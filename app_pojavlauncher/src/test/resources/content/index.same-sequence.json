@@ -1,0 +1,27 @@
+{
+  "config": {
+    "path": "config/launcher.e0aba007fe933ad13f1304362d8cece4bc6dfd7d063530cbed7743d4de4e2fb3.json",
+    "sha256": "e0aba007fe933ad13f1304362d8cece4bc6dfd7d063530cbed7743d4de4e2fb3",
+    "size": 356
+  },
+  "generatedAt": "2026-10-15T12:00:01Z",
+  "news": {
+    "path": "news/news.7ce2c1e5358806c665323ea858c93fec7486028cb742f7654f011a970f8752ff.json",
+    "sha256": "7ce2c1e5358806c665323ea858c93fec7486028cb742f7654f011a970f8752ff",
+    "size": 971
+  },
+  "packs": [
+    {
+      "id": "projects",
+      "latest": "2.3.0",
+      "manifest": {
+        "path": "packs/projects/2.3.0.json",
+        "sha256": "4f5e84300bc2ab12f1e44831b0cabb45bc394401588b7f3d4699f0553c5b4cb6",
+        "size": 651
+      },
+      "name": "Projects"
+    }
+  ],
+  "schema": 1,
+  "sequence": 1792065600
+}

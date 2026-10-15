@@ -1,0 +1,39 @@
+{
+  "items": [
+    {
+      "body": "## Yenilikler\n\n- Sodium 0.6\n- Daha hızlı açılış",
+      "category": "patchNotes",
+      "featured": false,
+      "id": "patch-2-3",
+      "pinned": true,
+      "publishedAt": "2026-10-01T09:00:00Z",
+      "summary": "Yeni modlar ve performans iyileştirmeleri.",
+      "title": "2.3 yama notları"
+    },
+    {
+      "category": "event",
+      "id": "bedwars-cup",
+      "publishedAt": "2026-10-14T18:00:00+03:00",
+      "summary": "Cumartesi akşamı başlıyor.",
+      "title": "Bed Wars turnuvası"
+    },
+    {
+      "category": "poll",
+      "id": "scheduled",
+      "publishedAt": "2099-01-01T00:00:00Z",
+      "title": "Zamanlanmış"
+    },
+    {
+      "expiresAt": "2026-10-10T00:00:00Z",
+      "id": "expired",
+      "publishedAt": "2026-09-01T00:00:00Z",
+      "title": "Süresi dolmuş"
+    },
+    {
+      "id": "broken-date",
+      "publishedAt": "dün",
+      "title": "Tarihi bozuk"
+    }
+  ],
+  "schema": 1
+}

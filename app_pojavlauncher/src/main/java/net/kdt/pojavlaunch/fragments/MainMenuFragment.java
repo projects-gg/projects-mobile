@@ -37,10 +37,13 @@ import net.kdt.pojavlaunch.value.launcherprofiles.MinecraftProfile;
 import java.io.File;
 import java.util.List;
 
+import gg.projects.mobile.ui.ProjectsHomeCard;
+
 public class MainMenuFragment extends Fragment {
     public static final String TAG = "MainMenuFragment";
 
     private mcVersionSpinner mVersionSpinner;
+    private ProjectsHomeCard mProjectsCard;
 
     public MainMenuFragment(){
         super(R.layout.fragment_launcher);
@@ -60,7 +63,8 @@ public class MainMenuFragment extends Fragment {
         mVersionSpinner = view.findViewById(R.id.mc_version_spinner);
 
         mNewsButton.setOnClickListener(v -> Tools.openURL(requireActivity(), Tools.URL_HOME));
-        mDiscordButton.setOnClickListener(v -> Tools.openURL(requireActivity(), getString(R.string.discord_invite)));
+        // Projects: the Discord invite comes from the signed launcher config when it has one.
+        mDiscordButton.setOnClickListener(v -> Tools.openURL(requireActivity(), ProjectsHomeCard.discordUrl(getString(R.string.discord_invite))));
         mCustomControlButton.setOnClickListener(v -> startActivity(new Intent(requireContext(), CustomControlsActivity.class)));
         if (hasOnlineProfile()) {
             mInstallJarButton.setOnClickListener(v -> runInstallerWithConfirmation(false));
@@ -86,6 +90,8 @@ public class MainMenuFragment extends Fragment {
         });
 
         mShareLogsButton.setOnClickListener((v) -> shareLog(requireContext()));
+
+        mProjectsCard = new ProjectsHomeCard(this, view, mVersionSpinner, mPlayButton);
 
         mOpenDirectoryButton.setOnClickListener((v)-> {
             if (Tools.isDemoProfile(v.getContext())){ // Say a different message when on demo profile since they might see the hidden demo folder
@@ -116,6 +122,13 @@ public class MainMenuFragment extends Fragment {
     public void onResume() {
         super.onResume();
         mVersionSpinner.reloadProfiles();
+        mProjectsCard.onResume();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        mProjectsCard.onPause();
     }
 
     private void runInstallerWithConfirmation(boolean isCustomArgs) {

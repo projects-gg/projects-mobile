@@ -1,0 +1,20 @@
+{
+  "links": {
+    "discord": "https://discord.gg/projects",
+    "website": "https://projects.gg"
+  },
+  "maintenance": {
+    "enabled": false
+  },
+  "recommendedPack": "projects",
+  "schema": 1,
+  "servers": [
+    {
+      "address": "play.projects.gg",
+      "featured": true,
+      "id": "main",
+      "name": "Projects",
+      "port": 25565
+    }
+  ]
+}

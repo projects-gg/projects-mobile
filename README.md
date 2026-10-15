@@ -1,3 +1,25 @@
+# Projects Launcher for Android
+
+This branch (`projects`) is the Android app of [projects.gg](https://projects.gg): a fork of
+[Amethyst-Android](https://github.com/AngelAuraMC/Amethyst-Android), which is based on
+[PojavLauncher](https://github.com/PojavLauncherTeam/PojavLauncher). It adds Projects branding,
+signed Projects news and a "Projects'e katıl" button that prepares the Projects profile and joins
+`play.projects.gg`. It is licensed under the GNU LGPLv3 like upstream; see [NOTICE](NOTICE) for
+credits and the list of changes. Build, signing and upstream-sync notes live in the ProLauncher2
+repository (`docs/mobile.md`).
+
+Quick build (Windows or Linux, JDK 21):
+
+```
+bash scripts/languagelist_updater.sh
+python3 scripts/projects/fetch_upstream_jre8.py   # prebuilt JRE 8 from an upstream release APK
+./gradlew :app_pojavlauncher:testDebugUnitTest :app_pojavlauncher:assembleDebug
+```
+
+The upstream README follows unchanged.
+
+---
+
 <h1 align="center">Angel Aura Amethyst</h1>
 
 <img src="https://github.com/AngelAuraMC/Amethyst-Android/blob/v3_openjdk/app_pojavlauncher/src/main/assets/amethyst.png" align="left" width="130" height="130" alt="Amethyst logo">

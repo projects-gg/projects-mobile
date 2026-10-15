@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Text on gold buttons; muted when the button is disabled (obsidian background). -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_enabled="false" android:color="@color/projects_ash_400" />
+    <item android:color="@color/projects_on_gold" />
+</selector>

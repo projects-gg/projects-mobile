@@ -1,0 +1,23 @@
+{
+  "dependencies": {
+    "fabric-loader": "0.16.9",
+    "minecraft": "1.21.1"
+  },
+  "files": [
+    {
+      "downloads": ["https://cdn.modrinth.com/data/AANobbMI/versions/u1OEbNKx/sodium-fabric-0.6.0%2Bmc1.21.1.jar"],
+      "env": {"client": "required", "server": "unsupported"},
+      "fileSize": 1048576,
+      "hashes": {"sha1": "6f07dc1d0a287f925d7672e6884d85ceb3f339ed"},
+      "path": "mods/sodium-fabric-0.6.0+mc1.21.1.jar"
+    }
+  ],
+  "formatVersion": 1,
+  "game": "minecraft",
+  "name": "Projects",
+  "projects": {
+    "packId": "projects",
+    "servers": [{"address": "play.projects.gg", "name": "Projects"}]
+  },
+  "versionId": "2.3.0"
+}

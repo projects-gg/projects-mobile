@@ -85,6 +85,7 @@ public class ProfileIconCache {
             case "default": return R.drawable.ic_pojav_full;
             case "fabric": return R.drawable.ic_fabric;
             case "quilt": return R.drawable.ic_quilt;
+            case "projects": return R.drawable.ic_projects_profile; // Projects fork
             default: return -1;
         }
     }

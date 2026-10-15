@@ -54,6 +54,27 @@ def getVersionName = {
     }
 }
 
+// Projects fork: own version line. versionCode must grow with every published build.
+def projectsVersionCode = 1
+def projectsVersionName = "0.1.0"
+def getProjectsVersionName = {
+    String commit = ""
+    try {
+        commit = providers.exec {
+            commandLine 'git', 'rev-parse', '--short', 'HEAD'
+            ignoreExitValue = true
+        }.getStandardOutput().asText.get().trim()
+    } catch (Exception ignored) {
+    }
+    def isRelease = project.gradle.startParameter.taskNames.any { it.toLowerCase().contains('release') || it.toLowerCase().contains('gplay') }
+    if (isRelease) return projectsVersionName
+    return projectsVersionName + "-debug" + (commit.isEmpty() ? "" : "+" + commit)
+}
+
+// Projects fork: release signing comes from the environment, never from the repository.
+// PROJECTS_KEYSTORE_FILE, PROJECTS_KEYSTORE_PASSWORD, PROJECTS_KEY_ALIAS, PROJECTS_KEY_PASSWORD
+def projectsKeystore = System.getenv("PROJECTS_KEYSTORE_FILE")
+
 def getCFApiKey = {
     String key = System.getenv("CURSEFORGE_API_KEY");
     if(key != null) return key;
@@ -85,26 +106,22 @@ android {
             keyAlias "androiddebugkey"
             keyPassword "android"
         }
-        customRelease {
-            storeFile file("aamc_upload.jks")
-            storePassword System.getenv("GPLAY_KEYSTORE_PASSWORD")
-            keyAlias "android_github_release"
-            keyPassword System.getenv("GPLAY_KEYSTORE_PASSWORD")
-        }
-        googlePlayBuild {
-            storeFile file("upload.jks")
-            storePassword System.getenv("GPLAY_KEYSTORE_PASSWORD")
-            keyAlias "upload"
-            keyPassword System.getenv("GPLAY_KEYSTORE_PASSWORD")
+        if (projectsKeystore != null) {
+            projectsRelease {
+                storeFile file(projectsKeystore)
+                storePassword System.getenv("PROJECTS_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("PROJECTS_KEY_ALIAS")
+                keyPassword System.getenv("PROJECTS_KEY_PASSWORD")
+            }
         }
     }
 
     defaultConfig {
-        applicationId "org.angelauramc.amethyst"
+        applicationId "gg.projects.mobile"
         minSdkVersion 21
         targetSdkVersion 34
-        versionCode 10000000
-        versionName getVersionName()
+        versionCode projectsVersionCode
+        versionName getProjectsVersionName()
         multiDexEnabled true //important
         resValue 'string', 'curseforge_api_key', getCFApiKey()
         externalNativeBuild {
@@ -122,11 +139,11 @@ android {
             shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.customDebug
-            resValue "string", "app_name", "Amethyst (Debug)"
-            resValue "string", "app_short_name", "Amethyst (Debug)"
-            resValue 'string', 'application_package', 'org.angelauramc.amethyst.debug'
-            resValue 'string', 'storageProviderAuthorities', 'org.angelauramc.amethyst.scoped.gamefolder.debug'
-            resValue 'string', 'shareProviderAuthority', 'org.angelauramc.amethyst.scoped.controlfolder.debug'
+            resValue "string", "app_name", "Projects Launcher (Debug)"
+            resValue "string", "app_short_name", "Projects (Debug)"
+            resValue 'string', 'application_package', 'gg.projects.mobile.debug'
+            resValue 'string', 'storageProviderAuthorities', 'gg.projects.mobile.scoped.gamefolder.debug'
+            resValue 'string', 'shareProviderAuthority', 'gg.projects.mobile.scoped.controlfolder.debug'
         }
         proguard {
             initWith debug
@@ -142,18 +159,19 @@ android {
             // Don't set to true or java.awt will be a.a or something similar.
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.customRelease
+            // Unsigned unless PROJECTS_KEYSTORE_FILE is set (see docs/mobile.md in ProLauncher2).
+            signingConfig projectsKeystore != null ? signingConfigs.projectsRelease : null
             // defaultConfig already set
             // multiDexEnabled = true
             // debuggable = true
-            resValue "string", "app_name", "Amethyst"
-            resValue "string", "app_short_name", "Amethyst"
-            resValue 'string', 'storageProviderAuthorities', 'org.angelauramc.amethyst.scoped.gamefolder'
-            resValue 'string', 'application_package', 'org.angelauramc.amethyst'
+            resValue "string", "app_name", "Projects Launcher"
+            resValue "string", "app_short_name", "Projects"
+            resValue 'string', 'storageProviderAuthorities', 'gg.projects.mobile.scoped.gamefolder'
+            resValue 'string', 'application_package', 'gg.projects.mobile'
         }
         gplay {
+            // Google Play: sign the bundle with the upload key (same PROJECTS_* variables).
             initWith release
-            signingConfig signingConfigs.googlePlayBuild
             matchingFallbacks = [ 'release' ]
         }
     }
@@ -253,5 +271,8 @@ dependencies {
 
     implementation project(":androidnsbypass")
 
+    // Projects fork: Ed25519 verification of the signed content index
+    implementation 'org.bouncycastle:bcprov-jdk15to18:1.86'
+    testImplementation 'junit:junit:4.13.2'
 }
 apply from: rootProject.file('gradle/prefab_bypass.gradle')

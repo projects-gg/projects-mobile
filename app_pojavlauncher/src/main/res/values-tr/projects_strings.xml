@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="projects_join">Projects\'e katıl</string>
+    <string name="projects_all_news">Tüm haberler</string>
+    <string name="projects_news_title">Projects haberleri</string>
+    <string name="projects_retry">Tekrar dene</string>
+    <string name="projects_close">Kapat</string>
+    <string name="projects_news_empty_title">Henüz haber yok</string>
+    <string name="projects_news_empty_body">Projects ekibinin duyuruları burada görünecek.</string>
+    <string name="projects_news_offline_title">Haberler yüklenemedi</string>
+    <string name="projects_news_offline_body">İnternet bağlantını kontrol edip tekrar dene.</string>
+    <string name="projects_news_update_title">Güncelleme gerekiyor</string>
+    <string name="projects_news_update_body">Son haberleri görmek için uygulamayı güncelle.</string>
+    <string name="projects_offline_since">Çevrim dışı. Son güncelleme: %1$s</string>
+    <string name="projects_pinned">Sabitlendi</string>
+    <string name="projects_category_update">Güncelleme</string>
+    <string name="projects_category_event">Etkinlik</string>
+    <string name="projects_category_announcement">Duyuru</string>
+    <string name="projects_category_patch_notes">Yama notları</string>
+    <string name="projects_category_community">Topluluk</string>
+    <string name="projects_maintenance_title">Bakım çalışması</string>
+    <string name="projects_join_busy">Projects zaten hazırlanıyor.</string>
+    <string name="projects_join_preparing">Projects hazırlanıyor</string>
+    <string name="projects_join_downloading">Projects paketi indiriliyor (%1$.1f MB / %2$.1f MB)</string>
+    <string name="projects_join_failed_title">Projects hazırlanamadı</string>
+    <string name="projects_join_failed_network">Projects paketi indirilemedi. İnternet bağlantını kontrol edip tekrar dene.</string>
+    <string name="projects_join_failed_generic">Projects paketi hazırlanamadı. Tekrar dene; sürerse ayrıntıları destek ekibine gönder.</string>
+    <string name="projects_join_finish_loader_title">Bir adım kaldı</string>
+    <string name="projects_join_finish_loader">Mod yükleyicinin kurulumunu bildirimden tamamla, ardından Projects\'e katıl düğmesine yeniden dokun.</string>
+    <string name="projects_copy_details">Ayrıntıları kopyala</string>
+    <string name="projects_details_copied">Ayrıntılar kopyalandı</string>
+    <string name="projects_based_on">Projects Launcher, Amethyst ve PojavLauncher tabanlıdır ve LGPLv3 lisansıyla açık kaynaktır.</string>
+    <string name="projects_about_title">Projects Launcher hakkında</string>
+</resources>

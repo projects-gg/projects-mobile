@@ -1,0 +1,2 @@
+# Projects fork: signed test fixtures must keep their exact bytes (no EOL conversion)
+app_pojavlauncher/src/test/resources/content/** -text

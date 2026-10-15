@@ -3,13 +3,14 @@
     <color name="control_button_color">#4CC4C4C4</color>
     <color name="control_button_pressed_color">#4D000000</color>
 
-    <color name="minebutton_color">#9649b8</color>
-    <color name="background_app">#181818</color>
+    <!-- Projects fork: upstream color names mapped onto the Projects palette (values/projects_colors.xml). -->
+    <color name="minebutton_color">@color/projects_gold_500</color>
+    <color name="background_app">@color/projects_obsidian_950</color>
     <color name="divider">@color/background_overlay</color>
-    <color name="background_overlay">#464646</color>
-    <color name="background_status_bar">#242424</color>
-    <color name="background_bottom_bar">#232323</color>
+    <color name="background_overlay">@color/projects_obsidian_700</color>
+    <color name="background_status_bar">@color/projects_obsidian_900</color>
+    <color name="background_bottom_bar">@color/projects_obsidian_900</color>
 
-    <color name="primary_text">#FFFFFF</color>
-    <color name="secondary_text">#B2B2B2</color>
+    <color name="primary_text">@color/projects_bone_100</color>
+    <color name="secondary_text">@color/projects_ash_400</color>
 </resources>

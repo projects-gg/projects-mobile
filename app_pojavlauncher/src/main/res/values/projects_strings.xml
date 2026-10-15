@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Strings added by the Projects Launcher fork. Turkish lives in values-tr/projects_strings.xml. -->
+<resources>
+    <string name="projects_brand" translatable="false">Projects</string>
+    <string name="projects_join">Join Projects</string>
+    <string name="projects_all_news">All news</string>
+    <string name="projects_news_title">Projects news</string>
+    <string name="projects_retry">Try again</string>
+    <string name="projects_close">Close</string>
+    <string name="projects_news_empty_title">No news yet</string>
+    <string name="projects_news_empty_body">Announcements from the Projects team will show up here.</string>
+    <string name="projects_news_offline_title">News could not be loaded</string>
+    <string name="projects_news_offline_body">Check your internet connection and try again.</string>
+    <string name="projects_news_update_title">An update is needed</string>
+    <string name="projects_news_update_body">Update the app to see the latest news.</string>
+    <string name="projects_offline_since">Offline. Last updated %1$s</string>
+    <string name="projects_pinned">Pinned</string>
+    <string name="projects_category_update">Update</string>
+    <string name="projects_category_event">Event</string>
+    <string name="projects_category_announcement">Announcement</string>
+    <string name="projects_category_patch_notes">Patch notes</string>
+    <string name="projects_category_community">Community</string>
+    <string name="projects_maintenance_title">Maintenance</string>
+    <string name="projects_join_busy">Projects is already being prepared.</string>
+    <string name="projects_join_preparing">Preparing Projects</string>
+    <string name="projects_join_downloading">Downloading the Projects pack (%1$.1f MB / %2$.1f MB)</string>
+    <string name="projects_join_failed_title">Projects could not be prepared</string>
+    <string name="projects_join_failed_network">The Projects pack could not be downloaded. Check your internet connection and try again.</string>
+    <string name="projects_join_failed_generic">The Projects pack could not be prepared. Try again; if it keeps happening, send the details to the support team.</string>
+    <string name="projects_join_finish_loader_title">One more step</string>
+    <string name="projects_join_finish_loader">Finish the mod loader installation from the notification, then tap Join Projects again.</string>
+    <string name="projects_copy_details">Copy details</string>
+    <string name="projects_details_copied">Details copied</string>
+    <string name="projects_based_on">Projects Launcher is based on Amethyst and PojavLauncher and is open source under the LGPLv3.</string>
+    <string name="projects_about_title">About Projects Launcher</string>
+</resources>

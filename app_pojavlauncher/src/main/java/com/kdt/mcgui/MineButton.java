@@ -20,8 +20,10 @@ public class MineButton extends androidx.appcompat.widget.AppCompatButton {
 	}
 
 	public void init() {
-		setTypeface(ResourcesCompat.getFont(getContext(), R.font.noto_sans_bold));
-		setBackground(ResourcesCompat.getDrawable(getResources(), R.drawable.mine_button_background, null));
+		// Projects fork: gold "hextech cut" primary button in Tektur (was the purple Amethyst 9-patch)
+		setTypeface(ResourcesCompat.getFont(getContext(), R.font.tektur_semibold));
+		setBackground(gg.projects.mobile.ui.ChamferDrawable.primary(getContext()));
+		setTextColor(androidx.core.content.ContextCompat.getColorStateList(getContext(), R.color.projects_on_gold_text));
 		setTextSize(TypedValue.COMPLEX_UNIT_PX, getResources().getDimensionPixelSize(R.dimen._13ssp));
 	}
 

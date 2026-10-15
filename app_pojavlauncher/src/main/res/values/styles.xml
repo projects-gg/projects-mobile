@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Light or not? -->
     <style name="AppTheme" parent="@style/Theme.AppCompat.NoActionBar">
         <item name="windowNoTitle">true</item>
@@ -11,6 +11,33 @@
 
         <item name="android:textSize">@dimen/_12ssp</item>
 
+        <!-- Projects fork: brand palette (gold is the single accent) -->
+        <item name="colorPrimary">@color/projects_obsidian_900</item>
+        <item name="colorPrimaryDark">@color/projects_obsidian_950</item>
+        <item name="colorAccent">@color/projects_gold_500</item>
+        <item name="android:windowBackground">@color/projects_obsidian_950</item>
+        <item name="android:textColorPrimary">@color/projects_bone_100</item>
+        <item name="android:textColorSecondary">@color/projects_ash_400</item>
+        <item name="android:colorBackground">@color/projects_obsidian_900</item>
+        <item name="colorBackgroundFloating">@color/projects_obsidian_800</item>
+        <item name="alertDialogTheme">@style/ProjectsAlertDialog</item>
+    </style>
+
+    <style name="ProjectsAlertDialog" parent="Theme.AppCompat.Dialog.Alert">
+        <item name="colorAccent">@color/projects_gold_500</item>
+        <item name="colorBackgroundFloating">@color/projects_obsidian_800</item>
+        <item name="android:windowBackground">@drawable/projects_dialog_background</item>
+        <item name="android:textColorPrimary">@color/projects_bone_100</item>
+        <item name="android:textColorSecondary">@color/projects_ash_400</item>
+    </style>
+
+    <!-- Projects fork: entry activity. Before Android 12 the window background is the splash;
+         Android 12+ draws the system splash from the windowSplashScreen* attributes. -->
+    <style name="AppTheme.Splash">
+        <item name="android:windowBackground">@drawable/projects_splash</item>
+        <item name="android:windowSplashScreenBackground" tools:targetApi="31">@color/projects_obsidian_950</item>
+        <item name="android:windowSplashScreenAnimatedIcon" tools:targetApi="31">@mipmap/ic_launcher_foreground</item>
+        <item name="android:windowSplashScreenIconBackgroundColor" tools:targetApi="31">@color/projects_obsidian_950</item>
     </style>
 
     <style name="LauncherFragment_Divider">

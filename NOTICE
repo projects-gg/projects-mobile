@@ -1,0 +1,44 @@
+Projects Launcher for Android
+=============================
+
+Projects Launcher for Android is a modified version (a fork) of Amethyst-Android:
+
+  Amethyst-Android  https://github.com/AngelAuraMC/Amethyst-Android
+  Copyright (C) the AngelAuraMC / Amethyst-Android contributors
+
+Amethyst-Android is itself based on PojavLauncher and Boardwalk:
+
+  PojavLauncher     https://github.com/PojavLauncherTeam/PojavLauncher
+  Copyright (C) the PojavLauncher Team and contributors
+  Boardwalk         https://github.com/zhuowei/Boardwalk (zhuowei)
+
+Amethyst-Android and PojavLauncher are licensed under the GNU Lesser General Public License,
+version 3 (see LICENSE). This fork is distributed under the same license. Everyone who receives
+the app must be able to get the complete corresponding source code, including the changes made
+by this fork (branch "projects").
+
+Changes made by this fork (2026, Projects / projects.gg):
+  - Branding: application name and id (gg.projects.mobile), launcher icon, splash screen,
+    colors and fonts.
+  - Projects integration: Ed25519-verified news from the Projects content index, the
+    "Projects'e katil" join flow (Projects profile, official pack sync, server list entry and
+    auto-join of play.projects.gg).
+  The full list of changes is the git history of the "projects" branch on top of upstream.
+
+Third-party components added by this fork:
+  - Bouncy Castle Crypto APIs (org.bouncycastle:bcprov-jdk15to18), MIT license,
+    Copyright (c) 2000 - 2023 The Legion of the Bouncy Castle Inc.
+    (app_pojavlauncher/src/main/assets/licenses/BOUNCYCASTLE_LICENSE)
+  - Tektur typeface, Copyright 2023 The Tektur Project Authors, SIL Open Font License 1.1
+    (app_pojavlauncher/src/main/assets/licenses/TEKTUR_OFL.txt)
+  - Figtree typeface, Copyright 2022 The Figtree Project Authors, SIL Open Font License 1.1
+    (app_pojavlauncher/src/main/assets/licenses/FIGTREE_OFL.txt)
+
+All notices of upstream and of the components it bundles are kept unchanged (see README.md
+"Credits & Dependencies" and app_pojavlauncher/src/main/assets/licenses).
+
+The Projects name, logo and mascot artwork are brand assets of Projects. The license of the
+code does not grant permission to use them to identify other products.
+
+Minecraft is a trademark of Mojang AB / Microsoft. This project is not affiliated with Mojang,
+Microsoft, AngelAuraMC or the PojavLauncher Team.

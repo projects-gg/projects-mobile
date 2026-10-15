@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Projects brand tokens (ProLauncher2 docs/design.md). Gold is the single accent. -->
+<resources>
+    <color name="projects_obsidian_950">#0A090C</color>
+    <color name="projects_obsidian_900">#121016</color>
+    <color name="projects_obsidian_800">#1B1820</color>
+    <color name="projects_obsidian_700">#27222C</color>
+    <color name="projects_ash_400">#9B93A3</color>
+    <color name="projects_bone_100">#F3EBDD</color>
+    <color name="projects_gold_300">#F6D58E</color>
+    <color name="projects_gold_500">#E89A2C</color>
+    <color name="projects_gold_600">#C9741A</color>
+    <color name="projects_ember_900">#3F0A0A</color>
+    <color name="projects_jade_400">#5FCB8E</color>
+    <color name="projects_flare_400">#F0624D</color>
+    <!-- Text on gold. -->
+    <color name="projects_on_gold">#1A0F05</color>
+</resources>
