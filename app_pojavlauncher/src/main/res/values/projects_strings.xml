@@ -141,4 +141,30 @@
     <string name="projects_notice_reset">The mods folder was empty; your mods were reinstalled.</string>
     <string name="projects_notice_issues">Some mod files could not be read.</string>
     <string name="projects_notice_dropped">The Projects pack no longer updates Minecraft %1$s.</string>
+
+    <!-- Home card: patch notes and events (also from the Discord news feed). -->
+    <string name="projects_patch_notes">Patch notes</string>
+    <string name="projects_pack_version" translatable="false">%1$s %2$s</string>
+    <string name="projects_event_live">Happening now</string>
+    <string name="projects_event_next">Next event</string>
+    <string name="projects_event_left">left</string>
+    <string name="projects_event_started">Started %1$s</string>
+    <string name="projects_event_running">Live</string>
+    <string name="projects_event_ends_in">%1$s left</string>
+    <plurals name="projects_events_more">
+        <item quantity="one">+%1$d event</item>
+        <item quantity="other">+%1$d events</item>
+    </plurals>
+    <string name="projects_events_other">Other events</string>
+    <string name="projects_countdown_days">days</string>
+    <string name="projects_countdown_hours">hours</string>
+    <string name="projects_countdown_minutes">minutes</string>
+    <string name="projects_countdown_seconds">seconds</string>
+    <string name="projects_span_days">%1$dd</string>
+    <string name="projects_span_days_hours">%1$dd %2$dh</string>
+    <string name="projects_span_hours">%1$dh</string>
+    <string name="projects_span_hours_minutes">%1$dh %2$dm</string>
+    <string name="projects_span_minutes">%1$dm</string>
+    <string name="projects_span_seconds">%1$ds</string>
+    <string name="projects_open_in_discord">Open in Discord</string>
 </resources>

@@ -38,8 +38,9 @@ public class BlurHashTest {
 
     @Test
     public void theBotsHashesDecode() {
-        // 4 x 3 components from the N1-A sample feed (D:\ProLauncher-build\feed-e2e) and the spec example.
-        for (String hash : new String[]{"L9G$-K0i$ySh|@1M^ORkE4tPJAay", "LKO2?U%2Tw=w]~RBVZRi};RPxuwH"}) {
+        // 4 x 3 components from the N1-A sample feed (D:\ProLauncher-build\feed-e2e), the bot's encoder on an
+        // M9 fixture cover, and the spec example.
+        for (String hash : new String[]{"L9G$-K0i$ySh|@1M^ORkE4tPJAay", "LHHJ590h-mEN}qI@s-jZ5A-mENkB", "LKO2?U%2Tw=w]~RBVZRi};RPxuwH"}) {
             int[] pixels = BlurHash.decode(hash, 32, 18, 1);
             assertNotNull(hash, pixels);
             assertEquals(32 * 18, pixels.length);

@@ -139,4 +139,28 @@
     <string name="projects_notice_reset">Mod klasörü boştu; seçtiğin modlar yeniden kuruldu.</string>
     <string name="projects_notice_issues">Bazı mod dosyaları okunamadı.</string>
     <string name="projects_notice_dropped">Projects paketi Minecraft %1$s sürümünü artık güncellemiyor.</string>
+
+    <string name="projects_patch_notes">Yama notları</string>
+    <string name="projects_event_live">Etkinlik sürüyor</string>
+    <string name="projects_event_next">Sıradaki etkinlik</string>
+    <string name="projects_event_left">kaldı</string>
+    <string name="projects_event_started">%1$s başladı</string>
+    <string name="projects_event_running">Sürüyor</string>
+    <string name="projects_event_ends_in">%1$s kaldı</string>
+    <plurals name="projects_events_more">
+        <item quantity="one">+%1$d etkinlik</item>
+        <item quantity="other">+%1$d etkinlik</item>
+    </plurals>
+    <string name="projects_events_other">Diğer etkinlikler</string>
+    <string name="projects_countdown_days">gün</string>
+    <string name="projects_countdown_hours">saat</string>
+    <string name="projects_countdown_minutes">dakika</string>
+    <string name="projects_countdown_seconds">saniye</string>
+    <string name="projects_span_days">%1$d gün</string>
+    <string name="projects_span_days_hours">%1$d gün %2$d sa</string>
+    <string name="projects_span_hours">%1$d sa</string>
+    <string name="projects_span_hours_minutes">%1$d sa %2$d dk</string>
+    <string name="projects_span_minutes">%1$d dk</string>
+    <string name="projects_span_seconds">%1$d sn</string>
+    <string name="projects_open_in_discord">Discord\'da aç</string>
 </resources>

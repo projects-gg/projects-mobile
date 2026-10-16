@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One line of the patch notes tile: a gold square and the bullet's text. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="6dp"
+    android:orientation="horizontal">
+
+    <View
+        android:layout_width="4dp"
+        android:layout_height="4dp"
+        android:layout_marginTop="7.5dp"
+        android:background="@drawable/projects_bullet_gold"
+        android:importantForAccessibility="no" />
+
+    <TextView
+        android:id="@+id/projects_patch_line_text"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="9dp"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:fontFamily="@font/figtree_regular"
+        android:lineSpacingMultiplier="1.1"
+        android:maxLines="2"
+        android:textColor="@color/projects_ash_300"
+        android:textSize="13sp"
+        tools:text="Yeni zindan: Kül Mağarası" />
+</LinearLayout>

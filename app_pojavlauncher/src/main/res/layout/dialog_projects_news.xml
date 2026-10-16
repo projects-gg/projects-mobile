@@ -13,15 +13,12 @@
         android:paddingEnd="20dp"
         android:paddingBottom="8dp">
 
-        <ImageView
+        <!-- Fixed 16:9 box: the dialog keeps its size when the picture arrives. -->
+        <gg.projects.mobile.ui.CoverView
             android:id="@+id/projects_article_cover"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="14dp"
-            android:adjustViewBounds="true"
-            android:importantForAccessibility="no"
-            android:maxHeight="220dp"
-            android:scaleType="centerCrop"
             android:visibility="gone" />
 
         <LinearLayout
@@ -46,13 +43,49 @@
 
             <TextView
                 android:id="@+id/projects_article_date"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:ellipsize="end"
                 android:fontFamily="@font/figtree_regular"
+                android:maxLines="1"
                 android:textColor="@color/projects_ash_400"
                 android:textSize="12sp"
                 tools:text="15 Ekim 2026" />
+
+            <!-- Discord posts: the original message, with Discord's own symbol and colour. -->
+            <LinearLayout
+                android:id="@+id/projects_article_discord"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/projects_pill_background"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="6dp"
+                android:paddingEnd="10dp"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/projects_discord_tile" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="7dp"
+                    android:fontFamily="@font/figtree_semibold"
+                    android:maxLines="1"
+                    android:text="@string/projects_open_in_discord"
+                    android:textColor="@color/projects_ash_300"
+                    android:textSize="12.5sp" />
+            </LinearLayout>
         </LinearLayout>
 
         <TextView

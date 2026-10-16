@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Small pill ("+2 etkinlik"): a faint white backing with a gold ripple. -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="#33F6D58E">
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="999dp" />
+            <solid android:color="#14FFFFFF" />
+        </shape>
+    </item>
+</ripple>

@@ -13,17 +13,17 @@ import android.view.animation.PathInterpolator;
  * Animator, so the system's animator duration scale applies; with animations removed
  * (scale 0) nothing moves and views jump to their end state.
  */
-final class Motion {
+public final class Motion {
     private Motion() {}
 
-    static final Interpolator EASE_OUT = new PathInterpolator(0.16f, 1f, 0.3f, 1f);
-    static final Interpolator EASE_IN = new PathInterpolator(0.55f, 0f, 1f, 0.45f);
+    public static final Interpolator EASE_OUT = new PathInterpolator(0.16f, 1f, 0.3f, 1f);
+    public static final Interpolator EASE_IN = new PathInterpolator(0.55f, 0f, 1f, 0.45f);
 
-    static final long ENTER_MS = 280;
-    static final long EXIT_MS = 190;
+    public static final long ENTER_MS = 280;
+    public static final long EXIT_MS = 190;
 
     /** False when the player turned animations off (reduced motion). */
-    static boolean enabled(Context context) {
+    public static boolean enabled(Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) return ValueAnimator.areAnimatorsEnabled();
         try {
             return Settings.Global.getFloat(context.getContentResolver(), Settings.Global.ANIMATOR_DURATION_SCALE, 1f) != 0f;

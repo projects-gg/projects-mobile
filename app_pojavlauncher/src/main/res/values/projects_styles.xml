@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Projects-only styles (kept out of upstream's styles.xml). -->
+<resources>
+    <!-- Event countdown: Tektur digits with tabular figures, small units below (the desktop's Countdown). -->
+    <style name="ProjectsCountdownCell">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginEnd">14dp</item>
+        <item name="android:orientation">vertical</item>
+    </style>
+
+    <style name="ProjectsCountdownValue">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:fontFamily">@font/tektur_semibold</item>
+        <item name="android:fontFeatureSettings">tnum</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:textColor">@color/projects_bone_100</item>
+        <item name="android:textSize">21sp</item>
+    </style>
+
+    <style name="ProjectsCountdownUnit">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">3dp</item>
+        <item name="android:fontFamily">@font/figtree_regular</item>
+        <item name="android:textColor">@color/projects_ash_300</item>
+        <item name="android:textSize">11sp</item>
+    </style>
+</resources>

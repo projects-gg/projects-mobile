@@ -12,7 +12,8 @@ import gg.projects.mobile.content.ContentPaths;
 
 /**
  * A small, safe Markdown renderer for news bodies: headings, bullet lists, bold, italic, inline
- * code and links. No HTML is interpreted; only https links become clickable.
+ * code and links. No HTML is interpreted; only https links become clickable (which also covers the
+ * Discord feed's rule); pictures show their alt text.
  */
 public final class MarkdownLite {
     private MarkdownLite() {}
@@ -88,6 +89,16 @@ public final class MarkdownLite {
                     int start = out.length();
                     out.append(text, i + 1, end);
                     out.setSpan(new TypefaceSpan("monospace"), start, out.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    i = end + 1;
+                    continue;
+                }
+            }
+            if (c == '!' && i + 1 < text.length() && text.charAt(i + 1) == '[') {
+                // Pictures are never loaded (a Discord post could point anywhere): their text stays.
+                int close = text.indexOf("](", i + 2);
+                int end = close < 0 ? -1 : text.indexOf(')', close + 2);
+                if (close > i + 1 && end > close) {
+                    appendInline(out, text.substring(i + 2, close));
                     i = end + 1;
                     continue;
                 }

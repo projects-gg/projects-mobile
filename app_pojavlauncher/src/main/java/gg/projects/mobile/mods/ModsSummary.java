@@ -34,11 +34,27 @@ public final class ModsSummary {
     /** Mods that are on (libraries not counted); -1 when unknown. */
     public final int enabled;
     public final int newItems;
+    /** The followed pack's name, version and changelog (the patch notes box without patch notes), or null. */
+    @Nullable
+    public final String packName;
+    @Nullable
+    public final String packVersion;
+    @Nullable
+    public final String changelog;
 
     private ModsSummary(boolean hasItems, int enabled, int newItems) {
+        this(hasItems, enabled, newItems, null);
+    }
+
+    private ModsSummary(boolean hasItems, int enabled, int newItems, @Nullable PackManifest manifest) {
         this.hasItems = hasItems;
         this.enabled = enabled;
         this.newItems = newItems;
+        String changelog = manifest == null || manifest.projects == null ? null : manifest.projects.changelog;
+        boolean notes = changelog != null && !changelog.trim().isEmpty();
+        this.packName = notes ? manifest.name : null;
+        this.packVersion = notes ? manifest.versionId : null;
+        this.changelog = notes ? changelog.trim() : null;
     }
 
     public interface Callback {
@@ -75,7 +91,7 @@ public final class ModsSummary {
                 if (status.effectivelyEnabled) enabled++;
                 if (status.isNew) fresh++;
             }
-            return new ModsSummary(choices > 0, enabled, fresh);
+            return new ModsSummary(choices > 0, enabled, fresh, manifest);
         } catch (ContentException | RuntimeException e) {
             Log.i(TAG, "mods summary unavailable: " + e);
             return null;

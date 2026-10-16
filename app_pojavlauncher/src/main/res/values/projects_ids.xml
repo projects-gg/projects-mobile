@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- View tag: the running cross-fade of a home card block (CardMotion). -->
+    <item name="projects_motion_ghost" type="id" />
+</resources>
