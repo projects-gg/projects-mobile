@@ -63,4 +63,27 @@ public final class ProjectsProfile {
     public static File gameDir(MinecraftProfile profile) {
         return Tools.getGameDirPath(profile);
     }
+
+    /** The profile's game directory, also before the profile exists (where it will be created). */
+    @WorkerThread
+    public static File gameDir() {
+        return gameDirOf(find());
+    }
+
+    /**
+     * {@link #gameDir()} from the profiles already in memory (loaded when the launcher started),
+     * for frequent background reads that should not reload or rewrite launcher_profiles.json.
+     */
+    @WorkerThread
+    public static File knownGameDir() {
+        if (LauncherProfiles.mainProfileJson == null || LauncherProfiles.mainProfileJson.profiles == null) return gameDir();
+        return gameDirOf(LauncherProfiles.mainProfileJson.profiles.get(KEY));
+    }
+
+    private static File gameDirOf(MinecraftProfile profile) {
+        if (profile != null) return gameDir(profile);
+        MinecraftProfile template = new MinecraftProfile();
+        template.gameDir = GAME_DIR;
+        return gameDir(template);
+    }
 }

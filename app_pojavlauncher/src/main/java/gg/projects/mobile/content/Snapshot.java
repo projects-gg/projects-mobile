@@ -38,11 +38,18 @@ public final class Snapshot {
         return index != null;
     }
 
-    /** The pack new installs should follow: {@code recommendedPack}, else the first published one. */
+    /** The launcher config's {@code recommendedPack} (a pack id), or null. */
+    public String recommendedPack() {
+        return config == null ? null : config.recommendedPack;
+    }
+
+    /** The pack a new install follows (see {@link RootIndex#newInstallPack}), or null. */
     public RootIndex.PackRef officialPack() {
-        if (index == null) return null;
-        RootIndex.PackRef pack = config == null ? null : index.pack(config.recommendedPack);
-        if (pack == null && index.packs != null && !index.packs.isEmpty()) pack = index.packs.get(0);
-        return pack;
+        return index == null ? null : index.newInstallPack(recommendedPack());
+    }
+
+    /** Which pack a profile with {@code state} follows (see {@link PackChoice}). */
+    public PackChoice packChoice(PackState state) {
+        return PackChoice.choose(index, recommendedPack(), state);
     }
 }

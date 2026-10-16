@@ -19,13 +19,16 @@ import net.kdt.pojavlaunch.Tools;
 import net.kdt.pojavlaunch.prefs.LauncherPreferences;
 
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.List;
 
 import gg.projects.mobile.ProjectsContent;
 import gg.projects.mobile.content.LauncherConfig;
 import gg.projects.mobile.content.NewsFeed;
+import gg.projects.mobile.content.PackState;
 import gg.projects.mobile.content.Snapshot;
 import gg.projects.mobile.join.ProjectsJoin;
+import gg.projects.mobile.join.SyncNotice;
 
 /**
  * The Projects card at the top of the main menu: the latest news from the signed content index
@@ -194,6 +197,46 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener {
         Tools.swapFragment(mFragment.requireActivity(), ProjectsNewsFragment.class, ProjectsNewsFragment.TAG, null);
     }
 
+    /** One short line for what the sync before a launch adopted or could not do. */
+    @Nullable
+    static String noticeText(android.content.Context context, @Nullable SyncNotice notice) {
+        if (notice == null) return null;
+        if (notice.droppedMinecraft != null) return context.getString(R.string.projects_notice_dropped, notice.droppedMinecraft);
+        List<String> parts = new ArrayList<>();
+        if (notice.changes.size() == 1) {
+            SyncNotice.Change change = notice.changes.get(0);
+            if (!change.requiredBy.isEmpty()) {
+                parts.add(context.getString(R.string.projects_notice_required, change.title, join(change.requiredBy)));
+            } else if (PackState.MANUAL_REMOVED.equals(change.change)) {
+                parts.add(context.getString(R.string.projects_notice_removed, change.title));
+            } else if (PackState.MANUAL_DISABLED.equals(change.change)) {
+                parts.add(context.getString(R.string.projects_notice_disabled, change.title));
+            } else if (PackState.MANUAL_ENABLED.equals(change.change)) {
+                parts.add(context.getString(R.string.projects_notice_enabled, change.title));
+            } else if (PackState.MANUAL_REPLACED.equals(change.change)) {
+                parts.add(context.getString(R.string.projects_notice_replaced, change.title));
+            }
+        } else if (notice.changes.size() > 1) {
+            parts.add(context.getResources().getQuantityString(R.plurals.projects_notice_many, notice.changes.size(), notice.changes.size()));
+        }
+        if (notice.reset) parts.add(context.getString(R.string.projects_notice_reset));
+        if (notice.issues > 0) parts.add(context.getString(R.string.projects_notice_issues));
+        return parts.isEmpty() ? null : join(parts, " ");
+    }
+
+    private static String join(List<String> parts) {
+        return join(parts, ", ");
+    }
+
+    private static String join(List<String> parts, String separator) {
+        StringBuilder out = new StringBuilder();
+        for (String part : parts) {
+            if (out.length() > 0) out.append(separator);
+            out.append(part);
+        }
+        return out.toString();
+    }
+
     private void join() {
         FragmentActivity activity = mFragment.requireActivity();
         if (ProjectsJoin.isBusy()) {
@@ -207,9 +250,13 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener {
         final WeakReference<ProjectsHomeCard> self = new WeakReference<>(this);
         boolean started = ProjectsJoin.start(activity, new ProjectsJoin.Callback() {
             @Override
-            public void onReady(String profileKey) {
+            public void onReady(String profileKey, @Nullable SyncNotice notice) {
                 ProjectsHomeCard card = self.get();
-                if (card != null) card.launch(profileKey);
+                if (card == null) return;
+                FragmentActivity a = activityOrNull(self);
+                String text = a == null ? null : noticeText(a, notice);
+                if (text != null) Toast.makeText(a, text, Toast.LENGTH_LONG).show();
+                card.launch(profileKey);
             }
 
             @Override

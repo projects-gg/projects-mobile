@@ -18,7 +18,8 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Downloads planned pack files: every URL of a file is tried in order, the result is verified
  * (size, SHA-1 and SHA-512 when the manifest has it) and moved into place atomically. Either all
- * downloads succeed or the call fails; deletions and the new pack state are the caller's next step.
+ * downloads succeed or the call fails; renames, deletions and the new pack state are the next
+ * step ({@link PackSyncApplier}).
  */
 public final class PackDownloader {
     private PackDownloader() {}
@@ -35,7 +36,7 @@ public final class PackDownloader {
     public static void downloadAll(final File gameDir, List<PackSyncPlanner.Download> downloads, final Transport transport,
                                    final Progress progress, int threads) throws IOException {
         long total = 0;
-        for (PackSyncPlanner.Download download : downloads) total += Math.max(0, download.file.fileSize);
+        for (PackSyncPlanner.Download download : downloads) total += Math.max(0, download.size);
         final long totalBytes = total;
         final AtomicLong done = new AtomicLong();
         final AtomicBoolean failed = new AtomicBoolean(false);
@@ -46,7 +47,7 @@ public final class PackDownloader {
                 futures.add(pool.submit(() -> {
                     if (failed.get()) return null;
                     try {
-                        fetch(gameDir, download.file, transport, new Progress() {
+                        fetch(gameDir, download, transport, new Progress() {
                             long reported = 0;
 
                             @Override
@@ -83,19 +84,19 @@ public final class PackDownloader {
         }
     }
 
-    private static void fetch(File gameDir, PackManifest.PackFile file, Transport transport, Progress progress) throws IOException {
-        File target = new File(gameDir, file.path);
+    private static void fetch(File gameDir, PackSyncPlanner.Download download, Transport transport, Progress progress) throws IOException {
+        File target = new File(gameDir, download.path);
         File parent = target.getParentFile();
         if (parent != null && !parent.isDirectory() && !parent.mkdirs() && !parent.isDirectory()) {
             throw new IOException("cannot create " + parent);
         }
         File tmp = new File(parent, target.getName() + ".projects-download");
-        long maxBytes = file.fileSize > 0 ? file.fileSize : 1L << 31;
+        long maxBytes = download.size > 0 ? download.size : 1L << 31;
         IOException last = null;
-        for (String url : file.downloads) {
+        for (String url : download.urls) {
             try {
                 transport.download(url, tmp, maxBytes, progress);
-                verify(tmp, file);
+                verify(tmp, download);
                 if (target.exists() && !target.delete()) throw new IOException("cannot replace " + target);
                 if (!tmp.renameTo(target)) throw new IOException("cannot move " + tmp + " to " + target);
                 return;
@@ -106,18 +107,17 @@ public final class PackDownloader {
                 progress.onProgress(0, 0);
             }
         }
-        throw new IOException("could not download " + file.path + (last == null ? "" : ": " + last.getMessage()), last);
+        throw new IOException("could not download " + download.path + (last == null ? "" : ": " + last.getMessage()), last);
     }
 
-    static void verify(File downloaded, PackManifest.PackFile file) throws IOException {
-        if (file.fileSize > 0 && downloaded.length() != file.fileSize) {
-            throw new IOException(file.path + ": expected " + file.fileSize + " bytes, got " + downloaded.length());
+    static void verify(File downloaded, PackSyncPlanner.Download download) throws IOException {
+        if (download.size > 0 && downloaded.length() != download.size) {
+            throw new IOException(download.path + ": expected " + download.size + " bytes, got " + downloaded.length());
         }
-        String sha512 = file.sha512();
-        if (sha512 != null) {
-            if (!sha512.equals(Hashes.fileHex(downloaded, "SHA-512"))) throw new IOException(file.path + ": SHA-512 mismatch");
+        if (download.sha512 != null && !download.sha512.equals(Hashes.fileHex(downloaded, "SHA-512"))) {
+            throw new IOException(download.path + ": SHA-512 mismatch");
         }
-        if (!file.sha1().equals(Hashes.fileHex(downloaded, "SHA-1"))) throw new IOException(file.path + ": SHA-1 mismatch");
+        if (!download.sha1.equals(Hashes.fileHex(downloaded, "SHA-1"))) throw new IOException(download.path + ": SHA-1 mismatch");
     }
 
     /** Streams over HttpURLConnection (redirects followed, size capped). */

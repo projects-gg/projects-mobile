@@ -33,4 +33,17 @@
     <string name="projects_details_copied">Details copied</string>
     <string name="projects_based_on">Projects Launcher is based on Amethyst and PojavLauncher and is open source under the LGPLv3.</string>
     <string name="projects_about_title">About Projects Launcher</string>
+
+    <string name="projects_notice_removed">%1$s was deleted, so it is now off.</string>
+    <string name="projects_notice_disabled">%1$s was disabled, so it is now off.</string>
+    <string name="projects_notice_enabled">%1$s was turned back on.</string>
+    <string name="projects_notice_replaced">You changed %1$s; it will not be overwritten.</string>
+    <string name="projects_notice_required">%1$s was reinstalled for %2$s.</string>
+    <plurals name="projects_notice_many">
+        <item quantity="one">%1$d change in the mods folder was saved.</item>
+        <item quantity="other">%1$d changes in the mods folder were saved.</item>
+    </plurals>
+    <string name="projects_notice_reset">The mods folder was empty; your mods were reinstalled.</string>
+    <string name="projects_notice_issues">Some mod files could not be read.</string>
+    <string name="projects_notice_dropped">The Projects pack no longer updates Minecraft %1$s.</string>
 </resources>

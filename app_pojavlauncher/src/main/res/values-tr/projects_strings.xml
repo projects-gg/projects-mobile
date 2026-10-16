@@ -31,4 +31,17 @@
     <string name="projects_details_copied">Ayrıntılar kopyalandı</string>
     <string name="projects_based_on">Projects Launcher, Amethyst ve PojavLauncher tabanlıdır ve LGPLv3 lisansıyla açık kaynaktır.</string>
     <string name="projects_about_title">Projects Launcher hakkında</string>
+
+    <string name="projects_notice_removed">%1$s silindiği için kapalı sayıldı.</string>
+    <string name="projects_notice_disabled">%1$s devre dışı bırakıldığı için kapalı sayıldı.</string>
+    <string name="projects_notice_enabled">%1$s yeniden açıldı.</string>
+    <string name="projects_notice_replaced">%1$s dosyasını değiştirdin; üzerine yazılmayacak.</string>
+    <string name="projects_notice_required">%1$s, %2$s için geri kuruldu.</string>
+    <plurals name="projects_notice_many">
+        <item quantity="one">Mod klasöründeki %1$d değişikliğin kaydedildi.</item>
+        <item quantity="other">Mod klasöründeki %1$d değişikliğin kaydedildi.</item>
+    </plurals>
+    <string name="projects_notice_reset">Mod klasörü boştu; seçtiğin modlar yeniden kuruldu.</string>
+    <string name="projects_notice_issues">Bazı mod dosyaları okunamadı.</string>
+    <string name="projects_notice_dropped">Projects paketi Minecraft %1$s sürümünü artık güncellemiyor.</string>
 </resources>

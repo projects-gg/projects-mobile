@@ -6,6 +6,7 @@ import android.os.Looper;
 import android.util.Log;
 
 import androidx.annotation.MainThread;
+import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
 import com.kdt.mcgui.ProgressLayout;
@@ -28,9 +29,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import gg.projects.mobile.ProjectsContent;
 import gg.projects.mobile.content.ContentException;
-import gg.projects.mobile.content.PackDownloader;
+import gg.projects.mobile.content.PackChoice;
 import gg.projects.mobile.content.PackManifest;
 import gg.projects.mobile.content.PackState;
+import gg.projects.mobile.content.PackSyncApplier;
 import gg.projects.mobile.content.PackSyncPlanner;
 import gg.projects.mobile.content.RootIndex;
 import gg.projects.mobile.content.Snapshot;
@@ -42,21 +44,24 @@ import gg.projects.mobile.servers.ServersDat;
  * to its servers.dat and hands over to the normal launch flow (which auto-joins the server for
  * this profile, see ProjectsLaunchHook).
  *
- * <p>With an official pack in the signed index the profile follows that pack (files synced with
- * the desktop rules, loader installed); without one it is vanilla on the newest release, pinned
- * when created. Account rules are upstream's: installing a pack needs an online account, exactly
- * like upstream's own modpack installers; launching goes through the regular Play checks.
+ * <p>With an official pack in the signed index the profile follows it ({@link PackChoice}): the
+ * pack's files are synced with the desktop rules and the player's mod choices
+ * ({@link PackSyncPlanner}), and the loader is installed. Without one it is vanilla on the newest
+ * release, pinned when created. Account rules are upstream's: installing a pack needs an online
+ * account, exactly like upstream's own modpack installers; launching goes through the regular
+ * Play checks.
  */
 public final class ProjectsJoin {
     private ProjectsJoin() {}
 
     private static final String TAG = "ProjectsJoin";
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
+    /** A join or a mod-screen apply is running (they never overlap). */
     private static final AtomicBoolean sBusy = new AtomicBoolean(false);
 
     public interface Callback {
-        /** The profile is ready: select it and start the game. */
-        void onReady(String profileKey);
+        /** The profile is ready: select it and start the game. {@code notice} is shown without blocking. */
+        void onReady(String profileKey, @Nullable SyncNotice notice);
 
         /** Installing the pack needs an online account (upstream's rule for modpacks). */
         void onNeedsOnlineAccount();
@@ -69,6 +74,15 @@ public final class ProjectsJoin {
 
     public static boolean isBusy() {
         return sBusy.get();
+    }
+
+    /** Claims the pack folder for other work (the mod screen); false while a join or apply runs. */
+    public static boolean tryBeginWork() {
+        return sBusy.compareAndSet(false, true);
+    }
+
+    public static void endWork() {
+        sBusy.set(false);
     }
 
     /** Starts the join flow; returns false when one is already running. */
@@ -106,15 +120,34 @@ public final class ProjectsJoin {
     private static Runnable prepare(Context app, final Callback callback) throws ContentException, IOException {
         ProgressLayout.setProgress(ProgressLayout.INSTALL_MODPACK, 0, R.string.projects_join_preparing);
         Snapshot snapshot = ProjectsContent.latestBlocking(app);
-        RootIndex.PackRef pack = snapshot.officialPack();
-        if (pack != null) {
-            // Upstream lets only online accounts install modpacks; the official pack is one.
-            if (!Tools.hasOnlineProfile()) return callback::onNeedsOnlineAccount;
-            if (!installPack(app, snapshot, pack)) return callback::onFinishLoaderInstall;
-        } else {
-            ensureVanilla();
+        MinecraftProfile existing = ProjectsProfile.find();
+        File gameDir = ProjectsProfile.gameDir();
+        PackChoice choice = snapshot.packChoice(PackState.load(gameDir));
+        if (choice.kind == PackChoice.Kind.DROPPED && existing == null) {
+            // The profile itself is gone: there is no installed version to keep, start over.
+            choice = snapshot.packChoice(null);
         }
-        return () -> callback.onReady(ProjectsProfile.KEY);
+        SyncNotice notice = null;
+        switch (choice.kind) {
+            case NONE:
+                ensureVanilla();
+                break;
+            case DROPPED:
+                // The family no longer offers this version: launch the installed set as it is.
+                Log.i(TAG, "the pack family no longer offers Minecraft " + choice.installedMinecraft + "; launching the installed set");
+                notice = SyncNotice.dropped(choice.installedMinecraft);
+                addServers(gameDir, new ArrayList<PackManifest.PackServer>());
+                break;
+            default:
+                // Upstream lets only online accounts install modpacks; the official pack is one.
+                if (!Tools.hasOnlineProfile()) return callback::onNeedsOnlineAccount;
+                Installed installed = installPack(app, snapshot, choice.pack);
+                if (!installed.loaderReady) return callback::onFinishLoaderInstall;
+                notice = installed.notice;
+                break;
+        }
+        final SyncNotice ready = notice;
+        return () -> callback.onReady(ProjectsProfile.KEY, ready);
     }
 
     @WorkerThread
@@ -129,9 +162,18 @@ public final class ProjectsJoin {
         addServers(ProjectsProfile.gameDir(profile), new ArrayList<PackManifest.PackServer>());
     }
 
-    /** @return false when the mod loader still needs upstream's GUI installer */
+    private static final class Installed {
+        final boolean loaderReady;
+        final SyncNotice notice;
+
+        Installed(boolean loaderReady, SyncNotice notice) {
+            this.loaderReady = loaderReady;
+            this.notice = notice;
+        }
+    }
+
     @WorkerThread
-    private static boolean installPack(Context app, Snapshot snapshot, RootIndex.PackRef pack) throws ContentException, IOException {
+    private static Installed installPack(Context app, Snapshot snapshot, RootIndex.PackRef pack) throws ContentException, IOException {
         PackManifest manifest = ProjectsContent.repository(app).packManifest(snapshot, pack);
         ModLoader loader = loaderOf(manifest);
         String versionId = loader != null ? loader.getVersionId() : manifest.minecraftVersion();
@@ -139,32 +181,16 @@ public final class ProjectsJoin {
         File gameDir = ProjectsProfile.gameDir(profile);
         if (!gameDir.isDirectory() && !gameDir.mkdirs()) throw new IOException("cannot create " + gameDir);
 
-        PackSyncPlanner.Plan plan = PackSyncPlanner.plan(manifest, PackState.load(gameDir), PackSyncPlanner.directoryProbe(gameDir));
-        if (!plan.downloads.isEmpty()) {
-            PackDownloader.downloadAll(gameDir, plan.downloads, PackDownloader.httpTransport(ProjectsContent.userAgent()),
-                    new PackDownloader.Progress() {
-                        long lastPercent = -1;
-
-                        @Override
-                        public void onProgress(long done, long total) {
-                            long percent = total <= 0 ? 0 : Math.min(100, done * 100 / total);
-                            if (percent == lastPercent) return;
-                            lastPercent = percent;
-                            ProgressLayout.setProgress(ProgressLayout.INSTALL_MODPACK, (int) percent,
-                                    R.string.projects_join_downloading, done / Tools.BYTE_TO_MB, total / Tools.BYTE_TO_MB);
-                        }
-                    }, 4);
-        }
-        for (String path : plan.deletes) {
-            File file = new File(gameDir, path);
-            if (file.isFile() && !file.delete()) Log.w(TAG, "could not delete " + path);
-        }
-        plan.nextState.save(gameDir);
-        Log.i(TAG, String.format(Locale.ROOT, "pack %s %s: %d downloaded, %d deleted, %d kept",
-                pack.id, manifest.versionId, plan.downloads.size(), plan.deletes.size(), plan.kept.size()));
+        PackSyncPlanner.Plan plan = PackSyncPlanner.plan(manifest, PackSyncPlanner.directoryProbe(gameDir),
+                PackState.load(gameDir), null, ProjectsPacks.syncOptions(manifest));
+        PackSyncApplier.Report report = ProjectsPacks.apply(gameDir, plan, R.string.projects_join_downloading);
+        Log.i(TAG, String.format(Locale.ROOT, "pack %s %s: %s; %d downloaded, %d restored, %d deleted, %d issues",
+                pack.id, manifest.versionId, plan.summary().describeTr(), report.downloaded, report.restored,
+                report.deleted, report.issues.size() + plan.issues.size()));
 
         addServers(gameDir, manifest.projects.servers);
-        return loader == null || installLoader(app, loader);
+        SyncNotice notice = SyncNotice.from(manifest, plan, report.issues.size());
+        return new Installed(loader == null || installLoader(app, loader), notice);
     }
 
     private static ModLoader loaderOf(PackManifest manifest) {
@@ -224,7 +250,7 @@ public final class ProjectsJoin {
         }
     }
 
-    private static String details(Throwable e) {
+    static String details(Throwable e) {
         StringBuilder out = new StringBuilder();
         for (Throwable t = e; t != null; t = t.getCause()) {
             if (out.length() > 0) out.append("\ncaused by: ");
