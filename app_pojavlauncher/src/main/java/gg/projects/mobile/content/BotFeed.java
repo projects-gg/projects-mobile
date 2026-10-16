@@ -1,0 +1,312 @@
+package gg.projects.mobile.content;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+/**
+ * {@code feed.json}: the Discord bot's full snapshot of the news it publishes (pl-content's
+ * {@code BotFeed}). A feed key can only add news: items are never pinned, links open only
+ * {@code https://} (and {@code projects://}), covers are small images verified by size and SHA-256,
+ * and one broken item never hides the others. The size, {@code schema}, {@code sequence},
+ * {@code generatedAt} and the item and event counts are whole-feed rules; a broken item or event is
+ * dropped or repaired on its own and reported in {@link #problems} (logs only).
+ */
+public final class BotFeed {
+    public final int schema;
+    /** Strictly increasing; clients refuse a lower one (equal only with identical bytes). */
+    public final long sequence;
+    public final long generatedAt;
+    /** News items ({@code fromFeed}, never pinned), in feed order. */
+    public final List<NewsFeed.NewsItem> items;
+    public final List<Event> events;
+    /** What was dropped or repaired, for logs. */
+    public final List<String> problems;
+
+    private BotFeed(int schema, long sequence, long generatedAt, List<NewsFeed.NewsItem> items, List<Event> events,
+                    List<String> problems) {
+        this.schema = schema;
+        this.sequence = sequence;
+        this.generatedAt = generatedAt;
+        this.items = Collections.unmodifiableList(items);
+        this.events = Collections.unmodifiableList(events);
+        this.problems = Collections.unmodifiableList(problems);
+    }
+
+    /** An event of the feed: the shape of the config's events with an optional end. */
+    public static final class Event {
+        public final String id;
+        public final String title;
+        public final long startsAt;
+        /** Missing: live for three hours after the start, shown without time left. */
+        public final Long endsAt;
+        /** A safe link, or null. */
+        public final String url;
+        /** A feed item the event came from, or null. */
+        public final String newsId;
+        public final int priority;
+
+        Event(String id, String title, long startsAt, Long endsAt, String url, String newsId, int priority) {
+            this.id = id;
+            this.title = title;
+            this.startsAt = startsAt;
+            this.endsAt = endsAt;
+            this.url = url;
+            this.newsId = newsId;
+            this.priority = priority;
+        }
+
+        /** {@code endsAt}, or {@code startsAt} + three hours. */
+        public long end() {
+            return endsAt != null ? endsAt : startsAt + ContentConfig.OPEN_EVENT_MS;
+        }
+    }
+
+    public NewsFeed.NewsItem item(String id) {
+        for (NewsFeed.NewsItem item : items) if (item.id.equals(id)) return item;
+        return null;
+    }
+
+    /** Every cover the feed references. */
+    public List<MediaRef> mediaRefs() {
+        List<MediaRef> refs = new ArrayList<>();
+        for (NewsFeed.NewsItem item : items) if (item.cover != null) refs.add(item.cover);
+        return refs;
+    }
+
+    /** Reads {@code feed.json} bytes whose signature already verified. */
+    public static BotFeed parse(byte[] bytes) throws ContentException {
+        if (bytes.length > ContentConfig.FEED_MAX_BYTES) {
+            throw invalid("feed.json is larger than " + ContentConfig.FEED_MAX_BYTES + " bytes");
+        }
+        String text = ContentJson.utf8(bytes, "feed.json");
+        JsonElement root;
+        try {
+            root = JsonParser.parseString(text);
+        } catch (RuntimeException e) {
+            throw new ContentException(ContentException.Kind.INVALID, "feed.json is not valid JSON: " + e.getMessage(), e);
+        }
+        int schema;
+        long sequence;
+        long generatedAt;
+        JsonArray rawItems;
+        JsonArray rawEvents;
+        try {
+            JsonObject object = JsonFields.object(root, "feed.json");
+            schema = (int) JsonFields.defaultInteger(object, "schema", 1, 0, 0xFFFFFFFFL);
+            sequence = JsonFields.requiredInteger(object, "sequence", 0, Long.MAX_VALUE);
+            generatedAt = JsonFields.requiredTimestamp(object, "generatedAt");
+            rawItems = JsonFields.defaultArray(object, "items");
+            rawEvents = JsonFields.defaultArray(object, "events");
+        } catch (JsonFields.Unreadable e) {
+            throw invalid("feed.json has an unexpected shape: " + e.getMessage());
+        }
+        ContentJson.checkSchema("news feed", schema, ContentConfig.FEED_SCHEMA);
+        if (rawItems.size() > ContentConfig.FEED_MAX_ITEMS) {
+            throw invalid("feed.json lists " + rawItems.size() + " items; at most " + ContentConfig.FEED_MAX_ITEMS + " are allowed");
+        }
+        if (rawEvents.size() > ContentConfig.FEED_MAX_EVENTS) {
+            throw invalid("feed.json lists " + rawEvents.size() + " events; at most " + ContentConfig.FEED_MAX_EVENTS + " are allowed");
+        }
+        List<String> problems = new ArrayList<>();
+        List<NewsFeed.NewsItem> items = readItems(rawItems, problems);
+        List<Event> events = readEvents(rawEvents, items, problems);
+        return new BotFeed(schema, sequence, generatedAt, items, events, problems);
+    }
+
+    private static ContentException invalid(String message) {
+        return new ContentException(ContentException.Kind.INVALID, message);
+    }
+
+    /** A cover the app may download: a safe path, a SHA-256, an image of 1 byte to 2 MB. */
+    public static boolean isValidCover(MediaRef media) {
+        return media != null && ContentPaths.isMirrorPath(media.path) && Hashes.normalizeHex(media.sha256, 64) != null
+                && "image".equals(media.kind) && media.size >= 1 && media.size <= ContentConfig.FEED_MAX_MEDIA_BYTES;
+    }
+
+    /** A usable call to action: a label and exactly one target, a safe link or a news id. */
+    static boolean isValidCta(NewsFeed.Cta cta) {
+        boolean label = !ContentText.isBlank(cta.label);
+        if (cta.url != null && cta.newsId == null) return label && ContentText.isSafeLink(cta.url);
+        if (cta.url == null && cta.newsId != null) return label && ContentIds.isValid(cta.newsId);
+        return false;
+    }
+
+    private static String rawId(JsonElement value) {
+        if (value == null || !value.isJsonObject()) return "";
+        JsonElement id = value.getAsJsonObject().get("id");
+        if (id == null || !id.isJsonPrimitive() || !id.getAsJsonPrimitive().isString()) return "";
+        String text = id.getAsString();
+        return text.length() > 80 ? text.substring(0, 80) : text;
+    }
+
+    /** Why an item's own text makes it unusable, or null. */
+    private static String textIssue(String id, String title, String summary, String body) {
+        if (!ContentIds.isValid(id)) return "bad id";
+        if (ContentText.isBlank(title)) return "empty title";
+        if (ContentText.longerThan(title, ContentConfig.FEED_MAX_TITLE_CHARS)) return "title too long";
+        if (ContentText.longerThan(summary, ContentConfig.FEED_MAX_SUMMARY_CHARS)) return "summary too long";
+        if (ContentText.longerThan(body, ContentConfig.FEED_MAX_BODY_CHARS)) return "body too long";
+        return null;
+    }
+
+    private static List<NewsFeed.NewsItem> readItems(JsonArray raw, List<String> problems) {
+        Set<String> seen = new HashSet<>();
+        List<NewsFeed.NewsItem> items = new ArrayList<>();
+        for (JsonElement value : raw) {
+            NewsFeed.NewsItem item;
+            try {
+                item = readItem(value);
+            } catch (JsonFields.Unreadable e) {
+                problems.add("item " + rawId(value) + " dropped: unreadable (" + e.getMessage() + ")");
+                continue;
+            }
+            String issue = textIssue(item.id, item.title, item.summary, item.body);
+            if (issue != null) {
+                problems.add("item " + item.id + " dropped: " + issue);
+                continue;
+            }
+            if (!seen.add(item.id)) {
+                problems.add("item " + item.id + " dropped: duplicate id");
+                continue;
+            }
+            item.pinned = false;
+            item.pinOrder = null;
+            item.hidden = false;
+            if (item.cover != null) {
+                item.cover.poster = null;
+                if (!isValidCover(item.cover)) {
+                    item.cover = null;
+                    problems.add("item " + item.id + ": cover removed");
+                }
+            }
+            if (item.cta != null && !isValidCta(item.cta)) {
+                item.cta = null;
+                problems.add("item " + item.id + ": button removed");
+            }
+            if (item.sourceUrl != null && !ContentText.isHttpsLink(item.sourceUrl)) {
+                item.sourceUrl = null;
+                problems.add("item " + item.id + ": source link removed");
+            }
+            items.add(item);
+        }
+        return items;
+    }
+
+    private static NewsFeed.NewsItem readItem(JsonElement value) throws JsonFields.Unreadable {
+        JsonObject o = JsonFields.object(value, "item");
+        NewsFeed.NewsItem item = new NewsFeed.NewsItem();
+        item.id = JsonFields.requiredString(o, "id");
+        item.title = JsonFields.requiredString(o, "title");
+        item.summary = JsonFields.defaultString(o, "summary", "");
+        item.body = JsonFields.defaultString(o, "body", "");
+        JsonObject cover = JsonFields.optionalObject(o, "cover");
+        item.cover = cover == null ? null : readMedia(cover, 0);
+        item.category = JsonFields.defaultString(o, "category", "announcement");
+        item.tags = JsonFields.defaultStringList(o, "tags");
+        item.publishedAt = JsonFields.requiredString(o, "publishedAt");
+        item.publishedAtMillis = JsonFields.requiredTimestamp(o, "publishedAt");
+        item.expiresAt = JsonFields.optionalString(o, "expiresAt");
+        item.expiresAtMillis = JsonFields.optionalTimestamp(o, "expiresAt");
+        item.pinned = JsonFields.defaultBoolean(o, "pinned", false);
+        item.featured = JsonFields.defaultBoolean(o, "featured", false);
+        JsonObject cta = JsonFields.optionalObject(o, "cta");
+        if (cta != null) {
+            item.cta = new NewsFeed.Cta();
+            item.cta.label = JsonFields.requiredString(cta, "label");
+            item.cta.url = JsonFields.optionalString(cta, "url");
+            item.cta.newsId = JsonFields.optionalString(cta, "newsId");
+        }
+        item.author = JsonFields.optionalString(o, "author");
+        item.sourceUrl = readSourceUrl(o);
+        item.fromFeed = true;
+        return item;
+    }
+
+    /** {@code source: { kind, channel?, url? }} (type-checked like the desktop); returns the url. */
+    private static String readSourceUrl(JsonObject o) throws JsonFields.Unreadable {
+        JsonObject source = JsonFields.optionalObject(o, "source");
+        if (source == null) return null;
+        JsonFields.defaultString(source, "kind", "unknown");
+        JsonFields.optionalString(source, "channel");
+        return JsonFields.optionalString(source, "url");
+    }
+
+    private static MediaRef readMedia(JsonObject o, int depth) throws JsonFields.Unreadable {
+        if (depth > 8) throw new JsonFields.Unreadable("poster chain is too deep");
+        MediaRef media = new MediaRef();
+        media.path = JsonFields.requiredString(o, "path");
+        media.sha256 = JsonFields.requiredString(o, "sha256");
+        media.size = JsonFields.requiredInteger(o, "size", 0, Long.MAX_VALUE);
+        media.kind = JsonFields.defaultString(o, "kind", "image");
+        Long width = JsonFields.optionalInteger(o, "width", 0, 0xFFFFFFFFL);
+        Long height = JsonFields.optionalInteger(o, "height", 0, 0xFFFFFFFFL);
+        media.width = width == null ? null : (int) Math.min(width, Integer.MAX_VALUE);
+        media.height = height == null ? null : (int) Math.min(height, Integer.MAX_VALUE);
+        media.blurhash = JsonFields.optionalString(o, "blurhash");
+        JsonObject poster = JsonFields.optionalObject(o, "poster");
+        media.poster = poster == null ? null : readMedia(poster, depth + 1);
+        media.alt = JsonFields.optionalString(o, "alt");
+        return media;
+    }
+
+    private static List<Event> readEvents(JsonArray raw, List<NewsFeed.NewsItem> items, List<String> problems) {
+        Set<String> itemIds = new HashSet<>();
+        for (NewsFeed.NewsItem item : items) itemIds.add(item.id);
+        Set<String> seen = new HashSet<>();
+        List<Event> events = new ArrayList<>();
+        for (JsonElement value : raw) {
+            String id;
+            String title;
+            long startsAt;
+            Long endsAt;
+            String url;
+            String newsId;
+            int priority;
+            try {
+                JsonObject o = JsonFields.object(value, "event");
+                id = JsonFields.requiredString(o, "id");
+                title = JsonFields.requiredString(o, "title");
+                startsAt = JsonFields.requiredTimestamp(o, "startsAt");
+                endsAt = JsonFields.optionalTimestamp(o, "endsAt");
+                url = JsonFields.optionalString(o, "url");
+                newsId = JsonFields.optionalString(o, "newsId");
+                priority = (int) JsonFields.defaultInteger(o, "priority", 0, Integer.MIN_VALUE, Integer.MAX_VALUE);
+                readSourceUrl(o);
+            } catch (JsonFields.Unreadable e) {
+                problems.add("event " + rawId(value) + " dropped: unreadable (" + e.getMessage() + ")");
+                continue;
+            }
+            String issue = null;
+            if (!ContentIds.isValid(id)) issue = "bad id";
+            else if (ContentText.isBlank(title)) issue = "empty title";
+            else if (ContentText.longerThan(title, ContentConfig.FEED_MAX_TITLE_CHARS)) issue = "title too long";
+            else if (endsAt != null && endsAt <= startsAt) issue = "ends before it starts";
+            if (issue != null) {
+                problems.add("event " + id + " dropped: " + issue);
+                continue;
+            }
+            if (!seen.add(id)) {
+                problems.add("event " + id + " dropped: duplicate id");
+                continue;
+            }
+            if (url != null && !ContentText.isSafeLink(url)) {
+                url = null;
+                problems.add("event " + id + ": link removed");
+            }
+            if (newsId != null && !itemIds.contains(newsId)) {
+                newsId = null;
+                problems.add("event " + id + ": unknown news item");
+            }
+            events.add(new Event(id, title, startsAt, endsAt, url, newsId, priority));
+        }
+        return events;
+    }
+}

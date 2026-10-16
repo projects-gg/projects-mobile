@@ -14,9 +14,16 @@ public final class Snapshot {
     public final String mirror;
     /** Why the last refresh failed, for logs and "copy details". */
     public final ContentException lastError;
+    /** The Discord bot's verified feed while the config enables it, or null. */
+    public final FeedSnapshot feed;
 
     Snapshot(RootIndex index, LauncherConfig config, NewsFeed news, boolean offline,
              long fetchedAt, String mirror, ContentException lastError) {
+        this(index, config, news, offline, fetchedAt, mirror, lastError, null);
+    }
+
+    private Snapshot(RootIndex index, LauncherConfig config, NewsFeed news, boolean offline,
+                     long fetchedAt, String mirror, ContentException lastError, FeedSnapshot feed) {
         this.index = index;
         this.config = config;
         this.news = news;
@@ -24,6 +31,7 @@ public final class Snapshot {
         this.fetchedAt = fetchedAt;
         this.mirror = mirror;
         this.lastError = lastError;
+        this.feed = feed;
     }
 
     static Snapshot empty(ContentException lastError) {
@@ -31,7 +39,17 @@ public final class Snapshot {
     }
 
     Snapshot asOffline(ContentException error) {
-        return new Snapshot(index, config, news, true, fetchedAt, mirror, error);
+        return new Snapshot(index, config, news, true, fetchedAt, mirror, error, feed);
+    }
+
+    /** This snapshot with the Discord feed (verified with this snapshot's config) attached. */
+    public Snapshot withFeed(FeedSnapshot feed) {
+        return new Snapshot(index, config, news, offline, fetchedAt, mirror, lastError, feed);
+    }
+
+    /** The merged news, patch notes and events at {@code now}. */
+    public HomeContent home(long now) {
+        return HomeContent.of(news, config, feed, now);
     }
 
     public boolean hasContent() {

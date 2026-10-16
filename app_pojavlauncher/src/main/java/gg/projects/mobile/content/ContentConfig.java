@@ -34,4 +34,26 @@ public final class ContentConfig {
 
     /** Index files are served with max-age=60; refreshing more often only costs data. */
     public static final long MIN_REFRESH_INTERVAL_MS = 60_000L;
+
+    // The Discord bot's news feed (content-format.md, "News feed (Discord bot)").
+
+    /** Highest {@code feed.json} schema this build understands. */
+    public static final int FEED_SCHEMA = 1;
+    public static final long FEED_MAX_BYTES = 512L * 1024;
+    public static final long FEED_MAX_SIGNATURE_BYTES = 16L * 1024;
+    public static final int FEED_MAX_ITEMS = 50;
+    public static final int FEED_MAX_EVENTS = 20;
+    /** Largest cover a feed item may reference. */
+    public static final long FEED_MAX_MEDIA_BYTES = 2L * 1024 * 1024;
+    /** Longest title, summary and body, in Unicode scalar values. */
+    public static final int FEED_MAX_TITLE_CHARS = 120;
+    public static final int FEED_MAX_SUMMARY_CHARS = 300;
+    public static final int FEED_MAX_BODY_CHARS = 8_000;
+    /** Most mirrors and keys {@code newsFeed} may list (clients use the first valid ones). */
+    public static final int FEED_MAX_MIRRORS = 4;
+    public static final int FEED_MAX_KEYS = 4;
+    /** {@code newsFeed.maxAgeDays} when it is missing or outside 1..365. */
+    public static final int FEED_DEFAULT_MAX_AGE_DAYS = 60;
+    /** How long a feed event without {@code endsAt} counts as live. */
+    public static final long OPEN_EVENT_MS = 3L * 60 * 60 * 1000;
 }
