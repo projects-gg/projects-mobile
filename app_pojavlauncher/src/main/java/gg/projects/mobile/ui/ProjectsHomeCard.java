@@ -245,7 +245,8 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener {
 
         LauncherConfig.Maintenance maintenance = snapshot == null || snapshot.config == null ? null : snapshot.config.maintenance;
         boolean maintenanceOn = maintenance != null && maintenance.isActive(now);
-        String status = snapshot != null && snapshot.hasContent() && snapshot.offline
+        // "Offline" only once a refresh failed: the cached copy shown at start is not news of an outage.
+        String status = snapshot != null && snapshot.hasContent() && snapshot.offline && !mRefreshing
                 ? activity.getString(R.string.projects_offline_since, ProjectsUi.dateTime(activity, snapshot.fetchedAt)) : null;
 
         NewsFeed.NewsItem notes = home == null ? null : home.patchNotes;

@@ -33,6 +33,7 @@ import gg.projects.mobile.mods.Motion;
  */
 public final class CoverView extends ImageView {
     private static final float RATIO = 9f / 16f;
+    private static final float SCREEN_FRACTION = 0.26f;
     private static final LruCache<String, Bitmap> PLACEHOLDERS = new LruCache<>(48);
 
     private int mMaxHeight = Integer.MAX_VALUE;
@@ -69,7 +70,10 @@ public final class CoverView extends ImageView {
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         int width = MeasureSpec.getSize(widthMeasureSpec);
-        int height = Math.min(Math.round(width * RATIO), mMaxHeight);
+        // Never more than about a quarter of the screen's current height: in landscape the cover
+        // becomes a strip instead of filling the view (portrait keeps the 16:9 box under its cap).
+        int screenCap = Math.round(getResources().getDisplayMetrics().heightPixels * SCREEN_FRACTION);
+        int height = Math.min(Math.round(width * RATIO), Math.min(mMaxHeight, screenCap));
         setMeasuredDimension(width, height);
     }
 

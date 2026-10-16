@@ -2,11 +2,13 @@
 <!-- Projects-only styles (kept out of upstream's styles.xml). -->
 <resources>
     <!-- Event countdown: Tektur digits with tabular figures, small units below (the desktop's Countdown). -->
+    <!-- The cell's baseline is its unit label's, so "kaldı" sits on the same line. -->
     <style name="ProjectsCountdownCell">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_marginEnd">14dp</item>
         <item name="android:orientation">vertical</item>
+        <item name="android:baselineAlignedChildIndex">1</item>
     </style>
 
     <style name="ProjectsCountdownValue">

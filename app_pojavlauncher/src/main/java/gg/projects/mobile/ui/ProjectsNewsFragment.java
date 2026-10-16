@@ -140,7 +140,7 @@ public class ProjectsNewsFragment extends Fragment implements ProjectsContent.Li
             message = true;
         }
         mMessage.setVisibility(message ? View.VISIBLE : View.GONE);
-        if (snapshot != null && snapshot.hasContent() && snapshot.offline) {
+        if (snapshot != null && snapshot.hasContent() && snapshot.offline && !refreshing) {
             mStatus.setText(getString(R.string.projects_offline_since, ProjectsUi.dateTime(requireContext(), snapshot.fetchedAt)));
             mStatus.setVisibility(View.VISIBLE);
         } else {
