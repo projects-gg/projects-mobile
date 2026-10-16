@@ -222,6 +222,8 @@ public class ProfileEditorFragment extends Fragment implements CropperUtils.Crop
             mProfileKey = profile;
         }else{
             minecraftProfile = MinecraftProfile.createTemplate();
+            // Projects: a new profile starts on the recommended Minecraft version (as on the desktop).
+            minecraftProfile.lastVersionId = gg.projects.mobile.join.DefaultProfiles.recommended();
             mProfileKey = LauncherProfiles.getFreeProfileKey();
         }
         return minecraftProfile;

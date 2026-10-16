@@ -32,12 +32,14 @@ import java.util.List;
 import java.util.Locale;
 
 import gg.projects.mobile.ProjectsContent;
+import gg.projects.mobile.content.DefaultVersion;
 import gg.projects.mobile.content.HomeContent;
 import gg.projects.mobile.content.LauncherConfig;
 import gg.projects.mobile.content.NewsFeed;
 import gg.projects.mobile.content.NewsText;
 import gg.projects.mobile.content.PackState;
 import gg.projects.mobile.content.Snapshot;
+import gg.projects.mobile.join.DefaultProfiles;
 import gg.projects.mobile.join.ProjectsJoin;
 import gg.projects.mobile.join.SyncNotice;
 import gg.projects.mobile.mods.ModsSummary;
@@ -113,6 +115,9 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener {
     private HomeContent.Event mEventBound;
     private int mEventCount;
     private String mPatchLinesShown;
+    /** The recommended Minecraft version the default profile was last checked against. */
+    @Nullable
+    private String mRecommendedChecked;
 
     private final Runnable mTick = this::tick;
 
@@ -195,6 +200,7 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener {
 
     public void onResume() {
         mResumed = true;
+        mRecommendedChecked = null;
         ProjectsContent.addListener(this);
         ProjectsContent.refresh(mFragment.requireContext(), false);
         setJoining(ProjectsJoin.isBusy());
@@ -227,8 +233,21 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener {
         if (!mFragment.isAdded()) return;
         mSnapshot = snapshot;
         mRefreshing = refreshing;
+        followRecommendedVersion(snapshot);
         refreshModsRow(snapshot);
         render(System.currentTimeMillis());
+    }
+
+    /**
+     * Keeps upstream's default profile on the recommended Minecraft version (at start and when a
+     * new config recommends another one); a version the player picked stays ({@link DefaultProfiles}).
+     */
+    private void followRecommendedVersion(@Nullable Snapshot snapshot) {
+        LauncherConfig config = snapshot == null ? null : snapshot.config;
+        String recommended = DefaultVersion.recommended(config);
+        if (recommended.equals(mRecommendedChecked)) return;
+        mRecommendedChecked = recommended;
+        if (DefaultProfiles.apply(mFragment.requireContext(), config)) mVersionSpinner.reloadProfiles();
     }
 
     // ---- rendering ----

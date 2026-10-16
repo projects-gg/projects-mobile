@@ -35,6 +35,14 @@ public final class ContentConfig {
     /** Index files are served with max-age=60; refreshing more often only costs data. */
     public static final long MIN_REFRESH_INTERVAL_MS = 60_000L;
 
+    /**
+     * The Minecraft version launchers recommend while the config names none (or an invalid one):
+     * desktop 2.0's built-in default ({@code pl_content::DEFAULT_RECOMMENDED_MINECRAFT_VERSION}).
+     */
+    public static final String DEFAULT_RECOMMENDED_MINECRAFT_VERSION = "26.1.2";
+    /** Longest Minecraft version id the content format carries, in UTF-8 bytes. */
+    public static final int MAX_MINECRAFT_VERSION_BYTES = 32;
+
     // The Discord bot's news feed (content-format.md, "News feed (Discord bot)").
 
     /** Highest {@code feed.json} schema this build understands. */

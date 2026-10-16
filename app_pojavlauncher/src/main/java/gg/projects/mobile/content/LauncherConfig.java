@@ -6,6 +6,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -27,11 +28,15 @@ public final class LauncherConfig {
     JsonElement eventsJson;
     @SerializedName("newsFeed")
     JsonElement newsFeedJson;
+    @SerializedName("recommendedMinecraftVersion")
+    JsonElement recommendedMinecraftVersionJson;
 
     /** Studio's events, hidden ones included (they take a feed event with their id off the card). */
     public transient List<EventCountdown> events = Collections.emptyList();
     /** The Discord bot's feed settings; null when the config has none. */
     public transient NewsFeedConfig newsFeed;
+    /** {@code recommendedMinecraftVersion} as written when it is a string, else null; see {@link #recommendedMinecraft()}. */
+    public transient String recommendedMinecraftVersion;
 
     @Keep
     public static final class Maintenance {
@@ -125,13 +130,45 @@ public final class LauncherConfig {
         }
         config.events = Collections.unmodifiableList(events);
         config.newsFeed = NewsFeedConfig.read(config.newsFeedJson);
+        // Like the events, a value of the wrong type drops only itself.
+        JsonElement recommended = config.recommendedMinecraftVersionJson;
+        config.recommendedMinecraftVersion = recommended != null && recommended.isJsonPrimitive()
+                && recommended.getAsJsonPrimitive().isString() ? recommended.getAsString() : null;
         config.eventsJson = null;
         config.newsFeedJson = null;
+        config.recommendedMinecraftVersionJson = null;
         return config;
     }
 
     /** The Discord invite to open, or null when the config has no usable one. */
     public String discordUrl() {
         return links != null && ContentPaths.isHttpsUrl(links.discord) ? links.discord : null;
+    }
+
+    /**
+     * The Minecraft version launchers recommend: {@code recommendedMinecraftVersion} when it is a
+     * valid version id, else the built-in default (pl-content's {@code recommended_minecraft}).
+     */
+    public String recommendedMinecraft() {
+        return isValidMinecraftVersion(recommendedMinecraftVersion)
+                ? recommendedMinecraftVersion : ContentConfig.DEFAULT_RECOMMENDED_MINECRAFT_VERSION;
+    }
+
+    /**
+     * A Minecraft version id as content documents carry it (pl-content's
+     * {@code is_valid_minecraft_version}): 1–32 UTF-8 bytes without whitespace or control
+     * characters, so snapshots and pre-releases fit. Whether Mojang lists it is not checked.
+     */
+    public static boolean isValidMinecraftVersion(String version) {
+        if (version == null) return false;
+        int bytes = version.getBytes(StandardCharsets.UTF_8).length;
+        if (bytes < 1 || bytes > ContentConfig.MAX_MINECRAFT_VERSION_BYTES) return false;
+        for (int i = 0; i < version.length(); ) {
+            int cp = version.codePointAt(i);
+            // A lone surrogate cannot be a Rust string either.
+            if (ContentText.isWhitespace(cp) || ContentText.isControl(cp) || (cp >= 0xD800 && cp <= 0xDFFF)) return false;
+            i += Character.charCount(cp);
+        }
+        return true;
     }
 }
