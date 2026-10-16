@@ -247,7 +247,12 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener {
         String recommended = DefaultVersion.recommended(config);
         if (recommended.equals(mRecommendedChecked)) return;
         mRecommendedChecked = recommended;
-        if (DefaultProfiles.apply(mFragment.requireContext(), config)) mVersionSpinner.reloadProfiles();
+        if (!DefaultProfiles.apply(mFragment.requireContext(), config)) return;
+        // A reload alone refreshes the spinner's list, not the selection it shows.
+        mVersionSpinner.reloadProfiles();
+        String selected = LauncherPreferences.DEFAULT_PREF.getString(LauncherPreferences.PREF_KEY_CURRENT_PROFILE, "");
+        int index = mVersionSpinner.getProfileAdapter().resolveProfileIndex(selected);
+        if (index >= 0) mVersionSpinner.setSelection(index);
     }
 
     // ---- rendering ----

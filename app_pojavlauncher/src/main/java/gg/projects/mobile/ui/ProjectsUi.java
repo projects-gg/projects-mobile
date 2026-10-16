@@ -106,7 +106,9 @@ public final class ProjectsUi {
     @Nullable
     public static String offlineSince(Context context, @Nullable Snapshot snapshot) {
         if (snapshot == null || !snapshot.hasContent() || !snapshot.offline || snapshot.lastError == null) return null;
-        return context.getString(R.string.projects_offline_since, dateTime(context, snapshot.fetchedAt));
+        // The date and time stay on one line when the text wraps ("17 Eki 02:24", not "17" / "Eki 02:24").
+        String when = dateTime(context, snapshot.fetchedAt).replace(' ', '\u00A0');
+        return context.getString(R.string.projects_offline_since, when);
     }
 
     public static boolean updateRequired(@Nullable Snapshot snapshot) {
