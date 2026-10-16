@@ -22,12 +22,14 @@ import java.util.List;
 public class IndexVerifierTest {
 
     @Test
-    public void productionKeyHasTheDocumentedKeyId() throws Exception {
-        assertEquals(1, ContentConfig.TRUSTED_KEYS.size());
+    public void productionKeysHaveTheDocumentedKeyIds() throws Exception {
+        // The primary key and the offline backup, the same list the desktop launcher trusts.
+        assertEquals(2, ContentConfig.TRUSTED_KEYS.size());
         byte[] key = IndexVerifier.decodePublicKey(ContentConfig.TRUSTED_KEYS.get(0));
         assertEquals(32, key.length);
         assertEquals("5125c0d365b019ce", IndexVerifier.keyId(key));
         assertEquals("5125c0d365b019ce", IndexVerifier.production().trustedKeys().get(0).keyId);
+        assertEquals("b63fd046213136eb", IndexVerifier.production().trustedKeys().get(1).keyId);
     }
 
     @Test
