@@ -29,10 +29,12 @@ import gg.projects.mobile.content.PackState;
 import gg.projects.mobile.content.Snapshot;
 import gg.projects.mobile.join.ProjectsJoin;
 import gg.projects.mobile.join.SyncNotice;
+import gg.projects.mobile.mods.ModsSummary;
+import gg.projects.mobile.mods.ProjectsModsFragment;
 
 /**
  * The Projects card at the top of the main menu: the latest news from the signed content index
- * (cached copy first, then a refresh) and the "Projects'e katıl" action.
+ * (cached copy first, then a refresh), the "Modlar" row and the "Projects'e katıl" action.
  */
 public final class ProjectsHomeCard implements ProjectsContent.Listener {
     private final Fragment mFragment;
@@ -55,8 +57,12 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener {
     private final TextView mMessageBody;
     private final Button mJoinButton;
     private final Button mSecondaryButton;
+    private final View mModsRow;
+    private final TextView mModsCount;
+    private final View mModsBadge;
 
     private Snapshot mSnapshot;
+    private int mModsToken;
 
     /** Keeps the join button in its "preparing" state until the running join finishes. */
     private final Runnable mBusyWatcher = new Runnable() {
@@ -87,10 +93,14 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener {
         mMessageBody = root.findViewById(R.id.projects_message_body);
         mJoinButton = root.findViewById(R.id.projects_join_button);
         mSecondaryButton = root.findViewById(R.id.projects_secondary_button);
+        mModsRow = root.findViewById(R.id.projects_mods_row);
+        mModsCount = root.findViewById(R.id.projects_mods_row_count);
+        mModsBadge = root.findViewById(R.id.projects_mods_row_badge);
 
         mJoinButton.setBackground(ChamferDrawable.primary(root.getContext()));
         mSecondaryButton.setBackground(ChamferDrawable.secondary(root.getContext()));
         mJoinButton.setOnClickListener(v -> join());
+        mModsRow.setOnClickListener(v -> openMods());
     }
 
     public void onResume() {
@@ -142,6 +152,8 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener {
         } else {
             mStatus.setVisibility(View.GONE);
         }
+
+        refreshModsRow(snapshot);
 
         List<NewsFeed.NewsItem> visible = snapshot == null || snapshot.news == null ? null : snapshot.news.visible(now);
         mSkeleton.setVisibility(View.GONE);
@@ -195,6 +207,40 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener {
 
     private void openAllNews() {
         Tools.swapFragment(mFragment.requireActivity(), ProjectsNewsFragment.class, ProjectsNewsFragment.TAG, null);
+    }
+
+    private void openMods() {
+        Tools.swapFragment(mFragment.requireActivity(), ProjectsModsFragment.class, ProjectsModsFragment.TAG, null);
+    }
+
+    /** The "Modlar" row: shown while a pack is published, with the number of mods on and "Yeni". */
+    private void refreshModsRow(@Nullable Snapshot snapshot) {
+        boolean published = snapshot != null && snapshot.index != null && snapshot.index.packs != null
+                && !snapshot.index.packs.isEmpty();
+        final int token = ++mModsToken;
+        if (!published) {
+            mModsRow.setVisibility(View.GONE);
+            return;
+        }
+        if (mModsRow.getVisibility() != View.VISIBLE) {
+            mModsCount.setText(null);
+            mModsBadge.setVisibility(View.GONE);
+            mModsRow.setVisibility(View.VISIBLE);
+        }
+        ModsSummary.load(mFragment.requireContext(), snapshot, summary -> {
+            if (token != mModsToken || !mFragment.isAdded()) return;
+            if (summary != null && !summary.hasItems) {
+                mModsRow.setVisibility(View.GONE);
+                return;
+            }
+            if (summary == null || summary.enabled < 0) {
+                mModsCount.setText(null);
+                mModsBadge.setVisibility(View.GONE);
+                return;
+            }
+            mModsCount.setText(mFragment.getResources().getQuantityString(R.plurals.projects_mods_on_count, summary.enabled, summary.enabled));
+            mModsBadge.setVisibility(summary.newItems > 0 ? View.VISIBLE : View.GONE);
+        });
     }
 
     /** One short line for what the sync before a launch adopted or could not do. */

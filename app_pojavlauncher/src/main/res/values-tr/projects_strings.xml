@@ -32,6 +32,101 @@
     <string name="projects_based_on">Projects Launcher, Amethyst ve PojavLauncher tabanlıdır ve LGPLv3 lisansıyla açık kaynaktır.</string>
     <string name="projects_about_title">Projects Launcher hakkında</string>
 
+    <!-- Mod ekranı -->
+    <string name="projects_mods">Modlar</string>
+    <plurals name="projects_mods_on_count">
+        <item quantity="one">%1$d mod açık</item>
+        <item quantity="other">%1$d mod açık</item>
+    </plurals>
+    <string name="projects_mods_back">Geri</string>
+    <string name="projects_mods_pack_caption">%1$s %2$s, Minecraft %3$s</string>
+    <string name="projects_mods_badge_new">Yeni</string>
+    <string name="projects_mods_badge_update">Güncelleme var</string>
+    <string name="projects_mods_badge_modified">Değiştirildi</string>
+    <string name="projects_mods_category_performance">Performans</string>
+    <string name="projects_mods_category_visual">Görsel</string>
+    <string name="projects_mods_category_interface">Arayüz</string>
+    <string name="projects_mods_category_gameplay">Oynanış</string>
+    <string name="projects_mods_category_other">Diğer</string>
+    <string name="projects_mods_category_library">Kitaplıklar</string>
+    <string name="projects_mods_toggle">%1$s kurulu olsun</string>
+    <string name="projects_mods_required_by">%1$s için gerekli.</string>
+    <string name="projects_mods_brings_along">Birlikte kurulur: %1$s.</string>
+    <string name="projects_mods_removed">Mod klasöründen silindi.</string>
+    <string name="projects_mods_removed_back">Silinmişti; %1$s için geri kuruldu.</string>
+    <string name="projects_mods_disabled">Mod klasöründe devre dışı bırakıldı.</string>
+    <string name="projects_mods_disabled_back">Devre dışıydı; %1$s için yeniden açıldı.</string>
+    <string name="projects_mods_enabled">Mod klasöründe yeniden açıldı.</string>
+    <string name="projects_mods_modified">Dosyayı değiştirdin; üzerine yazılmaz.</string>
+    <string name="projects_mods_unsupported">Android\'de desteklenmiyor.</string>
+    <string name="projects_mods_revert">Önerilene döndür</string>
+    <string name="projects_mods_keep_mine">Vazgeç</string>
+    <string name="projects_mods_library_for">%1$s için</string>
+    <string name="projects_mods_library_on">Kurulu</string>
+    <string name="projects_mods_library_off">Kurulu değil</string>
+    <plurals name="projects_mods_new_items">
+        <item quantity="one">%1$d yeni öneri var.</item>
+        <item quantity="other">%1$d yeni öneri var.</item>
+    </plurals>
+    <string name="projects_mods_new_items_ok">Tamam</string>
+    <plurals name="projects_mods_updates">
+        <item quantity="one">%1$d mod için güncelleme var; oyunu açınca kurulur.</item>
+        <item quantity="other">%1$d mod için güncelleme var; oyunu açınca kurulur.</item>
+    </plurals>
+    <string name="projects_mods_update_now">Şimdi güncelle</string>
+    <string name="projects_mods_reset">Mod klasörü boş; seçtiğin modlar oyunu açınca yeniden kurulacak.</string>
+    <plurals name="projects_mods_issues_title">
+        <item quantity="one">%1$d dosya okunamadı</item>
+        <item quantity="other">%1$d dosya okunamadı</item>
+    </plurals>
+    <string name="projects_mods_issues_body">Oyunu açmana engel değil.</string>
+    <string name="projects_mods_empty_title">Önerilen mod yok</string>
+    <string name="projects_mods_unavailable_title">Önerilen modlar yüklenemedi</string>
+    <string name="projects_mods_unavailable_body">İnternet bağlantını kontrol edip tekrar dene.</string>
+    <string name="projects_mods_dropped_title">Bu sürüm artık güncellenmiyor</string>
+    <string name="projects_mods_dropped_body">Kurulu modlarınla oynamaya devam edebilirsin.</string>
+    <string name="projects_mods_dropped_recommended">Önerilen sürüm: %1$s.</string>
+    <string name="projects_mods_calculating">Hesaplanıyor</string>
+    <plurals name="projects_mods_added">
+        <item quantity="one">%1$d mod eklenecek</item>
+        <item quantity="other">%1$d mod eklenecek</item>
+    </plurals>
+    <plurals name="projects_mods_updated">
+        <item quantity="one">%1$d mod güncellenecek</item>
+        <item quantity="other">%1$d mod güncellenecek</item>
+    </plurals>
+    <plurals name="projects_mods_removed_count">
+        <item quantity="one">%1$d mod kaldırılacak</item>
+        <item quantity="other">%1$d mod kaldırılacak</item>
+    </plurals>
+    <plurals name="projects_mods_files_added">
+        <item quantity="one">%1$d dosya eklenecek</item>
+        <item quantity="other">%1$d dosya eklenecek</item>
+    </plurals>
+    <plurals name="projects_mods_files_updated">
+        <item quantity="one">%1$d dosya güncellenecek</item>
+        <item quantity="other">%1$d dosya güncellenecek</item>
+    </plurals>
+    <plurals name="projects_mods_files_removed">
+        <item quantity="one">%1$d dosya kaldırılacak</item>
+        <item quantity="other">%1$d dosya kaldırılacak</item>
+    </plurals>
+    <string name="projects_mods_download_size">%1$s indirilecek.</string>
+    <string name="projects_mods_no_files">Dosya değişmeyecek.</string>
+    <string name="projects_mods_discard">Vazgeç</string>
+    <string name="projects_mods_apply">Uygula</string>
+    <string name="projects_mods_stage_preparing">Hazırlanıyor</string>
+    <string name="projects_mods_stage_downloading">İndiriliyor</string>
+    <string name="projects_mods_stage_removing">Kaldırılıyor</string>
+    <string name="projects_mods_stage_finishing">Yerleştiriliyor</string>
+    <string name="projects_mods_percent">%1$s %%%2$d</string>
+    <string name="projects_mods_applied">Modlar güncellendi</string>
+    <string name="projects_mods_applied_issues">Bazı dosyalar değiştirilemedi; sonra yeniden denenecek.</string>
+    <string name="projects_mods_apply_failed_title">Modlar güncellenemedi</string>
+    <string name="projects_mods_apply_failed_network">Modlar indirilemedi. İnternet bağlantını kontrol edip tekrar dene.</string>
+    <string name="projects_mods_apply_failed_generic">Modlar güncellenemedi. Tekrar dene; sürerse ayrıntıları destek ekibine gönder.</string>
+    <string name="projects_mods_leave_title">Değişiklikler uygulansın mı?</string>
+    <string name="projects_mods_downloading">Modlar indiriliyor (%1$.1f MB / %2$.1f MB)</string>
     <string name="projects_notice_removed">%1$s silindiği için kapalı sayıldı.</string>
     <string name="projects_notice_disabled">%1$s devre dışı bırakıldığı için kapalı sayıldı.</string>
     <string name="projects_notice_enabled">%1$s yeniden açıldı.</string>

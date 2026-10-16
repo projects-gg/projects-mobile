@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Switch knob: an 18dp circle centred in a 26dp box, tinted by projects_switch_thumb_tint.
+     A layer inset (not an InsetDrawable) keeps SwitchCompat from treating the gap as padding,
+     so the knob stays inside the track in both positions. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:bottom="4dp"
+        android:left="4dp"
+        android:right="4dp"
+        android:top="4dp">
+        <shape android:shape="oval">
+            <size android:width="18dp" android:height="18dp" />
+            <solid android:color="#FFFFFFFF" />
+        </shape>
+    </item>
+</layer-list>

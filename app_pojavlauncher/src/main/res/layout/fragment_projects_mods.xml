@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Projects mod screen: the official pack's recommended mods with the player's choices. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_app">
+
+    <!-- Centered column; capped in width on wide screens (see ProjectsModsFragment). -->
+    <FrameLayout
+        android:id="@+id/projects_mods_column"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center_horizontal">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="4dp"
+            android:paddingTop="8dp"
+            android:paddingEnd="16dp">
+
+            <ImageButton
+                android:id="@+id/projects_mods_back"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/projects_mods_back"
+                android:padding="12dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/projects_ic_caret_left"
+                android:tint="@color/projects_bone_100" />
+
+            <TextView
+                android:id="@+id/projects_mods_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="2dp"
+                android:layout_weight="1"
+                android:accessibilityHeading="true"
+                android:fontFamily="@font/tektur_semibold"
+                android:text="@string/projects_mods"
+                android:textColor="@color/projects_bone_100"
+                android:textSize="24sp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/projects_mods_caption"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="54dp"
+            android:layout_marginEnd="16dp"
+            android:fontFamily="@font/figtree_regular"
+            android:textColor="@color/projects_ash_400"
+            android:textSize="13sp"
+            android:visibility="invisible"
+            tools:text="Projects 2.3.0, Minecraft 1.21.1"
+            tools:visibility="visible" />
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="8dp"
+            android:layout_weight="1">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/projects_mods_list"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:paddingBottom="24dp"
+                android:scrollbarStyle="outsideOverlay"
+                android:scrollbars="vertical" />
+
+            <!-- Loading: rows shaped like mod entries. -->
+            <LinearLayout
+                android:id="@+id/projects_mods_skeleton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:importantForAccessibility="no"
+                android:orientation="vertical"
+                android:paddingStart="20dp"
+                android:paddingTop="12dp"
+                android:paddingEnd="20dp">
+
+                <View
+                    android:layout_width="110dp"
+                    android:layout_height="14dp"
+                    android:background="@drawable/projects_skeleton_bar" />
+
+                <include layout="@layout/view_projects_mod_skeleton_row" />
+
+                <include layout="@layout/view_projects_mod_skeleton_row" />
+
+                <include layout="@layout/view_projects_mod_skeleton_row" />
+
+                <include layout="@layout/view_projects_mod_skeleton_row" />
+            </LinearLayout>
+
+            <!-- Empty, offline and "version no longer updated" states. -->
+            <LinearLayout
+                android:id="@+id/projects_mods_message"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingStart="20dp"
+                android:paddingTop="16dp"
+                android:paddingEnd="20dp"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <TextView
+                    android:id="@+id/projects_mods_message_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/figtree_semibold"
+                    android:textColor="@color/projects_bone_100"
+                    android:textSize="16sp"
+                    tools:text="Önerilen modlar yüklenemedi" />
+
+                <TextView
+                    android:id="@+id/projects_mods_message_body"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:fontFamily="@font/figtree_regular"
+                    android:lineSpacingMultiplier="1.15"
+                    android:textColor="@color/projects_ash_400"
+                    android:textSize="14sp"
+                    tools:text="İnternet bağlantını kontrol edip tekrar dene." />
+
+                <Button
+                    android:id="@+id/projects_mods_retry"
+                    style="?android:attr/borderlessButtonStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:fontFamily="@font/figtree_semibold"
+                    android:minHeight="44dp"
+                    android:text="@string/projects_retry"
+                    android:textAllCaps="false"
+                    android:textColor="@color/projects_bone_100"
+                    android:textSize="14sp" />
+            </LinearLayout>
+        </FrameLayout>
+    </LinearLayout>
+
+    <!-- Floating apply bar: summary and actions, or progress while applying. -->
+    <LinearLayout
+        android:id="@+id/projects_mods_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
+        android:layout_marginBottom="12dp"
+        android:background="@drawable/projects_bar_background"
+        android:elevation="12dp"
+        android:gravity="center_vertical"
+        android:minHeight="64dp"
+        android:orientation="horizontal"
+        android:paddingStart="16dp"
+        android:paddingTop="10dp"
+        android:paddingEnd="10dp"
+        android:paddingBottom="10dp"
+        android:visibility="gone"
+        tools:visibility="visible">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/projects_mods_bar_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:accessibilityLiveRegion="polite"
+                android:fontFamily="@font/figtree_regular"
+                android:lineSpacingMultiplier="1.1"
+                android:textColor="@color/projects_bone_100"
+                android:textSize="14sp"
+                tools:text="2 mod eklenecek. 4,2 MB indirilecek." />
+
+            <ProgressBar
+                android:id="@+id/projects_mods_bar_progress"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="3dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginEnd="6dp"
+                android:max="1000"
+                android:progressDrawable="@drawable/projects_progress"
+                android:visibility="gone" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/projects_mods_discard"
+            style="?android:attr/borderlessButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:fontFamily="@font/figtree_semibold"
+            android:minWidth="0dp"
+            android:minHeight="44dp"
+            android:text="@string/projects_mods_discard"
+            android:textAllCaps="false"
+            android:textColor="@color/projects_bone_100"
+            android:textSize="14sp" />
+
+        <Button
+            android:id="@+id/projects_mods_apply"
+            style="?android:attr/borderlessButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:fontFamily="@font/tektur_semibold"
+            android:minWidth="0dp"
+            android:minHeight="44dp"
+            android:text="@string/projects_mods_apply"
+            android:textAllCaps="false"
+            android:textColor="@color/projects_on_gold_text"
+            android:textSize="15sp" />
+    </LinearLayout>
+    </FrameLayout>
+</FrameLayout>

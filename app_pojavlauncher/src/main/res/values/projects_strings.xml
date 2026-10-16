@@ -34,6 +34,101 @@
     <string name="projects_based_on">Projects Launcher is based on Amethyst and PojavLauncher and is open source under the LGPLv3.</string>
     <string name="projects_about_title">About Projects Launcher</string>
 
+    <!-- Mod screen -->
+    <string name="projects_mods">Mods</string>
+    <plurals name="projects_mods_on_count">
+        <item quantity="one">%1$d mod on</item>
+        <item quantity="other">%1$d mods on</item>
+    </plurals>
+    <string name="projects_mods_back">Back</string>
+    <string name="projects_mods_pack_caption">%1$s %2$s, Minecraft %3$s</string>
+    <string name="projects_mods_badge_new">New</string>
+    <string name="projects_mods_badge_update">Update</string>
+    <string name="projects_mods_badge_modified">Changed</string>
+    <string name="projects_mods_category_performance">Performance</string>
+    <string name="projects_mods_category_visual">Visuals</string>
+    <string name="projects_mods_category_interface">Interface</string>
+    <string name="projects_mods_category_gameplay">Gameplay</string>
+    <string name="projects_mods_category_other">Other</string>
+    <string name="projects_mods_category_library">Libraries</string>
+    <string name="projects_mods_toggle">%1$s installed</string>
+    <string name="projects_mods_required_by">Needed by %1$s.</string>
+    <string name="projects_mods_brings_along">Also installs %1$s.</string>
+    <string name="projects_mods_removed">Deleted from the mods folder.</string>
+    <string name="projects_mods_removed_back">It was deleted; reinstalled for %1$s.</string>
+    <string name="projects_mods_disabled">Disabled in the mods folder.</string>
+    <string name="projects_mods_disabled_back">It was disabled; turned back on for %1$s.</string>
+    <string name="projects_mods_enabled">Turned back on in the mods folder.</string>
+    <string name="projects_mods_modified">You changed this file; it will not be overwritten.</string>
+    <string name="projects_mods_unsupported">Not supported on Android.</string>
+    <string name="projects_mods_revert">Restore recommended</string>
+    <string name="projects_mods_keep_mine">Keep mine</string>
+    <string name="projects_mods_library_for">For %1$s</string>
+    <string name="projects_mods_library_on">Installed</string>
+    <string name="projects_mods_library_off">Not installed</string>
+    <plurals name="projects_mods_new_items">
+        <item quantity="one">%1$d new recommendation.</item>
+        <item quantity="other">%1$d new recommendations.</item>
+    </plurals>
+    <string name="projects_mods_new_items_ok">OK</string>
+    <plurals name="projects_mods_updates">
+        <item quantity="one">%1$d mod has an update; it installs when you play.</item>
+        <item quantity="other">%1$d mods have updates; they install when you play.</item>
+    </plurals>
+    <string name="projects_mods_update_now">Update now</string>
+    <string name="projects_mods_reset">The mods folder is empty; your mods will be reinstalled when you play.</string>
+    <plurals name="projects_mods_issues_title">
+        <item quantity="one">%1$d file could not be read</item>
+        <item quantity="other">%1$d files could not be read</item>
+    </plurals>
+    <string name="projects_mods_issues_body">It does not stop you from playing.</string>
+    <string name="projects_mods_empty_title">No recommended mods</string>
+    <string name="projects_mods_unavailable_title">Recommended mods could not be loaded</string>
+    <string name="projects_mods_unavailable_body">Check your internet connection and try again.</string>
+    <string name="projects_mods_dropped_title">This version is no longer updated</string>
+    <string name="projects_mods_dropped_body">You can keep playing with your installed mods.</string>
+    <string name="projects_mods_dropped_recommended">Recommended version: %1$s.</string>
+    <string name="projects_mods_calculating">Calculating</string>
+    <plurals name="projects_mods_added">
+        <item quantity="one">%1$d mod will be added</item>
+        <item quantity="other">%1$d mods will be added</item>
+    </plurals>
+    <plurals name="projects_mods_updated">
+        <item quantity="one">%1$d mod will be updated</item>
+        <item quantity="other">%1$d mods will be updated</item>
+    </plurals>
+    <plurals name="projects_mods_removed_count">
+        <item quantity="one">%1$d mod will be removed</item>
+        <item quantity="other">%1$d mods will be removed</item>
+    </plurals>
+    <plurals name="projects_mods_files_added">
+        <item quantity="one">%1$d file will be added</item>
+        <item quantity="other">%1$d files will be added</item>
+    </plurals>
+    <plurals name="projects_mods_files_updated">
+        <item quantity="one">%1$d file will be updated</item>
+        <item quantity="other">%1$d files will be updated</item>
+    </plurals>
+    <plurals name="projects_mods_files_removed">
+        <item quantity="one">%1$d file will be removed</item>
+        <item quantity="other">%1$d files will be removed</item>
+    </plurals>
+    <string name="projects_mods_download_size">%1$s to download.</string>
+    <string name="projects_mods_no_files">No files will change.</string>
+    <string name="projects_mods_discard">Discard</string>
+    <string name="projects_mods_apply">Apply</string>
+    <string name="projects_mods_stage_preparing">Preparing</string>
+    <string name="projects_mods_stage_downloading">Downloading</string>
+    <string name="projects_mods_stage_removing">Removing</string>
+    <string name="projects_mods_stage_finishing">Finishing</string>
+    <string name="projects_mods_percent">%1$s %2$d%%</string>
+    <string name="projects_mods_applied">Mods updated</string>
+    <string name="projects_mods_applied_issues">Some files could not be changed; they will be retried later.</string>
+    <string name="projects_mods_apply_failed_title">Mods could not be updated</string>
+    <string name="projects_mods_apply_failed_network">The mods could not be downloaded. Check your internet connection and try again.</string>
+    <string name="projects_mods_apply_failed_generic">The mods could not be updated. Try again; if it keeps happening, send the details to the support team.</string>
+    <string name="projects_mods_leave_title">Apply your changes?</string>
+    <string name="projects_mods_downloading">Downloading mods (%1$.1f MB / %2$.1f MB)</string>
     <string name="projects_notice_removed">%1$s was deleted, so it is now off.</string>
     <string name="projects_notice_disabled">%1$s was disabled, so it is now off.</string>
     <string name="projects_notice_enabled">%1$s was turned back on.</string>

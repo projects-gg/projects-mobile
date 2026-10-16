@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Switch track (tinted by projects_switch_track_tint). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <corners android:radius="13dp" />
+    <size android:width="46dp" android:height="26dp" />
+    <solid android:color="#FFFFFFFF" />
+</shape>

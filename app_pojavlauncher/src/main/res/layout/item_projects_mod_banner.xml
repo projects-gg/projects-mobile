@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A notice above the list: new recommendations, updates, a wiped mods folder, unreadable files. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="4dp"
+    android:layout_marginTop="6dp"
+    android:layout_marginEnd="4dp"
+    android:background="@drawable/projects_card_background"
+    android:gravity="center_vertical"
+    android:minHeight="56dp"
+    android:orientation="horizontal"
+    android:paddingStart="14dp"
+    android:paddingTop="8dp"
+    android:paddingEnd="8dp"
+    android:paddingBottom="8dp">
+
+    <ImageView
+        android:id="@+id/projects_banner_icon"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:importantForAccessibility="no"
+        android:src="@drawable/projects_ic_sparkle"
+        android:tint="@color/projects_gold_300" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/projects_banner_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/figtree_regular"
+            android:lineSpacingMultiplier="1.1"
+            android:textColor="@color/projects_bone_100"
+            android:textSize="14sp"
+            tools:text="2 yeni öneri var." />
+
+        <TextView
+            android:id="@+id/projects_banner_body"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:fontFamily="@font/figtree_regular"
+            android:textColor="@color/projects_ash_400"
+            android:textSize="13sp"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/projects_banner_action"
+        style="?android:attr/borderlessButtonStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:fontFamily="@font/figtree_semibold"
+        android:minWidth="0dp"
+        android:minHeight="40dp"
+        android:textAllCaps="false"
+        android:textColor="@color/projects_bone_100"
+        android:textSize="13.5sp"
+        android:visibility="gone"
+        tools:text="Tamam"
+        tools:visibility="visible" />
+</LinearLayout>

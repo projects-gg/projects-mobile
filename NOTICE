@@ -22,7 +22,7 @@ Changes made by this fork (2026, Projects / projects.gg):
     colors and fonts.
   - Projects integration: Ed25519-verified news from the Projects content index, the
     "Projects'e katil" join flow (Projects profile, official pack sync, server list entry and
-    auto-join of play.projects.gg).
+    auto-join of play.projects.gg), and the mod screen for the official pack's optional mods.
   The full list of changes is the git history of the "projects" branch on top of upstream.
 
 Third-party components added by this fork:
@@ -33,6 +33,9 @@ Third-party components added by this fork:
     (app_pojavlauncher/src/main/assets/licenses/TEKTUR_OFL.txt)
   - Figtree typeface, Copyright 2022 The Figtree Project Authors, SIL Open Font License 1.1
     (app_pojavlauncher/src/main/assets/licenses/FIGTREE_OFL.txt)
+  - Phosphor Icons (a few icons converted to Android vector drawables), MIT license,
+    Copyright (c) 2020 Phosphor Icons
+    (app_pojavlauncher/src/main/assets/licenses/PHOSPHOR_ICONS_LICENSE)
 
 All notices of upstream and of the components it bundles are kept unchanged (see README.md
 "Credits & Dependencies" and app_pojavlauncher/src/main/assets/licenses).
