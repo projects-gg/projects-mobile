@@ -60,8 +60,11 @@ public class DefaultVersionTest {
 
     @Test
     public void theUpstreamDefaultProfileMovesToTheRecommendation() {
-        // A new install, or an update from 0.1.0: Amethyst's untouched default.
+        // A new install, or an update from 0.1.0: Amethyst's untouched default, as the bundled
+        // launcher_profiles.json names it and as an empty profile list gets it.
+        assertEquals("26.1.2", DefaultVersion.next("(Default)", "1.7.10", null, "26.1.2"));
         assertEquals("26.1.2", DefaultVersion.next("Default", "1.7.10", null, "26.1.2"));
+        assertEquals("1.21.11", DefaultVersion.next("(Default)", "1.7.10", null, "1.21.11"));
         // Already there.
         assertNull(DefaultVersion.next("Default", "26.1.2", "26.1.2", "26.1.2"));
         // A newer recommendation is followed while the profile keeps the version the app gave it.
@@ -78,6 +81,7 @@ public class DefaultVersionTest {
         assertNull(DefaultVersion.next("Default", "latest-release", "26.1.2", "26.2"));
         // Profiles the app never managed: only Amethyst's untouched default moves.
         assertNull(DefaultVersion.next("Default", "1.20.1", null, "26.1.2"));
+        assertNull(DefaultVersion.next("(Default)", "1.12.2", null, "26.1.2"));
         assertNull(DefaultVersion.next("Survival", "1.7.10", null, "26.1.2"));
         assertNull(DefaultVersion.next(null, null, null, "26.1.2"));
     }
