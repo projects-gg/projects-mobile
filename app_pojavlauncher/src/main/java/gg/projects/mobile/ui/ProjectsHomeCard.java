@@ -1,8 +1,10 @@
 package gg.projects.mobile.ui;
 
 import android.content.Context;
+import android.graphics.Rect;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
+import android.view.TouchDelegate;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -172,6 +174,23 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener {
         mModsRow.setOnClickListener(v -> openMods());
         mEvent.setOnClickListener(v -> openEvent());
         mEventMore.setOnClickListener(v -> showOtherEvents());
+        // The small "+N etkinlik" pill gets a full-size touch area without growing the card.
+        mEvent.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> updateMoreTouchArea());
+    }
+
+    /** Extends the "+N etkinlik" pill's touch area to the 48 dp minimum within the event block. */
+    private void updateMoreTouchArea() {
+        if (mEventMore.getVisibility() != View.VISIBLE || mEventMore.getWidth() == 0) {
+            mEvent.setTouchDelegate(null);
+            return;
+        }
+        Rect area = new Rect();
+        mEventMore.getHitRect(area);
+        View row = (View) mEventMore.getParent();
+        area.offset(row.getLeft(), row.getTop());
+        int min = Math.round(48 * mEvent.getResources().getDisplayMetrics().density);
+        area.inset(-Math.max(0, (min - area.width() + 1) / 2), -Math.max(0, (min - area.height() + 1) / 2));
+        mEvent.setTouchDelegate(new TouchDelegate(area, mEventMore));
     }
 
     public void onResume() {
@@ -245,9 +264,7 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener {
 
         LauncherConfig.Maintenance maintenance = snapshot == null || snapshot.config == null ? null : snapshot.config.maintenance;
         boolean maintenanceOn = maintenance != null && maintenance.isActive(now);
-        // "Offline" only once a refresh failed: the cached copy shown at start is not news of an outage.
-        String status = snapshot != null && snapshot.hasContent() && snapshot.offline && !mRefreshing
-                ? activity.getString(R.string.projects_offline_since, ProjectsUi.dateTime(activity, snapshot.fetchedAt)) : null;
+        String status = ProjectsUi.offlineSince(activity, snapshot);
 
         NewsFeed.NewsItem notes = home == null ? null : home.patchNotes;
         NewsFeed.NewsItem top = null;
@@ -403,9 +420,28 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener {
         long remaining = Math.max(0, (live ? event.endsAt : event.startsAt) - now);
         long total = remaining / 1000;
         long[] values = {total / 86_400, (total % 86_400) / 3_600, (total % 3_600) / 60, total % 60};
-        for (int i = 0; i < values.length; i++) setText(mEventCells[i], String.format(Locale.ROOT, "%02d", values[i]));
+        for (int i = 0; i < values.length; i++) {
+            String digits = String.format(Locale.ROOT, "%02d", values[i]);
+            fitDigits(mEventCells[i], digits.length());
+            setText(mEventCells[i], digits);
+        }
         String spoken = ProjectsUi.span(context, remaining);
         mEventCountdown.setContentDescription(live ? context.getString(R.string.projects_event_ends_in, spoken) : spoken);
+    }
+
+    /**
+     * Sizes a countdown cell for {@code digits} tabular digits, so the value that changes every
+     * second only redraws the cell instead of measuring the whole menu again (a wrap_content
+     * TextView asks for a new layout on every text change).
+     */
+    private static void fitDigits(TextView cell, int digits) {
+        Object sized = cell.getTag(R.id.projects_countdown_digits);
+        if (sized instanceof Integer && (Integer) sized == digits) return;
+        StringBuilder sample = new StringBuilder();
+        for (int i = 0; i < digits; i++) sample.append('0');
+        cell.setWidth((int) Math.ceil(cell.getPaint().measureText(sample.toString()))
+                + cell.getCompoundPaddingLeft() + cell.getCompoundPaddingRight());
+        cell.setTag(R.id.projects_countdown_digits, digits);
     }
 
     private void bindPatch(final FragmentActivity activity, final Snapshot snapshot, @Nullable final NewsFeed.NewsItem notes,

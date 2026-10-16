@@ -18,11 +18,17 @@ import gg.projects.mobile.content.ContentPaths;
 public final class MarkdownLite {
     private MarkdownLite() {}
 
+    /** Height of a blank line (in body lines): above a heading, between blocks, under a heading. */
+    private static final float GAP_BEFORE_HEADING = 1f;
+    private static final float GAP_BETWEEN_BLOCKS = 0.6f;
+    private static final float GAP_AFTER_HEADING = 0.3f;
+
     public static CharSequence render(String markdown) {
         SpannableStringBuilder out = new SpannableStringBuilder();
         if (markdown == null) return out;
         String[] lines = markdown.replace("\r\n", "\n").replace('\r', '\n').split("\n", -1);
         boolean pendingBreak = false;
+        boolean afterHeading = false;
         for (String raw : lines) {
             String line = raw.trim();
             if (line.isEmpty()) {
@@ -30,12 +36,25 @@ public final class MarkdownLite {
                 continue;
             }
             if (line.matches("^(-{3,}|\\*{3,}|_{3,})$")) continue;
-            if (out.length() > 0) out.append(pendingBreak ? "\n\n" : "\n");
-            pendingBreak = false;
 
             int heading = 0;
             while (heading < line.length() && heading < 6 && line.charAt(heading) == '#') heading++;
-            if (heading > 0 && heading < line.length() && line.charAt(heading) == ' ') {
+            boolean isHeading = heading > 0 && heading < line.length() && line.charAt(heading) == ' ';
+            if (out.length() > 0) {
+                out.append('\n');
+                if (pendingBreak) {
+                    // A blank line keeps its meaning, sized so a heading sits closer to its own text
+                    // than to the paragraph before it.
+                    int start = out.length();
+                    out.append('\n');
+                    float gap = afterHeading ? GAP_AFTER_HEADING : isHeading ? GAP_BEFORE_HEADING : GAP_BETWEEN_BLOCKS;
+                    out.setSpan(new RelativeSizeSpan(gap), start, out.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+            }
+            pendingBreak = false;
+            afterHeading = isHeading;
+
+            if (isHeading) {
                 int start = out.length();
                 appendInline(out, line.substring(heading + 1).trim());
                 out.setSpan(new StyleSpan(Typeface.BOLD), start, out.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);

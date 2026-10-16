@@ -2,4 +2,6 @@
 <resources>
     <!-- View tag: the running cross-fade of a home card block (CardMotion). -->
     <item name="projects_motion_ghost" type="id" />
+    <!-- View tag: how many digits a countdown cell is sized for (ProjectsHomeCard). -->
+    <item name="projects_countdown_digits" type="id" />
 </resources>

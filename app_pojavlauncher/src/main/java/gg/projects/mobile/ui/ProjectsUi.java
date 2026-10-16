@@ -98,6 +98,17 @@ public final class ProjectsUi {
         return false;
     }
 
+    /**
+     * "Çevrim dışı. Son güncelleme: …" once a refresh failed, else null. The cached copy shown at
+     * start is not news of an outage (the desktop's rule), and a retry while offline keeps the line
+     * instead of hiding it until the retry fails again.
+     */
+    @Nullable
+    public static String offlineSince(Context context, @Nullable Snapshot snapshot) {
+        if (snapshot == null || !snapshot.hasContent() || !snapshot.offline || snapshot.lastError == null) return null;
+        return context.getString(R.string.projects_offline_since, dateTime(context, snapshot.fetchedAt));
+    }
+
     public static boolean updateRequired(@Nullable Snapshot snapshot) {
         return snapshot != null && snapshot.lastError != null
                 && snapshot.lastError.kind == ContentException.Kind.UNSUPPORTED_SCHEMA;

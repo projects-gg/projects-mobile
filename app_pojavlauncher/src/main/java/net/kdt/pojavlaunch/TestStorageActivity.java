@@ -65,6 +65,8 @@ public class TestStorageActivity extends Activity {
         LauncherPreferences.loadPreferences(this);
         AsyncAssetManager.unpackComponents(this);
         AsyncAssetManager.unpackSingleFiles(this);
+        // Projects: read the cached news while the splash is up, so the home card opens filled.
+        gg.projects.mobile.ProjectsContent.refresh(this, false);
 
         Intent intent =  new Intent(this, LauncherActivity.class);
         startActivity(intent);

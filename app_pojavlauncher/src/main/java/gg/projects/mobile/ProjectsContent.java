@@ -17,8 +17,12 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import gg.projects.mobile.content.AtomicFiles;
 import gg.projects.mobile.content.ContentConfig;
@@ -60,6 +64,12 @@ public final class ProjectsContent {
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
     private static final ExecutorService EXECUTOR = Executors.newSingleThreadExecutor();
     private static final ExecutorService MEDIA_EXECUTOR = Executors.newFixedThreadPool(2);
+    private static final ExecutorService FEED_EXECUTOR = Executors.newSingleThreadExecutor();
+    /**
+     * How long a first install's card waits for the Discord feed before showing the content
+     * without it (the feed then arrives on its own).
+     */
+    private static final long FIRST_FEED_WAIT_MS = 1200;
     private static final List<Listener> sListeners = new ArrayList<>();
     /** Decoded covers by cache name and width, so a re-bound card or row shows its picture at once. */
     private static final LruCache<String, Bitmap> COVERS = new LruCache<String, Bitmap>(24 << 20) {
@@ -195,9 +205,11 @@ public final class ProjectsContent {
         sRefreshing = true;
         notifyListeners();
         EXECUTOR.execute(() -> {
+            boolean firstFill = false;
             if (needCache) {
                 Snapshot loaded = repository.loadCached();
                 final Snapshot cached = loaded.hasContent() ? withCachedFeed(feeds, loaded) : loaded;
+                firstFill = !cached.hasContent();
                 MAIN.post(() -> {
                     if (sSnapshot == null && cached.hasContent()) {
                         sSnapshot = cached;
@@ -208,30 +220,59 @@ public final class ProjectsContent {
             Snapshot refreshed = repository.refresh();
             if (refreshed.lastError != null) Log.i(TAG, "content refresh failed: " + refreshed.lastError);
             // Verified against the (possibly new) config's keys before it is shown.
-            final Snapshot latest = withCachedFeed(feeds, refreshed);
+            Snapshot latest = withCachedFeed(feeds, refreshed);
+            Future<FeedSnapshot> firstFeed = null;
+            final FeedSettings settings = latest.offline ? null : feedSettings(latest);
+            if (firstFill && settings != null && latest.feed == null) {
+                // A first install shows its loading card until now: give the feed a moment, so the
+                // card fills in one step instead of swapping its event and patch notes right after
+                // it appeared. Covers follow on their own (their BlurHash shows first).
+                firstFeed = FEED_EXECUTOR.submit(() -> feeds.refresh(settings));
+                FeedSnapshot early = await(firstFeed, FIRST_FEED_WAIT_MS);
+                if (early != null && early.feed != null) latest = latest.withFeed(early);
+            }
+            final Snapshot shown = latest;
             sLastAttempt = System.currentTimeMillis();
             MAIN.post(() -> {
-                sSnapshot = latest;
+                sSnapshot = shown;
                 sRefreshing = false;
                 notifyListeners();
             });
-            if (!latest.offline) refreshFeed(feeds, latest);
+            if (!shown.offline) refreshFeed(feeds, shown, firstFeed);
         });
     }
 
+    /** The result of {@code pending}, waiting at most {@code timeoutMs}; null on a timeout or failure. */
+    @Nullable
+    private static FeedSnapshot await(Future<FeedSnapshot> pending, long timeoutMs) {
+        try {
+            return pending.get(timeoutMs, TimeUnit.MILLISECONDS);
+        } catch (TimeoutException e) {
+            return null;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return null;
+        } catch (ExecutionException e) {
+            Log.w(TAG, "news feed refresh failed", e.getCause());
+            return null;
+        }
+    }
+
     /**
-     * Refreshes the Discord feed for {@code latest}'s config and downloads the covers of the
-     * items it shows, then updates the UI when something changed. A feed the config disables is
-     * never requested and its cache is deleted. Failures keep what is on screen.
+     * Refreshes the Discord feed for {@code latest}'s config (or takes over {@code pending}, the
+     * first install's fetch that is already running) and downloads the covers of the items it
+     * shows, then updates the UI when something changed. A feed the config disables is never
+     * requested and its cache is deleted. Failures keep what is on screen.
      */
-    private static void refreshFeed(FeedRepository feeds, final Snapshot latest) {
+    private static void refreshFeed(FeedRepository feeds, final Snapshot latest, @Nullable Future<FeedSnapshot> pending) {
         try {
             FeedSettings settings = feedSettings(latest);
             if (settings == null) {
                 if (feeds.hasCache()) feeds.clear();
                 return;
             }
-            FeedSnapshot fresh = feeds.refresh(settings);
+            FeedSnapshot fresh = pending == null ? null : await(pending, Long.MAX_VALUE);
+            if (fresh == null) fresh = feeds.refresh(settings);
             if (fresh.lastError != null) Log.i(TAG, "news feed refresh failed: " + fresh.lastError);
             if (fresh.feed != null && !fresh.feed.problems.isEmpty()) {
                 Log.w(TAG, "news feed entries dropped or repaired: " + fresh.feed.problems);
