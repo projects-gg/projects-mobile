@@ -311,7 +311,8 @@ dependencies {
 
     implementation fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
 
-    implementation "net.java.dev.jna:jna:5.14.0@aar"
+    // 5.17.0+ natives load on 16 KB page devices (same JNI interface 7.0.x as 5.14.0)
+    implementation "net.java.dev.jna:jna:5.18.1@aar"
 
     implementation project(":androidnsbypass")
 
