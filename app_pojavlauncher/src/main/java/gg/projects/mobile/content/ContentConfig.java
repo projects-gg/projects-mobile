@@ -18,7 +18,8 @@ public final class ContentConfig {
      * trusts old and new keys, wait for adoption, then sign with the new key.
      */
     public static final List<String> TRUSTED_KEYS = Collections.unmodifiableList(Arrays.asList(
-            "muj3CSu3m9jpB7fUP5TbkRSnISGEH13XbTt6agmIK68=" // keyId 5125c0d365b019ce
+            "muj3CSu3m9jpB7fUP5TbkRSnISGEH13XbTt6agmIK68=", // keyId 5125c0d365b019ce
+            "qTmm+6djdFYCmoHKop6DuvVMgUsHk1EzdZZ9wDhXdOM=" // offline backup, keyId b63fd046213136eb
     ));
 
     public static final int ROOT_INDEX_SCHEMA = 1;
