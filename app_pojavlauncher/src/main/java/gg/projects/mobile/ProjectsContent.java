@@ -14,14 +14,17 @@ import androidx.annotation.Nullable;
 import net.kdt.pojavlaunch.BuildConfig;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import gg.projects.mobile.content.AtomicFiles;
 import gg.projects.mobile.content.ContentConfig;
 import gg.projects.mobile.content.ContentException;
 import gg.projects.mobile.content.ContentRepository;
+import gg.projects.mobile.content.ContentSources;
 import gg.projects.mobile.content.ContentStore;
 import gg.projects.mobile.content.HttpFetcher;
 import gg.projects.mobile.content.IndexVerifier;
@@ -56,16 +59,50 @@ public final class ProjectsContent {
 
     public static synchronized ContentRepository repository(Context context) {
         if (sRepository == null) {
-            File root = new File(context.getApplicationContext().getFilesDir(), "projects-content");
+            Context app = context.getApplicationContext();
+            ContentSources sources = sources(app);
+            IndexVerifier verifier;
+            try {
+                verifier = new IndexVerifier(sources.trustedKeys);
+            } catch (ContentException e) {
+                throw new IllegalStateException("content keys are invalid", e);
+            }
+            // Test content never mixes with the real cache.
+            File root = new File(app.getFilesDir(), sources.override ? "projects-content-debug" : "projects-content");
             sRepository = new ContentRepository(
                     new ContentStore(root),
                     new HttpFetcher.UrlConnection(userAgent()),
-                    IndexVerifier.production(),
-                    ContentConfig.MIRRORS,
+                    verifier,
+                    sources.mirrors,
                     System::currentTimeMillis);
         }
         return sRepository;
     }
+
+    /**
+     * The embedded mirrors and keys. Debug builds only: {@code projects-debug.json} in the app's
+     * external files folder may name other mirrors and one throwaway test key (local end-to-end
+     * tests, like the desktop's PROJECTS_CONTENT_MIRRORS and PROJECTS_CONTENT_TEST_KEY). Release
+     * builds never read it.
+     */
+    private static ContentSources sources(Context app) {
+        if (BuildConfig.DEBUG) {
+            File dir = app.getExternalFilesDir(null);
+            File file = dir == null ? null : new File(dir, DEBUG_OVERRIDE_FILE);
+            if (file != null && file.isFile()) {
+                try {
+                    ContentSources sources = ContentSources.withDebugOverride(AtomicFiles.read(file, 64 * 1024));
+                    Log.w(TAG, "debug content override in use: " + sources.mirrors);
+                    return sources;
+                } catch (IOException | ContentException e) {
+                    Log.w(TAG, "ignoring a broken " + DEBUG_OVERRIDE_FILE, e);
+                }
+            }
+        }
+        return ContentSources.production();
+    }
+
+    private static final String DEBUG_OVERRIDE_FILE = "projects-debug.json";
 
     public static String userAgent() {
         return "ProjectsLauncher-Android/" + BuildConfig.VERSION_NAME;
