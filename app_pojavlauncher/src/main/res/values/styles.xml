@@ -29,6 +29,17 @@
         <item name="android:windowBackground">@drawable/projects_dialog_background</item>
         <item name="android:textColorPrimary">@color/projects_bone_100</item>
         <item name="android:textColorSecondary">@color/projects_ash_400</item>
+        <item name="buttonBarPositiveButtonStyle">@style/ProjectsDialogButton</item>
+        <item name="buttonBarNegativeButtonStyle">@style/ProjectsDialogButton</item>
+        <item name="buttonBarNeutralButtonStyle">@style/ProjectsDialogButton</item>
+    </style>
+
+    <!-- Dialog buttons in sentence case (design.md: OYNA is the only all-caps label). -->
+    <style name="ProjectsDialogButton" parent="Widget.AppCompat.Button.ButtonBar.AlertDialog">
+        <item name="textAllCaps">false</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:fontFamily">@font/figtree_semibold</item>
+        <item name="android:textSize">15sp</item>
     </style>
 
     <!-- Projects fork: entry activity. Before Android 12 the window background is the splash;
