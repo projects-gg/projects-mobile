@@ -44,7 +44,8 @@ public class ControlButton extends TextView implements ControlInterface {
         super(layout.getContext());
         mControlLayout = layout;
         setGravity(Gravity.CENTER);
-        setAllCaps(LauncherPreferences.PREF_BUTTON_ALL_CAPS);
+        // Projects fork: capitals with Locale.ROOT, so a Turkish phone shows "HIDE GUI", not "HİDE GUI".
+        setTransformationMethod(LauncherPreferences.PREF_BUTTON_ALL_CAPS ? gg.projects.mobile.controls.ControlCaps.INSTANCE : null);
         setTextColor(Color.WHITE);
         setPadding(4, 4, 4, 4);
         setTextSize(14); // Nullify the default size setting

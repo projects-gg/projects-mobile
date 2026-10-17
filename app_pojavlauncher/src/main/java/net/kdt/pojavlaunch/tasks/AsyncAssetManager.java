@@ -70,6 +70,9 @@ public class AsyncAssetManager {
             try {
                 Tools.copyAssetFile(ctx, "options.txt", Tools.DIR_GAME_NEW, false);
 
+                // Projects fork: an earlier version's untouched default layout takes the new labels.
+                gg.projects.mobile.controls.ControlCaps.replaceOldDefault(ctx, "default.json", new File(Tools.CTRLDEF_FILE));
+
                 // This is disgusting, but am lazy. We probably wont be getting any updates to
                 // controlmap till rewrite anyway so this is fiiine.
                 try (InputStream is = ctx.getAssets().open("default.json")) {
