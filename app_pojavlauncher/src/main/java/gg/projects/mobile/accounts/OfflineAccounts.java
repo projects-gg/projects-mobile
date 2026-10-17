@@ -1,10 +1,12 @@
 package gg.projects.mobile.accounts;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
+import java.util.UUID;
 
 /**
  * Offline ("local") accounts: the desktop launcher's name rules ({@code name-rules.ts} in
- * apps/launcher, {@code identity.rs} in pl-mc).
+ * apps/launcher, {@code identity.rs} in pl-mc) and the identity the game starts with.
  *
  * <p>Since 0.1.3 an offline account needs no Microsoft account and no copy of the game (the owner's
  * decision of 17 October 2026, as on the desktop and in PojavLauncher before Amethyst's 2025
@@ -104,6 +106,22 @@ public final class OfflineAccounts {
             if (account != null && equalsIgnoreAsciiCase(account, name)) return account;
         }
         return null;
+    }
+
+    /** The UUID offline-mode servers give this name: {@code UUID.nameUUIDFromBytes("OfflinePlayer:" + name)}. */
+    public static UUID uuid(String name) {
+        return UUID.nameUUIDFromBytes(("OfflinePlayer:" + name).getBytes(StandardCharsets.UTF_8));
+    }
+
+    /**
+     * The profile UUID the game starts with ({@code ${auth_uuid}}, without dashes). An offline
+     * account gets the UUID offline-mode servers give its name, like on the desktop, so a world
+     * played alone and the server see the same player (upstream gave every local account the
+     * all-zero UUID). Microsoft accounts, demo ones included, keep their own.
+     */
+    public static String launchUuid(boolean offline, String username, String profileId) {
+        String id = offline ? uuid(username).toString() : profileId;
+        return id == null ? null : id.replace("-", "");
     }
 
     private static String trim(String raw) {

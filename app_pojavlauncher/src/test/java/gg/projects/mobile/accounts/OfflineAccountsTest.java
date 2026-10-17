@@ -10,8 +10,9 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
-/** Offline names with the desktop's rules (name-rules.test.ts). */
+/** Offline names with the desktop's rules (name-rules.test.ts) and the identity the game gets. */
 public class OfflineAccountsTest {
     /** Account files on the device: offline ones and a Microsoft one (one file per name on Android). */
     private static final List<String> ACCOUNTS = Arrays.asList("EjderAvcisi", "KorAtesi_", "Cagri");
@@ -112,5 +113,26 @@ public class OfflineAccountsTest {
         assertFalse(OfflineAccounts.isValidName("Demo.Player"));
         assertFalse(OfflineAccounts.isValidName(""));
         assertFalse(OfflineAccounts.isValidName(null));
+    }
+
+    @Test
+    public void offlineUuidIsTheOneServersCompute() {
+        // The desktop's test vector (pl-mc identity.rs), a version 3 UUID.
+        UUID notch = OfflineAccounts.uuid("Notch");
+        assertEquals("b50ad385-829d-3141-a216-7e7d7539ba7f", notch.toString());
+        assertEquals(3, notch.version());
+        // Case matters to servers: another name, another player.
+        assertFalse(notch.equals(OfflineAccounts.uuid("notch")));
+    }
+
+    @Test
+    public void launchUuidOfOfflineAndMicrosoftAccounts() {
+        assertEquals("b50ad385829d3141a2167e7d7539ba7f",
+                OfflineAccounts.launchUuid(true, "Notch", "00000000-0000-0000-0000-000000000000"));
+        // Microsoft accounts keep their own profile id, a demo one (all zero) as well.
+        assertEquals("069a79f444e94726a5befca90e38aaf5",
+                OfflineAccounts.launchUuid(false, "Notch", "069a79f4-44e9-4726-a5be-fca90e38aaf5"));
+        assertEquals("00000000000000000000000000000000",
+                OfflineAccounts.launchUuid(false, "Demo.Player", "00000000-0000-0000-0000-000000000000"));
     }
 }
