@@ -190,4 +190,18 @@
     <string name="projects_offline_name_spaces">Boşluk kullanılamaz.</string>
     <string name="projects_offline_name_characters">Yalnızca İngilizce harf, rakam ve alt çizgi (_) kullanılabilir.</string>
     <string name="projects_version_needs_internet">Minecraft %1$s henüz indirilmedi. İndirmek için internete bağlan.</string>
+
+    <!-- 0.1.4: the dot on unseen news, event reminders and the status page notice. -->
+    <plurals name="projects_reminder_starts_in">
+        <item quantity="one">%1$d dakika sonra başlıyor.</item>
+        <item quantity="other">%1$d dakika sonra başlıyor.</item>
+    </plurals>
+    <string name="projects_reminder_running">Şu an sürüyor.</string>
+    <plurals name="projects_reminder_starts_in_toast">
+        <item quantity="one">%1$s %2$d dakika sonra başlıyor</item>
+        <item quantity="other">%1$s %2$d dakika sonra başlıyor</item>
+    </plurals>
+    <string name="projects_reminder_running_toast">%1$s sürüyor</string>
+    <string name="projects_reminder_channel">Etkinlik hatırlatmaları</string>
+    <string name="projects_reminder_channel_description">Hatırlat dediğin etkinlikler, başlamadan 5 dakika önce.</string>
 </resources>

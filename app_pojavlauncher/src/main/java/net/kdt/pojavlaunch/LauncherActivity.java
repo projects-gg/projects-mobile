@@ -326,7 +326,9 @@ public class LauncherActivity extends BaseActivity {
         );
         getWindow().setBackgroundDrawable(null);
         bindViews();
-        checkNotificationPermission();
+        // Projects fork: no notification permission prompt at start. The event reminder's bell asks
+        // for it when tapped, and Settings keeps upstream's "request notification permission" entry;
+        // downloads keep running without it (Android lists the foreground service in its task manager).
         mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         ProgressKeeper.addTaskCountListener(mDoubleLaunchPreventionListener);
         ProgressKeeper.addTaskCountListener((mProgressServiceKeeper = new ProgressServiceKeeper(this)));

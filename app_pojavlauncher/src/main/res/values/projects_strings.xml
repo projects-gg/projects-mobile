@@ -194,4 +194,18 @@
     <string name="projects_offline_name_spaces">Spaces can\'t be used.</string>
     <string name="projects_offline_name_characters">Use only English letters, numbers and underscores (_).</string>
     <string name="projects_version_needs_internet">Minecraft %1$s isn\'t downloaded yet. Connect to the internet to download it.</string>
+
+    <!-- 0.1.4: the dot on unseen news, event reminders and the status page notice. -->
+    <plurals name="projects_reminder_starts_in">
+        <item quantity="one">Starts in %1$d minute.</item>
+        <item quantity="other">Starts in %1$d minutes.</item>
+    </plurals>
+    <string name="projects_reminder_running">Happening now.</string>
+    <plurals name="projects_reminder_starts_in_toast">
+        <item quantity="one">%1$s starts in %2$d minute</item>
+        <item quantity="other">%1$s starts in %2$d minutes</item>
+    </plurals>
+    <string name="projects_reminder_running_toast">%1$s is on</string>
+    <string name="projects_reminder_channel">Event reminders</string>
+    <string name="projects_reminder_channel_description">Events you asked to be reminded of, 5 minutes before they start.</string>
 </resources>
