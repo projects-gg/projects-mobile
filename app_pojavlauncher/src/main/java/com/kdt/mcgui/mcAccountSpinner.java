@@ -92,7 +92,11 @@ public class mcAccountSpinner extends AppCompatSpinner implements AdapterView.On
     };
 
     private final DoneListener mDoneListener = account -> {
-        Toast.makeText(getContext(), R.string.main_login_done, Toast.LENGTH_SHORT).show();
+        // Projects fork: an offline account was added, nobody signed in.
+        Context toastContext = getContext();
+        Toast.makeText(toastContext, account.isLocal()
+                ? toastContext.getString(R.string.projects_offline_added, account.username)
+                : toastContext.getString(R.string.main_login_done), Toast.LENGTH_SHORT).show();
 
         // Check if the account being added is not one that is already existing
         // Like login twice on the same mc account...
@@ -134,6 +138,15 @@ public class mcAccountSpinner extends AppCompatSpinner implements AdapterView.On
     /* Triggered when we need to perform mojang login */
     private final ExtraListener<String[]> mMojangLoginListener = (key, value) -> {
         if(value[1].isEmpty()){ // Test mode
+            // Projects fork: a name already in the list (ignoring case) switches to that account,
+            // so no account file is ever overwritten, a Microsoft account's included.
+            String existing = gg.projects.mobile.accounts.OfflineAccounts.findExisting(value[0],
+                    mAccountList.subList(1, mAccountList.size()));
+            if (existing != null) {
+                pickAccount(mAccountList.indexOf(existing));
+                Toast.makeText(getContext(), getContext().getString(R.string.projects_offline_switched, existing), Toast.LENGTH_SHORT).show();
+                return false;
+            }
             MinecraftAccount account = new MinecraftAccount();
             account.username = value[0];
             try {

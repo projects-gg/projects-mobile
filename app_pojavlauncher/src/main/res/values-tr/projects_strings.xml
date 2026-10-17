@@ -175,4 +175,18 @@
     <string name="projects_pref_autojre_summary">“%1$s” için Java sürümü otomatik seçilmez.</string>
     <string name="projects_profile_custom_path">Oyun klasörü</string>
     <string name="projects_version_recommended">Önerilen</string>
+
+    <!-- Offline accounts (0.1.3): no Microsoft account needed; the desktop's name rules and wording. -->
+    <string name="projects_offline_add">Ekle</string>
+    <string name="projects_offline_switch">O hesaba geç</string>
+    <string name="projects_offline_exists">Bu adla bir hesabın zaten var.</string>
+    <string name="projects_offline_use_suggestion">%1$s kullan</string>
+    <string name="projects_offline_added">%1$s eklendi</string>
+    <string name="projects_offline_switched">Artık %1$s ile oynuyorsun</string>
+    <string name="projects_offline_name_empty">Bir oyuncu adı yaz.</string>
+    <string name="projects_offline_name_too_short">En az 3 karakter olmalı.</string>
+    <string name="projects_offline_name_too_long">En fazla 16 karakter olabilir.</string>
+    <string name="projects_offline_name_turkish">Türkçe harfler (ç, ğ, ı, ö, ş, ü) kullanılamaz.</string>
+    <string name="projects_offline_name_spaces">Boşluk kullanılamaz.</string>
+    <string name="projects_offline_name_characters">Yalnızca İngilizce harf, rakam ve alt çizgi (_) kullanılabilir.</string>
 </resources>

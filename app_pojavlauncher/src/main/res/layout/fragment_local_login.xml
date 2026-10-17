@@ -20,45 +20,71 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-
+    <!-- Projects fork: the offline account's name, checked as it is typed (LocalLoginFragment):
+         label, field, a message line for problems and the button, packed in the card's middle. -->
     <TextView
+        android:id="@+id/login_label"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/_6sdp"
+        android:fontFamily="@font/figtree_semibold"
+        android:labelFor="@+id/login_edit_email"
         android:text="@string/login_online_username_hint"
+        android:textColor="@color/projects_bone_100"
+        android:textSize="@dimen/_11ssp"
 
         app:layout_constraintBottom_toTopOf="@+id/login_edit_email"
-        app:layout_constraintStart_toStartOf="@+id/login_edit_email" />
+        app:layout_constraintStart_toStartOf="@+id/login_edit_email"
+        app:layout_constraintTop_toTopOf="@+id/login_menu"
+        app:layout_constraintVertical_chainStyle="packed" />
 
-
-    <com.kdt.mcgui.MineEditText
+    <EditText
         android:id="@+id/login_edit_email"
         android:layout_width="0dp"
         android:layout_height="@dimen/_37sdp"
-
         android:layout_marginHorizontal="@dimen/_25sdp"
+        android:background="@drawable/projects_input"
+        android:fontFamily="@font/figtree_regular"
+        android:imeOptions="actionDone"
+        android:importantForAutofill="no"
+        android:inputType="textVisiblePassword|textNoSuggestions"
+        android:maxLines="1"
+        android:paddingHorizontal="12dp"
+        android:textColor="@color/projects_bone_100"
+        android:textSize="@dimen/_13ssp"
 
-        android:layout_marginTop="@dimen/_60sdp"
-        android:imeOptions="flagNoExtractUi"
-        android:inputType="textEmailAddress"
-        android:textSize="@dimen/_16ssp"
-
+        app:layout_constraintBottom_toTopOf="@+id/login_message"
         app:layout_constraintEnd_toEndOf="@+id/login_menu"
         app:layout_constraintStart_toStartOf="@+id/login_menu"
-        app:layout_constraintTop_toTopOf="@+id/login_menu"
-        app:layout_constraintVertical_bias="0.251" />
+        app:layout_constraintTop_toBottomOf="@+id/login_label" />
+
+    <TextView
+        android:id="@+id/login_message"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/_5sdp"
+        android:accessibilityLiveRegion="polite"
+        android:fontFamily="@font/figtree_regular"
+        android:minLines="1"
+        android:textColor="@color/projects_flare_400"
+        android:textSize="@dimen/_10ssp"
+
+        app:layout_constraintBottom_toTopOf="@+id/login_button"
+        app:layout_constraintEnd_toEndOf="@+id/login_edit_email"
+        app:layout_constraintStart_toStartOf="@+id/login_edit_email"
+        app:layout_constraintTop_toBottomOf="@+id/login_edit_email" />
 
     <com.kdt.mcgui.MineButton
         android:id="@+id/login_button"
         android:layout_width="0dp"
-        android:layout_height="@dimen/_42sdp"
-        android:layout_marginHorizontal="@dimen/_25sdp"
-        android:layout_marginTop="@dimen/padding_heavy"
-        android:onClick="loginMC"
-        android:text="@string/login_online_login_label"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/_8sdp"
+        android:text="@string/projects_offline_add"
+        android:textSize="@dimen/_12ssp"
 
-        android:textColor="@android:color/white"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/login_edit_email" />
+        app:layout_constraintBottom_toBottomOf="@+id/login_menu"
+        app:layout_constraintEnd_toEndOf="@+id/login_edit_email"
+        app:layout_constraintStart_toStartOf="@+id/login_edit_email"
+        app:layout_constraintTop_toBottomOf="@+id/login_message" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
