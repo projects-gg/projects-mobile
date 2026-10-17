@@ -79,9 +79,18 @@ public class LocalLoginFragment extends Fragment {
             }
         });
         mUsernameEditText.setOnEditorActionListener((v, actionId, event) -> {
-            boolean enter = event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER;
-            if (actionId != EditorInfo.IME_ACTION_DONE && !enter) return false;
-            if (!enter || event.getAction() == KeyEvent.ACTION_DOWN) submit();
+            if (event == null) {
+                // The on-screen keyboard's Done.
+                if (actionId != EditorInfo.IME_ACTION_DONE) return false;
+                submit();
+                return true;
+            }
+            int key = event.getKeyCode();
+            if (key != KeyEvent.KEYCODE_ENTER && key != KeyEvent.KEYCODE_NUMPAD_ENTER) return false;
+            // A hardware keyboard's Enter: the press is taken here and the account is added on the
+            // release, so the release cannot reach the main menu that opens next (it opened the
+            // account list there). Holding the key repeats the press, never the add.
+            if (event.getAction() == KeyEvent.ACTION_UP) submit();
             return true;
         });
         mLoginButton.setOnClickListener(v -> submit());
