@@ -130,6 +130,10 @@ public class MainActivity extends BaseActivity implements ControlButtonMenuListe
         Tools.useANGLE = minecraftProfile.useANGLE;
 
         String gameDirPath = Tools.getGameDirPath(minecraftProfile).getAbsolutePath();
+        // Projects fork: a new game folder starts in Turkish, before the line below creates an empty options.txt.
+        String launchedVersion = getIntent().getStringExtra(INTENT_MINECRAFT_VERSION);
+        gg.projects.mobile.launch.ProjectsLaunchHook.seedOptions(new File(gameDirPath),
+                launchedVersion != null ? launchedVersion : minecraftProfile.lastVersionId);
         MCOptionUtils.load(gameDirPath);
 
         Intent gameServiceIntent = new Intent(this, GameService.class);
