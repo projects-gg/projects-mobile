@@ -1,6 +1,5 @@
 package net.kdt.pojavlaunch.fragments;
 
-import android.animation.LayoutTransition;
 import android.content.Context;
 import android.graphics.Typeface;
 import android.os.Bundle;
@@ -14,7 +13,7 @@ import android.text.style.ClickableSpan;
 import android.text.style.MetricAffectingSpan;
 import android.view.KeyEvent;
 import android.view.View;
-import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
@@ -65,11 +64,6 @@ public class LocalLoginFragment extends Fragment {
         mMessageView = view.findViewById(R.id.login_message);
         mLoginButton = view.findViewById(R.id.login_button);
         mMessageView.setMovementMethod(LinkMovementMethod.getInstance());
-        // A message that needs another line moves the button smoothly (the animator scale applies).
-        LayoutTransition transition = new LayoutTransition();
-        transition.enableTransitionType(LayoutTransition.CHANGING);
-        transition.setDuration(LayoutTransition.CHANGING, 180);
-        ((ViewGroup) view).setLayoutTransition(transition);
 
         mUsernameEditText.addTextChangedListener(new TextWatcher() {
             @Override
@@ -93,19 +87,34 @@ public class LocalLoginFragment extends Fragment {
         mLoginButton.setOnClickListener(v -> submit());
         render();
 
-        if (savedInstanceState == null) {
-            mUsernameEditText.requestFocus();
-            mUsernameEditText.post(() -> {
-                InputMethodManager keyboard = (InputMethodManager) mUsernameEditText.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-                if (keyboard != null) keyboard.showSoftInput(mUsernameEditText, InputMethodManager.SHOW_IMPLICIT);
-            });
-        }
+        if (savedInstanceState == null) focusWhenShown(view);
     }
 
     @Override
     public void onPause() {
         super.onPause();
         hideKeyboard();
+    }
+
+    /**
+     * Focuses the field and opens the keyboard once the screen is on display: the fragment swap
+     * keeps the new view hidden for a frame or two (alpha 0, then invisible). Nothing in this
+     * layout may animate its bounds (a LayoutTransition did): a view that moves farther than its
+     * own height under such an animation passes through a negative size, and Android drops its
+     * focus, which left the keyboard open with nowhere to type.
+     */
+    private void focusWhenShown(View root) {
+        root.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+            @Override
+            public boolean onPreDraw() {
+                if (!mUsernameEditText.hasFocus() && (!mUsernameEditText.isShown() || root.getAlpha() < 1f)) return true;
+                root.getViewTreeObserver().removeOnPreDrawListener(this);
+                if (mUsernameEditText.hasFocus() || !mUsernameEditText.requestFocus()) return true;
+                InputMethodManager keyboard = (InputMethodManager) mUsernameEditText.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                if (keyboard != null) keyboard.showSoftInput(mUsernameEditText, InputMethodManager.SHOW_IMPLICIT);
+                return true;
+            }
+        });
     }
 
     private void submit() {
@@ -155,10 +164,10 @@ public class LocalLoginFragment extends Fragment {
         }
     }
 
-    /** "Golge_Avci kullan" in gold: puts the suggestion into the field. */
+    /** "Golge_Avci kullan" in gold, kept on one line: puts the suggestion into the field. */
     private void appendSuggestion(Context context, SpannableStringBuilder text, final String suggestion) {
         int start = text.length();
-        text.append(context.getString(R.string.projects_offline_use_suggestion, suggestion));
+        text.append(context.getString(R.string.projects_offline_use_suggestion, suggestion).replace(' ', (char) 0xA0));
         int end = text.length();
         final int gold = ContextCompat.getColor(context, R.color.projects_gold_300);
         text.setSpan(new ClickableSpan() {

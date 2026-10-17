@@ -21,7 +21,8 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <!-- Projects fork: the offline account's name, checked as it is typed (LocalLoginFragment):
-         label, field, a message line for problems and the button, packed in the card's middle. -->
+         label, field, the message (two lines kept free, so the button does not move when one
+         appears) and the button, packed in the card's middle. -->
     <TextView
         android:id="@+id/login_label"
         android:layout_width="wrap_content"
@@ -65,7 +66,7 @@
         android:layout_marginTop="@dimen/_5sdp"
         android:accessibilityLiveRegion="polite"
         android:fontFamily="@font/figtree_regular"
-        android:minLines="1"
+        android:minLines="2"
         android:textColor="@color/projects_flare_400"
         android:textSize="@dimen/_10ssp"
 
@@ -78,7 +79,7 @@
         android:id="@+id/login_button"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/_8sdp"
+        android:layout_marginTop="@dimen/_6sdp"
         android:text="@string/projects_offline_add"
         android:textSize="@dimen/_12ssp"
 
