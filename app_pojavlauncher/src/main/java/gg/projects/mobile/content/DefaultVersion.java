@@ -22,6 +22,15 @@ public final class DefaultVersion {
         return config == null ? ContentConfig.DEFAULT_RECOMMENDED_MINECRAFT_VERSION : config.recommendedMinecraft();
     }
 
+    /**
+     * Whether a version list marks {@code versionId} "Önerilen": exactly the recommended version,
+     * as the desktop's lists do. A recommendation the list lacks marks nothing, and versions built
+     * on it (an installed "fabric-loader-0.17.2-26.1.2", a "26.1.2-rc1") are other versions.
+     */
+    public static boolean isRecommended(String versionId, String recommended) {
+        return recommended != null && !recommended.isEmpty() && recommended.equals(versionId);
+    }
+
     /** Amethyst's default profile as upstream creates it, untouched by the player. */
     public static boolean isUpstreamDefault(String name, String version) {
         if (!UPSTREAM_VERSION.equals(version)) return false;

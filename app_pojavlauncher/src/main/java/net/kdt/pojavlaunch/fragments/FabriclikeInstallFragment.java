@@ -4,6 +4,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -182,7 +183,20 @@ public abstract class FabriclikeInstallFragment extends Fragment implements Modl
             if(!onlyStable || fabricVersion.stable) filteredVersions.add(fabricVersion);
         }
         filteredVersions.trimToSize();
-        return new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_dropdown_item, filteredVersions);
+        // Projects: the recommended Minecraft version is marked "Önerilen" (the row text is the item's
+        // toString(); loader versions never match the recommendation).
+        return new ArrayAdapter<FabricVersion>(requireContext(), android.R.layout.simple_spinner_dropdown_item, filteredVersions) {
+            @NonNull
+            @Override
+            public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+                return gg.projects.mobile.ui.VersionMark.mark(super.getView(position, convertView, parent), String.valueOf(getItem(position)));
+            }
+
+            @Override
+            public View getDropDownView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+                return gg.projects.mobile.ui.VersionMark.mark(super.getDropDownView(position, convertView, parent), String.valueOf(getItem(position)));
+            }
+        };
     }
 
     private void onException(Future<?> myFuture, Exception e) {

@@ -2,13 +2,15 @@ package gg.projects.mobile.content;
 
 import static gg.projects.mobile.content.FeedFixtures.utf8;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
 /**
  * {@code LauncherConfig.recommendedMinecraftVersion} (content-format.md "Launcher config"; the
- * desktop's {@code recommended_minecraft}) and the default profile's version.
+ * desktop's {@code recommended_minecraft}), the default profile's version and the "Önerilen" mark.
  */
 public class DefaultVersionTest {
     private static final String BUILT_IN = ContentConfig.DEFAULT_RECOMMENDED_MINECRAFT_VERSION;
@@ -71,6 +73,28 @@ public class DefaultVersionTest {
         assertEquals("26.2", DefaultVersion.next("Default", "26.1.2", "26.1.2", "26.2"));
         // A rename alone is not a version choice.
         assertEquals("26.2", DefaultVersion.next("Benim profilim", "26.1.2", "26.1.2", "26.2"));
+    }
+
+    @Test
+    public void versionListsMarkOnlyTheRecommendedVersion() throws Exception {
+        // The desktop's rule: the row whose id is the recommendation (in any group, an installed copy
+        // of it too); a list without it marks nothing.
+        String recommended = DefaultVersion.recommended(parse("{\"recommendedMinecraftVersion\":\"1.21.11\"}"));
+        assertTrue(DefaultVersion.isRecommended("1.21.11", recommended));
+        for (String other : new String[]{"1.21.1", "1.21.110", "1.21.11-rc1", " 1.21.11", "1.21.11 ", "1.21.11\n",
+                "fabric-loader-0.17.2-1.21.11", "1.21.11-forge-61.0.2", "26.1.2", "", null}) {
+            assertFalse(String.valueOf(other), DefaultVersion.isRecommended(other, recommended));
+        }
+        // A recommended snapshot is marked like any other id.
+        assertTrue(DefaultVersion.isRecommended("26w41a", recommendedOf("26w41a")));
+        // Before any content, and when the config's value is broken, the built-in default is marked.
+        assertTrue(DefaultVersion.isRecommended("26.1.2", DefaultVersion.recommended(null)));
+        assertFalse(DefaultVersion.isRecommended("1.21.11", DefaultVersion.recommended(null)));
+        assertTrue(DefaultVersion.isRecommended("26.1.2",
+                DefaultVersion.recommended(parse("{\"recommendedMinecraftVersion\":\"1.21 4\"}"))));
+        // Nothing to recommend, nothing marked.
+        assertFalse(DefaultVersion.isRecommended("26.1.2", null));
+        assertFalse(DefaultVersion.isRecommended("", ""));
     }
 
     @Test

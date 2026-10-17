@@ -115,8 +115,8 @@ public class VersionListAdapter extends BaseExpandableListAdapter implements Exp
     public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
         if(convertView == null)
             convertView = mLayoutInflater.inflate(android.R.layout.simple_expandable_list_item_1, parent, false);
-        ((TextView) convertView).setText(getChild(groupPosition, childPosition));
-        return convertView;
+        // Projects: the recommended Minecraft version is marked "Önerilen" (getChild stays the id).
+        return gg.projects.mobile.ui.VersionMark.mark(convertView, getChild(groupPosition, childPosition));
     }
 
     @Override

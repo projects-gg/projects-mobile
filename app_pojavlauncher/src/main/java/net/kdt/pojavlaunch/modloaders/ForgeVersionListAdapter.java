@@ -74,9 +74,8 @@ public class ForgeVersionListAdapter extends BaseExpandableListAdapter implement
         if(convertView == null)
             convertView = mLayoutInflater.inflate(android.R.layout.simple_expandable_list_item_1, viewGroup, false);
 
-        ((TextView) convertView).setText(getGameVersion(i));
-
-        return convertView;
+        // Projects: the recommended Minecraft version is marked "Önerilen".
+        return gg.projects.mobile.ui.VersionMark.mark(convertView, getGameVersion(i));
     }
 
     @Override
