@@ -92,7 +92,11 @@ public class PojavApplication extends Application {
 
 	@Override
     protected void attachBaseContext(Context base) {
-        super.attachBaseContext(LocaleUtils.setLocale(base));
+        // Projects fork: the context inside LocaleUtils' wrapper (base, or base with the English
+        // configuration). Android casts an application's base context to its own ContextImpl
+        // before it delivers a broadcast to a manifest receiver (the event reminders' alarm), so a
+        // wrapper there crashed it; an Application gains nothing from the extra wrapper.
+        super.attachBaseContext(LocaleUtils.setLocale(base).getBaseContext());
     }
 
     @Override
