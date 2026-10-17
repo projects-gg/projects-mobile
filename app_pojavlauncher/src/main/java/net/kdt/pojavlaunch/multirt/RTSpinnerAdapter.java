@@ -60,7 +60,8 @@ public class RTSpinnerAdapter implements SpinnerAdapter {
 
         Runtime runtime = mRuntimes.get(position);
         if(position == mRuntimes.size() - 1 ){
-            ((TextView) view).setText(runtime.name);
+            // Projects: the "<Default>" entry reads "Varsayılan" (its name stays the sentinel).
+            ((TextView) view).setText(R.string.global_default);
         }else{
             ((TextView) view).setText(String.format("%s - %s",
                     runtime.name.replace(".tar.xz", ""),
