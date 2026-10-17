@@ -22,6 +22,7 @@ import net.kdt.pojavlaunch.R;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -32,6 +33,7 @@ import gg.projects.mobile.content.HomeContent;
 import gg.projects.mobile.content.HttpStatusException;
 import gg.projects.mobile.content.NewsFeed;
 import gg.projects.mobile.content.Snapshot;
+import gg.projects.mobile.reminders.Reminders;
 
 /** Shared formatting and dialogs for the Projects screens. */
 public final class ProjectsUi {
@@ -83,10 +85,34 @@ public final class ProjectsUi {
         return context.getString(R.string.projects_span_seconds, total);
     }
 
-    /** When an upcoming event starts: "Cumartesi 20:00" within a week, else "20 Ekim 20:00". */
-    public static String eventMoment(Context context, long millis, long now) {
-        String pattern = millis - now < 6 * DateUtils.DAY_IN_MILLIS ? "EEEE HH:mm" : "d MMMM HH:mm";
-        return new SimpleDateFormat(pattern, locale(context)).format(new Date(millis));
+    /**
+     * When an upcoming event starts (the desktop's {@code startMoment}): "Bugün 20:00",
+     * "Yarın 20:00", "Cumartesi 20:00" within the week, "25 Ekim 20:00" beyond it (a weekday alone
+     * would point at the wrong week).
+     */
+    public static String startMoment(Context context, long millis, long now) {
+        Locale locale = locale(context);
+        String time = new SimpleDateFormat("HH:mm", locale).format(new Date(millis));
+        long days = Math.round((startOfDay(millis) - startOfDay(now)) / (double) DateUtils.DAY_IN_MILLIS);
+        if (days == 0) return context.getString(R.string.projects_event_today, time);
+        if (days == 1) return context.getString(R.string.projects_event_tomorrow, time);
+        String pattern = days > 1 && days < 7 ? "EEEE HH:mm" : "d MMMM HH:mm";
+        return new SimpleDateFormat(pattern, locale).format(new Date(millis));
+    }
+
+    private static long startOfDay(long millis) {
+        Calendar day = Calendar.getInstance();
+        day.setTimeInMillis(millis);
+        day.set(Calendar.HOUR_OF_DAY, 0);
+        day.set(Calendar.MINUTE, 0);
+        day.set(Calendar.SECOND, 0);
+        day.set(Calendar.MILLISECOND, 0);
+        return day.getTimeInMillis();
+    }
+
+    /** What a "Hatırlat" bell does when it is tapped (the home card sets or removes the reminder). */
+    public interface BellHandler {
+        void onBell(ReminderBellView bell, HomeContent.Event event);
     }
 
     /** True when every mirror answered "not found": nothing is published yet, not a connection problem. */
@@ -144,9 +170,12 @@ public final class ProjectsUi {
         else openUrl(activity, event.url);
     }
 
-    /** The events behind "+N etkinlik": what runs and what comes, each opening its article or link. */
+    /**
+     * The events behind "+N etkinlik": what runs and what comes, each opening its article or link;
+     * upcoming ones with their "Hatırlat" bell.
+     */
     public static void showOtherEvents(final Activity activity, final Snapshot snapshot, final HomeContent home,
-                                       List<HomeContent.Event> events, long now) {
+                                       List<HomeContent.Event> events, long now, final BellHandler bells) {
         LayoutInflater inflater = LayoutInflater.from(activity);
         View view = inflater.inflate(R.layout.dialog_projects_events, null, false);
         ViewGroup list = view.findViewById(R.id.projects_events_list);
@@ -167,7 +196,11 @@ public final class ProjectsUi {
                         ? activity.getString(R.string.projects_event_started, relative(event.startsAt, now))
                         : activity.getString(R.string.projects_event_ends_in, span(activity, event.endsAt - now)));
             } else {
-                time.setText(eventMoment(activity, event.startsAt, now));
+                time.setText(startMoment(activity, event.startsAt, now));
+                final ReminderBellView bell = row.findViewById(R.id.projects_event_row_bell);
+                bell.setVisibility(View.VISIBLE);
+                bell.setSet(Reminders.isSet(activity, event.id), false);
+                bell.setOnClickListener(v -> bells.onBell(bell, event));
             }
             if (eventOpens(home, event)) {
                 // A caret opens the article on the home screen; the external mark opens the browser.
@@ -186,8 +219,12 @@ public final class ProjectsUi {
         dialog.show();
     }
 
-    /** Full article: cover, category, date, title, the Markdown body and, for Discord posts, the original. */
+    /**
+     * Full article: cover, category, date, title, the Markdown body and, for Discord posts, the
+     * original. Opening it counts as reading it: its "new" dot goes out.
+     */
     public static void showArticle(final Activity activity, final Snapshot snapshot, final NewsFeed.NewsItem item) {
+        NewsSeenStore.markRead(activity, item);
         View view = LayoutInflater.from(activity).inflate(R.layout.dialog_projects_news, null, false);
         ((TextView) view.findViewById(R.id.projects_article_category)).setText(categoryLabel(activity, item));
         ((TextView) view.findViewById(R.id.projects_article_date)).setText(date(activity, item.publishedAtMillis()));

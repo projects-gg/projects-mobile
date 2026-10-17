@@ -60,6 +60,15 @@
         </LinearLayout>
     </LinearLayout>
 
+    <!-- "Hatırlat" for an upcoming event (a live one has none). -->
+    <gg.projects.mobile.ui.ReminderBellView
+        android:id="@+id/projects_event_row_bell"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginStart="4dp"
+        android:visibility="gone"
+        tools:visibility="visible" />
+
     <ImageView
         android:id="@+id/projects_event_row_caret"
         android:layout_width="18dp"

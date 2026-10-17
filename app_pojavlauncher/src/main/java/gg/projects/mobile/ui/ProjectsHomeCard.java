@@ -1,7 +1,13 @@
 package gg.projects.mobile.ui;
 
+import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
+import android.net.Uri;
+import android.os.Build;
+import android.provider.Settings;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.TouchDelegate;
@@ -13,8 +19,10 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
@@ -33,48 +41,69 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.TimeZone;
 
 import gg.projects.mobile.ProjectsContent;
 import gg.projects.mobile.content.DefaultVersion;
+import gg.projects.mobile.content.FeedStatus;
 import gg.projects.mobile.content.HomeContent;
 import gg.projects.mobile.content.LauncherConfig;
 import gg.projects.mobile.content.NewsFeed;
+import gg.projects.mobile.content.NewsSeen;
 import gg.projects.mobile.content.NewsText;
 import gg.projects.mobile.content.PackState;
 import gg.projects.mobile.content.Snapshot;
 import gg.projects.mobile.join.DefaultProfiles;
 import gg.projects.mobile.join.ProjectsJoin;
 import gg.projects.mobile.join.SyncNotice;
+import gg.projects.mobile.mods.Motion;
 import gg.projects.mobile.mods.ModsSummary;
 import gg.projects.mobile.mods.ProjectsModsFragment;
+import gg.projects.mobile.reminders.EventReminders;
+import gg.projects.mobile.reminders.Reminders;
 
 /**
- * The Projects card at the top of the main menu: the latest news (Studio's signed content and the
- * Discord bot's feed, merged as on the desktop), the event card with its countdown, the newest
- * patch notes, the "Modlar" row and the "Projects'e katıl" action.
+ * The Projects card at the top of the main menu: the notice (Studio's maintenance, else an active
+ * problem on the status page), the latest news (Studio's signed content and the Discord bot's
+ * feed, merged as on the desktop), the event card with its countdown and "Hatırlat" bell, the
+ * newest patch notes, the "Modlar" row and the "Projects'e katıl" action. A small gold dot marks
+ * news the player has not seen yet.
  *
  * <p>Re-binding with the same content changes nothing on screen. When something changes, sections
  * that come or go fade in place while the rest glides, and a block that shows something else
  * cross-fades in place ({@link CardMotion}); with animations off everything just appears.
  */
-public final class ProjectsHomeCard implements ProjectsContent.Listener {
+public final class ProjectsHomeCard implements ProjectsContent.Listener, ProjectsUi.BellHandler {
     private static final int SKELETON = 0;
     private static final int CONTENT = 1;
     private static final int MESSAGE = 2;
 
+    /** While a status notice is on screen the card asks again at most this often... */
+    private static final long STATUS_RECHECK_MS = 5 * 60_000L;
+    /** ...and once more this long before it would expire (the bot renews it while the problem lasts)... */
+    private static final long STATUS_RECHECK_BEFORE_EXPIRY_MS = 60_000L;
+    /** ...but never sooner than this (the content is cached for a minute). */
+    private static final long STATUS_RECHECK_MIN_MS = 60_000L;
+    private static final long DOT_FADE_MS = 200;
+
     private final Fragment mFragment;
     private final mcVersionSpinner mVersionSpinner;
     private final View mPlayButton;
+    @Nullable
+    private final ActivityResultLauncher<String> mNotificationPermission;
 
     private final ViewGroup mSceneRoot;
     private final TextView mStatus;
-    private final View mMaintenance;
-    private final TextView mMaintenanceTitle;
-    private final TextView mMaintenanceMessage;
+    private final View mNotice;
+    private final ImageView mNoticeIcon;
+    private final TextView mNoticeTitle;
+    private final TextView mNoticeMessage;
+    private final TextView mNoticeLink;
     private final View mSkeleton;
     private final View mNews;
     private final CoverView mNewsCover;
     private final TextView mNewsCategory;
+    private final View mNewsDot;
     private final TextView mNewsDate;
     private final TextView mNewsTitle;
     private final TextView mNewsSummary;
@@ -83,11 +112,14 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener {
     private final TextView mEventMore;
     private final ImageView mEventCaret;
     private final TextView mEventTitle;
+    private final TextView mEventWhen;
     private final View mEventCountdown;
     private final TextView[] mEventCells;
     private final TextView mEventLeft;
     private final TextView mEventStarted;
+    private final ReminderBellView mEventBell;
     private final View mPatch;
+    private final View mPatchDot;
     private final TextView mPatchMeta;
     private final ImageView mPatchCaret;
     private final TextView mPatchTitle;
@@ -100,6 +132,7 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener {
     private final View mModsRow;
     private final TextView mModsCount;
     private final View mModsBadge;
+    private final Drawable mAllNewsDot;
 
     private Snapshot mSnapshot;
     private HomeContent mHome;
@@ -111,6 +144,7 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener {
 
     /** What is on screen: the card's structure and each block's identity. */
     private String mStructure;
+    private String mNoticeShown;
     private String mNewsShown;
     private String mEventShown;
     private String mPatchShown;
@@ -118,11 +152,26 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener {
     private HomeContent.Event mEventBound;
     private int mEventCount;
     private String mPatchLinesShown;
+    /** The local day the event's start moment was last written for ("Yarın" becomes "Bugün" at midnight). */
+    private long mEventWhenDay = Long.MIN_VALUE;
+    /** The notice's backing drawable (the layout starts with the maintenance one). */
+    private int mNoticeBackground = R.drawable.projects_maintenance_background;
+    /** The news whose dot is on screen (shown, or faded out while it keeps its room). */
+    @Nullable
+    private String mNewsDotItem;
+    @Nullable
+    private String mPatchDotItem;
     /** The recommended Minecraft version the default profile was last checked against. */
     @Nullable
     private String mRecommendedChecked;
+    /** A bell that waits for the notification permission. */
+    @Nullable
+    private PendingBell mPendingBell;
 
     private final Runnable mTick = this::tick;
+    private final Runnable mStatusExpiry = () -> render(System.currentTimeMillis());
+    private final Runnable mStatusRecheck = this::recheckStatus;
+    private final Runnable mSeenChanged = this::onSeenChanged;
 
     /** Keeps the join button in its "preparing" state until the running join finishes. */
     private final Runnable mBusyWatcher = new Runnable() {
@@ -133,20 +182,35 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener {
         }
     };
 
-    public ProjectsHomeCard(Fragment fragment, View root, mcVersionSpinner versionSpinner, View playButton) {
+    private static final class PendingBell {
+        final ReminderBellView bell;
+        final HomeContent.Event event;
+
+        PendingBell(ReminderBellView bell, HomeContent.Event event) {
+            this.bell = bell;
+            this.event = event;
+        }
+    }
+
+    public ProjectsHomeCard(Fragment fragment, View root, mcVersionSpinner versionSpinner, View playButton,
+                            @Nullable ActivityResultLauncher<String> notificationPermission) {
         mFragment = fragment;
         mVersionSpinner = versionSpinner;
         mPlayButton = playButton;
+        mNotificationPermission = notificationPermission;
         View card = root.findViewById(R.id.projects_card);
         mSceneRoot = card.getParent() instanceof ViewGroup ? (ViewGroup) card.getParent() : (ViewGroup) card;
         mStatus = root.findViewById(R.id.projects_status);
-        mMaintenance = root.findViewById(R.id.projects_maintenance);
-        mMaintenanceTitle = root.findViewById(R.id.projects_maintenance_title);
-        mMaintenanceMessage = root.findViewById(R.id.projects_maintenance_message);
+        mNotice = root.findViewById(R.id.projects_maintenance);
+        mNoticeIcon = root.findViewById(R.id.projects_maintenance_icon);
+        mNoticeTitle = root.findViewById(R.id.projects_maintenance_title);
+        mNoticeMessage = root.findViewById(R.id.projects_maintenance_message);
+        mNoticeLink = root.findViewById(R.id.projects_maintenance_link);
         mSkeleton = root.findViewById(R.id.projects_skeleton);
         mNews = root.findViewById(R.id.projects_news);
         mNewsCover = root.findViewById(R.id.projects_news_cover);
         mNewsCategory = root.findViewById(R.id.projects_news_category);
+        mNewsDot = root.findViewById(R.id.projects_news_dot);
         mNewsDate = root.findViewById(R.id.projects_news_date);
         mNewsTitle = root.findViewById(R.id.projects_news_title);
         mNewsSummary = root.findViewById(R.id.projects_news_summary);
@@ -155,12 +219,15 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener {
         mEventMore = root.findViewById(R.id.projects_event_more);
         mEventCaret = root.findViewById(R.id.projects_event_caret);
         mEventTitle = root.findViewById(R.id.projects_event_title);
+        mEventWhen = root.findViewById(R.id.projects_event_when);
         mEventCountdown = root.findViewById(R.id.projects_event_countdown);
         mEventCells = new TextView[]{root.findViewById(R.id.projects_event_days), root.findViewById(R.id.projects_event_hours),
                 root.findViewById(R.id.projects_event_minutes), root.findViewById(R.id.projects_event_seconds)};
         mEventLeft = root.findViewById(R.id.projects_event_left);
         mEventStarted = root.findViewById(R.id.projects_event_started);
+        mEventBell = root.findViewById(R.id.projects_event_bell);
         mPatch = root.findViewById(R.id.projects_patch);
+        mPatchDot = root.findViewById(R.id.projects_patch_dot);
         mPatchMeta = root.findViewById(R.id.projects_patch_meta);
         mPatchCaret = root.findViewById(R.id.projects_patch_caret);
         mPatchTitle = root.findViewById(R.id.projects_patch_title);
@@ -175,9 +242,14 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener {
         mModsBadge = root.findViewById(R.id.projects_mods_row_badge);
 
         Context context = root.getContext();
-        mNewsCover.setMaxCoverHeight(Math.round(200 * context.getResources().getDisplayMetrics().density));
+        float density = context.getResources().getDisplayMetrics().density;
+        mNewsCover.setMaxCoverHeight(Math.round(200 * density));
+        // The bell's box ends at the block's edge (its row reaches into the padding); the icon moves
+        // 5 dp toward it, under the caret above (both centred 9 dp from the content's end).
+        mEventBell.setIconShift(5 * density);
         mJoinButton.setBackground(ChamferDrawable.primary(context));
         mSecondaryButton.setBackground(ChamferDrawable.secondary(context));
+        mAllNewsDot = ContextCompat.getDrawable(context, R.drawable.projects_news_dot);
         mJoinButton.setOnClickListener(v -> join());
         mModsRow.setOnClickListener(v -> openMods());
         mEvent.setOnClickListener(v -> openEvent());
@@ -204,16 +276,30 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener {
     public void onResume() {
         mResumed = true;
         mRecommendedChecked = null;
+        // Shown afresh: a dot that went out since (the news list was visited) leaves no gap.
+        mNewsDotItem = null;
+        mPatchDotItem = null;
+        NewsSeenStore.addListener(mSeenChanged);
         ProjectsContent.addListener(this);
         ProjectsContent.refresh(mFragment.requireContext(), false);
         setJoining(ProjectsJoin.isBusy());
+        // A reminder whose moment came while notifications were off is told now.
+        Reminders.tellInApp(mFragment.requireContext());
+    }
+
+    /** An article was opened somewhere: its dot goes out. */
+    private void onSeenChanged() {
+        if (mFragment.isAdded()) render(System.currentTimeMillis());
     }
 
     public void onPause() {
         mResumed = false;
+        NewsSeenStore.removeListener(mSeenChanged);
         ProjectsContent.removeListener(this);
         mJoinButton.removeCallbacks(mBusyWatcher);
         mEvent.removeCallbacks(mTick);
+        mNotice.removeCallbacks(mStatusExpiry);
+        mNotice.removeCallbacks(mStatusRecheck);
     }
 
     private void setJoining(boolean joining) {
@@ -238,7 +324,10 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener {
         mRefreshing = refreshing;
         followRecommendedVersion(snapshot);
         refreshModsRow(snapshot);
-        render(System.currentTimeMillis());
+        long now = System.currentTimeMillis();
+        // Reminders follow events Studio moved or hid.
+        Reminders.onContent(mFragment.requireContext(), snapshot, now);
+        render(now);
     }
 
     /**
@@ -291,7 +380,9 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener {
 
         LauncherConfig.Maintenance maintenance = snapshot == null || snapshot.config == null ? null : snapshot.config.maintenance;
         boolean maintenanceOn = maintenance != null && maintenance.isActive(now);
-        String status = ProjectsUi.offlineSince(activity, snapshot);
+        // Studio's maintenance notice wins; the status notice shows only while it has not expired.
+        FeedStatus feedStatus = maintenanceOn || home == null ? null : home.status;
+        String offline = ProjectsUi.offlineSince(activity, snapshot);
 
         NewsFeed.NewsItem notes = home == null ? null : home.patchNotes;
         NewsFeed.NewsItem top = null;
@@ -333,6 +424,9 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener {
         boolean live = event != null && event.isLive(now);
         int others = home == null ? 0 : Math.max(0, home.events.size() - 1);
         boolean eventOpens = event != null && ProjectsUi.eventOpens(home, event);
+        String noticeShown = maintenanceOn ? "maintenance\n" + maintenance.title + '\n' + maintenance.message
+                : feedStatus != null ? "status\n" + feedStatus.level + '\n' + feedStatus.title + '\n' + feedStatus.message
+                + '\n' + (feedStatus.url != null) : null;
         String newsShown = top == null ? null : top.id + '\n' + top.title + '\n' + top.summary + '\n'
                 + top.publishedAtMillis() + '\n' + coverKey(top, showsCover(top));
         String eventShown = event == null ? null : event.id + '\n' + live + '\n' + event.title;
@@ -340,12 +434,16 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener {
                 : pack != null ? "pack\n" + pack.packName + '\n' + pack.packVersion + '\n' + pack.changelog : null;
         boolean news = state == CONTENT && top != null;
         boolean allNews = state == SKELETON || (home != null && !home.news.isEmpty());
-        String structure = state + "|" + maintenanceOn + "|" + (status != null) + "|" + messageTitle + "|" + retry + "|" + allNews
+        String structure = state + "|" + noticeShown + "|" + (offline != null) + "|" + messageTitle + "|" + retry + "|" + allNews
                 + "|" + (news ? newsShown : "") + "|" + (state == CONTENT ? eventShown + "|" + others + "|" + eventOpens + "|" + patchShown : "");
 
         boolean changed = mStructure != null && !structure.equals(mStructure);
         if (changed && CardMotion.canAnimate(mSceneRoot)) {
             // Blocks that stay but show something else cross-fade in place.
+            if (noticeShown != null && mNotice.getVisibility() == View.VISIBLE && mNoticeShown != null
+                    && !mNoticeShown.equals(noticeShown)) {
+                CardMotion.crossfade(mNotice);
+            }
             if (news && mNews.getVisibility() == View.VISIBLE && mNewsShown != null && !mNewsShown.equals(newsShown)) {
                 CardMotion.crossfade(mNews);
             }
@@ -361,15 +459,14 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener {
         }
         mStructure = structure;
 
-        // Maintenance and the offline line.
-        if (maintenanceOn) {
-            setText(mMaintenanceTitle, isBlank(maintenance.title) ? activity.getString(R.string.projects_maintenance_title) : maintenance.title.trim());
-            setText(mMaintenanceMessage, isBlank(maintenance.message) ? "" : maintenance.message.trim());
-            show(mMaintenanceMessage, !isBlank(maintenance.message));
-        }
-        show(mMaintenance, maintenanceOn);
-        if (status != null) setText(mStatus, status);
-        show(mStatus, status != null);
+        // The notice and the offline line.
+        if (maintenanceOn) bindMaintenance(activity, maintenance);
+        else if (feedStatus != null) bindStatus(activity, feedStatus);
+        show(mNotice, noticeShown != null);
+        mNoticeShown = noticeShown;
+        scheduleStatus(feedStatus, now);
+        if (offline != null) setText(mStatus, offline);
+        show(mStatus, offline != null);
 
         show(mSkeleton, state == SKELETON);
         show(mMessage, state == MESSAGE);
@@ -378,10 +475,13 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener {
             setText(mMessageBody, activity.getString(messageBody));
         }
 
+        NewsSeen seen = NewsSeenStore.get(activity);
+
         // The latest story.
         show(mNews, news);
         if (news) bindNews(activity, snapshot, top);
         mNewsShown = news ? newsShown : null;
+        mNewsDotItem = bindDot(mNewsDot, mNewsDotItem, news ? top.id : null, news && seen.isNew(top, now));
 
         // The event card.
         boolean eventVisible = state == CONTENT && event != null;
@@ -396,15 +496,123 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener {
         show(mPatch, patchVisible);
         mPatchShown = patchVisible ? patchShown : null;
         if (patchVisible) bindPatch(activity, snapshot, notes, pack, now);
+        boolean notesShown = patchVisible && notes != null;
+        mPatchDotItem = bindDot(mPatchDot, mPatchDotItem, notesShown ? notes.id : null, notesShown && seen.isNew(notes, now));
 
         if (retry) {
-            showSecondary(R.string.projects_retry, v -> ProjectsContent.refresh(mFragment.requireContext(), true));
+            showSecondary(R.string.projects_retry, v -> ProjectsContent.refresh(mFragment.requireContext(), true), false);
         } else if (allNews) {
-            showSecondary(R.string.projects_all_news, v -> openAllNews());
+            // The dot when news the card does not show is new.
+            boolean unseen = false;
+            if (home != null) {
+                for (NewsFeed.NewsItem item : home.news) {
+                    boolean onCard = (news && item.id.equals(top.id)) || (notesShown && item.id.equals(notes.id));
+                    if (!onCard && seen.isNew(item, now)) {
+                        unseen = true;
+                        break;
+                    }
+                }
+            }
+            showSecondary(R.string.projects_all_news, v -> openAllNews(), unseen);
         } else {
             show(mSecondaryButton, false);
         }
         scheduleTick(now);
+    }
+
+    /**
+     * Shows {@code dot} for {@code item} while it is new. A dot that goes out while its item stays
+     * on screen (the article was opened) fades and keeps its room, so the date beside it does not
+     * move; anything else just hides it. Returns the item whose dot is on screen.
+     */
+    @Nullable
+    private static String bindDot(View dot, @Nullable String shownFor, @Nullable String item, boolean isNew) {
+        if (isNew) {
+            dot.animate().cancel();
+            dot.setAlpha(1f);
+            dot.setVisibility(View.VISIBLE);
+            return item;
+        }
+        if (item != null && item.equals(shownFor) && dot.getVisibility() != View.GONE) {
+            if (dot.getVisibility() == View.VISIBLE && dot.getAlpha() > 0f) {
+                if (Motion.enabled(dot.getContext()) && dot.isAttachedToWindow()) {
+                    dot.animate().alpha(0f).setDuration(DOT_FADE_MS).setInterpolator(Motion.EASE_OUT)
+                            .withEndAction(() -> dot.setVisibility(View.INVISIBLE)).start();
+                } else {
+                    dot.setVisibility(View.INVISIBLE);
+                }
+            }
+            return item;
+        }
+        dot.animate().cancel();
+        dot.setAlpha(1f);
+        dot.setVisibility(View.GONE);
+        return null;
+    }
+
+    /** Swaps the notice's backing only when it changes (a new drawable would restart its ripple). */
+    private void setNoticeBackground(int drawable) {
+        if (mNoticeBackground == drawable) return;
+        mNoticeBackground = drawable;
+        mNotice.setBackgroundResource(drawable);
+    }
+
+    private void bindMaintenance(Context context, LauncherConfig.Maintenance maintenance) {
+        setNoticeBackground(R.drawable.projects_maintenance_background);
+        mNoticeIcon.setImageResource(R.drawable.projects_ic_wrench);
+        mNoticeIcon.setImageTintList(ContextCompat.getColorStateList(context, R.color.projects_gold_300));
+        setText(mNoticeTitle, isBlank(maintenance.title) ? context.getString(R.string.projects_maintenance_title) : maintenance.title.trim());
+        setText(mNoticeMessage, isBlank(maintenance.message) ? "" : maintenance.message.trim());
+        show(mNoticeMessage, !isBlank(maintenance.message));
+        show(mNoticeLink, false);
+        mNotice.setOnClickListener(null);
+        mNotice.setClickable(false);
+        mNotice.setFocusable(false);
+    }
+
+    /** The status page's active problem: an outage in the error colour with a faint ring, else gold. */
+    private void bindStatus(final FragmentActivity activity, final FeedStatus status) {
+        boolean outage = status.level == FeedStatus.Level.OUTAGE;
+        setNoticeBackground(outage ? R.drawable.projects_notice_outage_background : R.drawable.projects_maintenance_background);
+        mNoticeIcon.setImageResource(outage ? R.drawable.projects_ic_warning_octagon
+                : status.level == FeedStatus.Level.DEGRADED ? R.drawable.projects_ic_warning : R.drawable.projects_ic_megaphone);
+        mNoticeIcon.setImageTintList(ContextCompat.getColorStateList(activity,
+                outage ? R.color.projects_flare_400 : R.color.projects_gold_300));
+        setText(mNoticeTitle, status.title.trim());
+        setText(mNoticeMessage, status.message.trim());
+        show(mNoticeMessage, !isBlank(status.message));
+        final String url = status.url;
+        boolean link = url != null;
+        show(mNoticeLink, link);
+        mNotice.setClickable(link);
+        mNotice.setFocusable(link);
+        mNotice.setOnClickListener(link ? v -> ProjectsUi.openUrl(activity, url) : null);
+        if (!link) mNotice.setClickable(false);
+    }
+
+    /**
+     * While a status notice is on screen: it leaves at its {@code expiresAt} without waiting for a
+     * refresh, and the card asks the servers again now and then and shortly before it expires, so it
+     * goes soon after the problem is over and stays while the bot keeps renewing it.
+     */
+    private void scheduleStatus(@Nullable FeedStatus status, long now) {
+        mNotice.removeCallbacks(mStatusExpiry);
+        mNotice.removeCallbacks(mStatusRecheck);
+        if (status == null || !mResumed) return;
+        mNotice.postDelayed(mStatusExpiry, Math.max(0, status.expiresAt - now) + 50);
+        mNotice.postDelayed(mStatusRecheck, recheckDelay(status, now));
+    }
+
+    private static long recheckDelay(FeedStatus status, long now) {
+        long beforeExpiry = status.expiresAt - STATUS_RECHECK_BEFORE_EXPIRY_MS - now;
+        return Math.max(STATUS_RECHECK_MIN_MS, Math.min(beforeExpiry, STATUS_RECHECK_MS));
+    }
+
+    private void recheckStatus() {
+        if (!mResumed || !mFragment.isAdded()) return;
+        ProjectsContent.refresh(mFragment.requireContext(), true);
+        FeedStatus status = mHome == null ? null : mHome.status;
+        if (status != null) mNotice.postDelayed(mStatusRecheck, recheckDelay(status, System.currentTimeMillis()));
     }
 
     private void bindNews(final FragmentActivity activity, final Snapshot snapshot, final NewsFeed.NewsItem item) {
@@ -417,7 +625,7 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener {
         mNews.setOnClickListener(v -> ProjectsUi.showArticle(activity, snapshot, item));
     }
 
-    private void bindEvent(Context context, HomeContent.Event event, boolean live, int others, boolean opens, long now) {
+    private void bindEvent(Context context, final HomeContent.Event event, boolean live, int others, boolean opens, long now) {
         setText(mEventLabel, context.getString(live ? R.string.projects_event_live : R.string.projects_event_next));
         mEventLabel.setTextColor(ContextCompat.getColor(context, live ? R.color.projects_gold_300 : R.color.projects_ash_300));
         setText(mEventTitle, event.title);
@@ -432,7 +640,21 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener {
         show(mEventCountdown, !started);
         show(mEventStarted, started);
         show(mEventLeft, live);
+        // An upcoming event: when it starts, and the bell.
+        show(mEventWhen, !live);
+        show(mEventBell, !live);
+        if (!live) {
+            mEventWhenDay = Long.MIN_VALUE;
+            boolean set = Reminders.isSet(context, event.id);
+            if (mEventBell.isSet() != set) mEventBell.setSet(set, false);
+            mEventBell.setOnClickListener(v -> onBell(mEventBell, event));
+        }
         updateCountdown(context, now);
+    }
+
+    /** The local day of {@code millis} (after 1970), to notice midnight cheaply. */
+    private static long localDay(long millis) {
+        return (millis + TimeZone.getDefault().getOffset(millis)) / 86_400_000L;
     }
 
     /** The countdown digits (or "X önce başladı"), updated every second while the card is shown. */
@@ -440,6 +662,13 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener {
         HomeContent.Event event = mEventBound;
         if (event == null) return;
         boolean live = event.isLive(now);
+        if (!live) {
+            long day = localDay(now);
+            if (day != mEventWhenDay) {
+                mEventWhenDay = day;
+                setText(mEventWhen, ProjectsUi.startMoment(context, event.startsAt, now));
+            }
+        }
         if (live && event.openEnded) {
             setText(mEventStarted, context.getString(R.string.projects_event_started, ProjectsUi.relative(event.startsAt, now)));
             return;
@@ -546,12 +775,108 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener {
         long now = System.currentTimeMillis();
         List<HomeContent.Event> order = HomeContent.cardEvents(mHome.events, now);
         if (order.size() < 2) return;
-        ProjectsUi.showOtherEvents(activity, mSnapshot, mHome, order.subList(1, order.size()), now);
+        ProjectsUi.showOtherEvents(activity, mSnapshot, mHome, order.subList(1, order.size()), now, this);
     }
 
-    private void showSecondary(int label, View.OnClickListener listener) {
-        setText(mSecondaryButton, mSecondaryButton.getContext().getString(label));
+    // ---- reminders ----
+
+    /**
+     * The "Hatırlat" bell: sets or removes the event's reminder. Setting one needs notifications:
+     * on Android 13 and newer the permission is asked for now (never before a bell is tapped), and
+     * when notifications are off for good the player is offered the settings instead.
+     */
+    @Override
+    public void onBell(ReminderBellView bell, HomeContent.Event event) {
+        FragmentActivity activity = mFragment.getActivity();
+        if (activity == null) return;
+        if (Reminders.isSet(activity, event.id)) {
+            Reminders.toggle(activity, event);
+            bell.setSet(false, true);
+            return;
+        }
+        Reminders.ensureChannel(activity);
+        if (Reminders.canNotify(activity)) {
+            setReminder(activity, bell, event);
+        } else if (Build.VERSION.SDK_INT >= 33 && mNotificationPermission != null
+                && ContextCompat.checkSelfPermission(activity, Manifest.permission.POST_NOTIFICATIONS)
+                != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            mPendingBell = new PendingBell(bell, event);
+            mNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS);
+        } else {
+            showNotificationsOff(activity);
+        }
+    }
+
+    /** The answer to the notification permission asked for by {@link #onBell}. */
+    public void onNotificationPermission(boolean granted) {
+        PendingBell pending = mPendingBell;
+        mPendingBell = null;
+        FragmentActivity activity = mFragment.getActivity();
+        if (pending == null || activity == null || !mFragment.isAdded()) return;
+        if (granted && Reminders.canNotify(activity)) {
+            setReminder(activity, pending.bell, pending.event);
+        } else if (granted || !ActivityCompat.shouldShowRequestPermissionRationale(activity, Manifest.permission.POST_NOTIFICATIONS)) {
+            // Android will not ask again (or only this app's reminders are off): the settings can.
+            showNotificationsOff(activity);
+        } else {
+            Toast.makeText(activity, R.string.projects_reminder_needs_notifications, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void setReminder(final FragmentActivity activity, final ReminderBellView bell, HomeContent.Event event) {
+        if (!Reminders.toggle(activity, event)) return;
+        bell.setSet(true, true);
+        if (EventReminders.ringsAt(event.startsAt) <= System.currentTimeMillis()) {
+            // Less than five minutes left: the reminder itself comes at once.
+            Reminders.tellInApp(activity);
+        } else if (Reminders.takeFirstExplanation(activity)) {
+            // A beat after the bell, so the swing is not held back by the message appearing.
+            bell.postDelayed(() -> {
+                if (mFragment.isAdded()) Toast.makeText(activity, R.string.projects_reminder_explained, Toast.LENGTH_LONG).show();
+            }, 180);
+        }
+    }
+
+    private static void showNotificationsOff(final FragmentActivity activity) {
+        new AlertDialog.Builder(activity)
+                .setTitle(R.string.projects_reminder_notifications_off_title)
+                .setMessage(R.string.projects_reminder_notifications_off)
+                .setPositiveButton(R.string.projects_open_settings, (d, w) -> openNotificationSettings(activity))
+                .setNegativeButton(R.string.projects_not_now, null)
+                .show();
+    }
+
+    /** The reminder channel's settings when only it is off, else the app's notification settings. */
+    private static void openNotificationSettings(FragmentActivity activity) {
+        Intent intent;
+        if (Build.VERSION.SDK_INT >= 26) {
+            boolean channel = Reminders.channelBlocked(activity);
+            intent = new Intent(channel ? Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS : Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                    .putExtra(Settings.EXTRA_APP_PACKAGE, activity.getPackageName());
+            if (channel) intent.putExtra(Settings.EXTRA_CHANNEL_ID, "projects_event_reminders");
+        } else {
+            intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", activity.getPackageName(), null));
+        }
+        try {
+            activity.startActivity(intent);
+        } catch (RuntimeException e) {
+            activity.startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    Uri.fromParts("package", activity.getPackageName(), null)));
+        }
+    }
+
+    // ---- actions ----
+
+    private void showSecondary(int label, View.OnClickListener listener, boolean dot) {
+        Context context = mSecondaryButton.getContext();
+        setText(mSecondaryButton, context.getString(label));
         mSecondaryButton.setOnClickListener(listener);
+        Drawable[] current = mSecondaryButton.getCompoundDrawablesRelative();
+        if ((current[0] != null) != dot) {
+            mSecondaryButton.setCompoundDrawablesRelativeWithIntrinsicBounds(dot ? mAllNewsDot : null, null, null, null);
+            mSecondaryButton.setCompoundDrawablePadding(dot ? Math.round(7 * context.getResources().getDisplayMetrics().density) : 0);
+        }
+        mSecondaryButton.setContentDescription(dot ? context.getString(R.string.projects_all_news_new) : null);
         show(mSecondaryButton, true);
     }
 

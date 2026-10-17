@@ -192,6 +192,12 @@
     <string name="projects_version_needs_internet">Minecraft %1$s henüz indirilmedi. İndirmek için internete bağlan.</string>
 
     <!-- 0.1.4: the dot on unseen news, event reminders and the status page notice. -->
+    <string name="projects_news_new">Yeni</string>
+    <string name="projects_all_news_new">Tüm haberler, yeni haber var</string>
+    <string name="projects_event_today">Bugün %1$s</string>
+    <string name="projects_event_tomorrow">Yarın %1$s</string>
+    <string name="projects_reminder_bell">Hatırlat</string>
+    <string name="projects_reminder_explained">Başlamadan 5 dakika önce haber vereceğiz.</string>
     <plurals name="projects_reminder_starts_in">
         <item quantity="one">%1$d dakika sonra başlıyor.</item>
         <item quantity="other">%1$d dakika sonra başlıyor.</item>
@@ -204,4 +210,10 @@
     <string name="projects_reminder_running_toast">%1$s sürüyor</string>
     <string name="projects_reminder_channel">Etkinlik hatırlatmaları</string>
     <string name="projects_reminder_channel_description">Hatırlat dediğin etkinlikler, başlamadan 5 dakika önce.</string>
+    <string name="projects_reminder_notifications_off_title">Bildirimler kapalı</string>
+    <string name="projects_reminder_notifications_off">Hatırlatabilmemiz için bildirimlere izin ver.</string>
+    <string name="projects_reminder_needs_notifications">Hatırlatma için bildirimlere izin ver.</string>
+    <string name="projects_open_settings">Ayarları aç</string>
+    <string name="projects_not_now">Şimdi değil</string>
+    <string name="projects_status_page">Durum sayfası</string>
 </resources>

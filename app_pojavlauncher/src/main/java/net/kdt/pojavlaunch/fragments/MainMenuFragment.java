@@ -14,6 +14,8 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -42,6 +44,11 @@ public class MainMenuFragment extends Fragment {
 
     private mcVersionSpinner mVersionSpinner;
     private ProjectsHomeCard mProjectsCard;
+    // Projects fork: the event reminder's bell asks for the notification permission when it is tapped.
+    private final ActivityResultLauncher<String> mNotificationPermission = registerForActivityResult(
+            new ActivityResultContracts.RequestPermission(), granted -> {
+                if (mProjectsCard != null) mProjectsCard.onNotificationPermission(granted);
+            });
 
     public MainMenuFragment(){
         super(R.layout.fragment_launcher);
@@ -88,7 +95,7 @@ public class MainMenuFragment extends Fragment {
 
         mShareLogsButton.setOnClickListener((v) -> shareLog(requireContext()));
 
-        mProjectsCard = new ProjectsHomeCard(this, view, mVersionSpinner, mPlayButton);
+        mProjectsCard = new ProjectsHomeCard(this, view, mVersionSpinner, mPlayButton, mNotificationPermission);
 
         mOpenDirectoryButton.setOnClickListener((v)-> {
             if (Tools.isDemoProfile(v.getContext())){ // Say a different message when on demo profile since they might see the hidden demo folder

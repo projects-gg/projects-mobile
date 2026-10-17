@@ -41,6 +41,17 @@
             android:textSize="12sp"
             tools:text="Etkinlik" />
 
+        <!-- New to the player since the last visit; fades out when read and keeps its room. -->
+        <View
+            android:id="@+id/projects_item_dot"
+            android:layout_width="6dp"
+            android:layout_height="6dp"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/projects_news_dot"
+            android:contentDescription="@string/projects_news_new"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
         <TextView
             android:id="@+id/projects_item_date"
             android:layout_width="0dp"

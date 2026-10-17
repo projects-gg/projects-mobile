@@ -50,35 +50,69 @@
             tools:visibility="visible" />
     </LinearLayout>
 
+    <!-- The notice: Studio's maintenance notice, or else an active problem on the status page (from
+         the Discord feed). One at a time, maintenance first; the status page opens from the whole block. -->
     <LinearLayout
         android:id="@+id/projects_maintenance"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
         android:background="@drawable/projects_maintenance_background"
-        android:orientation="vertical"
+        android:orientation="horizontal"
         android:padding="12dp"
         android:visibility="gone"
         tools:visibility="visible">
 
-        <TextView
-            android:id="@+id/projects_maintenance_title"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:fontFamily="@font/figtree_semibold"
-            android:textColor="@color/projects_bone_100"
-            android:textSize="14sp"
-            tools:text="Bakım çalışması" />
+        <ImageView
+            android:id="@+id/projects_maintenance_icon"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginTop="0.5dp"
+            android:importantForAccessibility="no"
+            android:src="@drawable/projects_ic_wrench"
+            android:tint="@color/projects_gold_300" />
 
-        <TextView
-            android:id="@+id/projects_maintenance_message"
-            android:layout_width="match_parent"
+        <LinearLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:fontFamily="@font/figtree_regular"
-            android:textColor="@color/projects_bone_100"
-            android:textSize="13sp"
-            tools:text="Sunucular kısa bir süre bakımda olacak." />
+            android:layout_marginStart="10dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/projects_maintenance_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/figtree_semibold"
+                android:textColor="@color/projects_bone_100"
+                android:textSize="14sp"
+                tools:text="Bakım çalışması" />
+
+            <TextView
+                android:id="@+id/projects_maintenance_message"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:fontFamily="@font/figtree_regular"
+                android:textColor="@color/projects_bone_100"
+                android:textSize="13sp"
+                tools:text="Sunucular kısa bir süre bakımda olacak." />
+
+            <TextView
+                android:id="@+id/projects_maintenance_link"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:drawableEnd="@drawable/projects_ic_arrow_square_out_small"
+                android:drawablePadding="4dp"
+                android:fontFamily="@font/figtree_semibold"
+                android:gravity="center_vertical"
+                android:text="@string/projects_status_page"
+                android:textColor="@color/projects_gold_300"
+                android:textSize="13sp"
+                android:visibility="gone"
+                tools:visibility="visible" />
+        </LinearLayout>
     </LinearLayout>
 
     <!-- Loading: skeleton shaped like a news entry. -->
@@ -149,6 +183,17 @@
                 android:textColor="@color/projects_gold_300"
                 android:textSize="12sp"
                 tools:text="Yama notları" />
+
+            <!-- Shown while the story is new to the player; it fades out once read and keeps its room. -->
+            <View
+                android:id="@+id/projects_news_dot"
+                android:layout_width="6dp"
+                android:layout_height="6dp"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/projects_news_dot"
+                android:contentDescription="@string/projects_news_new"
+                android:visibility="gone"
+                tools:visibility="visible" />
 
             <TextView
                 android:id="@+id/projects_news_date"
@@ -330,6 +375,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="14dp"
         android:background="@drawable/projects_row_background"
+        android:clipToPadding="false"
         android:orientation="vertical"
         android:paddingStart="14dp"
         android:paddingTop="10dp"
@@ -399,11 +445,29 @@
             android:textSize="16sp"
             tools:text="Kış etkinliği finali" />
 
+        <!-- When an upcoming event starts: "Bugün 20:00", "Yarın 20:00", "Cumartesi 20:00". -->
+        <TextView
+            android:id="@+id/projects_event_when"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="1dp"
+            android:fontFamily="@font/figtree_regular"
+            android:fontFeatureSettings="tnum"
+            android:maxLines="1"
+            android:textColor="@color/projects_ash_300"
+            android:textSize="12.5sp"
+            android:visibility="gone"
+            tools:text="Yarın 20:00"
+            tools:visibility="visible" />
+
+        <!-- The bell sits on the digits' line, its icon under the caret above: the row reaches into
+             the block's end padding, so the bell keeps its full touch area there. -->
         <LinearLayout
             android:id="@+id/projects_event_countdown"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
+            android:layout_marginEnd="-10dp"
             android:gravity="bottom"
             android:orientation="horizontal">
 
@@ -460,6 +524,19 @@
                 android:id="@+id/projects_event_left"
                 style="@style/ProjectsCountdownUnit"
                 android:text="@string/projects_event_left" />
+
+            <Space
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
+
+            <gg.projects.mobile.ui.ReminderBellView
+                android:id="@+id/projects_event_bell"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="center_vertical"
+                android:visibility="gone"
+                tools:visibility="visible" />
         </LinearLayout>
 
         <TextView
@@ -504,6 +581,15 @@
                 android:text="@string/projects_patch_notes"
                 android:textColor="@color/projects_bone_100"
                 android:textSize="14sp" />
+
+            <View
+                android:id="@+id/projects_patch_dot"
+                android:layout_width="6dp"
+                android:layout_height="6dp"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/projects_news_dot"
+                android:contentDescription="@string/projects_news_new"
+                android:visibility="gone" />
 
             <TextView
                 android:id="@+id/projects_patch_meta"

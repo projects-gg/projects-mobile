@@ -29,6 +29,7 @@ import java.util.Set;
 
 import gg.projects.mobile.ProjectsContent;
 import gg.projects.mobile.content.NewsFeed;
+import gg.projects.mobile.content.NewsSeen;
 import gg.projects.mobile.content.Snapshot;
 import gg.projects.mobile.mods.Motion;
 
@@ -36,9 +37,14 @@ import gg.projects.mobile.mods.Motion;
  * Every visible Projects news entry, Studio's and the Discord feed's merged as on the desktop
  * (pinned first in their order, then newest). Rows that arrive later (the feed follows the
  * content) fade in where they belong while the others glide; covers keep their space.
+ *
+ * <p>News the player has not seen yet has a small gold dot before its date. The screen decides
+ * with what was seen when it opened, so the dots stay for the whole visit, and counts everything
+ * it shows as seen from then on; opening an article fades its dot out where it is.
  */
 public class ProjectsNewsFragment extends Fragment implements ProjectsContent.Listener {
     public static final String TAG = "ProjectsNewsFragment";
+    private static final long DOT_FADE_MS = 200;
 
     private final NewsAdapter mAdapter = new NewsAdapter();
     private RecyclerView mList;
@@ -48,6 +54,9 @@ public class ProjectsNewsFragment extends Fragment implements ProjectsContent.Li
     private Button mRetry;
     private TextView mStatus;
     private boolean mAnimateRows;
+    /** What was seen when the screen opened. */
+    private NewsSeen mSeenAtOpen;
+    private final Runnable mSeenChanged = this::updateDots;
 
     public ProjectsNewsFragment() {
         super(R.layout.fragment_projects_news);
@@ -78,6 +87,7 @@ public class ProjectsNewsFragment extends Fragment implements ProjectsContent.Li
         mRetry.setBackground(ChamferDrawable.secondary(view.getContext()));
         mRetry.setOnClickListener(v -> ProjectsContent.refresh(requireContext(), true));
         mStatus = view.findViewById(R.id.projects_news_status);
+        if (mSeenAtOpen == null) mSeenAtOpen = NewsSeenStore.get(view.getContext());
     }
 
     /** Slide up and fade in; leave a little faster (as the mod screen). */
@@ -105,6 +115,7 @@ public class ProjectsNewsFragment extends Fragment implements ProjectsContent.Li
     @Override
     public void onResume() {
         super.onResume();
+        NewsSeenStore.addListener(mSeenChanged);
         ProjectsContent.addListener(this);
         ProjectsContent.refresh(requireContext(), false);
     }
@@ -112,7 +123,23 @@ public class ProjectsNewsFragment extends Fragment implements ProjectsContent.Li
     @Override
     public void onPause() {
         super.onPause();
+        NewsSeenStore.removeListener(mSeenChanged);
         ProjectsContent.removeListener(this);
+    }
+
+    /** New to the player: published after what was seen when the screen opened, and not opened since. */
+    private boolean isNew(NewsFeed.NewsItem item) {
+        return mSeenAtOpen != null && mSeenAtOpen.isNew(item, System.currentTimeMillis())
+                && !NewsSeenStore.get(requireContext()).isRead(item.id);
+    }
+
+    /** An article was opened: its dot fades out where it is. */
+    private void updateDots() {
+        if (mList == null || !isAdded()) return;
+        for (int i = 0; i < mList.getChildCount(); i++) {
+            RecyclerView.ViewHolder holder = mList.getChildViewHolder(mList.getChildAt(i));
+            if (holder instanceof NewsHolder) ((NewsHolder) holder).updateDot();
+        }
     }
 
     @Override
@@ -121,6 +148,8 @@ public class ProjectsNewsFragment extends Fragment implements ProjectsContent.Li
         List<NewsFeed.NewsItem> items = snapshot == null
                 ? new ArrayList<NewsFeed.NewsItem>() : snapshot.home(System.currentTimeMillis()).news;
         mAdapter.submit(snapshot, items);
+        // Everything this visit shows counts as seen from now on (the dots stay until it ends).
+        NewsSeenStore.advance(requireContext(), items);
         boolean message = false;
         if (items.isEmpty() && !(refreshing && (snapshot == null || !snapshot.hasContent()))) {
             boolean empty = snapshot != null && (snapshot.news != null || ProjectsUi.nothingPublished(snapshot));
@@ -232,6 +261,7 @@ public class ProjectsNewsFragment extends Fragment implements ProjectsContent.Li
             holder.itemView.animate().cancel();
             holder.itemView.setAlpha(1f);
             holder.itemView.setTranslationY(0f);
+            holder.mDot.animate().cancel();
         }
 
         @Override
@@ -243,16 +273,21 @@ public class ProjectsNewsFragment extends Fragment implements ProjectsContent.Li
     private final class NewsHolder extends RecyclerView.ViewHolder {
         private final CoverView mCover;
         private final TextView mCategory;
+        private final View mDot;
         private final TextView mDate;
         private final TextView mPinned;
         private final TextView mTitle;
         private final TextView mSummary;
+        private NewsFeed.NewsItem mItem;
+        /** The item whose dot this row shows (or keeps the room of, after it faded). */
+        private String mDotFor;
 
         NewsHolder(View view) {
             super(view);
             mCover = view.findViewById(R.id.projects_item_cover);
             mCover.setMaxCoverHeight(Math.round(180 * view.getResources().getDisplayMetrics().density));
             mCategory = view.findViewById(R.id.projects_item_category);
+            mDot = view.findViewById(R.id.projects_item_dot);
             mDate = view.findViewById(R.id.projects_item_date);
             mPinned = view.findViewById(R.id.projects_item_pinned);
             mTitle = view.findViewById(R.id.projects_item_title);
@@ -260,6 +295,7 @@ public class ProjectsNewsFragment extends Fragment implements ProjectsContent.Li
         }
 
         void bind(final Snapshot snapshot, final NewsFeed.NewsItem item) {
+            mItem = item;
             mCategory.setText(ProjectsUi.categoryLabel(itemView.getContext(), item));
             mDate.setText(ProjectsUi.date(itemView.getContext(), item.publishedAtMillis()));
             mPinned.setVisibility(item.pinned ? View.VISIBLE : View.GONE);
@@ -268,6 +304,29 @@ public class ProjectsNewsFragment extends Fragment implements ProjectsContent.Li
             mSummary.setVisibility(item.summary.isEmpty() ? View.GONE : View.VISIBLE);
             mCover.bind(snapshot, item, showsCover(item));
             itemView.setOnClickListener(v -> ProjectsUi.showArticle(requireActivity(), snapshot, item));
+            if (isNew(item)) {
+                mDot.animate().cancel();
+                mDot.setAlpha(1f);
+                mDot.setVisibility(View.VISIBLE);
+                mDotFor = item.id;
+            } else if (!item.id.equals(mDotFor)) {
+                mDot.animate().cancel();
+                mDot.setVisibility(View.GONE);
+                mDotFor = null;
+            } else if (mDot.getVisibility() == View.VISIBLE) {
+                mDot.setVisibility(View.INVISIBLE);
+            }
+        }
+
+        /** The article was read: the dot fades out and keeps its room, so the date stays put. */
+        void updateDot() {
+            if (mItem == null || !mItem.id.equals(mDotFor) || mDot.getVisibility() != View.VISIBLE || isNew(mItem)) return;
+            if (Motion.enabled(mDot.getContext())) {
+                mDot.animate().alpha(0f).setDuration(DOT_FADE_MS).setInterpolator(Motion.EASE_OUT)
+                        .withEndAction(() -> mDot.setVisibility(View.INVISIBLE)).start();
+            } else {
+                mDot.setVisibility(View.INVISIBLE);
+            }
         }
     }
 }

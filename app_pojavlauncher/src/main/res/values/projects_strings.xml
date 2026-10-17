@@ -196,6 +196,12 @@
     <string name="projects_version_needs_internet">Minecraft %1$s isn\'t downloaded yet. Connect to the internet to download it.</string>
 
     <!-- 0.1.4: the dot on unseen news, event reminders and the status page notice. -->
+    <string name="projects_news_new">New</string>
+    <string name="projects_all_news_new">All news, new posts</string>
+    <string name="projects_event_today">Today %1$s</string>
+    <string name="projects_event_tomorrow">Tomorrow %1$s</string>
+    <string name="projects_reminder_bell">Remind me</string>
+    <string name="projects_reminder_explained">We\'ll let you know 5 minutes before it starts.</string>
     <plurals name="projects_reminder_starts_in">
         <item quantity="one">Starts in %1$d minute.</item>
         <item quantity="other">Starts in %1$d minutes.</item>
@@ -208,4 +214,10 @@
     <string name="projects_reminder_running_toast">%1$s is on</string>
     <string name="projects_reminder_channel">Event reminders</string>
     <string name="projects_reminder_channel_description">Events you asked to be reminded of, 5 minutes before they start.</string>
+    <string name="projects_reminder_notifications_off_title">Notifications are off</string>
+    <string name="projects_reminder_notifications_off">Allow notifications so we can remind you.</string>
+    <string name="projects_reminder_needs_notifications">Allow notifications to get reminders.</string>
+    <string name="projects_open_settings">Open settings</string>
+    <string name="projects_not_now">Not now</string>
+    <string name="projects_status_page">Status page</string>
 </resources>
