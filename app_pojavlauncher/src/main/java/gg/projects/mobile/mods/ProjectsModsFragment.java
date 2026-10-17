@@ -6,6 +6,7 @@ import android.animation.ObjectAnimator;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -25,6 +26,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.SwitchCompat;
+import androidx.core.content.ContextCompat;
+import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.core.view.AccessibilityDelegateCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
@@ -602,6 +605,8 @@ public class ProjectsModsFragment extends Fragment implements ModsApply.Listener
         String badge;
         String note;
         String status;
+        /** "Mod sayfası": the item's https page, or null (no link). */
+        String page;
 
         Row(int type, String key) {
             this.type = type;
@@ -610,7 +615,7 @@ public class ProjectsModsFragment extends Fragment implements ModsApply.Listener
 
         void seal() {
             content = type + "|" + title + "|" + body + "|" + action + "|" + on + enabled + changed + isNew + unsupported
-                    + reverting + modified + "|" + badge + "|" + note + "|" + status;
+                    + reverting + modified + "|" + badge + "|" + note + "|" + status + "|" + page;
         }
     }
 
@@ -709,6 +714,7 @@ public class ProjectsModsFragment extends Fragment implements ModsApply.Listener
         row.item = item;
         row.title = item.title;
         row.body = item.summary == null || item.summary.trim().isEmpty() ? null : item.summary.trim();
+        row.page = item.page();
         row.on = mEnabled.contains(item.id);
         List<PackManifest.PackItem> needed = ModsSelection.neededBy(manifest, mEnabled, item.id);
         boolean forced = !needed.isEmpty();
@@ -930,6 +936,7 @@ public class ProjectsModsFragment extends Fragment implements ModsApply.Listener
                     if (mRow != null) toggleRevert(mRow.item.id);
                 });
                 view.findViewById(R.id.projects_mod_icon_frame).setClipToOutline(true);
+                setUpPageLink(view.findViewById(R.id.projects_mod_page));
             } else if (type == TYPE_LIBRARY) {
                 view.findViewById(R.id.projects_mod_icon_frame).setClipToOutline(true);
             } else if (type == TYPE_BANNER) {
@@ -937,6 +944,32 @@ public class ProjectsModsFragment extends Fragment implements ModsApply.Listener
                     if (mRow != null && mRow.enabled) onBannerAction(mRow);
                 });
             }
+        }
+
+        /**
+         * "Mod sayfası" with the external-link mark in the text's size and colour (gold while
+         * pressed); opens the page in the browser, announced as a button named after the mod.
+         */
+        private void setUpPageLink(TextView page) {
+            Context context = page.getContext();
+            Drawable icon = ContextCompat.getDrawable(context, R.drawable.projects_ic_arrow_square_out);
+            if (icon != null) {
+                icon = DrawableCompat.wrap(icon.mutate());
+                int size = Math.round(page.getTextSize());
+                icon.setBounds(0, 0, size, size);
+                DrawableCompat.setTintList(icon, ContextCompat.getColorStateList(context, R.color.projects_link_text));
+                page.setCompoundDrawablesRelative(null, null, icon, null);
+            }
+            page.setOnClickListener(v -> {
+                if (mRow != null && mRow.page != null) ProjectsUi.openUrl(requireActivity(), mRow.page);
+            });
+            ViewCompat.setAccessibilityDelegate(page, new AccessibilityDelegateCompat() {
+                @Override
+                public void onInitializeAccessibilityNodeInfo(@NonNull View host, @NonNull AccessibilityNodeInfoCompat info) {
+                    super.onInitializeAccessibilityNodeInfo(host, info);
+                    info.setClassName(Button.class.getName());
+                }
+            });
         }
 
         void bind(Row row, boolean partial) {
@@ -1007,6 +1040,9 @@ public class ProjectsModsFragment extends Fragment implements ModsApply.Listener
             TextView summary = itemView.findViewById(R.id.projects_mod_summary);
             summary.setText(row.body);
             summary.setVisibility(row.body == null ? View.GONE : View.VISIBLE);
+            TextView page = itemView.findViewById(R.id.projects_mod_page);
+            page.setVisibility(row.page == null ? View.GONE : View.VISIBLE);
+            page.setContentDescription(row.page == null ? null : getString(R.string.projects_mods_page_for, row.title));
             itemView.findViewById(R.id.projects_mod_badge_new).setVisibility(row.isNew ? View.VISIBLE : View.GONE);
             TextView badge = itemView.findViewById(R.id.projects_mod_badge);
             badge.setText(row.badge);

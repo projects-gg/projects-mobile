@@ -63,6 +63,8 @@
     <string name="projects_mods_unsupported">Not supported on Android.</string>
     <string name="projects_mods_revert">Restore recommended</string>
     <string name="projects_mods_keep_mine">Keep mine</string>
+    <string name="projects_mods_page">Mod page</string>
+    <string name="projects_mods_page_for">%1$s mod page</string>
     <string name="projects_mods_library_for">For %1$s</string>
     <string name="projects_mods_library_on">Installed</string>
     <string name="projects_mods_library_off">Not installed</string>
@@ -167,4 +169,5 @@
     <string name="projects_span_minutes">%1$dm</string>
     <string name="projects_span_seconds">%1$ds</string>
     <string name="projects_open_in_discord">Open in Discord</string>
+    <string name="projects_link_no_app">No app can open this link.</string>
 </resources>

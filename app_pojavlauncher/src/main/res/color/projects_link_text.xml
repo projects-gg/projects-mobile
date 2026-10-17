@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Quiet text links ("Mod sayfası"): ash at rest, gold while pressed (the desktop's hover). -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:color="@color/projects_gold_300" android:state_pressed="true" />
+    <item android:color="@color/projects_ash_300" />
+</selector>

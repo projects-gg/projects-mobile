@@ -83,6 +83,15 @@ public final class ContentPaths {
         return isHttpUrl(text) && text.regionMatches(true, 0, "https:", 0, 6);
     }
 
+    /**
+     * The address to hand to the browser: an {@link #isHttpsUrl https URL} with its scheme in lower
+     * case (Android matches intent schemes case-sensitively, so "HTTPS://" would find no browser),
+     * otherwise null. Nothing else is ever opened.
+     */
+    public static String browserUrl(String text) {
+        return isHttpsUrl(text) ? "https" + text.substring(5) : null;
+    }
+
     static boolean isWindowsDeviceName(String component) {
         int dot = component.indexOf('.');
         String stem = dot >= 0 ? component.substring(0, dot) : component;

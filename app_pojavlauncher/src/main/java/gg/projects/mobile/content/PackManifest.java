@@ -111,6 +111,8 @@ public final class PackManifest {
         public String category;
         /** {@code https://} icon. */
         public String iconUrl;
+        /** The mod's official page ({@code https://}), opened in the browser ("Mod sayfası"). */
+        public String pageUrl;
         public ModrinthRef modrinth;
         /** Selected on a brand-new install only. */
         public boolean defaultEnabled = true;
@@ -139,6 +141,15 @@ public final class PackManifest {
         public String fileName() {
             int slash = path == null ? -1 : path.lastIndexOf('/');
             return slash >= 0 ? path.substring(slash + 1) : path;
+        }
+
+        /**
+         * The page "Mod sayfası" opens: {@link #pageUrl} as {@link ContentPaths#browserUrl}, or null
+         * (pl-content's {@code PackItem::page}). Valid manifests carry only https pages; this also
+         * guards items that never went through {@link PackManifest#validate()}.
+         */
+        public String page() {
+            return ContentPaths.browserUrl(pageUrl);
         }
     }
 
@@ -253,8 +264,8 @@ public final class PackManifest {
 
     /**
      * Item rules (a manifest that breaks one is refused): valid and unique ids, each item points
-     * at a different, client-side {@code files[]} entry, has a title and an {@code https://} icon
-     * (if any), {@code requires} names existing items and has no cycles.
+     * at a different, client-side {@code files[]} entry, has a title, an {@code https://} icon and
+     * page (if any), {@code requires} names existing items and has no cycles.
      */
     void validateItems() throws ContentException {
         List<PackItem> items = projects.items;
@@ -271,6 +282,9 @@ public final class PackManifest {
             if (item.title == null || item.title.trim().isEmpty()) throw invalid("item " + item.id + " has no title");
             if (item.iconUrl != null && !ContentPaths.isHttpsUrl(item.iconUrl)) {
                 throw invalid("item " + item.id + " has a non-HTTPS icon");
+            }
+            if (item.pageUrl != null && !ContentPaths.isHttpsUrl(item.pageUrl)) {
+                throw invalid("item " + item.id + " has a non-HTTPS page");
             }
         }
         for (PackItem item : items) {

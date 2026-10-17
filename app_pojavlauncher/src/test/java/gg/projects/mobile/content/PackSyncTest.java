@@ -134,6 +134,38 @@ public class PackSyncTest {
         assertFalse(zoom.defaultEnabled);
         assertEquals("unknown categories show as other", "other", zoom.categoryOrDefault());
         assertTrue(zoom.requires.isEmpty());
+        assertNull("no pageUrl, no link", zoom.pageUrl);
+        assertNull(zoom.page());
+    }
+
+    @Test
+    public void itemPagesAreHttpsOnly() throws Exception {
+        String files = fileJson("mods/sodium.jar", "sodium", "") + "," + fileJson("mods/zoom.jar", "zoom", "");
+        PackManifest manifest = manifestJson(files, "{\"items\": ["
+                + "{\"id\": \"AANobbMI\", \"path\": \"mods/sodium.jar\", \"title\": \"Sodium\", \"pageUrl\": \"https://modrinth.com/project/AANobbMI\"},"
+                + "{\"id\": \"wi-zoom\", \"path\": \"mods/zoom.jar\", \"title\": \"WI Zoom\", \"pageUrl\": \"HTTPS://www.wimods.net/wi-zoom/\"}]}");
+        PackManifest.PackItem sodium = manifest.projects.item("AANobbMI");
+        assertEquals("https://modrinth.com/project/AANobbMI", sodium.pageUrl);
+        assertEquals("https://modrinth.com/project/AANobbMI", sodium.page());
+        // The browser gets the scheme in lower case (intent filters match schemes case-sensitively).
+        assertEquals("https://www.wimods.net/wi-zoom/", manifest.projects.item("wi-zoom").page());
+
+        // Like the desktop (pl-content's InsecurePage), a manifest with any other page is refused.
+        for (String page : new String[]{"http://modrinth.com/project/x", "javascript:alert(1)", "projects://mods",
+                "intent://x#Intent;end", "file:///sdcard/x.html", "modrinth.com/project/x", "https://", ""}) {
+            expect(ContentException.Kind.INVALID, () -> manifestJson(files, "{\"items\": [{\"id\": \"a\", \"path\": \"mods/sodium.jar\","
+                    + " \"title\": \"A\", \"pageUrl\": \"" + page + "\"}]}"));
+        }
+
+        // Items that never went through validation still open nothing but https pages.
+        PackManifest.PackItem unchecked = new PackManifest.PackItem();
+        assertNull(unchecked.page());
+        unchecked.pageUrl = "http://modrinth.com/project/x";
+        assertNull(unchecked.page());
+        unchecked.pageUrl = "javascript:alert(1)";
+        assertNull(unchecked.page());
+        unchecked.pageUrl = "https://modrinth.com/project/x";
+        assertEquals("https://modrinth.com/project/x", unchecked.page());
     }
 
     @Test

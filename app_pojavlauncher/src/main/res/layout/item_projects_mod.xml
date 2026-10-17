@@ -19,6 +19,7 @@
         android:layout_height="wrap_content"
         android:background="@drawable/projects_mod_row_background"
         android:clickable="true"
+        android:clipChildren="false"
         android:focusable="true"
         android:gravity="top"
         android:minHeight="72dp"
@@ -54,11 +55,14 @@
                 android:visibility="invisible" />
         </FrameLayout>
 
+        <!-- No clipping here or in the row: the "Mod sayfası" ripple reaches 6dp past the text
+             column's start. -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="14dp"
             android:layout_weight="1"
+            android:clipChildren="false"
             android:orientation="vertical">
 
             <!-- Title with its badges right after it; a long title shrinks and ellipsizes. -->
@@ -140,6 +144,33 @@
                 android:textColor="@color/projects_ash_400"
                 android:textSize="13sp"
                 tools:text="Daha yüksek FPS, daha akıcı oyun." />
+
+            <!-- "Mod sayfası": the mod's official page in the browser (https only, shown only with one),
+                 quiet like the summary it follows. The padding is its touch area; the negative margins
+                 keep the text close to the summary (the ripple covers only the text line). Its own
+                 touch target, so it never toggles the row. -->
+            <TextView
+                android:id="@+id/projects_mod_page"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="-6dp"
+                android:layout_marginTop="-6dp"
+                android:layout_marginBottom="-4dp"
+                android:background="@drawable/projects_link_ripple"
+                android:clickable="true"
+                android:drawablePadding="4dp"
+                android:focusable="true"
+                android:fontFamily="@font/figtree_semibold"
+                android:gravity="center_vertical"
+                android:paddingStart="6dp"
+                android:paddingTop="8dp"
+                android:paddingEnd="6dp"
+                android:paddingBottom="8dp"
+                android:text="@string/projects_mods_page"
+                android:textColor="@color/projects_link_text"
+                android:textSize="12.5sp"
+                android:visibility="gone"
+                tools:visibility="visible" />
 
             <TextView
                 android:id="@+id/projects_mod_note"

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Press feedback for quiet text links ("Mod sayfası"): the gold ripple of projects_row_ripple, drawn
+     only around the text line; the padding above and below stays touch area without a highlight. -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="#1FF6D58E">
+    <item android:id="@android:id/mask">
+        <inset
+            android:insetTop="6dp"
+            android:insetBottom="6dp">
+            <shape android:shape="rectangle">
+                <corners android:radius="6dp" />
+                <solid android:color="#FFFFFFFF" />
+            </shape>
+        </inset>
+    </item>
+</ripple>

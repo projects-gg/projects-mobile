@@ -1,6 +1,8 @@
 package gg.projects.mobile.content;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -59,6 +61,24 @@ public class PathsAndGlobTest {
         assertTrue(ContentPaths.isHttpsUrl("HTTPS://projects.gg"));
         assertFalse(ContentPaths.isHttpsUrl("http://projects.gg"));
         assertFalse(ContentPaths.isHttpsUrl("javascript:alert(1)"));
+    }
+
+    @Test
+    public void onlyHttpsAddressesReachTheBrowser() {
+        // What "Mod sayfası" and the news links hand to ACTION_VIEW: the address itself...
+        assertEquals("https://modrinth.com/project/AANobbMI", ContentPaths.browserUrl("https://modrinth.com/project/AANobbMI"));
+        assertEquals("https://www.wimods.net/wi-zoom/?a=1#top", ContentPaths.browserUrl("https://www.wimods.net/wi-zoom/?a=1#top"));
+        // ...with the scheme in lower case: Android matches intent schemes case-sensitively.
+        assertEquals("https://Modrinth.com/Project/X", ContentPaths.browserUrl("HTTPS://Modrinth.com/Project/X"));
+        assertEquals("https://projects.gg", ContentPaths.browserUrl("hTtPs://projects.gg"));
+        // Nothing else: other schemes, no host, relative or malformed addresses.
+        for (String bad : new String[]{null, "", "http://modrinth.com/project/x", "javascript:alert(1)",
+                "intent://scan/#Intent;scheme=zxing;end", "file:///sdcard/x.html", "content://x/y", "projects://mods",
+                "market://details?id=x", "data:text/html,x", "https://", "https:///path", "https:modrinth.com",
+                "//modrinth.com/x", "modrinth.com/project/x", " https://modrinth.com", "https://modrinth.com/a b",
+                "https://modrinth.com/\n"}) {
+            assertNull(String.valueOf(bad), ContentPaths.browserUrl(bad));
+        }
     }
 
     @Test

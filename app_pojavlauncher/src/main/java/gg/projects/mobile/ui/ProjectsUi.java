@@ -116,12 +116,19 @@ public final class ProjectsUi {
                 && snapshot.lastError.kind == ContentException.Kind.UNSUPPORTED_SCHEMA;
     }
 
+    /**
+     * Opens an https link in the browser ({@link ContentPaths#browserUrl}; anything else is ignored).
+     * When no app can open it, a short message says so.
+     */
     public static void openUrl(Activity activity, String url) {
-        if (!ContentPaths.isHttpsUrl(url)) return;
+        String target = ContentPaths.browserUrl(url);
+        if (target == null) return;
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(target)).addCategory(Intent.CATEGORY_BROWSABLE);
         try {
-            activity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
-        } catch (RuntimeException ignored) {
-            // No browser available.
+            activity.startActivity(intent);
+        } catch (RuntimeException e) {
+            // ActivityNotFoundException: no browser, or nothing else that opens web links.
+            Toast.makeText(activity, R.string.projects_link_no_app, Toast.LENGTH_SHORT).show();
         }
     }
 
