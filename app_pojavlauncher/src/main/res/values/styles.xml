@@ -59,6 +59,10 @@
 
     <style name="LauncherMenuButton" parent="Widget.AppCompat.Button">
         <item name="android:background">?android:attr/selectableItemBackground</item>
+        <!-- Projects fork: sentence case (design.md: OYNA is the only all-caps label; Turkish capitals
+             also turned "Discord" and "Wiki" into "DİSCORD" and "WİKİ"). -->
+        <item name="textAllCaps">false</item>
+        <item name="android:textAllCaps">false</item>
     </style>
 
     <style name="LauncherMenuButton.Universal" parent="LauncherMenuButton">

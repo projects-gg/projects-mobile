@@ -170,5 +170,9 @@
     <string name="projects_span_seconds">%1$ds</string>
     <string name="projects_open_in_discord">Open in Discord</string>
     <string name="projects_link_no_app">No app can open this link.</string>
+
+    <!-- Upstream screens: the account screen, settings, the profile editor and version lists. -->
+    <string name="projects_auth_microsoft">Microsoft account</string>
+    <string name="projects_auth_local">Local account</string>
     <string name="projects_version_recommended">Recommended</string>
 </resources>

@@ -243,6 +243,9 @@ public class ProfileEditorFragment extends Fragment implements CropperUtils.Crop
 
         mSaveButton = view.findViewById(R.id.vprof_editor_save_button);
         mDeleteButton = view.findViewById(R.id.vprof_editor_delete_button);
+        // Projects: "Sil" is not as loud as "Kaydet" (design.md: one loud thing; deleting is not the goal).
+        mDeleteButton.setBackground(gg.projects.mobile.ui.ChamferDrawable.secondary(view.getContext()));
+        mDeleteButton.setTextColor(androidx.core.content.ContextCompat.getColor(view.getContext(), R.color.projects_bone_100));
         mControlSelectButton = view.findViewById(R.id.vprof_editor_ctrl_button);
         mVersionSelectButton = view.findViewById(R.id.vprof_editor_version_button);
         mGameDirButton = view.findViewById(R.id.vprof_editor_path_button);

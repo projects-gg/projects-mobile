@@ -17,6 +17,9 @@ public class MineButton extends androidx.appcompat.widget.AppCompatButton {
 	public MineButton(Context ctx, AttributeSet attrs) {
 		super(ctx, attrs);
 		init();
+		// Projects fork: sentence case unless the layout asks for capitals (only OYNA does; design.md).
+		// Turkish capitals also turned brand names into "MİCROSOFT", "FABRİC" and "OPTİFİNE".
+		setAllCaps(attrs != null && attrs.getAttributeBooleanValue("http://schemas.android.com/apk/res/android", "textAllCaps", false));
 	}
 
 	public void init() {
