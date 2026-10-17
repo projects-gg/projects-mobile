@@ -149,7 +149,17 @@ public class ProgressLayout extends ConstraintLayout implements View.OnClickList
         public void onProgressUpdated(int progress, int resid, Object... va) {
             post(()-> {
                 textView.setProgress(progress);
-                if(resid != -1) textView.setText(getContext().getString(resid, va));
+                if(resid != -1) {
+                    // Projects fork: a text whose placeholders do not fit the arguments keeps the
+                    // previous text instead of crashing the launcher (in 0.1.2 Fabric's first
+                    // message came without the loader name its text needs).
+                    try {
+                        textView.setText(getContext().getString(resid, va));
+                    } catch (java.util.IllegalFormatException e) {
+                        Log.w("ProgressLayout", "progress text " + getResources().getResourceEntryName(resid)
+                                + " got " + (va == null ? 0 : va.length) + " argument(s)", e);
+                    }
+                }
                 else if(va.length > 0 && va[0] != null)textView.setText((String)va[0]);
                 else textView.setText("");
             });
