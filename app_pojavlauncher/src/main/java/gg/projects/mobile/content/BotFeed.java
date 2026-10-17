@@ -27,16 +27,19 @@ public final class BotFeed {
     /** News items ({@code fromFeed}, never pinned), in feed order. */
     public final List<NewsFeed.NewsItem> items;
     public final List<Event> events;
+    /** The status page's active problem, or null; check {@link FeedStatus#isActive} before showing it. */
+    public final FeedStatus status;
     /** What was dropped or repaired, for logs. */
     public final List<String> problems;
 
     private BotFeed(int schema, long sequence, long generatedAt, List<NewsFeed.NewsItem> items, List<Event> events,
-                    List<String> problems) {
+                    FeedStatus status, List<String> problems) {
         this.schema = schema;
         this.sequence = sequence;
         this.generatedAt = generatedAt;
         this.items = Collections.unmodifiableList(items);
         this.events = Collections.unmodifiableList(events);
+        this.status = status;
         this.problems = Collections.unmodifiableList(problems);
     }
 
@@ -98,6 +101,7 @@ public final class BotFeed {
         long generatedAt;
         JsonArray rawItems;
         JsonArray rawEvents;
+        JsonElement rawStatus;
         try {
             JsonObject object = JsonFields.object(root, "feed.json");
             schema = (int) JsonFields.defaultInteger(object, "schema", 1, 0, 0xFFFFFFFFL);
@@ -105,6 +109,7 @@ public final class BotFeed {
             generatedAt = JsonFields.requiredTimestamp(object, "generatedAt");
             rawItems = JsonFields.defaultArray(object, "items");
             rawEvents = JsonFields.defaultArray(object, "events");
+            rawStatus = object.get("status");
         } catch (JsonFields.Unreadable e) {
             throw invalid("feed.json has an unexpected shape: " + e.getMessage());
         }
@@ -118,7 +123,9 @@ public final class BotFeed {
         List<String> problems = new ArrayList<>();
         List<NewsFeed.NewsItem> items = readItems(rawItems, problems);
         List<Event> events = readEvents(rawEvents, items, problems);
-        return new BotFeed(schema, sequence, generatedAt, items, events, problems);
+        // A broken status notice drops only itself (content-format.md "Status notice").
+        FeedStatus status = FeedStatus.read(rawStatus, problems);
+        return new BotFeed(schema, sequence, generatedAt, items, events, status, problems);
     }
 
     private static ContentException invalid(String message) {

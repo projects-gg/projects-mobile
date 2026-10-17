@@ -21,12 +21,16 @@ public final class HomeContent {
     public final NewsFeed.NewsItem patchNotes;
     /** Events that have not ended at {@link #now}, in event card order (the card shows the first). */
     public final List<Event> events;
+    /** The feed's status notice while it is active and no maintenance notice is, else null. */
+    public final FeedStatus status;
     public final long now;
 
-    private HomeContent(List<NewsFeed.NewsItem> news, NewsFeed.NewsItem patchNotes, List<Event> events, long now) {
+    private HomeContent(List<NewsFeed.NewsItem> news, NewsFeed.NewsItem patchNotes, List<Event> events, FeedStatus status,
+                        long now) {
         this.news = Collections.unmodifiableList(news);
         this.patchNotes = patchNotes;
         this.events = Collections.unmodifiableList(events);
+        this.status = status;
         this.now = now;
     }
 
@@ -78,7 +82,18 @@ public final class HomeContent {
         List<NewsFeed.NewsItem> news = mergeNews(studio, bot, maxAge, now);
         List<LauncherConfig.EventCountdown> configEvents = config == null
                 ? Collections.<LauncherConfig.EventCountdown>emptyList() : config.events;
-        return new HomeContent(news, newestPatchNotes(news), mergeEvents(configEvents, bot, news, now), now);
+        boolean maintenance = config != null && config.maintenance != null && config.maintenance.isActive(now);
+        return new HomeContent(news, newestPatchNotes(news), mergeEvents(configEvents, bot, news, now),
+                homeStatus(bot, maintenance, now), now);
+    }
+
+    /**
+     * The status notice the home screen shows at {@code now} (pl-content's {@code home_status}):
+     * the feed's while it has not expired, and never while Studio's maintenance notice is active.
+     */
+    public static FeedStatus homeStatus(BotFeed feed, boolean maintenanceActive, long now) {
+        if (maintenanceActive || feed == null || feed.status == null) return null;
+        return feed.status.isActive(now) ? feed.status : null;
     }
 
     /** The item with {@code id} while it is in the merged news, else null. */
