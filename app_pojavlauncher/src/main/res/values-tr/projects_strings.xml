@@ -189,4 +189,5 @@
     <string name="projects_offline_name_turkish">Türkçe harfler (ç, ğ, ı, ö, ş, ü) kullanılamaz.</string>
     <string name="projects_offline_name_spaces">Boşluk kullanılamaz.</string>
     <string name="projects_offline_name_characters">Yalnızca İngilizce harf, rakam ve alt çizgi (_) kullanılabilir.</string>
+    <string name="projects_version_needs_internet">Minecraft %1$s henüz indirilmedi. İndirmek için internete bağlan.</string>
 </resources>

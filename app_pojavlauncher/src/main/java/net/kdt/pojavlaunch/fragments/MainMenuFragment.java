@@ -2,8 +2,6 @@ package net.kdt.pojavlaunch.fragments;
 
 import static net.kdt.pojavlaunch.Tools.dialogOnUiThread;
 import static net.kdt.pojavlaunch.Tools.hasMods;
-import static net.kdt.pojavlaunch.Tools.hasNoOnlineProfileDialog;
-import static net.kdt.pojavlaunch.Tools.hasOnlineProfile;
 import static net.kdt.pojavlaunch.Tools.openPath;
 import static net.kdt.pojavlaunch.Tools.runOnUiThread;
 import static net.kdt.pojavlaunch.Tools.shareLog;
@@ -66,13 +64,12 @@ public class MainMenuFragment extends Fragment {
         // Projects: the Discord invite comes from the signed launcher config when it has one.
         mDiscordButton.setOnClickListener(v -> Tools.openURL(requireActivity(), ProjectsHomeCard.discordUrl(getString(R.string.discord_invite))));
         mCustomControlButton.setOnClickListener(v -> startActivity(new Intent(requireContext(), CustomControlsActivity.class)));
-        if (hasOnlineProfile()) {
-            mInstallJarButton.setOnClickListener(v -> runInstallerWithConfirmation(false));
-            mInstallJarButton.setOnLongClickListener(v -> {
-                runInstallerWithConfirmation(true);
-                return true;
-            });
-        } else mInstallJarButton.setOnClickListener(v -> hasNoOnlineProfileDialog(requireActivity()));
+        // Projects fork: every account may run installers, offline ones too (upstream: Microsoft only).
+        mInstallJarButton.setOnClickListener(v -> runInstallerWithConfirmation(false));
+        mInstallJarButton.setOnLongClickListener(v -> {
+            runInstallerWithConfirmation(true);
+            return true;
+        });
         mEditProfileButton.setOnClickListener(v -> mVersionSpinner.openProfileEditor(requireActivity()));
 
         mPlayButton.setOnClickListener(v -> {
@@ -95,10 +92,8 @@ public class MainMenuFragment extends Fragment {
 
         mOpenDirectoryButton.setOnClickListener((v)-> {
             if (Tools.isDemoProfile(v.getContext())){ // Say a different message when on demo profile since they might see the hidden demo folder
-                hasNoOnlineProfileDialog(getActivity(), getString(R.string.demo_unsupported), getString(R.string.change_account));
-            } else if (!hasOnlineProfile()) { // Otherwise display the generic pop-up to log in
-                hasNoOnlineProfileDialog(requireActivity());
-            } else openPath(v.getContext(), getCurrentProfileDirectory(), false);
+                dialogOnUiThread(requireActivity(), getString(R.string.demo_unsupported), getString(R.string.change_account));
+            } else openPath(v.getContext(), getCurrentProfileDirectory(), false); // Projects fork: offline accounts too
 
         });
 

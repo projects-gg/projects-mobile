@@ -193,4 +193,5 @@
     <string name="projects_offline_name_turkish">Turkish letters (ç, ğ, ı, ö, ş, ü) can\'t be used.</string>
     <string name="projects_offline_name_spaces">Spaces can\'t be used.</string>
     <string name="projects_offline_name_characters">Use only English letters, numbers and underscores (_).</string>
+    <string name="projects_version_needs_internet">Minecraft %1$s isn\'t downloaded yet. Connect to the internet to download it.</string>
 </resources>

@@ -12,7 +12,6 @@ import com.kdt.mcgui.ProgressLayout;
 
 import net.kdt.pojavlaunch.PojavApplication;
 import net.kdt.pojavlaunch.R;
-import net.kdt.pojavlaunch.Tools;
 
 import java.io.File;
 import java.io.IOException;
@@ -37,7 +36,7 @@ public final class ModsApply {
     private static final String TAG = "ProjectsMods";
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
 
-    public enum Outcome { DONE, NEEDS_ACCOUNT, FAILED }
+    public enum Outcome { DONE, FAILED }
 
     public static final class Result {
         public final Outcome outcome;
@@ -95,16 +94,13 @@ public final class ModsApply {
                 // Plan again against the disk as it is now; the screen's preview may be stale.
                 PackSyncPlanner.Plan plan = PackSyncPlanner.plan(manifest, PackSyncPlanner.directoryProbe(gameDir),
                         PackState.load(gameDir), selection, ProjectsPacks.syncOptions(manifest));
-                if (!plan.downloads.isEmpty() && !Tools.hasOnlineProfile()) {
-                    // Upstream's rule: downloading modpack files needs an online account.
-                    result = new Result(Outcome.NEEDS_ACCOUNT, 0, false, null);
-                } else {
-                    if (!gameDir.isDirectory() && !gameDir.mkdirs()) throw new IOException("cannot create " + gameDir);
-                    PackSyncApplier.Report report = ProjectsPacks.apply(gameDir, plan, R.string.projects_mods_downloading,
-                            (phase, done, total) -> progress(phase, total > 0 ? (float) done / total : -1));
-                    Log.i(TAG, "mod selection applied: " + plan.summary().describeTr() + ", " + report.issues.size() + " issues");
-                    result = new Result(Outcome.DONE, report.issues.size(), false, null);
-                }
+                // Any account may download (since 0.1.3; upstream kept modpack downloads for
+                // Microsoft accounts that own the game).
+                if (!gameDir.isDirectory() && !gameDir.mkdirs()) throw new IOException("cannot create " + gameDir);
+                PackSyncApplier.Report report = ProjectsPacks.apply(gameDir, plan, R.string.projects_mods_downloading,
+                        (phase, done, total) -> progress(phase, total > 0 ? (float) done / total : -1));
+                Log.i(TAG, "mod selection applied: " + plan.summary().describeTr() + ", " + report.issues.size() + " issues");
+                result = new Result(Outcome.DONE, report.issues.size(), false, null);
             } catch (ContentException e) {
                 Log.w(TAG, "applying mods failed", e);
                 result = new Result(Outcome.FAILED, 0, e.kind == ContentException.Kind.NETWORK, String.valueOf(e));

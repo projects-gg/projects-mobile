@@ -61,7 +61,6 @@ public class MinecraftDownloader {
 
     private static final ThreadLocal<byte[]> sThreadLocalDownloadBuffer = new ThreadLocal<>();
 
-    private boolean isLocalProfile = false;
     private boolean isOnline;
 
     /**
@@ -75,18 +74,21 @@ public class MinecraftDownloader {
                       @NonNull String realVersion,
                       @NonNull AsyncMinecraftDownloader.DoneListener listener) {
         if(activity != null){
-            isLocalProfile = Tools.isLocalProfile(activity);
             isOnline = Tools.isOnline(activity);
             Tools.switchDemo(Tools.isDemoProfile(activity));
 
         } else {
-            isLocalProfile = true;
-            Tools.switchDemo(true);
+            // Projects fork: no account to check without an activity, and every account may
+            // download, so try it (upstream assumed a local account and the demo folder here).
+            isOnline = true;
         }
 
         sExecutorService.execute(() -> {
             try {
-                if(isLocalProfile || !isOnline) {
+                // Projects fork: only a missing connection limits us to the installed files. Upstream
+                // kept local accounts to them as well; since the owner's decision of 17 October 2026
+                // offline accounts download like any other.
+                if(!isOnline) {
                     String versionMessage = realVersion; // Use provided version unless we find its a modded instance
 
                     // See if provided version is a modded version and if that version depends on another jar, check for presence of both jar's .json.
@@ -105,8 +107,7 @@ public class MinecraftDownloader {
 
                         listener.onDownloadDone();
                     } catch (Exception e) {
-                        String tryagain = !isOnline ? "Please ensure you have an internet connection" : "Please try again on your Microsoft Account";
-                        Tools.showErrorRemote(versionMessage + " is not currently installed. "+ tryagain, e);
+                        Tools.showErrorRemote(activity.getString(R.string.projects_version_needs_internet, versionMessage), e);
                     }
                 }else {
                 downloadGame(activity, version, realVersion);

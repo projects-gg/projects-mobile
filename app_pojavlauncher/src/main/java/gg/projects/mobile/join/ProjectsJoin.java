@@ -47,9 +47,9 @@ import gg.projects.mobile.servers.ServersDat;
  * <p>With an official pack in the signed index the profile follows it ({@link PackChoice}): the
  * pack's files are synced with the desktop rules and the player's mod choices
  * ({@link PackSyncPlanner}), and the loader is installed. Without one it is vanilla on the newest
- * release, pinned when created. Account rules are upstream's: installing a pack needs an online
- * account, exactly like upstream's own modpack installers; launching goes through the regular
- * Play checks.
+ * release, pinned when created. Installing the pack needs no particular account (since 0.1.3 offline
+ * accounts may download everything, like on the desktop); launching goes through the regular Play
+ * checks.
  */
 public final class ProjectsJoin {
     private ProjectsJoin() {}
@@ -62,9 +62,6 @@ public final class ProjectsJoin {
     public interface Callback {
         /** The profile is ready: select it and start the game. {@code notice} is shown without blocking. */
         void onReady(String profileKey, @Nullable SyncNotice notice);
-
-        /** Installing the pack needs an online account (upstream's rule for modpacks). */
-        void onNeedsOnlineAccount();
 
         /** Forge/NeoForge packs need the installer GUI that upstream starts from a notification. */
         void onFinishLoaderInstall();
@@ -139,8 +136,6 @@ public final class ProjectsJoin {
                 addServers(gameDir, new ArrayList<PackManifest.PackServer>());
                 break;
             default:
-                // Upstream lets only online accounts install modpacks; the official pack is one.
-                if (!Tools.hasOnlineProfile()) return callback::onNeedsOnlineAccount;
                 Installed installed = installPack(app, snapshot, choice.pack);
                 if (!installed.loaderReady) return callback::onFinishLoaderInstall;
                 notice = installed.notice;

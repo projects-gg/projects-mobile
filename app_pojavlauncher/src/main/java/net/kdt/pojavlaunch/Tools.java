@@ -5,7 +5,6 @@ import static android.os.Build.VERSION_CODES.P;
 import static net.kdt.pojavlaunch.Architecture.archAsStringAndroid;
 import static net.kdt.pojavlaunch.Architecture.getDeviceArchitecture;
 import static net.kdt.pojavlaunch.PojavApplication.sExecutorService;
-import static net.kdt.pojavlaunch.PojavProfile.getAllProfiles;
 import static net.kdt.pojavlaunch.prefs.LauncherPreferences.PREF_IGNORE_NOTCH;
 import static net.kdt.pojavlaunch.prefs.LauncherPreferences.PREF_NOTCH_SIZE;
 
@@ -1840,41 +1839,10 @@ public final class Tools {
         return currentProfile != null && currentProfile.isDemo();
     }
 
-    public static boolean isLocalProfile(Context ctx){
-        MinecraftAccount currentProfile = PojavProfile.getCurrentProfileContent(ctx, null);
-        return currentProfile == null || currentProfile.isLocal();
-    }
-    public static boolean hasOnlineProfile(){
-        for (MinecraftAccount accountToCheck : getAllProfiles()) {
-            if (!accountToCheck.isLocal() && !accountToCheck.isDemo()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public static void hasNoOnlineProfileDialog(Activity activity, @Nullable Runnable run, @Nullable String customTitle, @Nullable String customMessage){
-        if (hasOnlineProfile() && !Tools.isDemoProfile(activity)){
-            if (run != null) { // Demo profile handling should be using customTitle and customMessage
-                run.run();
-            }
-        } else { // If there is no online profile, show a dialog
-            customTitle = customTitle == null ? activity.getString(R.string.no_minecraft_account_found) : customTitle;
-            customMessage = customMessage == null ? activity.getString(R.string.feature_requires_java_account) : customMessage;
-            dialogOnUiThread(activity, customTitle, customMessage);
-        }
-    }
-
-    // Some boilerplate to reduce boilerplate elsewhere
-    public static void hasNoOnlineProfileDialog(Activity activity){
-        hasNoOnlineProfileDialog(activity, null, null, null);
-    }
-    public static void hasNoOnlineProfileDialog(Activity activity, Runnable run){
-        hasNoOnlineProfileDialog(activity, run, null, null);
-    }
-    public static void hasNoOnlineProfileDialog(Activity activity, String customTitle, String customMessage){
-        hasNoOnlineProfileDialog(activity, null, customTitle, customMessage);
-    }
+    // Projects fork: upstream's helpers that reserved features for Microsoft accounts owning the
+    // game are gone. Every account may use every feature, offline accounts included (the owner's
+    // decision of 17 October 2026); only Microsoft demo accounts keep their limits (isDemoProfile).
+    // AccountGatesTest fails if an upstream merge brings them back.
 
     public static String getSelectedVanillaMcVer(){
         String selectedProfile = LauncherPreferences.DEFAULT_PREF.getString(LauncherPreferences.PREF_KEY_CURRENT_PROFILE, "");

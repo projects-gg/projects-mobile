@@ -39,7 +39,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import net.kdt.pojavlaunch.R;
-import net.kdt.pojavlaunch.Tools;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -413,10 +412,6 @@ public class ProjectsModsFragment extends Fragment implements ModsApply.Listener
                 Toast.makeText(activity, result.issues > 0 ? R.string.projects_mods_applied_issues : R.string.projects_mods_applied,
                         Toast.LENGTH_SHORT).show();
                 load(true);
-                break;
-            case NEEDS_ACCOUNT:
-                recompute();
-                Tools.hasNoOnlineProfileDialog(activity);
                 break;
             default:
                 recompute();

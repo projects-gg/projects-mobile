@@ -22,8 +22,11 @@ import androidx.fragment.app.FragmentActivity;
 import com.kdt.mcgui.ProgressLayout;
 import com.kdt.mcgui.mcVersionSpinner;
 
+import net.kdt.pojavlaunch.PojavProfile;
 import net.kdt.pojavlaunch.R;
 import net.kdt.pojavlaunch.Tools;
+import net.kdt.pojavlaunch.extra.ExtraConstants;
+import net.kdt.pojavlaunch.extra.ExtraCore;
 import net.kdt.pojavlaunch.prefs.LauncherPreferences;
 
 import java.lang.ref.WeakReference;
@@ -646,6 +649,13 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener {
             Toast.makeText(activity, R.string.tasks_ongoing, Toast.LENGTH_LONG).show();
             return;
         }
+        if (PojavProfile.getCurrentProfileContent(activity, null) == null) {
+            // No account yet: ask for one first, as Play does, instead of downloading the pack
+            // and asking afterwards. Any account will do, an offline one too.
+            Toast.makeText(activity, R.string.no_saved_accounts, Toast.LENGTH_LONG).show();
+            ExtraCore.setValue(ExtraConstants.SELECT_AUTH_METHOD, true);
+            return;
+        }
         final WeakReference<ProjectsHomeCard> self = new WeakReference<>(this);
         boolean started = ProjectsJoin.start(activity, new ProjectsJoin.Callback() {
             @Override
@@ -656,12 +666,6 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener {
                 String text = a == null ? null : noticeText(a, notice);
                 if (text != null) Toast.makeText(a, text, Toast.LENGTH_LONG).show();
                 card.launch(profileKey);
-            }
-
-            @Override
-            public void onNeedsOnlineAccount() {
-                FragmentActivity a = activityOrNull(self);
-                if (a != null) Tools.hasNoOnlineProfileDialog(a);
             }
 
             @Override

@@ -3,7 +3,6 @@ package net.kdt.pojavlaunch;
 import static android.content.res.Configuration.ORIENTATION_PORTRAIT;
 import static net.kdt.pojavlaunch.Tools.getMods;
 import static net.kdt.pojavlaunch.Tools.hasMods;
-import static net.kdt.pojavlaunch.Tools.hasNoOnlineProfileDialog;
 import static net.kdt.pojavlaunch.Tools.isOnline;
 
 import android.Manifest;
@@ -217,13 +216,14 @@ public class LauncherActivity extends BaseActivity {
 
 
             }
-            // We just installed a json, we need internet + online acc to download so we add super
+            // We just installed a json, we need internet to download so we add super
             // basic detection whether lwjgl3ify assets were downloaded
+            // (Projects fork: any account may download, offline ones too.)
             try {
                 String jsonPath = LWJGL3ifyUtils.getJsonPath(LWJGL3ifyUtils.getProfileID(lwjgl3ifyJar));
                 File lwjgl3ifyClientJar = new File(jsonPath.replace(".json", ".jar"));
                 if (!lwjgl3ifyClientJar.exists()){
-                    if (mAccountSpinner.getSelectedAccount().isLocal() || !isOnline(this)){
+                    if (!isOnline(this)){
                         Tools.dialogOnUiThread(this, R.string.global_error, R.string.mc_download_failed);
                         return false;
                     }
@@ -247,7 +247,7 @@ public class LauncherActivity extends BaseActivity {
             }
 
             if (isOlderThan13) {
-                hasNoOnlineProfileDialog(this, getString(R.string.global_error), getString(R.string.demo_versions_supported));
+                Tools.dialogOnUiThread(this, R.string.global_error, R.string.demo_versions_supported);
                 return false;
             }
         }

@@ -1,7 +1,5 @@
 package net.kdt.pojavlaunch.fragments;
 
-import static net.kdt.pojavlaunch.Tools.hasNoOnlineProfileDialog;
-
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -24,12 +22,14 @@ public class SelectAuthFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         Button mMicrosoftButton = view.findViewById(R.id.button_microsoft_authentication);
         Button mLocalButton = view.findViewById(R.id.button_local_authentication);
-        // Projects: Microsoft is the way in (local accounts come only after one), so the local
-        // account is the quiet secondary button (design.md: one loud thing per screen).
+        // Projects: an offline account needs no Microsoft account (the owner's decision of
+        // 17 October 2026; upstream asked for one that owns the game first). As on the desktop's
+        // "Hesap ekle", Microsoft stays the main action and the offline account the quiet
+        // secondary one (design.md: one loud thing per screen).
         mLocalButton.setBackground(gg.projects.mobile.ui.ChamferDrawable.secondary(view.getContext()));
         mLocalButton.setTextColor(androidx.core.content.ContextCompat.getColor(view.getContext(), R.color.projects_bone_100));
 
         mMicrosoftButton.setOnClickListener(v -> Tools.swapFragment(requireActivity(), MicrosoftLoginFragment.class, MicrosoftLoginFragment.TAG, null));
-        mLocalButton.setOnClickListener(v -> hasNoOnlineProfileDialog(requireActivity(), () -> Tools.swapFragment(requireActivity(), LocalLoginFragment.class, LocalLoginFragment.TAG, null)));
+        mLocalButton.setOnClickListener(v -> Tools.swapFragment(requireActivity(), LocalLoginFragment.class, LocalLoginFragment.TAG, null));
     }
 }
