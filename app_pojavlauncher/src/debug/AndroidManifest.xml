@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Debug builds only: allows plain HTTP to the development machine (local content tests). -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <application android:networkSecurityConfig="@xml/projects_debug_network" />
+    <application android:networkSecurityConfig="@xml/projects_debug_network">
+        <!-- Debug builds only: the game's exit screen can be opened from adb, so a start that Sodium
+             broke can be played on an emulator without breaking the game. -->
+        <activity android:name="net.kdt.pojavlaunch.ExitActivity" android:exported="true" />
+    </application>
 </manifest>

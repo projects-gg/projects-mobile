@@ -418,11 +418,9 @@ public class JREUtils {
         final int exitCode = VMLauncher.launchJVM(userArgs.toArray(new String[0]));
         Logger.appendToLog("Java Exit code: " + exitCode);
         if (exitCode != 0) {
-            LifecycleAwareAlertDialog.DialogCreator dialogCreator = (dialog, builder)->
-                    builder.setMessage(activity.getString(R.string.mcn_exit_title, exitCode))
-                    .setPositiveButton(R.string.main_share_logs, (dialogInterface, which)-> shareLog(activity));
-
-            LifecycleAwareAlertDialog.haltOnDialog(activity.getLifecycle(), activity, dialogCreator);
+            // Projects fork: the same exit screen as a game that calls exit() (the launcher looks at a
+            // start Sodium kept from working there, and never shows codes or log file names).
+            net.kdt.pojavlaunch.ExitActivity.showExitMessage(activity, exitCode, false);
         }
         Tools.fullyExit();
     }

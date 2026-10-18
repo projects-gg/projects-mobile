@@ -69,6 +69,8 @@ public class TestStorageActivity extends Activity {
         gg.projects.mobile.ProjectsContent.refresh(this, false);
 
         Intent intent =  new Intent(this, LauncherActivity.class);
+        // Projects fork: "Tekrar başlat" after Sodium kept the game from starting.
+        gg.projects.mobile.launch.ProjectsRelaunch.forward(getIntent(), intent);
         startActivity(intent);
         finish();
     }

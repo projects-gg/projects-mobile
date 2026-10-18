@@ -226,4 +226,10 @@
     <string name="projects_mods_sodium_offer_body">The game runs smoother with it.</string>
     <string name="projects_mods_sodium_offer_on">Turn on</string>
     <string name="projects_mods_sodium_offer_keep">Keep off</string>
+    <string name="projects_sodium_crash_projects">The game couldn\'t start because of Sodium, so we turned it off.</string>
+    <string name="projects_sodium_crash_own">The game couldn\'t start because of Sodium.</string>
+    <string name="projects_sodium_start_again">Start again</string>
+    <string name="projects_sodium_disable_and_start">Turn off Sodium and start</string>
+    <string name="projects_game_closed">The game closed unexpectedly.</string>
+    <string name="projects_share_log">Share log</string>
 </resources>

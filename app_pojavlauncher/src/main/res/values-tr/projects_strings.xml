@@ -222,4 +222,10 @@
     <string name="projects_mods_sodium_offer_body">Oyun onunla daha akıcı çalışır.</string>
     <string name="projects_mods_sodium_offer_on">Aç</string>
     <string name="projects_mods_sodium_offer_keep">Kapalı kalsın</string>
+    <string name="projects_sodium_crash_projects">Oyun Sodium yüzünden açılamadı, onu kapattık.</string>
+    <string name="projects_sodium_crash_own">Oyun Sodium yüzünden açılamadı.</string>
+    <string name="projects_sodium_start_again">Tekrar başlat</string>
+    <string name="projects_sodium_disable_and_start">Sodium\'u kapatıp başlat</string>
+    <string name="projects_game_closed">Oyun beklenmedik şekilde kapandı.</string>
+    <string name="projects_share_log">Kaydı paylaş</string>
 </resources>

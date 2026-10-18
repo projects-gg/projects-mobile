@@ -964,6 +964,11 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         return out.toString();
     }
 
+    /** "Projects'e katıl" without a tap: "Tekrar başlat" after Sodium kept the game from starting. */
+    public void joinNow() {
+        join();
+    }
+
     private void join() {
         FragmentActivity activity = mFragment.requireActivity();
         if (ProjectsJoin.isBusy()) {

@@ -29,4 +29,15 @@
         <item name="android:textColor">@color/projects_ash_300</item>
         <item name="android:textSize">11sp</item>
     </style>
+
+    <!-- The game's exit message (0.1.5): no window of its own behind the branded dialog, which
+         appears once the launcher looked at the failed start (a fraction of a second). -->
+    <style name="ProjectsExitTheme" parent="AppTheme">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:backgroundDimEnabled">false</item>
+        <item name="android:windowAnimationStyle">@null</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
 </resources>

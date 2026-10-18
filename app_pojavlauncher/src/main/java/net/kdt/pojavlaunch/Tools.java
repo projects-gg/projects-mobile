@@ -293,7 +293,16 @@ public final class Tools {
      * @return The found mods
      */
     public static List<File> getMods(String... filenames) {
-        File gameDir = getGameDir();
+        return getMods(getGameDir(), filenames);
+    }
+
+    /** Projects fork: {@link #hasMods(String...)} for a given game directory. */
+    public static boolean hasMods(File gameDir, String... filenames) {
+        return !getMods(gameDir, filenames).isEmpty();
+    }
+
+    /** Projects fork: {@link #getMods(String...)} for a given game directory. */
+    public static List<File> getMods(File gameDir, String... filenames) {
         File modsDir = new File(gameDir, "mods");
         File[] modFiles = modsDir.listFiles(file -> file.isFile() && file.getName().toLowerCase().endsWith(".jar"));
         if (modFiles == null) return new ArrayList<>();
@@ -309,41 +318,11 @@ public final class Tools {
         return foundModFiles;
     }
 
-    /**
-     * Tries to delete any sodium related mods of the currently selected profile via string matching
-     * the files in the mods folder.
-     */
-    public static void deleteSodiumMods() {
-        File modsDir = new File(getGameDir(), "mods");
-        File[] mods = modsDir.listFiles(file -> file.isFile() && file.getName().endsWith(".jar"));
-        if(mods == null) ;
-        for(File file : mods) {
-            String name = file.getName().toLowerCase();
-            if(name.contains("sodium") ||
-                    name.contains("beddium")    || // Also covers embeddium
-                    name.contains("rubidium")   ||
-                    name.contains("xenon")      || // Name conflicts with another mod
-                    name.contains("celeritas")  ||
-                    name.contains("relictium")  ||
-                    name.contains("vintagium")  ||
-                    name.contains("podium")     ||
-                    name.contains("indium")     ||
-                    name.contains("lazurite")   ||
-                    name.contains("iris")       ||
-                    name.contains("monocle")    ||
-                    name.contains("voxy")       ||
-                    name.contains("nvidium")    ||
-                    name.contains("chloride")   ||
-                    name.contains("bedrodium")  ||
-                    name.contains("substrate")  || // Name conflicts with another mod
-                    name.contains("blendium")   ||
-                    name.contains("ryoamium")
-                // The name conflicts are for pretty dead mods so we ignore them.
-                // I doubt they're using some mod with less than 5k downloads with sodium.
-            ) if(!file.delete())
-                throw new RuntimeException("Failed to delete Sodium and related mods!");
-        }
-    }
+    // Projects fork: upstream's deleteSodiumMods() is gone. It deleted every jar whose name looked
+    // like Sodium's (Sodium, its add-ons, Iris; pack files included) from the Play button's dialog,
+    // so a join of the Projects pack started Fabric without them. Sodium is now held off where it
+    // cannot run (gg.projects.mobile.content.SodiumSupport) and a start it breaks is caught
+    // afterwards (gg.projects.mobile.launch.SodiumFallback); the app never deletes pack files itself.
 
     /**
      * Search for TouchController mod to automatically enable TouchController mod support.
@@ -510,36 +489,13 @@ public final class Tools {
         javaArgList.add("-Dimgui.library.name=imgui-java");
         // We use an abomination to support all DH versions with a single library.
         javaArgList.add("-DZstdNativePath="+Tools.NATIVE_LIB_DIR+"/libzstd-jni-1.5.7-6-dhcompat.so");
-        // We only ever reach this point when user has already used the force run switch
-        boolean hasSodiumMod = false;
-        for (String modName : sodiumMods) {
-            if (hasMods(sodiumMods)) {
-                hasSodiumMod = true;
-                File mixinPropertiesConfigFile = new File(getGameDir(), "config/" + modName + "-mixins.properties");
-                // Write mixin configs to somewhat help stability. We don't want more people complaining.
-                String[] propertiesToAdd = {
-                        "mixin.features.buffer_builder.intrinsics=false",
-                        "mixin.features.chunk_rendering=false"
-                };
-                List<String> mixinPropertiesConfigStrings = null;
-                try {
-                    mixinPropertiesConfigStrings = org.apache.commons.io.FileUtils.readLines(mixinPropertiesConfigFile, "UTF-8");
-                } catch (IOException ignored) {}
-                if (mixinPropertiesConfigStrings == null) {
-                    mixinPropertiesConfigStrings = new ArrayList<>();
-                }
-                for (String newLine : propertiesToAdd) {
-                    if (!mixinPropertiesConfigStrings.contains(newLine)) {
-                        mixinPropertiesConfigStrings.add(newLine);
-                    }
-                }
-                try {
-                    org.apache.commons.io.FileUtils.writeLines(mixinPropertiesConfigFile, mixinPropertiesConfigStrings);
-                } catch (IOException ignored) {} // If we can't write it, we tried our best.
-
-            }
-        }
-        // We use a janky lwjgl setup. We don't want more people complaining it crashes.
+        // Projects fork: upstream also wrote mixin.features.buffer_builder.intrinsics=false and
+        // mixin.features.chunk_rendering=false into config/<sodium|embeddium|rubidium|xenon>-mixins.properties
+        // for every Sodium start. Sodium 0.6 and later have neither option (0.8.12 logs "No
+        // configuration key exists" and ignores them; its chunk renderer is core and cannot be
+        // switched off), so they did nothing but leave four files behind. Kept: Sodium's LWJGL
+        // version check is turned off (upstream's LWJGL is a fork that may report another version).
+        boolean hasSodiumMod = hasMods(gamedir, sodiumMods);
         if (hasSodiumMod) javaArgList.add("-Dsodium.checks.issue2561=false");
         javaArgList.add(versionInfo.mainClass);
         javaArgList.addAll(Arrays.asList(launchArgs));

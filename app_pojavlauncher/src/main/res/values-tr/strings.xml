@@ -430,16 +430,10 @@
     <string name="preference_category_SDL_settings">SDL ayarları</string>
     <string name="mcl_gamepad_forcedSDL">SDL kontrolcü desteğini zorla</string>
     <string name="mcl_gamepad_forcedSDL_subtitle">26.3-snapshot-4 ve sonrasında ya da kontrolcü modları düzgün çalışmıyorsa bunu dene.</string>
-    <string name="sodium_override_title">Sodium\'u yine de çalıştır</string>
-    <string name="sodium_override_summaryOff">Sodium görüntü hatalarına ve çökmelere yol açabilir.</string>
-    <string name="sodium_override_summaryOn">Sodium desteklenmiyor; sorun yaşarsan destek verilemez.</string>
     <string name="mg_renderer_title_dsaExt">Deneysel Direct State Access uzantısını bildir</string>
     <string name="mg_renderer_summary_dsaExt">Iris shader paketlerine yardımcı olabilir; AcceleratedRendering modu için gerekir.</string>
     <string name="error_invalid_value">Geçersiz değer.</string>
     <string name="minecraft_no_username_set">Minecraft oyuncu adın henüz yok. Giriş yapmadan önce Minecraft sitesinde bir ad belirle.</string>
-    <string name="sodium_warning_title">Sodium bulundu</string>
-    <string name="sodium_warning_message">Sodium Android\'de desteklenmiyor ve görüntü hatalarına ya da çökmelere yol açabilir. Onu ve ona bağlı modları kaldır.</string>
-    <string name="delete_sodium">Sodium\'u sil ve oyna</string>
     <string name="use_angle_checkbox">ANGLE kullan (FPS\'i artırabilir)</string>
     <string name="create_lwjgl3ify_profile">LWJGL3ify profili oluştur</string>
 </resources>

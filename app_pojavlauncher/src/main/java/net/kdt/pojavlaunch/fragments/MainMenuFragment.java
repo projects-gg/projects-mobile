@@ -1,7 +1,6 @@
 package net.kdt.pojavlaunch.fragments;
 
 import static net.kdt.pojavlaunch.Tools.dialogOnUiThread;
-import static net.kdt.pojavlaunch.Tools.hasMods;
 import static net.kdt.pojavlaunch.Tools.openPath;
 import static net.kdt.pojavlaunch.Tools.runOnUiThread;
 import static net.kdt.pojavlaunch.Tools.shareLog;
@@ -18,7 +17,6 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 
 import com.kdt.mcgui.mcVersionSpinner;
@@ -67,8 +65,9 @@ public class MainMenuFragment extends Fragment {
         Button mPlayButton = view.findViewById(R.id.play_button);
         mVersionSpinner = view.findViewById(R.id.mc_version_spinner);
 
+        // Projects fork: our wiki; the Discord invite comes from the signed launcher config when it
+        // has one, else the website's own link, which leads to the current invite.
         mNewsButton.setOnClickListener(v -> Tools.openURL(requireActivity(), Tools.URL_HOME));
-        // Projects: the Discord invite comes from the signed launcher config when it has one.
         mDiscordButton.setOnClickListener(v -> Tools.openURL(requireActivity(), ProjectsHomeCard.discordUrl(getString(R.string.discord_invite))));
         mCustomControlButton.setOnClickListener(v -> startActivity(new Intent(requireContext(), CustomControlsActivity.class)));
         // Projects fork: every account may run installers, offline ones too (upstream: Microsoft only).
@@ -79,23 +78,17 @@ public class MainMenuFragment extends Fragment {
         });
         mEditProfileButton.setOnClickListener(v -> mVersionSpinner.openProfileEditor(requireActivity()));
 
-        mPlayButton.setOnClickListener(v -> {
-            if (Tools.hasMods("sodium") && !(LauncherPreferences.DEFAULT_PREF.getBoolean("sodium_override", false))) {
-                AlertDialog sodiumWarningDialog = new AlertDialog.Builder(requireContext())
-                        .setTitle(R.string.sodium_warning_title)
-                        .setMessage(R.string.sodium_warning_message)
-                        .setNeutralButton(R.string.delete_sodium, (d,w)-> {
-                            Tools.deleteSodiumMods();
-                            ExtraCore.setValue(ExtraConstants.LAUNCH_GAME, true);
-                        })
-                        .create();
-                sodiumWarningDialog.show();
-            } else ExtraCore.setValue(ExtraConstants.LAUNCH_GAME, true);
-        });
+        // Projects fork: Play starts the game. Upstream first asked about Sodium with a single
+        // button that deleted every Sodium-looking jar (pack files included) before starting; Sodium
+        // is now held off where it cannot run, and a start it breaks is caught afterwards
+        // (gg.projects.mobile.launch.SodiumFallback).
+        mPlayButton.setOnClickListener(v -> ExtraCore.setValue(ExtraConstants.LAUNCH_GAME, true));
 
         mShareLogsButton.setOnClickListener((v) -> shareLog(requireContext()));
 
         mProjectsCard = new ProjectsHomeCard(this, view, mVersionSpinner, mPlayButton, mNotificationPermission);
+        // Projects fork: "Tekrar başlat" after Sodium kept the game from starting.
+        if (gg.projects.mobile.launch.ProjectsRelaunch.take(requireActivity())) view.postDelayed(() -> startAgain(40), 500);
 
         mOpenDirectoryButton.setOnClickListener((v)-> {
             if (Tools.isDemoProfile(v.getContext())){ // Say a different message when on demo profile since they might see the hidden demo folder
@@ -109,6 +102,21 @@ public class MainMenuFragment extends Fragment {
             Tools.swapFragment(requireActivity(), GamepadMapperFragment.class, GamepadMapperFragment.TAG, null);
             return true;
         });
+    }
+
+    /**
+     * Starts the profile that just failed again: the Projects profile through its join (the sync
+     * takes Sodium out first). Waits for the start-up unpacking, which Play would refuse to overlap.
+     */
+    private void startAgain(int triesLeft) {
+        if (!isAdded() || getView() == null) return;
+        if (com.kdt.mcgui.ProgressLayout.hasProcesses() && triesLeft > 0) {
+            getView().postDelayed(() -> startAgain(triesLeft - 1), 300);
+            return;
+        }
+        String current = LauncherPreferences.DEFAULT_PREF.getString(LauncherPreferences.PREF_KEY_CURRENT_PROFILE, "");
+        if (gg.projects.mobile.join.ProjectsProfile.KEY.equals(current)) mProjectsCard.joinNow();
+        else ExtraCore.setValue(ExtraConstants.LAUNCH_GAME, true);
     }
 
     private File getCurrentProfileDirectory() {
