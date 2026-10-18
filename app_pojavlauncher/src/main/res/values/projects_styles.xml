@@ -34,8 +34,10 @@
     <!-- The launcher's screens: Figtree for every text (design.md), sentence-case buttons, calm
          list rows. The game's activity keeps the platform font for upstream's in-game controls. -->
     <style name="AppTheme.Launcher">
+        <!-- Only the platform attribute: a theme-level app:fontFamily outranks every layout's own
+             android:fontFamily in AppCompat (the Projects card's Tektur titles turned Figtree). Views
+             that take Tektur from a text appearance alone set android:fontFamily themselves. -->
         <item name="android:fontFamily">@font/figtree</item>
-        <item name="fontFamily">@font/figtree</item>
         <item name="android:textAppearanceButton">@style/TextAppearance.Projects.Button</item>
         <item name="android:textAppearanceListItem">@style/TextAppearance.Projects.ListItem</item>
         <item name="android:textAppearanceListItemSmall">@style/TextAppearance.Projects.ListItem</item>
@@ -95,6 +97,9 @@
     </style>
 
     <style name="ProjectsPreferenceTheme" parent="PreferenceThemeOverlay.v14.Material">
+        <!-- Upstream's theme-wide text size outranks every text appearance: titles, summaries and
+             category titles all read the same size. Settings take their appearances' sizes. -->
+        <item name="android:textSize">@null</item>
         <item name="preferenceCategoryTitleTextAppearance">@style/TextAppearance.Projects.PreferenceCategory</item>
         <item name="preferenceCategoryTitleTextColor">@color/projects_ash_300</item>
     </style>

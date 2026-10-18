@@ -60,6 +60,26 @@ public class ThemeWiringTest {
     }
 
     @Test
+    public void themesLeaveTheTextAppearancesTheirFontsAndSizes() throws Exception {
+        // A theme-level value outranks every text appearance (AppCompat reads the theme's app
+        // fontFamily before a layout's own android:fontFamily): titles turned Figtree, and upstream's
+        // theme-wide text size gave settings' titles, summaries and dialog texts one size.
+        String projects = read(new File(RES, "values/projects_styles.xml"));
+        String upstream = read(new File(RES, "values/styles.xml"));
+        String appFont = "<item name=\"fontFamily\">";
+        assertTrue(!style(projects, "AppTheme.Launcher").contains(appFont));
+        assertTrue(!style(upstream, "ProjectsAlertDialog").contains(appFont));
+        String noSize = "<item name=\"android:textSize\">@null</item>";
+        assertTrue(style(projects, "ProjectsPreferenceTheme").contains(noSize));
+        assertTrue(style(upstream, "ProjectsAlertDialog").contains(noSize));
+        for (String header : new String[]{"layout/projects_screen_header.xml", "layout/projects_preference_header.xml"}) {
+            String xml = read(new File(RES, header));
+            assertTrue(header, xml.contains("android:fontFamily=\"@font/tektur_semibold\""));
+            assertTrue(header, xml.contains("android:textSize=\"@dimen/projects_text_title\""));
+        }
+    }
+
+    @Test
     public void theLaunchScreenHasAStillSheenBeforeAndroid71() throws Exception {
         // drawable-v25 holds the render-thread animation (gradients need 7.0, render-thread vectors 7.1);
         // without a plain drawable of the same name the screen would not open on Android 5 to 7.0.

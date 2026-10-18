@@ -7,6 +7,9 @@
     </style>
 
     <style name="ProjectsAlertDialog" parent="Theme.AppCompat.Dialog.Alert">
+        <!-- The activity's theme-wide text size would flatten the dialog's title, message and list
+             to one size: dialogs take their text appearances' sizes. -->
+        <item name="android:textSize">@null</item>
         <item name="colorAccent">@color/projects_gold_500</item>
         <item name="colorBackgroundFloating">@color/projects_obsidian_800</item>
         <item name="android:windowBackground">@drawable/projects_dialog_background</item>
@@ -17,7 +20,6 @@
         <item name="buttonBarNeutralButtonStyle">@style/ProjectsDialogButton</item>
         <!-- M14: dialogs speak Figtree and press like every other button (gold ripple, haptics). -->
         <item name="android:fontFamily">@font/figtree</item>
-        <item name="fontFamily">@font/figtree</item>
         <item name="colorControlHighlight">@color/projects_ripple</item>
         <item name="android:colorControlHighlight">@color/projects_ripple</item>
         <item name="colorControlActivated">@color/projects_gold_500</item>
@@ -32,6 +34,9 @@
     <!-- M14: dialog titles in Tektur like every screen title (design.md: dialog title 17). -->
     <style name="ProjectsDialogTitle" parent="RtlOverlay.DialogWindowTitle.AppCompat">
         <item name="android:textAppearance">@style/TextAppearance.Projects.DialogTitle</item>
+        <!-- The dialog theme's Figtree would outrank the text appearance's font. -->
+        <item name="android:fontFamily">@font/tektur_semibold</item>
+        <item name="android:textSize">@dimen/projects_text_section</item>
     </style>
 
     <!-- Dialog buttons in sentence case (design.md: OYNA is the only all-caps label). -->

@@ -33,7 +33,9 @@
             android:accessibilityHeading="true"
             android:ellipsize="end"
             android:maxLines="2"
-            android:textAppearance="@style/TextAppearance.Projects.Title" />
+            android:textAppearance="@style/TextAppearance.Projects.Title"
+            android:fontFamily="@font/tektur_semibold"
+            android:textSize="@dimen/projects_text_title" />
     </LinearLayout>
 
     <TextView
