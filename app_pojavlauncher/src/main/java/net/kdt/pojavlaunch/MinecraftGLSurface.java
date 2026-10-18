@@ -225,7 +225,9 @@ public class MinecraftGLSurface extends View implements GrabListener, DirectGame
 
                 @Override
                 public void onSurfaceTextureUpdated(@NonNull SurfaceTexture surface) {
-                    // TODO: Triggers on eglSwapBuffers. Add a loading message and make it end here
+                    // Triggers on eglSwapBuffers. Projects fork (M14): the loading screen ends at
+                    // Minecraft's first frame (one static read per frame once it is gone).
+                    gg.projects.mobile.launch.LaunchCurtain.onGameFrame();
                 }
             });
 
@@ -543,6 +545,11 @@ public class MinecraftGLSurface extends View implements GrabListener, DirectGame
     /** A small interface called when the listener is ready for the first time */
     public interface SurfaceReadyListener {
         void isReady();
+    }
+
+    /** Projects fork (M14): the view the game draws into (TextureView or SurfaceView), once started. */
+    public View getRenderView() {
+        return mSurface;
     }
 
     public void setSurfaceReadyListener(SurfaceReadyListener listener){

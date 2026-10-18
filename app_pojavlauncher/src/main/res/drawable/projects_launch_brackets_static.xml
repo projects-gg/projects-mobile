@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The launch screen's pixel brackets at rest (M14): used with animations off. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="172dp"
+    android:height="172dp"
+    android:viewportWidth="172"
+    android:viewportHeight="172">
+    <path
+        android:fillColor="@color/projects_gold_300"
+        android:pathData="M10,10 H26 V12 H12 V26 H10 Z M162,10 V26 H160 V12 H146 V10 Z M10,162 V146 H12 V160 H26 V162 Z M162,162 H146 V160 H160 V146 H162 Z" />
+</vector>

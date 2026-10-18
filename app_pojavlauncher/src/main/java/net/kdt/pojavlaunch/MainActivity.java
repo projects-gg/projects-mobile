@@ -140,6 +140,8 @@ public class MainActivity extends BaseActivity implements ControlButtonMenuListe
         // Start the service a bit early
         ContextCompat.startForegroundService(this, gameServiceIntent);
         initLayout(R.layout.activity_basemain);
+        // Projects fork (M14): the loading screen until Minecraft draws its first frame.
+        gg.projects.mobile.launch.LaunchCurtain.attach(this, minecraftGLView);
         CallbackBridge.addGrabListener(touchpad);
         CallbackBridge.addGrabListener(minecraftGLView);
 
@@ -683,6 +685,8 @@ public class MainActivity extends BaseActivity implements ControlButtonMenuListe
     public void onServiceConnected(ComponentName name, IBinder service) {
         GameService.LocalBinder localBinder = (GameService.LocalBinder) service;
         mServiceBinder = localBinder;
+        // Projects fork (M14): a game already running in this process needs no loading screen.
+        if (localBinder.isActive) gg.projects.mobile.launch.LaunchCurtain.dismissNow();
         minecraftGLView.start(localBinder.isActive, touchpad);
         localBinder.isActive = true;
     }

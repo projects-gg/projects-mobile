@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The launch screen's emblem arriving (M14): it fades in while it settles from 90% to its size.
+     Played once on the render thread (Android 7.1+), so it stays smooth while the game's process
+     starts Java; nothing moves afterwards. -->
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/projects_launch_emblem">
+    <target android:name="root">
+        <aapt:attr xmlns:aapt="http://schemas.android.com/aapt" name="android:animation">
+            <objectAnimator
+                android:duration="420"
+                android:interpolator="@android:interpolator/linear_out_slow_in"
+                android:propertyName="alpha"
+                android:valueFrom="0"
+                android:valueTo="1"
+                android:valueType="floatType" />
+        </aapt:attr>
+    </target>
+    <target android:name="emblem">
+        <aapt:attr xmlns:aapt="http://schemas.android.com/aapt" name="android:animation">
+            <set>
+                <objectAnimator
+                    android:duration="640"
+                    android:interpolator="@interpolator/projects_ease_out_expo"
+                    android:propertyName="scaleX"
+                    android:valueFrom="0.9"
+                    android:valueTo="1"
+                    android:valueType="floatType" />
+                <objectAnimator
+                    android:duration="640"
+                    android:interpolator="@interpolator/projects_ease_out_expo"
+                    android:propertyName="scaleY"
+                    android:valueFrom="0.9"
+                    android:valueTo="1"
+                    android:valueType="floatType" />
+            </set>
+        </aapt:attr>
+    </target>
+</animated-vector>

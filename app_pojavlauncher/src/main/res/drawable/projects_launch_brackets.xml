@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The launch screen's pixel brackets (M14; design.md: they mark the active thing): four gold L
+     corners around the emblem that close in from 10dp out while they fade in, once. The vector
+     starts in the first frame's state (invisible, out); with animations off the launch screen
+     shows projects_launch_brackets_static instead. -->
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+    <aapt:attr name="android:drawable">
+        <vector
+            android:width="172dp"
+            android:height="172dp"
+            android:viewportWidth="172"
+            android:viewportHeight="172">
+            <group android:name="tl" android:translateX="-10" android:translateY="-10">
+                <path
+                    android:name="tl_arm"
+                    android:fillAlpha="0"
+                    android:fillColor="@color/projects_gold_300"
+                    android:pathData="M10,10 H26 V12 H12 V26 H10 Z" />
+            </group>
+            <group android:name="tr" android:translateX="10" android:translateY="-10">
+                <path
+                    android:name="tr_arm"
+                    android:fillAlpha="0"
+                    android:fillColor="@color/projects_gold_300"
+                    android:pathData="M162,10 V26 H160 V12 H146 V10 Z" />
+            </group>
+            <group android:name="bl" android:translateX="-10" android:translateY="10">
+                <path
+                    android:name="bl_arm"
+                    android:fillAlpha="0"
+                    android:fillColor="@color/projects_gold_300"
+                    android:pathData="M10,162 V146 H12 V160 H26 V162 Z" />
+            </group>
+            <group android:name="br" android:translateX="10" android:translateY="10">
+                <path
+                    android:name="br_arm"
+                    android:fillAlpha="0"
+                    android:fillColor="@color/projects_gold_300"
+                    android:pathData="M162,162 H146 V160 H160 V146 H162 Z" />
+            </group>
+        </vector>
+    </aapt:attr>
+
+    <target android:name="tl">
+        <aapt:attr name="android:animation">
+            <set>
+                <objectAnimator android:duration="520" android:interpolator="@interpolator/projects_ease_out_expo"
+                    android:propertyName="translateX" android:valueFrom="-10" android:valueTo="0" />
+                <objectAnimator android:duration="520" android:interpolator="@interpolator/projects_ease_out_expo"
+                    android:propertyName="translateY" android:valueFrom="-10" android:valueTo="0" />
+            </set>
+        </aapt:attr>
+    </target>
+    <target android:name="tr">
+        <aapt:attr name="android:animation">
+            <set>
+                <objectAnimator android:duration="520" android:interpolator="@interpolator/projects_ease_out_expo"
+                    android:propertyName="translateX" android:valueFrom="10" android:valueTo="0" />
+                <objectAnimator android:duration="520" android:interpolator="@interpolator/projects_ease_out_expo"
+                    android:propertyName="translateY" android:valueFrom="-10" android:valueTo="0" />
+            </set>
+        </aapt:attr>
+    </target>
+    <target android:name="bl">
+        <aapt:attr name="android:animation">
+            <set>
+                <objectAnimator android:duration="520" android:interpolator="@interpolator/projects_ease_out_expo"
+                    android:propertyName="translateX" android:valueFrom="-10" android:valueTo="0" />
+                <objectAnimator android:duration="520" android:interpolator="@interpolator/projects_ease_out_expo"
+                    android:propertyName="translateY" android:valueFrom="10" android:valueTo="0" />
+            </set>
+        </aapt:attr>
+    </target>
+    <target android:name="br">
+        <aapt:attr name="android:animation">
+            <set>
+                <objectAnimator android:duration="520" android:interpolator="@interpolator/projects_ease_out_expo"
+                    android:propertyName="translateX" android:valueFrom="10" android:valueTo="0" />
+                <objectAnimator android:duration="520" android:interpolator="@interpolator/projects_ease_out_expo"
+                    android:propertyName="translateY" android:valueFrom="10" android:valueTo="0" />
+            </set>
+        </aapt:attr>
+    </target>
+    <target android:name="tl_arm">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:duration="320" android:propertyName="fillAlpha"
+                android:valueFrom="0" android:valueTo="1" />
+        </aapt:attr>
+    </target>
+    <target android:name="tr_arm">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:duration="320" android:propertyName="fillAlpha"
+                android:valueFrom="0" android:valueTo="1" />
+        </aapt:attr>
+    </target>
+    <target android:name="bl_arm">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:duration="320" android:propertyName="fillAlpha"
+                android:valueFrom="0" android:valueTo="1" />
+        </aapt:attr>
+    </target>
+    <target android:name="br_arm">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:duration="320" android:propertyName="fillAlpha"
+                android:valueFrom="0" android:valueTo="1" />
+        </aapt:attr>
+    </target>
+</animated-vector>

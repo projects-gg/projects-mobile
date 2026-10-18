@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Before Android 7.1 the launch screen's emblem has no sheen (drawable-v25 has the animation). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@android:color/transparent" />
+    <size android:width="112dp" android:height="112dp" />
+</shape>
