@@ -1,54 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Phosphor "Mouse" (regular), MIT license, see assets/licenses/PHOSPHOR_ICONS_LICENSE. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="48dp"
-    android:height="48dp"
-    android:viewportWidth="48"
-    android:viewportHeight="48">
-  <path
-      android:pathData="M4.5,40.7V4.3l25.2,29H18.5l4.7,9.3 -3.8,0.9 -4.6,-9.3 -10.3,6.5Z"
-      android:strokeLineJoin="round"
-      android:strokeWidth="3"
-      android:fillColor="#8c8c8c"
-      android:strokeColor="#fff"
-      android:fillType="evenOdd"
-      android:strokeLineCap="round"/>
-  <path
-      android:pathData="M12.517,4.3l31,0"
-      android:strokeLineJoin="round"
-      android:strokeWidth="3.05"
-      android:fillColor="#00000000"
-      android:strokeColor="#fff"
-      android:fillType="evenOdd"
-      android:strokeLineCap="round"/>
-  <path
-      android:pathData="M20.975,14l22.5,0"
-      android:strokeLineJoin="round"
-      android:strokeWidth="2.944"
-      android:fillColor="#00000000"
-      android:strokeColor="#fff"
-      android:fillType="evenOdd"
-      android:strokeLineCap="round"/>
-  <path
-      android:pathData="M29.533,23.5l14,0"
-      android:strokeLineJoin="round"
-      android:strokeWidth="2.596"
-      android:fillColor="#00000000"
-      android:strokeColor="#fff"
-      android:fillType="evenOdd"
-      android:strokeLineCap="round"/>
-  <path
-      android:pathData="M36.025,33.3l7.5,0"
-      android:strokeLineJoin="round"
-      android:strokeWidth="2.05"
-      android:fillColor="#00000000"
-      android:strokeColor="#fff"
-      android:fillType="evenOdd"
-      android:strokeLineCap="round"/>
-  <path
-      android:pathData="M29.531,43l13.995,0"
-      android:strokeLineJoin="round"
-      android:strokeWidth="2.8"
-      android:fillColor="#00000000"
-      android:strokeColor="#fff"
-      android:fillType="evenOdd"
-      android:strokeLineCap="round"/>
+    android:width="24dp"
+    android:height="24dp"
+    android:tint="@color/projects_ash_300"
+    android:viewportWidth="256"
+    android:viewportHeight="256">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M144,16H112A64.07,64.07,0,0,0,48,80v96a64.07,64.07,0,0,0,64,64h32a64.07,64.07,0,0,0,64-64V80A64.07,64.07,0,0,0,144,16Zm48,64v24H136V32h8A48.05,48.05,0,0,1,192,80ZM112,32h8v72H64V80A48.05,48.05,0,0,1,112,32Zm32,192H112a48.05,48.05,0,0,1-48-48V120H192v56A48.05,48.05,0,0,1,144,224Z" />
 </vector>

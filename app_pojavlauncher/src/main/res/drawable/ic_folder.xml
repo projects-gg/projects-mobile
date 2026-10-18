@@ -1,21 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Phosphor "FolderOpen" (regular), MIT license, see assets/licenses/PHOSPHOR_ICONS_LICENSE. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
-    android:viewportWidth="36"
-    android:viewportHeight="36">
-  <path
-      android:pathData="m13.8,9 l3,3H30v15H6V9h7.8M15,6H6a3,3 0,0 0,-3 3v18a3,3 0,0 0,3 3h24a3,3 0,0 0,3 -3V12a3,3 0,0 0,-3 -3H18l-3,-3Z"
-      android:strokeLineJoin="round"
-      android:fillColor="#fff"
-      android:fillType="nonZero"/>
-  <path
-      android:pathData="M13,23.4v-3.6L9.5,19.8v3.6L13,23.4ZM20,23.4h-3.5v-3.6L13,19.8v-3.6L9.5,16.2v-3.6L6,12.6v3.6h3.5v3.6L6,19.8v3.6h3.5L9.5,27L13,27v-3.6h3.5L16.5,27L20,27v-3.6Z"
-      android:strokeLineJoin="round"
-      android:fillColor="#ffde53"
-      android:fillType="evenOdd"/>
-  <path
-      android:pathData="M23.5,23.4L20,23.4v-3.6h-3.5v-3.6L13,16.2v-3.6L9.5,12.6L9.5,9L6,9v3.6h3.5v3.6L6,16.2v3.6h3.5v3.6L6,23.4L6,27h3.5v-3.6L13,23.4L13,27h3.5v-3.6L20,23.4L20,27h3.5v-3.6ZM16.5,23.4v-3.6L13,19.8v3.6h3.5ZM13,16.2L9.5,16.2v3.6L13,19.8v-3.6Z"
-      android:strokeLineJoin="round"
-      android:fillColor="#dcaf24"
-      android:fillType="evenOdd"/>
+    android:tint="@color/projects_ash_300"
+    android:viewportWidth="256"
+    android:viewportHeight="256">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M245,110.64A16,16,0,0,0,232,104H216V88a16,16,0,0,0-16-16H130.67L102.94,51.2a16.14,16.14,0,0,0-9.6-3.2H40A16,16,0,0,0,24,64V208h0a8,8,0,0,0,8,8H211.1a8,8,0,0,0,7.59-5.47l28.49-85.47A16.05,16.05,0,0,0,245,110.64ZM93.34,64,123.2,86.4A8,8,0,0,0,128,88h72v16H69.77a16,16,0,0,0-15.18,10.94L40,158.7V64Zm112,136H43.1l26.67-80H232Z" />
 </vector>
