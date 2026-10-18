@@ -11,6 +11,12 @@ import androidx.appcompat.app.AppCompatActivity;
 
 public class FatalErrorActivity extends AppCompatActivity {
 
+    /** Projects fork: in the app's language on Android 12 and older too (13+ has the app locale). */
+    @Override
+    protected void attachBaseContext(Context newBase) {
+        super.attachBaseContext(net.kdt.pojavlaunch.utils.LocaleUtils.setLocale(newBase));
+    }
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);

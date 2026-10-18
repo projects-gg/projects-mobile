@@ -16,6 +16,12 @@ import java.io.Serializable;
 
 public class ShowErrorActivity extends Activity {
 
+    /** Projects fork: in the app's language on Android 12 and older too (13+ has the app locale). */
+    @Override
+    protected void attachBaseContext(Context newBase) {
+        super.attachBaseContext(net.kdt.pojavlaunch.utils.LocaleUtils.setLocale(newBase));
+    }
+
     private static final String ERROR_ACTIVITY_REMOTE_TASK = "remoteTask";
 
     @Override

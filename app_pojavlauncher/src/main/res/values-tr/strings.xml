@@ -7,7 +7,7 @@
     <string name="login_online_username_hint">Oyuncu adı</string>
     <string name="login_online_login_label">Giriş yap</string>
     <!-- Hint -->
-    <string name="hint_control_mapping">"\"Bağlam menüsünü açmak için orta üstteki dişli simgesine dokunun ⚙\nBir düğmeye dokunarak özelleştirin: düzenle, boyutlandır, kaldır veya tuş atamalarını değiştir."</string>
+    <string name="hint_control_mapping">"Menü için üst ortadaki dişliye dokun ⚙\nBir tuşa dokunup düzenle: değiştir, boyutlandır, kaldır ya da tuş ata."</string>
     <!-- Warnings -->
     <string name="warning_remove_account">Bu hesap kaldırılacak!</string>
     <!-- AlertDialog title -->
@@ -50,10 +50,10 @@
     <string name="mcl_setting_title_renderer_settings">Ek işleyici ayarları</string>
     <string name="mcl_setting_title_renderer_subtitle">İşleyiciye özgü ayarlar</string>
     <string name="mcl_setting_category_renderer">İşleyici</string>
-    <string name="mcl_setting_renderer_gles2_4">Kutsal GL4ES- (1.21.4&lt; sadece, Hızlı)</string>
-    <string name="mcl_setting_renderer_vulkan_zink">Zink (Vulkan) - (tüm sürümler için, orta)</string>
-    <string name="mcl_setting_renderer_mobileglues">MobileGlues (OpenGL ES) - (sadece 1.17+, hızlı)</string>
-    <string name="mcl_setting_renderer_ltw">LTW (OpenGL ES 3) - sadece 1.17+</string>
+    <string name="mcl_setting_renderer_gles2_4">Holy GL4ES (yalnız 1.21.4 öncesi, hızlı)</string>
+    <string name="mcl_setting_renderer_vulkan_zink">Zink (Vulkan) (tüm sürümler, yavaş)</string>
+    <string name="mcl_setting_renderer_mobileglues">MobileGlues (OpenGL ES) (tüm sürümler, hızlı)</string>
+    <string name="mcl_setting_renderer_ltw">LTW (OpenGL ES 3) (yalnız 1.17 ve sonrası)</string>
     <string name="mcl_setting_veroption_release">Kararlı sürümler</string>
     <string name="mcl_setting_veroption_snapshot">Test sürümleri</string>
     <string name="mcl_setting_veroption_oldalpha">Eski alfa</string>
@@ -106,7 +106,7 @@
     <string name="import_control_label">Kontrolleri içeri aktar</string>
     <string name="import_control_invalid_file">Geçersiz veya bozuk dosya</string>
     <string name="import_control_import_button">Kontrolleri içe aktar</string>
-    <string name="import_control_verifying_file">Dosya şu anda doğrulanıyor, lütfen bekleyin ve tekrar deneyin…</string>
+    <string name="import_control_verifying_file">Dosya doğrulanıyor; biraz bekleyip tekrar dene.</string>
     <string name="import_control_invalid_name">Geçersiz isim ya da dosya zaten var</string>
     <string name="import_control_done">İçeri aktarma tamamlandı</string>
     <!--
@@ -218,14 +218,14 @@
     <string name="folder_fragment_select">Klasör seç</string>
     <string name="main_login_done">Giriş yapıldı</string>
     <string name="main_add_account">Hesap ekle</string>
-    <string name="tasks_ongoing">Görevler devam etmekte, lütfen bekleyin</string>
+    <string name="tasks_ongoing">İndirmeler sürüyor, biraz bekle.</string>
     <string name="no_saved_accounts">Kayıtlı hesap yok</string>
     <string name="mc_download_failed">Minecraft\'ı indirmek başarısız oldu! Bu kötü internet bağlantısı, yanlış yerleştirilmiş dosyalar vb… sebebiyle olabilir.</string>
     <string name="xerr_unknown">Bilinmeyen XBOX Live API hatası %d</string>
-    <string name="xerr_no_account">Bir Xbox Live hesabına sahip olmadığınız görünüyor. Lütfen bir kereliğine https://minecraft.net/ \'da giriş yapın ve tekrar deneyin.</string>
+    <string name="xerr_no_account">Xbox Live hesabın yok gibi görünüyor. https://minecraft.net/ adresinde bir kez giriş yapıp tekrar dene.</string>
     <string name="xerr_adult_verification">Bir yetişkinin hesabınızı onaylaması gerekiyor.</string>
     <string name="xerr_child">Hesabınız bir çocuk hesabı ve giriş yapabilmek için bir aileye eklenmesi gerekiyor.</string>
-    <string name="minecraft_not_owned">Görünüşe göre bu hesap bir Minecraft profiline sahip değil. Eğer Xbox Game Pass\'e sahip iseniz, lütfen https://minecraft.net/ \'den giriş yapın ve ayarlayın.</string>
+    <string name="minecraft_not_owned">Bu hesabın Minecraft profili yok gibi görünüyor. Xbox Game Pass kullanıyorsan https://minecraft.net/ adresinde giriş yapıp profilini oluştur.</string>
     <string name="xerr_not_available">Xbox Live ülkenizde mevcut değil</string>
     <string name="preference_enable_gyro_title">Jiroskop kontrollerini etkinleştir</string>
     <string name="preference_enable_gyro_description">Bunu etkinleştirmek, telefonunuzu çevirerek oyun içi dönüş yapmanızı sağlayacaktır.</string>
@@ -235,7 +235,7 @@
     <string name="preference_gyro_sample_rate_title">Jiroskop örnekleme oranı</string>
     <string name="preference_gyro_sample_rate_description">Eğer jiroskop kontrolleriyle performans probleminiz varsa bunu arttırın.</string>
     <string name="microsoft_login_retry_later">Çok fazla deneme oldu. Biraz sonra yeniden dene.</string>
-    <string name="storage_required">Projects Launcher harici depolama biriminin bağlı olmasını gerektirir. Lütfen yeniden bağlayın ve uygulamayı yeniden başlatın.</string>
+    <string name="storage_required">Projects Launcher için harici depolama gerekiyor. Yeniden bağlayıp uygulamayı yeniden başlat.</string>
     <string name="mcl_setting_title_buttonallcaps">Düğme etiketlerinde yalnızca büyük harfler kullanın</string>
     <string name="mcl_setting_subtitle_buttonallcaps">Kontrollerinizde küçük harfler kullanmak istiyorsanız bunu devre dışı bırakın.</string>
     <string name="create_profile">Yeni profil oluştur</string>
@@ -266,15 +266,15 @@
     <string name="fabric_dl_loader_version">%s yükleyici sürümü</string>
     <string name="fabric_dl_game_version">Minecraft sürümü</string>
     <string name="fabric_dl_install">Yükle</string>
-    <string name="fabric_dl_cant_read_meta">%s yükleyici meta verileri okunamadı. Lütfen daha sonra tekrar deneyin.</string>
+    <string name="fabric_dl_cant_read_meta">%s yükleyici bilgileri okunamadı. Sonra tekrar dene.</string>
     <string name="modloader_dl_install_fabric">Fabric profili oluştur</string>
     <string name="modloader_dl_install_quilt">Quilt profili oluştur</string>
     <string name="modloader_dl_install_forge">Forge profili oluştur</string>
     <string name="create_profile_vanilla">Vanilla profil oluştur</string>
     <string name="create_profile_vanilla_like_versions">Vanilla benzeri sürümler</string>
     <string name="create_profile_modded_versions">Modlu sürümler</string>
-    <string name="fabric_dl_loader_title">Sürümleri seçiniz</string>
-    <string name="of_dl_select_version">OptiFine sürümü seçiniz</string>
+    <string name="fabric_dl_loader_title">Sürüm seç</string>
+    <string name="of_dl_select_version">OptiFine sürümü seç</string>
     <string name="of_dl_failed_to_scrape">OptiFine yüklemesi için veri toplanamadı</string>
     <string name="of_dl_progress">%s indiriliyor</string>
     <string name="create_profile_optifine">OptiFine profili oluştur</string>
@@ -385,7 +385,7 @@
     <string name="bta_installer_nightly_versions">Günlük BTA sürümleri</string>
     <string name="newdl_extracting_native_libraries">Yerel kütüphaneler çıkarılıyor (%d/%d)</string>
     <string name="toast_not_available_demo">Bu demo modunda yoktur</string>
-    <string name="preference_renderer_mobileglues_settings">MobileGlues Ișleyici Seçenekleri</string>
+    <string name="preference_renderer_mobileglues_settings">MobileGlues işleyici ayarları</string>
     <string name="mg_renderer_glsl_cache">Maks GLSL önbellek boyutu</string>
     <string name="mg_renderer_angle">Sürücü olarak ANGLE\'ı kullan</string>
     <string name="mg_renderer_multidraw">Multidraw emulasyon modu</string>
@@ -408,17 +408,17 @@
     <string name="no_minecraft_account_found">Minecraft hesabı bulunamadı</string>
     <string name="feature_requires_java_account">Bunun için Minecraft: Java Edition\'a sahip bir Microsoft hesabı gerekir.</string>
     <string name="delete_account_and_login">Hesabı sil ve giriş yap</string>
-    <string name="login_again">Lütfen yeniden giriş yap.</string>
+    <string name="login_again">Yeniden giriş yap.</string>
     <string name="account_corrupted">Seçili hesap bozuk</string>
     <string name="modloader_dl_install_neoforge">NeoForge profili oluştur</string>
-    <string name="neoforge_dl_select_version">Lütfen NeoForge Sürümü seçiniz</string>
-    <string name="neoforge_dl_no_installer">Özür dileriz, ama NeoForge\'un bu sürümü indiriciye sahip değil veya gözükmüyor, bu yüzden şu durumda destek dışıdır.</string>
+    <string name="neoforge_dl_select_version">NeoForge sürümü seç</string>
+    <string name="neoforge_dl_no_installer">NeoForge\'un bu sürümünün yükleyicisi yok, bu yüzden kurulamıyor.</string>
     <string name="preference_category_touchcontroller_settings">TouchController ayarları</string>
     <string name="preference_force_enable_touchcontroller_title">TouchController\'ı zorla aç</string>
     <string name="preference_force_enable_touchcontroller_description">Mod dosyası bulunmasa bile TouchController desteğini açar.</string>
     <string name="preference_touchcontroller_vibrate_length_title">TouchController titreşim süresi</string>
     <string name="preference_touchcontroller_vibrate_length_description">TouchController kullanılırken titreşimin süresini ayarlar.</string>
-    <string name="error_vanilla_json_corrupt">Vanila json dosyaları görünüşe göre bozulmuş veya deforme halde. Lütfen Github veya discord\'a bir Hata raporu yollayınız.</string>
+    <string name="error_vanilla_json_corrupt">Oyunun sürüm dosyaları bozuk görünüyor. Projects Discord\'unda yardım iste.</string>
     <string name="preference_ask_for_microphone_title">Mikrofona izin ver</string>
     <!-- Projects fork: Turkish for upstream strings on screens players reach (accounts, settings,
          profile editor, the Sodium warning before a launch) -->
@@ -434,4 +434,33 @@
     <string name="minecraft_no_username_set">Minecraft oyuncu adın henüz yok. Giriş yapmadan önce Minecraft sitesinde bir ad belirle.</string>
     <string name="use_angle_checkbox">ANGLE kullan (FPS\'i artırabilir)</string>
     <string name="create_lwjgl3ify_profile">LWJGL3ify profili oluştur</string>
+    <!-- Projects fork (0.1.5): renderer names upstream left untranslated, the controls editor and the
+         modpack screen. -->
+    <string name="mcl_setting_renderer_ng_gl4es">Krypton Wrapper (tüm sürümler, hızlı)</string>
+    <string name="mcl_setting_renderer_vulkan_kopper_zink">Kopper Zink (Vulkan) (tüm sürümler, orta)</string>
+    <!-- Projects fork (0.1.5): upstream texts that had no Turkish yet. -->
+    <string name="mcl_gamepad_SDL">SDL kontrolcü desteği</string>
+    <string name="mcl_gamepad_SDL_subtitle">Modlarla daha uyumlu kontrolcü desteği. Kullanılmazsa GLFW\'ye döner.</string>
+    <string name="neoforge_dl_searching">NeoForge sürümü aranıyor</string>
+    <string name="newdl_downloading_jre_runtime">Java %s indiriliyor (%.2f/%.2f MB)</string>
+    <string name="oldL4JFound">Legacy4J\'nin bu sürümünde Android düzeltmeleri yok. Android sürümünü kendin kurman gerekiyor.</string>
+    <string name="global_warning">Uyarı</string>
+    <string name="controllableFound">Controllable açılışta zaman zaman çökebiliyor. Tekrar dene ya da modu kaldır.</string>
+    <string name="mg_renderer_title_fsr">AMD FSR 1 ile ölçekleme</string>
+    <string name="autorendererselectfailed">İşleyici kendiliğinden seçilemedi, Holy GL4ES kullanılıyor</string>
+    <string name="not_modpack_file">Bu bir modpack dosyası değil.</string>
+    <string name="global_not_installed">Kurulu değil</string>
+    <string name="global_download">İndir</string>
+    <string name="multirt_no_internet">İndirilemedi. İnternet bağlantını kontrol et.</string>
+    <string name="global_installing">Kuruluyor…</string>
+    <string name="error_key_unsupported">Bu tuşa atanan tuş geçersiz. Uygulamayı güncellemeyi dene.</string>
+    <string name="select_lwjgl3ify_version">LWJGL3ify sürümü seç</string>
+    <string name="lwjgl3ify_installer_available_versions">Desteklenen LWJGL3ify sürümleri</string>
+    <string name="lwjgl3ify_installer_broken_versions">Bozuk LWJGL3ify sürümleri (SDL)</string>
+    <string name="new_default_controls">Yeni varsayılan tuş düzeni hazır, dene.</string>
+    <string name="import_modpack_start">Modpack içe aktarılıyor…</string>
+    <string name="import_modpack_hash">Modpack dosyası denetleniyor… (%s MB / %s MB)</string>
+    <string name="import_modpack_json">Modpack bilgileri okunuyor…</string>
+    <string name="import_modpack_copy">Modpack dosyası kopyalanıyor… (%s MB / %s MB)</string>
+    <string name="angelica_found_sfpew_notice">Angelica bulundu, Simple FPE Wrapper gerekmiyor</string>
 </resources>

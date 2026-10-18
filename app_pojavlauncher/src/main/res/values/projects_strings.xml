@@ -219,6 +219,7 @@
     <string name="projects_open_settings">Open settings</string>
     <string name="projects_not_now">Not now</string>
     <string name="projects_status_page">Status page</string>
+
     <!-- 0.1.5: Sodium on Android, the game's exit message and the app's language. -->
     <string name="projects_mods_sodium_renderer">Doesn\'t work with the selected renderer.</string>
     <string name="projects_mods_sodium_crashed">It stopped the game from starting on this phone.</string>
@@ -232,6 +233,9 @@
     <string name="projects_sodium_disable_and_start">Turn off Sodium and start</string>
     <string name="projects_game_closed">The game closed unexpectedly.</string>
     <string name="projects_share_log">Share log</string>
+    <string name="projects_modpack_browse">Browse modpacks</string>
+    <string name="projects_modpack_import">Import a zip or mrpack</string>
+    <string name="projects_control_button_name">Button name</string>
     <string name="projects_language_title">Language</string>
     <string name="projects_language_auto">Automatic (%1$s)</string>
     <!-- Each language in its own words, whatever the interface speaks. -->

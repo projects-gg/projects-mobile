@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Projects fork: Turkish for upstream's MobileGlues lists (upstream: "TODO: Make this translatable"). -->
+<resources>
+    <string-array name="mg_renderer_names_angle">
+        <item>Mümkünse kapalı</item>
+        <item>Mümkünse açık</item>
+        <item>Kapalı</item>
+        <item>Açık</item>
+    </string-array>
+    <string-array name="mg_renderer_names_errorSetting">
+        <item>Otomatik</item>
+        <item>Yok sayma</item>
+        <item>Shader ve program hatalarını yok say</item>
+        <item>Shader, program ve framebuffer hatalarını yok say</item>
+    </string-array>
+    <string-array name="mg_renderer_names_fsr">
+        <item>Kapalı</item>
+        <item>Performans</item>
+        <item>Dengeli</item>
+        <item>Kalite</item>
+        <item>Ultra kalite</item>
+    </string-array>
+</resources>

@@ -124,6 +124,11 @@ public class CustomSeekBarPreference extends SeekBarPreference {
 
 
     private void updateTextViewWithSuffix(){
+        // Projects fork: Turkish writes a percentage before the number ("%70", not "70 %").
+        if(" %".equals(mSuffix) && "tr".equals(getContext().getResources().getConfiguration().locale.getLanguage())){
+            if(!mTextView.getText().toString().startsWith("%")) mTextView.setText("%" + mTextView.getText());
+            return;
+        }
         if(!mTextView.getText().toString().endsWith(mSuffix)){
             mTextView.setText(String.format("%s%s", mTextView.getText(), mSuffix));
         }
