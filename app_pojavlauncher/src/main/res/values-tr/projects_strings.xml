@@ -240,6 +240,7 @@
     <string name="projects_top_home">Ana sayfa</string>
     <string name="projects_account_chip">Hesap: %1$s</string>
     <string name="projects_account_remove">%1$s hesabını kaldır</string>
+    <string name="projects_account_remove_question">%1$s hesabı bu telefondan kaldırılsın mı?</string>
     <string name="projects_settings_title">Ayarlar</string>
     <string name="projects_haptics_title">Dokunma titreşimi</string>
     <string name="projects_or">ya da</string>

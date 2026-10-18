@@ -4,9 +4,11 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.SystemClock;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -44,6 +46,7 @@ import java.util.List;
 import java.util.Objects;
 
 import gg.projects.mobile.mods.Motion;
+import gg.projects.mobile.ui.HeadPlaceholderDrawable;
 import gg.projects.mobile.ui.PixelHeadDrawable;
 import gg.projects.mobile.ui.Press;
 import gg.projects.mobile.ui.TopBarLine;
@@ -64,6 +67,8 @@ public class mcAccountSpinner extends AppCompatSpinner implements AdapterView.On
 
     private final List<String> mAccountList = new ArrayList<>(2);
     private MinecraftAccount mSelectecAccount = null;
+    /** Projects fork (M14): when the last touch on the chip began (a held chip opens the list). */
+    private long mTouchDownAt;
 
     /* When a login is performed in the background, we need to know where we are */
     private final static int MAX_LOGIN_STEP = 5;
@@ -161,6 +166,7 @@ public class mcAccountSpinner extends AppCompatSpinner implements AdapterView.On
         setDropDownWidth(Math.round(300 * density));
         setDropDownVerticalOffset(Math.round(52 * density));
         Press.attach(this, Press.Style.BUTTON);
+        setOnLongClickListener(v -> mAccountList.size() <= 1 && performClick());
 
         // Set behavior
         reloadAccounts(true, 0);
@@ -218,10 +224,19 @@ public class mcAccountSpinner extends AppCompatSpinner implements AdapterView.On
     }
 
     @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        if (event.getActionMasked() == MotionEvent.ACTION_DOWN) mTouchDownAt = SystemClock.uptimeMillis();
+        return super.onTouchEvent(event);
+    }
+
+    @Override
     public void onWindowFocusChanged(boolean hasWindowFocus) {
         super.onWindowFocusChanged(hasWindowFocus);
-        // The list is a popup window: the bar's window gets its focus back when it closes.
+        // The list is a popup window: the bar's window gets its focus back when it closes. A list
+        // opened by holding the chip (drag-to-open, no performClick) takes the focus right after
+        // the touch began.
         if (hasWindowFocus) turnCaret(0f);
+        else if (mAccountList.size() > 1 && SystemClock.uptimeMillis() - mTouchDownAt < 1500) turnCaret(180f);
     }
 
     private void turnCaret(float degrees) {
@@ -326,6 +341,14 @@ public class mcAccountSpinner extends AppCompatSpinner implements AdapterView.On
     private void updateChipBackground() {
         boolean empty = mAccountList.size() <= 1;
         setBackgroundResource(empty ? R.drawable.projects_account_chip_add : R.drawable.projects_account_chip);
+        // A held chip opens the list by drag-to-open, which skips performClick; with no account that
+        // list holds only "Hesap ekle", whose tap selects nothing new. A long-clickable view gets no
+        // drag-to-open: the hold opens the account screen like a tap.
+        setLongClickable(empty);
+        // A pill swapped in while the bar is on screen starts its state fade from nothing and was
+        // left invisible until the next touch: show it as it is at once.
+        Drawable background = getBackground();
+        if (background != null) background.jumpToCurrentState();
         setContentDescription(empty ? getContext().getString(R.string.main_add_account)
                 : mSelectecAccount == null ? null
                 : getContext().getString(R.string.projects_account_chip, mSelectecAccount.username));
@@ -394,19 +417,31 @@ public class mcAccountSpinner extends AppCompatSpinner implements AdapterView.On
     private class AccountAdapter extends ArrayAdapter<String> {
 
         private final HashMap<String, Drawable> mImageCache = new HashMap<>();
+        private final HashMap<Integer, Drawable> mPlaceholders = new HashMap<>();
         public AccountAdapter(@NonNull Context context, int resource, @NonNull String[] objects) {
             super(context, resource, objects);
         }
 
-        /** Projects fork: the crisp head of {@code username} at {@code sizeDp}, or null. */
-        @Nullable
+        /**
+         * Projects fork: the crisp head of {@code username} at {@code sizeDp}, or a placeholder tile
+         * while there is none yet (an offline account's head comes from a game jar on the phone).
+         * The placeholder is not cached with the heads, so the real head shows once it exists.
+         */
+        @NonNull
         private Drawable head(String username, int sizeDp) {
             String key = username + "@" + sizeDp;
             Drawable cached = mImageCache.get(key);
             if (cached != null) return cached;
             Bitmap face = MinecraftAccount.getSkinFace(username);
-            if (face == null) return null;
             float density = getContext().getResources().getDisplayMetrics().density;
+            if (face == null) {
+                Drawable placeholder = mPlaceholders.get(sizeDp);
+                if (placeholder == null) {
+                    placeholder = new HeadPlaceholderDrawable(getContext(), Math.round(sizeDp * density), 3 * density);
+                    mPlaceholders.put(sizeDp, placeholder);
+                }
+                return placeholder;
+            }
             Drawable drawable = new PixelHeadDrawable(face, Math.round(sizeDp * density), 3 * density);
             mImageCache.put(key, drawable);
             return drawable;
@@ -471,7 +506,7 @@ public class mcAccountSpinner extends AppCompatSpinner implements AdapterView.On
                 Drawable head = head(username, 24);
                 headView.setImageTintList(null);
                 headView.setImageDrawable(head);
-                headView.setVisibility(head == null ? View.GONE : View.VISIBLE);
+                headView.setVisibility(View.VISIBLE);
                 name.setText(username);
                 name.setTextColor(ContextCompat.getColor(context, R.color.projects_bone_100));
                 caret.setVisibility(View.VISIBLE);
@@ -479,15 +514,22 @@ public class mcAccountSpinner extends AppCompatSpinner implements AdapterView.On
             return convertView;
         }
 
+        /**
+         * Projects fork (M14): names the account and asks; "Kaldır" stands where the confirming
+         * choice does, in the error colour, with "İptal" beside it (upstream offered "Sil" on the
+         * far side and "İptal" as the main choice, under "Bu hesap kaldırılacak!").
+         */
         private void showDeleteDialog(Context context, int position) {
-            new AlertDialog.Builder(context)
-                    .setMessage(R.string.warning_remove_account)
-                    .setPositiveButton(android.R.string.cancel, null)
-                    .setNeutralButton(R.string.global_delete, (dialog, which) -> {
+            AlertDialog dialog = new AlertDialog.Builder(context)
+                    .setMessage(context.getString(R.string.projects_account_remove_question, getItem(position)))
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .setPositiveButton(R.string.global_remove, (d, which) -> {
                         onDetachedFromWindow();
                         removeAccount(position);
                     })
                     .show();
+            android.widget.Button remove = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            if (remove != null) remove.setTextColor(ContextCompat.getColor(context, R.color.projects_flare_400));
         }
     }
 

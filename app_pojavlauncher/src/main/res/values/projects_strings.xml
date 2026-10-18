@@ -247,6 +247,7 @@
     <string name="projects_top_home">Home</string>
     <string name="projects_account_chip">Account: %1$s</string>
     <string name="projects_account_remove">Remove %1$s</string>
+    <string name="projects_account_remove_question">Remove %1$s from this phone?</string>
     <string name="projects_settings_title">Settings</string>
     <string name="projects_haptics_title">Haptic feedback</string>
     <string name="projects_or">or</string>
