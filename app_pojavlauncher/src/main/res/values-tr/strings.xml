@@ -218,7 +218,7 @@
     <string name="folder_fragment_select">Klasör seç</string>
     <string name="main_login_done">Giriş yapıldı</string>
     <string name="main_add_account">Hesap ekle</string>
-    <string name="tasks_ongoing">İndirmeler sürüyor, biraz bekle.</string>
+    <string name="tasks_ongoing">Bir işlem sürüyor, biraz bekle.</string>
     <string name="no_saved_accounts">Kayıtlı hesap yok</string>
     <string name="mc_download_failed">Minecraft\'ı indirmek başarısız oldu! Bu kötü internet bağlantısı, yanlış yerleştirilmiş dosyalar vb… sebebiyle olabilir.</string>
     <string name="xerr_unknown">Bilinmeyen XBOX Live API hatası %d</string>
@@ -434,8 +434,7 @@
     <string name="minecraft_no_username_set">Minecraft oyuncu adın henüz yok. Giriş yapmadan önce Minecraft sitesinde bir ad belirle.</string>
     <string name="use_angle_checkbox">ANGLE kullan (FPS\'i artırabilir)</string>
     <string name="create_lwjgl3ify_profile">LWJGL3ify profili oluştur</string>
-    <!-- Projects fork (0.1.5): renderer names upstream left untranslated, the controls editor and the
-         modpack screen. -->
+    <!-- Projects fork (0.1.5): renderer names upstream left untranslated. -->
     <string name="mcl_setting_renderer_ng_gl4es">Krypton Wrapper (tüm sürümler, hızlı)</string>
     <string name="mcl_setting_renderer_vulkan_kopper_zink">Kopper Zink (Vulkan) (tüm sürümler, orta)</string>
     <!-- Projects fork (0.1.5): upstream texts that had no Turkish yet. -->
