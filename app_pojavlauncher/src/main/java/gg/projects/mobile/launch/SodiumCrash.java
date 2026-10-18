@@ -57,6 +57,21 @@ public final class SodiumCrash {
     /** Java frames of the game's rendering, for a native crash without a library name. */
     private static final Pattern RENDER_FRAMES = Pattern.compile("org\\.lwjgl\\.(opengl|opengles|egl)\\.|com\\.mojang\\.blaze3d\\.");
 
+    /**
+     * Lines Minecraft writes when its first resource load has brought up the sound engine (26.1.2 and
+     * older versions alike), the last part of its start; or when sound could not start and it went
+     * on without. Server connects are no sign: the Projects profile's Quick Play connects while the
+     * resources are still loading.
+     */
+    private static final String[] SOUND_UP = {"Sound engine started", "Error starting SoundSystem"};
+    /** Minecraft shutting down: whatever ended the game, it had started. */
+    private static final String STOPPING = "Stopping!";
+    /** The rest of the first resource load and the first moments of the menu still count as the start. */
+    static final long SETTLE_MS = 90_000;
+    /** A start that ends later than this after its launch was not a start-up failure. */
+    static final long STARTUP_LIMIT_MS = 15 * 60_000;
+    private static final Pattern TIME = Pattern.compile("^\\[(\\d{2}):(\\d{2}):(\\d{2})\\]", Pattern.MULTILINE);
+
     private static final String CRASH_REPORT_START = "---- Minecraft Crash Report ----";
     private static final String FATAL_ERROR = "A fatal error has been detected by the Java Runtime Environment";
     /** Lines at the end of the log searched for the error that ended the game. */
@@ -87,6 +102,55 @@ public final class SodiumCrash {
             return Verdict.NONE;
         }
         return lastErrorIsSodium(text) ? Verdict.SODIUM : Verdict.NONE;
+    }
+
+    /**
+     * True when a game that ended with an error ended during its start (REVIEW1 A1: a graphics driver
+     * crash hours into play was taken for Sodium keeping the game from starting, and Sodium stayed
+     * off for good). The start lasts until the first resource load has brought up the sound engine,
+     * plus {@link #SETTLE_MS} (the rest of that load and the menu's first moments), measured with the
+     * log's own clock; a game that was stopping, ended more than {@link #STARTUP_LIMIT_MS} after its
+     * launch, or wrote more log than was read, had started.
+     *
+     * @param log          the end of the game log, or null when there is none
+     * @param logTruncated the log is longer than the part that was read (its start is missing)
+     * @param ageMs        time from the launch to now (the exit screen runs as the game ends)
+     */
+    public static boolean duringStartup(String log, boolean logTruncated, long ageMs) {
+        if (logTruncated || ageMs < 0 || ageMs > STARTUP_LIMIT_MS) return false;
+        if (log == null) return true;
+        if (log.contains(STOPPING)) return false;
+        int sound = -1;
+        for (String marker : SOUND_UP) {
+            int at = log.indexOf(marker);
+            if (at >= 0 && (sound < 0 || at < sound)) sound = at;
+        }
+        if (sound < 0) return true;
+        long soundAt = timeBefore(log, sound);
+        long lastAt = lastTime(log);
+        if (soundAt < 0 || lastAt < 0) return false;
+        long since = lastAt - soundAt;
+        if (since < 0) since += 24L * 60 * 60 * 1000; // past midnight
+        return since <= SETTLE_MS;
+    }
+
+    /** The time of day ("[16:14:29]") of the log line holding {@code index}, in ms, or -1. */
+    private static long timeBefore(String log, int index) {
+        int lineStart = log.lastIndexOf('\n', index) + 1;
+        java.util.regex.Matcher m = TIME.matcher(log);
+        return m.find(lineStart) && m.start() == lineStart ? millis(m) : -1;
+    }
+
+    /** The time of day of the last timestamped line, in ms, or -1. */
+    private static long lastTime(String log) {
+        java.util.regex.Matcher m = TIME.matcher(log);
+        long last = -1;
+        while (m.find()) last = millis(m);
+        return last;
+    }
+
+    private static long millis(java.util.regex.Matcher m) {
+        return ((Integer.parseInt(m.group(1)) * 60L + Integer.parseInt(m.group(2))) * 60L + Integer.parseInt(m.group(3))) * 1000L;
     }
 
     /** The crash report printed into the log, if the game printed one. */

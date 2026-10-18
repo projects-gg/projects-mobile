@@ -82,7 +82,17 @@ public class MainMenuFragment extends Fragment {
         // button that deleted every Sodium-looking jar (pack files included) before starting; Sodium
         // is now held off where it cannot run, and a start it breaks is caught afterwards
         // (gg.projects.mobile.launch.SodiumFallback).
-        mPlayButton.setOnClickListener(v -> ExtraCore.setValue(ExtraConstants.LAUNCH_GAME, true));
+        mPlayButton.setOnClickListener(v -> {
+            // Projects fork (REVIEW1 A2): the Projects profile goes through its join while Sodium is
+            // held off but its jars are still in place, so the sync takes them out first.
+            String current = LauncherPreferences.DEFAULT_PREF.getString(LauncherPreferences.PREF_KEY_CURRENT_PROFILE, "");
+            if (gg.projects.mobile.join.ProjectsProfile.KEY.equals(current)
+                    && gg.projects.mobile.launch.SodiumFallback.projectsStartNeedsSync(requireContext())) {
+                mProjectsCard.joinNow();
+                return;
+            }
+            ExtraCore.setValue(ExtraConstants.LAUNCH_GAME, true);
+        });
         // Projects fork (M14): OYNA's gold face in its socket; the launch check confirms or rejects
         // the press (LauncherActivity). The tool rows are clipped to their rounded group.
         gg.projects.mobile.ui.PlayButtons.decoratePlay(mPlayButton);

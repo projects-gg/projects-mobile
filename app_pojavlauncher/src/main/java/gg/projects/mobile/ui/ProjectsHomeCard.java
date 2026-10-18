@@ -1042,7 +1042,10 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         return card.mFragment.getActivity();
     }
 
-    /** Selects the Projects profile and presses Play, so upstream's launch checks all apply. */
+    /**
+     * Selects the Projects profile and starts it the way Play does, so upstream's launch checks all
+     * apply (not through Play's click: Play itself may send the Projects profile here, REVIEW1 A2).
+     */
     private void launch(String profileKey) {
         if (!mFragment.isAdded() || mFragment.getView() == null) return;
         mVersionSpinner.reloadProfiles();
@@ -1052,6 +1055,6 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         LauncherPreferences.DEFAULT_PREF.edit()
                 .putString(LauncherPreferences.PREF_KEY_CURRENT_PROFILE, profileKey)
                 .commit();
-        mPlayButton.performClick();
+        ExtraCore.setValue(ExtraConstants.LAUNCH_GAME, true);
     }
 }

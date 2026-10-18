@@ -18,6 +18,7 @@ import java.util.Locale;
 import java.util.Set;
 
 import gg.projects.mobile.content.AtomicFiles;
+import gg.projects.mobile.content.SodiumSupport;
 import gg.projects.mobile.join.ProjectsProfile;
 import gg.projects.mobile.mods.SodiumState;
 
@@ -58,6 +59,18 @@ public final class SodiumFallback {
         }
     }
 
+    /**
+     * Play starts the Projects profile without its sync (REVIEW1 A2): after Sodium kept the game from
+     * starting, a player who closed the message and pressed Play would start the same jars and see
+     * the same crash. While the family is held off with the profile's renderer and its jars are still
+     * in the mods folder, the start goes through "Projects'e katıl", whose sync takes them out. Reads
+     * the profiles already in memory and lists one folder (cheap enough for a tap).
+     */
+    public static boolean projectsStartNeedsSync(Context context) {
+        if (SodiumState.block(context) == SodiumSupport.Block.NONE) return false;
+        return !sodiumJarNames(new File(ProjectsProfile.knownGameDir(), "mods")).isEmpty();
+    }
+
     /** File names in a mods folder that look like Sodium's family (for the launch record). */
     public static List<String> sodiumJarNames(File modsDir) {
         List<String> names = new ArrayList<>();
@@ -83,7 +96,14 @@ public final class SodiumFallback {
         long age = System.currentTimeMillis() - record.startedAt;
         if (age < 0 || age > MAX_RECORD_AGE_MS) return new Result(Outcome.NONE, null);
         File gameDir = new File(record.gameDir);
-        String log = Tools.DIR_GAME_HOME == null ? null : tail(new File(Tools.DIR_GAME_HOME, "latestlog.txt"), LOG_TAIL_BYTES);
+        File logFile = Tools.DIR_GAME_HOME == null ? null : new File(Tools.DIR_GAME_HOME, "latestlog.txt");
+        String log = logFile == null ? null : tail(logFile, LOG_TAIL_BYTES);
+        // Only a game that ended during its start counts (REVIEW1 A1): a driver crash in the menu or
+        // hours into play is not Sodium keeping the game from starting, and gets the plain message.
+        if (!SodiumCrash.duringStartup(log, logFile != null && logFile.length() > LOG_TAIL_BYTES, age)) {
+            Log.i(TAG, "game exit " + code + " after its start: not checked for Sodium");
+            return new Result(Outcome.NONE, null);
+        }
         String crash = newest(new File(gameDir, "crash-reports"), "crash-", ".txt", record.startedAt);
         String fatal = newest(gameDir, "hs_err_pid", ".log", record.startedAt);
         SodiumCrash.Verdict verdict = SodiumCrash.diagnose(log, crash, fatal, true);

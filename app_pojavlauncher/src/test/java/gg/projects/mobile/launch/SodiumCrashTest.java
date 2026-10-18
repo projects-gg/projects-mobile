@@ -117,4 +117,46 @@ public class SodiumCrashTest {
         assertEquals(SodiumCrash.Verdict.NONE, SodiumCrash.diagnose(null, null, null, true));
         assertEquals(SodiumCrash.Verdict.NONE, SodiumCrash.diagnose("", null, null, true));
     }
+
+    /** The end of a real 26.1.2 start with the Projects pack (M13, session 1), up to its sounds. */
+    private static final String STARTED = NORMAL + "\n" + String.join("\n",
+            "[16:14:21] [Render thread/INFO]: Reloading ResourceManager: vanilla, appleskin, badoptimizations",
+            "[16:14:23] [Render thread/INFO]: Created: 1024x1024x0 minecraft:textures/atlas/gui.png-atlas",
+            "[16:14:29] [Render thread/INFO]: OpenAL initialized on device OpenSL",
+            "[16:14:29] [Render thread/INFO]: Sound engine started",
+            "[16:14:30] [Render thread/INFO]: Created: 2048x2048x4 minecraft:textures/atlas/blocks.png-atlas");
+
+    private static final String DRIVER_CRASH = "\n#\n# A fatal error has been detected by the Java Runtime Environment:\n#\n"
+            + "# Problematic frame:\n# C  [libGLESv2_adreno.so+0x3f10c]\n#\n";
+
+    @Test
+    public void aCrashDuringTheStartCounts() {
+        // Before the first resource load reached its sounds: the start the fallback is for.
+        String early = NORMAL + "\n[15:59:40] [Render thread/INFO]: Reloading ResourceManager: vanilla" + DRIVER_CRASH;
+        assertEquals(true, SodiumCrash.duringStartup(early, false, 3 * 60_000));
+        assertEquals(SodiumCrash.Verdict.RENDERER_WITH_SODIUM, SodiumCrash.diagnose(early, null, null, true));
+        // The rest of that load (the block atlas comes after the sounds) still belongs to the start.
+        assertEquals(true, SodiumCrash.duringStartup(STARTED + "\n[16:14:31] [Render thread/WARN]: x" + DRIVER_CRASH, false, 4 * 60_000));
+        // A crash so early that no log was written.
+        assertEquals(true, SodiumCrash.duringStartup(null, false, 20_000));
+    }
+
+    @Test
+    public void aLateCrashDoesNotCount() {
+        // REVIEW1 A1: a driver crash long after the menu (here 41 minutes of play by the log's clock).
+        String late = STARTED + "\n[16:55:02] [Render thread/INFO]: [CHAT] <Steve> hi" + DRIVER_CRASH;
+        assertEquals(false, SodiumCrash.duringStartup(late, false, 9 * 60_000));
+        // Past midnight the clock wraps; still long after the sounds came up.
+        String overnight = NORMAL + "\n[23:58:00] [Render thread/INFO]: Sound engine started\n[00:20:00] [Render thread/INFO]: x" + DRIVER_CRASH;
+        assertEquals(false, SodiumCrash.duringStartup(overnight, false, 10 * 60_000));
+        // More than 15 minutes after the launch, a log longer than what was read, or a game that was
+        // stopping: it had started, whatever the log shows.
+        assertEquals(false, SodiumCrash.duringStartup(NORMAL + DRIVER_CRASH, false, 16 * 60_000));
+        assertEquals(false, SodiumCrash.duringStartup(NORMAL + DRIVER_CRASH, true, 60_000));
+        assertEquals(false, SodiumCrash.duringStartup(NORMAL + "\n[16:20:00] [Render thread/INFO]: Stopping!" + DRIVER_CRASH, false, 60_000));
+        // Sounds that could not start mark the end of the start as well.
+        String noSound = NORMAL + "\n[16:14:29] [Render thread/ERROR]: Error starting SoundSystem. Turning off sounds & music\n"
+                + "[16:30:00] [Render thread/INFO]: x" + DRIVER_CRASH;
+        assertEquals(false, SodiumCrash.duringStartup(noSound, false, 14 * 60_000));
+    }
 }
