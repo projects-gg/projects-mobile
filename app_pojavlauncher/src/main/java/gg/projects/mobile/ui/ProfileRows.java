@@ -49,6 +49,13 @@ public final class ProfileRows {
 
     /** A row of the profile list: the gold ripple, a gold tint on the profile in use. */
     public static void listRowBackground(View row, boolean selected) {
+        int start = row.getPaddingStart();
+        int top = row.getPaddingTop();
+        int end = row.getPaddingEnd();
+        int bottom = row.getPaddingBottom();
         row.setBackgroundResource(selected ? R.drawable.projects_profile_item_selected : R.drawable.projects_profile_item);
+        // The backgrounds are inset from the sheet's sides, and a background's insets replace the
+        // view's padding: the icons sat on the tint's edge instead of inside it.
+        row.setPaddingRelative(start, top, end, bottom);
     }
 }

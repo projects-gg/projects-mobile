@@ -133,6 +133,7 @@ public class mcVersionSpinner extends ExtendedTextView {
                     mPopupWindow.dismiss();
                     return;
                 }
+                mPopupWindow.setHeight(popupHeight()); // Projects fork (M14)
                 mPopupWindow.showAsDropDown(mcVersionSpinner.this, 0, offset);
                 turnCaret(true);
                 // Post() is required for the layout inflation phase
@@ -202,6 +203,24 @@ public class mcVersionSpinner extends ExtendedTextView {
         }else {
             mPopupWindow.dismiss();
         }
+    }
+
+    /**
+     * Projects fork (M14): the sheet hugs its rows (upstream kept one fixed height, which left an
+     * empty band under a short list), up to four and a half rows and the room above the play bar.
+     */
+    private int popupHeight() {
+        float density = getResources().getDisplayMetrics().density;
+        int row = Math.round(60 * density); // item_version_profile_layout
+        int padding = mListView.getPaddingTop() + mListView.getPaddingBottom();
+        int content = mProfileAdapter.getCount() * row + padding;
+        int[] location = new int[2];
+        getLocationInWindow(location);
+        androidx.core.view.WindowInsetsCompat insets = androidx.core.view.ViewCompat.getRootWindowInsets(this);
+        int top = insets == null ? 0 : insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars()).top;
+        int room = location[1] - top - Math.round(16 * density);
+        int cap = Math.min(Math.round(row * 4.5f) + padding, Math.max(row + padding, room));
+        return Math.min(content, cap);
     }
 
     public ProfileAdapter getProfileAdapter() {
