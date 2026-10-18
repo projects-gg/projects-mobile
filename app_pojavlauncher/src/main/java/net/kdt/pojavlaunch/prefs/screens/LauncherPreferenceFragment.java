@@ -11,6 +11,9 @@ import androidx.annotation.Nullable;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
+import androidx.preference.PreferenceScreen;
+import androidx.preference.TwoStatePreference;
+import androidx.recyclerview.widget.RecyclerView;
 
 import net.kdt.pojavlaunch.LauncherActivity;
 import net.kdt.pojavlaunch.R;
@@ -29,6 +32,46 @@ public class LauncherPreferenceFragment extends PreferenceFragmentCompat impleme
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         view.setBackgroundColor(getResources().getColor(R.color.background_app));
         super.onViewCreated(view, savedInstanceState);
+        // Projects fork (M14): the screen's header names it; rows press (gold ripple, a light tick);
+        // no dividers between rows, the category titles group them.
+        PreferenceScreen screen = getPreferenceScreen();
+        for (int i = 0; screen != null && i < screen.getPreferenceCount(); i++) {
+            Preference preference = screen.getPreference(i);
+            if (preference instanceof net.kdt.pojavlaunch.prefs.BackButtonPreference) preference.setTitle(headerTitle());
+        }
+        setDivider(null);
+        RecyclerView list = getListView();
+        if (list != null) {
+            list.addOnChildAttachStateChangeListener(new RecyclerView.OnChildAttachStateChangeListener() {
+                @Override
+                public void onChildViewAttachedToWindow(@NonNull View row) {
+                    gg.projects.mobile.ui.Press.attach(row, gg.projects.mobile.ui.Press.Style.ROW);
+                }
+
+                @Override
+                public void onChildViewDetachedFromWindow(@NonNull View row) {}
+            });
+        }
+    }
+
+    /** Projects fork (M14): the title in this screen's header. */
+    private int headerTitle() {
+        if (this instanceof LauncherPreferenceVideoFragment) return R.string.preference_video_title;
+        if (this instanceof LauncherPreferenceControlFragment) return R.string.preference_control_title;
+        if (this instanceof LauncherPreferenceJavaFragment) return R.string.preference_java_title;
+        if (this instanceof LauncherPreferenceMiscellaneousFragment) return R.string.preference_misc_title;
+        if (this instanceof LauncherPreferenceExperimentalFragment) return R.string.preference_experimental_title;
+        if (this instanceof LauncherPreferenceRendererSettingsFragment) return R.string.preference_renderer_mobileglues_settings;
+        return R.string.projects_settings_title;
+    }
+
+    /** Projects fork (M14): a switch row plays the toggle haptic when it flips. */
+    @Override
+    public boolean onPreferenceTreeClick(@NonNull Preference preference) {
+        if (preference instanceof TwoStatePreference) {
+            gg.projects.mobile.ui.Haptics.toggle(getListView(), ((TwoStatePreference) preference).isChecked());
+        }
+        return super.onPreferenceTreeClick(preference);
     }
 
     @Override

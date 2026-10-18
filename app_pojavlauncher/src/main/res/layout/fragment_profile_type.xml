@@ -1,9 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.kdt.DefocusableScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- Projects fork (M14): back and the title above upstream's list, as on every sub-screen. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/background_app">
+    android:background="@color/background_app"
+    android:orientation="vertical">
+
+    <gg.projects.mobile.ui.ScreenHeader
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/projects_profile_new" />
+
+<com.kdt.DefocusableScrollView
+    android:layout_width="match_parent"
+    android:layout_height="0dp"
+    android:layout_weight="1">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -11,8 +23,6 @@
 
         android:paddingHorizontal="@dimen/fragment_padding_medium"
         android:orientation="vertical">
-
-
 
         <!-- Vanilla like version -->
 
@@ -150,4 +160,4 @@
             app:layout_constraintGuide_percent="0.25" />
     </LinearLayout>
 </com.kdt.DefocusableScrollView>
-
+</LinearLayout>

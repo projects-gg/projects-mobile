@@ -2,8 +2,11 @@ package net.kdt.pojavlaunch.prefs;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.view.View;
 
+import androidx.annotation.NonNull;
 import androidx.preference.Preference;
+import androidx.preference.PreferenceViewHolder;
 
 import net.kdt.pojavlaunch.R;
 import net.kdt.pojavlaunch.extra.ExtraConstants;
@@ -23,9 +26,19 @@ public class BackButtonPreference extends Preference {
         if(getTitle() == null){
             setTitle(R.string.preference_back_title);
         }
-        if(getIcon() == null){
-            setIcon(R.drawable.ic_arrow_back_white);
-        }
+        // Projects fork (M14): drawn as the screen's header (back and the screen's title, set by
+        // LauncherPreferenceFragment); only the back button reacts, the title is not a row.
+        setLayoutResource(R.layout.projects_preference_header);
+        setSelectable(false);
+        setPersistent(false);
+        setIconSpaceReserved(false);
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull PreferenceViewHolder holder) {
+        super.onBindViewHolder(holder);
+        View back = holder.findViewById(R.id.projects_header_back);
+        if (back != null) back.setOnClickListener(v -> onClick());
     }
 
 

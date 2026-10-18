@@ -6,17 +6,12 @@
     android:background="@color/background_app"
     android:orientation="vertical">
 
-    <TextView
+    <!-- M14: back and the title, as on every sub-screen. -->
+    <gg.projects.mobile.ui.ScreenHeader
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:fontFamily="@font/tektur_semibold"
-        android:paddingStart="16dp"
-        android:paddingTop="16dp"
-        android:paddingEnd="16dp"
-        android:paddingBottom="8dp"
-        android:text="@string/projects_news_title"
-        android:textColor="@color/projects_bone_100"
-        android:textSize="24sp" />
+        android:paddingBottom="4dp"
+        android:text="@string/projects_news_title" />
 
     <LinearLayout
         android:id="@+id/projects_news_message"

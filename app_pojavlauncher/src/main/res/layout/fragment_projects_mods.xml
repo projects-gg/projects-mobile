@@ -48,7 +48,7 @@
                 android:fontFamily="@font/tektur_semibold"
                 android:text="@string/projects_mods"
                 android:textColor="@color/projects_bone_100"
-                android:textSize="24sp" />
+                android:textSize="@dimen/projects_text_title" />
         </LinearLayout>
 
         <TextView

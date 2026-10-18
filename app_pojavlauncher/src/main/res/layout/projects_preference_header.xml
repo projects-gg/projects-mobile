@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Settings' header (M14, BackButtonPreference): back and the screen's title, like every other
+     sub-screen's header (ScreenHeader); upstream showed a "back to the last screen" row. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:minHeight="56dp"
+    android:orientation="horizontal"
+    android:paddingStart="4dp"
+    android:paddingTop="4dp"
+    android:paddingEnd="16dp"
+    android:paddingBottom="4dp">
+
+    <ImageButton
+        android:id="@+id/projects_header_back"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="@drawable/projects_icon_button_ripple"
+        android:contentDescription="@string/projects_mods_back"
+        android:padding="12dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/projects_ic_caret_left"
+        android:tint="@color/projects_bone_100" />
+
+    <TextView
+        android:id="@android:id/title"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="2dp"
+        android:layout_weight="1"
+        android:accessibilityHeading="true"
+        android:ellipsize="end"
+        android:maxLines="2"
+        android:textAppearance="@style/TextAppearance.Projects.Title" />
+</LinearLayout>

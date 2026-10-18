@@ -8,6 +8,12 @@
     android:background="@color/background_app"
     android:orientation="vertical"
     >
+    <!-- Projects fork (M14): back and the title, as on every sub-screen. -->
+    <gg.projects.mobile.ui.ScreenHeader
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/projects_profile_edit" />
+
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
