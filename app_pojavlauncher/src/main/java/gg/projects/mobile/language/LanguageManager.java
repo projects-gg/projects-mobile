@@ -42,6 +42,8 @@ public final class LanguageManager {
     public static final String KEY_CHOICE = "projects_language";
     /** The app locale this app last gave Android 13+ ("" for the system default), to notice changes made elsewhere. */
     private static final String KEY_APPLIED = "projects_language_applied";
+    /** The language the default on-screen controls were last brought in line with. */
+    private static final String KEY_CONTROLS = "projects_language_controls";
     /** Upstream's "show the interface in English" switch, replaced by {@link #KEY_CHOICE}. */
     private static final String KEY_FORCE_ENGLISH = "force_english";
 
@@ -143,7 +145,9 @@ public final class LanguageManager {
     /**
      * Brings the process in line with the app's language: Java's default locale (dates, relative
      * times), the application's resources on Android 12 and older, and Android 13+'s app locale
-     * (which also takes in a change made on the system's "App languages" page as the choice).
+     * (which also takes in a change made on the system's "App languages" page as the choice). When
+     * the language changed (a choice, or "Otomatik" after the time zone moved) the default on-screen
+     * controls follow it too.
      */
     public static void apply(Context context) {
         try {
@@ -152,6 +156,16 @@ public final class LanguageManager {
             Log.w(TAG, "app locale not set", e);
         }
         applyLocal(context);
+        try {
+            String language = effective(context);
+            SharedPreferences prefs = prefs(context);
+            if (!language.equals(prefs.getString(KEY_CONTROLS, null))) {
+                prefs.edit().putString(KEY_CONTROLS, language).apply();
+                ControlLayouts.syncInBackground(context.getApplicationContext());
+            }
+        } catch (RuntimeException e) {
+            Log.w(TAG, "controls not checked", e);
+        }
     }
 
     /**
@@ -189,7 +203,6 @@ public final class LanguageManager {
         prefs(activity).edit().putString(KEY_CHOICE, AppLanguage.normalizeChoice(choice)).commit();
         apply(activity);
         String after = effective(activity);
-        ControlLayouts.syncInBackground(activity.getApplicationContext());
         // Android 13+ starts the activity again itself when the app locale changes.
         if (!before.equals(after) && Build.VERSION.SDK_INT < 33) activity.recreate();
     }

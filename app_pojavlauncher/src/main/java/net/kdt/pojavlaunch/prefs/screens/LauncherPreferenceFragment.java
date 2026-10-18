@@ -41,15 +41,24 @@ public class LauncherPreferenceFragment extends PreferenceFragmentCompat impleme
     /** Projects fork: "Dil": "Otomatik (Türkçe)", "Türkçe", "English" (each language in its own words). */
     private void setupLanguagePreference() {
         ListPreference language = requirePreference(LanguageManager.KEY_CHOICE, ListPreference.class);
-        language.setEntries(new CharSequence[]{LanguageManager.autoLabel(requireContext()),
-                getString(R.string.projects_language_turkish), getString(R.string.projects_language_english)});
         language.setEntryValues(new CharSequence[]{AppLanguage.AUTO, AppLanguage.TURKISH, AppLanguage.ENGLISH});
-        language.setValue(LanguageManager.choice(requireContext()));
+        showLanguageChoice(language);
         language.setSummaryProvider(ListPreference.SimpleSummaryProvider.getInstance());
         language.setOnPreferenceChangeListener((preference, value) -> {
             LanguageManager.setChoice(requireActivity(), String.valueOf(value));
             return true;
         });
+    }
+
+    /**
+     * The entries and the current choice. Shown again on resume: the choice may have changed since
+     * (Android's "App languages" page, adopted when the launcher resumes) and so may what
+     * "Otomatik" stands for (the time zone).
+     */
+    private void showLanguageChoice(ListPreference language) {
+        language.setEntries(new CharSequence[]{LanguageManager.autoLabel(requireContext()),
+                getString(R.string.projects_language_turkish), getString(R.string.projects_language_english)});
+        language.setValue(LanguageManager.choice(requireContext()));
     }
 
     private void setupNotificationRequestPreference() {
@@ -76,6 +85,8 @@ public class LauncherPreferenceFragment extends PreferenceFragmentCompat impleme
     @Override
     public void onResume() {
         super.onResume();
+        ListPreference language = findPreference(LanguageManager.KEY_CHOICE);
+        if (language != null) showLanguageChoice(language);
         SharedPreferences sharedPreferences = getPreferenceManager().getSharedPreferences();
         if(sharedPreferences != null) sharedPreferences.registerOnSharedPreferenceChangeListener(this);
     }
