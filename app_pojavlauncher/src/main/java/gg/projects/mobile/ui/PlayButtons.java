@@ -35,12 +35,14 @@ public final class PlayButtons {
         Press.attach(button, Press.Style.BUTTON);
     }
 
-    public static void confirm(@Nullable View button) {
-        if (button == null) return;
+    /** The accepted press: the confirm effect and the sheen. Returns true when the sheen plays. */
+    public static boolean confirm(@Nullable View button) {
+        if (button == null) return false;
         Haptics.confirm(button);
         if (button.getBackground() instanceof PlayButtonDrawable && button.isShown()) {
-            ((PlayButtonDrawable) button.getBackground()).sheen(button.getContext());
+            return ((PlayButtonDrawable) button.getBackground()).sheen(button.getContext());
         }
+        return false;
     }
 
     public static void reject(@Nullable View button) {

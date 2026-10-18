@@ -50,6 +50,9 @@ public final class Haptics {
     }
 
     public static void release(@Nullable View view) {
+        if (view == null) return;
+        Object strong = view.getTag(R.id.projects_haptic_strong);
+        if (!HapticMap.releaseDue(strong instanceof Long ? (Long) strong : 0L, SystemClock.uptimeMillis())) return;
         perform(view, HapticMap.Kind.RELEASE);
     }
 
@@ -62,11 +65,17 @@ public final class Haptics {
     }
 
     public static void confirm(@Nullable View view) {
+        markStrong(view);
         perform(view, HapticMap.Kind.CONFIRM);
     }
 
     public static void reject(@Nullable View view) {
+        markStrong(view);
         perform(view, HapticMap.Kind.REJECT);
+    }
+
+    private static void markStrong(@Nullable View view) {
+        if (view != null) view.setTag(R.id.projects_haptic_strong, SystemClock.uptimeMillis());
     }
 
     /** A slider step; steps closer together than a motor can follow are skipped. */

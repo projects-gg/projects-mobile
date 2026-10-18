@@ -55,7 +55,10 @@ public final class PixelHeadDrawable extends Drawable {
         mRect.set(left, top, left + mSizePx, top + mSizePx);
         mMatrix.setScale(mSizePx / (float) mHead.getWidth(), mSizePx / (float) mHead.getHeight());
         mMatrix.postTranslate(left, top);
-        mPaint.getShader().setLocalMatrix(mMatrix);
+        Shader shader = mPaint.getShader();
+        shader.setLocalMatrix(mMatrix);
+        // Before Android 8 the paint keeps the shader as it was when set: set it again.
+        mPaint.setShader(shader);
     }
 
     @Override

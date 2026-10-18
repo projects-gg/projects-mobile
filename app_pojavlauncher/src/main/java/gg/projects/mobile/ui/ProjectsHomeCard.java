@@ -182,6 +182,11 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         }
     };
 
+    /** Turns the join button to "Hazırlanıyor" once the sheen of the accepted press has crossed it. */
+    private final Runnable mShowJoining = () -> {
+        if (ProjectsJoin.isBusy()) setJoining(true);
+    };
+
     private static final class PendingBell {
         final ReminderBellView bell;
         final HomeContent.Event event;
@@ -306,12 +311,14 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         NewsSeenStore.removeListener(mSeenChanged);
         ProjectsContent.removeListener(this);
         mJoinButton.removeCallbacks(mBusyWatcher);
+        mJoinButton.removeCallbacks(mShowJoining);
         mEvent.removeCallbacks(mTick);
         mNotice.removeCallbacks(mStatusExpiry);
         mNotice.removeCallbacks(mStatusRecheck);
     }
 
     private void setJoining(boolean joining) {
+        mJoinButton.removeCallbacks(mShowJoining);
         mJoinButton.removeCallbacks(mBusyWatcher);
         mJoinButton.setEnabled(!joining);
         mJoinButton.setText(joining ? R.string.projects_join_preparing : R.string.projects_join);
@@ -1031,8 +1038,10 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
             }
         });
         if (started) {
-            PlayButtons.confirm(mJoinButton);
-            setJoining(true);
+            // A disabled face draws no sheen: the button turns to "Hazırlanıyor" once it has crossed.
+            // A second tap meanwhile meets the busy check above.
+            if (PlayButtons.confirm(mJoinButton)) mJoinButton.postDelayed(mShowJoining, PlayButtonDrawable.SHEEN_MS);
+            else setJoining(true);
         }
     }
 

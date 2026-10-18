@@ -59,6 +59,18 @@ public final class HapticMap {
         }
     }
 
+    /** How long after a confirm or reject a release tick stays silent. */
+    public static final long STRONG_HOLD_MS = 400;
+
+    /**
+     * A button's release tick comes right after its click (Android clears the pressed state after
+     * posting the click), and a new effect cancels the running one: right after the click played
+     * a confirm or a reject, the release stays silent. True when a release may play at {@code now}.
+     */
+    public static boolean releaseDue(long lastStrongAt, long now) {
+        return lastStrongAt <= 0 || now < lastStrongAt || now - lastStrongAt >= STRONG_HOLD_MS;
+    }
+
     /**
      * Slider steps arrive faster than a motor can tick: at most one tick per {@code minGapMs}.
      * Returns true when a tick may play at {@code now}.

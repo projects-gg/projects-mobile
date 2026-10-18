@@ -6,6 +6,8 @@
     <item name="projects_countdown_digits" type="id" />
     <!-- View tag: when the last slider tick played (Haptics.tick). -->
     <item name="projects_haptic_tick" type="id" />
+    <!-- View tag: when a confirm or reject last played (Haptics), so the release tick keeps quiet. -->
+    <item name="projects_haptic_strong" type="id" />
     <!-- View tag: the press style a view was given (Press), so it is attached once. -->
     <item name="projects_press_style" type="id" />
 </resources>

@@ -47,6 +47,14 @@ public class HapticMapTest {
     }
 
     @Test
+    public void aReleaseTickDoesNotCutAConfirmOrRejectShort() {
+        assertTrue("no confirm yet", HapticMap.releaseDue(0, 1000));
+        assertFalse("the release right after the click's confirm", HapticMap.releaseDue(1000, 1030));
+        assertTrue(HapticMap.releaseDue(1000, 1000 + HapticMap.STRONG_HOLD_MS));
+        assertTrue("a clock that went back does not silence the release", HapticMap.releaseDue(5000, 1000));
+    }
+
+    @Test
     public void sliderTicksAreSpacedOut() {
         assertTrue("the first tick plays", HapticMap.tickDue(0, 1000, 35));
         assertFalse(HapticMap.tickDue(1000, 1020, 35));

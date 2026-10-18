@@ -72,12 +72,15 @@ public final class PlayButtonDrawable extends Drawable {
         mPadding = new Rect(h, v, h, v);
     }
 
-    /** One crossing of the sheen (about 0.65 s); none with animations off. */
-    public void sheen(Context context) {
-        if (!Motion.enabled(context)) return;
+    /** How long one crossing of the sheen takes. */
+    public static final long SHEEN_MS = 650;
+
+    /** One crossing of the sheen; none with animations off. Returns true when it plays. */
+    public boolean sheen(Context context) {
+        if (!Motion.enabled(context)) return false;
         if (mSheenAnimator != null) mSheenAnimator.cancel();
         mSheenAnimator = ValueAnimator.ofFloat(0f, 1f);
-        mSheenAnimator.setDuration(650);
+        mSheenAnimator.setDuration(SHEEN_MS);
         mSheenAnimator.setInterpolator(new android.view.animation.PathInterpolator(0.45f, 0f, 0.25f, 1f));
         mSheenAnimator.addUpdateListener(a -> {
             mSheen = (float) a.getAnimatedValue();
@@ -91,6 +94,7 @@ public final class PlayButtonDrawable extends Drawable {
             }
         });
         mSheenAnimator.start();
+        return true;
     }
 
     private static void chamfer(Path path, float l, float t, float r, float b, float cut) {
@@ -160,7 +164,10 @@ public final class PlayButtonDrawable extends Drawable {
             mSheenMatrix.reset();
             mSheenMatrix.setTranslate(x, 0);
             mSheenMatrix.postSkew(-0.32f, 0f, x, mFaceRect.centerY());
-            mSheenPaint.getShader().setLocalMatrix(mSheenMatrix);
+            Shader sheen = mSheenPaint.getShader();
+            sheen.setLocalMatrix(mSheenMatrix);
+            // Before Android 8 the paint keeps the shader as it was when set: set it again.
+            mSheenPaint.setShader(sheen);
             mSheenPaint.setAlpha(mAlpha);
             canvas.drawRect(mFaceRect, mSheenPaint);
         }
