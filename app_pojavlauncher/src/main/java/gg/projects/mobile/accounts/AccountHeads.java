@@ -18,7 +18,10 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -39,6 +42,10 @@ public final class AccountHeads {
     private static final int MAX_JARS = 12;
     /** The head is drawn this many pixels square (crisp pixels: nearest-neighbour). */
     private static final int HEAD_PIXELS = 96;
+    /** An offline head with no skin on the phone yet is looked for again after this long. */
+    private static final long RETRY_MS = 60_000;
+    /** When a head could not be drawn for a profile (no client jar has its skin yet). */
+    private static final Map<UUID, Long> MISSED = new HashMap<>();
 
     /**
      * Downloads a Microsoft account's skin from Mojang's texture host and saves its head to
@@ -72,8 +79,23 @@ public final class AccountHeads {
      * Saves the head of the default skin Minecraft gives {@code profile} (an offline account's
      * UUID), read from a client jar on the phone; false when no installed version has it yet.
      */
-    public static boolean saveDefault(java.util.UUID profile, File out) {
+    public static boolean saveDefault(UUID profile, File out) {
+        // The account list asks on every redraw: without a suitable jar, look again only after a while.
+        long now = System.currentTimeMillis();
+        synchronized (MISSED) {
+            Long missed = MISSED.get(profile);
+            if (missed != null && now - missed < RETRY_MS) return false;
+        }
         SkinFace.DefaultSkin skin = SkinFace.defaultSkin(profile);
+        boolean saved = saveDefault(skin, out);
+        synchronized (MISSED) {
+            if (saved) MISSED.remove(profile);
+            else MISSED.put(profile, now);
+        }
+        return saved;
+    }
+
+    private static boolean saveDefault(SkinFace.DefaultSkin skin, File out) {
         for (File jar : clientJars()) {
             try (ZipFile zip = new ZipFile(jar)) {
                 ZipEntry entry = zip.getEntry(skin.jarEntry());
