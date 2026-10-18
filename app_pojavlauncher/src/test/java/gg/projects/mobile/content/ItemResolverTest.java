@@ -200,42 +200,58 @@ public class ItemResolverTest {
         assertTrue(resolution.choices.isEmpty() && resolution.seen.isEmpty());
     }
 
-    @Test
-    public void androidDefaultsLeaveUnsupportedModsOff() {
-        // Real ids: Sodium (AANobbMI) and Iris (YL57xq9U) do not work on Android; what needs them neither.
-        PackManifest m = manifest(
-                item("AANobbMI", "mods/sodium-fabric-0.6.0.jar", true, "P7dR8mSH"),
-                item("YL57xq9U", "mods/iris-fabric-1.8.8.jar", false, "AANobbMI"),
-                item("extras", "mods/extras.jar", true, "AANobbMI"),
+    /** Real ids: Sodium (AANobbMI) and Iris (YL57xq9U); an add-on and what it brings; Lithium is not in the family. */
+    private static PackManifest sodiumPack() {
+        return manifest(
+                item("AANobbMI", "mods/sodium-fabric-0.8.12.jar", true, "P7dR8mSH"),
+                item("YL57xq9U", "mods/iris-fabric-1.10.9.jar", true, "AANobbMI"),
+                item("extras", "mods/extras.jar", true, "AANobbMI", "anvil"),
                 item("lithium", "mods/lithium.jar", true),
+                library("anvil", "mods/anvianslib.jar"),
                 library("P7dR8mSH", "mods/fabric-api.jar"));
-        assertEquals(new java.util.HashSet<>(Arrays.asList("AANobbMI", "YL57xq9U", "extras")), AndroidSupport.unsupportedItems(m));
-        ItemResolver.Resolution fresh = ItemResolver.resolve(m, null, null, Collections.<String, Boolean>emptyMap(), AndroidSupport.defaults(m));
-        assertEquals(Collections.singletonList("lithium"), enabled(fresh));
-        assertEquals("the off defaults are recorded like any other", Boolean.FALSE, fresh.choices.get("AANobbMI"));
-
-        // A file the pack already installed keeps its item on (the player had it).
-        PackState legacy = new PackState();
-        legacy.files.put("mods/sodium-fabric-0.6.0.jar", record(sha1("mods/sodium-fabric-0.6.0.jar"), null));
-        ItemResolver.Resolution kept = ItemResolver.resolve(m, legacy, null, Collections.<String, Boolean>emptyMap(), AndroidSupport.defaults(m));
-        assertTrue(kept.isEnabled("AANobbMI") && kept.isEnabled("P7dR8mSH"));
-
-        // The player may still switch it on.
-        ItemResolver.Resolution chosen = ItemResolver.resolve(m, ItemResolverTest.stateWith(fresh), select("AANobbMI", true),
-                Collections.<String, Boolean>emptyMap(), AndroidSupport.defaults(m));
-        assertTrue(chosen.isEnabled("AANobbMI"));
     }
 
     @Test
-    public void unsupportedModsAreRecognisedByIdOrFileName() {
+    public void heldItemsAreNotInstalledButKeepTheirChoices() {
+        PackManifest m = sodiumPack();
+        java.util.Set<String> family = SodiumSupport.family(m);
+        assertEquals(new java.util.HashSet<>(Arrays.asList("AANobbMI", "YL57xq9U", "extras")), family);
+
+        // A new set on a phone that cannot run Sodium: the pack's defaults are recorded, nothing of
+        // the family is installed (nor the library only it needs), Lithium is.
+        ItemResolver.Resolution fresh = ItemResolver.resolve(m, null, null, Collections.<String, Boolean>emptyMap(),
+                ItemResolver.MANIFEST_DEFAULTS, family);
+        assertEquals(Collections.singletonList("lithium"), enabled(fresh));
+        assertEquals("the recorded choice stays the pack's default", Boolean.TRUE, fresh.choices.get("AANobbMI"));
+        ItemResolver.ItemStatus sodium = fresh.status("AANobbMI");
+        assertTrue(sodium.selected && sodium.heldOff && !sodium.effectivelyEnabled);
+        assertFalse("libraries are never held, only not needed", fresh.status("anvil").heldOff);
+        assertFalse(fresh.status("lithium").heldOff);
+
+        // Once nothing holds it (another renderer, the player's override), the same state installs it.
+        ItemResolver.Resolution back = ItemResolver.resolve(m, stateWith(fresh), null, Collections.<String, Boolean>emptyMap(),
+                ItemResolver.MANIFEST_DEFAULTS, Collections.<String>emptySet());
+        assertTrue(back.isEnabled("AANobbMI") && back.isEnabled("YL57xq9U") && back.isEnabled("extras") && back.isEnabled("anvil"));
+        assertFalse(back.status("AANobbMI").heldOff);
+
+        // An explicit selection switching a held item on wins, and brings what it needs.
+        ItemResolver.Resolution chosen = ItemResolver.resolve(m, stateWith(fresh), select("YL57xq9U", true),
+                Collections.<String, Boolean>emptyMap(), ItemResolver.MANIFEST_DEFAULTS, family);
+        assertTrue(chosen.isEnabled("YL57xq9U") && chosen.isEnabled("AANobbMI") && chosen.isEnabled("P7dR8mSH"));
+        assertFalse("not selected, still held", chosen.isEnabled("extras"));
+    }
+
+    @Test
+    public void sodiumFamilyIsRecognisedByIdOrFileName() {
         PackManifest.PackItem byModrinth = item("x", "mods/x.jar", true);
         byModrinth.modrinth = new PackManifest.ModrinthRef();
         byModrinth.modrinth.projectId = "AANobbMI";
-        assertTrue(AndroidSupport.isKnownUnsupported(byModrinth));
-        assertTrue(AndroidSupport.isKnownUnsupported(item("y", "mods/Embeddium-1.0.jar", true)));
-        assertTrue(AndroidSupport.isKnownUnsupported(item("reeses", "mods/reeses-sodium-options.jar", true)));
-        assertFalse(AndroidSupport.isKnownUnsupported(item("lithium", "mods/lithium-fabric.jar", true)));
+        assertTrue(SodiumSupport.isKnown(byModrinth));
+        assertTrue(SodiumSupport.isKnown(item("y", "mods/Embeddium-1.0.jar", true)));
+        assertTrue(SodiumSupport.isKnown(item("reeses", "mods/reeses-sodium-options.jar", true)));
+        assertTrue(SodiumSupport.isKnown(item("YL57xq9U", "mods/shaders.jar", true)));
+        assertFalse(SodiumSupport.isKnown(item("lithium", "mods/lithium-fabric.jar", true)));
         assertNull(item("z", "mods/z.jar", true).modrinth);
-        assertNotNull(AndroidSupport.defaults(catalog()));
+        assertNotNull(SodiumSupport.family(catalog()));
     }
 }

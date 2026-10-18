@@ -920,7 +920,7 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
                 return;
             }
             mModsCount.setText(mFragment.getResources().getQuantityString(R.plurals.projects_mods_on_count, summary.enabled, summary.enabled));
-            mModsBadge.setVisibility(summary.newItems > 0 ? View.VISIBLE : View.GONE);
+            mModsBadge.setVisibility(summary.hasNews() ? View.VISIBLE : View.GONE);
         });
     }
 

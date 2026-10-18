@@ -60,7 +60,6 @@
     <string name="projects_mods_disabled_back">It was disabled; turned back on for %1$s.</string>
     <string name="projects_mods_enabled">Turned back on in the mods folder.</string>
     <string name="projects_mods_modified">You changed this file; it will not be overwritten.</string>
-    <string name="projects_mods_unsupported">Not supported on Android.</string>
     <string name="projects_mods_revert">Restore recommended</string>
     <string name="projects_mods_keep_mine">Keep mine</string>
     <string name="projects_mods_page">Mod page</string>
@@ -220,4 +219,11 @@
     <string name="projects_open_settings">Open settings</string>
     <string name="projects_not_now">Not now</string>
     <string name="projects_status_page">Status page</string>
+    <!-- 0.1.5: Sodium on Android, the game's exit message and the app's language. -->
+    <string name="projects_mods_sodium_renderer">Doesn\'t work with the selected renderer.</string>
+    <string name="projects_mods_sodium_crashed">It stopped the game from starting on this phone.</string>
+    <string name="projects_mods_sodium_offer">Sodium now works on your phone too.</string>
+    <string name="projects_mods_sodium_offer_body">The game runs smoother with it.</string>
+    <string name="projects_mods_sodium_offer_on">Turn on</string>
+    <string name="projects_mods_sodium_offer_keep">Keep off</string>
 </resources>

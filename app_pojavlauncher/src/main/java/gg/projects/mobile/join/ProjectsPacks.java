@@ -1,5 +1,7 @@
 package gg.projects.mobile.join;
 
+import android.content.Context;
+
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.annotation.WorkerThread;
@@ -12,11 +14,11 @@ import java.io.File;
 import java.io.IOException;
 
 import gg.projects.mobile.ProjectsContent;
-import gg.projects.mobile.content.AndroidSupport;
 import gg.projects.mobile.content.PackDownloader;
 import gg.projects.mobile.content.PackManifest;
 import gg.projects.mobile.content.PackSyncApplier;
 import gg.projects.mobile.content.PackSyncPlanner;
+import gg.projects.mobile.mods.SodiumState;
 
 /** Sync settings and applying a plan, shared by the join flow and the mod screen. */
 public final class ProjectsPacks {
@@ -26,11 +28,13 @@ public final class ProjectsPacks {
     private static final int THREADS = 4;
 
     /**
-     * Android sync options: files whose size and recorded hash match are not hashed again, and
-     * mods known not to work on Android start switched off on a new install.
+     * Android sync options: files whose size and recorded hash match are not hashed again, and the
+     * Sodium family is held off while this phone cannot run it ({@link SodiumState}). The pack's
+     * defaults apply to a new set, as on the desktop.
      */
-    public static PackSyncPlanner.Options syncOptions(PackManifest manifest) {
-        return new PackSyncPlanner.Options().quick(true).defaults(AndroidSupport.defaults(manifest));
+    @WorkerThread
+    public static PackSyncPlanner.Options syncOptions(Context context, PackManifest manifest) {
+        return new PackSyncPlanner.Options().quick(true).heldOff(SodiumState.heldOff(context, manifest));
     }
 
     /**

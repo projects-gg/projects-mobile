@@ -193,7 +193,6 @@
                 android:drawablePadding="6dp"
                 android:fontFamily="@font/figtree_semibold"
                 android:gravity="center_vertical"
-                android:text="@string/projects_mods_unsupported"
                 android:textColor="@color/projects_flare_400"
                 android:textSize="12.5sp"
                 android:visibility="gone"

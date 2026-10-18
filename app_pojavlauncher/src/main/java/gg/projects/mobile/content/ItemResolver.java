@@ -74,6 +74,11 @@ public final class ItemResolver {
         public boolean modified;
         /** Switched off and kept as {@code <path>.disabled} (set by the planner). */
         public boolean disabledCopy;
+        /**
+         * Held off on this phone (Android: the Sodium family on a renderer that cannot run it, see
+         * {@link SodiumSupport}): not installed whatever {@link #selected} says.
+         */
+        public boolean heldOff;
 
         ItemStatus(String id, String path, boolean library) {
             this.id = id;
@@ -120,24 +125,39 @@ public final class ItemResolver {
      */
     public static Resolution resolve(PackManifest manifest, PackState previous, PackSelection selection,
                                      Map<String, Boolean> adopted, Defaults defaults) {
+        return resolve(manifest, previous, selection, adopted, defaults, Collections.<String>emptySet());
+    }
+
+    /**
+     * {@link #resolve(PackManifest, PackState, PackSelection, Map, Defaults)} with items held off on
+     * this device ({@code heldOff}, closed under "requires": everything that needs one of them is in
+     * it too). Held items are not installed and their recorded choices are kept as they are, so they
+     * come back once nothing holds them; an explicit selection switching one on wins.
+     */
+    public static Resolution resolve(PackManifest manifest, PackState previous, PackSelection selection,
+                                     Map<String, Boolean> adopted, Defaults defaults, Set<String> heldOff) {
         List<PackManifest.PackItem> items = manifest.projects.items;
         PackState prev = previous != null ? previous : new PackState();
         Defaults fallback = defaults != null ? defaults : MANIFEST_DEFAULTS;
+        Set<String> held = heldOff != null ? heldOff : Collections.<String>emptySet();
         boolean fresh = prev.items.isEmpty() && prev.seenItems.isEmpty();
 
         Resolution resolution = new Resolution();
         resolution.choices.putAll(prev.items);
         Set<String> selected = new HashSet<>();
+        Set<String> chosen = new HashSet<>();
         for (PackManifest.PackItem item : items) {
             if (item.library) continue;
             Boolean choice = null;
-            if (selection != null && selection.items.get(item.id) != null) choice = selection.items.get(item.id);
+            boolean explicit = selection != null && selection.items.get(item.id) != null;
+            if (explicit) choice = selection.items.get(item.id);
             else if (adopted.get(item.id) != null) choice = adopted.get(item.id);
             else if (prev.items.get(item.id) != null) choice = prev.items.get(item.id);
             else if (fresh) choice = installedRecord(prev, item) != null || fallback.enabledByDefault(item);
             if (choice != null) {
                 resolution.choices.put(item.id, choice);
-                if (choice) selected.add(item.id);
+                if (choice) chosen.add(item.id);
+                if (choice && (explicit || !held.contains(item.id))) selected.add(item.id);
             }
         }
 
@@ -161,8 +181,9 @@ public final class ItemResolver {
             String expected = file == null ? null : file.sha1();
             Map.Entry<String, PackState.InstalledFile> record = installedRecord(prev, item);
             ItemStatus status = new ItemStatus(item.id, item.path, item.library);
-            status.selected = selected.contains(item.id);
+            status.selected = chosen.contains(item.id);
             status.effectivelyEnabled = enabled.contains(item.id);
+            status.heldOff = held.contains(item.id) && !status.effectivelyEnabled;
             status.isNew = !item.library && !fresh && !prev.seenItems.contains(item.id) && !prev.items.containsKey(item.id);
             for (PackManifest.PackItem other : items) {
                 if (!other.id.equals(item.id) && enabled.contains(other.id) && other.requires.contains(item.id)) {

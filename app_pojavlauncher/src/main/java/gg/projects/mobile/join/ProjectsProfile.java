@@ -80,6 +80,20 @@ public final class ProjectsProfile {
         return gameDirOf(LauncherProfiles.mainProfileJson.profiles.get(KEY));
     }
 
+    /**
+     * The renderer the profile runs with ({@code pojavRendererName}; null for upstream's default),
+     * from the profiles already in memory like {@link #knownGameDir()}.
+     */
+    @WorkerThread
+    public static String knownRenderer() {
+        if (LauncherProfiles.mainProfileJson == null || LauncherProfiles.mainProfileJson.profiles == null) {
+            MinecraftProfile profile = find();
+            return profile == null ? null : profile.pojavRendererName;
+        }
+        MinecraftProfile profile = LauncherProfiles.mainProfileJson.profiles.get(KEY);
+        return profile == null ? null : profile.pojavRendererName;
+    }
+
     private static File gameDirOf(MinecraftProfile profile) {
         if (profile != null) return gameDir(profile);
         MinecraftProfile template = new MinecraftProfile();

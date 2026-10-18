@@ -88,4 +88,38 @@ public class ModsSelectionTest {
         assertEquals(1, bar[2][0]);
         assertEquals(2, bar[2][1]);
     }
+
+    @Test
+    public void heldItemsShowOffUntilThePlayerLiftsTheHold() {
+        // Android: a phone that cannot run Sodium holds the family off; iris was chosen on before.
+        PackManifest m = catalog();
+        PackState state = new PackState();
+        state.items.put("sodium", true);
+        state.items.put("iris", true);
+        state.items.put("shaders", false);
+        state.seenItems.addAll(Arrays.asList("sodium", "iris", "shaders", "fabric-api"));
+        Set<String> held = new HashSet<>(Arrays.asList("sodium", "iris", "shaders"));
+        ItemResolver.Resolution resolution = ItemResolver.resolve(m, state, null, Collections.<String, Boolean>emptyMap(),
+                ItemResolver.MANIFEST_DEFAULTS, held);
+
+        Map<String, Boolean> choices = ModsSelection.choicesOf(resolution.items);
+        assertEquals("held items start off on screen", "{sodium=false, iris=false, shaders=false}", choices.toString());
+        assertNull(ModsSelection.pending(resolution.items, choices, null));
+
+        // Switching one on lifts the hold: the family shows its recorded choices again.
+        Map<String, Boolean> lifted = ModsSelection.choicesOf(resolution.items, true);
+        assertEquals("{sodium=true, iris=true, shaders=false}", lifted.toString());
+        assertNull("recorded choices are no change once lifted", ModsSelection.pending(resolution.items, lifted, null, true));
+        lifted.put("iris", false);
+        PackSelection pending = ModsSelection.pending(resolution.items, lifted, null, true);
+        assertEquals("{iris=false}", pending.items.toString());
+        assertTrue(ModsSelection.touches(pending, held));
+        assertTrue(!ModsSelection.switchesOn(pending, held));
+
+        // Without lifting, switching a held item on is the change.
+        choices.put("shaders", true);
+        PackSelection on = ModsSelection.pending(resolution.items, choices, null);
+        assertEquals("{shaders=true}", on.items.toString());
+        assertTrue(ModsSelection.switchesOn(on, held));
+    }
 }

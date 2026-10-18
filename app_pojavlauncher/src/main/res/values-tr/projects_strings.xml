@@ -58,7 +58,6 @@
     <string name="projects_mods_disabled_back">Devre dışıydı; %1$s için yeniden açıldı.</string>
     <string name="projects_mods_enabled">Mod klasöründe yeniden açıldı.</string>
     <string name="projects_mods_modified">Dosyayı değiştirdin; üzerine yazılmaz.</string>
-    <string name="projects_mods_unsupported">Android\'de desteklenmiyor.</string>
     <string name="projects_mods_revert">Önerilene döndür</string>
     <string name="projects_mods_keep_mine">Vazgeç</string>
     <string name="projects_mods_page">Mod sayfası</string>
@@ -216,4 +215,11 @@
     <string name="projects_open_settings">Ayarları aç</string>
     <string name="projects_not_now">Şimdi değil</string>
     <string name="projects_status_page">Durum sayfası</string>
+    <!-- 0.1.5: Android'de Sodium, oyunun kapanış mesajı ve uygulamanın dili. -->
+    <string name="projects_mods_sodium_renderer">Seçili işleyiciyle çalışmaz.</string>
+    <string name="projects_mods_sodium_crashed">Bu telefonda oyunun açılmasını engellemişti.</string>
+    <string name="projects_mods_sodium_offer">Sodium artık telefonunda da çalışıyor.</string>
+    <string name="projects_mods_sodium_offer_body">Oyun onunla daha akıcı çalışır.</string>
+    <string name="projects_mods_sodium_offer_on">Aç</string>
+    <string name="projects_mods_sodium_offer_keep">Kapalı kalsın</string>
 </resources>

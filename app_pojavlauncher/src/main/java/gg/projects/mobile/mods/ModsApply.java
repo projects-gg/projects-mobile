@@ -80,6 +80,7 @@ public final class ModsApply {
     @MainThread
     public static boolean start(Context context, final PackManifest manifest, final File gameDir, final PackSelection selection) {
         if (sRunning || !ProjectsJoin.tryBeginWork()) return false;
+        final Context app = context.getApplicationContext();
         sRunning = true;
         sPhase = null;
         sFraction = -1;
@@ -93,13 +94,13 @@ public final class ModsApply {
                 ProgressLayout.setProgress(ProgressLayout.INSTALL_MODPACK, 0, R.string.projects_join_preparing);
                 // Plan again against the disk as it is now; the screen's preview may be stale.
                 PackSyncPlanner.Plan plan = PackSyncPlanner.plan(manifest, PackSyncPlanner.directoryProbe(gameDir),
-                        PackState.load(gameDir), selection, ProjectsPacks.syncOptions(manifest));
+                        PackState.load(gameDir), selection, ProjectsPacks.syncOptions(app, manifest));
                 // Any account may download (since 0.1.3; upstream kept modpack downloads for
                 // Microsoft accounts that own the game).
                 if (!gameDir.isDirectory() && !gameDir.mkdirs()) throw new IOException("cannot create " + gameDir);
                 PackSyncApplier.Report report = ProjectsPacks.apply(gameDir, plan, R.string.projects_mods_downloading,
                         (phase, done, total) -> progress(phase, total > 0 ? (float) done / total : -1));
-                Log.i(TAG, "mod selection applied: " + plan.summary().describeTr() + ", " + report.issues.size() + " issues");
+                Log.i(TAG, "mod selection applied: " + plan.summary().describe() + ", " + report.issues.size() + " issues");
                 result = new Result(Outcome.DONE, report.issues.size(), false, null);
             } catch (ContentException e) {
                 Log.w(TAG, "applying mods failed", e);

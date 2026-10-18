@@ -92,6 +92,8 @@ public final class PackSyncPlanner {
         public boolean quickCheck;
         /** Defaults of a fresh set. */
         public ItemResolver.Defaults defaults = ItemResolver.MANIFEST_DEFAULTS;
+        /** Items held off on this device (see {@link ItemResolver#resolve(PackManifest, PackState, PackSelection, Map, ItemResolver.Defaults, Set)}). */
+        public Set<String> heldOff = new HashSet<>();
 
         public Options quick(boolean quickCheck) {
             this.quickCheck = quickCheck;
@@ -100,6 +102,11 @@ public final class PackSyncPlanner {
 
         public Options defaults(ItemResolver.Defaults defaults) {
             this.defaults = defaults;
+            return this;
+        }
+
+        public Options heldOff(Set<String> heldOff) {
+            this.heldOff = heldOff != null ? heldOff : new HashSet<String>();
             return this;
         }
     }
@@ -274,14 +281,14 @@ public final class PackSyncPlanner {
             return added.total() + updated.total() + removed.total() == 0;
         }
 
-        /** Turkish one-liner for logs, e.g. "3 mod güncellenecek, 1 mod kaldırılacak". */
-        public String describeTr() {
+        /** One line for logs, e.g. "3 mods updated, 1 mod removed" (logs are English). */
+        public String describe() {
             List<String> parts = new ArrayList<>();
-            describe(parts, added, "eklenecek");
-            describe(parts, updated, "güncellenecek");
-            describe(parts, removed, "kaldırılacak");
-            if (kept > 0) parts.add(kept + " değiştirilmiş dosya korunacak");
-            if (parts.isEmpty()) return "Paket güncel";
+            describe(parts, added, "added");
+            describe(parts, updated, "updated");
+            describe(parts, removed, "removed");
+            if (kept > 0) parts.add(kept + (kept == 1 ? " changed file kept" : " changed files kept"));
+            if (parts.isEmpty()) return "pack up to date";
             StringBuilder out = new StringBuilder();
             for (String part : parts) {
                 if (out.length() > 0) out.append(", ");
@@ -292,8 +299,10 @@ public final class PackSyncPlanner {
 
         private static void describe(List<String> parts, Counts counts, String verb) {
             int[] values = {counts.mods, counts.resourcePacks, counts.shaderPacks, counts.configs, counts.other};
-            String[] nouns = {"mod", "kaynak paketi", "shader paketi", "yapılandırma dosyası", "dosya"};
-            for (int i = 0; i < values.length; i++) if (values[i] > 0) parts.add(values[i] + " " + nouns[i] + " " + verb);
+            String[] nouns = {"mod", "resource pack", "shader pack", "config file", "file"};
+            for (int i = 0; i < values.length; i++) {
+                if (values[i] > 0) parts.add(values[i] + " " + nouns[i] + (values[i] == 1 ? " " : "s ") + verb);
+            }
         }
     }
 
@@ -389,7 +398,8 @@ public final class PackSyncPlanner {
         boolean reset = looksWiped(probe, prev, disk);
         Adoption adoption = adopt(ext, prev, selection, disk, reset);
 
-        ItemResolver.Resolution resolution = ItemResolver.resolve(manifest, previous, selection, adoption.choices, opts.defaults);
+        ItemResolver.Resolution resolution = ItemResolver.resolve(manifest, previous, selection, adoption.choices,
+                opts.defaults, opts.heldOff);
         Set<String> enabledItems = new HashSet<>();
         for (ItemResolver.ItemStatus status : resolution.items) if (status.effectivelyEnabled) enabledItems.add(status.id);
 

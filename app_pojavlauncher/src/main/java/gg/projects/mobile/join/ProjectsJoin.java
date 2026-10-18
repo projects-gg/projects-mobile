@@ -177,10 +177,10 @@ public final class ProjectsJoin {
         if (!gameDir.isDirectory() && !gameDir.mkdirs()) throw new IOException("cannot create " + gameDir);
 
         PackSyncPlanner.Plan plan = PackSyncPlanner.plan(manifest, PackSyncPlanner.directoryProbe(gameDir),
-                PackState.load(gameDir), null, ProjectsPacks.syncOptions(manifest));
+                PackState.load(gameDir), null, ProjectsPacks.syncOptions(app, manifest));
         PackSyncApplier.Report report = ProjectsPacks.apply(gameDir, plan, R.string.projects_join_downloading);
         Log.i(TAG, String.format(Locale.ROOT, "pack %s %s: %s; %d downloaded, %d restored, %d deleted, %d issues",
-                pack.id, manifest.versionId, plan.summary().describeTr(), report.downloaded, report.restored,
+                pack.id, manifest.versionId, plan.summary().describe(), report.downloaded, report.restored,
                 report.deleted, report.issues.size() + plan.issues.size()));
 
         addServers(gameDir, manifest.projects.servers);

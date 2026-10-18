@@ -208,7 +208,7 @@ public class PackSyncTest {
         assertTrue(plan.deletes.isEmpty() && plan.unchanged.isEmpty());
         assertEquals(2, plan.nextState.files.size());
         assertEquals(PackManifest.POLICY_PRESERVE, plan.nextState.files.get("config/a.json").policy);
-        assertEquals("1 mod eklenecek, 1 yapılandırma dosyası eklenecek", plan.summary().describeTr());
+        assertEquals("1 mod added, 1 config file added", plan.summary().describe());
         assertTrue(plan.adopted.isEmpty() && !plan.reset && plan.issues.isEmpty());
         assertTrue(plan.stateChanged);
     }
@@ -236,7 +236,7 @@ public class PackSyncTest {
         assertEquals(Collections.singletonList("mods/removed-but-edited.jar USER_MODIFIED"), kept(plan));
         assertFalse(plan.nextState.files.containsKey("mods/removed.jar"));
         assertFalse(plan.nextState.files.containsKey("mods/user-added.jar"));
-        assertEquals("1 mod eklenecek, 1 mod güncellenecek, 1 mod kaldırılacak, 1 değiştirilmiş dosya korunacak", plan.summary().describeTr());
+        assertEquals("1 mod added, 1 mod updated, 1 mod removed, 1 changed file kept", plan.summary().describe());
         assertEquals(3, plan.summary().removeBytes);
         assertFalse("one missing file is not a wiped folder", plan.reset);
 
@@ -399,7 +399,7 @@ public class PackSyncTest {
         PackManifest m2 = TestPacks.manifest(list(file("mods/sodium.jar", "sodium v2"), file("config/sodium.json", "{\"v\":2}")), configPolicy());
         m2.versionId = "1.1.0";
         plan = plan(m2, game, saved);
-        assertEquals("1 mod güncellenecek, 1 mod kaldırılacak, 1 değiştirilmiş dosya korunacak", plan.summary().describeTr());
+        assertEquals("1 mod updated, 1 mod removed, 1 changed file kept", plan.summary().describe());
         apply(game, plan, transport);
         assertEquals("sodium v2", read(game, "mods/sodium.jar"));
         assertFalse(new File(game, "mods/old.jar").exists());
@@ -407,7 +407,7 @@ public class PackSyncTest {
         assertEquals("{\"v\":\"mine\"}", read(game, "config/sodium.json"));
         PackSyncPlanner.Plan again = plan(m2, game, PackState.load(game));
         assertTrue(again.isNoop());
-        assertTrue(again.summary().describeTr().contains("korunacak"));
+        assertTrue(again.summary().describe().contains("kept"));
     }
 
     @Test
@@ -493,11 +493,11 @@ public class PackSyncTest {
         assertEquals(FileCategory.CONFIG, FileCategory.of("options.txt"));
         assertEquals(FileCategory.OTHER, FileCategory.of("servers.dat"));
         assertEquals(FileCategory.OTHER, FileCategory.of("kubejs/x.js"));
-        assertEquals("Paket güncel", new PackSyncPlanner.Summary().describeTr());
+        assertEquals("pack up to date", new PackSyncPlanner.Summary().describe());
         PackSyncPlanner.Summary summary = new PackSyncPlanner.Summary();
         summary.updated.mods = 3;
         summary.removed.resourcePacks = 1;
-        assertEquals("3 mod güncellenecek, 1 kaynak paketi kaldırılacak", summary.describeTr());
+        assertEquals("3 mods updated, 1 resource pack removed", summary.describe());
         assertFalse(summary.isNoop());
     }
 
@@ -608,7 +608,7 @@ public class PackSyncTest {
         assertEquals(Collections.singletonList("mods/sodium-0.5.jar"), deleted(plan));
         assertTrue(plan.deletes.get(0).replaced);
         PackSyncPlanner.Summary summary = plan.summary();
-        assertEquals("1 mod güncellenecek", summary.describeTr());
+        assertEquals("1 mod updated", summary.describe());
         assertEquals(0, summary.removed.total());
         assertEquals(6, summary.removeBytes);
         ItemResolver.ItemStatus sodium = plan.status("sodium");
@@ -917,5 +917,34 @@ public class PackSyncTest {
             assertTrue(e.getMessage(), e.getMessage().contains("mods/a.jar"));
         }
         assertFalse(new File(game, "mods/a.jar").exists());
+    }
+
+    @Test
+    public void heldItemsGoAwayWithoutBecomingThePlayersChoice() throws Exception {
+        // Android: Sodium kept the game from starting on this phone, so the family is held off.
+        File game = tmp.newFolder("game");
+        PackManifest m = itemManifest("mods/sodium.jar", "zoom", true);
+        PackState state = installed(game, plan(m, game, null), "fabric", "sodium", "zoom", "{}");
+        java.util.Set<String> held = new java.util.HashSet<>(Arrays.asList("sodium", "iris"));
+        PackSyncPlanner.Options holding = defaults().heldOff(held);
+
+        PackSyncPlanner.Plan plan = plan(m, game, state, null, holding);
+        assertTrue(plan.downloads.isEmpty());
+        assertEquals("Sodium and the library only it needed", Arrays.asList("mods/fabric-api.jar", "mods/sodium.jar"), deleted(plan));
+        assertEquals("the recorded choice stays", Boolean.TRUE, plan.nextState.items.get("sodium"));
+        assertTrue(plan.adopted.isEmpty());
+        apply(game, plan, new TestPacks.FakeTransport());
+        assertFalse(new File(game, "mods/sodium.jar").exists());
+        assertTrue(new File(game, "mods/zoom.jar").exists());
+
+        // The next sync does not take the missing file for a deletion of the player's.
+        PackSyncPlanner.Plan again = plan(m, game, PackState.load(game), null, holding);
+        assertTrue(again.isNoop() && again.adopted.isEmpty() && again.nextState.manual.isEmpty());
+        assertEquals(Boolean.TRUE, again.nextState.items.get("sodium"));
+
+        // Nothing holds it any more (another renderer, or the player switched it back on): it returns.
+        PackSyncPlanner.Plan back = plan(m, game, PackState.load(game), null, defaults());
+        assertEquals(Arrays.asList("mods/fabric-api.jar", "mods/sodium.jar"), paths(back));
+        assertTrue(back.adopted.isEmpty());
     }
 }

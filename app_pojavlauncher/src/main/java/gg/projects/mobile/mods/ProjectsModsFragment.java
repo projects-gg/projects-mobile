@@ -58,6 +58,7 @@ import gg.projects.mobile.content.PackSelection;
 import gg.projects.mobile.content.PackState;
 import gg.projects.mobile.content.PackSyncApplier;
 import gg.projects.mobile.content.PackSyncPlanner;
+import gg.projects.mobile.content.SodiumSupport;
 import gg.projects.mobile.ui.ChamferDrawable;
 import gg.projects.mobile.ui.ProjectsUi;
 
@@ -99,6 +100,11 @@ public class ProjectsModsFragment extends Fragment implements ModsApply.Listener
     private final Map<String, Boolean> mChoices = new HashMap<>();
     private final Set<String> mRevert = new HashSet<>();
     private Set<String> mEnabled = new HashSet<>();
+    /**
+     * The player switched on a Sodium item this phone holds off: the family shows (and applying
+     * installs) the recorded choices again, and the hold is lifted on apply.
+     */
+    private boolean mHoldLifted;
     @Nullable private PackSelection mSelection;
     @Nullable private PackSyncPlanner.Summary mPreview;
     private int mPreviewToken;
@@ -232,6 +238,7 @@ public class ProjectsModsFragment extends Fragment implements ModsApply.Listener
         mRevert.clear();
         mPreview = null;
         mPreviewToken++;
+        mHoldLifted = false;
         if (model.plan != null) mChoices.putAll(ModsSelection.choicesOf(model.plan.items));
 
         if (model.status == ModsModel.Status.READY && model.manifest != null) {
@@ -314,8 +321,38 @@ public class ProjectsModsFragment extends Fragment implements ModsApply.Listener
 
     private void toggle(String id, boolean on) {
         if (locked() || mModel == null || mModel.plan == null) return;
+        if (on && !mHoldLifted && heldOff(id)) {
+            // Switching a held-off Sodium item on lifts the hold: the family shows its recorded
+            // choices again (what applying will install), with this one on.
+            mHoldLifted = true;
+            for (ItemResolver.ItemStatus status : mModel.plan.items) {
+                if (status.heldOff && !status.library) mChoices.put(status.id, status.selected);
+            }
+        }
         mChoices.put(id, on);
         changed();
+    }
+
+    private boolean heldOff(String id) {
+        if (mModel == null || mModel.plan == null) return false;
+        for (ItemResolver.ItemStatus status : mModel.plan.items) if (status.id.equals(id)) return status.heldOff;
+        return false;
+    }
+
+    /** "Sodium artık telefonunda da çalışıyor" → "Aç": the recommended family on, applied at once when nothing else waits. */
+    private void acceptSodiumOffer() {
+        if (locked() || mModel == null || mModel.plan == null || mModel.manifest == null) return;
+        boolean otherChanges = mSelection != null;
+        for (String id : SodiumSupport.recommendedFamily(mModel.manifest)) mChoices.put(id, true);
+        SodiumState.answerOffer(requireContext());
+        changed();
+        if (!otherChanges && mSelection != null) apply(mSelection);
+    }
+
+    private void declineSodiumOffer() {
+        if (mModel == null) return;
+        SodiumState.answerOffer(requireContext());
+        load(true);
     }
 
     private void toggleRevert(String id) {
@@ -327,6 +364,7 @@ public class ProjectsModsFragment extends Fragment implements ModsApply.Listener
     private void discard() {
         if (locked() || mModel == null || mModel.plan == null) return;
         mChoices.clear();
+        mHoldLifted = false;
         mChoices.putAll(ModsSelection.choicesOf(mModel.plan.items));
         mRevert.clear();
         changed();
@@ -341,7 +379,9 @@ public class ProjectsModsFragment extends Fragment implements ModsApply.Listener
     private void recompute() {
         if (mModel != null && mModel.plan != null && mModel.manifest != null) {
             mEnabled = ModsSelection.enabledSet(mModel.manifest, mChoices);
-            mSelection = ModsSelection.pending(mModel.plan.items, mChoices, mRevert);
+            mSelection = ModsSelection.pending(mModel.plan.items, mChoices, mRevert, mHoldLifted);
+            // Lifting the hold is a change of its own, even when every choice stays as recorded.
+            if (mSelection == null && mHoldLifted) mSelection = new PackSelection();
             mAdapter.submit(buildRows());
         } else {
             mEnabled = new HashSet<>();
@@ -355,13 +395,15 @@ public class ProjectsModsFragment extends Fragment implements ModsApply.Listener
         final int token = ++mPreviewToken;
         final PackSelection selection = mSelection;
         final ModsModel model = mModel;
+        final boolean holdLifted = mHoldLifted;
+        final Context app = requireContext().getApplicationContext();
         if (selection == null || model == null) return;
         mMain.postDelayed(() -> {
             if (token != mPreviewToken) return;
             WORKER.execute(() -> {
                 PackSyncPlanner.Summary summary = null;
                 try {
-                    summary = model.preview(selection).summary();
+                    summary = model.preview(app, selection, holdLifted).summary();
                 } catch (ContentException | RuntimeException ignored) {
                     // The bar keeps saying it is calculating; applying plans again anyway.
                 }
@@ -379,7 +421,15 @@ public class ProjectsModsFragment extends Fragment implements ModsApply.Listener
 
     private void apply(PackSelection selection) {
         if (mModel == null || mModel.manifest == null || locked()) return;
-        if (!ModsApply.start(requireContext(), mModel.manifest, mModel.gameDir, selection)) {
+        Context context = requireContext();
+        // The player wants Sodium although this phone held it off: their choice from now on.
+        if (mHoldLifted || (mModel.sodiumBlock != SodiumSupport.Block.NONE
+                && ModsSelection.switchesOn(selection, mModel.sodiumFamily))) {
+            SodiumState.setOverride(context, true);
+        }
+        // Choosing about the family answers the offer to sets from before 0.1.5 as well.
+        if (ModsSelection.touches(selection, mModel.sodiumFamily)) SodiumState.answerOffer(context);
+        if (!ModsApply.start(context, mModel.manifest, mModel.gameDir, selection)) {
             Toast.makeText(requireContext(), R.string.projects_join_busy, Toast.LENGTH_SHORT).show();
             return;
         }
@@ -574,6 +624,8 @@ public class ProjectsModsFragment extends Fragment implements ModsApply.Listener
     private static final int TYPE_HEADER = 1;
     private static final int TYPE_ITEM = 2;
     private static final int TYPE_LIBRARY = 3;
+    /** The offer to sets from before 0.1.5 ("Sodium artık telefonunda da çalışıyor"): text above two buttons. */
+    private static final int TYPE_OFFER = 4;
 
     private static final int BANNER_NEW = 0;
     private static final int BANNER_UPDATES = 1;
@@ -594,7 +646,10 @@ public class ProjectsModsFragment extends Fragment implements ModsApply.Listener
         boolean enabled;
         boolean changed;
         boolean isNew;
-        boolean unsupported;
+        /** Why a Sodium item may not work here ("Seçili işleyiciyle çalışmaz."), or null. */
+        String warning;
+        /** A second, quiet action ("Kapalı kalsın"), or null. */
+        String dismiss;
         boolean reverting;
         boolean modified;
         String badge;
@@ -609,8 +664,8 @@ public class ProjectsModsFragment extends Fragment implements ModsApply.Listener
         }
 
         void seal() {
-            content = type + "|" + title + "|" + body + "|" + action + "|" + on + enabled + changed + isNew + unsupported
-                    + reverting + modified + "|" + badge + "|" + note + "|" + status + "|" + page;
+            content = type + "|" + title + "|" + body + "|" + action + "|" + dismiss + "|" + on + enabled + changed + isNew
+                    + reverting + modified + "|" + badge + "|" + note + "|" + status + "|" + page + "|" + warning;
         }
     }
 
@@ -628,6 +683,15 @@ public class ProjectsModsFragment extends Fragment implements ModsApply.Listener
         for (ItemResolver.ItemStatus status : plan.items) {
             if (status.isNew && !status.library) newCount++;
             if (status.updateAvailable && mEnabled.contains(status.id)) updates++;
+        }
+        if (model.sodiumOffer) {
+            Row row = new Row(TYPE_OFFER, "offer-sodium");
+            row.title = getString(R.string.projects_mods_sodium_offer);
+            row.body = getString(R.string.projects_mods_sodium_offer_body);
+            row.action = getString(R.string.projects_mods_sodium_offer_on);
+            row.dismiss = getString(R.string.projects_mods_sodium_offer_keep);
+            row.enabled = !locked;
+            rows.add(row);
         }
         if (newCount > 0) {
             Row row = new Row(TYPE_BANNER, "banner-new");
@@ -716,9 +780,12 @@ public class ProjectsModsFragment extends Fragment implements ModsApply.Listener
         row.enabled = !locked && !(forced && row.on);
         Boolean choice = mChoices.get(item.id);
         row.reverting = mRevert.contains(item.id);
-        row.changed = (choice != null && choice != status.selected) || row.reverting;
+        row.changed = (choice != null && choice != ModsSelection.baseline(status, mHoldLifted)) || row.reverting;
         row.isNew = status.isNew;
-        row.unsupported = mModel.unsupported.contains(item.id);
+        if (mModel.sodiumFamily.contains(item.id)) {
+            if (mModel.rendererBlocksSodium) row.warning = getString(R.string.projects_mods_sodium_renderer);
+            else if (mModel.sodiumCrashedHere) row.warning = getString(R.string.projects_mods_sodium_crashed);
+        }
         row.modified = status.modified;
         if (status.modified) row.badge = getString(R.string.projects_mods_badge_modified);
         else if (status.updateAvailable && row.on) row.badge = getString(R.string.projects_mods_badge_update);
@@ -854,6 +921,7 @@ public class ProjectsModsFragment extends Fragment implements ModsApply.Listener
             int layout;
             switch (viewType) {
                 case TYPE_BANNER: layout = R.layout.item_projects_mod_banner; break;
+                case TYPE_OFFER: layout = R.layout.item_projects_mod_offer; break;
                 case TYPE_HEADER: layout = R.layout.item_projects_mod_header; break;
                 case TYPE_LIBRARY: layout = R.layout.item_projects_mod_library; break;
                 default: layout = R.layout.item_projects_mod; break;
@@ -938,6 +1006,15 @@ public class ProjectsModsFragment extends Fragment implements ModsApply.Listener
                 view.findViewById(R.id.projects_banner_action).setOnClickListener(v -> {
                     if (mRow != null && mRow.enabled) onBannerAction(mRow);
                 });
+            } else if (type == TYPE_OFFER) {
+                Button on = view.findViewById(R.id.projects_offer_on);
+                on.setBackground(ChamferDrawable.primary(view.getContext()));
+                on.setOnClickListener(v -> {
+                    if (mRow != null && mRow.enabled) acceptSodiumOffer();
+                });
+                view.findViewById(R.id.projects_offer_keep).setOnClickListener(v -> {
+                    if (mRow != null && mRow.enabled) declineSodiumOffer();
+                });
             }
         }
 
@@ -977,6 +1054,9 @@ public class ProjectsModsFragment extends Fragment implements ModsApply.Listener
                 case TYPE_BANNER:
                     bindBanner(row);
                     break;
+                case TYPE_OFFER:
+                    bindOffer(row);
+                    break;
                 case TYPE_LIBRARY:
                     bindLibrary(context, row, partial);
                     break;
@@ -1015,6 +1095,19 @@ public class ProjectsModsFragment extends Fragment implements ModsApply.Listener
             }
         }
 
+        private void bindOffer(Row row) {
+            ((TextView) itemView.findViewById(R.id.projects_offer_title)).setText(row.title);
+            ((TextView) itemView.findViewById(R.id.projects_offer_body)).setText(row.body);
+            Button on = itemView.findViewById(R.id.projects_offer_on);
+            on.setText(row.action);
+            on.setEnabled(row.enabled);
+            on.setAlpha(row.enabled ? 1f : 0.5f);
+            Button keep = itemView.findViewById(R.id.projects_offer_keep);
+            keep.setText(row.dismiss);
+            keep.setEnabled(row.enabled);
+            keep.setAlpha(row.enabled ? 1f : 0.5f);
+        }
+
         private void bindLibrary(Context context, Row row, boolean partial) {
             ((TextView) itemView.findViewById(R.id.projects_mod_title)).setText(row.title);
             TextView note = itemView.findViewById(R.id.projects_mod_note);
@@ -1045,7 +1138,9 @@ public class ProjectsModsFragment extends Fragment implements ModsApply.Listener
             TextView note = itemView.findViewById(R.id.projects_mod_note);
             note.setText(row.note);
             note.setVisibility(row.note == null ? View.GONE : View.VISIBLE);
-            itemView.findViewById(R.id.projects_mod_warning).setVisibility(row.unsupported ? View.VISIBLE : View.GONE);
+            TextView warning = itemView.findViewById(R.id.projects_mod_warning);
+            warning.setText(row.warning);
+            warning.setVisibility(row.warning == null ? View.GONE : View.VISIBLE);
             Button revert = itemView.findViewById(R.id.projects_mod_revert);
             revert.setVisibility(row.modified ? View.VISIBLE : View.GONE);
             revert.setText(row.reverting ? R.string.projects_mods_keep_mine : R.string.projects_mods_revert);
@@ -1089,7 +1184,7 @@ public class ProjectsModsFragment extends Fragment implements ModsApply.Listener
     private static String monogram(String title) {
         String trimmed = title == null ? "" : title.trim();
         if (trimmed.isEmpty()) return "";
-        return trimmed.substring(0, trimmed.offsetByCodePoints(0, 1)).toUpperCase(new Locale("tr"));
+        return trimmed.substring(0, trimmed.offsetByCodePoints(0, 1)).toUpperCase(Locale.getDefault());
     }
 
     static int dp(Context context, float value) {
