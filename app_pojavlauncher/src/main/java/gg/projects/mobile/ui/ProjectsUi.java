@@ -247,6 +247,7 @@ public final class ProjectsUi {
         View discord = view.findViewById(R.id.projects_article_discord);
         if (source != null && ContentPaths.isHttpsUrl(source)) {
             discord.setVisibility(View.VISIBLE);
+            Press.attach(discord, Press.Style.CARD); // M14
             discord.setOnClickListener(v -> openUrl(activity, source));
         }
 

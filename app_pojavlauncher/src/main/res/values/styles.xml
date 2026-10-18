@@ -26,6 +26,12 @@
         <item name="viewInflaterClass">gg.projects.mobile.ui.ProjectsViewInflater</item>
         <item name="android:textAppearanceListItem">@style/TextAppearance.Projects.ListItem</item>
         <item name="android:textAppearanceListItemSmall">@style/TextAppearance.Projects.ListItem</item>
+        <item name="android:windowTitleStyle">@style/ProjectsDialogTitle</item>
+    </style>
+
+    <!-- M14: dialog titles in Tektur like every screen title (design.md: dialog title 17). -->
+    <style name="ProjectsDialogTitle" parent="RtlOverlay.DialogWindowTitle.AppCompat">
+        <item name="android:textAppearance">@style/TextAppearance.Projects.DialogTitle</item>
     </style>
 
     <!-- Dialog buttons in sentence case (design.md: OYNA is the only all-caps label). -->

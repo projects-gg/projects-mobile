@@ -6,6 +6,7 @@ import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.animation.StateListAnimator;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.animation.Interpolator;
 import android.view.animation.PathInterpolator;
 
@@ -23,7 +24,9 @@ import gg.projects.mobile.mods.Motion;
  * <ul>
  * <li>the view settles to a smaller scale with a short ease-out (100 ms) and comes back a little
  * slower (240 ms; buttons with a hint of spring), from wherever it is, so quick taps never jump;</li>
- * <li>{@link Haptics} plays on the way down and, for buttons, a lighter tick on the way up.</li>
+ * <li>{@link Haptics} plays on the way down and, for buttons, a lighter tick on the way up;</li>
+ * <li>a view with a long-press action sinks a little further once the press becomes a long press,
+ * as Android plays its long-press effect.</li>
  * </ul>
  * With animations turned off nothing moves; the haptics stay. Colour and ripple come from the
  * view's own background (the theme's gold ripple).
@@ -65,8 +68,15 @@ public final class Press {
     public static void attach(@Nullable final View view, final Style style) {
         if (view == null || view.getTag(R.id.projects_press_style) == style) return;
         view.setTag(R.id.projects_press_style, style);
-        float pressedScale = Motion.enabled(view.getContext()) ? style.scale : 1f;
+        final boolean motion = Motion.enabled(view.getContext());
+        float pressedScale = motion ? style.scale : 1f;
         final boolean[] down = {false};
+        // Held long enough for a long press (a view with a long-click action): it sinks a little
+        // further as Android plays its long-press effect, so holding is seen as well as felt.
+        final AnimatorSet deeper = scale(view, style.scale - (1f - style.scale) * 0.5f, PRESS_MS + 60, PRESS_IN);
+        final Runnable held = () -> {
+            if (down[0] && view.isPressed() && view.isLongClickable() && motion) deeper.start();
+        };
 
         AnimatorSet in = scale(view, pressedScale, PRESS_MS, PRESS_IN);
         in.addListener(new AnimatorListenerAdapter() {
@@ -75,6 +85,7 @@ public final class Press {
                 if (down[0]) return;
                 down[0] = true;
                 Haptics.perform(view, style.down);
+                if (view.isLongClickable()) view.postDelayed(held, ViewConfiguration.getLongPressTimeout());
             }
         });
         AnimatorSet out = scale(view, 1f, RELEASE_MS, style.spring ? RELEASE_SPRING : Motion.EASE_OUT);
@@ -84,6 +95,8 @@ public final class Press {
                 // The first state a view gets (attached, not pressed) is no release.
                 if (!down[0]) return;
                 down[0] = false;
+                view.removeCallbacks(held);
+                if (deeper.isRunning()) deeper.cancel();
                 if (style.tickOnRelease) Haptics.release(view);
             }
         });

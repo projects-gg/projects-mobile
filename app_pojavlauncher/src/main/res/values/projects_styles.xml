@@ -81,6 +81,13 @@
         <item name="android:textColor">@color/projects_bone_100</item>
     </style>
 
+    <style name="TextAppearance.Projects.DialogTitle" parent="TextAppearance.AppCompat.Title">
+        <item name="android:fontFamily">@font/tektur_semibold</item>
+        <item name="fontFamily">@font/tektur_semibold</item>
+        <item name="android:textSize">@dimen/projects_text_section</item>
+        <item name="android:textColor">@color/projects_bone_100</item>
+    </style>
+
     <style name="TextAppearance.Projects.PreferenceCategory" parent="TextAppearance.AppCompat.Body2">
         <item name="android:fontFamily">@font/figtree_semibold</item>
         <item name="fontFamily">@font/figtree_semibold</item>

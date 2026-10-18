@@ -182,6 +182,7 @@ public class LocalLoginFragment extends Fragment {
         text.setSpan(new ClickableSpan() {
             @Override
             public void onClick(@NonNull View widget) {
+                gg.projects.mobile.ui.Haptics.press(widget); // M14: a tap on the suggestion is felt
                 mUsernameEditText.setText(suggestion);
                 mUsernameEditText.setSelection(suggestion.length());
             }

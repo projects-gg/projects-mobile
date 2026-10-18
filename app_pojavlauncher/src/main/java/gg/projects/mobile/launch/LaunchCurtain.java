@@ -468,9 +468,9 @@ public final class LaunchCurtain extends FrameLayout implements Logger.eventLogL
         super.onSizeChanged(w, h, oldw, oldh);
         float cx = w / 2f;
         float cy = h / 2f - 8 * getResources().getDisplayMetrics().density - dp(24);
-        float ember = Math.max(w, h) * 0.55f;
+        float ember = Math.max(w, h) * 0.45f;
         mEmberPaint.setShader(new RadialGradient(cx, cy, ember,
-                new int[]{0x803F0A0A, 0x2E3F0A0A, 0x003F0A0A}, new float[]{0f, 0.45f, 1f}, Shader.TileMode.CLAMP));
+                new int[]{0x663F0A0A, 0x243F0A0A, 0x003F0A0A}, new float[]{0f, 0.45f, 1f}, Shader.TileMode.CLAMP));
         float gold = dp(150);
         mGoldPaint.setShader(new RadialGradient(cx, cy, gold,
                 new int[]{0x2EE89A2C, 0x12E89A2C, 0x00E89A2C}, new float[]{0f, 0.5f, 1f}, Shader.TileMode.CLAMP));
