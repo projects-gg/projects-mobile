@@ -23,8 +23,9 @@ import gg.projects.mobile.content.AtomicFiles;
 /**
  * The options a new game folder starts with, as on the desktop (pl-mc's {@code seed_options}):
  * right before a launch, a folder without an {@code options.txt} gets {@code version:<data
- * version>} and Turkish as the game language. The game fills in everything else, and a file the
- * player, the game or a pack wrote is never touched, so later changes stay the player's.
+ * version>} and the app's language as the game language (Turkish or English, see
+ * {@code AppLanguage}). The game fills in everything else, and a file the player, the game or a
+ * pack wrote is never touched, so later changes stay the player's.
  *
  * <p>The {@code version} line matters: without it the game takes the file for one from before
  * data versions existed and runs its options data fixers from the start, and one of them (1.19.3
@@ -72,7 +73,7 @@ public final class FirstOptions {
      * {@code minecraft} is the vanilla version (a modded version's {@code inheritsFrom}); the data
      * version comes from the first readable jar of {@code clientJars}.
      */
-    public static Result seed(File gameDir, String minecraft, List<File> clientJars) throws IOException {
+    public static Result seed(File gameDir, String minecraft, List<File> clientJars, boolean turkish) throws IOException {
         File file = new File(gameDir, FILE_NAME);
         List<String> kept = new ArrayList<>();
         if (file.exists()) {
@@ -87,7 +88,7 @@ public final class FirstOptions {
         if (dataVersion == null && hasAccessibilityOnboarding(minecraft)) return Result.SKIPPED;
         StringBuilder content = new StringBuilder();
         if (dataVersion != null) content.append("version:").append(dataVersion).append('\n');
-        content.append("lang:").append(turkishLanguage(minecraft)).append('\n');
+        content.append("lang:").append(gameLanguage(minecraft, turkish)).append('\n');
         for (String line : kept) content.append(line).append('\n');
         AtomicFiles.write(file, content.toString().getBytes(StandardCharsets.UTF_8));
         return Result.WRITTEN;
@@ -140,7 +141,47 @@ public final class FirstOptions {
      * (its snapshots from 16w32a and the year-numbered releases included), {@code tr_TR} before.
      */
     public static String turkishLanguage(String version) {
-        return atLeast(version, 1, 11, 0, 16, 32) ? "tr_tr" : "tr_TR";
+        return gameLanguage(version, true);
+    }
+
+    /**
+     * The {@code lang} value for Turkish or English: {@code tr_tr} / {@code en_us} from 1.11 on (its
+     * snapshots from 16w32a and the year-numbered releases included), {@code tr_TR} / {@code en_US}
+     * before.
+     */
+    public static String gameLanguage(String version, boolean turkish) {
+        boolean lower = atLeast(version, 1, 11, 0, 16, 32);
+        if (turkish) return lower ? "tr_tr" : "tr_TR";
+        return lower ? "en_us" : "en_US";
+    }
+
+    /**
+     * Upstream's {@code assets/options.txt} for the default game folder with its {@code lang} line in
+     * the app's language. The file has old key codes the game's data fixers convert, so it carries
+     * no {@code version} line and keeps the old {@code tr_TR} / {@code en_US} form (the fixers lower
+     * it). A missing {@code lang} line is added at the end.
+     */
+    public static String withLanguage(String options, boolean turkish) {
+        String lang = "lang:" + (turkish ? "tr_TR" : "en_US");
+        StringBuilder out = new StringBuilder();
+        boolean found = false;
+        String[] lines = options.split("\n", -1);
+        for (int i = 0; i < lines.length; i++) {
+            String line = lines[i];
+            boolean cr = line.endsWith("\r");
+            String bare = cr ? line.substring(0, line.length() - 1) : line;
+            if (bare.startsWith("lang:")) {
+                line = lang + (cr ? "\r" : "");
+                found = true;
+            }
+            out.append(line);
+            if (i < lines.length - 1) out.append('\n');
+        }
+        if (!found) {
+            if (out.length() > 0 && out.charAt(out.length() - 1) != '\n') out.append('\n');
+            out.append(lang).append('\n');
+        }
+        return out.toString();
     }
 
     /** Versions from 1.19.3 (snapshot 22w42a) on show new players an accessibility onboarding. */

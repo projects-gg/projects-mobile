@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Projects-only arrays. -->
+<resources>
+    <!-- Settings → "Dil" (the entries' labels are set in code: "Otomatik (Türkçe)", "Türkçe", "English"). -->
+    <string-array name="projects_language_values" translatable="false">
+        <item>auto</item>
+        <item>tr</item>
+        <item>en</item>
+    </string-array>
+</resources>

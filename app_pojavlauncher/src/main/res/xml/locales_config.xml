@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Projects fork: the app's two languages, for Android 13+'s per-app "App languages" setting. -->
+<locale-config xmlns:android="http://schemas.android.com/apk/res/android">
+    <locale android:name="tr" />
+    <locale android:name="en" />
+</locale-config>

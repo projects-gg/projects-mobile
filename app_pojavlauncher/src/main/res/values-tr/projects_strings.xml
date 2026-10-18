@@ -228,4 +228,6 @@
     <string name="projects_sodium_disable_and_start">Sodium\'u kapatıp başlat</string>
     <string name="projects_game_closed">Oyun beklenmedik şekilde kapandı.</string>
     <string name="projects_share_log">Kaydı paylaş</string>
+    <string name="projects_language_title">Dil</string>
+    <string name="projects_language_auto">Otomatik (%1$s)</string>
 </resources>

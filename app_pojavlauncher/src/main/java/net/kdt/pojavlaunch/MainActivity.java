@@ -130,9 +130,9 @@ public class MainActivity extends BaseActivity implements ControlButtonMenuListe
         Tools.useANGLE = minecraftProfile.useANGLE;
 
         String gameDirPath = Tools.getGameDirPath(minecraftProfile).getAbsolutePath();
-        // Projects fork: a new game folder starts in Turkish, before the line below creates an empty options.txt.
+        // Projects fork: a new game folder starts in the app's language, before the line below creates an empty options.txt.
         String launchedVersion = getIntent().getStringExtra(INTENT_MINECRAFT_VERSION);
-        gg.projects.mobile.launch.ProjectsLaunchHook.seedOptions(new File(gameDirPath),
+        gg.projects.mobile.launch.ProjectsLaunchHook.seedOptions(this, new File(gameDirPath),
                 launchedVersion != null ? launchedVersion : minecraftProfile.lastVersionId);
         MCOptionUtils.load(gameDirPath);
 
@@ -488,8 +488,9 @@ public class MainActivity extends BaseActivity implements ControlButtonMenuListe
         } catch (NumberFormatException e) { folder.mkdir(); }
 
         MinecraftAccount minecraftAccount = PojavProfile.getCurrentProfileContent(this, null);
-        if (hasMods("sodium"))
-            Logger.appendToLog("WARNING: Sodium is being used, Amethyst-Android does NOT support this mod, you are on your own");
+        // Projects fork: what this start is (profile, folder, renderer, Sodium), for the launcher
+        // to tell afterwards whether Sodium kept the game from starting.
+        gg.projects.mobile.launch.ProjectsLaunchHook.recordLaunch(this, minecraftProfile, versionId);
         Logger.appendToLog("--------- Starting game with Launcher Debug!");
         Tools.printLauncherInfo(versionId, Tools.isValidString(minecraftProfile.javaArgs) ? minecraftProfile.javaArgs : LauncherPreferences.PREF_CUSTOM_JAVA_ARGS, Tools.getTotalDeviceMemory(this));
         if(Tools.LOCAL_RENDERER.equals("opengles_mobileglues")) {

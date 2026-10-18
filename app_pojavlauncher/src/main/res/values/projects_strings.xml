@@ -232,4 +232,9 @@
     <string name="projects_sodium_disable_and_start">Turn off Sodium and start</string>
     <string name="projects_game_closed">The game closed unexpectedly.</string>
     <string name="projects_share_log">Share log</string>
+    <string name="projects_language_title">Language</string>
+    <string name="projects_language_auto">Automatic (%1$s)</string>
+    <!-- Each language in its own words, whatever the interface speaks. -->
+    <string name="projects_language_turkish" translatable="false">Türkçe</string>
+    <string name="projects_language_english" translatable="false">English</string>
 </resources>

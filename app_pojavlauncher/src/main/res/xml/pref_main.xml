@@ -55,10 +55,15 @@
             />
     </PreferenceCategory>
 
-    <SwitchPreference
-        android:title="@string/preference_force_english_title"
-        android:key="force_english"
-        android:summary="@string/preference_force_english_description"
+    <!-- Projects fork: the app's language (gg.projects.mobile.language). "Otomatik" is Turkish in
+         Turkey or on a Turkish phone, else English; it replaces upstream's "force English" switch.
+         The entries are set in LauncherPreferenceFragment ("Otomatik (Türkçe)"). -->
+    <androidx.preference.ListPreference
+        android:key="projects_language"
+        android:title="@string/projects_language_title"
+        android:defaultValue="auto"
+        android:entries="@array/projects_language_values"
+        android:entryValues="@array/projects_language_values"
         />
 
     <Preference

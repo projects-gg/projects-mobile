@@ -58,6 +58,8 @@ public class PojavApplication extends Application {
 		
 		try {
 			super.onCreate();
+			// Projects fork: the app's language (Settings → "Dil"), also Android 13+'s app locale.
+			gg.projects.mobile.language.LanguageManager.applyLocal(this);
 			if(Tools.checkStorageRoot(this)){
 				// Implicitly initializes early constants and storage constants.
 				// Required to run the main activity properly.
@@ -92,16 +94,17 @@ public class PojavApplication extends Application {
 
 	@Override
     protected void attachBaseContext(Context base) {
-        // Projects fork: the context inside LocaleUtils' wrapper (base, or base with the English
-        // configuration). Android casts an application's base context to its own ContextImpl
-        // before it delivers a broadcast to a manifest receiver (the event reminders' alarm), so a
-        // wrapper there crashed it; an Application gains nothing from the extra wrapper.
+        // Projects fork: the context inside LocaleUtils' wrapper (base, or base in the app's
+        // language). Android casts an application's base context to its own ContextImpl before it
+        // delivers a broadcast to a manifest receiver (the event reminders' alarm), so a wrapper
+        // there crashed it; an Application gains nothing from the extra wrapper.
         super.attachBaseContext(LocaleUtils.setLocale(base).getBaseContext());
     }
 
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-        LocaleUtils.setLocale(this);
+        // Projects fork: the phone's language or time zone may have changed what "Otomatik" means.
+        gg.projects.mobile.language.LanguageManager.applyLocal(this);
     }
 }

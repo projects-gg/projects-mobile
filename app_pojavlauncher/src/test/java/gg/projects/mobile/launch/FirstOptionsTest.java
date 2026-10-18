@@ -87,12 +87,12 @@ public class FirstOptionsTest {
         File jar = clientJar("26.1.2.jar", "{\"id\":\"26.1.2\",\"world_version\":4790,\"java_version\":25}");
         assertEquals(Integer.valueOf(4790), FirstOptions.clientDataVersion(jar));
         File game = new File(temp.getRoot(), "custom_instances/projects");
-        assertEquals(FirstOptions.Result.WRITTEN, FirstOptions.seed(game, "26.1.2", Collections.singletonList(jar)));
+        assertEquals(FirstOptions.Result.WRITTEN, FirstOptions.seed(game, "26.1.2", Collections.singletonList(jar), true));
         // No GUI scale: the game's "Auto" keeps buttons finger-sized on a phone.
         assertEquals("version:4790\nlang:tr_tr\n", read(game));
         // Only once: from then on the file is the game's and the player's.
         write(game, "version:4790\nlang:en_us\nguiScale:3\nrenderDistance:6\n");
-        assertEquals(FirstOptions.Result.EXISTS, FirstOptions.seed(game, "26.1.2", Collections.singletonList(jar)));
+        assertEquals(FirstOptions.Result.EXISTS, FirstOptions.seed(game, "26.1.2", Collections.singletonList(jar), true));
         assertEquals("version:4790\nlang:en_us\nguiScale:3\nrenderDistance:6\n", read(game));
     }
 
@@ -102,11 +102,11 @@ public class FirstOptionsTest {
         File game = temp.newFolder("pack");
         String pack = "version:3955\r\nlang:en_us\r\nkey_key.jump:key.keyboard.space\r\n";
         write(game, pack);
-        assertEquals(FirstOptions.Result.EXISTS, FirstOptions.seed(game, "1.21.1", Collections.singletonList(jar)));
+        assertEquals(FirstOptions.Result.EXISTS, FirstOptions.seed(game, "1.21.1", Collections.singletonList(jar), true));
         assertEquals(pack, read(game));
         // A line the game would not write is not ours either.
         write(game, "fullscreen:off\nsomething odd\n");
-        assertEquals(FirstOptions.Result.EXISTS, FirstOptions.seed(game, "1.21.1", Collections.singletonList(jar)));
+        assertEquals(FirstOptions.Result.EXISTS, FirstOptions.seed(game, "1.21.1", Collections.singletonList(jar), true));
     }
 
     @Test
@@ -116,16 +116,16 @@ public class FirstOptionsTest {
         File jar = clientJar("1.21.1.jar", "{\"world_version\":3955}");
         File game = temp.newFolder("stopped");
         write(game, "");
-        assertEquals(FirstOptions.Result.WRITTEN, FirstOptions.seed(game, "1.21.1", Collections.singletonList(jar)));
+        assertEquals(FirstOptions.Result.WRITTEN, FirstOptions.seed(game, "1.21.1", Collections.singletonList(jar), true));
         assertEquals("version:3955\nlang:tr_tr\n", read(game));
 
         write(game, "overrideHeight:1080\nfullscreen:off\r\noverrideWidth:2400\n\n");
-        assertEquals(FirstOptions.Result.WRITTEN, FirstOptions.seed(game, "1.21.1", Collections.singletonList(jar)));
+        assertEquals(FirstOptions.Result.WRITTEN, FirstOptions.seed(game, "1.21.1", Collections.singletonList(jar), true));
         assertEquals("version:3955\nlang:tr_tr\noverrideHeight:1080\nfullscreen:off\noverrideWidth:2400\n", read(game));
 
         // Its own lines from a launch that stopped early are written again, the window kept.
         write(game, "lang:tr_tr\noverrideWidth:2400\nversion:3955\n");
-        assertEquals(FirstOptions.Result.WRITTEN, FirstOptions.seed(game, "1.21.1", Collections.singletonList(jar)));
+        assertEquals(FirstOptions.Result.WRITTEN, FirstOptions.seed(game, "1.21.1", Collections.singletonList(jar), true));
         assertEquals("version:3955\nlang:tr_tr\noverrideWidth:2400\n", read(game));
     }
 
@@ -134,7 +134,7 @@ public class FirstOptionsTest {
         File missing = new File(temp.getRoot(), "fabric-loader-0.19.5-26.1.2.jar");
         File vanilla = clientJar("26.1.2.jar", "{\"world_version\":4790}");
         File game = temp.newFolder("fabric");
-        assertEquals(FirstOptions.Result.WRITTEN, FirstOptions.seed(game, "26.1.2", Arrays.asList(missing, vanilla)));
+        assertEquals(FirstOptions.Result.WRITTEN, FirstOptions.seed(game, "26.1.2", Arrays.asList(missing, vanilla), true));
         assertEquals("version:4790\nlang:tr_tr\n", read(game));
     }
 
@@ -144,16 +144,16 @@ public class FirstOptionsTest {
         assertNull(FirstOptions.clientDataVersion(noJson));
         // Older versions have no onboarding: the language alone is safe.
         File old = temp.newFolder("old");
-        assertEquals(FirstOptions.Result.WRITTEN, FirstOptions.seed(old, "1.12.2", Collections.singletonList(noJson)));
+        assertEquals(FirstOptions.Result.WRITTEN, FirstOptions.seed(old, "1.12.2", Collections.singletonList(noJson), true));
         assertEquals("lang:tr_tr\n", read(old));
         File older = temp.newFolder("older");
-        assertEquals(FirstOptions.Result.WRITTEN, FirstOptions.seed(older, "1.8.9", Collections.singletonList(noJson)));
+        assertEquals(FirstOptions.Result.WRITTEN, FirstOptions.seed(older, "1.8.9", Collections.singletonList(noJson), true));
         assertEquals("lang:tr_TR\n", read(older));
         // From 1.19.3 on, the game would switch the onboarding off: better nothing than that.
         File modern = temp.newFolder("modern");
-        assertEquals(FirstOptions.Result.SKIPPED, FirstOptions.seed(modern, "1.21.4", Collections.singletonList(noJson)));
+        assertEquals(FirstOptions.Result.SKIPPED, FirstOptions.seed(modern, "1.21.4", Collections.singletonList(noJson), true));
         assertFalse(new File(modern, FirstOptions.FILE_NAME).exists());
-        assertEquals(FirstOptions.Result.SKIPPED, FirstOptions.seed(modern, "1.21.4", new ArrayList<File>()));
+        assertEquals(FirstOptions.Result.SKIPPED, FirstOptions.seed(modern, "1.21.4", new ArrayList<File>(), true));
     }
 
     @Test
@@ -178,5 +178,31 @@ public class FirstOptionsTest {
         assertFalse(FirstOptions.launcherOnly("guiScale:2\n", new ArrayList<String>()));
         assertFalse(FirstOptions.launcherOnly(":value\n", new ArrayList<String>()));
         assertFalse(FirstOptions.launcherOnly("fullscreen\n", new ArrayList<String>()));
+    }
+
+    @Test
+    public void theGameStartsInTheAppsLanguage() throws Exception {
+        File jar = clientJar("26.1.2-en.jar", "{\"world_version\":4790}");
+        File game = new File(temp.getRoot(), "english");
+        assertEquals(FirstOptions.Result.WRITTEN, FirstOptions.seed(game, "26.1.2", Collections.singletonList(jar), false));
+        assertEquals("version:4790\nlang:en_us\n", read(game));
+        // A folder the game never saved into follows the app's language at the next start.
+        assertEquals(FirstOptions.Result.WRITTEN, FirstOptions.seed(game, "26.1.2", Collections.singletonList(jar), true));
+        assertEquals("version:4790\nlang:tr_tr\n", read(game));
+
+        assertEquals("en_us", FirstOptions.gameLanguage("1.21.1", false));
+        assertEquals("en_US", FirstOptions.gameLanguage("1.10.2", false));
+        assertEquals("en_us", FirstOptions.gameLanguage("26.1.2", false));
+        assertEquals("tr_TR", FirstOptions.gameLanguage("16w31a", true));
+        assertEquals("tr_tr", FirstOptions.gameLanguage("16w32a", true));
+    }
+
+    @Test
+    public void upstreamsDefaultFolderOptionsSpeakTheAppsLanguage() {
+        String asset = "invertYMouse:false\r\nlang:tr_TR\r\nrenderDistance:2\r\n";
+        assertEquals("invertYMouse:false\r\nlang:en_US\r\nrenderDistance:2\r\n", FirstOptions.withLanguage(asset, false));
+        assertEquals(asset, FirstOptions.withLanguage(asset, true));
+        assertEquals("renderDistance:2\nlang:en_US\n", FirstOptions.withLanguage("renderDistance:2", false));
+        assertEquals("renderDistance:2\nlang:tr_TR\n", FirstOptions.withLanguage("renderDistance:2\n", true));
     }
 }

@@ -17,7 +17,8 @@ public abstract class BaseActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        LocaleUtils.setLocale(this);
+        // Projects fork: Java's default locale follows the app's language (dates, relative times).
+        gg.projects.mobile.language.LanguageManager.applyLocal(this);
         Tools.setFullscreen(this, setFullscreen());
         Tools.updateWindowSize(this);
     }

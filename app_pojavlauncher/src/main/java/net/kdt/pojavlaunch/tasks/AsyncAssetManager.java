@@ -68,19 +68,22 @@ public class AsyncAssetManager {
         ProgressLayout.setProgress(ProgressLayout.EXTRACT_SINGLE_FILES, 0);
         sExecutorService.execute(() -> {
             try {
-                Tools.copyAssetFile(ctx, "options.txt", Tools.DIR_GAME_NEW, false);
+                // Projects fork: the default game folder's first options speak the app's language.
+                gg.projects.mobile.launch.ProjectsLaunchHook.copyDefaultOptions(ctx, new File(Tools.DIR_GAME_NEW));
 
-                // Projects fork: an earlier version's untouched default layout takes the new labels.
-                gg.projects.mobile.controls.ControlCaps.replaceOldDefault(ctx, "default.json", new File(Tools.CTRLDEF_FILE));
+                // Projects fork: the default layout speaks the app's language; an untouched default
+                // (this version's in either language, or an earlier one) takes it, an edited one
+                // keeps its buttons with its default labels translated.
+                String layoutAsset = gg.projects.mobile.controls.ControlLayouts.sync(ctx);
 
                 // This is disgusting, but am lazy. We probably wont be getting any updates to
                 // controlmap till rewrite anyway so this is fiiine.
-                try (InputStream is = ctx.getAssets().open("default.json")) {
+                try (InputStream is = ctx.getAssets().open(layoutAsset)) {
                     String assetSha1 = new String(org.apache.commons.codec.binary.Hex.encodeHex(org.apache.commons.codec.digest.DigestUtils.sha1(is)));
                     if (!Tools.compareSHA1(new File(Tools.CTRLDEF_FILE), assetSha1)) {
-                        Tools.copyAssetFile(ctx, "default.json", Tools.CTRLMAP_PATH, "new_default.json" , false);
+                        Tools.copyAssetFile(ctx, layoutAsset, Tools.CTRLMAP_PATH, "new_default.json" , false);
                     } else if (!new File(Tools.CTRLMAP_PATH+"/new_default.json").exists())
-                    Tools.copyAssetFile(ctx, "default.json", Tools.CTRLMAP_PATH, false);
+                    Tools.copyAssetFile(ctx, layoutAsset, Tools.CTRLMAP_PATH, "default.json", false);
                 }
 
                 Tools.copyAssetFile(ctx, "launcher_profiles.json", Tools.DIR_GAME_NEW, false);

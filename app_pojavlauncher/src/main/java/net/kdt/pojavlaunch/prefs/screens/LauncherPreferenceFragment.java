@@ -8,12 +8,16 @@ import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
 import net.kdt.pojavlaunch.LauncherActivity;
 import net.kdt.pojavlaunch.R;
 import net.kdt.pojavlaunch.prefs.LauncherPreferences;
+
+import gg.projects.mobile.language.AppLanguage;
+import gg.projects.mobile.language.LanguageManager;
 
 /**
  * Preference for the main screen, any sub-screen should inherit this class for consistent behavior,
@@ -31,6 +35,21 @@ public class LauncherPreferenceFragment extends PreferenceFragmentCompat impleme
     public void onCreatePreferences(Bundle b, String str) {
         addPreferencesFromResource(R.xml.pref_main);
         setupNotificationRequestPreference();
+        setupLanguagePreference();
+    }
+
+    /** Projects fork: "Dil": "Otomatik (Türkçe)", "Türkçe", "English" (each language in its own words). */
+    private void setupLanguagePreference() {
+        ListPreference language = requirePreference(LanguageManager.KEY_CHOICE, ListPreference.class);
+        language.setEntries(new CharSequence[]{LanguageManager.autoLabel(requireContext()),
+                getString(R.string.projects_language_turkish), getString(R.string.projects_language_english)});
+        language.setEntryValues(new CharSequence[]{AppLanguage.AUTO, AppLanguage.TURKISH, AppLanguage.ENGLISH});
+        language.setValue(LanguageManager.choice(requireContext()));
+        language.setSummaryProvider(ListPreference.SimpleSummaryProvider.getInstance());
+        language.setOnPreferenceChangeListener((preference, value) -> {
+            LanguageManager.setChoice(requireActivity(), String.valueOf(value));
+            return true;
+        });
     }
 
     private void setupNotificationRequestPreference() {

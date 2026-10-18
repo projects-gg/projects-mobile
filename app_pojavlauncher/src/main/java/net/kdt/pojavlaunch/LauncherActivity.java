@@ -356,6 +356,10 @@ public class LauncherActivity extends BaseActivity {
         super.onResume();
         ContextExecutor.setActivity(this);
         mInstallTracker.attach();
+        // Projects fork: "Otomatik" follows the time zone and the phone's language; a change made
+        // while the app was away (or on Android 13+'s "App languages" page) is taken in here.
+        gg.projects.mobile.language.LanguageManager.apply(this);
+        if (gg.projects.mobile.language.LanguageManager.outdated(this)) recreate();
     }
 
     @Override
@@ -365,10 +369,26 @@ public class LauncherActivity extends BaseActivity {
         mInstallTracker.detach();
     }
 
+    /** Projects fork: "Otomatik" means Turkish in Turkey; a new time zone may change the language. */
+    private final android.content.BroadcastReceiver mTimeZoneReceiver = new android.content.BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, android.content.Intent intent) {
+            gg.projects.mobile.language.LanguageManager.apply(LauncherActivity.this);
+            if (gg.projects.mobile.language.LanguageManager.outdated(LauncherActivity.this)) recreate();
+        }
+    };
+
     @Override
     protected void onStart() {
         super.onStart();
         getSupportFragmentManager().registerFragmentLifecycleCallbacks(mFragmentCallbackListener, true);
+        registerReceiver(mTimeZoneReceiver, new android.content.IntentFilter(android.content.Intent.ACTION_TIMEZONE_CHANGED));
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        unregisterReceiver(mTimeZoneReceiver);
     }
 
     @Override

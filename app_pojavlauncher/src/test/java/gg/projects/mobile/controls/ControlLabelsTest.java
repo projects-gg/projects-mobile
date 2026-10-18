@@ -24,6 +24,7 @@ import gg.projects.mobile.content.AtomicFiles;
 /** Capitals of the on-screen controls and the Turkish default layout. */
 public class ControlLabelsTest {
     private static final File DEFAULT_LAYOUT = new File("src/main/assets/default.json");
+    private static final File ENGLISH_LAYOUT = new File("src/main/assets/default_en.json");
 
     /** The English labels 0.1.0 to 0.1.3 shipped, in file order, as written in the JSON. */
     private static final String[][] ENGLISH = {
@@ -78,7 +79,11 @@ public class ControlLabelsTest {
 
     /** Every label of the default layout that is drawn (buttons, drawers and their buttons; joysticks show none). */
     private static List<JsonObject> drawnButtons() throws IOException {
-        JsonObject layout = JsonParser.parseString(text(DEFAULT_LAYOUT)).getAsJsonObject();
+        return drawnButtons(DEFAULT_LAYOUT);
+    }
+
+    private static List<JsonObject> drawnButtons(File file) throws IOException {
+        JsonObject layout = JsonParser.parseString(text(file)).getAsJsonObject();
         List<JsonObject> buttons = new ArrayList<>();
         for (JsonElement button : layout.getAsJsonArray("mControlDataList")) buttons.add(button.getAsJsonObject());
         for (JsonElement drawer : layout.getAsJsonArray("mDrawerDataList")) {
@@ -95,8 +100,91 @@ public class ControlLabelsTest {
 
     @Test
     public void theDefaultLayoutIsTurkishAndInCapitals() throws IOException {
+        List<String> names = labelsInCapitalsThatFit(DEFAULT_LAYOUT);
+        assertTrue(names.contains("TUŞLARI\nGİZLE"));
+        assertTrue(names.contains("EĞİL"));
+        // Key names players know stay.
+        assertTrue(names.contains("CTRL"));
+        assertTrue(names.contains("SHIFT"));
+        assertTrue(names.contains("F3"));
+        assertFalse(names.contains("Hide\nGUI"));
+    }
+
+    @Test
+    public void theEnglishLayoutIsTheSameLayoutWithEnglishLabels() throws IOException {
+        List<String> names = labelsInCapitalsThatFit(ENGLISH_LAYOUT);
+        assertTrue(names.contains("HIDE\nBUTTONS"));
+        assertTrue(names.contains("SNEAK"));
+        assertTrue(names.contains("CTRL") && names.contains("SHIFT") && names.contains("F3"));
+        for (String name : names) {
+            assertFalse("no Turkish left: " + name, name.matches("(?s).*[ÇĞİÖŞÜçğıöşü].*"));
+        }
+        // Button for button, the Turkish label maps to the English one (ControlLabels' table) and
+        // nothing else differs: positions, sizes and keys are the Turkish file's.
+        JsonObject turkish = JsonParser.parseString(text(DEFAULT_LAYOUT)).getAsJsonObject();
+        JsonObject english = JsonParser.parseString(text(ENGLISH_LAYOUT)).getAsJsonObject();
+        List<JsonObject> turkishButtons = drawnButtons(DEFAULT_LAYOUT);
+        List<JsonObject> englishButtons = drawnButtons(ENGLISH_LAYOUT);
+        assertEquals(turkishButtons.size(), englishButtons.size());
+        for (int i = 0; i < turkishButtons.size(); i++) {
+            String from = turkishButtons.get(i).get("name").getAsString();
+            String to = englishButtons.get(i).get("name").getAsString();
+            String mapped = ControlLabels.ENGLISH_LABELS.containsKey(from) ? ControlLabels.ENGLISH_LABELS.get(from) : from;
+            assertEquals(from, mapped, to);
+        }
+        assertEquals("the Turkish file translated is the English file",
+                english, JsonParser.parseString(ControlLabels.translate(text(DEFAULT_LAYOUT), false)));
+        assertEquals("and back", turkish, JsonParser.parseString(ControlLabels.translate(text(ENGLISH_LAYOUT), true)));
+        assertEquals(ControlLabels.ENGLISH_ASSET, ControlLabels.assetFor(false));
+        assertEquals(ControlLabels.TURKISH_ASSET, ControlLabels.assetFor(true));
+    }
+
+    @Test
+    public void untouchedDefaultsFollowTheLanguageEditedOnesKeepTheirButtons() throws IOException {
+        byte[] turkish = text(DEFAULT_LAYOUT).getBytes(StandardCharsets.UTF_8);
+        byte[] english = text(ENGLISH_LAYOUT).getBytes(StandardCharsets.UTF_8);
+        assertTrue(ControlLabels.isUntouchedDefault(turkish, turkish, english));
+        assertTrue(ControlLabels.isUntouchedDefault(english, turkish, english));
+        String lf = text(ENGLISH_LAYOUT).replace("\r\n", "\n");
+        assertTrue("line endings aside", ControlLabels.isUntouchedDefault(lf.getBytes(StandardCharsets.UTF_8), turkish, english));
+        assertTrue("line endings aside", ControlLabels.isUntouchedDefault(
+                lf.replace("\n", "\r\n").getBytes(StandardCharsets.UTF_8), turkish, english));
+        assertFalse(ControlLabels.isUntouchedDefault(null, turkish, english));
+
+        // An edited layout: a moved button, a label of the player's own and a default label.
+        JsonObject layout = JsonParser.parseString(text(DEFAULT_LAYOUT)).getAsJsonObject();
+        JsonObject first = layout.getAsJsonArray("mControlDataList").get(0).getAsJsonObject();
+        first.addProperty("dynamicX", "0.5 * ${screen_width}");
+        JsonObject second = layout.getAsJsonArray("mControlDataList").get(1).getAsJsonObject();
+        second.addProperty("name", "BENİM TUŞUM");
+        byte[] edited = layout.toString().getBytes(StandardCharsets.UTF_8);
+        assertFalse(ControlLabels.isUntouchedDefault(edited, turkish, english));
+        JsonObject translated = JsonParser.parseString(ControlLabels.translate(layout.toString(), false)).getAsJsonObject();
+        JsonObject movedJump = translated.getAsJsonArray("mControlDataList").get(0).getAsJsonObject();
+        assertEquals("JUMP", movedJump.get("name").getAsString());
+        assertEquals("0.5 * ${screen_width}", movedJump.get("dynamicX").getAsString());
+        assertEquals("the player's own label stays", "BENİM TUŞUM",
+                translated.getAsJsonArray("mControlDataList").get(1).getAsJsonObject().get("name").getAsString());
+        assertEquals("already in that language: nothing to do", null, ControlLabels.translate(text(DEFAULT_LAYOUT), true));
+        // An edited layout of 0.1.0 to 0.1.3 with upstream's English labels, on a Turkish app.
+        JsonObject old = JsonParser.parseString(text(DEFAULT_LAYOUT)).getAsJsonObject();
+        old.getAsJsonArray("mControlDataList").get(0).getAsJsonObject().addProperty("name", "Jump");
+        old.getAsJsonArray("mControlDataList").get(1).getAsJsonObject().addProperty("name", "Hide\nGUI");
+        JsonObject turkishAgain = JsonParser.parseString(ControlLabels.translate(old.toString(), true)).getAsJsonObject();
+        assertEquals("ZIPLA", turkishAgain.getAsJsonArray("mControlDataList").get(0).getAsJsonObject().get("name").getAsString());
+        assertEquals("TUŞLARI\nGİZLE", turkishAgain.getAsJsonArray("mControlDataList").get(1).getAsJsonObject().get("name").getAsString());
+        // On an English app the Turkish default labels become English and upstream's stay as they are.
+        JsonObject englishAgain = JsonParser.parseString(ControlLabels.translate(old.toString(), false)).getAsJsonObject();
+        assertEquals("Hide\nGUI", englishAgain.getAsJsonArray("mControlDataList").get(1).getAsJsonObject().get("name").getAsString());
+        assertEquals("MENU", englishAgain.getAsJsonArray("mControlDataList").get(2).getAsJsonObject().get("name").getAsString());
+        assertEquals("not a layout", null, ControlLabels.translate("[1, 2]", false));
+        assertEquals(null, ControlLabels.translate("{ broken", false));
+    }
+
+    /** The drawn labels of a layout, each checked: in capitals, and every single-word line fits its button. */
+    private static List<String> labelsInCapitalsThatFit(File file) throws IOException {
         List<String> names = new ArrayList<>();
-        for (JsonObject button : drawnButtons()) {
+        for (JsonObject button : drawnButtons(file)) {
             String name = button.get("name").getAsString();
             names.add(name);
             // Written in capitals: the same with or without the "all caps" setting, and root
@@ -109,13 +197,7 @@ public class ControlLabelsTest {
                 assertTrue(name + " in " + width + " dp", line.length() * 9 <= width);
             }
         }
-        assertTrue(names.contains("TUŞLARI\nGİZLE"));
-        assertTrue(names.contains("EĞİL"));
-        // Key names players know stay.
-        assertTrue(names.contains("CTRL"));
-        assertTrue(names.contains("SHIFT"));
-        assertTrue(names.contains("F3"));
-        assertFalse(names.contains("Hide\nGUI"));
+        return names;
     }
 
     @Test
