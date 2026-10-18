@@ -252,4 +252,6 @@
     <string name="projects_launch_mods">Modlar yükleniyor</string>
     <string name="projects_launch_minecraft">Minecraft açılıyor</string>
     <string name="projects_launch_slow">Bu biraz sürebilir.</string>
+    <string name="projects_launch_show_log">Kaydı göster</string>
+    <string name="projects_launch_close">Oyunu kapat</string>
 </resources>

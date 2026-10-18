@@ -566,6 +566,8 @@ public class MainActivity extends BaseActivity implements ControlButtonMenuListe
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
+        // Projects fork (REVIEW1 M14-1): back on the loading screen shows its way out.
+        if (gg.projects.mobile.launch.LaunchCurtain.onBack(event)) return true;
         if(isInEditor) {
             if(event.getKeyCode() == KeyEvent.KEYCODE_BACK) {
                 if(event.getAction() == KeyEvent.ACTION_DOWN) mControlLayout.askToExit(this);

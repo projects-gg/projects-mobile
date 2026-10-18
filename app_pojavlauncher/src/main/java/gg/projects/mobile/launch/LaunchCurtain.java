@@ -58,9 +58,13 @@ import gg.projects.mobile.mods.Motion;
  * sampled with TextureView's own frame callback or, for the SurfaceView mode, PixelCopy (Android
  * 7+); frames that stay black lift it 2.5 s after they started once Minecraft is starting; and as
  * fallbacks, 3 s after Minecraft starts loading its resources, when the game grabs the pointer, 150 s
- * into Minecraft's start, or after 8 minutes. It fades out in a quarter second and removes itself:
- * nothing of it (log listener, polling, animations) runs afterwards. With animations off it is a
- * still picture that disappears at once.
+ * into Minecraft's start, 5 minutes into a start that never reached Minecraft, or after 8 minutes.
+ * It fades out in a quarter second and removes itself: nothing of it (log listener, polling,
+ * animations) runs afterwards. With animations off it is a still picture that disappears at once.
+ *
+ * <p>A start that hangs never traps the player (REVIEW1 M14-1): with the slow line, or as soon as
+ * the player taps the screen or presses back, "Kaydı göster" (the loading screen steps aside for
+ * upstream's live log) and "Oyunu kapat" (upstream's force-close question) appear under the status.
  */
 @SuppressLint("ViewConstructor")
 public final class LaunchCurtain extends FrameLayout implements Logger.eventLogListener, GrabListener {
@@ -71,6 +75,8 @@ public final class LaunchCurtain extends FrameLayout implements Logger.eventLogL
     private static final long RESOURCES_FALLBACK_MS = 3000;
     private static final long MINECRAFT_FALLBACK_MS = 150_000;
     private static final long ABSOLUTE_FALLBACK_MS = 8 * 60_000;
+    /** A start that has not reached Minecraft itself by now is stuck (REVIEW1 M14-1): out of the way. */
+    private static final long BEFORE_MINECRAFT_LIMIT_MS = 5 * 60_000;
     private static final long SLOW_HINT_MS = 30_000;
     private static final int MAX_POLL_ERRORS = 40;
 
@@ -90,6 +96,8 @@ public final class LaunchCurtain extends FrameLayout implements Logger.eventLogL
     private TextView mStatus;
     private TextView mStatusNext;
     private final TextView mSlow;
+    /** "Kaydı göster" and "Oyunu kapat": a start that hangs never traps the player (REVIEW1 M14-1). */
+    private final LinearLayout mActions;
     private final Paint mEmberPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint mGoldPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Bitmap mSample = Bitmap.createBitmap(8, 8, Bitmap.Config.ARGB_8888);
@@ -150,6 +158,19 @@ public final class LaunchCurtain extends FrameLayout implements Logger.eventLogL
         LinearLayout.LayoutParams slowParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         slowParams.topMargin = dp(6);
         column.addView(mSlow, slowParams);
+
+        // The way out of a start that hangs: shown with the slow line, or as soon as the player taps
+        // the screen or presses back. Space is kept for it so nothing moves when it appears.
+        mActions = new LinearLayout(activity);
+        mActions.setOrientation(LinearLayout.HORIZONTAL);
+        mActions.setGravity(Gravity.CENTER);
+        mActions.addView(action(activity, R.string.projects_launch_show_log, v -> showLog()));
+        mActions.addView(action(activity, R.string.projects_launch_close, v -> net.kdt.pojavlaunch.Tools.dialogForceClose(getContext())));
+        mActions.setAlpha(0f);
+        mActions.setVisibility(INVISIBLE);
+        LinearLayout.LayoutParams actionsParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        actionsParams.topMargin = dp(12);
+        column.addView(mActions, actionsParams);
 
         // A little above the middle: the optical centre of the screen.
         FrameLayout.LayoutParams columnParams = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER);
@@ -263,12 +284,17 @@ public final class LaunchCurtain extends FrameLayout implements Logger.eventLogL
                 lift("minecraft timeout", true);
                 return;
             }
+            if (mMinecraftAt == 0 && now - mStartedAt > BEFORE_MINECRAFT_LIMIT_MS) {
+                lift("timeout before Minecraft", true);
+                return;
+            }
             if (now - mStartedAt > ABSOLUTE_FALLBACK_MS) {
                 lift("timeout", true);
                 return;
             }
             if (mStageShownAt > 0 && now - mStageShownAt > SLOW_HINT_MS && mSlow.getAlpha() == 0f) {
                 fade(mSlow, 1f, Motion.ENTER_MS);
+                showActions();
             }
             mMain.postDelayed(this, POLL_MS);
         }
@@ -486,7 +512,45 @@ public final class LaunchCurtain extends FrameLayout implements Logger.eventLogL
     @SuppressLint("ClickableViewAccessibility")
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        // The controls under it do nothing yet; a touch stays here.
+        // The controls under it do nothing yet; a tap shows the way out instead.
+        if (event.getActionMasked() == MotionEvent.ACTION_UP) showActions();
         return true;
+    }
+
+    /**
+     * MainActivity's back key while the loading screen is up: shows the way out (back would only
+     * send Escape to a game that is not on screen yet). Returns true when it took the key.
+     */
+    public static boolean onBack(android.view.KeyEvent event) {
+        LaunchCurtain curtain = sActive;
+        if (curtain == null || curtain.mLifted || event.getKeyCode() != android.view.KeyEvent.KEYCODE_BACK) return false;
+        if (event.getAction() == android.view.KeyEvent.ACTION_UP) curtain.showActions();
+        return true;
+    }
+
+    private TextView action(Context context, int text, View.OnClickListener listener) {
+        TextView view = text(context, 14, R.color.projects_ash_300, R.font.figtree_semibold);
+        view.setText(text);
+        view.setMinHeight(dp(48));
+        view.setPadding(dp(16), 0, dp(16), 0);
+        view.setBackgroundResource(R.drawable.projects_row_ripple);
+        view.setClickable(true);
+        view.setFocusable(true);
+        view.setOnClickListener(listener);
+        gg.projects.mobile.ui.Press.attach(view, gg.projects.mobile.ui.Press.Style.BUTTON);
+        return view;
+    }
+
+    private void showActions() {
+        if (mLifted || mActions.getVisibility() == VISIBLE) return;
+        mActions.setVisibility(VISIBLE);
+        fade(mActions, 1f, Motion.ENTER_MS);
+    }
+
+    /** "Kaydı göster": the loading screen steps aside for upstream's live log. */
+    private void showLog() {
+        View logger = ((Activity) getContext()).findViewById(R.id.mainLoggerView);
+        lift("log shown", true);
+        if (logger != null) logger.setVisibility(VISIBLE);
     }
 }
