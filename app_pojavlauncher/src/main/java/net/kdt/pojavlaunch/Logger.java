@@ -10,6 +10,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @Keep
 public class Logger {
     private static final CopyOnWriteArrayList<eventLogListener> logListeners = new CopyOnWriteArrayList<>();
+    /** Projects fork (M14): the one native listener, set once and never replaced or unset. */
+    private static final eventLogListener DISPATCHER = Logger::onEventLogged;
+    private static boolean sNativeListenerSet;
 
     /** Print the text to the log file if not censored */
     public static native void appendToLog(String text);
@@ -17,21 +20,25 @@ public class Logger {
     /** Reset the log file, effectively erasing any previous logs */
     public static native void begin(String logFilePath);
 
-    /** Add a listener for the logfile, ask the native side for a listener if needed */
+    /**
+     * Add a listener for the logfile. Projects fork (M14): the native side gets one listener the
+     * first time and keeps it. Unsetting or replacing it deletes the global reference the logger
+     * thread may be calling through at that very moment (it checks the field, then calls), which
+     * could abort the game when the loading screen stopped listening while Minecraft logged its
+     * start; upstream unset it whenever the last listener left.
+     */
     public static void addLogListener(eventLogListener logListeners) {
-        boolean wasEmpty = Logger.logListeners.isEmpty();
         Logger.logListeners.add(logListeners);
-        if (wasEmpty) setLogListener(Logger::onEventLogged);
+        synchronized (Logger.class) {
+            if (sNativeListenerSet) return;
+            sNativeListenerSet = true;
+        }
+        setLogListener(DISPATCHER);
     }
 
-    /** Remove a listener for the logfile, unset the native listener if no listeners left */
+    /** Remove a listener for the logfile; the native listener stays (it then finds nobody). */
     public static void removeLogListener(eventLogListener logListener) {
         Logger.logListeners.remove(logListener);
-        if (Logger.logListeners.isEmpty()){
-            // Makes the JNI code be able to skip expensive logger callbacks
-            // NOTE: was tested by rapidly smashing the log on/off button, no sync issues found :)
-            setLogListener(null);
-        }
     }
 
     private static void onEventLogged(String text) {
