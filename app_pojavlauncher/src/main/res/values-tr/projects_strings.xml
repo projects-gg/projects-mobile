@@ -234,4 +234,22 @@
     <string name="projects_control_button_name">Tuş adı</string>
     <string name="projects_language_title">Dil</string>
     <string name="projects_language_auto">Otomatik (%1$s)</string>
+
+    <!-- 0.1.6 (M14): tasarım geçişi, basma tepkisi ve oyunun yükleme ekranı. -->
+    <string name="projects_top_settings">Ayarlar</string>
+    <string name="projects_top_home">Ana sayfa</string>
+    <string name="projects_account_chip">Hesap: %1$s</string>
+    <string name="projects_account_remove">%1$s hesabını kaldır</string>
+    <string name="projects_settings_title">Ayarlar</string>
+    <string name="projects_haptics_title">Dokunma titreşimi</string>
+    <string name="projects_or">ya da</string>
+    <string name="projects_profile_edit">Profili düzenle</string>
+    <string name="projects_profile_new">Yeni profil</string>
+    <string name="projects_profile_default_name">Varsayılan</string>
+    <string name="projects_launch_title">Oyun açılıyor</string>
+    <string name="projects_launch_preparing">Hazırlanıyor</string>
+    <string name="projects_launch_java">Java başlatılıyor</string>
+    <string name="projects_launch_mods">Modlar yükleniyor</string>
+    <string name="projects_launch_minecraft">Minecraft açılıyor</string>
+    <string name="projects_launch_slow">Bu biraz sürebilir.</string>
 </resources>

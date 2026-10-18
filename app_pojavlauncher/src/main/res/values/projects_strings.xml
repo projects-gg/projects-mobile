@@ -241,4 +241,22 @@
     <!-- Each language in its own words, whatever the interface speaks. -->
     <string name="projects_language_turkish" translatable="false">Türkçe</string>
     <string name="projects_language_english" translatable="false">English</string>
+
+    <!-- 0.1.6 (M14): the design pass, press feedback and the game's loading screen. -->
+    <string name="projects_top_settings">Settings</string>
+    <string name="projects_top_home">Home</string>
+    <string name="projects_account_chip">Account: %1$s</string>
+    <string name="projects_account_remove">Remove %1$s</string>
+    <string name="projects_settings_title">Settings</string>
+    <string name="projects_haptics_title">Haptic feedback</string>
+    <string name="projects_or">or</string>
+    <string name="projects_profile_edit">Edit profile</string>
+    <string name="projects_profile_new">New profile</string>
+    <string name="projects_profile_default_name">Default</string>
+    <string name="projects_launch_title">The game is starting</string>
+    <string name="projects_launch_preparing">Getting ready</string>
+    <string name="projects_launch_java">Starting Java</string>
+    <string name="projects_launch_mods">Loading mods</string>
+    <string name="projects_launch_minecraft">Opening Minecraft</string>
+    <string name="projects_launch_slow">This can take a while.</string>
 </resources>

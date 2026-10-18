@@ -200,6 +200,7 @@ public final class ProjectsUi {
                 final ReminderBellView bell = row.findViewById(R.id.projects_event_row_bell);
                 bell.setVisibility(View.VISIBLE);
                 bell.setSet(Reminders.isSet(activity, event.id), false);
+                Press.attach(bell, Press.Style.ICON); // M14
                 bell.setOnClickListener(v -> bells.onBell(bell, event));
             }
             if (eventOpens(home, event)) {
@@ -209,6 +210,7 @@ public final class ProjectsUi {
                 mark.setImageResource(article ? R.drawable.projects_ic_caret_right : R.drawable.projects_ic_arrow_square_out);
                 mark.setVisibility(View.VISIBLE);
                 row.setBackgroundResource(R.drawable.projects_row_ripple);
+                Press.attach(row, Press.Style.ROW); // M14
                 row.setOnClickListener(v -> {
                     dialog.dismiss();
                     openEvent(activity, snapshot, home, event);

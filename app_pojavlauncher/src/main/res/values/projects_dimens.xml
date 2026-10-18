@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Projects layout tokens (M14; ProLauncher2 docs/design.md, scaled for touch). Spacing follows a
+     4 dp grid, containers use the soft 10 dp radius, actions the chamfer ("hextech cut"). -->
+<resources>
+    <dimen name="projects_space_xs">4dp</dimen>
+    <dimen name="projects_space_sm">8dp</dimen>
+    <dimen name="projects_space_md">12dp</dimen>
+    <dimen name="projects_space_lg">16dp</dimen>
+    <dimen name="projects_space_xl">24dp</dimen>
+
+    <dimen name="projects_radius_container">10dp</dimen>
+    <dimen name="projects_radius_popup">12dp</dimen>
+    <dimen name="projects_radius_sheet">16dp</dimen>
+
+    <!-- Touch targets and icons: 48 dp targets, 24 dp icons (20 dp inline, 16 dp micro). -->
+    <dimen name="projects_touch">48dp</dimen>
+    <dimen name="projects_icon">24dp</dimen>
+    <dimen name="projects_icon_inline">20dp</dimen>
+    <dimen name="projects_icon_micro">16dp</dimen>
+
+    <!-- Bars. -->
+    <dimen name="projects_top_bar">56dp</dimen>
+    <dimen name="projects_top_bar_land">48dp</dimen>
+    <dimen name="projects_chip_height">40dp</dimen>
+    <dimen name="projects_chip_head">24dp</dimen>
+    <dimen name="projects_profile_row">60dp</dimen>
+    <dimen name="projects_profile_icon">40dp</dimen>
+    <dimen name="projects_play_height">56dp</dimen>
+    <dimen name="projects_menu_row">56dp</dimen>
+
+    <!-- Type scale (sp). -->
+    <dimen name="projects_text_title">22sp</dimen>
+    <dimen name="projects_text_section">17sp</dimen>
+    <dimen name="projects_text_body">15sp</dimen>
+    <dimen name="projects_text_control">15sp</dimen>
+    <dimen name="projects_text_meta">13sp</dimen>
+    <dimen name="projects_text_caption">12sp</dimen>
+    <dimen name="projects_text_play">20sp</dimen>
+</resources>

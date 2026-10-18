@@ -982,8 +982,16 @@ public class ProjectsModsFragment extends Fragment implements ModsApply.Listener
                 toggle.setFocusable(false);
                 toggle.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
                 View rowView = view.findViewById(R.id.projects_mod_row);
+                // M14: the row presses (light tick, barely moves); a flip plays the switch's toggle,
+                // a locked row (needed by another mod) a reject.
+                gg.projects.mobile.ui.Press.attach(rowView, gg.projects.mobile.ui.Press.Style.ROW);
                 rowView.setOnClickListener(v -> {
-                    if (mRow == null || !mRow.enabled) return;
+                    if (mRow == null) return;
+                    if (!mRow.enabled) {
+                        gg.projects.mobile.ui.Haptics.reject(v);
+                        return;
+                    }
+                    gg.projects.mobile.ui.Haptics.toggle(v, !mRow.on);
                     toggle(mRow.item.id, !mRow.on);
                 });
                 ViewCompat.setAccessibilityDelegate(rowView, new AccessibilityDelegateCompat() {
@@ -995,7 +1003,9 @@ public class ProjectsModsFragment extends Fragment implements ModsApply.Listener
                         info.setChecked(mRow != null && mRow.on);
                     }
                 });
-                view.findViewById(R.id.projects_mod_revert).setOnClickListener(v -> {
+                View revert = view.findViewById(R.id.projects_mod_revert);
+                gg.projects.mobile.ui.Press.attach(revert, gg.projects.mobile.ui.Press.Style.BUTTON);
+                revert.setOnClickListener(v -> {
                     if (mRow != null) toggleRevert(mRow.item.id);
                 });
                 view.findViewById(R.id.projects_mod_icon_frame).setClipToOutline(true);
@@ -1032,6 +1042,7 @@ public class ProjectsModsFragment extends Fragment implements ModsApply.Listener
                 DrawableCompat.setTintList(icon, ContextCompat.getColorStateList(context, R.color.projects_link_text));
                 page.setCompoundDrawablesRelative(null, null, icon, null);
             }
+            gg.projects.mobile.ui.Press.attach(page, gg.projects.mobile.ui.Press.Style.BUTTON);
             page.setOnClickListener(v -> {
                 if (mRow != null && mRow.page != null) ProjectsUi.openUrl(requireActivity(), mRow.page);
             });

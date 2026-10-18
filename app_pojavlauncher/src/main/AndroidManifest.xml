@@ -63,9 +63,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <!-- Projects fork (M14): the launcher speaks Figtree everywhere (AppTheme.Launcher). -->
         <activity
             android:name=".LauncherActivity"
             android:label="@string/app_short_name"
+            android:theme="@style/AppTheme.Launcher"
             android:windowSoftInputMode="adjustResize"/>
         <activity
             android:name=".ImportControlActivity"

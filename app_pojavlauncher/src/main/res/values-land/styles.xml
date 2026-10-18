@@ -1,32 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Light or not? -->
-    <style name="AppTheme" parent="@style/Theme.AppCompat.NoActionBar">
-        <item name="windowNoTitle">true</item>
-        <item name="windowActionBar">false</item>
-        <item name="android:windowContentOverlay">@null</item>
-        <item name="android:statusBarColor">@color/background_status_bar</item>
-        <item name="android:navigationBarColor">@color/background_app</item>
-        <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Material</item>
-
+    <!-- Projects fork: the brand theme lives in projects_styles.xml (Theme.Projects.Base), shared with
+         portrait; landscape only keeps upstream's larger text size. -->
+    <style name="AppTheme" parent="@style/Theme.Projects.Base">
         <item name="android:textSize">@dimen/_14ssp</item>
-
-        <!-- Projects fork: brand palette, the same as values/styles.xml (gold is the single accent) -->
-        <item name="colorPrimary">@color/projects_obsidian_900</item>
-        <item name="colorPrimaryDark">@color/projects_obsidian_950</item>
-        <item name="colorAccent">@color/projects_gold_500</item>
-        <item name="android:windowBackground">@color/projects_obsidian_950</item>
-        <item name="android:textColorPrimary">@color/projects_bone_100</item>
-        <item name="android:textColorSecondary">@color/projects_ash_400</item>
-        <item name="android:colorBackground">@color/projects_obsidian_900</item>
-        <item name="colorBackgroundFloating">@color/projects_obsidian_800</item>
-        <item name="alertDialogTheme">@style/ProjectsAlertDialog</item>
     </style>
 
     <style name="LauncherMenuButton.Universal" parent="LauncherMenuButton">
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_marginTop">8dp</item>
-        <item name="android:layout_marginBottom">8dp</item>
+        <item name="android:layout_height">@dimen/projects_menu_row</item>
     </style>
 
 </resources>

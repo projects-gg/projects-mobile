@@ -3,16 +3,28 @@
 <resources>
     <color name="projects_obsidian_950">#0A090C</color>
     <color name="projects_obsidian_900">#121016</color>
+    <color name="projects_obsidian_850">#16131A</color>
     <color name="projects_obsidian_800">#1B1820</color>
     <color name="projects_obsidian_700">#27222C</color>
+    <color name="projects_obsidian_600">#3A3340</color>
     <color name="projects_ash_300">#BDB6C3</color>
     <color name="projects_ash_400">#9B93A3</color>
+    <color name="projects_bone_50">#FBF6EC</color>
     <color name="projects_bone_100">#F3EBDD</color>
+    <color name="projects_gold_200">#FAE5B3</color>
     <color name="projects_gold_300">#F6D58E</color>
     <color name="projects_gold_400">#F0B849</color>
     <color name="projects_gold_500">#E89A2C</color>
     <color name="projects_gold_600">#C9741A</color>
+    <color name="projects_gold_700">#8E4A12</color>
+    <color name="projects_ember_950">#220606</color>
     <color name="projects_ember_900">#3F0A0A</color>
+    <color name="projects_ember_700">#7A2416</color>
+    <!-- Press feedback (M14): the gold ripple every tappable surface shares, and the hairline under
+         the top bar and above the play bar. -->
+    <color name="projects_ripple">#29F6D58E</color>
+    <color name="projects_ripple_strong">#3DF6D58E</color>
+    <color name="projects_hairline">#14FFFFFF</color>
     <color name="projects_jade_400">#5FCB8E</color>
     <color name="projects_flare_400">#F0624D</color>
     <!-- Text on gold. -->

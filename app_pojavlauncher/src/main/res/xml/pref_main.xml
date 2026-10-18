@@ -52,6 +52,7 @@
             android:title="@string/preference_experimental_title"
             android:summary="@string/preference_experimental_description"
             android:fragment="net.kdt.pojavlaunch.prefs.screens.LauncherPreferenceExperimentalFragment"
+            android:icon="@drawable/projects_pref_flask"
             />
     </PreferenceCategory>
 
@@ -64,17 +65,29 @@
         android:defaultValue="auto"
         android:entries="@array/projects_language_values"
         android:entryValues="@array/projects_language_values"
+        android:icon="@drawable/projects_pref_translate"
+        />
+
+    <!-- Projects fork (M14): touch feedback the player feels on presses, switches and sliders
+         (gg.projects.mobile.ui.Haptics); Android's own touch feedback setting applies as well. -->
+    <androidx.preference.SwitchPreferenceCompat
+        android:key="projects_haptics"
+        android:title="@string/projects_haptics_title"
+        android:defaultValue="true"
+        android:icon="@drawable/projects_pref_vibrate"
         />
 
     <Preference
         android:title="@string/preference_ask_for_notification_title"
         android:summary="@string/preference_ask_for_notification_description"
         android:key="notification_permission_request"
+        android:icon="@drawable/projects_pref_bell"
         />
     <Preference
         android:title="@string/preference_ask_for_microphone_title"
         android:summary="@string/preference_ask_for_microphone_description"
         android:key="microphone_permission_request"
+        android:icon="@drawable/projects_pref_microphone"
         />
     <!-- Projects fork: credits (LGPLv3 upstream notice) -->
     <Preference
@@ -82,6 +95,7 @@
         android:selectable="false"
         android:title="@string/projects_about_title"
         android:summary="@string/projects_based_on"
+        android:icon="@drawable/projects_pref_info"
         />
 
 

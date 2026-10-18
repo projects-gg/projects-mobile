@@ -1,26 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Light or not? -->
-    <style name="AppTheme" parent="@style/Theme.AppCompat.NoActionBar">
-        <item name="windowNoTitle">true</item>
-        <item name="windowActionBar">false</item>
-        <item name="android:windowContentOverlay">@null</item>
-        <item name="android:statusBarColor">@color/background_status_bar</item>
-        <item name="android:navigationBarColor">@color/background_app</item>
-        <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Material</item>
-
+    <!-- Projects fork: the brand theme lives in projects_styles.xml (Theme.Projects.Base); only the
+         text size differs between portrait and landscape. -->
+    <style name="AppTheme" parent="@style/Theme.Projects.Base">
         <item name="android:textSize">@dimen/_12ssp</item>
-
-        <!-- Projects fork: brand palette (gold is the single accent) -->
-        <item name="colorPrimary">@color/projects_obsidian_900</item>
-        <item name="colorPrimaryDark">@color/projects_obsidian_950</item>
-        <item name="colorAccent">@color/projects_gold_500</item>
-        <item name="android:windowBackground">@color/projects_obsidian_950</item>
-        <item name="android:textColorPrimary">@color/projects_bone_100</item>
-        <item name="android:textColorSecondary">@color/projects_ash_400</item>
-        <item name="android:colorBackground">@color/projects_obsidian_900</item>
-        <item name="colorBackgroundFloating">@color/projects_obsidian_800</item>
-        <item name="alertDialogTheme">@style/ProjectsAlertDialog</item>
     </style>
 
     <style name="ProjectsAlertDialog" parent="Theme.AppCompat.Dialog.Alert">
@@ -32,6 +15,17 @@
         <item name="buttonBarPositiveButtonStyle">@style/ProjectsDialogButton</item>
         <item name="buttonBarNegativeButtonStyle">@style/ProjectsDialogButton</item>
         <item name="buttonBarNeutralButtonStyle">@style/ProjectsDialogButton</item>
+        <!-- M14: dialogs speak Figtree and press like every other button (gold ripple, haptics). -->
+        <item name="android:fontFamily">@font/figtree</item>
+        <item name="fontFamily">@font/figtree</item>
+        <item name="colorControlHighlight">@color/projects_ripple</item>
+        <item name="android:colorControlHighlight">@color/projects_ripple</item>
+        <item name="colorControlActivated">@color/projects_gold_500</item>
+        <item name="switchStyle">@style/ProjectsSwitchCompat</item>
+        <item name="android:switchStyle">@style/ProjectsSwitch</item>
+        <item name="viewInflaterClass">gg.projects.mobile.ui.ProjectsViewInflater</item>
+        <item name="android:textAppearanceListItem">@style/TextAppearance.Projects.ListItem</item>
+        <item name="android:textAppearanceListItemSmall">@style/TextAppearance.Projects.ListItem</item>
     </style>
 
     <!-- Dialog buttons in sentence case (design.md: OYNA is the only all-caps label). -->
@@ -66,7 +60,7 @@
     </style>
 
     <style name="LauncherMenuButton.Universal" parent="LauncherMenuButton">
-        <item name="android:layout_height">@dimen/_66sdp</item>
+        <item name="android:layout_height">@dimen/projects_menu_row</item>
     </style>
 
     <style name="ThickDivider">

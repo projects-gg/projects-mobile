@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Icon buttons (M14): a borderless gold ripple around the 24dp glyph, 20dp radius inside the
+     48dp target. -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="@color/projects_ripple_strong"
+    android:radius="20dp" />

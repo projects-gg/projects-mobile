@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:color="#991A0F05" android:state_checked="true" android:state_enabled="false" />
-    <item android:color="@color/projects_on_gold" android:state_checked="true" />
-    <item android:color="#669B93A3" android:state_enabled="false" />
-    <item android:color="@color/projects_ash_400" />
-</selector>

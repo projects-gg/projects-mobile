@@ -1,16 +1,71 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Switch knob: an 18dp circle centred in a 26dp box, tinted by projects_switch_thumb_tint.
-     A layer inset (not an InsetDrawable) keeps SwitchCompat from treating the gap as padding,
-     so the knob stays inside the track in both positions. -->
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item
-        android:bottom="4dp"
-        android:left="4dp"
-        android:right="4dp"
-        android:top="4dp">
-        <shape android:shape="oval">
-            <size android:width="18dp" android:height="18dp" />
-            <solid android:color="#FFFFFFFF" />
-        </shape>
+<!-- Switch knob (M14, the desktop's Switch): an 18dp circle in a 26dp box; bone when off, gold ink on
+     the gold track when on. While pressed it stretches to a 22dp pill (the desktop's scale-x 1.18).
+     Layer insets (not an InsetDrawable) keep SwitchCompat from treating the gap as padding. The
+     colours are part of the drawable, so the platform Switch matches on every Android version. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:enterFadeDuration="120"
+    android:exitFadeDuration="160">
+    <item android:state_enabled="true" android:state_pressed="true" android:state_checked="true">
+        <layer-list>
+            <item android:bottom="4dp" android:left="2dp" android:right="2dp" android:top="4dp">
+                <shape android:shape="rectangle">
+                    <corners android:radius="9dp" />
+                    <size android:width="22dp" android:height="18dp" />
+                    <solid android:color="@color/projects_on_gold" />
+                </shape>
+            </item>
+        </layer-list>
     </item>
-</layer-list>
+    <item android:state_enabled="true" android:state_pressed="true">
+        <layer-list>
+            <item android:bottom="4dp" android:left="2dp" android:right="2dp" android:top="4dp">
+                <shape android:shape="rectangle">
+                    <corners android:radius="9dp" />
+                    <size android:width="22dp" android:height="18dp" />
+                    <solid android:color="@color/projects_bone_100" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+    <item android:state_enabled="false" android:state_checked="true">
+        <layer-list>
+            <item android:bottom="4dp" android:left="4dp" android:right="4dp" android:top="4dp">
+                <shape android:shape="oval">
+                    <size android:width="18dp" android:height="18dp" />
+                    <solid android:color="#991A0F05" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+    <item android:state_checked="true">
+        <layer-list>
+            <item android:bottom="4dp" android:left="4dp" android:right="4dp" android:top="4dp">
+                <shape android:shape="oval">
+                    <size android:width="18dp" android:height="18dp" />
+                    <solid android:color="@color/projects_on_gold" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+    <item android:state_enabled="false">
+        <layer-list>
+            <item android:bottom="4dp" android:left="4dp" android:right="4dp" android:top="4dp">
+                <shape android:shape="oval">
+                    <size android:width="18dp" android:height="18dp" />
+                    <solid android:color="#66F3EBDD" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+    <item>
+        <layer-list>
+            <item android:bottom="4dp" android:left="4dp" android:right="4dp" android:top="4dp">
+                <shape android:shape="oval">
+                    <size android:width="18dp" android:height="18dp" />
+                    <solid android:color="@color/projects_bone_100" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+</selector>

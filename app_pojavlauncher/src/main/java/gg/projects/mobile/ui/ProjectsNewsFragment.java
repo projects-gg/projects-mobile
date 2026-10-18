@@ -239,7 +239,9 @@ public class ProjectsNewsFragment extends Fragment implements ProjectsContent.Li
         @NonNull
         @Override
         public NewsHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            return new NewsHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.item_projects_news, parent, false));
+            View row = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_projects_news, parent, false);
+            Press.attach(row, Press.Style.CARD); // M14: rows press with a light tick
+            return new NewsHolder(row);
         }
 
         @Override

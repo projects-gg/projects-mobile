@@ -1,6 +1,135 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Projects-only styles (kept out of upstream's styles.xml). -->
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- M14: what every Projects activity shares (values/styles.xml and values-land/styles.xml only add
+         their text size to it as AppTheme). Gold is the single accent; ripples are gold too. -->
+    <style name="Theme.Projects.Base" parent="@style/Theme.AppCompat.NoActionBar">
+        <item name="windowNoTitle">true</item>
+        <item name="windowActionBar">false</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:statusBarColor">@color/background_status_bar</item>
+        <item name="android:navigationBarColor">@color/background_app</item>
+        <item name="preferenceTheme">@style/ProjectsPreferenceTheme</item>
+
+        <item name="colorPrimary">@color/projects_obsidian_900</item>
+        <item name="colorPrimaryDark">@color/projects_obsidian_950</item>
+        <item name="colorAccent">@color/projects_gold_500</item>
+        <item name="android:windowBackground">@color/projects_obsidian_950</item>
+        <item name="android:textColorPrimary">@color/projects_bone_100</item>
+        <item name="android:textColorSecondary">@color/projects_ash_400</item>
+        <item name="android:colorBackground">@color/projects_obsidian_900</item>
+        <item name="colorBackgroundFloating">@color/projects_obsidian_800</item>
+        <item name="alertDialogTheme">@style/ProjectsAlertDialog</item>
+
+        <!-- Press feedback and controls (M14). -->
+        <item name="colorControlHighlight">@color/projects_ripple</item>
+        <item name="android:colorControlHighlight">@color/projects_ripple</item>
+        <item name="colorControlNormal">@color/projects_ash_400</item>
+        <item name="colorControlActivated">@color/projects_gold_500</item>
+        <item name="switchStyle">@style/ProjectsSwitchCompat</item>
+        <item name="android:switchStyle">@style/ProjectsSwitch</item>
+        <item name="viewInflaterClass">gg.projects.mobile.ui.ProjectsViewInflater</item>
+    </style>
+
+    <!-- The launcher's screens: Figtree for every text (design.md), sentence-case buttons, calm
+         list rows. The game's activity keeps the platform font for upstream's in-game controls. -->
+    <style name="AppTheme.Launcher">
+        <item name="android:fontFamily">@font/figtree</item>
+        <item name="fontFamily">@font/figtree</item>
+        <item name="android:textAppearanceButton">@style/TextAppearance.Projects.Button</item>
+        <item name="android:textAppearanceListItem">@style/TextAppearance.Projects.ListItem</item>
+        <item name="android:textAppearanceListItemSmall">@style/TextAppearance.Projects.ListItem</item>
+        <item name="android:textAppearanceListItemSecondary">@style/TextAppearance.Projects.Secondary</item>
+        <item name="android:textAppearanceSmall">@style/TextAppearance.Projects.Secondary</item>
+        <item name="android:listPreferredItemPaddingStart">16dp</item>
+        <item name="android:listPreferredItemPaddingLeft">16dp</item>
+        <item name="android:listPreferredItemPaddingEnd">20dp</item>
+        <item name="android:listPreferredItemPaddingRight">20dp</item>
+        <item name="android:popupMenuStyle">@style/ProjectsPopupMenu</item>
+        <item name="popupMenuStyle">@style/ProjectsPopupMenu</item>
+        <item name="android:dropDownListViewStyle">@style/ProjectsDropDownList</item>
+        <item name="dropDownListViewStyle">@style/ProjectsDropDownList</item>
+    </style>
+
+    <style name="TextAppearance.Projects.Button" parent="TextAppearance.AppCompat.Button">
+        <item name="android:fontFamily">@font/figtree_semibold</item>
+        <item name="fontFamily">@font/figtree_semibold</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="textAllCaps">false</item>
+    </style>
+
+    <style name="TextAppearance.Projects.ListItem" parent="TextAppearance.AppCompat.Subhead">
+        <item name="android:fontFamily">@font/figtree</item>
+        <item name="fontFamily">@font/figtree</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/projects_bone_100</item>
+    </style>
+
+    <style name="TextAppearance.Projects.Secondary" parent="TextAppearance.AppCompat.Small">
+        <item name="android:fontFamily">@font/figtree</item>
+        <item name="fontFamily">@font/figtree</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/projects_ash_400</item>
+    </style>
+
+    <!-- Screen titles in sub-screen headers (Tektur, like "Modlar"). -->
+    <style name="TextAppearance.Projects.Title" parent="">
+        <item name="android:fontFamily">@font/tektur_semibold</item>
+        <item name="fontFamily">@font/tektur_semibold</item>
+        <item name="android:textSize">@dimen/projects_text_title</item>
+        <item name="android:textColor">@color/projects_bone_100</item>
+    </style>
+
+    <style name="TextAppearance.Projects.PreferenceCategory" parent="TextAppearance.AppCompat.Body2">
+        <item name="android:fontFamily">@font/figtree_semibold</item>
+        <item name="fontFamily">@font/figtree_semibold</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+
+    <style name="ProjectsPreferenceTheme" parent="PreferenceThemeOverlay.v14.Material">
+        <item name="preferenceCategoryTitleTextAppearance">@style/TextAppearance.Projects.PreferenceCategory</item>
+        <item name="preferenceCategoryTitleTextColor">@color/projects_ash_300</item>
+    </style>
+
+    <!-- Switches (M14; the desktop's Switch, sized for touch): an obsidian track with a hairline ring
+         and a bone knob, gold with a gold-ink knob when on; the knob stretches while pressed. The
+         drawables carry their own colours, so the platform Switch looks the same on Android 5. -->
+    <style name="ProjectsSwitchCompat" parent="Widget.AppCompat.CompoundButton.Switch">
+        <item name="android:thumb">@drawable/projects_switch_thumb</item>
+        <item name="track">@drawable/projects_switch_track</item>
+        <item name="thumbTint">@null</item>
+        <item name="trackTint">@null</item>
+        <item name="switchMinWidth">0dp</item>
+        <item name="android:background">@null</item>
+    </style>
+
+    <style name="ProjectsSwitch" parent="@android:style/Widget.Material.CompoundButton.Switch">
+        <item name="android:thumb">@drawable/projects_switch_thumb</item>
+        <item name="android:track">@drawable/projects_switch_track</item>
+        <item name="android:switchMinWidth">0dp</item>
+        <item name="android:background">@null</item>
+    </style>
+
+    <!-- Drop-down lists (spinners, menus): an obsidian panel with a hairline and soft corners. -->
+    <style name="ProjectsPopupMenu" parent="Widget.AppCompat.PopupMenu">
+        <item name="android:popupBackground">@drawable/projects_popup_background</item>
+        <item name="android:popupElevation" tools:targetApi="21">8dp</item>
+    </style>
+
+    <style name="ProjectsDropDownList" parent="Widget.AppCompat.ListView.DropDown">
+        <item name="android:divider">@null</item>
+        <item name="android:dividerHeight">0dp</item>
+    </style>
+
+    <!-- A hairline between the main menu's tool rows, from the text's start (16 + 24 + 16 dp). -->
+    <style name="ProjectsMenuDivider">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">1dp</item>
+        <item name="android:layout_marginStart">56dp</item>
+        <item name="android:background">@color/projects_obsidian_700</item>
+    </style>
+
     <!-- Event countdown: Tektur digits with tabular figures, small units below (the desktop's Countdown). -->
     <!-- The cell's baseline is its unit label's, so "kaldı" sits on the same line. -->
     <style name="ProjectsCountdownCell">

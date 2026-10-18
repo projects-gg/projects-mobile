@@ -219,10 +219,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="12dp"
-            android:layout_marginTop="9dp"
-            android:thumb="@drawable/projects_switch_thumb"
-            app:thumbTint="@color/projects_switch_thumb_tint"
-            app:track="@drawable/projects_switch_track"
-            app:trackTint="@color/projects_switch_track_tint" />
+            android:layout_marginTop="9dp" />
     </LinearLayout>
 </FrameLayout>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Figtree (OFL) as one family, so bold text uses the bundled semibold instead of a synthetic bold.
+     The app: attributes are what AppCompat reads below Android 8. -->
+<font-family xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <font
+        android:font="@font/figtree_regular"
+        android:fontStyle="normal"
+        android:fontWeight="400"
+        app:font="@font/figtree_regular"
+        app:fontStyle="normal"
+        app:fontWeight="400" />
+    <font
+        android:font="@font/figtree_semibold"
+        android:fontStyle="normal"
+        android:fontWeight="600"
+        app:font="@font/figtree_semibold"
+        app:fontStyle="normal"
+        app:fontWeight="600" />
+</font-family>
