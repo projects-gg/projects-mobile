@@ -32,16 +32,18 @@ public class MinecraftAccount {
     public String skinFaceBase64;
     private Bitmap mFaceCache;
     
-    void updateSkinFace(String uuid) {
-        try {
-            File skinFile = getSkinFaceFile(username);
-            Tools.downloadFile("https://mc-heads.net/head/" + uuid + "/100", skinFile.getAbsolutePath());
-            
+    /**
+     * Projects fork: the head is cut from the account's own skin texture on Mojang's texture host
+     * ({@code skinUrl}, from the Minecraft profile), like the desktop launcher; upstream downloaded
+     * it from the third-party service mc-heads.net.
+     */
+    public void updateSkinFace(@Nullable String skinUrl) {
+        mFaceCache = null;
+        if (gg.projects.mobile.accounts.AccountHeads.saveFromTexture(skinUrl, getSkinFaceFile(username))) {
             Log.i("SkinLoader", "Update skin face success");
-        } catch (IOException e) {
-            // Skin refresh limit, no internet connection, etc...
-            // Simply ignore updating skin face
-            Log.w("SkinLoader", "Could not update skin face", e);
+        } else {
+            // No skin, no internet connection, etc.: keep the head we have.
+            Log.w("SkinLoader", "Could not update skin face");
         }
     }
 
@@ -51,10 +53,6 @@ public class MinecraftAccount {
 
     public boolean isDemo(){
         return username.startsWith("Demo.");
-    }
-    
-    public void updateSkinFace() {
-        updateSkinFace(profileId);
     }
     
     public String save(String outPath) throws IOException {
@@ -100,9 +98,13 @@ public class MinecraftAccount {
     }
 
     public Bitmap getSkinFace(){
-        if(isLocal()) return null;
-
         File skinFaceFile = getSkinFaceFile(username);
+        // Projects fork: an offline account shows the default skin Minecraft gives its name, cut
+        // from a client jar on the phone (the desktop's rule); upstream showed none.
+        if(isLocal() && !skinFaceFile.exists()
+                && !gg.projects.mobile.accounts.AccountHeads.saveDefault(
+                        gg.projects.mobile.accounts.OfflineAccounts.uuid(username), skinFaceFile)) return null;
+
         if (!skinFaceFile.exists()) {
             // Legacy version, storing the head inside the json as base 64
             if(skinFaceBase64 == null) return null;
@@ -118,7 +120,11 @@ public class MinecraftAccount {
     }
 
     public static Bitmap getSkinFace(String username) {
-        return BitmapFactory.decodeFile(getSkinFaceFile(username).getAbsolutePath());
+        File file = getSkinFaceFile(username);
+        if (file.exists()) return BitmapFactory.decodeFile(file.getAbsolutePath());
+        // Projects fork: an offline account's head is drawn the first time it is needed.
+        MinecraftAccount account = load(username);
+        return account == null ? null : account.getSkinFace();
     }
 
     private static File getSkinFaceFile(String username) {

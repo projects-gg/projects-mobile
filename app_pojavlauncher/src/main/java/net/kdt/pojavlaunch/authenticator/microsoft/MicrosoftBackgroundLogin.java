@@ -60,6 +60,8 @@ public class MicrosoftBackgroundLogin {
     public String mcName;
     public String mcToken;
     public String mcUuid;
+    /** Projects fork: the active skin's texture address from the Minecraft profile (for the head). */
+    public String mcSkinUrl;
     public boolean doesOwnGame, hasProfile = false;
     public long expiresAt;
 
@@ -104,7 +106,7 @@ public class MicrosoftBackgroundLogin {
                 acc.isMicrosoft = true;
                 acc.msaRefreshToken = msRefreshToken;
                 acc.expiresAt = expiresAt;
-                acc.updateSkinFace();
+                acc.updateSkinFace(mcSkinUrl);
                 acc.save();
 
                 if(doneListener != null) {
@@ -327,6 +329,17 @@ public class MicrosoftBackgroundLogin {
 
     }
 
+    /** Projects fork: the {@code url} of the profile's active skin, or null. */
+    private static String activeSkinUrl(JSONObject profile) {
+        org.json.JSONArray skins = profile.optJSONArray("skins");
+        if (skins == null) return null;
+        for (int i = 0; i < skins.length(); i++) {
+            JSONObject skin = skins.optJSONObject(i);
+            if (skin != null && "ACTIVE".equalsIgnoreCase(skin.optString("state"))) return skin.optString("url", null);
+        }
+        return null;
+    }
+
     private void checkMcProfile(String mcAccessToken) throws IOException, JSONException {
         URL url = new URL(mcProfileUrl);
 
@@ -354,6 +367,7 @@ public class MicrosoftBackgroundLogin {
                 Log.i("MicrosoftLogin","Uuid Minecraft = " + uuidDashes);
                 mcName = name;
                 mcUuid = uuidDashes;
+                mcSkinUrl = activeSkinUrl(jsonObject);
                 break;
             } else if (conn.getResponseCode() == 404){
                 Log.i("MicrosoftLogin","It seems that this Microsoft Account does not have a Minecraft profile, checking for ownership.");
