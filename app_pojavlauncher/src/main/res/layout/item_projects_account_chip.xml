@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The top bar's account chip (M14; the desktop's account switcher): the active account's head,
+     name and a small caret, or "Hesap ekle" with its icon in gold when there is no account. The
+     chip's pill is the spinner's background (projects_account_chip*). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:minHeight="40dp"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="8dp"
+    android:paddingEnd="12dp">
+
+    <ImageView
+        android:id="@+id/projects_account_chip_head"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:importantForAccessibility="no"
+        android:scaleType="center" />
+
+    <TextView
+        android:id="@+id/projects_account_chip_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:ellipsize="end"
+        android:fontFamily="@font/figtree_semibold"
+        android:includeFontPadding="false"
+        android:maxWidth="200dp"
+        android:singleLine="true"
+        android:textColor="@color/projects_bone_100"
+        android:textSize="15sp"
+        tools:text="Golge_Avci" />
+
+    <ImageView
+        android:id="@+id/projects_account_chip_caret"
+        android:layout_width="14dp"
+        android:layout_height="14dp"
+        android:layout_marginStart="6dp"
+        android:importantForAccessibility="no"
+        android:src="@drawable/projects_ic_caret_down_bold"
+        android:tint="@color/projects_ash_400" />
+
+</LinearLayout>

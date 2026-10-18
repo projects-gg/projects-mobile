@@ -1,13 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Projects fork (M14): the profile list rising from the play bar, on a sheet with rounded top
+     corners and a gold scroll thumb. -->
 <ListView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/list_view"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:scrollbars="vertical"
+    android:background="@drawable/projects_profile_sheet"
+    android:divider="@null"
     android:fadeScrollbars="false"
+    android:paddingTop="10dp"
+    android:paddingBottom="10dp"
+    android:clipToPadding="false"
+    android:scrollbarSize="3dp"
     android:scrollbarThumbVertical="@color/minebutton_color"
-    android:paddingVertical="@dimen/_14sdp"
-    android:scrollbarSize="@dimen/padding_medium"
-    android:background="@color/background_bottom_bar"
-    android:divider="@null" />
+    android:scrollbars="vertical"
+    android:listSelector="@android:color/transparent" />

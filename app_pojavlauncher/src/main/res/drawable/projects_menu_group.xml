@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The main menu's tools (M14): one container with the card's radius and ring; its rows are
+     clipped to it, so their ripples keep the rounded corners. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <corners android:radius="@dimen/projects_radius_container" />
+    <solid android:color="@color/projects_obsidian_900" />
+    <stroke android:width="1dp" android:color="@color/projects_obsidian_700" />
+</shape>

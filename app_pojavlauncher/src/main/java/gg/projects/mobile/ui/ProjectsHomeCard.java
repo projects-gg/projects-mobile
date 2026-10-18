@@ -247,8 +247,17 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         // The bell's box ends at the block's edge (its row reaches into the padding); the icon moves
         // 5 dp toward it, under the caret above (both centred 9 dp from the content's end).
         mEventBell.setIconShift(5 * density);
-        mJoinButton.setBackground(ChamferDrawable.primary(context));
+        // M14: "Projects'e katıl" is the gold face (without OYNA's socket); every tappable part of the
+        // card presses (rows and blocks barely move, buttons sink to 96%) with a haptic.
+        PlayButtons.decorateJoin(mJoinButton);
         mSecondaryButton.setBackground(ChamferDrawable.secondary(context));
+        Press.attach(mModsRow, Press.Style.ROW);
+        Press.attach(mNews, Press.Style.CARD);
+        Press.attach(mEvent, Press.Style.CARD);
+        Press.attach(mPatch, Press.Style.CARD);
+        Press.attach(mNotice, Press.Style.CARD);
+        Press.attach(mEventMore, Press.Style.BUTTON);
+        Press.attach(mEventBell, Press.Style.ICON);
         mAllNewsDot = ContextCompat.getDrawable(context, R.drawable.projects_news_dot);
         mJoinButton.setOnClickListener(v -> join());
         mModsRow.setOnClickListener(v -> openMods());
@@ -971,17 +980,21 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
 
     private void join() {
         FragmentActivity activity = mFragment.requireActivity();
+        // M14: the press confirms when the join starts and rejects (a short shake) when it cannot.
         if (ProjectsJoin.isBusy()) {
+            PlayButtons.reject(mJoinButton);
             Toast.makeText(activity, R.string.projects_join_busy, Toast.LENGTH_SHORT).show();
             return;
         }
         if (ProgressLayout.hasProcesses()) {
+            PlayButtons.reject(mJoinButton);
             Toast.makeText(activity, R.string.tasks_ongoing, Toast.LENGTH_LONG).show();
             return;
         }
         if (PojavProfile.getCurrentProfileContent(activity, null) == null) {
             // No account yet: ask for one first, as Play does, instead of downloading the pack
             // and asking afterwards. Any account will do, an offline one too.
+            PlayButtons.reject(mJoinButton);
             Toast.makeText(activity, R.string.no_saved_accounts, Toast.LENGTH_LONG).show();
             ExtraCore.setValue(ExtraConstants.SELECT_AUTH_METHOD, true);
             return;
@@ -1017,7 +1030,10 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
                         network ? R.string.projects_join_failed_network : R.string.projects_join_failed_generic, details);
             }
         });
-        if (started) setJoining(true);
+        if (started) {
+            PlayButtons.confirm(mJoinButton);
+            setJoining(true);
+        }
     }
 
     private static FragmentActivity activityOrNull(WeakReference<ProjectsHomeCard> ref) {

@@ -82,7 +82,7 @@ public class ProfileIconCache {
 
     private static int getStaticIconResource(String icon) {
         switch (icon) {
-            case "default": return R.drawable.ic_pojav_full;
+            case "default": return R.drawable.projects_profile_default; // Projects fork (M14): was the purple Amethyst cube
             case "fabric": return R.drawable.ic_fabric;
             case "quilt": return R.drawable.ic_quilt;
             case "projects": return R.drawable.ic_projects_profile; // Projects fork

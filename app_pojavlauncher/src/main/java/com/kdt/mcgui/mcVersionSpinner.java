@@ -97,12 +97,19 @@ public class mcVersionSpinner extends ExtendedTextView {
     /** Initialize various behaviors */
     private void init(){
         // Setup various attributes
-        setTextSize(TypedValue.COMPLEX_UNIT_PX, getResources().getDimensionPixelSize(R.dimen._12ssp));
+        // Projects fork (M14): the play bar's profile row: icon, name over what it plays, a caret
+        // that turns while the list is open; presses like a row.
+        setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+        setTypeface(androidx.core.content.res.ResourcesCompat.getFont(getContext(), R.font.figtree_semibold));
+        setTextColor(androidx.core.content.ContextCompat.getColor(getContext(), R.color.projects_bone_100));
+        setMaxLines(2);
+        setEllipsize(android.text.TextUtils.TruncateAt.END);
         setGravity(Gravity.CENTER_VERTICAL);
-        int startPadding = getContext().getResources().getDimensionPixelOffset(R.dimen._17sdp);
-        int endPadding = getContext().getResources().getDimensionPixelOffset(R.dimen._5sdp);
+        int startPadding = getContext().getResources().getDimensionPixelOffset(R.dimen.projects_space_sm);
+        int endPadding = getContext().getResources().getDimensionPixelOffset(R.dimen.projects_space_md);
         setPaddingRelative(startPadding, 0, endPadding, 0);
-        setCompoundDrawablePadding(startPadding);
+        setCompoundDrawablePadding(getContext().getResources().getDimensionPixelOffset(R.dimen.projects_space_md));
+        gg.projects.mobile.ui.Press.attach(this, gg.projects.mobile.ui.Press.Style.ROW);
 
         int profileIndex;
         String extra_value = (String) ExtraCore.consumeValue(ExtraConstants.REFRESH_VERSION_SPINNER);
@@ -127,6 +134,7 @@ public class mcVersionSpinner extends ExtendedTextView {
                     return;
                 }
                 mPopupWindow.showAsDropDown(mcVersionSpinner.this, 0, offset);
+                turnCaret(true);
                 // Post() is required for the layout inflation phase
                 post(() -> mListView.setSelection(mSelectedIndex));
             }
@@ -160,6 +168,7 @@ public class mcVersionSpinner extends ExtendedTextView {
 
         mPopupWindow = new PopupWindow(mListView, MATCH_PARENT, getContext().getResources().getDimensionPixelOffset(R.dimen._184sdp));
         mPopupWindow.setElevation(5);
+        mPopupWindow.setOnDismissListener(() -> turnCaret(false)); // Projects fork (M14)
         mPopupWindow.setClippingEnabled(false);
 
         // Block clicking outside of the popup window
@@ -197,5 +206,23 @@ public class mcVersionSpinner extends ExtendedTextView {
 
     public ProfileAdapter getProfileAdapter() {
         return mProfileAdapter;
+    }
+
+    /** Projects fork (M14): the caret turns up while the list is open, back when it closes. */
+    private void turnCaret(boolean open) {
+        android.graphics.drawable.Drawable caret = getCompoundsDrawables()[2];
+        if (caret == null) return;
+        int target = open ? 10000 : 0;
+        Object running = getTag(R.id.projects_motion_ghost);
+        if (running instanceof android.animation.Animator) ((android.animation.Animator) running).cancel();
+        if (!gg.projects.mobile.mods.Motion.enabled(getContext()) || !isShown()) {
+            caret.setLevel(target);
+            return;
+        }
+        android.animation.ObjectAnimator turn = android.animation.ObjectAnimator.ofInt(caret, "level", caret.getLevel(), target);
+        turn.setDuration(open ? 220 : 180);
+        turn.setInterpolator(gg.projects.mobile.mods.Motion.EASE_OUT);
+        setTag(R.id.projects_motion_ghost, turn);
+        turn.start();
     }
 }

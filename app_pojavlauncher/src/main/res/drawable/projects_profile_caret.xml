@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The profile row's caret (M14): turns half a round while the profile list is open (its level
+     goes from 0 to 10000, mcVersionSpinner). -->
+<rotate xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/projects_profile_caret_glyph"
+    android:fromDegrees="0"
+    android:pivotX="50%"
+    android:pivotY="50%"
+    android:toDegrees="180" />

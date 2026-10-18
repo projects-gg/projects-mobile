@@ -28,6 +28,8 @@ public class MineButton extends androidx.appcompat.widget.AppCompatButton {
 		setBackground(gg.projects.mobile.ui.ChamferDrawable.primary(getContext()));
 		setTextColor(androidx.core.content.ContextCompat.getColorStateList(getContext(), R.color.projects_on_gold_text));
 		setTextSize(TypedValue.COMPLEX_UNIT_PX, getResources().getDimensionPixelSize(R.dimen._13ssp));
+		// Projects fork (M14): presses down to 96% with a haptic click, like every button.
+		gg.projects.mobile.ui.Press.attach(this, gg.projects.mobile.ui.Press.Style.BUTTON);
 	}
 
 }

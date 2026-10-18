@@ -15,7 +15,6 @@ import android.os.Bundle;
 import android.provider.OpenableColumns;
 import android.util.Log;
 import android.view.View;
-import android.widget.ImageButton;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -127,7 +126,7 @@ public class LauncherActivity extends BaseActivity {
 
     private mcAccountSpinner mAccountSpinner;
     private FragmentContainerView mFragmentView;
-    private ImageButton mSettingsButton;
+    private gg.projects.mobile.ui.TopBarButton mSettingsButton;
     private ProgressLayout mProgressLayout;
     private ProgressServiceKeeper mProgressServiceKeeper;
     private ModloaderInstallTracker mInstallTracker;
@@ -137,8 +136,8 @@ public class LauncherActivity extends BaseActivity {
     private final FragmentManager.FragmentLifecycleCallbacks mFragmentCallbackListener = new FragmentManager.FragmentLifecycleCallbacks() {
         @Override
         public void onFragmentResumed(@NonNull FragmentManager fm, @NonNull Fragment f) {
-            mSettingsButton.setImageDrawable(ContextCompat.getDrawable(getBaseContext(), f instanceof MainMenuFragment
-                    ? R.drawable.ic_menu_settings : R.drawable.ic_menu_home));
+            // Projects fork (M14): the glyph turns from settings to home instead of being swapped.
+            mSettingsButton.setHome(!(f instanceof MainMenuFragment));
         }
     };
 
@@ -170,23 +169,30 @@ public class LauncherActivity extends BaseActivity {
     };
 
     private final ExtraListener<Boolean> mLaunchGameListener = (key, value) -> {
+        // Projects fork (M14): the play press confirms when the start goes ahead and rejects when it
+        // is refused (the haptic and a short shake tell the truth, the toast says why).
+        View feedback = gg.projects.mobile.ui.PlayButtons.playButtonOf(this);
         if(ProgressLayout.hasProcesses()){
+            gg.projects.mobile.ui.PlayButtons.reject(feedback);
             Toast.makeText(this, R.string.tasks_ongoing, Toast.LENGTH_LONG).show();
             return false;
         }
 
         String selectedProfile = LauncherPreferences.DEFAULT_PREF.getString(LauncherPreferences.PREF_KEY_CURRENT_PROFILE,"");
         if (LauncherProfiles.mainProfileJson == null || !LauncherProfiles.mainProfileJson.profiles.containsKey(selectedProfile)){
+            gg.projects.mobile.ui.PlayButtons.reject(feedback);
             Toast.makeText(this, R.string.error_no_version, Toast.LENGTH_LONG).show();
             return false;
         }
         MinecraftProfile prof = LauncherProfiles.mainProfileJson.profiles.get(selectedProfile);
         if (prof == null || prof.lastVersionId == null || "Unknown".equals(prof.lastVersionId)){
+            gg.projects.mobile.ui.PlayButtons.reject(feedback);
             Toast.makeText(this, R.string.error_no_version, Toast.LENGTH_LONG).show();
             return false;
         }
 
         if(mAccountSpinner.getSelectedAccount() == null){
+            gg.projects.mobile.ui.PlayButtons.reject(feedback);
             Toast.makeText(this, R.string.no_saved_accounts, Toast.LENGTH_LONG).show();
             ExtraCore.setValue(ExtraConstants.SELECT_AUTH_METHOD, true);
             return false;
@@ -197,6 +203,7 @@ public class LauncherActivity extends BaseActivity {
         if (!lwjgl3ifyJars.isEmpty()) {
             if (lwjgl3ifyJars.size() > 1) {
                 // "Duplicate LWJGL3ify jars found, cannot launch."
+                gg.projects.mobile.ui.PlayButtons.reject(feedback);
                 Tools.dialogOnUiThread(this, R.string.global_error, R.string.mc_download_failed);
                 return false;
             }
@@ -224,6 +231,7 @@ public class LauncherActivity extends BaseActivity {
                 File lwjgl3ifyClientJar = new File(jsonPath.replace(".json", ".jar"));
                 if (!lwjgl3ifyClientJar.exists()){
                     if (!isOnline(this)){
+                        gg.projects.mobile.ui.PlayButtons.reject(feedback);
                         Tools.dialogOnUiThread(this, R.string.global_error, R.string.mc_download_failed);
                         return false;
                     }
@@ -247,11 +255,13 @@ public class LauncherActivity extends BaseActivity {
             }
 
             if (isOlderThan13) {
+                gg.projects.mobile.ui.PlayButtons.reject(feedback);
                 Tools.dialogOnUiThread(this, R.string.global_error, R.string.demo_versions_supported);
                 return false;
             }
         }
 
+        gg.projects.mobile.ui.PlayButtons.confirm(feedback);
         new MinecraftDownloader().start(
                 this,
                 mcVersion,

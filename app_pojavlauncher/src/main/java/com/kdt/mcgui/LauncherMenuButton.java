@@ -34,17 +34,26 @@ public class LauncherMenuButton extends ExtendedButton {
     private void setSettings(){
         Resources resources = getContext().getResources();
 
-        int padding = resources.getDimensionPixelSize(R.dimen._22sdp);
+        // Projects fork (M14): a calm 56dp row: a 24dp Phosphor icon, Figtree 16sp, the gold ripple
+        // of the theme and the row press (a light tick, barely moves).
+        int padding = resources.getDimensionPixelSize(R.dimen.projects_space_lg);
         setCompoundDrawablePadding(padding);
-        setPaddingRelative(padding, 0, 0, 0);
-        setGravity(Gravity.CENTER_VERTICAL);
+        setPaddingRelative(padding, 0, padding, 0);
+        setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
+        setMinHeight(resources.getDimensionPixelSize(R.dimen.projects_menu_row));
+        setMinimumHeight(resources.getDimensionPixelSize(R.dimen.projects_menu_row));
 
-        setTextSize(TypedValue.COMPLEX_UNIT_PX, getResources().getDimensionPixelSize(R.dimen._12ssp));
+        setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+        setTextColor(androidx.core.content.ContextCompat.getColor(getContext(), R.color.projects_bone_100));
+        setTypeface(ResourcesCompat.getFont(getContext(), R.font.figtree_regular));
+        setSingleLine(true);
+        setEllipsize(android.text.TextUtils.TruncateAt.END);
 
         // Set drawable size
         int[] sizes = getExtendedViewData().getSizeCompounds();
-        sizes[0] = resources.getDimensionPixelSize(R.dimen._30sdp);
+        sizes[0] = resources.getDimensionPixelSize(R.dimen.projects_icon);
         getExtendedViewData().setSizeCompounds(sizes);
         postProcessDrawables();
+        gg.projects.mobile.ui.Press.attach(this, gg.projects.mobile.ui.Press.Style.ROW);
     }
 }

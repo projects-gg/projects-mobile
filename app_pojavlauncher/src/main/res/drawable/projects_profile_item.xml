@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A row of the profile list (M14): a gold ripple, rounded inside the list's side margins. -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="@color/projects_ripple">
+    <item android:id="@android:id/mask">
+        <inset android:insetLeft="8dp" android:insetRight="8dp">
+            <shape android:shape="rectangle">
+                <corners android:radius="@dimen/projects_radius_container" />
+                <solid android:color="#FFFFFFFF" />
+            </shape>
+        </inset>
+    </item>
+</ripple>

@@ -1,39 +1,45 @@
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Projects fork (M14): a row of the account list under the top bar's chip: the crisp head, the
+     name, and the remove button as a 48dp icon button. The first row is "Hesap ekle". -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_height="@dimen/_52sdp"
     android:layout_width="match_parent"
-    android:orientation="horizontal">
+    android:layout_height="56dp"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="16dp"
+    android:paddingEnd="4dp">
 
-    <fr.spse.extended_view.ExtendedTextView
+    <ImageView
+        android:id="@+id/projects_account_row_head"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:importantForAccessibility="no"
+        android:scaleType="center" />
+
+    <TextView
         android:id="@+id/account_item"
         android:layout_width="0dp"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
         android:layout_weight="1"
+        android:ellipsize="end"
+        android:fontFamily="@font/figtree_semibold"
+        android:singleLine="true"
+        android:textColor="@color/projects_bone_100"
+        android:textSize="16sp"
+        tools:text="Golge_Avci" />
 
-        android:textSize="@dimen/_16ssp"
-        android:gravity="center_vertical"
-        android:drawablePadding="@dimen/_6sdp"
-        android:paddingStart="@dimen/_8sdp"
-        app:drawableStartSize="@dimen/_30sdp"
-
-        tools:text="HELLO THERE"
-        tools:drawableStart="@mipmap/ic_launcher"
-
-
-        tools:ignore="RtlSymmetry" />
-
-    <!-- Fun fact, if I put an Image button, the spinner fails to put an onclick listener on the extended view -->
     <ImageView
         android:id="@+id/delete_account_button"
-        android:layout_width="@dimen/_52sdp"
-        android:layout_height="match_parent"
-        android:background="?attr/selectableItemBackground"
-        android:src="@drawable/ic_menu_delete_forever"
-
-        android:padding="@dimen/padding_moderate"
-        />
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="@drawable/projects_icon_button_ripple"
+        android:clickable="true"
+        android:contentDescription="@string/global_delete"
+        android:focusable="true"
+        android:padding="14dp"
+        android:src="@drawable/projects_ic_trash"
+        android:tint="@color/projects_ash_400" />
 
 </LinearLayout>
-

@@ -83,6 +83,11 @@ public class MainMenuFragment extends Fragment {
         // is now held off where it cannot run, and a start it breaks is caught afterwards
         // (gg.projects.mobile.launch.SodiumFallback).
         mPlayButton.setOnClickListener(v -> ExtraCore.setValue(ExtraConstants.LAUNCH_GAME, true));
+        // Projects fork (M14): OYNA's gold face in its socket; the launch check confirms or rejects
+        // the press (LauncherActivity). The tool rows are clipped to their rounded group.
+        gg.projects.mobile.ui.PlayButtons.decoratePlay(mPlayButton);
+        View menuGroup = view.findViewById(R.id.projects_menu_group);
+        if (menuGroup != null) menuGroup.setClipToOutline(true);
 
         mShareLogsButton.setOnClickListener((v) -> shareLog(requireContext()));
 

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The default profile's icon (M14): a gold Phosphor cube on an obsidian tile with the container
+     radius, instead of upstream's purple Amethyst cube. The desktop marks Minecraft with the same
+     cube. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <size android:width="40dp" android:height="40dp" />
+            <corners android:radius="10dp" />
+            <solid android:color="@color/projects_obsidian_800" />
+            <stroke android:width="1dp" android:color="@color/projects_obsidian_700" />
+        </shape>
+    </item>
+    <item
+        android:bottom="9dp"
+        android:drawable="@drawable/projects_profile_default_glyph"
+        android:left="9dp"
+        android:right="9dp"
+        android:top="9dp" />
+</layer-list>

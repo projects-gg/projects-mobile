@@ -1,20 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Projects fork (M14): a row of the profile list: the profile's icon, its name and what it plays
+     ("Minecraft 26.1.2, Fabric", ProfileRows). -->
 <fr.spse.extended_view.ExtendedTextView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:background="?attr/selectableItemBackground"
     android:layout_width="match_parent"
-    android:layout_height="@dimen/_52sdp"
-    android:paddingStart="@dimen/_17sdp"
-    app:drawableStartSize="@dimen/_36sdp"
-    app:drawableStartIntegerScaling="true"
-
+    android:layout_height="60dp"
+    android:background="@drawable/projects_profile_item"
+    android:drawablePadding="12dp"
+    android:ellipsize="end"
+    android:fontFamily="@font/figtree_semibold"
     android:gravity="center_vertical"
-    android:drawablePadding="@dimen/_19sdp"
-    tools:drawableStart="@drawable/ic_gamepad_pointer"
-    tools:text="FORGE - Forge-1.7.10-1664"
-    tools:ignore="RtlSymmetry">
-
-
-</fr.spse.extended_view.ExtendedTextView>
+    android:maxLines="2"
+    android:paddingStart="20dp"
+    android:paddingEnd="20dp"
+    android:textColor="@color/projects_bone_100"
+    android:textSize="15sp"
+    app:drawableStartIntegerScaling="true"
+    app:drawableStartSize="36dp"
+    tools:drawableStart="@drawable/projects_profile_default"
+    tools:ignore="RtlSymmetry"
+    tools:text="Projects" />
