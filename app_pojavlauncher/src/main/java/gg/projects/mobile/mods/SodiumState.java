@@ -52,8 +52,8 @@ public final class SodiumState {
      * now on (until the player switches it back on). Written at once: the process may end soon.
      */
     public static void recordCrash(Context context, @Nullable String renderer) {
-        Set<String> crashed = crashedRenderers(context);
-        crashed.add(SodiumSupport.rendererOrDefault(renderer));
+        // A new set: crashedRenderers() is the immutable empty set before the first crash.
+        Set<String> crashed = SodiumSupport.withCrash(crashedRenderers(context), renderer);
         prefs(context).edit().putStringSet(KEY_CRASHED, crashed).putBoolean(KEY_OVERRIDE, false).commit();
     }
 

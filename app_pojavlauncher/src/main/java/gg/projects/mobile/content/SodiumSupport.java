@@ -56,6 +56,13 @@ public final class SodiumSupport {
         return renderer;
     }
 
+    /** {@code crashedRenderers} with {@code renderer} (null: the default) added, as a new set. */
+    public static Set<String> withCrash(Collection<String> crashedRenderers, String renderer) {
+        Set<String> crashed = crashedRenderers == null ? new HashSet<>() : new HashSet<>(crashedRenderers);
+        crashed.add(rendererOrDefault(renderer));
+        return crashed;
+    }
+
     /** True when {@code renderer} (a profile's {@code pojavRendererName}, null for the default) can run Sodium. */
     public static boolean rendererRunsSodium(String renderer) {
         return !GL4ES_RENDERERS.contains(rendererOrDefault(renderer));

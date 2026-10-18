@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /** Sodium on Android: which renderers run it, what holds it off, the offer to old sets. */
 public class SodiumSupportTest {
@@ -33,6 +34,19 @@ public class SodiumSupportTest {
         PackManifest.Projects ext = TestPacks.ext();
         ext.items = new ArrayList<>(Arrays.asList(items));
         return TestPacks.manifest(files, ext);
+    }
+
+    @Test
+    public void aCrashGoesIntoANewSet() {
+        // The stored set is the immutable empty set before the first crash.
+        Set<String> none = Collections.emptySet();
+        Set<String> crashed = SodiumSupport.withCrash(none, null);
+        assertEquals(Collections.singleton(SodiumSupport.DEFAULT_RENDERER), crashed);
+        assertTrue(none.isEmpty());
+        Set<String> both = SodiumSupport.withCrash(crashed, "vulkan_zink");
+        assertEquals(new HashSet<>(Arrays.asList(SodiumSupport.DEFAULT_RENDERER, "opengles3_desktopgl_zink_kopper")), both);
+        assertEquals(1, crashed.size());
+        assertEquals(crashed, SodiumSupport.withCrash(crashed, SodiumSupport.DEFAULT_RENDERER));
     }
 
     @Test

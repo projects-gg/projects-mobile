@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 
 import androidx.annotation.Keep;
 import androidx.annotation.Nullable;
@@ -30,6 +31,9 @@ public class ExitActivity extends AppCompatActivity {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // Projects fork: Android may have ended the launcher process while the game ran. A new one has
+        // not set the storage paths up yet, and the game log is read and shared from there.
+        if (Tools.checkStorageRoot(this)) Tools.initStorageConstants(getApplicationContext());
         int code = -1;
         boolean isSignal = false;
         Bundle extras = getIntent().getExtras();
@@ -48,6 +52,7 @@ public class ExitActivity extends AppCompatActivity {
             try {
                 result = SodiumFallback.inspect(app, exitCode, signal);
             } catch (RuntimeException e) {
+                Log.w("ExitActivity", "exit not inspected", e);
                 result = null;
             }
             final SodiumFallback.Result finalResult = result;
