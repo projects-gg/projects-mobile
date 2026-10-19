@@ -57,7 +57,10 @@ public final class JoystickSkin {
 
     private void paint() {
         view.setBackgroundColor(baseFill);
-        view.setBorderColor(active ? RING_ACTIVE : baseRing);
+        int ring = active ? RING_ACTIVE : baseRing;
+        // The library paints the ring at its own alpha (opaque by default) over the colour's.
+        view.setBorderAlpha(ring >>> 24);
+        view.setBorderColor(ring);
         view.setBorderWidth(Math.round((active ? ringDp + 0.5f : ringDp) * dp));
         view.setButtonColor(active ? KNOB_ACTIVE : KNOB);
         view.invalidate();
