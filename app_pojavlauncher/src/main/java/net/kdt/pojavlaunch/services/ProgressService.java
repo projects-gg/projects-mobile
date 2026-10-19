@@ -38,6 +38,9 @@ public class ProgressService extends Service implements TaskCountListener {
     }
 
     private NotificationCompat.Builder mNotificationBuilder;
+    // Projects fork (M17): the notification says what runs and how far ("Projects hazırlanıyor" and the
+    // progress bar's line), and a tap opens the app.
+    private gg.projects.mobile.join.ProgressNotice mNotice;
 
     @Override
     public void onCreate() {
@@ -51,7 +54,18 @@ public class ProgressService extends Service implements TaskCountListener {
                 .setContentTitle(getString(R.string.lazy_service_default_title))
                 .addAction(android.R.drawable.ic_menu_close_clear_cancel,  getString(R.string.notification_terminate), pendingKillIntent)
                 .setSmallIcon(R.drawable.notif_icon)
+                .setOnlyAlertOnce(true)
                 .setNotificationSilent();
+        mNotice = new gg.projects.mobile.join.ProgressNotice(this, this::refreshNotification);
+        mNotice.start();
+    }
+
+    /** Projects fork (M17): the progress moved: the notification follows (at most twice a second). */
+    private void refreshNotification() {
+        int tasks = ProgressKeeper.getTaskCount();
+        if (tasks < 1 || mNotice == null) return;
+        mNotice.fill(mNotificationBuilder, tasks);
+        notificationManagerCompat.notify(NotificationUtils.NOTIFICATION_ID_PROGRESS_SERVICE, mNotificationBuilder.build());
     }
 
     @SuppressLint("StringFormatInvalid")
@@ -65,9 +79,10 @@ public class ProgressService extends Service implements TaskCountListener {
             }
         }
         Log.d("ProgressService", "Started!");
-        // Projects fork (M14): a plural ("1 task", not "1 tasks").
+        // Projects fork (M14): a plural ("1 task", not "1 tasks"); M17: what runs and how far.
         int tasks = ProgressKeeper.getTaskCount();
         mNotificationBuilder.setContentText(getResources().getQuantityString(R.plurals.projects_tasks_in_progress, tasks, tasks));
+        if (mNotice != null) mNotice.fill(mNotificationBuilder, tasks);
         Notification notification = mNotificationBuilder.build();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             startForeground(NotificationUtils.NOTIFICATION_ID_PROGRESS_SERVICE, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MANIFEST);
@@ -89,6 +104,7 @@ public class ProgressService extends Service implements TaskCountListener {
     @Override
     public void onDestroy() {
         ProgressKeeper.removeTaskCountListener(this);
+        if (mNotice != null) mNotice.stop();
     }
 
     @Override
@@ -96,6 +112,7 @@ public class ProgressService extends Service implements TaskCountListener {
         Tools.MAIN_HANDLER.post(()->{
             if(taskCount > 0) {
                 mNotificationBuilder.setContentText(getResources().getQuantityString(R.plurals.projects_tasks_in_progress, taskCount, taskCount));
+                if (mNotice != null) mNotice.fill(mNotificationBuilder, taskCount);
                 notificationManagerCompat.notify(1, mNotificationBuilder.build());
             }else{
                 stopSelf();

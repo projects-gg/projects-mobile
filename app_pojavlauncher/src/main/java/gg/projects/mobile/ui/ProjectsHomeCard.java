@@ -37,7 +37,8 @@ import net.kdt.pojavlaunch.extra.ExtraConstants;
 import net.kdt.pojavlaunch.extra.ExtraCore;
 import net.kdt.pojavlaunch.prefs.LauncherPreferences;
 
-import java.lang.ref.WeakReference;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -53,8 +54,12 @@ import gg.projects.mobile.content.NewsSeen;
 import gg.projects.mobile.content.NewsText;
 import gg.projects.mobile.content.PackState;
 import gg.projects.mobile.content.Snapshot;
+import gg.projects.mobile.controls.KeyFix;
+import gg.projects.mobile.controls.KeyFixer;
 import gg.projects.mobile.join.DefaultProfiles;
+import gg.projects.mobile.join.JoinOutcome;
 import gg.projects.mobile.join.ProjectsJoin;
+import gg.projects.mobile.join.ProjectsProfile;
 import gg.projects.mobile.join.SyncNotice;
 import gg.projects.mobile.mods.Motion;
 import gg.projects.mobile.mods.ModsSummary;
@@ -72,8 +77,21 @@ import gg.projects.mobile.reminders.Reminders;
  * <p>Re-binding with the same content changes nothing on screen. When something changes, sections
  * that come or go fade in place while the rest glides, and a block that shows something else
  * cross-fades in place ({@link CardMotion}); with animations off everything just appears.
+ *
+ * <p>M17: the story falls back to Minecraft's own newest update when there is no Projects story
+ * (never the patch notes tile or the event card, never a "new" dot); a live event on the server
+ * offers "Katıl" where the bell goes; an options.txt saved before 0.1.6 with the mods' clashing keys
+ * gets a one-tap fix, offered once ({@link KeyFixer}), with "Geri al" ({@link UndoBar}); and the
+ * card is the home screen of {@link JoinOutcome}: a start that ended while the player was away
+ * shows its failure, or Play ready, when the player is back.
  */
-public final class ProjectsHomeCard implements ProjectsContent.Listener, ProjectsUi.BellHandler {
+public final class ProjectsHomeCard implements ProjectsContent.Listener, ProjectsUi.BellHandler, JoinOutcome.Home {
+    /** M17: the key fix was offered on the home card once (fixed, set aside, or seen before a game). */
+    private static final String KEY_FIX_OFFERED = "projects_keyfix_offered";
+    private static final android.os.Handler MAIN = new android.os.Handler(android.os.Looper.getMainLooper());
+    /** M17: a fix made while no home screen was there to show it; the next one shows it with "Geri al". */
+    @Nullable
+    private static KeyFixer.Applied sUnshownFix;
     private static final int SKELETON = 0;
     private static final int CONTENT = 1;
     private static final int MESSAGE = 2;
@@ -133,6 +151,19 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
     private final TextView mModsCount;
     private final View mModsBadge;
     private final Drawable mAllNewsDot;
+    // M17: the key fix's offer, the event's "Katıl" and the undo bar over the play bar.
+    private final View mKeyFix;
+    private final Button mKeyFixButton;
+    private final View mKeyFixClose;
+    private final View mEventActions;
+    private final View mEventGap;
+    private final Button mEventJoin;
+    @Nullable
+    private final UndoBar mUndoBar;
+    /** M17: what the key fix would change now, while the card offers it (null: no offer). */
+    @Nullable
+    private List<KeyFix.Change> mKeyFixPlan;
+    private int mKeyFixToken;
 
     private Snapshot mSnapshot;
     private HomeContent mHome;
@@ -245,6 +276,14 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         mModsRow = root.findViewById(R.id.projects_mods_row);
         mModsCount = root.findViewById(R.id.projects_mods_row_count);
         mModsBadge = root.findViewById(R.id.projects_mods_row_badge);
+        mKeyFix = root.findViewById(R.id.projects_keyfix);
+        mKeyFixButton = root.findViewById(R.id.projects_keyfix_fix);
+        mKeyFixClose = root.findViewById(R.id.projects_keyfix_close);
+        mEventActions = root.findViewById(R.id.projects_event_actions);
+        mEventGap = root.findViewById(R.id.projects_event_gap);
+        mEventJoin = root.findViewById(R.id.projects_event_join);
+        mUndoBar = root instanceof androidx.constraintlayout.widget.ConstraintLayout
+                ? UndoBar.attach((androidx.constraintlayout.widget.ConstraintLayout) root, R.id._background_display_view) : null;
 
         Context context = root.getContext();
         float density = context.getResources().getDisplayMetrics().density;
@@ -264,6 +303,16 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         Press.attach(mEventMore, Press.Style.BUTTON);
         Press.attach(mEventBell, Press.Style.ICON);
         mAllNewsDot = ContextCompat.getDrawable(context, R.drawable.projects_news_dot);
+        // M17: the offer's button and the event's "Katıl" are quiet outlined actions inside raised
+        // blocks (OYNA stays the one loud thing); they press like every button.
+        mKeyFixButton.setBackground(ChamferDrawable.outlined(context));
+        Press.attach(mKeyFixButton, Press.Style.BUTTON);
+        Press.attach(mKeyFixClose, Press.Style.ICON);
+        mEventJoin.setBackground(ChamferDrawable.outlined(context));
+        Press.attach(mEventJoin, Press.Style.BUTTON);
+        mKeyFixButton.setOnClickListener(v -> fixKeys());
+        mKeyFixClose.setOnClickListener(v -> setKeyFixAside());
+        mEventJoin.setOnClickListener(v -> join(mEventJoin));
         mJoinButton.setOnClickListener(v -> join(mJoinButton));
         mModsRow.setOnClickListener(v -> openMods());
         mEvent.setOnClickListener(v -> openEvent());
@@ -299,6 +348,10 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         setJoining(ProjectsJoin.isBusy());
         // A reminder whose moment came while notifications were off is told now.
         Reminders.tellInApp(mFragment.requireContext());
+        // M17: a start that ended while the player was away says how it went; a key fix asked for
+        // in the game is made now that the game is closed, or offered once.
+        JoinOutcome.homeResumed(mFragment.requireContext(), this);
+        checkKeyFix();
     }
 
     /** An article was opened somewhere: its dot goes out. */
@@ -308,6 +361,7 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
 
     public void onPause() {
         mResumed = false;
+        JoinOutcome.homePaused(this);
         NewsSeenStore.removeListener(mSeenChanged);
         ProjectsContent.removeListener(this);
         mJoinButton.removeCallbacks(mBusyWatcher);
@@ -322,6 +376,17 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         mJoinButton.removeCallbacks(mBusyWatcher);
         mJoinButton.setEnabled(!joining);
         mJoinButton.setText(joining ? R.string.projects_join_preparing : R.string.projects_join);
+        // M17: "Katıl" waits too, and its disabled look fades (150 ms) instead of snapping.
+        if (mEventJoin.isEnabled() == joining) {
+            mEventJoin.setEnabled(!joining);
+            float alpha = joining ? 0.45f : 1f;
+            if (Motion.enabled(mEventJoin.getContext()) && mEventJoin.isShown()) {
+                mEventJoin.animate().alpha(alpha).setDuration(150).setInterpolator(Motion.EASE_OUT).start();
+            } else {
+                mEventJoin.animate().cancel();
+                mEventJoin.setAlpha(alpha);
+            }
+        }
         if (joining) mJoinButton.postDelayed(mBusyWatcher, 400);
     }
 
@@ -410,6 +475,9 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
                     break;
                 }
             }
+            // M17: without a Projects story, Minecraft's newest update fills the place (never the
+            // patch notes tile or the event card; content-format.md "Minecraft news").
+            if (top == null && !home.minecraft.isEmpty()) top = ProjectsUi.localized(activity, home.minecraft.get(0));
         }
         HomeContent.Event event = home == null || home.events.isEmpty() ? null : home.events.get(0);
         ModsSummary pack = notes == null && mModsSummary != null && mModsSummary.changelog != null ? mModsSummary : null;
@@ -444,13 +512,15 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
                 : feedStatus != null ? "status\n" + feedStatus.level + '\n' + feedStatus.title + '\n' + feedStatus.message
                 + '\n' + (feedStatus.url != null) : null;
         String newsShown = top == null ? null : top.id + '\n' + top.title + '\n' + top.summary + '\n'
-                + top.publishedAtMillis() + '\n' + coverKey(top, showsCover(top));
-        String eventShown = event == null ? null : event.id + '\n' + live + '\n' + event.title;
+                + top.publishedAtMillis() + '\n' + coverKey(top, showsCover(top)) + '\n' + top.isMinecraft();
+        String eventShown = event == null ? null : eventKey(event, now);
         String patchShown = notes != null ? "news\n" + notes.id + '\n' + notes.title
                 : pack != null ? "pack\n" + pack.packName + '\n' + pack.packVersion + '\n' + pack.changelog : null;
         boolean news = state == CONTENT && top != null;
-        boolean allNews = state == SKELETON || (home != null && !home.news.isEmpty());
+        boolean allNews = state == SKELETON || (home != null && (!home.news.isEmpty() || !home.minecraft.isEmpty()));
+        boolean keyFix = mKeyFixPlan != null && !mKeyFixPlan.isEmpty();
         String structure = state + "|" + noticeShown + "|" + (offline != null) + "|" + messageTitle + "|" + retry + "|" + allNews
+                + "|" + keyFix
                 + "|" + (news ? newsShown : "") + "|" + (state == CONTENT ? eventShown + "|" + others + "|" + eventOpens + "|" + patchShown : "");
 
         boolean changed = mStructure != null && !structure.equals(mStructure);
@@ -486,6 +556,9 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
 
         show(mSkeleton, state == SKELETON);
         show(mMessage, state == MESSAGE);
+        // M17: the key fix's offer, whatever the news says.
+        show(mKeyFix, keyFix);
+        if (!keyFix) mKeyFixButton.setEnabled(true);
         if (state == MESSAGE) {
             setText(mMessageTitle, activity.getString(messageTitle));
             setText(mMessageBody, activity.getString(messageBody));
@@ -631,8 +704,13 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         if (status != null) mNotice.postDelayed(mStatusRecheck, recheckDelay(status, System.currentTimeMillis()));
     }
 
+    /** What the event block shows: a change cross-fades it (it went live, "Katıl" came or went). */
+    private static String eventKey(HomeContent.Event event, long now) {
+        return event.id + '\n' + event.isLive(now) + '\n' + event.title + '\n' + event.offersJoin(now);
+    }
+
     private void bindNews(final FragmentActivity activity, final Snapshot snapshot, final NewsFeed.NewsItem item) {
-        setText(mNewsCategory, ProjectsUi.categoryLabel(activity, item));
+        ProjectsUi.bindCategory(mNewsCategory, item);
         setText(mNewsDate, ProjectsUi.date(activity, item.publishedAtMillis()));
         setText(mNewsTitle, item.title);
         setText(mNewsSummary, item.summary);
@@ -653,9 +731,21 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         mEvent.setClickable(opens);
         mEvent.setFocusable(opens);
         boolean started = live && event.openEnded;
+        // M17: a live event on the server offers "Katıl" in the bell's place (never before it starts).
+        boolean joinable = event.offersJoin(now);
         show(mEventCountdown, !started);
         show(mEventStarted, started);
+        show(mEventGap, !started);
         show(mEventLeft, live);
+        show(mEventJoin, joinable);
+        if (joinable) mEventJoin.setContentDescription(context.getString(R.string.projects_event_join) + ", " + event.title);
+        // "X önce başladı" alone keeps its old place under the title; beside "Katıl" it centres on the button.
+        ViewGroup.MarginLayoutParams actions = (ViewGroup.MarginLayoutParams) mEventActions.getLayoutParams();
+        int top = Math.round((started && !joinable ? 6 : 10) * context.getResources().getDisplayMetrics().density);
+        if (actions.topMargin != top) {
+            actions.topMargin = top;
+            mEventActions.setLayoutParams(actions);
+        }
         // An upcoming event: when it starts, and the bell.
         show(mEventWhen, !live);
         show(mEventBell, !live);
@@ -769,7 +859,7 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         long now = System.currentTimeMillis();
         List<HomeContent.Event> order = HomeContent.cardEvents(mHome.events, now);
         HomeContent.Event first = order.isEmpty() ? null : order.get(0);
-        String shown = first == null ? null : first.id + '\n' + first.isLive(now) + '\n' + first.title;
+        String shown = first == null ? null : eventKey(first, now);
         if (order.size() != mEventCount || (shown == null ? mEventShown != null : !shown.equals(mEventShown))) {
             render(now);
             return;
@@ -1015,35 +1105,25 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
             ExtraCore.setValue(ExtraConstants.SELECT_AUTH_METHOD, true);
             return;
         }
-        final WeakReference<ProjectsHomeCard> self = new WeakReference<>(this);
+        // M17: the offer of the key fix was seen before a game; it does not come back.
+        if (mKeyFix.getVisibility() == View.VISIBLE) markKeyFixOffered();
+        // M17: the outcome goes to whichever home screen is up when it comes (JoinOutcome): the game
+        // starts only while the player is on it; away, a notification tells how it went.
+        final Context app = activity.getApplicationContext();
         boolean started = ProjectsJoin.start(activity, new ProjectsJoin.Callback() {
             @Override
             public void onReady(String profileKey, @Nullable SyncNotice notice) {
-                ProjectsHomeCard card = self.get();
-                if (card == null) return;
-                FragmentActivity a = activityOrNull(self);
-                String text = a == null ? null : noticeText(a, notice);
-                if (text != null) Toast.makeText(a, text, Toast.LENGTH_LONG).show();
-                card.launch(profileKey);
+                JoinOutcome.ready(app, profileKey, notice);
             }
 
             @Override
             public void onFinishLoaderInstall() {
-                FragmentActivity a = activityOrNull(self);
-                if (a == null) return;
-                new AlertDialog.Builder(a)
-                        .setTitle(R.string.projects_join_finish_loader_title)
-                        .setMessage(R.string.projects_join_finish_loader)
-                        .setPositiveButton(android.R.string.ok, null)
-                        .show();
+                JoinOutcome.finishLoader(app);
             }
 
             @Override
             public void onFailed(boolean network, String details) {
-                FragmentActivity a = activityOrNull(self);
-                if (a == null) return;
-                ProjectsUi.showError(a, R.string.projects_join_failed_title,
-                        network ? R.string.projects_join_failed_network : R.string.projects_join_failed_generic, details);
+                JoinOutcome.failed(app, network, false, details);
             }
         });
         if (started) {
@@ -1056,17 +1136,59 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         }
     }
 
-    private static FragmentActivity activityOrNull(WeakReference<ProjectsHomeCard> ref) {
-        ProjectsHomeCard card = ref.get();
-        if (card == null || !card.mFragment.isAdded()) return null;
-        return card.mFragment.getActivity();
+    // ---- JoinOutcome.Home (M17) ----
+
+    @Override
+    public void launch(String profileKey, @Nullable SyncNotice notice) {
+        FragmentActivity activity = mFragment.getActivity();
+        if (activity == null || !mFragment.isAdded()) return;
+        String text = noticeText(activity, notice);
+        if (text != null) Toast.makeText(activity, text, Toast.LENGTH_LONG).show();
+        launch(profileKey);
+    }
+
+    @Override
+    public void showFailure(JoinOutcome.Failure failure) {
+        FragmentActivity activity = mFragment.getActivity();
+        if (activity == null || !mFragment.isAdded()) return;
+        ProjectsUi.showError(activity, R.string.projects_join_failed_title, JoinOutcome.message(failure), failure.details);
+    }
+
+    @Override
+    public void showFinishLoader() {
+        FragmentActivity activity = mFragment.getActivity();
+        if (activity == null || !mFragment.isAdded()) return;
+        new AlertDialog.Builder(activity)
+                .setTitle(R.string.projects_join_finish_loader_title)
+                .setMessage(R.string.projects_join_finish_loader)
+                .setPositiveButton(android.R.string.ok, null)
+                .show();
     }
 
     /**
-     * Selects the Projects profile and starts it the way Play does, so upstream's launch checks all
-     * apply (not through Play's click: Play itself may send the Projects profile here, REVIEW1 A2).
+     * Back after a start finished while the player was away: the Projects profile is the chosen one,
+     * a short line says it is ready, and one sheen crosses Play once the screen has settled, so the
+     * eye finds where to press. No haptic: nothing was pressed.
      */
-    private void launch(String profileKey) {
+    @Override
+    public void showReady(@Nullable SyncNotice notice) {
+        FragmentActivity activity = mFragment.getActivity();
+        if (activity == null || !mFragment.isAdded()) return;
+        select(ProjectsProfile.KEY);
+        String text = noticeText(activity, notice);
+        Toast.makeText(activity, text != null ? text : activity.getString(R.string.projects_ready_title),
+                text != null ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT).show();
+        final Context context = activity;
+        mPlayButton.postDelayed(() -> {
+            if (!mResumed || !mPlayButton.isShown()) return;
+            if (mPlayButton.getBackground() instanceof PlayButtonDrawable) {
+                ((PlayButtonDrawable) mPlayButton.getBackground()).sheen(context);
+            }
+        }, 420);
+    }
+
+    /** The profile the spinner shows and Play starts, written down for the game process. */
+    private void select(String profileKey) {
         if (!mFragment.isAdded() || mFragment.getView() == null) return;
         mVersionSpinner.reloadProfiles();
         int index = mVersionSpinner.getProfileAdapter().resolveProfileIndex(profileKey);
@@ -1075,6 +1197,160 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         LauncherPreferences.DEFAULT_PREF.edit()
                 .putString(LauncherPreferences.PREF_KEY_CURRENT_PROFILE, profileKey)
                 .commit();
+    }
+
+    /**
+     * Selects the Projects profile and starts it the way Play does, so upstream's launch checks all
+     * apply (not through Play's click: Play itself may send the Projects profile here, REVIEW1 A2).
+     */
+    private void launch(String profileKey) {
+        if (!mFragment.isAdded() || mFragment.getView() == null) return;
+        select(profileKey);
         ExtraCore.setValue(ExtraConstants.LAUNCH_GAME, true);
+    }
+
+    // ---- the key fix (M17) ----
+
+    /**
+     * Looks at the Projects profile's options.txt off the main thread: a fix asked for in the game is
+     * made now that the game is closed (with "Geri al"); otherwise the clashes are offered once.
+     */
+    private void checkKeyFix() {
+        final Context app = mFragment.requireContext().getApplicationContext();
+        final boolean offered = keyFixOffered();
+        final int token = ++mKeyFixToken;
+        // A fix made while no home screen could show it (the menu left meanwhile) is shown now.
+        KeyFixer.Applied unshown = sUnshownFix;
+        sUnshownFix = null;
+        if (unshown != null) showFixed(unshown);
+        KeyFixer.run(() -> {
+            File gameDir = ProjectsProfile.knownGameDir();
+            KeyFixer.Applied applied = null;
+            List<KeyFix.Change> plan = null;
+            if (!KeyFixer.gameRunning(app)) applied = KeyFixer.applyQueued(app, gameDir);
+            if (applied == null && !offered && !KeyFixer.queued(app, gameDir)) {
+                List<KeyFix.Change> changes = KeyFixer.plan(app, gameDir);
+                if (!changes.isEmpty()) plan = changes;
+            }
+            final KeyFixer.Applied done = applied;
+            final List<KeyFix.Change> offer = plan;
+            MAIN.post(() -> {
+                // The file changed: the player hears of it and gets "Geri al", here or on the next visit.
+                if (done != null) {
+                    markKeyFixOffered();
+                    if (mResumed && mFragment.isAdded()) showFixed(done);
+                    else sUnshownFix = done;
+                }
+                if (token != mKeyFixToken || !mFragment.isAdded()) return;
+                mKeyFixPlan = offer;
+                render(System.currentTimeMillis());
+            });
+        });
+    }
+
+    /**
+     * "Tuş çakışmalarını düzelt": the offer folds away and the bar says what happened, with "Geri al".
+     * While the game runs (it keeps its keys in memory) the fix waits for it to close.
+     */
+    private void fixKeys() {
+        if (mKeyFixPlan == null) return;
+        mKeyFixButton.setEnabled(false);
+        final Context app = mFragment.requireContext().getApplicationContext();
+        final int token = ++mKeyFixToken;
+        KeyFixer.run(() -> {
+            File gameDir = ProjectsProfile.knownGameDir();
+            KeyFixer.Applied applied = null;
+            boolean queued = false;
+            boolean failed = false;
+            try {
+                if (KeyFixer.gameRunning(app)) {
+                    KeyFixer.queue(app, gameDir);
+                    queued = true;
+                } else {
+                    applied = KeyFixer.apply(app, gameDir);
+                }
+            } catch (IOException | RuntimeException e) {
+                android.util.Log.w("ProjectsKeyFix", "fix not made", e);
+                failed = true;
+            }
+            final KeyFixer.Applied done = applied;
+            final boolean waits = queued;
+            final boolean broke = failed;
+            MAIN.post(() -> {
+                if (!mFragment.isAdded()) {
+                    // Left meanwhile: the next visit shows the fix with its "Geri al".
+                    if (done != null) {
+                        markKeyFixOffered();
+                        sUnshownFix = done;
+                    }
+                    return;
+                }
+                if (broke) {
+                    // The file could not be written: the offer stays, the button can be pressed again.
+                    Haptics.reject(mKeyFixButton);
+                    mKeyFixButton.setEnabled(true);
+                    Toast.makeText(mFragment.requireContext(), R.string.projects_keyfix_failed, Toast.LENGTH_LONG).show();
+                    return;
+                }
+                markKeyFixOffered();
+                if (token == mKeyFixToken) {
+                    mKeyFixPlan = null;
+                    render(System.currentTimeMillis());
+                }
+                if (done != null) {
+                    Haptics.confirm(mKeyFixButton);
+                    showFixed(done);
+                } else if (waits && mUndoBar != null) {
+                    Haptics.confirm(mKeyFixButton);
+                    mUndoBar.show(mFragment.getString(R.string.projects_keyfix_queued), () -> {
+                        KeyFixer.run(() -> KeyFixer.unqueue(app));
+                        mUndoBar.showResult(mFragment.getString(R.string.projects_keyfix_undone));
+                    });
+                } else if (mUndoBar != null) {
+                    // Nothing clashed any more (the keys were changed in the game meanwhile).
+                    mUndoBar.show(mFragment.getString(R.string.projects_keyfix_done), null);
+                }
+            });
+        });
+    }
+
+    /** "Tuş çakışmaları düzeltildi" with "Geri al", which puts the old keys back. */
+    private void showFixed(final KeyFixer.Applied applied) {
+        if (mUndoBar == null) {
+            Toast.makeText(mFragment.requireContext(), R.string.projects_keyfix_done, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        final Context app = mFragment.requireContext().getApplicationContext();
+        mUndoBar.show(mFragment.getString(R.string.projects_keyfix_done), () -> KeyFixer.run(() -> {
+            boolean undone;
+            try {
+                undone = KeyFixer.undo(app, applied);
+            } catch (IOException | RuntimeException e) {
+                android.util.Log.w("ProjectsKeyFix", "fix not taken back", e);
+                undone = false;
+            }
+            final boolean back = undone;
+            MAIN.post(() -> {
+                if (!mFragment.isAdded()) return;
+                if (back) mUndoBar.showResult(mFragment.getString(R.string.projects_keyfix_undone));
+                else mUndoBar.dismiss();
+            });
+        }));
+    }
+
+    /** "Şimdi değil": the offer folds away and does not come back (the MODLAR key still offers the fix). */
+    private void setKeyFixAside() {
+        markKeyFixOffered();
+        mKeyFixToken++;
+        mKeyFixPlan = null;
+        render(System.currentTimeMillis());
+    }
+
+    private static boolean keyFixOffered() {
+        return LauncherPreferences.DEFAULT_PREF.getBoolean(KEY_FIX_OFFERED, false);
+    }
+
+    private static void markKeyFixOffered() {
+        if (!keyFixOffered()) LauncherPreferences.DEFAULT_PREF.edit().putBoolean(KEY_FIX_OFFERED, true).apply();
     }
 }

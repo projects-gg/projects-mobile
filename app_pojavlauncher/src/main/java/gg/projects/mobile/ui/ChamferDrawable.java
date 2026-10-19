@@ -121,6 +121,24 @@ public final class ChamferDrawable extends Drawable {
         return states;
     }
 
+    /**
+     * M17: a secondary action inside a raised block (the key fix's button, the event's "Katıl"),
+     * where obsidian-700 would vanish into the block: a bone hairline at 28 %, a faint bone fill while
+     * pressed, a dimmer hairline while disabled.
+     */
+    public static Drawable outlined(Context context) {
+        Rect padding = padding(context, 14, 8);
+        float cut = cut(context);
+        float stroke = context.getResources().getDisplayMetrics().density;
+        StateListDrawable states = new StateListDrawable();
+        states.addState(new int[]{-android.R.attr.state_enabled}, new ChamferDrawable(0, 0x1FF3EBDD, stroke, cut, padding));
+        states.addState(new int[]{android.R.attr.state_pressed}, new ChamferDrawable(0x1AF3EBDD, 0x66F3EBDD, stroke, cut, padding));
+        states.addState(new int[]{android.R.attr.state_focused},
+                new ChamferDrawable(0, ContextCompat.getColor(context, R.color.projects_gold_300), 2 * stroke, cut, padding));
+        states.addState(new int[]{}, new ChamferDrawable(0, 0x47F3EBDD, stroke, cut, padding));
+        return states;
+    }
+
     /** Quiet secondary action: transparent with an obsidian-700 outline. */
     public static Drawable secondary(Context context) {
         Rect padding = padding(context, 14, 8);

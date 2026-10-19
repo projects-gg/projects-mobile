@@ -334,6 +334,89 @@
             android:tint="@color/projects_ash_400" />
     </LinearLayout>
 
+    <!-- M17: the Projects profile's options.txt still has the mods' clashing keys (saved before 0.1.6).
+         One tap fixes them; shown on one home visit, gone once fixed or set aside. -->
+    <LinearLayout
+        android:id="@+id/projects_keyfix"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/projects_notice_background"
+        android:orientation="vertical"
+        android:paddingStart="14dp"
+        android:paddingTop="2dp"
+        android:paddingEnd="2dp"
+        android:paddingBottom="12dp"
+        android:visibility="gone"
+        tools:visibility="visible">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginTop="12dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/projects_ic_keyboard"
+                android:tint="@color/projects_gold_300" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="11dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/projects_keyfix_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/figtree_semibold"
+                    android:text="@string/projects_keyfix_title"
+                    android:textColor="@color/projects_bone_100"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:fontFamily="@font/figtree_regular"
+                    android:text="@string/projects_keyfix_body"
+                    android:textColor="@color/projects_ash_300"
+                    android:textSize="13sp" />
+            </LinearLayout>
+
+            <ImageButton
+                android:id="@+id/projects_keyfix_close"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="@drawable/projects_icon_button_ripple"
+                android:contentDescription="@string/projects_not_now"
+                android:padding="14dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/projects_ic_x"
+                android:tint="@color/projects_ash_400" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/projects_keyfix_fix"
+            style="?android:attr/borderlessButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="30dp"
+            android:layout_marginTop="6dp"
+            android:fontFamily="@font/figtree_semibold"
+            android:minHeight="48dp"
+            android:text="@string/projects_keyfix_action"
+            android:textAllCaps="false"
+            android:textColor="@color/projects_bone_100"
+            android:textSize="14sp" />
+    </LinearLayout>
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -461,9 +544,11 @@
             tools:visibility="visible" />
 
         <!-- The bell sits on the digits' line, its icon under the caret above: the row reaches into
-             the block's end padding, so the bell keeps its full touch area there. -->
+             the block's end padding, so the bell keeps its full touch area there. M17: the row is the
+             event's action place: the bell before an event, "Katıl" while one on the server is live
+             (beside the digits, or beside "X önce başladı" when the end is unknown). -->
         <LinearLayout
-            android:id="@+id/projects_event_countdown"
+            android:id="@+id/projects_event_actions"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
@@ -471,61 +556,82 @@
             android:gravity="bottom"
             android:orientation="horizontal">
 
-            <LinearLayout style="@style/ProjectsCountdownCell">
+            <LinearLayout
+                android:id="@+id/projects_event_countdown"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="bottom"
+                android:orientation="horizontal">
 
-                <TextView
-                    android:id="@+id/projects_event_days"
-                    style="@style/ProjectsCountdownValue"
-                    tools:text="02" />
+                <LinearLayout style="@style/ProjectsCountdownCell">
 
+                    <TextView
+                        android:id="@+id/projects_event_days"
+                        style="@style/ProjectsCountdownValue"
+                        tools:text="02" />
+
+                    <TextView
+                        style="@style/ProjectsCountdownUnit"
+                        android:text="@string/projects_countdown_days" />
+                </LinearLayout>
+
+                <LinearLayout style="@style/ProjectsCountdownCell">
+
+                    <TextView
+                        android:id="@+id/projects_event_hours"
+                        style="@style/ProjectsCountdownValue"
+                        tools:text="14" />
+
+                    <TextView
+                        style="@style/ProjectsCountdownUnit"
+                        android:text="@string/projects_countdown_hours" />
+                </LinearLayout>
+
+                <LinearLayout style="@style/ProjectsCountdownCell">
+
+                    <TextView
+                        android:id="@+id/projects_event_minutes"
+                        style="@style/ProjectsCountdownValue"
+                        tools:text="33" />
+
+                    <TextView
+                        style="@style/ProjectsCountdownUnit"
+                        android:text="@string/projects_countdown_minutes" />
+                </LinearLayout>
+
+                <LinearLayout style="@style/ProjectsCountdownCell">
+
+                    <TextView
+                        android:id="@+id/projects_event_seconds"
+                        style="@style/ProjectsCountdownValue"
+                        tools:text="12" />
+
+                    <TextView
+                        style="@style/ProjectsCountdownUnit"
+                        android:text="@string/projects_countdown_seconds" />
+                </LinearLayout>
+
+                <!-- Same type as the unit labels, on their line. -->
                 <TextView
+                    android:id="@+id/projects_event_left"
                     style="@style/ProjectsCountdownUnit"
-                    android:text="@string/projects_countdown_days" />
+                    android:text="@string/projects_event_left" />
             </LinearLayout>
 
-            <LinearLayout style="@style/ProjectsCountdownCell">
-
-                <TextView
-                    android:id="@+id/projects_event_hours"
-                    style="@style/ProjectsCountdownValue"
-                    tools:text="14" />
-
-                <TextView
-                    style="@style/ProjectsCountdownUnit"
-                    android:text="@string/projects_countdown_hours" />
-            </LinearLayout>
-
-            <LinearLayout style="@style/ProjectsCountdownCell">
-
-                <TextView
-                    android:id="@+id/projects_event_minutes"
-                    style="@style/ProjectsCountdownValue"
-                    tools:text="33" />
-
-                <TextView
-                    style="@style/ProjectsCountdownUnit"
-                    android:text="@string/projects_countdown_minutes" />
-            </LinearLayout>
-
-            <LinearLayout style="@style/ProjectsCountdownCell">
-
-                <TextView
-                    android:id="@+id/projects_event_seconds"
-                    style="@style/ProjectsCountdownValue"
-                    tools:text="12" />
-
-                <TextView
-                    style="@style/ProjectsCountdownUnit"
-                    android:text="@string/projects_countdown_seconds" />
-            </LinearLayout>
-
-            <!-- Same type as the unit labels, on their line. -->
             <TextView
-                android:id="@+id/projects_event_left"
-                style="@style/ProjectsCountdownUnit"
-                android:text="@string/projects_event_left" />
+                android:id="@+id/projects_event_started"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_weight="1"
+                android:fontFamily="@font/figtree_regular"
+                android:textColor="@color/projects_ash_300"
+                android:textSize="13sp"
+                android:visibility="gone"
+                tools:text="20 dakika önce başladı" />
 
             <Space
+                android:id="@+id/projects_event_gap"
                 android:layout_width="0dp"
                 android:layout_height="1dp"
                 android:layout_weight="1" />
@@ -537,18 +643,27 @@
                 android:layout_gravity="center_vertical"
                 android:visibility="gone"
                 tools:visibility="visible" />
-        </LinearLayout>
 
-        <TextView
-            android:id="@+id/projects_event_started"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:fontFamily="@font/figtree_regular"
-            android:textColor="@color/projects_ash_300"
-            android:textSize="13sp"
-            android:visibility="gone"
-            tools:text="20 dakika önce başladı" />
+            <!-- M17: joins the server the Projects profile joins, like "Projects'e katıl". -->
+            <Button
+                android:id="@+id/projects_event_join"
+                style="?android:attr/borderlessButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="10dp"
+                android:drawableStart="@drawable/projects_join_glyph"
+                android:drawablePadding="6dp"
+                android:fontFamily="@font/figtree_semibold"
+                android:minWidth="0dp"
+                android:minHeight="48dp"
+                android:text="@string/projects_event_join"
+                android:textAllCaps="false"
+                android:textColor="@color/projects_bone_100"
+                android:textSize="14sp"
+                android:visibility="gone" />
+        </LinearLayout>
     </LinearLayout>
 
     <!-- Newest patch notes from Studio or the Discord feed; the pack's changelog without them. -->

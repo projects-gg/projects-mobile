@@ -58,6 +58,8 @@ public final class ProjectsJoin {
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
     /** A join or a mod-screen apply is running (they never overlap). */
     private static final AtomicBoolean sBusy = new AtomicBoolean(false);
+    /** M17: a join (not a mod-screen apply) is running: the progress notification says "Projects hazırlanıyor". */
+    private static volatile boolean sJoining;
 
     public interface Callback {
         /** The profile is ready: select it and start the game. {@code notice} is shown without blocking. */
@@ -73,6 +75,11 @@ public final class ProjectsJoin {
         return sBusy.get();
     }
 
+    /** M17: a join runs (the mod screen's apply also makes {@link #isBusy} true). */
+    public static boolean isJoining() {
+        return sJoining;
+    }
+
     /** Claims the pack folder for other work (the mod screen); false while a join or apply runs. */
     public static boolean tryBeginWork() {
         return sBusy.compareAndSet(false, true);
@@ -86,26 +93,32 @@ public final class ProjectsJoin {
     @MainThread
     public static boolean start(Context context, final Callback callback) {
         if (!sBusy.compareAndSet(false, true)) return false;
+        sJoining = true;
         final Context app = context.getApplicationContext();
+        // M17: what an earlier start left for the home screen (its notification too) is old news now.
+        JoinOutcome.starting(app);
         PojavApplication.sExecutorService.execute(() -> {
             Runnable outcome;
             try {
                 outcome = prepare(app, callback);
             } catch (ContentException e) {
                 Log.w(TAG, "join failed", e);
-                final boolean network = e.kind == ContentException.Kind.NETWORK;
+                // M17: a full disk is not a connection problem, whatever layer wrapped it.
+                final boolean network = e.kind == ContentException.Kind.NETWORK && FailureKind.isNetwork(e, true);
                 final String details = details(e);
                 outcome = () -> callback.onFailed(network, details);
             } catch (IOException e) {
                 Log.w(TAG, "join failed", e);
+                final boolean network = FailureKind.isNetwork(e, true);
                 final String details = details(e);
-                outcome = () -> callback.onFailed(true, details);
+                outcome = () -> callback.onFailed(network, details);
             } catch (Throwable e) {
                 Log.e(TAG, "join failed", e);
                 final String details = details(e);
                 outcome = () -> callback.onFailed(false, details);
             }
             // Clear our progress before the callback runs: Play refuses to start while tasks run.
+            sJoining = false;
             ProgressLayout.clearProgress(ProgressLayout.INSTALL_MODPACK);
             sBusy.set(false);
             post(outcome);
@@ -259,7 +272,8 @@ public final class ProjectsJoin {
         }
     }
 
-    static String details(Throwable e) {
+    /** A failure's cause chain, for "Ayrıntıları kopyala". */
+    public static String details(Throwable e) {
         StringBuilder out = new StringBuilder();
         for (Throwable t = e; t != null; t = t.getCause()) {
             if (out.length() > 0) out.append("\ncaused by: ");
