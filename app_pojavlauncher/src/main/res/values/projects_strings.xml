@@ -259,6 +259,7 @@
     <string name="projects_launch_java">Starting Java</string>
     <string name="projects_launch_mods">Loading mods</string>
     <string name="projects_launch_minecraft">Opening Minecraft</string>
+    <string name="projects_launch_almost">Almost ready</string>
     <string name="projects_launch_slow">This can take a while.</string>
     <string name="projects_launch_show_log">Show log</string>
     <string name="projects_launch_close">Close the game</string>

@@ -10,7 +10,11 @@ package gg.projects.mobile.launch;
  * <li>{@link #PREPARING}: the game activity opened (options, the renderer, the runtime);</li>
  * <li>{@link #JAVA}: the launcher started the Java runtime;</li>
  * <li>{@link #MODS}: a mod loader (Fabric, Quilt, Forge, NeoForge) is finding and loading mods;</li>
- * <li>{@link #MINECRAFT}: Minecraft itself is starting (its render thread, the session).</li>
+ * <li>{@link #MINECRAFT}: Minecraft itself is starting (its render thread, the session);</li>
+ * <li>{@link #RESOURCES}: Minecraft is loading its resources, the last step before its own screen.
+ * Not from {@link #advance}: the launch screen shows it a moment after {@link #loadingResources},
+ * so a start whose red Mojang screen lifts the launch screen at once does not change its line in
+ * the last frames.</li>
  * </ul>
  * Stages only move forward.
  */
@@ -21,6 +25,7 @@ public final class LaunchStages {
     public static final int JAVA = 1;
     public static final int MODS = 2;
     public static final int MINECRAFT = 3;
+    public static final int RESOURCES = 4;
 
     private static final String[] JAVA_MARKERS = {
             "Starting game with Launcher Debug",

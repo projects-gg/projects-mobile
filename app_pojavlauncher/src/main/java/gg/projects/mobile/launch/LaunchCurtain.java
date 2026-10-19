@@ -51,7 +51,7 @@ import gg.projects.mobile.mods.Motion;
  * are AnimatedVectorDrawables, which run on the render thread from Android 7.1, so they stay
  * smooth while the process starts Java;</li>
  * <li>one short line says where the start is ({@link LaunchStages}: getting ready, starting Java,
- * loading mods, opening Minecraft), read from the game's log, cross-fading as it changes; after
+ * loading mods, opening Minecraft, almost ready), read from the game's log, cross-fading as it changes; after
  * 30 s in one stage a quiet second line says it can take a while.</li>
  * </ul>
  * When it lifts: the first frame on the game's surface that is not black ({@link FrameContent}),
@@ -82,6 +82,11 @@ public final class LaunchCurtain extends FrameLayout implements Logger.eventLogL
     /** The game's surface is read at 16 x 16: enough to catch a white logo on black. */
     private static final int SAMPLE = 16;
     private static final long LIFT_MS = 300;
+    /**
+     * "Neredeyse hazır" comes this long after Minecraft starts loading its resources: a red Mojang
+     * screen lifts the launch screen within a moment, and the line should not change in the last frames.
+     */
+    private static final long RESOURCES_LINE_MS = 3000;
 
     private static volatile LaunchCurtain sActive;
     /** The game drew in this process: an activity created again later shows no curtain. */
@@ -428,8 +433,19 @@ public final class LaunchCurtain extends FrameLayout implements Logger.eventLogL
             if (mResourcesAt == 0 && LaunchStages.loadingResources(text)) {
                 mResourcesAt = now;
                 Log.i(TAG, "resources after " + (now - mStartedAt) + " ms");
+                mMain.postDelayed(this::showResources, RESOURCES_LINE_MS);
             }
         }
+    }
+
+    /** Minecraft has been loading its resources for a moment and nothing lifted the screen: the last step. */
+    private void showResources() {
+        if (mLifted) return;
+        synchronized (this) {
+            if (mStage >= LaunchStages.RESOURCES) return;
+            mStage = LaunchStages.RESOURCES;
+        }
+        showStage(true);
     }
 
     @Override
@@ -482,6 +498,7 @@ public final class LaunchCurtain extends FrameLayout implements Logger.eventLogL
             case LaunchStages.JAVA: return R.string.projects_launch_java;
             case LaunchStages.MODS: return R.string.projects_launch_mods;
             case LaunchStages.MINECRAFT: return R.string.projects_launch_minecraft;
+            case LaunchStages.RESOURCES: return R.string.projects_launch_almost;
             default: return R.string.projects_launch_preparing;
         }
     }

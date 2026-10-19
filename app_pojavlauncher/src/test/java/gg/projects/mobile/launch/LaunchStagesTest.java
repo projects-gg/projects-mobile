@@ -53,4 +53,15 @@ public class LaunchStagesTest {
         assertFalse(LaunchStages.loadingResources("[Render thread/INFO]: Creating new resource manager!"));
         assertFalse(LaunchStages.loadingResources(null));
     }
+
+    @Test
+    public void theResourcesStageComesOnlyFromTheLaunchScreenAndStays() {
+        // LaunchCurtain shows "Neredeyse hazır" a moment after the resources marker; the log never
+        // moves a start there by itself, and nothing in it moves a start back.
+        assertTrue(LaunchStages.RESOURCES > LaunchStages.MINECRAFT);
+        assertEquals(LaunchStages.MINECRAFT, LaunchStages.advance(LaunchStages.MINECRAFT,
+                "[16:14:21] [Render thread/INFO]: Reloading ResourceManager: vanilla, appleskin"));
+        assertEquals(LaunchStages.RESOURCES, LaunchStages.advance(LaunchStages.RESOURCES,
+                "--------- Starting game with Launcher Debug!\n[Render thread/INFO]: Setting user: X"));
+    }
 }
