@@ -149,8 +149,11 @@ public final class ControlStyle {
         return Math.min(w, h) <= 48f ? 8f : 9f;
     }
 
-    /** Smallest label size (sp): below this a label would not be read. */
-    public static final float MIN_LABEL_SP = 6.5f;
+    /**
+     * Smallest label size, in dp so a label fits its key at any font scale (the start size is in sp
+     * and grows with it): below this a label would not be read.
+     */
+    public static final float MIN_LABEL_DP = 6.5f;
 
     /** Measures a label at a text size (in px or sp, as long as the width is in the same unit). */
     public interface Measure {

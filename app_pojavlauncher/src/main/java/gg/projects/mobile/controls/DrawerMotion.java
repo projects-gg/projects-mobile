@@ -6,6 +6,8 @@ import android.view.animation.PathInterpolator;
 
 import java.util.List;
 
+import net.kdt.pojavlaunch.R;
+
 import gg.projects.mobile.mods.Motion;
 
 /**
@@ -32,6 +34,7 @@ public final class DrawerMotion {
             View button = buttons.get(i);
             float to = opacity.of(button);
             button.animate().cancel();
+            button.setTag(R.id.projects_drawer_leaving, null);
             button.setVisibility(View.VISIBLE);
             if (!motion) {
                 rest(button, to);
@@ -55,17 +58,27 @@ public final class DrawerMotion {
             float to = opacity.of(button);
             button.animate().cancel();
             if (!motion || button.getVisibility() != View.VISIBLE) {
+                button.setTag(R.id.projects_drawer_leaving, null);
                 button.setVisibility(View.GONE);
                 rest(button, to);
                 continue;
             }
+            // While it fades it takes no new touch: a tap meant for what appears under it (the other
+            // panel's button in the same place) or for the game gets there.
+            button.setTag(R.id.projects_drawer_leaving, Boolean.TRUE);
             button.animate().alpha(0f).scaleX(0.96f).scaleY(0.96f)
                     .setStartDelay(0).setDuration(EXIT_MS).setInterpolator(EASE_OUT).withLayer()
                     .withEndAction(() -> {
+                        button.setTag(R.id.projects_drawer_leaving, null);
                         if (stillClosed.closed()) button.setVisibility(View.GONE);
                         rest(button, to);
                     });
         }
+    }
+
+    /** True while {@code button} fades out of a closing drawer. */
+    public static boolean isLeaving(View button) {
+        return Boolean.TRUE.equals(button.getTag(R.id.projects_drawer_leaving));
     }
 
     /** A button at rest: full size, its own alpha. */

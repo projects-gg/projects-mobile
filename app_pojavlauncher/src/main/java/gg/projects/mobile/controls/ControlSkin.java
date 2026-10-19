@@ -48,7 +48,10 @@ public final class ControlSkin {
     private String label = "";
     private String altLabel = "";
     private float labelPx, altLabelPx;
-    private int fittedW = -1;
+    private int fittedW = -1, fittedH = -1;
+    // The tint each glyph was last given (a tint change builds a new colour filter).
+    private int glyphInk, altGlyphInk;
+    private boolean glyphInked, altGlyphInked;
 
     // Shown state and where it is heading.
     private float press, hold, on, alt;
@@ -100,6 +103,7 @@ public final class ControlSkin {
         if (!name.equals(glyphName)) {
             glyphName = name;
             glyph = load(name);
+            glyphInked = false;
         }
         String text = ControlStyle.labelText(data.name, allCaps);
         if (!text.equals(label)) {
@@ -144,6 +148,7 @@ public final class ControlSkin {
         if (!glyphName.equals(altGlyphName)) {
             altGlyphName = glyphName;
             altGlyph = load(glyphName);
+            altGlyphInked = false;
         }
         String next = text == null ? "" : text;
         if (!next.equals(altLabel)) {
@@ -211,7 +216,7 @@ public final class ControlSkin {
             shapeH = h;
             shapeCorner = corner;
         }
-        if (fittedW != w) fitLabels(w, h);
+        if (fittedW != w || fittedH != h) fitLabels(w, h);
 
         float scale = ControlStyle.scale(press, motion);
         int save = canvas.save();
@@ -243,8 +248,20 @@ public final class ControlSkin {
             int gl = Math.round((w - glyphPx) / 2f);
             int gt = Math.round(top);
             int gs = Math.round(glyphPx);
-            drawGlyph(canvas, glyph, gl, gt, gs, ink, altGlyph != null ? 1f - alt : 1f, 1f - 0.15f * alt);
-            if (altGlyph != null && alt > 0f) drawGlyph(canvas, altGlyph, gl, gt, gs, ink, alt, 0.85f + 0.15f * alt);
+            if (!glyphInked || glyphInk != ink) {
+                glyph.setTint(ink);
+                glyphInk = ink;
+                glyphInked = true;
+            }
+            drawGlyph(canvas, glyph, gl, gt, gs, altGlyph != null ? 1f - alt : 1f, 1f - 0.15f * alt);
+            if (altGlyph != null && alt > 0f) {
+                if (!altGlyphInked || altGlyphInk != ink) {
+                    altGlyph.setTint(ink);
+                    altGlyphInk = ink;
+                    altGlyphInked = true;
+                }
+                drawGlyph(canvas, altGlyph, gl, gt, gs, alt, 0.85f + 0.15f * alt);
+            }
         }
         if (hasLabel) {
             labelPaint.setTextSize(shownLabelPx);
@@ -256,10 +273,9 @@ public final class ControlSkin {
         if (moving) view.postInvalidateOnAnimation();
     }
 
-    private static void drawGlyph(Canvas canvas, Drawable d, int left, int top, int size, int ink, float alpha, float scale) {
+    private static void drawGlyph(Canvas canvas, Drawable d, int left, int top, int size, float alpha, float scale) {
         if (alpha <= 0.01f) return;
         d.setBounds(left, top, left + size, top + size);
-        d.setTint(ink);
         d.setAlpha(Math.round(255 * Math.min(1f, alpha)));
         if (scale != 1f) {
             int s = canvas.save();
@@ -279,8 +295,10 @@ public final class ControlSkin {
             labelPaint.setTextSize(size);
             return labelPaint.measureText(text);
         };
-        labelPx = label.isEmpty() ? start : ControlStyle.fit(measure, label, max, start, ControlStyle.MIN_LABEL_SP * sp);
-        altLabelPx = altLabel.isEmpty() ? labelPx : ControlStyle.fit(measure, altLabel, max, start, ControlStyle.MIN_LABEL_SP * sp);
+        float floor = Math.min(start, ControlStyle.MIN_LABEL_DP * dp);
+        labelPx = label.isEmpty() ? start : ControlStyle.fit(measure, label, max, start, floor);
+        altLabelPx = altLabel.isEmpty() ? labelPx : ControlStyle.fit(measure, altLabel, max, start, floor);
         fittedW = w;
+        fittedH = h;
     }
 }

@@ -92,12 +92,7 @@ public class ControlButton extends TextView implements ControlInterface {
 
         setText(properties.name);
         mSkin = gg.projects.mobile.controls.ControlSkin.attach(this, mSkin, properties, LauncherPreferences.PREF_BUTTON_ALL_CAPS);
-        if (mSkin != null) {
-            mSkin.setOn(mProperties.isToggle && mIsToggled);
-            // The hide button shows "show" while the other controls are hidden.
-            if (properties.containsKeycode(ControlData.SPECIALBTN_TOGGLECTRL) && getParent() instanceof ControlLayout)
-                onControlsShown(((ControlLayout) getParent()).areControlVisible());
-        }
+        if (mSkin != null) mSkin.setOn(mProperties.isToggle && mIsToggled);
     }
 
     @Override
@@ -114,6 +109,10 @@ public class ControlButton extends TextView implements ControlInterface {
     /** Projects fork (M15): a skinned button draws its own key, so it has no background drawable. */
     @Override
     public void setBackground() {
+        // The editor's colour, ring and corner controls end here: the skin takes them again.
+        if (mSkin != null && mProperties != null) {
+            mSkin = gg.projects.mobile.controls.ControlSkin.attach(this, mSkin, mProperties, LauncherPreferences.PREF_BUTTON_ALL_CAPS);
+        }
         if (mSkin != null) {
             setBackground((android.graphics.drawable.Drawable) null);
             invalidate();
@@ -122,10 +121,22 @@ public class ControlButton extends TextView implements ControlInterface {
         ControlInterface.super.setBackground();
     }
 
-    /** Projects fork (M15): the hide button's glyph and label follow whether the controls are shown. */
+    /**
+     * Projects fork (M15): the hide button's glyph and label follow whether the controls are shown
+     * (ControlLayout tells it; the editor always shows its own). A key not laid out yet (a layout
+     * just loaded) takes the state without a cross-fade.
+     */
     public void onControlsShown(boolean shown) {
-        if (mSkin == null || !mProperties.containsKeycode(ControlData.SPECIALBTN_TOGGLECTRL)) return;
+        if (mSkin == null || mProperties == null || !mProperties.containsKeycode(ControlData.SPECIALBTN_TOGGLECTRL)) return;
         mSkin.setAlt(!shown, "show", getContext().getString(R.string.projects_control_show));
+        if (getWidth() == 0) mSkin.settle();
+    }
+
+    /** Projects fork (M15): a drawer button fading out takes no new touch (it reaches what is under it). */
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent event) {
+        if (event.getActionMasked() == MotionEvent.ACTION_DOWN && gg.projects.mobile.controls.DrawerMotion.isLeaving(this)) return false;
+        return super.dispatchTouchEvent(event);
     }
 
     /** Projects fork (M15): a press clicks down and ticks up (a toggle latches instead, see triggerToggle). */
@@ -144,7 +155,9 @@ public class ControlButton extends TextView implements ControlInterface {
     /** Projects fork (M15): the pressed look follows the finger, or the key for a swipeable button. */
     protected void refreshPressed() {
         if (mSkin == null || mProperties == null) return;
-        boolean pressed = mProperties.isSwipeable ? isActivated()
+        // A swipeable key is pressed while its key is down; a toggle's key mirrors its latch, so a
+        // toggle (swipeable or not) shows the finger.
+        boolean pressed = mProperties.isSwipeable && !mProperties.isToggle ? isActivated()
                 : mFingerDown || (!mProperties.isToggle && isActivated());
         if (pressed == mShownPressed) return;
         mShownPressed = pressed;

@@ -236,7 +236,7 @@ public class ControlLayoutTest {
                 // fits at the smallest size the skin uses, within 4 dp of each side.
                 double widthDp = b.w / 2.625;
                 assertTrue(b.name + " in " + widthDp + " dp",
-                        b.name.length() * 0.66 * ControlStyle.MIN_LABEL_SP <= widthDp - 8);
+                        b.name.length() * 0.66 * ControlStyle.MIN_LABEL_DP <= widthDp - 8);
             }
             assertTrue(keys >= 25);
         }

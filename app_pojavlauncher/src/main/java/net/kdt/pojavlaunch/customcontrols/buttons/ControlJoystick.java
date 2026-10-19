@@ -141,12 +141,21 @@ public class ControlJoystick extends JoystickView implements ControlInterface {
         if (mSkin != null) mSkin.drawOver(canvas);
     }
 
-    /** Projects fork (M15): a thumb on the base lights the joystick and is felt once. */
+    /**
+     * Projects fork (M15): a thumb on the base lights the joystick and is felt once; a cancelled
+     * touch (the library ignores it) lets go of the stick and of the keys it held.
+     */
     @SuppressLint("ClickableViewAccessibility")
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         boolean handled = super.onTouchEvent(event);
-        if (mSkin == null || getControlLayoutParent() == null || getControlLayoutParent().getModifiable()) return handled;
+        if (getControlLayoutParent() == null || getControlLayoutParent().getModifiable()) return handled;
+        if (event.getActionMasked() == MotionEvent.ACTION_CANCEL) {
+            resetButtonPosition();
+            sendDirectionalKeycode(mCurrentDirectionInt, false);
+            mLastDirectionInt = mCurrentDirectionInt = GamepadJoystick.DIRECTION_NONE;
+        }
+        if (mSkin == null) return handled;
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
                 float dx = event.getX() - getWidth() / 2f, dy = event.getY() - getHeight() / 2f;

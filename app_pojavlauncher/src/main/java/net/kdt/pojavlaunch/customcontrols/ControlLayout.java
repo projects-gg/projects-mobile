@@ -125,6 +125,10 @@ public class ControlLayout extends FrameLayout {
 		setModified(sanitizedModified);
 		mButtons = null;
 		getButtonChildren(); // Force refresh
+		// Projects fork (M15): the hide button starts in the state the controls are in.
+		for (ControlInterface button : mButtons) {
+			if (button instanceof ControlButton) ((ControlButton) button).onControlsShown(mModifiable || mControlVisible);
+		}
 	} // loadLayout
 
 	//CONTROL BUTTON
@@ -274,6 +278,8 @@ public class ControlLayout extends FrameLayout {
 			// In edit mode, all controls have to be shown
 			for(ControlInterface button : getButtonChildren()){
 				button.setVisible(true);
+				// Projects fork (M15): and the hide button as itself.
+				if (button instanceof ControlButton) ((ControlButton) button).onControlsShown(true);
 			}
 		}
 	}
