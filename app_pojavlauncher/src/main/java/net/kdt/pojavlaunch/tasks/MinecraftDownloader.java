@@ -257,6 +257,8 @@ public class MinecraftDownloader {
         }
         Exception thrownException = mDownloaderThreadException.get();
         if (thrownException != null) {
+            // The first failure also drops the files still queued (upstream let them download on
+            // after the error was shown).
             pool.shutdownNow();
             throw thrownException;
         }
@@ -264,17 +266,20 @@ public class MinecraftDownloader {
     }
 
     /**
-     * Projects fork (M16): the download pass's tasks and its total. Sizes the metadata does not give
-     * are asked for now, only for the files that are downloaded (upstream asked for every such file
-     * before every start); when one cannot be had, progress counts files instead.
+     * Projects fork (M16): readies the download pass, on this one thread. Each file's folder is made
+     * here: two pool threads making the same folder at once can fail one of them. Sizes the metadata
+     * does not give are asked for here too (HEAD requests, one at a time, while the check's line
+     * stays up), only for the files that are downloaded; upstream asked for every such file before
+     * every start. When one cannot be had, progress counts files instead and no more are asked for.
      */
-    private void prepareDownloadPass(List<DownloaderTask> needed) {
+    private void prepareDownloadPass(List<DownloaderTask> needed) throws IOException {
         mTotalSize = 0;
         mUseFileCounter = false;
         mProcessedFileCounter.set(0);
         mProcessedSizeCounter.set(0);
         for (DownloaderTask task : needed) {
             task.mDownloadPass = true;
+            FileUtils.ensureParentDirectory(task.mTargetPath);
             long size = task.mDownloadSize;
             if (size <= 0 && !mUseFileCounter) {
                 size = DownloadMirror.getContentLengthMirrored(task.mDownloadClass, task.mTargetUrl);
@@ -448,7 +453,7 @@ public class MinecraftDownloader {
                                   long size, boolean skipIfFailed) throws IOException {
         // Projects fork (M16): nothing is touched or asked for here. Upstream made every file's parent
         // folder and sent a HEAD request for each file without a size before every start; the
-        // download pass does both for the files it downloads (prepareDownloadPass, DownloaderTask).
+        // download pass does both, on one thread, for the files it downloads (prepareDownloadPass).
         mTotalFileCount++;
         mScheduledDownloadTasks.add(
                 new DownloaderTask(targetFile, downloadClass, url, sha1, Math.max(0, size), skipIfFailed)
@@ -714,6 +719,8 @@ public class MinecraftDownloader {
                 }
                 if(mDownloadClass == DownloadMirror.DOWNLOAD_CLASS_LIBRARIES && !Tools.isValidString(mTargetSha1)) {
                     // If we're downloading a library, try to get sha1 since it might be available as a file
+                    // (Projects: only for a file its stamp did not settle, so this request is rare now
+                    // and happens while "Checking game files" shows).
                     tryGetLibrarySha1();
                 }
                 if(Tools.isValidString(mTargetSha1)) {
@@ -755,32 +762,60 @@ public class MinecraftDownloader {
             }
         }
 
-        /** Projects fork (M16): the download pass; a verified download is remembered with its new stamp. */
+        /**
+         * Projects fork (M16): the download pass (its folder was made by prepareDownloadPass). A
+         * download whose SHA-1 matched is remembered with its stamp.
+         */
         private void downloadPass() throws Exception {
-            FileUtils.ensureParentDirectory(mTargetPath);
             mChecked.forget(mTargetPath);
-            if (downloadFile() && Tools.isValidString(mTargetSha1)) {
-                CheckedFiles.Stamp stamp = stampOf(mTargetPath);
-                if (stamp != null) mChecked.put(mTargetPath, stamp, mTargetSha1.trim());
-            }
+            CheckedFiles.Stamp verified = downloadFile();
+            if (verified != null) mChecked.put(mTargetPath, verified, mTargetSha1.trim());
             mDownloadedCounter.incrementAndGet();
         }
 
-        /** Upstream's download with its SHA-1 check; true unless a failure was skipped. */
-        private boolean downloadFile() throws Exception {
-            boolean verified = true;
+        /**
+         * Projects fork (M16): downloads the file, up to five times while its SHA-1 does not match
+         * (as upstream's ensureSha1), and returns its stamp once the hash matched; null without a hash
+         * to compare or when a failure was skipped. The check pass found the file missing or wrong, so
+         * it is not hashed again first: ensureSha1 did, and counted a file it could not read as a match.
+         * Here a file that cannot be read after its download does not match.
+         */
+        private CheckedFiles.Stamp downloadFile() throws Exception {
+            CheckedFiles.Stamp verified = null;
             try {
-                DownloadUtils.ensureSha1(mTargetPath, mTargetSha1, () -> {
+                String expected = Tools.isValidString(mTargetSha1) ? mTargetSha1.trim() : null;
+                for (int attempt = 1; ; attempt++) {
+                    // A try again counts its bytes from zero (the speed line keeps all that was fetched).
+                    mProcessedSizeCounter.addAndGet(-mLastCurr);
+                    mLastCurr = 0;
                     DownloadMirror.downloadFileMirrored(mDownloadClass, mTargetUrl, mTargetPath,
                             getLocalBuffer(), this);
-                    return null;
-                });
+                    if (expected == null) break;
+                    // The stamp before the read: a change during it shows as a new stamp next time.
+                    CheckedFiles.Stamp stamp = stampOf(mTargetPath);
+                    if (stamp != null && expected.equalsIgnoreCase(readSha1())) {
+                        verified = stamp;
+                        break;
+                    }
+                    if (attempt == 5) {
+                        throw new DownloadUtils.SHA1VerificationException("SHA1 verifcation failed after 5 download attempts");
+                    }
+                }
             }catch (Exception e) {
                 if(!mSkipIfFailed) throw e;
-                verified = false;
             }
             mProcessedFileCounter.incrementAndGet();
             return verified;
+        }
+
+        /** The file's SHA-1, or null when it cannot be read. */
+        private String readSha1() {
+            try {
+                return CheckedFiles.sha1(mTargetPath, getLocalBuffer());
+            } catch (IOException e) {
+                Log.w(CHECK_TAG, "could not read " + mTargetPath.getName(), e);
+                return null;
+            }
         }
 
         @Override
