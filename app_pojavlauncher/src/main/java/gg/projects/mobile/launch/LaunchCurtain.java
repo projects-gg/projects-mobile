@@ -60,7 +60,7 @@ import gg.projects.mobile.mods.Motion;
  * 7+); when the game grabs the pointer; and by {@link LiftRules}: frames that stay black, the
  * resources signal where frames cannot be seen, and long timeouts. A title screen shown early, while
  * the game still loads behind it (the Projects pack's Remove Reloading Screen), stays covered until the
- * game says it finished: it stutters and freezes meanwhile. It dissolves in 300 ms and
+ * game says it finished: it stutters and freezes meanwhile. It dissolves in 400 ms and
  * removes itself: nothing of it (log listener, polling, animations) runs afterwards. With
  * animations off it is a still picture that disappears at once.
  *
@@ -84,7 +84,7 @@ public final class LaunchCurtain extends FrameLayout implements Logger.eventLogL
     private static final int MAX_POLL_ERRORS = 40;
     /** The game's surface is read at 16 x 16: enough to catch a white logo on black. */
     private static final int SAMPLE = 16;
-    private static final long LIFT_MS = 300;
+    private static final long LIFT_MS = 400;
     /**
      * "Neredeyse hazır" comes this long after Minecraft starts loading its resources: a red Mojang
      * screen lifts the launch screen within a moment, and the line should not change in the last frames.
@@ -575,11 +575,12 @@ public final class LaunchCurtain extends FrameLayout implements Logger.eventLogL
             remove();
             return;
         }
-        // A cross-dissolve into Minecraft's first frame, the emblem drifting forward a little as it
-        // goes: the drawer curve answers at once without a jump and settles softly (an ease-in held
-        // the dark screen and then dropped it in the last frames).
-        mColumn.animate().scaleX(1.04f).scaleY(1.04f).setDuration(LIFT_MS).setInterpolator(Motion.EASE_DRAWER).start();
-        animate().alpha(0f).setDuration(LIFT_MS).setInterpolator(Motion.EASE_DRAWER).withEndAction(this::remove).start();
+        // A cross-dissolve into the game's screen, the emblem drifting forward a little as it goes.
+        // The opacity eases both ends: the drawer curve (300 ms) took two thirds of the dark screen
+        // away in the first 60 ms, which read as a flash against the bright title screen on the
+        // emulator recording; an ease-in (before) held the dark screen and dropped it at the end.
+        mColumn.animate().scaleX(1.05f).scaleY(1.05f).setDuration(LIFT_MS).setInterpolator(Motion.EASE_DRAWER).start();
+        animate().alpha(0f).setDuration(LIFT_MS).setInterpolator(Motion.EASE_IN_OUT).withEndAction(this::remove).start();
     }
 
     private void detachSources() {

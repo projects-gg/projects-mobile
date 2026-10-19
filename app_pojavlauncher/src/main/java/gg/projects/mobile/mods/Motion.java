@@ -24,6 +24,12 @@ public final class Motion {
      * softly (the launch screen dissolving into the game).
      */
     public static final Interpolator EASE_DRAWER = new PathInterpolator(0.32f, 0.72f, 0f, 1f);
+    /**
+     * A cross-dissolve between two whole screens of very different brightness (the launch screen
+     * into the game): {@code cubic-bezier(0.45, 0, 0.55, 1)} eases both ends, so neither the start
+     * nor the end of the change reads as a flash.
+     */
+    public static final Interpolator EASE_IN_OUT = new PathInterpolator(0.45f, 0f, 0.55f, 1f);
 
     public static final long ENTER_MS = 280;
     public static final long EXIT_MS = 190;
