@@ -56,33 +56,42 @@ import gg.projects.mobile.mods.Motion;
  * </ul>
  * When it lifts: the first frame on the game's surface that is not black ({@link FrameContent}),
  * sampled with TextureView's own frame callback or, for the SurfaceView mode, PixelCopy (Android
- * 7+); frames that stay black lift it 2.5 s after they started once Minecraft is starting; and as
- * fallbacks, 3 s after Minecraft starts loading its resources, when the game grabs the pointer, 150 s
- * into Minecraft's start, 5 minutes into a start that never reached Minecraft, or after 8 minutes.
- * It fades out in a quarter second and removes itself: nothing of it (log listener, polling,
- * animations) runs afterwards. With animations off it is a still picture that disappears at once.
+ * 7+); when the game grabs the pointer; and by {@link LiftRules}: frames that stay black, the
+ * resources signal where frames cannot be seen, and long timeouts. It dissolves in 300 ms and
+ * removes itself: nothing of it (log listener, polling, animations) runs afterwards. With
+ * animations off it is a still picture that disappears at once.
  *
  * <p>A start that hangs never traps the player (REVIEW1 M14-1): with the slow line, or as soon as
  * the player taps the screen or presses back, "Kaydı göster" (the loading screen steps aside for
  * upstream's live log) and "Oyunu kapat" (upstream's force-close question) appear under the status.
+ *
+ * <p>Diagnostics: logcat tag {@code ProjectsCurtain} has the stages, the resources signal, the first
+ * frame and why it lifted (and the first frame after the lift when it lifted without one). With
+ * {@code adb shell setprop log.tag.ProjectsCurtain DEBUG} before the game starts it also traces the
+ * frame rate and every sample.
  */
 @SuppressLint("ViewConstructor")
 public final class LaunchCurtain extends FrameLayout implements Logger.eventLogListener, GrabListener {
     private static final String TAG = "ProjectsCurtain";
+    /** Frame rate and sample trace (off unless the log tag is set to DEBUG; read once per process). */
+    private static final boolean TRACE = Log.isLoggable(TAG, Log.DEBUG);
 
     private static final long POLL_MS = 150;
-    private static final long STEADY_MS = 2500;
-    private static final long RESOURCES_FALLBACK_MS = 3000;
-    private static final long MINECRAFT_FALLBACK_MS = 150_000;
-    private static final long ABSOLUTE_FALLBACK_MS = 8 * 60_000;
-    /** A start that has not reached Minecraft itself by now is stuck (REVIEW1 M14-1): out of the way. */
-    private static final long BEFORE_MINECRAFT_LIMIT_MS = 5 * 60_000;
     private static final long SLOW_HINT_MS = 30_000;
     private static final int MAX_POLL_ERRORS = 40;
+    /** The game's surface is read at 16 x 16: enough to catch a white logo on black. */
+    private static final int SAMPLE = 16;
+    private static final long LIFT_MS = 300;
 
     private static volatile LaunchCurtain sActive;
     /** The game drew in this process: an activity created again later shows no curtain. */
     private static volatile boolean sGameShown;
+    private static long sShownAt;
+    private static long sLiftedAt;
+    /** It lifted before any frame came: the first one is logged (how early the fallback was). */
+    private static boolean sAwaitingFrame;
+    private static long sTraceSince;
+    private static int sTraceFrames;
 
     private final MinecraftGLSurface mGame;
     private final Handler mMain = new Handler(Looper.getMainLooper());
@@ -100,12 +109,16 @@ public final class LaunchCurtain extends FrameLayout implements Logger.eventLogL
     private final LinearLayout mActions;
     private final Paint mEmberPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint mGoldPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final Bitmap mSample = Bitmap.createBitmap(8, 8, Bitmap.Config.ARGB_8888);
-    private final int[] mPixels = new int[64];
+    private final Bitmap mSample = Bitmap.createBitmap(SAMPLE, SAMPLE, Bitmap.Config.ARGB_8888);
+    private final int[] mPixels = new int[SAMPLE * SAMPLE];
+    private final LiftRules.State mRules = new LiftRules.State();
 
     private volatile int mStage = LaunchStages.PREPARING;
-    private volatile boolean mResourcesSeen;
+    /** Written by the logger thread. */
+    private volatile long mResourcesAt;
+    private volatile long mLastLogAt;
     private int mShownStage = -1;
+    private int mLastCopyResult = Integer.MIN_VALUE;
     private long mStageShownAt;
     private long mMinecraftAt;
     private long mFirstFrameAt;
@@ -226,16 +239,43 @@ public final class LaunchCurtain extends FrameLayout implements Logger.eventLogL
         if (curtain != null) curtain.lift("already running", false);
     }
 
-    /** A frame reached the game's TextureView (its onSurfaceTextureUpdated). Nothing once lifted. */
+    /**
+     * A frame reached the game's TextureView (its onSurfaceTextureUpdated, main thread). Once the
+     * curtain is gone this is a field read or two per frame.
+     */
     public static void onGameFrame() {
         LaunchCurtain curtain = sActive;
-        if (curtain != null) curtain.frameArrived();
+        if (curtain != null && !curtain.mLifted) {
+            curtain.frameArrived();
+        } else if (sAwaitingFrame) {
+            sAwaitingFrame = false;
+            Log.i(TAG, "first frame " + (SystemClock.uptimeMillis() - sLiftedAt) + " ms after the lift");
+        }
+        if (TRACE) traceFrame();
+    }
+
+    /** Trace: frames per second while the trace runs (the first ten minutes after the curtain showed). */
+    private static void traceFrame() {
+        long now = SystemClock.uptimeMillis();
+        if (sShownAt == 0 || now - sShownAt > 600_000) return;
+        sTraceFrames++;
+        if (sTraceSince == 0) {
+            sTraceSince = now;
+            Log.d(TAG, "trace: first frame on the surface " + (now - sShownAt) + " ms after shown");
+            sTraceFrames = 0;
+        } else if (now - sTraceSince >= 1000) {
+            Log.d(TAG, "trace: " + sTraceFrames + " frames in " + (now - sTraceSince) + " ms, at " + (now - sShownAt) + " ms");
+            sTraceSince = now;
+            sTraceFrames = 0;
+        }
     }
 
     // ---- Lifecycle ----
 
     private void begin() {
+        sShownAt = mStartedAt;
         Log.i(TAG, "shown");
+        if (TRACE) Log.d(TAG, "trace: on, sample " + SAMPLE + "x" + SAMPLE);
         showStage(false);
         if (mMotion) {
             mBrackets.setImageResource(R.drawable.projects_launch_brackets);
@@ -276,20 +316,16 @@ public final class LaunchCurtain extends FrameLayout implements Logger.eventLogL
             if (mLifted) return;
             long now = SystemClock.uptimeMillis();
             pollSurface();
-            if (FrameContent.steadyFrames(mFirstFrameAt, now, mStage, STEADY_MS)) {
-                lift("steady frames", true);
-                return;
-            }
-            if (mMinecraftAt > 0 && now - mMinecraftAt > MINECRAFT_FALLBACK_MS) {
-                lift("minecraft timeout", true);
-                return;
-            }
-            if (mMinecraftAt == 0 && now - mStartedAt > BEFORE_MINECRAFT_LIMIT_MS) {
-                lift("timeout before Minecraft", true);
-                return;
-            }
-            if (now - mStartedAt > ABSOLUTE_FALLBACK_MS) {
-                lift("timeout", true);
+            mRules.startedAt = mStartedAt;
+            mRules.stage = mStage;
+            mRules.minecraftAt = mMinecraftAt;
+            mRules.resourcesAt = mResourcesAt;
+            mRules.lastLogAt = mLastLogAt;
+            mRules.firstFrameAt = mFirstFrameAt;
+            mRules.seesFrames = seesFrames();
+            String reason = LiftRules.reason(mRules, now);
+            if (reason != null) {
+                lift(reason, true);
                 return;
             }
             if (mStageShownAt > 0 && now - mStageShownAt > SLOW_HINT_MS && mSlow.getAlpha() == 0f) {
@@ -299,6 +335,18 @@ public final class LaunchCurtain extends FrameLayout implements Logger.eventLogL
             mMain.postDelayed(this, POLL_MS);
         }
     };
+
+    /**
+     * Whether frames on the game's surface can be seen: TextureView reports each frame it shows (its
+     * content changes no other way); the SurfaceView mode is read with PixelCopy from Android 7 while
+     * that works. Before the game's view starts there is nothing to see yet.
+     */
+    private boolean seesFrames() {
+        View render = mGame.getRenderView();
+        if (render instanceof TextureView) return true;
+        return render instanceof SurfaceView && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N
+                && mPollErrors <= MAX_POLL_ERRORS;
+    }
 
     /** SurfaceView mode (Android 7+): has a frame been queued, and does it show a picture? */
     private void pollSurface() {
@@ -312,6 +360,10 @@ public final class LaunchCurtain extends FrameLayout implements Logger.eventLogL
             PixelCopy.request(surface, mSample, result -> {
                 mSampling = false;
                 if (mLifted) return;
+                if (TRACE && result != mLastCopyResult) {
+                    Log.d(TAG, "trace: PixelCopy result " + result + " at " + (SystemClock.uptimeMillis() - mStartedAt) + " ms");
+                }
+                mLastCopyResult = result;
                 if (result == PixelCopy.SUCCESS) {
                     mPollErrors = 0;
                     onSample();
@@ -355,7 +407,8 @@ public final class LaunchCurtain extends FrameLayout implements Logger.eventLogL
             mFirstFrameAt = now;
             Log.i(TAG, "first frame after " + (now - mStartedAt) + " ms");
         }
-        mSample.getPixels(mPixels, 0, 8, 0, 0, 8, 8);
+        mSample.getPixels(mPixels, 0, SAMPLE, 0, 0, SAMPLE, SAMPLE);
+        if (TRACE) Log.d(TAG, "trace: sample " + FrameContent.describe(mPixels) + " at " + (now - mStartedAt) + " ms");
         if (FrameContent.hasPicture(mPixels)) lift("picture", true);
     }
 
@@ -364,16 +417,18 @@ public final class LaunchCurtain extends FrameLayout implements Logger.eventLogL
     @Override
     public void onEventLogged(String text) {
         // The logger thread and the launcher's own appendToLog (the JVM thread) both call this.
+        long now = SystemClock.uptimeMillis();
+        mLastLogAt = now;
         synchronized (this) {
             int stage = LaunchStages.advance(mStage, text);
             if (stage > mStage) {
                 mStage = stage;
                 mMain.post(() -> showStage(true));
             }
-        }
-        if (!mResourcesSeen && LaunchStages.loadingResources(text)) {
-            mResourcesSeen = true;
-            mMain.postDelayed(() -> lift("resources", true), RESOURCES_FALLBACK_MS);
+            if (mResourcesAt == 0 && LaunchStages.loadingResources(text)) {
+                mResourcesAt = now;
+                Log.i(TAG, "resources after " + (now - mStartedAt) + " ms");
+            }
         }
     }
 
@@ -446,15 +501,20 @@ public final class LaunchCurtain extends FrameLayout implements Logger.eventLogL
         if (mLifted) return;
         mLifted = true;
         sGameShown = true;
-        Log.i(TAG, "lifted (" + reason + ") after " + (SystemClock.uptimeMillis() - mStartedAt) + " ms, stage " + mStage);
+        long now = SystemClock.uptimeMillis();
+        sLiftedAt = now;
+        sAwaitingFrame = mFirstFrameAt == 0;
+        Log.i(TAG, "lifted (" + reason + ") after " + (now - mStartedAt) + " ms, stage " + mStage);
         detachSources();
         if (!animate || !mMotion || !isAttachedToWindow()) {
             remove();
             return;
         }
-        // The emblem comes forward a little as the screen dissolves into Minecraft's.
-        mColumn.animate().scaleX(1.04f).scaleY(1.04f).setDuration(260).setInterpolator(Motion.EASE_IN).start();
-        animate().alpha(0f).setDuration(260).setInterpolator(Motion.EASE_IN).withEndAction(this::remove).start();
+        // A cross-dissolve into Minecraft's first frame, the emblem drifting forward a little as it
+        // goes: the drawer curve answers at once without a jump and settles softly (an ease-in held
+        // the dark screen and then dropped it in the last frames).
+        mColumn.animate().scaleX(1.04f).scaleY(1.04f).setDuration(LIFT_MS).setInterpolator(Motion.EASE_DRAWER).start();
+        animate().alpha(0f).setDuration(LIFT_MS).setInterpolator(Motion.EASE_DRAWER).withEndAction(this::remove).start();
     }
 
     private void detachSources() {

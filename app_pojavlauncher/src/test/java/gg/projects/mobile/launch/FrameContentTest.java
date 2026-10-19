@@ -1,5 +1,6 @@
 package gg.projects.mobile.launch;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -29,6 +30,26 @@ public class FrameContentTest {
         int[] monochrome = filled(0xFF000000);
         monochrome[27] = 0xFFFFFFFF;
         assertTrue("a white logo on black where the sample caught it", FrameContent.hasPicture(monochrome));
+    }
+
+    @Test
+    public void aWhiteLogoOnBlackShowsInTheSixteenBySixteenSample() {
+        // Monochrome mode: the logo is a quarter of the screen's height across its middle.
+        int[] sample = new int[256];
+        Arrays.fill(sample, 0xFF000000);
+        assertFalse(FrameContent.hasPicture(sample));
+        sample[7 * 16 + 9] = 0xFFFFFFFF;
+        assertTrue(FrameContent.hasPicture(sample));
+    }
+
+    @Test
+    public void aSampleFitsOneLogLine() {
+        assertEquals("mean 239,50,61 max 239", FrameContent.describe(filled(0xFFEF323D)));
+        int[] half = filled(0xFF000000);
+        Arrays.fill(half, 0, 32, 0xFFFFFFFF);
+        assertEquals("mean 128,128,128 max 255", FrameContent.describe(half));
+        assertEquals("empty", FrameContent.describe(new int[0]));
+        assertEquals("empty", FrameContent.describe(null));
     }
 
     @Test

@@ -18,6 +18,12 @@ public final class Motion {
 
     public static final Interpolator EASE_OUT = new PathInterpolator(0.16f, 1f, 0.3f, 1f);
     public static final Interpolator EASE_IN = new PathInterpolator(0.55f, 0f, 1f, 0.45f);
+    /**
+     * design.md's drawer curve {@code cubic-bezier(0.32, 0.72, 0, 1)}, which the desktop's page
+     * cross-fade uses too: it answers at once without the jump of the entrance curve and settles
+     * softly (the launch screen dissolving into the game).
+     */
+    public static final Interpolator EASE_DRAWER = new PathInterpolator(0.32f, 0.72f, 0f, 1f);
 
     public static final long ENTER_MS = 280;
     public static final long EXIT_MS = 190;
