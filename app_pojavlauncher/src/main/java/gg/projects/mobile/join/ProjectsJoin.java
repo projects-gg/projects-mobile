@@ -119,20 +119,34 @@ public final class ProjectsJoin {
         Snapshot snapshot = ProjectsContent.latestBlocking(app);
         MinecraftProfile existing = ProjectsProfile.find();
         File gameDir = ProjectsProfile.gameDir();
-        PackChoice choice = snapshot.packChoice(PackState.load(gameDir));
+        PackState state = PackState.load(gameDir);
+        PackChoice choice = snapshot.packChoice(state);
         if (choice.kind == PackChoice.Kind.DROPPED && existing == null) {
             // The profile itself is gone: there is no installed version to keep, start over.
             choice = snapshot.packChoice(null);
         }
+        boolean packInstalled = state != null && state.packId != null && !state.packId.isEmpty();
+        JoinRoute.Kind route = JoinRoute.of(snapshot.hasContent(), choice.kind, packInstalled);
+        if (route == JoinRoute.Kind.AS_IS && existing == null) route = JoinRoute.Kind.NEEDS_CONTENT;
         SyncNotice notice = null;
-        switch (choice.kind) {
-            case NONE:
+        switch (route) {
+            case NEEDS_CONTENT:
+                // M16: nothing to install from (no content was ever verified on this phone) and nothing
+                // installed: fail as offline instead of starting plain vanilla.
+                Log.i(TAG, "no verified content and no installed pack; not starting vanilla");
+                throw snapshot.lastError != null ? snapshot.lastError
+                        : new ContentException(ContentException.Kind.NETWORK, "no verified content");
+            case VANILLA:
                 ensureVanilla();
                 break;
-            case DROPPED:
-                // The family no longer offers this version: launch the installed set as it is.
-                Log.i(TAG, "the pack family no longer offers Minecraft " + choice.installedMinecraft + "; launching the installed set");
-                notice = SyncNotice.dropped(choice.installedMinecraft);
+            case AS_IS:
+                if (choice.kind == PackChoice.Kind.DROPPED) {
+                    // The family no longer offers this version: launch the installed set as it is.
+                    Log.i(TAG, "the pack family no longer offers Minecraft " + choice.installedMinecraft + "; launching the installed set");
+                    notice = SyncNotice.dropped(choice.installedMinecraft);
+                } else {
+                    Log.i(TAG, "no verified content to sync with; launching the installed set");
+                }
                 addServers(gameDir, new ArrayList<PackManifest.PackServer>());
                 break;
             default:

@@ -264,7 +264,7 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         Press.attach(mEventMore, Press.Style.BUTTON);
         Press.attach(mEventBell, Press.Style.ICON);
         mAllNewsDot = ContextCompat.getDrawable(context, R.drawable.projects_news_dot);
-        mJoinButton.setOnClickListener(v -> join());
+        mJoinButton.setOnClickListener(v -> join(mJoinButton));
         mModsRow.setOnClickListener(v -> openMods());
         mEvent.setOnClickListener(v -> openEvent());
         mEventMore.setOnClickListener(v -> showOtherEvents());
@@ -982,26 +982,35 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
 
     /** "Projects'e katıl" without a tap: "Tekrar başlat" after Sodium kept the game from starting. */
     public void joinNow() {
-        join();
+        join(mJoinButton);
     }
 
-    private void join() {
+    /**
+     * M16: OYNA on the Projects profile. It goes through the join, so the pack is installed and in
+     * step before the game starts (before, OYNA on a profile that had never joined started plain
+     * vanilla). {@code playButton} gets the press's answer, the card's button shows the join running.
+     */
+    public void playThroughJoin(View playButton) {
+        join(playButton);
+    }
+
+    private void join(View pressed) {
         FragmentActivity activity = mFragment.requireActivity();
         // M14: the press confirms when the join starts and rejects (a short shake) when it cannot.
         if (ProjectsJoin.isBusy()) {
-            PlayButtons.reject(mJoinButton);
+            PlayButtons.reject(pressed);
             Toast.makeText(activity, R.string.projects_join_busy, Toast.LENGTH_SHORT).show();
             return;
         }
         if (ProgressLayout.hasProcesses()) {
-            PlayButtons.reject(mJoinButton);
+            PlayButtons.reject(pressed);
             Toast.makeText(activity, R.string.tasks_ongoing, Toast.LENGTH_LONG).show();
             return;
         }
         if (PojavProfile.getCurrentProfileContent(activity, null) == null) {
             // No account yet: ask for one first, as Play does, instead of downloading the pack
             // and asking afterwards. Any account will do, an offline one too.
-            PlayButtons.reject(mJoinButton);
+            PlayButtons.reject(pressed);
             Toast.makeText(activity, R.string.no_saved_accounts, Toast.LENGTH_LONG).show();
             ExtraCore.setValue(ExtraConstants.SELECT_AUTH_METHOD, true);
             return;
@@ -1039,8 +1048,10 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         });
         if (started) {
             // A disabled face draws no sheen: the button turns to "Hazırlanıyor" once it has crossed.
-            // A second tap meanwhile meets the busy check above.
-            if (PlayButtons.confirm(mJoinButton)) mJoinButton.postDelayed(mShowJoining, PlayButtonDrawable.SHEEN_MS);
+            // A second tap meanwhile meets the busy check above. A press on OYNA sheens OYNA, and the
+            // card's button shows the join at once.
+            boolean sheen = PlayButtons.confirm(pressed);
+            if (sheen && pressed == mJoinButton) mJoinButton.postDelayed(mShowJoining, PlayButtonDrawable.SHEEN_MS);
             else setJoining(true);
         }
     }

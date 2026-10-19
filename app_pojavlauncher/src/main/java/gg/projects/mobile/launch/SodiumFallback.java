@@ -18,7 +18,6 @@ import java.util.Locale;
 import java.util.Set;
 
 import gg.projects.mobile.content.AtomicFiles;
-import gg.projects.mobile.content.SodiumSupport;
 import gg.projects.mobile.join.ProjectsProfile;
 import gg.projects.mobile.mods.SodiumState;
 
@@ -59,17 +58,8 @@ public final class SodiumFallback {
         }
     }
 
-    /**
-     * Play starts the Projects profile without its sync (REVIEW1 A2): after Sodium kept the game from
-     * starting, a player who closed the message and pressed Play would start the same jars and see
-     * the same crash. While the family is held off with the profile's renderer and its jars are still
-     * in the mods folder, the start goes through "Projects'e katıl", whose sync takes them out. Reads
-     * the profiles already in memory and lists one folder (cheap enough for a tap).
-     */
-    public static boolean projectsStartNeedsSync(Context context) {
-        if (SodiumState.block(context) == SodiumSupport.Block.NONE) return false;
-        return !sodiumJarNames(new File(ProjectsProfile.knownGameDir(), "mods")).isEmpty();
-    }
+    // REVIEW1 A2's projectsStartNeedsSync is gone (M16): Play on the Projects profile always goes
+    // through "Projects'e katıl", whose sync takes a held-off Sodium family out before the start.
 
     /** File names in a mods folder that look like Sodium's family (for the launch record). */
     public static List<String> sodiumJarNames(File modsDir) {

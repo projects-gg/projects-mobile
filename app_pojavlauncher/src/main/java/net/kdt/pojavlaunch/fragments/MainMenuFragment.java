@@ -83,12 +83,13 @@ public class MainMenuFragment extends Fragment {
         // is now held off where it cannot run, and a start it breaks is caught afterwards
         // (gg.projects.mobile.launch.SodiumFallback).
         mPlayButton.setOnClickListener(v -> {
-            // Projects fork (REVIEW1 A2): the Projects profile goes through its join while Sodium is
-            // held off but its jars are still in place, so the sync takes them out first.
+            // Projects fork (M16): the Projects profile always starts through its join, like "Projects'e
+            // katıl": the pack is installed and in step first, so OYNA never starts it as plain vanilla
+            // (a profile that had not joined yet showed the newest release and started without the
+            // pack). This also covers REVIEW1 A2 (Sodium held off but its jars still in place).
             String current = LauncherPreferences.DEFAULT_PREF.getString(LauncherPreferences.PREF_KEY_CURRENT_PROFILE, "");
-            if (gg.projects.mobile.join.ProjectsProfile.KEY.equals(current)
-                    && gg.projects.mobile.launch.SodiumFallback.projectsStartNeedsSync(requireContext())) {
-                mProjectsCard.joinNow();
+            if (gg.projects.mobile.join.ProjectsProfile.KEY.equals(current)) {
+                mProjectsCard.playThroughJoin(mPlayButton);
                 return;
             }
             ExtraCore.setValue(ExtraConstants.LAUNCH_GAME, true);
