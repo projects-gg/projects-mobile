@@ -306,9 +306,11 @@ public class ControlLayout extends FrameLayout {
 		if (mModHint != null) mModHint.hide();
 	}
 
-	/** Projects fork (M16): the game's key bindings or its mods changed: the MODLAR keys look again. */
+	/**
+	 * Projects fork (M16): the game's key bindings or its mods changed, or editing started or ended:
+	 * the MODLAR keys look again (none is faded in the editor).
+	 */
 	private void refreshModKeys() {
-		if (mModifiable) return;
 		for (ControlInterface button : getButtonChildren()) {
 			if (button instanceof ControlButton) ((ControlButton) button).refreshModKey();
 		}
@@ -333,6 +335,8 @@ public class ControlLayout extends FrameLayout {
 		}
 		mModifiable = isModifiable;
 		if(isModifiable){
+			// Projects fork (M16): the reason line goes with play.
+			hideModHint();
 			// In edit mode, all controls have to be shown
 			for(ControlInterface button : getButtonChildren()){
 				button.setVisible(true);
@@ -340,6 +344,7 @@ public class ControlLayout extends FrameLayout {
 				if (button instanceof ControlButton) ((ControlButton) button).onControlsShown(true);
 			}
 		}
+		refreshModKeys();
 	}
 
 	public boolean getModifiable(){

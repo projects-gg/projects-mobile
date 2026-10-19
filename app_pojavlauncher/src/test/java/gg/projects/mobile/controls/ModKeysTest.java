@@ -272,11 +272,13 @@ public class ModKeysTest {
                 {"key.keyboard.escape", 256}, {"key.keyboard.enter", 257}, {"key.keyboard.tab", 258},
                 {"key.keyboard.page.down", 267}, {"key.keyboard.end", 269}, {"key.keyboard.caps.lock", 280},
                 {"key.keyboard.print.screen", 283}, {"key.keyboard.pause", 284}, {"key.keyboard.left.shift", 340},
-                {"key.keyboard.left.win", 343}, {"key.keyboard.right.alt", 346}, {"key.keyboard.menu", 348},
+                {"key.keyboard.left.win", 343}, {"key.keyboard.right.alt", 346}, {"key.keyboard.right.win", 347},
         };
         for (Object[] row : table) assertEquals((String) row[0], (Integer) row[1], ModKeys.code((String) row[0]));
         assertNull(ModKeys.code(null));
         assertNull(ModKeys.code(ModKeys.UNBOUND_KEY));
         assertNull(ModKeys.code("scancode.12"));
+        // Upstream's key table has no room for the menu key: it is not sent.
+        assertNull(ModKeys.code("key.keyboard.menu"));
     }
 }

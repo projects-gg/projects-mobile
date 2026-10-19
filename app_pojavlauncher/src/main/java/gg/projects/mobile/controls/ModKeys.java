@@ -212,7 +212,8 @@ public final class ModKeys {
     /**
      * The code to send for one of the game's input names ({@code key.keyboard.*}, {@code key.mouse.*}):
      * a GLFW key code, or upstream's special code for a mouse button. Null for a name the screen cannot
-     * press (scan codes, mouse buttons 6 to 8, anything unknown).
+     * press (scan codes, mouse buttons 6 to 8, the menu key, anything unknown). The menu key (GLFW 348) is
+     * left out: upstream's key table ends at 347, so pressing it would crash the game.
      */
     public static Integer code(String name) {
         if (name == null) return null;
@@ -241,7 +242,7 @@ public final class ModKeys {
                 {"keypad.multiply", "332"}, {"keypad.subtract", "333"}, {"keypad.add", "334"},
                 {"keypad.enter", "335"}, {"keypad.equal", "336"}, {"left.shift", "340"},
                 {"left.control", "341"}, {"left.alt", "342"}, {"left.win", "343"}, {"right.shift", "344"},
-                {"right.control", "345"}, {"right.alt", "346"}, {"right.win", "347"}, {"menu", "348"},
+                {"right.control", "345"}, {"right.alt", "346"}, {"right.win", "347"},
         };
         for (String[] pair : named) codes.put("key.keyboard." + pair[0], Integer.parseInt(pair[1]));
         codes.put("key.mouse.left", MOUSE_LEFT);

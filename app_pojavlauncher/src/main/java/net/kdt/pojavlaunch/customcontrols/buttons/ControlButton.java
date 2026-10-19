@@ -342,20 +342,33 @@ public class ControlButton extends TextView implements ControlInterface {
     public void sendKeyPresses(boolean isDown){
         int[] keys = mProperties.keycodes;
         // Projects fork (M16): a MODLAR key presses the key its mapping uses now, or says why it cannot.
+        // Its release lets go of exactly what its press sent, even if the binding changed in between.
         if (mModAction != null && mControlLayout != null && !mControlLayout.getModifiable()) {
             if (isDown) {
-                gg.projects.mobile.controls.ModKeys.Binding binding = gg.projects.mobile.controls.ModKeysLive.binding(mModAction);
-                if (binding != null && !binding.ready()) {
-                    unavailablePress(binding);
-                    return;
+                // A press again before the release (a swipe back onto it) presses the same keys.
+                if (mSentKeys == null) {
+                    gg.projects.mobile.controls.ModKeys.Binding binding = gg.projects.mobile.controls.ModKeysLive.binding(mModAction);
+                    if (binding != null && !binding.ready()) {
+                        unavailablePress(binding);
+                        return;
+                    }
+                    mSentKeys = binding != null ? binding.keys : mProperties.keycodes;
                 }
-                mSentKeys = binding != null ? binding.keys : null;
+                if (mUnavailablePress) {
+                    // It became bound while held: its hint goes, its release lets go of the keys.
+                    mUnavailablePress = false;
+                    mControlLayout.releaseModHint();
+                }
             } else if (mUnavailablePress) {
                 mUnavailablePress = false;
                 mControlLayout.releaseModHint();
                 return;
+            } else if (mSentKeys == null) {
+                // Nothing was pressed through it: nothing to let go of.
+                setActivated(false);
+                return;
             }
-            if (mSentKeys != null) keys = mSentKeys;
+            keys = mSentKeys;
         }
         setActivated(isDown);
         for(int keycode : keys){
