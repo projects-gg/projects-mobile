@@ -118,6 +118,34 @@ public class LiftRulesTest {
     }
 
     @Test
+    public void anEarlyTitleScreenIsCoveredUntilTheGameFinishedLoadingBehindIt() {
+        // 80-trace (19 October): picture at 88.4 s, smooth from 104 s, "Overlay is removed!" at 108.8 s.
+        LiftRules.State s = state(true);
+        s.stage = LaunchStages.RESOURCES;
+        s.minecraftAt = 57_500;
+        s.firstFrameAt = 88_400;
+        s.pictureAt = 88_400;
+        s.lastLogAt = 100_000;
+        assertNull("still loading: it writes", LiftRules.reason(s, 105_000));
+        s.loadDoneAt = 108_800;
+        assertEquals("loaded", LiftRules.reason(s, 108_800));
+    }
+
+    @Test
+    public void anEarlyTitleScreenThatNeverSaysItIsDoneIsLeftAfterQuietOrALimit() {
+        LiftRules.State s = state(true);
+        s.stage = LaunchStages.RESOURCES;
+        s.pictureAt = 90_000;
+        s.lastLogAt = 95_000;
+        assertNull(LiftRules.reason(s, 95_000 + LiftRules.SETTLE_QUIET_MS - 1));
+        assertEquals("settled", LiftRules.reason(s, 95_000 + LiftRules.SETTLE_QUIET_MS));
+        s.lastLogAt = 90_000 + LiftRules.SETTLE_LIMIT_MS;
+        assertEquals("a game that keeps writing", "settle timeout", LiftRules.reason(s, 90_000 + LiftRules.SETTLE_LIMIT_MS));
+        s.lastLogAt = 0;
+        assertNull("quiet counts from the picture", LiftRules.reason(s, 90_000 + LiftRules.SETTLE_QUIET_MS - 1));
+    }
+
+    @Test
     public void nothingLiftsItEarly() {
         LiftRules.State s = state(true);
         assertNull(LiftRules.reason(s, START));

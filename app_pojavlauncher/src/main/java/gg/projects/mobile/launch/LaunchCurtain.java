@@ -9,6 +9,7 @@ import android.graphics.Paint;
 import android.graphics.RadialGradient;
 import android.graphics.Shader;
 import android.graphics.drawable.Animatable;
+import android.graphics.drawable.AnimatedVectorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Handler;
@@ -57,7 +58,9 @@ import gg.projects.mobile.mods.Motion;
  * When it lifts: the first frame on the game's surface that is not black ({@link FrameContent}),
  * sampled with TextureView's own frame callback or, for the SurfaceView mode, PixelCopy (Android
  * 7+); when the game grabs the pointer; and by {@link LiftRules}: frames that stay black, the
- * resources signal where frames cannot be seen, and long timeouts. It dissolves in 300 ms and
+ * resources signal where frames cannot be seen, and long timeouts. A title screen shown early, while
+ * the game still loads behind it (the Projects pack's Remove Reloading Screen), stays covered until the
+ * game says it finished: it stutters and freezes meanwhile. It dissolves in 300 ms and
  * removes itself: nothing of it (log listener, polling, animations) runs afterwards. With
  * animations off it is a still picture that disappears at once.
  *
@@ -87,6 +90,13 @@ public final class LaunchCurtain extends FrameLayout implements Logger.eventLogL
      * screen lifts the launch screen within a moment, and the line should not change in the last frames.
      */
     private static final long RESOURCES_LINE_MS = 3000;
+    /**
+     * The sheen crosses the emblem once (about a second) every 3.6 s. Between passes nothing animates,
+     * so the render thread draws no frames: as one endless animator it drew every frame while the
+     * band waited off the emblem (about 50 frames a second on the emulator while Java started).
+     */
+    private static final long SHEEN_EVERY_MS = 3600;
+    private static final long SHEEN_FIRST_MS = 920;
 
     private static volatile LaunchCurtain sActive;
     /** The game drew in this process: an activity created again later shows no curtain. */
@@ -122,6 +132,11 @@ public final class LaunchCurtain extends FrameLayout implements Logger.eventLogL
     /** Written by the logger thread. */
     private volatile long mResourcesAt;
     private volatile long mLastLogAt;
+    /** The game shows its title screen early and loads behind it (Remove Reloading Screen). */
+    private volatile boolean mEarlyTitle;
+    private volatile long mLoadDoneAt;
+    /** A picture came while the game still loads behind its early title screen: no more sampling. */
+    private long mPictureAt;
     private int mShownStage = -1;
     private int mLastCopyResult = Integer.MIN_VALUE;
     private long mStageShownAt;
@@ -288,7 +303,7 @@ public final class LaunchCurtain extends FrameLayout implements Logger.eventLogL
             mSheen.setImageResource(R.drawable.projects_launch_sheen);
             start(mEmblem.getDrawable());
             mMain.postDelayed(() -> start(mBrackets.getDrawable()), 160);
-            mMain.postDelayed(() -> start(mSheen.getDrawable()), 520);
+            if (mSheen.getDrawable() instanceof AnimatedVectorDrawable) mMain.postDelayed(mSheenPass, SHEEN_FIRST_MS);
             mColumn.setAlpha(1f);
         } else {
             mBrackets.setImageResource(R.drawable.projects_launch_brackets_static);
@@ -307,6 +322,19 @@ public final class LaunchCurtain extends FrameLayout implements Logger.eventLogL
             Log.w(TAG, "animation unavailable", e);
         }
     }
+
+    /** One pass of the sheen (drawable-v25), then the next one in {@link #SHEEN_EVERY_MS}. */
+    private final Runnable mSheenPass = new Runnable() {
+        @Override
+        public void run() {
+            if (mLifted || !(mSheen.getDrawable() instanceof AnimatedVectorDrawable)) return;
+            AnimatedVectorDrawable sheen = (AnimatedVectorDrawable) mSheen.getDrawable();
+            // Only drawable-v25 animates, so this runs from Android 7.1 (reset() is API 23).
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) sheen.reset();
+            start(sheen);
+            mMain.postDelayed(this, SHEEN_EVERY_MS);
+        }
+    };
 
     private void stopAnimations() {
         for (ImageView view : new ImageView[]{mEmblem, mSheen, mBrackets}) {
@@ -328,6 +356,8 @@ public final class LaunchCurtain extends FrameLayout implements Logger.eventLogL
             mRules.lastLogAt = mLastLogAt;
             mRules.firstFrameAt = mFirstFrameAt;
             mRules.seesFrames = seesFrames();
+            mRules.pictureAt = mPictureAt;
+            mRules.loadDoneAt = mLoadDoneAt;
             String reason = LiftRules.reason(mRules, now);
             if (reason != null) {
                 lift(reason, true);
@@ -355,7 +385,7 @@ public final class LaunchCurtain extends FrameLayout implements Logger.eventLogL
 
     /** SurfaceView mode (Android 7+): has a frame been queued, and does it show a picture? */
     private void pollSurface() {
-        if (mSampling || Build.VERSION.SDK_INT < Build.VERSION_CODES.N || mPollErrors > MAX_POLL_ERRORS) return;
+        if (mSampling || mPictureAt > 0 || Build.VERSION.SDK_INT < Build.VERSION_CODES.N || mPollErrors > MAX_POLL_ERRORS) return;
         View render = mGame.getRenderView();
         if (!(render instanceof SurfaceView)) return;
         SurfaceView surface = (SurfaceView) render;
@@ -390,7 +420,7 @@ public final class LaunchCurtain extends FrameLayout implements Logger.eventLogL
             mFirstFrameAt = now;
             Log.i(TAG, "first frame after " + (now - mStartedAt) + " ms");
         }
-        if (now - mLastSampleAt < 100) return;
+        if (mPictureAt > 0 || now - mLastSampleAt < 100) return;
         mLastSampleAt = now;
         // Not while TextureView is drawing (this runs inside its frame callback).
         mMain.post(() -> {
@@ -414,7 +444,17 @@ public final class LaunchCurtain extends FrameLayout implements Logger.eventLogL
         }
         mSample.getPixels(mPixels, 0, SAMPLE, 0, 0, SAMPLE, SAMPLE);
         if (TRACE) Log.d(TAG, "trace: sample " + FrameContent.describe(mPixels) + " at " + (now - mStartedAt) + " ms");
-        if (FrameContent.hasPicture(mPixels)) lift("picture", true);
+        if (!FrameContent.hasPicture(mPixels)) return;
+        if (mEarlyTitle && mLoadDoneAt == 0) {
+            // The title screen came early; the game still loads behind it and would stutter and
+            // freeze under the player's finger: LiftRules waits for it to finish.
+            if (mPictureAt == 0) {
+                mPictureAt = now;
+                Log.i(TAG, "picture after " + (now - mStartedAt) + " ms, the game still loading behind it");
+            }
+            return;
+        }
+        lift("picture", true);
     }
 
     // ---- The game's log (logger thread) ----
@@ -434,6 +474,14 @@ public final class LaunchCurtain extends FrameLayout implements Logger.eventLogL
                 mResourcesAt = now;
                 Log.i(TAG, "resources after " + (now - mStartedAt) + " ms");
                 mMain.postDelayed(this::showResources, RESOURCES_LINE_MS);
+            }
+            if (!mEarlyTitle && LaunchStages.earlyTitle(text)) {
+                mEarlyTitle = true;
+                Log.i(TAG, "early title screen after " + (now - mStartedAt) + " ms");
+            }
+            if (mLoadDoneAt == 0 && LaunchStages.loadDone(text)) {
+                mLoadDoneAt = now;
+                Log.i(TAG, "load done after " + (now - mStartedAt) + " ms");
             }
         }
     }

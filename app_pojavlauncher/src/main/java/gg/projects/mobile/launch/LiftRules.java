@@ -37,6 +37,13 @@ public final class LiftRules {
     public static final long QUIET_MS = 120_000;
     /** Whatever the log says. */
     public static final long HARD_LIMIT_MS = 20 * 60_000;
+    /**
+     * A title screen shown early (Remove Reloading Screen) while the game still loads behind it: the
+     * screen stays until the game says it finished, the game wrote nothing for this long, or ...
+     */
+    public static final long SETTLE_QUIET_MS = 10_000;
+    /** ... this long after that first picture. */
+    public static final long SETTLE_LIMIT_MS = 40_000;
 
     /** What LaunchCurtain knows at one moment; times are uptime milliseconds, 0 for "not yet". */
     public static final class State {
@@ -52,10 +59,26 @@ public final class LiftRules {
         public long firstFrameAt;
         /** Frames on the game's surface can be seen (TextureView, or PixelCopy that works). */
         public boolean seesFrames;
+        /** A picture came while the game still loads behind its early title screen ({@link LaunchStages#earlyTitle}). */
+        public long pictureAt;
+        /** The game finished loading behind its early title screen ({@link LaunchStages#loadDone}). */
+        public long loadDoneAt;
     }
 
-    /** The reason to lift at {@code now}, or null to stay. */
+    /**
+     * The reason to lift at {@code now}, or null to stay. A picture lifts the screen at once
+     * (LaunchCurtain) unless the game showed its title screen early: then {@link State#pictureAt} is
+     * set and the screen waits for the game to finish loading behind it. On the emulator (19 October)
+     * the early title screen ran at 9 to 17 frames a second, froze for 7 s and was smooth 16 s after
+     * its first frame; the game wrote "Overlay is removed!" 20 s after it.
+     */
     public static String reason(State s, long now) {
+        if (s.pictureAt > 0) {
+            if (s.loadDoneAt > 0) return "loaded";
+            if (now - s.pictureAt >= SETTLE_LIMIT_MS) return "settle timeout";
+            if (now - Math.max(s.pictureAt, s.lastLogAt) >= SETTLE_QUIET_MS) return "settled";
+            return null;
+        }
         if (FrameContent.steadyFrames(s.firstFrameAt, now, s.stage, STEADY_MS) && now - s.lastLogAt >= STEADY_MS) {
             return "steady frames";
         }

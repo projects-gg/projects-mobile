@@ -68,6 +68,19 @@ public final class LaunchStages {
         return chunk != null && containsAny(chunk, RESOURCES_MARKERS);
     }
 
+    /**
+     * True when {@code chunk} says the title screen comes early, while the resources still load behind
+     * it: Remove Reloading Screen (in the Projects pack) logs this right after "Reloading ResourceManager".
+     */
+    public static boolean earlyTitle(String chunk) {
+        return chunk != null && chunk.contains("Trying to complete load early");
+    }
+
+    /** True when {@code chunk} says that load finished (Remove Reloading Screen removed its hidden overlay). */
+    public static boolean loadDone(String chunk) {
+        return chunk != null && chunk.contains("Overlay is removed!");
+    }
+
     private static boolean containsAny(String text, String[] markers) {
         for (String marker : markers) {
             if (text.contains(marker)) return true;

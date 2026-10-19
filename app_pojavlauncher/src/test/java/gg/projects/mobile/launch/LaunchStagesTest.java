@@ -55,6 +55,17 @@ public class LaunchStagesTest {
     }
 
     @Test
+    public void removeReloadingScreenSaysWhenItShowsTheTitleEarlyAndWhenItIsDone() {
+        // 80-trace's log (Projects pack, Remove Reloading Screen 5.2.6).
+        assertTrue(LaunchStages.earlyTitle("[17:02:33] [Render thread/INFO]: Reloading ResourceManager: vanilla\n[17:02:34] [Render thread/INFO]: Trying to complete load early..."));
+        assertFalse(LaunchStages.earlyTitle("[17:02:33] [Render thread/INFO]: Reloading ResourceManager: vanilla"));
+        assertFalse(LaunchStages.earlyTitle(null));
+        assertTrue(LaunchStages.loadDone("[17:03:02] [Render thread/INFO]: Overlay is removed!"));
+        assertFalse(LaunchStages.loadDone("[17:02:53] [Render thread/INFO]: 29877 cache(s) were cleared!"));
+        assertFalse(LaunchStages.loadDone(null));
+    }
+
+    @Test
     public void theResourcesStageComesOnlyFromTheLaunchScreenAndStays() {
         // LaunchCurtain shows "Neredeyse hazır" a moment after the resources marker; the log never
         // moves a start there by itself, and nothing in it moves a start back.
