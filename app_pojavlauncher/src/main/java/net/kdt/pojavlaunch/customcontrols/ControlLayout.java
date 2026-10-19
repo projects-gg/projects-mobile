@@ -284,7 +284,16 @@ public class ControlLayout extends FrameLayout {
 			mModHint = new gg.projects.mobile.controls.ControlHint(getContext());
 			addView(mModHint);
 		}
-		mModHint.show(key, reason, held);
+		// A drawer's key: the line goes under the whole open panel, so it covers none of its keys.
+		android.graphics.RectF clear = new android.graphics.RectF(key.getX(), key.getY(),
+				key.getX() + key.getWidth(), key.getY() + key.getHeight());
+		if (key instanceof ControlSubButton) {
+			for (ControlSubButton button : ((ControlSubButton) key).parentDrawer.buttons) {
+				if (button.getVisibility() != VISIBLE) continue;
+				clear.union(button.getX(), button.getY(), button.getX() + button.getWidth(), button.getY() + button.getHeight());
+			}
+		}
+		mModHint.show(key, clear, reason, held);
 	}
 
 	/** Projects fork (M16): the finger left the key; the reason stays long enough to be read. */

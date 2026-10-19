@@ -76,6 +76,9 @@ public final class ControlHint extends View {
         setClickable(false);
         setFocusable(false);
         setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
+        // Above the keys (upstream lifts every key to a translation Z of 10), without a shadow.
+        setOutlineProvider(null);
+        setTranslationZ(12f);
         setVisibility(GONE);
     }
 
@@ -87,10 +90,11 @@ public final class ControlHint extends View {
     }
 
     /**
-     * Shows {@code message} beside {@code key} (a child of the same layout). While {@code held} it
-     * stays; {@link #release} starts its time.
+     * Shows {@code message} beside {@code key} (a child of the same layout), clear of {@code clear}
+     * (the key itself, or the whole panel a drawer's key is part of, so no other key is covered).
+     * While {@code held} it stays; {@link #release} starts its time.
      */
-    public void show(View key, String message, boolean held) {
+    public void show(View key, android.graphics.RectF clear, String message, boolean held) {
         ViewGroup parent = (ViewGroup) getParent();
         if (parent == null || message == null || message.isEmpty()) return;
         boolean again = showing && getVisibility() == VISIBLE;
@@ -105,11 +109,11 @@ public final class ControlHint extends View {
         int w = Math.round(widest(text)) + 2 * padX;
         int h = text.getHeight() + 2 * padY;
 
-        // Under the key, its left edge on the key's, kept on screen; above the key when there is no room.
-        float keyLeft = key.getX(), keyTop = key.getY(), keyBottom = keyTop + key.getHeight();
+        // Under the panel, its left edge on the key's, kept on screen; above it when there is no room.
+        float keyLeft = key.getX();
+        boolean below = clear.bottom + 8 * dp + h <= parent.getHeight() - margin;
         int x = Math.round(Math.max(margin, Math.min(keyLeft, parent.getWidth() - margin - w)));
-        boolean below = keyBottom + 6 * dp + h <= parent.getHeight() - margin;
-        int y = Math.round(below ? keyBottom + 6 * dp : keyTop - 6 * dp - h);
+        int y = Math.round(below ? clear.bottom + 8 * dp : clear.top - 8 * dp - h);
         FrameLayout.LayoutParams params = getLayoutParams() instanceof FrameLayout.LayoutParams
                 ? (FrameLayout.LayoutParams) getLayoutParams() : new FrameLayout.LayoutParams(w, h);
         params.width = w;
