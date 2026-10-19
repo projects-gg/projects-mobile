@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- The launch screen's sheen (M14; the desktop OYNA's sheen): a warm light band that crosses the
-     emblem in about a second, then waits off the emblem, every 3.6 s while the game starts. Clipped
-     to the emblem's silhouette (traced from the logo, m14/trace_silhouette.py) so only the emblem
-     catches the light. Runs on the render thread (Android 7.1+, hence drawable-v25): smooth while
-     the process starts Java. Its translateX keeps still while it waits, so the vector is not
-     redrawn then. -->
+     emblem in about a second. LaunchCurtain starts it every 3.6 s while the game starts; between
+     passes nothing animates, so the render thread draws no frames (as an endless animator it kept
+     drawing every frame while it waited off the emblem). Clipped to the emblem's silhouette (traced
+     from the logo, m14/trace_silhouette.py) so only the emblem catches the light. Runs on the render
+     thread (Android 7.1+, hence drawable-v25): smooth while the process starts Java. -->
 <animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:aapt="http://schemas.android.com/aapt">
     <aapt:attr name="android:drawable">
@@ -43,19 +43,12 @@
     <target android:name="band">
         <aapt:attr name="android:animation">
             <objectAnimator
-                android:duration="3600"
-                android:repeatCount="infinite"
-                android:startOffset="400"
-                android:valueType="floatType">
-                <propertyValuesHolder android:propertyName="translateX">
-                    <keyframe android:fraction="0" android:value="-900" />
-                    <keyframe
-                        android:fraction="0.3"
-                        android:interpolator="@interpolator/projects_ease_in_out"
-                        android:value="2950" />
-                    <keyframe android:fraction="1" android:value="2950" />
-                </propertyValuesHolder>
-            </objectAnimator>
+                android:duration="1080"
+                android:interpolator="@interpolator/projects_ease_in_out"
+                android:propertyName="translateX"
+                android:valueFrom="-900"
+                android:valueTo="2950"
+                android:valueType="floatType" />
         </aapt:attr>
     </target>
 </animated-vector>
