@@ -53,6 +53,18 @@ public final class NewsFeed {
         transient boolean fromFeed;
         /** The Discord message a feed item summarizes ({@code https://} only), for "Discord'da aç". */
         transient String sourceUrl;
+        /**
+         * M17: one of Minecraft's own updates (the feed's {@code minecraft[]}, content-format.md
+         * "Minecraft news"): never Projects news, never "new", its {@link #sourceUrl} the article on
+         * minecraft.net.
+         */
+        transient boolean minecraft;
+        /** M17: the Minecraft version it is about ({@code 26.3}). */
+        transient String minecraftVersion;
+        /** M17: its English texts ({@code translations.en}); a missing summary or body keeps the base text. */
+        transient String enTitle;
+        transient String enSummary;
+        transient String enBody;
 
         public long publishedAtMillis() {
             return publishedAtMillis;
@@ -64,6 +76,57 @@ public final class NewsFeed {
 
         public String sourceUrl() {
             return sourceUrl;
+        }
+
+        /** M17: Minecraft's own update, not Projects news. */
+        public boolean isMinecraft() {
+            return minecraft;
+        }
+
+        public String minecraftVersion() {
+            return minecraftVersion;
+        }
+
+        /**
+         * M17: this entry in English where it has English texts (a Minecraft entry's
+         * {@code translations.en}), else itself. Projects news stays as written (Turkish).
+         */
+        public NewsItem inEnglish() {
+            if (!minecraft || enTitle == null) return this;
+            NewsItem copy = copy();
+            copy.title = enTitle;
+            if (enSummary != null) copy.summary = enSummary;
+            if (enBody != null) copy.body = enBody;
+            return copy;
+        }
+
+        private NewsItem copy() {
+            NewsItem copy = new NewsItem();
+            copy.id = id;
+            copy.title = title;
+            copy.summary = summary;
+            copy.body = body;
+            copy.cover = cover;
+            copy.category = category;
+            copy.tags = tags;
+            copy.publishedAt = publishedAt;
+            copy.expiresAt = expiresAt;
+            copy.pinned = pinned;
+            copy.pinOrder = pinOrder;
+            copy.featured = featured;
+            copy.hidden = hidden;
+            copy.cta = cta;
+            copy.author = author;
+            copy.publishedAtMillis = publishedAtMillis;
+            copy.expiresAtMillis = expiresAtMillis;
+            copy.fromFeed = fromFeed;
+            copy.sourceUrl = sourceUrl;
+            copy.minecraft = minecraft;
+            copy.minecraftVersion = minecraftVersion;
+            copy.enTitle = enTitle;
+            copy.enSummary = enSummary;
+            copy.enBody = enBody;
+            return copy;
         }
 
         /** Not hidden, published by {@code now} and not expired yet. */
@@ -82,7 +145,7 @@ public final class NewsFeed {
         }
 
         public boolean isPatchNotes() {
-            return "patchNotes".equals(category);
+            return !minecraft && "patchNotes".equals(category);
         }
     }
 

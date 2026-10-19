@@ -38,6 +38,8 @@ public final class NewsSeen {
      * follows the same rule: an old pinned article is not new.
      */
     public boolean isNew(NewsFeed.NewsItem item, long now) {
+        // M17: Minecraft's own updates never carry the dot (content-format.md "Minecraft news").
+        if (item.isMinecraft()) return false;
         return isNew(item.id, item.publishedAtMillis(), now);
     }
 

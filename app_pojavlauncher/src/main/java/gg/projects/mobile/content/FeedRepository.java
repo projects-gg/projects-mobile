@@ -214,7 +214,10 @@ public final class FeedRepository {
         long floor = snapshot.settings.ageFloor(now);
         int downloaded = 0;
         Set<String> seen = new HashSet<>();
-        for (NewsFeed.NewsItem item : snapshot.feed.items) {
+        // M17: Minecraft entries' covers are feed covers too (content-format.md "Minecraft news", rule 7).
+        List<NewsFeed.NewsItem> shown = new ArrayList<>(snapshot.feed.items);
+        shown.addAll(snapshot.feed.minecraft);
+        for (NewsFeed.NewsItem item : shown) {
             if (item.cover == null || !item.isVisible(now) || item.publishedAtMillis() < floor) continue;
             if (!seen.add(Hashes.normalizeHex(item.cover.sha256, 64)) || cachedMedia(item.cover) != null) continue;
             try {

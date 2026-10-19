@@ -23,14 +23,20 @@ public final class HomeContent {
     public final List<Event> events;
     /** The feed's status notice while it is active and no maintenance notice is, else null. */
     public final FeedStatus status;
+    /**
+     * M17: Minecraft's own updates shown at {@link #now} ({@link #visibleMinecraft}): never Projects
+     * news, only where it leaves room.
+     */
+    public final List<NewsFeed.NewsItem> minecraft;
     public final long now;
 
     private HomeContent(List<NewsFeed.NewsItem> news, NewsFeed.NewsItem patchNotes, List<Event> events, FeedStatus status,
-                        long now) {
+                        List<NewsFeed.NewsItem> minecraft, long now) {
         this.news = Collections.unmodifiableList(news);
         this.patchNotes = patchNotes;
         this.events = Collections.unmodifiableList(events);
         this.status = status;
+        this.minecraft = Collections.unmodifiableList(minecraft);
         this.now = now;
     }
 
@@ -50,9 +56,16 @@ public final class HomeContent {
         public final String newsId;
         public final int priority;
         public final boolean fromFeed;
+        /** M17: on the server: while it is live the card offers "Katıl" (never before it starts). */
+        public final boolean join;
 
         public Event(String id, String title, long startsAt, long endsAt, boolean openEnded, String url, String newsId,
                      int priority, boolean fromFeed) {
+            this(id, title, startsAt, endsAt, openEnded, url, newsId, priority, fromFeed, false);
+        }
+
+        public Event(String id, String title, long startsAt, long endsAt, boolean openEnded, String url, String newsId,
+                     int priority, boolean fromFeed, boolean join) {
             this.id = id;
             this.title = title;
             this.startsAt = startsAt;
@@ -62,6 +75,12 @@ public final class HomeContent {
             this.newsId = newsId;
             this.priority = priority;
             this.fromFeed = fromFeed;
+            this.join = join;
+        }
+
+        /** M17: "Katıl" shows now: the event is live and takes place on the server. */
+        public boolean offersJoin(long now) {
+            return join && isLive(now);
         }
 
         public Phase phase(long now) {
@@ -84,7 +103,31 @@ public final class HomeContent {
                 ? Collections.<LauncherConfig.EventCountdown>emptyList() : config.events;
         boolean maintenance = config != null && config.maintenance != null && config.maintenance.isActive(now);
         return new HomeContent(news, newestPatchNotes(news), mergeEvents(configEvents, bot, news, now),
-                homeStatus(bot, maintenance, now), now);
+                homeStatus(bot, maintenance, now), visibleMinecraft(studio, bot, maxAge, now), now);
+    }
+
+    /**
+     * M17: the feed's Minecraft entries shown at {@code now} (content-format.md "Minecraft news",
+     * rules 4 and 5): published, not expired, published at most {@code maxAgeDays} ago, and not
+     * hidden by Studio (a Studio item with the entry's id hides it, visible or not); the newer
+     * {@code publishedAt} first, then the smaller id.
+     */
+    public static List<NewsFeed.NewsItem> visibleMinecraft(NewsFeed studio, BotFeed feed, int maxAgeDays, long now) {
+        List<NewsFeed.NewsItem> out = new ArrayList<>();
+        if (feed == null) return out;
+        long floor = now - maxAgeDays * 86_400_000L;
+        for (NewsFeed.NewsItem entry : feed.minecraft) {
+            if (studio != null && studio.publishes(entry.id)) continue;
+            if (entry.isVisible(now) && entry.publishedAtMillis() >= floor) out.add(entry);
+        }
+        Collections.sort(out, new Comparator<NewsFeed.NewsItem>() {
+            @Override
+            public int compare(NewsFeed.NewsItem a, NewsFeed.NewsItem b) {
+                int byDate = Long.compare(b.publishedAtMillis(), a.publishedAtMillis());
+                return byDate != 0 ? byDate : ContentText.compare(a.id, b.id);
+            }
+        });
+        return out;
     }
 
     /**
@@ -155,13 +198,13 @@ public final class HomeContent {
             configIds.add(event.id);
             if (event.hidden) continue;
             events.add(new Event(event.id, event.title, event.startsAt, event.endsAt, false, event.url,
-                    newsIds.contains(event.newsId) ? event.newsId : null, event.priority, false));
+                    newsIds.contains(event.newsId) ? event.newsId : null, event.priority, false, event.join));
         }
         if (feed != null) {
             for (BotFeed.Event event : feed.events) {
                 if (configIds.contains(event.id)) continue;
                 events.add(new Event(event.id, event.title, event.startsAt, event.end(), event.endsAt == null, event.url,
-                        newsIds.contains(event.newsId) ? event.newsId : null, event.priority, true));
+                        newsIds.contains(event.newsId) ? event.newsId : null, event.priority, true, event.join));
             }
         }
         return cardEvents(events, now);

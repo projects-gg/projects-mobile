@@ -272,4 +272,24 @@
     <string name="projects_modkey_no_mod">%1$s bu profilde yüklü değil.</string>
     <!-- M16: the start's file check before the game opens (files only checked, nothing downloaded). -->
     <string name="projects_check_files">Oyun dosyaları denetleniyor… (%1$d/%2$d)</string>
+    <!-- M17: one tap fixes the mods' clashing keys an options.txt saved before 0.1.6 still has. -->
+    <string name="projects_keyfix_title">Bazı mod tuşları çakışıyor</string>
+    <string name="projects_keyfix_body">Bir tuşa basınca iki eylem birden çalışıyor.</string>
+    <string name="projects_keyfix_action">Tuş çakışmalarını düzelt</string>
+    <string name="projects_keyfix_done">Tuş çakışmaları düzeltildi</string>
+    <string name="projects_keyfix_queued">Oyunu yeniden açınca düzelecek.</string>
+    <string name="projects_keyfix_undone">Eski tuşların geri geldi.</string>
+    <string name="projects_keyfix_failed">Tuşlar değiştirilemedi. Tekrar dene.</string>
+    <string name="projects_undo">Geri al</string>
+    <string name="projects_modkey_conflict_short">Bu tuşu oyunda başka bir eylem de kullanıyor.</string>
+    <!-- M17: a Projects start that ends while the player is away from the home screen. -->
+    <string name="projects_ready_title">Projects hazır</string>
+    <string name="projects_ready_body">Kurulum bitti. Başlatmak için Oyna\'ya bas.</string>
+    <string name="projects_files_failed_network">Oyun dosyaları indirilemedi. İnternet bağlantını kontrol edip tekrar dene.</string>
+    <string name="projects_files_failed_generic">Oyun dosyaları hazırlanamadı. Tekrar dene; sürerse ayrıntıları destek ekibine gönder.</string>
+    <!-- M17: Minecraft's own updates and the event card's "Join". -->
+    <string name="projects_minecraft_read">minecraft.net\'te oku</string>
+    <string name="projects_event_join">Katıl</string>
+    <!-- M17: Settings, under About: small and quiet. -->
+    <string name="projects_not_affiliated">Mojang veya Minecraft ile bağlantılı değildir.</string>
 </resources>

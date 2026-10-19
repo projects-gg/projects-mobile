@@ -167,7 +167,8 @@ public class FeedStatusTest {
     @Test
     public void fieldsANewerBotAddsAreIgnored() throws Exception {
         String text = feed(1792130400L, list(item("discord-1", "2026-10-16T08:00:00Z", ",\"reactions\":3")),
-                list(event("discord-9", "2026-10-18T17:00:00Z", "2026-10-18T20:00:00Z", ",\"join\":{\"server\":\"x\"}")));
+                // M17: "join" is a known field since Q4 (a non-boolean drops the event); "lobby" is not.
+                list(event("discord-9", "2026-10-18T17:00:00Z", "2026-10-18T20:00:00Z", ",\"lobby\":{\"server\":\"x\"}")));
         String status = status("outage")
                 .replace("\"level\":\"outage\"", "\"level\":\"outage\",\"incidentId\":\"abc\",\"severity\":{\"score\":9}")
                 .replace("\"state\":\"down\"", "\"state\":\"down\",\"region\":\"eu\"");

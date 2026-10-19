@@ -12,4 +12,8 @@
     <item name="projects_press_style" type="id" />
     <!-- View tag: a control drawer's button fading out (DrawerMotion), so it takes no new touch. -->
     <item name="projects_drawer_leaving" type="id" />
+    <!-- View tag (M17): the home screen's undo bar, made once per menu view (UndoBar.attach). -->
+    <item name="projects_undo_bar" type="id" />
+    <!-- View tag (M17): whether a news category chip is styled for a Minecraft update (ProjectsUi.bindCategory). -->
+    <item name="projects_chip_minecraft" type="id" />
 </resources>

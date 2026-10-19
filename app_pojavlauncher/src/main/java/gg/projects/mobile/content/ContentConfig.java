@@ -64,4 +64,10 @@ public final class ContentConfig {
     public static final int FEED_DEFAULT_MAX_AGE_DAYS = 60;
     /** How long a feed event without {@code endsAt} counts as live. */
     public static final long OPEN_EVENT_MS = 3L * 60 * 60 * 1000;
+    /** M17: most entries the feed's {@code minecraft[]} may hold (more: the array is ignored). */
+    public static final int FEED_MAX_MINECRAFT = 10;
+    /** M17: longest a Minecraft entry may stay ({@code expiresAt - publishedAt}). */
+    public static final long MINECRAFT_MAX_LIFETIME_MS = 90L * 24 * 60 * 60 * 1000;
+    /** M17: longest Minecraft version id an entry may name. */
+    public static final int MINECRAFT_MAX_VERSION_CHARS = 40;
 }

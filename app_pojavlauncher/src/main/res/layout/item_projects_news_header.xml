@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- M17: the quiet heading over Minecraft's own updates in "Tüm haberler", after every Projects post. -->
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="16dp"
+    android:layout_marginTop="22dp"
+    android:layout_marginEnd="16dp"
+    android:layout_marginBottom="2dp"
+    android:accessibilityHeading="true"
+    android:drawableStart="@drawable/projects_minecraft_glyph"
+    android:drawablePadding="6dp"
+    android:fontFamily="@font/figtree_semibold"
+    android:gravity="center_vertical"
+    android:text="@string/projects_minecraft"
+    android:textColor="@color/projects_ash_300"
+    android:textSize="13sp" />

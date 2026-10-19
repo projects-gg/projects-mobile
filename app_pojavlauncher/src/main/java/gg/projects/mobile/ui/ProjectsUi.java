@@ -40,6 +40,8 @@ public final class ProjectsUi {
     private ProjectsUi() {}
 
     public static String categoryLabel(Context context, NewsFeed.NewsItem item) {
+        // M17: Minecraft's own updates carry "Minecraft" in place of a category.
+        if (item.isMinecraft()) return context.getString(R.string.projects_minecraft);
         switch (item.categoryOrDefault()) {
             case "update": return context.getString(R.string.projects_category_update);
             case "event": return context.getString(R.string.projects_category_event);
@@ -47,6 +49,34 @@ public final class ProjectsUi {
             case "community": return context.getString(R.string.projects_category_community);
             default: return context.getString(R.string.projects_category_announcement);
         }
+    }
+
+    /**
+     * M17: the category chip. Projects news shows its category in gold; Minecraft's own updates show
+     * "Minecraft" quieter, in ash with the cube mark (the desktop's quieter Minecraft row), so the
+     * server's own news stays the loud one.
+     */
+    public static void bindCategory(TextView chip, NewsFeed.NewsItem item) {
+        Context context = chip.getContext();
+        CharSequence label = categoryLabel(context, item);
+        if (!android.text.TextUtils.equals(chip.getText(), label)) chip.setText(label);
+        boolean minecraft = item.isMinecraft();
+        Object styled = chip.getTag(R.id.projects_chip_minecraft);
+        if (styled instanceof Boolean && (Boolean) styled == minecraft) return;
+        chip.setTag(R.id.projects_chip_minecraft, minecraft);
+        chip.setTextColor(androidx.core.content.ContextCompat.getColor(context,
+                minecraft ? R.color.projects_ash_300 : R.color.projects_gold_300));
+        chip.setCompoundDrawablesRelativeWithIntrinsicBounds(minecraft ? R.drawable.projects_minecraft_glyph : 0, 0, 0, 0);
+        chip.setCompoundDrawablePadding(minecraft ? Math.round(4 * context.getResources().getDisplayMetrics().density) : 0);
+    }
+
+    /**
+     * M17: {@code item} in the app's language: a Minecraft entry's English texts on an English
+     * interface ({@code translations.en}); Projects news stays as written.
+     */
+    public static NewsFeed.NewsItem localized(Context context, NewsFeed.NewsItem item) {
+        if (item == null || !item.isMinecraft()) return item;
+        return gg.projects.mobile.language.LanguageManager.isTurkish(context) ? item : item.inEnglish();
     }
 
     private static Locale locale(Context context) {
@@ -225,10 +255,13 @@ public final class ProjectsUi {
      * Full article: cover, category, date, title, the Markdown body and, for Discord posts, the
      * original. Opening it counts as reading it: its "new" dot goes out.
      */
-    public static void showArticle(final Activity activity, final Snapshot snapshot, final NewsFeed.NewsItem item) {
-        NewsSeenStore.markRead(activity, item);
+    public static void showArticle(final Activity activity, final Snapshot snapshot, final NewsFeed.NewsItem shown) {
+        // M17: a Minecraft update in the app's language; it never moves the "new" marks of Projects news.
+        final NewsFeed.NewsItem item = localized(activity, shown);
+        boolean minecraft = item.isMinecraft();
+        if (!minecraft) NewsSeenStore.markRead(activity, item);
         View view = LayoutInflater.from(activity).inflate(R.layout.dialog_projects_news, null, false);
-        ((TextView) view.findViewById(R.id.projects_article_category)).setText(categoryLabel(activity, item));
+        bindCategory(view.findViewById(R.id.projects_article_category), item);
         ((TextView) view.findViewById(R.id.projects_article_date)).setText(date(activity, item.publishedAtMillis()));
         ((TextView) view.findViewById(R.id.projects_article_title)).setText(item.title);
         TextView body = view.findViewById(R.id.projects_article_body);
@@ -236,7 +269,11 @@ public final class ProjectsUi {
         body.setText(rendered);
         body.setMovementMethod(LinkMovementMethod.getInstance());
         TextView author = view.findViewById(R.id.projects_article_author);
-        if (item.author != null && !item.author.trim().isEmpty()) {
+        if (minecraft) {
+            // The source, named under the title; the article itself opens from the dialog's button.
+            author.setText(R.string.projects_minecraft_source);
+            author.setVisibility(View.VISIBLE);
+        } else if (item.author != null && !item.author.trim().isEmpty()) {
             author.setText(item.author.trim());
             author.setVisibility(View.VISIBLE);
         }
@@ -245,7 +282,7 @@ public final class ProjectsUi {
         cover.bind(snapshot, item, true);
         final String source = item.sourceUrl();
         View discord = view.findViewById(R.id.projects_article_discord);
-        if (source != null && ContentPaths.isHttpsUrl(source)) {
+        if (!minecraft && source != null && ContentPaths.isHttpsUrl(source)) {
             discord.setVisibility(View.VISIBLE);
             Press.attach(discord, Press.Style.CARD); // M14
             discord.setOnClickListener(v -> openUrl(activity, source));
@@ -254,6 +291,14 @@ public final class ProjectsUi {
         AlertDialog.Builder builder = new AlertDialog.Builder(activity)
                 .setView(view)
                 .setPositiveButton(R.string.projects_close, null);
+        if (minecraft) {
+            // M17: "minecraft.net'te oku" in the system browser (https only), never "Discord'da aç".
+            if (source != null && ContentPaths.isHttpsUrl(source)) {
+                builder.setNeutralButton(R.string.projects_minecraft_read, (d, w) -> openUrl(activity, source));
+            }
+            builder.show();
+            return;
+        }
         final NewsFeed.Cta cta = item.cta;
         if (cta != null && cta.label != null && !cta.label.trim().isEmpty()) {
             if (ContentPaths.isHttpsUrl(cta.url)) {

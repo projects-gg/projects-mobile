@@ -29,17 +29,23 @@ public final class BotFeed {
     public final List<Event> events;
     /** The status page's active problem, or null; check {@link FeedStatus#isActive} before showing it. */
     public final FeedStatus status;
+    /**
+     * M17: Minecraft's own updates ({@code minecraft[]}, content-format.md "Minecraft news"), in feed
+     * order: entries the home screen shows only where Projects news leaves room.
+     */
+    public final List<NewsFeed.NewsItem> minecraft;
     /** What was dropped or repaired, for logs. */
     public final List<String> problems;
 
     private BotFeed(int schema, long sequence, long generatedAt, List<NewsFeed.NewsItem> items, List<Event> events,
-                    FeedStatus status, List<String> problems) {
+                    FeedStatus status, List<NewsFeed.NewsItem> minecraft, List<String> problems) {
         this.schema = schema;
         this.sequence = sequence;
         this.generatedAt = generatedAt;
         this.items = Collections.unmodifiableList(items);
         this.events = Collections.unmodifiableList(events);
         this.status = status;
+        this.minecraft = Collections.unmodifiableList(minecraft);
         this.problems = Collections.unmodifiableList(problems);
     }
 
@@ -55,8 +61,10 @@ public final class BotFeed {
         /** A feed item the event came from, or null. */
         public final String newsId;
         public final int priority;
+        /** M17: the event takes place on the server: while it is live the card offers "Katıl". */
+        public final boolean join;
 
-        Event(String id, String title, long startsAt, Long endsAt, String url, String newsId, int priority) {
+        Event(String id, String title, long startsAt, Long endsAt, String url, String newsId, int priority, boolean join) {
             this.id = id;
             this.title = title;
             this.startsAt = startsAt;
@@ -64,6 +72,7 @@ public final class BotFeed {
             this.url = url;
             this.newsId = newsId;
             this.priority = priority;
+            this.join = join;
         }
 
         /** {@code endsAt}, or {@code startsAt} + three hours. */
@@ -77,10 +86,11 @@ public final class BotFeed {
         return null;
     }
 
-    /** Every cover the feed references. */
+    /** Every cover the feed references (Minecraft entries' too: they are feed covers). */
     public List<MediaRef> mediaRefs() {
         List<MediaRef> refs = new ArrayList<>();
         for (NewsFeed.NewsItem item : items) if (item.cover != null) refs.add(item.cover);
+        for (NewsFeed.NewsItem entry : minecraft) if (entry.cover != null) refs.add(entry.cover);
         return refs;
     }
 
@@ -102,6 +112,7 @@ public final class BotFeed {
         JsonArray rawItems;
         JsonArray rawEvents;
         JsonElement rawStatus;
+        JsonElement rawMinecraft;
         try {
             JsonObject object = JsonFields.object(root, "feed.json");
             schema = (int) JsonFields.defaultInteger(object, "schema", 1, 0, 0xFFFFFFFFL);
@@ -110,6 +121,7 @@ public final class BotFeed {
             rawItems = JsonFields.defaultArray(object, "items");
             rawEvents = JsonFields.defaultArray(object, "events");
             rawStatus = object.get("status");
+            rawMinecraft = object.get("minecraft");
         } catch (JsonFields.Unreadable e) {
             throw invalid("feed.json has an unexpected shape: " + e.getMessage());
         }
@@ -125,7 +137,152 @@ public final class BotFeed {
         List<Event> events = readEvents(rawEvents, items, problems);
         // A broken status notice drops only itself (content-format.md "Status notice").
         FeedStatus status = FeedStatus.read(rawStatus, problems);
-        return new BotFeed(schema, sequence, generatedAt, items, events, status, problems);
+        // M17: so does a broken Minecraft entry, or the whole array when it is not one (or too long).
+        List<NewsFeed.NewsItem> minecraft = readMinecraft(rawMinecraft, problems);
+        return new BotFeed(schema, sequence, generatedAt, items, events, status, minecraft, problems);
+    }
+
+    /**
+     * M17: {@code minecraft[]} (content-format.md "Minecraft news"). Missing means none; not an array,
+     * or more than {@link ContentConfig#FEED_MAX_MINECRAFT} entries, ignores it as a whole. An entry is
+     * dropped when it does not parse, its id is not {@code minecraft-<version>} (or repeats), the
+     * version, title, summary, body, dates or the minecraft.net link break their rules; a bad cover or
+     * a bad English translation drops only that part. Entries carry no category, pin, button or
+     * author: whatever the feed says there is ignored.
+     */
+    static List<NewsFeed.NewsItem> readMinecraft(JsonElement raw, List<String> problems) {
+        List<NewsFeed.NewsItem> entries = new ArrayList<>();
+        if (raw == null) return entries;
+        if (!raw.isJsonArray()) {
+            problems.add("minecraft ignored: not an array");
+            return entries;
+        }
+        JsonArray array = raw.getAsJsonArray();
+        if (array.size() > ContentConfig.FEED_MAX_MINECRAFT) {
+            problems.add("minecraft ignored: " + array.size() + " entries; at most " + ContentConfig.FEED_MAX_MINECRAFT);
+            return entries;
+        }
+        Set<String> seen = new HashSet<>();
+        for (JsonElement value : array) {
+            NewsFeed.NewsItem entry;
+            try {
+                entry = readMinecraftEntry(value, problems);
+            } catch (JsonFields.Unreadable e) {
+                problems.add("minecraft " + rawId(value) + " dropped: unreadable (" + e.getMessage() + ")");
+                continue;
+            }
+            if (entry == null) continue;
+            if (!seen.add(entry.id)) {
+                problems.add("minecraft " + entry.id + " dropped: duplicate id");
+                continue;
+            }
+            entries.add(entry);
+        }
+        return entries;
+    }
+
+    /** One Minecraft entry, or null (with the reason in {@code problems}) when it breaks an entry rule. */
+    private static NewsFeed.NewsItem readMinecraftEntry(JsonElement value, List<String> problems) throws JsonFields.Unreadable {
+        JsonObject o = JsonFields.object(value, "minecraft entry");
+        NewsFeed.NewsItem entry = new NewsFeed.NewsItem();
+        entry.id = JsonFields.requiredString(o, "id");
+        String version = JsonFields.requiredString(o, "version");
+        entry.title = JsonFields.requiredString(o, "title");
+        entry.summary = JsonFields.defaultString(o, "summary", "");
+        entry.body = JsonFields.defaultString(o, "body", "");
+        JsonObject cover = JsonFields.optionalObject(o, "cover");
+        entry.publishedAt = JsonFields.requiredString(o, "publishedAt");
+        entry.publishedAtMillis = JsonFields.requiredTimestamp(o, "publishedAt");
+        entry.expiresAt = JsonFields.requiredString(o, "expiresAt");
+        long expiresAt = JsonFields.requiredTimestamp(o, "expiresAt");
+        entry.expiresAtMillis = expiresAt;
+        JsonObject source = JsonFields.optionalObject(o, "source");
+        String url = source == null ? null : JsonFields.optionalString(source, "url");
+
+        String issue = textIssue(entry.id, entry.title, entry.summary, entry.body);
+        if (issue == null && !isMinecraftVersion(version)) issue = "bad version";
+        else if (issue == null && !entry.id.equals("minecraft-" + version)) issue = "id is not minecraft-<version>";
+        else if (issue == null && expiresAt <= entry.publishedAtMillis) issue = "expires before it is published";
+        else if (issue == null && expiresAt - entry.publishedAtMillis > ContentConfig.MINECRAFT_MAX_LIFETIME_MS) issue = "expires more than 90 days after it is published";
+        else if (issue == null && !isMinecraftArticle(url)) issue = "no minecraft.net link";
+        if (issue != null) {
+            problems.add("minecraft " + entry.id + " dropped: " + issue);
+            return null;
+        }
+        entry.minecraft = true;
+        entry.minecraftVersion = version;
+        entry.fromFeed = true;
+        entry.sourceUrl = url;
+        entry.category = null;
+        entry.tags = new ArrayList<>();
+        if (cover != null) {
+            try {
+                entry.cover = readMedia(cover, 0);
+                entry.cover.poster = null;
+                if (!isValidCover(entry.cover)) {
+                    entry.cover = null;
+                    problems.add("minecraft " + entry.id + ": cover removed");
+                }
+            } catch (JsonFields.Unreadable e) {
+                entry.cover = null;
+                problems.add("minecraft " + entry.id + ": cover removed");
+            }
+        }
+        readEnglish(o, entry, problems);
+        return entry;
+    }
+
+    /** {@code translations.en}: a text that breaks its limits, or a value that is not an object, is ignored. */
+    private static void readEnglish(JsonObject o, NewsFeed.NewsItem entry, List<String> problems) {
+        JsonElement translations = o.get("translations");
+        if (translations == null || translations.isJsonNull()) return;
+        if (!translations.isJsonObject()) {
+            problems.add("minecraft " + entry.id + ": translations ignored");
+            return;
+        }
+        JsonElement en = translations.getAsJsonObject().get("en");
+        if (en == null || en.isJsonNull()) return;
+        try {
+            JsonObject english = JsonFields.object(en, "translation");
+            String title = JsonFields.requiredString(english, "title");
+            String summary = JsonFields.optionalString(english, "summary");
+            String body = JsonFields.optionalString(english, "body");
+            if (ContentText.isBlank(title) || ContentText.longerThan(title, ContentConfig.FEED_MAX_TITLE_CHARS)
+                    || ContentText.longerThan(summary, ContentConfig.FEED_MAX_SUMMARY_CHARS)
+                    || ContentText.longerThan(body, ContentConfig.FEED_MAX_BODY_CHARS)) {
+                problems.add("minecraft " + entry.id + ": English text ignored");
+                return;
+            }
+            entry.enTitle = title;
+            entry.enSummary = summary;
+            entry.enBody = body;
+        } catch (JsonFields.Unreadable e) {
+            problems.add("minecraft " + entry.id + ": English text ignored");
+        }
+    }
+
+    /** Mojang's version id: 1 to 40 characters from {@code [A-Za-z0-9._-]}. */
+    static boolean isMinecraftVersion(String version) {
+        if (version == null || version.isEmpty() || version.length() > ContentConfig.MINECRAFT_MAX_VERSION_CHARS) return false;
+        for (int i = 0; i < version.length(); i++) {
+            char c = version.charAt(i);
+            boolean ok = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '.' || c == '_' || c == '-';
+            if (!ok) return false;
+        }
+        return true;
+    }
+
+    /** The attribution link: an {@code https://} URL on minecraft.net or www.minecraft.net, without credentials. */
+    static boolean isMinecraftArticle(String url) {
+        if (!ContentText.isHttpsLink(url)) return false;
+        try {
+            String host = new java.net.URI(url).getHost();
+            if (host == null) return false;
+            host = host.toLowerCase(java.util.Locale.ROOT);
+            return host.equals("minecraft.net") || host.equals("www.minecraft.net");
+        } catch (java.net.URISyntaxException e) {
+            return false;
+        }
     }
 
     private static ContentException invalid(String message) {
@@ -277,6 +434,7 @@ public final class BotFeed {
             String url;
             String newsId;
             int priority;
+            boolean join;
             try {
                 JsonObject o = JsonFields.object(value, "event");
                 id = JsonFields.requiredString(o, "id");
@@ -286,6 +444,8 @@ public final class BotFeed {
                 url = JsonFields.optionalString(o, "url");
                 newsId = JsonFields.optionalString(o, "newsId");
                 priority = (int) JsonFields.defaultInteger(o, "priority", 0, Integer.MIN_VALUE, Integer.MAX_VALUE);
+                // M17: a "join" that is not a boolean makes the event unreadable (content-format.md rule 4).
+                join = JsonFields.defaultBoolean(o, "join", false);
                 readSourceUrl(o);
             } catch (JsonFields.Unreadable e) {
                 problems.add("event " + rawId(value) + " dropped: unreadable (" + e.getMessage() + ")");
@@ -312,7 +472,7 @@ public final class BotFeed {
                 newsId = null;
                 problems.add("event " + id + ": unknown news item");
             }
-            events.add(new Event(id, title, startsAt, endsAt, url, newsId, priority));
+            events.add(new Event(id, title, startsAt, endsAt, url, newsId, priority, join));
         }
         return events;
     }

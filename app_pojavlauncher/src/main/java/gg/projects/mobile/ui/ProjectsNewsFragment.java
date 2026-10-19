@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 
 import gg.projects.mobile.ProjectsContent;
+import gg.projects.mobile.content.HomeContent;
 import gg.projects.mobile.content.NewsFeed;
 import gg.projects.mobile.content.NewsSeen;
 import gg.projects.mobile.content.Snapshot;
@@ -41,10 +42,18 @@ import gg.projects.mobile.mods.Motion;
  * <p>News the player has not seen yet has a small gold dot before its date. The screen decides
  * with what was seen when it opened, so the dots stay for the whole visit, and counts everything
  * it shows as seen from then on; opening an article fades its dot out where it is.
+ *
+ * <p>M17: Minecraft's own updates (the feed's {@code minecraft[]}) come after every Projects post,
+ * under a quiet "Minecraft" heading, labelled "Minecraft" in ash instead of a gold category, in the
+ * app's language; they never carry the dot and never count as seen Projects news.
  */
 public class ProjectsNewsFragment extends Fragment implements ProjectsContent.Listener {
     public static final String TAG = "ProjectsNewsFragment";
     private static final long DOT_FADE_MS = 200;
+    private static final int TYPE_NEWS = 0;
+    private static final int TYPE_HEADING = 1;
+    /** The heading's row id: no news id has a space. */
+    private static final String HEADING_ID = "minecraft heading";
 
     private final NewsAdapter mAdapter = new NewsAdapter();
     private RecyclerView mList;
@@ -145,13 +154,16 @@ public class ProjectsNewsFragment extends Fragment implements ProjectsContent.Li
     @Override
     public void onContent(@Nullable Snapshot snapshot, boolean refreshing) {
         if (!isAdded() || getView() == null) return;
-        List<NewsFeed.NewsItem> items = snapshot == null
-                ? new ArrayList<NewsFeed.NewsItem>() : snapshot.home(System.currentTimeMillis()).news;
-        mAdapter.submit(snapshot, items);
-        // Everything this visit shows counts as seen from now on (the dots stay until it ends).
+        HomeContent home = snapshot == null ? null : snapshot.home(System.currentTimeMillis());
+        List<NewsFeed.NewsItem> items = home == null ? new ArrayList<NewsFeed.NewsItem>() : home.news;
+        List<NewsFeed.NewsItem> minecraft = new ArrayList<>();
+        if (home != null) for (NewsFeed.NewsItem entry : home.minecraft) minecraft.add(ProjectsUi.localized(requireContext(), entry));
+        mAdapter.submit(snapshot, items, minecraft);
+        // Everything this visit shows counts as seen from now on (the dots stay until it ends);
+        // Minecraft's updates are not Projects news and move nothing.
         NewsSeenStore.advance(requireContext(), items);
         boolean message = false;
-        if (items.isEmpty() && !(refreshing && (snapshot == null || !snapshot.hasContent()))) {
+        if (items.isEmpty() && minecraft.isEmpty() && !(refreshing && (snapshot == null || !snapshot.hasContent()))) {
             boolean empty = snapshot != null && (snapshot.news != null || ProjectsUi.nothingPublished(snapshot));
             if (empty) {
                 mMessageTitle.setText(R.string.projects_news_empty_title);
@@ -175,9 +187,11 @@ public class ProjectsNewsFragment extends Fragment implements ProjectsContent.Li
     }
 
     /** What a row shows; rows re-bind only when this changes. */
-    private static String content(NewsFeed.NewsItem item) {
+    private static String content(Row row) {
+        NewsFeed.NewsItem item = row.item;
+        if (item == null) return HEADING_ID;
         return item.title + '\n' + item.summary + '\n' + item.publishedAtMillis() + '\n' + item.pinned + '\n'
-                + item.category + '\n' + item.featured + '\n' + item.fromFeed() + '\n'
+                + item.category + '\n' + item.featured + '\n' + item.fromFeed() + '\n' + item.isMinecraft() + '\n'
                 + (item.cover == null ? "" : item.cover.sha256);
     }
 
@@ -186,16 +200,34 @@ public class ProjectsNewsFragment extends Fragment implements ProjectsContent.Li
         return item.cover != null && (item.featured || item.fromFeed());
     }
 
-    private final class NewsAdapter extends RecyclerView.Adapter<NewsHolder> {
+    /** A row of the list: a news entry, or the "Minecraft" heading ({@code item} null). */
+    private static final class Row {
+        final String id;
+        @Nullable
+        final NewsFeed.NewsItem item;
+
+        Row(String id, @Nullable NewsFeed.NewsItem item) {
+            this.id = id;
+            this.item = item;
+        }
+    }
+
+    private final class NewsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         private Snapshot mSnapshot;
-        private List<NewsFeed.NewsItem> mItems = new ArrayList<>();
+        private List<Row> mRows = new ArrayList<>();
         private final Map<String, Long> mIds = new HashMap<>();
         private final Set<String> mShown = new HashSet<>();
 
-        void submit(Snapshot snapshot, final List<NewsFeed.NewsItem> items) {
+        void submit(Snapshot snapshot, List<NewsFeed.NewsItem> items, List<NewsFeed.NewsItem> minecraft) {
             mSnapshot = snapshot;
-            final List<NewsFeed.NewsItem> old = mItems;
-            mItems = new ArrayList<>(items);
+            final List<Row> rows = new ArrayList<>();
+            for (NewsFeed.NewsItem item : items) rows.add(new Row(item.id, item));
+            if (!minecraft.isEmpty()) {
+                rows.add(new Row(HEADING_ID, null));
+                for (NewsFeed.NewsItem entry : minecraft) rows.add(new Row(entry.id, entry));
+            }
+            final List<Row> old = mRows;
+            mRows = rows;
             if (old.isEmpty()) {
                 // First fill: rows enter with their own staggered animation, not the item animator's.
                 notifyDataSetChanged();
@@ -210,24 +242,24 @@ public class ProjectsNewsFragment extends Fragment implements ProjectsContent.Li
 
                 @Override
                 public int getNewListSize() {
-                    return items.size();
+                    return rows.size();
                 }
 
                 @Override
                 public boolean areItemsTheSame(int oldPosition, int newPosition) {
-                    return old.get(oldPosition).id.equals(items.get(newPosition).id);
+                    return old.get(oldPosition).id.equals(rows.get(newPosition).id);
                 }
 
                 @Override
                 public boolean areContentsTheSame(int oldPosition, int newPosition) {
-                    return content(old.get(oldPosition)).equals(content(items.get(newPosition)));
+                    return content(old.get(oldPosition)).equals(content(rows.get(newPosition)));
                 }
             }).dispatchUpdatesTo(this);
         }
 
         @Override
         public long getItemId(int position) {
-            String id = mItems.get(position).id;
+            String id = mRows.get(position).id;
             Long stable = mIds.get(id);
             if (stable == null) {
                 stable = (long) mIds.size();
@@ -236,39 +268,48 @@ public class ProjectsNewsFragment extends Fragment implements ProjectsContent.Li
             return stable;
         }
 
+        @Override
+        public int getItemViewType(int position) {
+            return mRows.get(position).item == null ? TYPE_HEADING : TYPE_NEWS;
+        }
+
         @NonNull
         @Override
-        public NewsHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            View row = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_projects_news, parent, false);
+        public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            LayoutInflater inflater = LayoutInflater.from(parent.getContext());
+            if (viewType == TYPE_HEADING) {
+                return new RecyclerView.ViewHolder(inflater.inflate(R.layout.item_projects_news_header, parent, false)) {};
+            }
+            View row = inflater.inflate(R.layout.item_projects_news, parent, false);
             Press.attach(row, Press.Style.CARD); // M14: rows press with a light tick
             return new NewsHolder(row);
         }
 
         @Override
-        public void onBindViewHolder(@NonNull NewsHolder holder, int position) {
-            NewsFeed.NewsItem item = mItems.get(position);
-            holder.bind(mSnapshot, item);
+        public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+            Row row = mRows.get(position);
+            if (holder instanceof NewsHolder && row.item != null) ((NewsHolder) holder).bind(mSnapshot, row.item);
             View view = holder.itemView;
-            if (mAnimateRows && !mShown.contains(item.id) && position < 8) {
+            if (mAnimateRows && !mShown.contains(row.id) && position < 8) {
                 view.setAlpha(0f);
                 view.setTranslationY(14 * view.getResources().getDisplayMetrics().density);
                 view.animate().alpha(1f).translationY(0f).setStartDelay(60L + position * 40L)
                         .setDuration(Motion.ENTER_MS).setInterpolator(Motion.EASE_OUT).start();
             }
-            mShown.add(item.id);
+            mShown.add(row.id);
         }
 
         @Override
-        public void onViewRecycled(@NonNull NewsHolder holder) {
+        public void onViewRecycled(@NonNull RecyclerView.ViewHolder holder) {
             holder.itemView.animate().cancel();
             holder.itemView.setAlpha(1f);
             holder.itemView.setTranslationY(0f);
-            holder.mDot.animate().cancel();
+            if (holder instanceof NewsHolder) ((NewsHolder) holder).mDot.animate().cancel();
         }
 
         @Override
         public int getItemCount() {
-            return mItems.size();
+            return mRows.size();
         }
     }
 
@@ -298,7 +339,7 @@ public class ProjectsNewsFragment extends Fragment implements ProjectsContent.Li
 
         void bind(final Snapshot snapshot, final NewsFeed.NewsItem item) {
             mItem = item;
-            mCategory.setText(ProjectsUi.categoryLabel(itemView.getContext(), item));
+            ProjectsUi.bindCategory(mCategory, item);
             mDate.setText(ProjectsUi.date(itemView.getContext(), item.publishedAtMillis()));
             mPinned.setVisibility(item.pinned ? View.VISIBLE : View.GONE);
             mTitle.setText(item.title);

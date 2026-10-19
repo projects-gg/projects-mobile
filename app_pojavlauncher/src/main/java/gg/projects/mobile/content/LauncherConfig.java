@@ -87,9 +87,16 @@ public final class LauncherConfig {
         public final int priority;
         /** Never shown; takes the feed event with this id off the card. */
         public final boolean hidden;
+        /** M17: the event takes place on the server: while it is live the card offers "Katıl". */
+        public final boolean join;
 
         public EventCountdown(String id, String title, long startsAt, long endsAt, String url, String newsId,
                               int priority, boolean hidden) {
+            this(id, title, startsAt, endsAt, url, newsId, priority, hidden, false);
+        }
+
+        public EventCountdown(String id, String title, long startsAt, long endsAt, String url, String newsId,
+                              int priority, boolean hidden, boolean join) {
             this.id = id;
             this.title = title;
             this.startsAt = startsAt;
@@ -98,6 +105,7 @@ public final class LauncherConfig {
             this.newsId = newsId;
             this.priority = priority;
             this.hidden = hidden;
+            this.join = join;
         }
 
         static EventCountdown read(JsonElement value) throws JsonFields.Unreadable {
@@ -110,7 +118,9 @@ public final class LauncherConfig {
                     JsonFields.optionalString(o, "url"),
                     JsonFields.optionalString(o, "newsId"),
                     (int) JsonFields.defaultInteger(o, "priority", 0, Integer.MIN_VALUE, Integer.MAX_VALUE),
-                    JsonFields.defaultBoolean(o, "hidden", false));
+                    JsonFields.defaultBoolean(o, "hidden", false),
+                    // M17: like "hidden", a value that is not a boolean drops the event.
+                    JsonFields.defaultBoolean(o, "join", false));
         }
     }
 
