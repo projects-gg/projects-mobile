@@ -26,8 +26,9 @@ import gg.projects.mobile.content.AtomicFiles;
  * version>} and the app's language as the game language (Turkish or English, see
  * {@code AppLanguage}), plus {@code tutorialStep:none} (the keyboard tutorial means nothing on a
  * phone); the Projects profile's folder also gets the pack's conflict-free key bindings
- * ({@link #keyLines}, the desktop's table). The game fills in everything else, and a file the
- * player, the game or a pack wrote is never touched, so later changes stay the player's.
+ * ({@link #keyLines}, the desktop's table), and since M17 every new folder the phone's graphics
+ * preset ({@link PhoneGraphics}). The game fills in everything else, and a file the player, the
+ * game or a pack wrote is never touched, so later changes stay the player's.
  *
  * <p>The {@code version} line matters: without it the game takes the file for one from before
  * data versions existed and runs its options data fixers from the start, and one of them (1.19.3
@@ -93,11 +94,29 @@ public final class FirstOptions {
      */
     public static Result seed(File gameDir, String minecraft, List<File> clientJars, boolean turkish,
                               List<String> extra) throws IOException {
+        return seed(gameDir, minecraft, clientJars, turkish, extra, Collections.<String>emptySet(), null);
+    }
+
+    /** M17: the graphics preset of a new file ({@link PhoneGraphics}), asked for only when one is written. */
+    public interface Preset {
+        List<String> lines(String minecraft);
+    }
+
+    /**
+     * {@link #seed} with the phone's graphics preset (M17): {@code preset}'s lines follow the
+     * language, before {@code extra}; {@code presetKeys} are its keys, so a file holding only lines
+     * written here still counts as never the game's. The preset is asked for only when the file is
+     * written (it may look at the GPU), never for an existing file.
+     */
+    public static Result seed(File gameDir, String minecraft, List<File> clientJars, boolean turkish,
+                              List<String> extra, Set<String> presetKeys, Preset preset) throws IOException {
         File file = new File(gameDir, FILE_NAME);
         List<String> kept = new ArrayList<>();
         if (file.exists()) {
             String existing = new String(AtomicFiles.read(file, MAX_OPTIONS_BYTES), StandardCharsets.UTF_8);
-            if (!launcherOnly(existing, kept, keysOf(extra))) return Result.EXISTS;
+            Set<String> ours = keysOf(extra);
+            ours.addAll(presetKeys);
+            if (!launcherOnly(existing, kept, ours)) return Result.EXISTS;
         }
         Integer dataVersion = null;
         for (File jar : clientJars) {
@@ -109,6 +128,7 @@ public final class FirstOptions {
         if (dataVersion != null) content.append("version:").append(dataVersion).append('\n');
         content.append("lang:").append(gameLanguage(minecraft, turkish)).append('\n');
         content.append(PHONE_LINE).append('\n');
+        if (preset != null) for (String line : preset.lines(minecraft)) content.append(line).append('\n');
         for (String line : extra) content.append(line).append('\n');
         for (String line : kept) content.append(line).append('\n');
         AtomicFiles.write(file, content.toString().getBytes(StandardCharsets.UTF_8));

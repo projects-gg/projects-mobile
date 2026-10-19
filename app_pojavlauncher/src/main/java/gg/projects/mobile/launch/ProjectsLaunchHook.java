@@ -58,6 +58,9 @@ public final class ProjectsLaunchHook {
      * vanilla version it inherits from decides the language code, and the downloader copies its jar).
      */
     public static void seedOptions(Context context, File gameDir, String versionId) {
+        // M17: a key fix the player asked for in the game is made before the game reads its keys again
+        // (when the home screen did not make it first).
+        applyQueuedKeyFix(context, gameDir);
         if (versionId == null || versionId.isEmpty()) return;
         try {
             String minecraft = versionId;
@@ -68,13 +71,62 @@ public final class ProjectsLaunchHook {
                 minecraft = inherits;
                 jars.add(clientJar(inherits));
             }
+            final Context app = context.getApplicationContext();
             FirstOptions.Result result = FirstOptions.seed(gameDir, minecraft, jars, LanguageManager.isTurkish(context),
-                    projectsKeys(context));
+                    projectsKeys(context), PhoneGraphics.keys(minecraft), version -> phonePreset(app, version));
             if (result != FirstOptions.Result.EXISTS) Log.i(TAG, "first options for " + minecraft + ": " + result);
         } catch (Exception e) {
             // Never block a launch because of the first options; the game starts with its defaults.
             Log.w(TAG, "first options skipped", e);
         }
+    }
+
+    /** M17: the game process looked for a queued key fix (once: the game starts once per process). */
+    private static boolean sQueuedKeyFixChecked;
+
+    /**
+     * M17: the queued one-tap key fix of the Projects profile ({@link gg.projects.mobile.controls.KeyFixer}),
+     * made right before the game reads its options. Only at the game's start: an activity created again
+     * while the game runs (a configuration change, "Don't keep activities") must not rewrite the file
+     * under the running game, which keeps its keys in memory.
+     */
+    private static void applyQueuedKeyFix(Context context, File gameDir) {
+        if (sQueuedKeyFixChecked) return;
+        sQueuedKeyFixChecked = true;
+        try {
+            String profileKey = LauncherPreferences.DEFAULT_PREF.getString(LauncherPreferences.PREF_KEY_CURRENT_PROFILE, "");
+            if (!ProjectsProfile.KEY.equals(profileKey)) return;
+            gg.projects.mobile.controls.KeyFixer.applyQueued(context, gameDir);
+        } catch (RuntimeException e) {
+            Log.w(TAG, "queued key fix skipped", e);
+        }
+    }
+
+    /**
+     * M17: the graphics preset for this phone ({@link PhoneGraphics}): its memory, cores, Android's
+     * low-RAM flag and the GPU's name (upstream asks the GPU once per game process anyway).
+     */
+    private static List<String> phonePreset(Context context, String minecraft) {
+        long memory = 0;
+        boolean lowRam = false;
+        android.app.ActivityManager manager = (android.app.ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        if (manager != null) {
+            android.app.ActivityManager.MemoryInfo info = new android.app.ActivityManager.MemoryInfo();
+            manager.getMemoryInfo(info);
+            memory = info.totalMem;
+            lowRam = manager.isLowRamDevice();
+        }
+        int cores = Runtime.getRuntime().availableProcessors();
+        String renderer = null;
+        try {
+            renderer = net.kdt.pojavlaunch.utils.GLInfoUtils.getGlInfo().renderer;
+        } catch (RuntimeException e) {
+            Log.w(TAG, "GPU not known", e);
+        }
+        PhoneGraphics.Tier tier = PhoneGraphics.tier(memory, lowRam, cores, renderer);
+        Log.i(TAG, String.format(java.util.Locale.ROOT, "graphics preset %s (%.1f GB, %d cores, low RAM %s, GPU %s)",
+                tier, memory / (1024.0 * 1024 * 1024), cores, lowRam, renderer));
+        return PhoneGraphics.lines(minecraft, tier);
     }
 
     /**
