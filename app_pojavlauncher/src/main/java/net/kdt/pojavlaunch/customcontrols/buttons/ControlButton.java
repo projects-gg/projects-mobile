@@ -47,6 +47,11 @@ public class ControlButton extends TextView implements ControlInterface {
     private final Runnable mHeld = () -> {
         if (mShownPressed && mSkin != null) mSkin.setHeld(true);
     };
+    // Projects fork (M16): a MODLAR key sends what its key mapping uses in the game now (ModKeys);
+    // the release sends what the press sent; a key that cannot act says why instead.
+    private gg.projects.mobile.controls.ModKeys.Action mModAction;
+    private int[] mSentKeys;
+    private boolean mUnavailablePress;
 
     public ControlButton(ControlLayout layout, ControlData properties) {
         super(layout.getContext());
@@ -93,6 +98,41 @@ public class ControlButton extends TextView implements ControlInterface {
         setText(properties.name);
         mSkin = gg.projects.mobile.controls.ControlSkin.attach(this, mSkin, properties, LauncherPreferences.PREF_BUTTON_ALL_CAPS);
         if (mSkin != null) mSkin.setOn(mProperties.isToggle && mIsToggled);
+        mModAction = gg.projects.mobile.controls.ModKeys.actionOf(properties.icon, properties.keycodes);
+        refreshModKey();
+    }
+
+    /** Projects fork (M16): a MODLAR key shows whether it can act now (ModKeysLive tells the layout). */
+    public void refreshModKey() {
+        if (mSkin == null) return;
+        gg.projects.mobile.controls.ModKeys.Binding binding = modBinding();
+        mSkin.setUnavailable(binding != null && !binding.ready());
+    }
+
+    /** How this MODLAR key is bound in the running game; null for other keys and in the editor. */
+    private gg.projects.mobile.controls.ModKeys.Binding modBinding() {
+        if (mModAction == null || mControlLayout == null || mControlLayout.getModifiable()) return null;
+        return gg.projects.mobile.controls.ModKeysLive.binding(mModAction);
+    }
+
+    /** Projects fork (M16): a press on a key that cannot act: a rejecting tick and the reason beside it. */
+    private void unavailablePress(gg.projects.mobile.controls.ModKeys.Binding binding) {
+        mUnavailablePress = true;
+        gg.projects.mobile.ui.Haptics.reject(this);
+        if (mSkin != null) mSkin.setUnavailable(true);
+        String reason;
+        switch (binding.state) {
+            case NO_MOD:
+                reason = getContext().getString(R.string.projects_modkey_no_mod, binding.action.modName);
+                break;
+            case UNSENDABLE:
+                reason = getContext().getString(R.string.projects_modkey_unsendable);
+                break;
+            default:
+                reason = getContext().getString(R.string.projects_modkey_unbound);
+                break;
+        }
+        mControlLayout.showModHint(this, reason, true);
     }
 
     @Override
@@ -277,6 +317,14 @@ public class ControlButton extends TextView implements ControlInterface {
     public boolean triggerToggle(){
         //returns true a the toggle system is triggered
         if(mProperties.isToggle){
+            // Projects fork (M16): a MODLAR key made a toggle in the editor does not latch while it cannot act.
+            gg.projects.mobile.controls.ModKeys.Binding binding = modBinding();
+            if (binding != null && !binding.ready() && !mIsToggled) {
+                unavailablePress(binding);
+                mUnavailablePress = false;
+                mControlLayout.releaseModHint();
+                return true;
+            }
             mIsToggled = !mIsToggled;
             invalidate();
             sendKeyPresses(mIsToggled);
@@ -289,8 +337,25 @@ public class ControlButton extends TextView implements ControlInterface {
     }
 
     public void sendKeyPresses(boolean isDown){
+        int[] keys = mProperties.keycodes;
+        // Projects fork (M16): a MODLAR key presses the key its mapping uses now, or says why it cannot.
+        if (mModAction != null && mControlLayout != null && !mControlLayout.getModifiable()) {
+            if (isDown) {
+                gg.projects.mobile.controls.ModKeys.Binding binding = gg.projects.mobile.controls.ModKeysLive.binding(mModAction);
+                if (binding != null && !binding.ready()) {
+                    unavailablePress(binding);
+                    return;
+                }
+                mSentKeys = binding != null ? binding.keys : null;
+            } else if (mUnavailablePress) {
+                mUnavailablePress = false;
+                mControlLayout.releaseModHint();
+                return;
+            }
+            if (mSentKeys != null) keys = mSentKeys;
+        }
         setActivated(isDown);
-        for(int keycode : mProperties.keycodes){
+        for(int keycode : keys){
             if(keycode >= GLFW_KEY_UNKNOWN){
                 sendKeyPress(keycode, EfficientAndroidLWJGLKeycode.getLwjglChar(keycode), CallbackBridge.getCurrentMods(), isDown);
                 CallbackBridge.setModifiers(keycode, isDown);
@@ -299,6 +364,7 @@ public class ControlButton extends TextView implements ControlInterface {
                 sendSpecialKey(keycode, isDown);
             }
         }
+        if (!isDown) mSentKeys = null;
     }
 
     private void sendSpecialKey(int keycode, boolean isDown){

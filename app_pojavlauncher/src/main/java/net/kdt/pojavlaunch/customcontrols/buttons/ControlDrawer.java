@@ -66,6 +66,10 @@ public class ControlDrawer extends ControlButton {
     }
 
     private void showButtons(boolean show) {
+        // Projects fork (M16): an opening panel checks the game's key bindings again (if options.txt
+        // changed); a closing one takes the MODLAR keys' reason line with it.
+        if (show) gg.projects.mobile.controls.ModKeysLive.refresh();
+        else parentLayout.hideModHint();
         gg.projects.mobile.controls.DrawerMotion.Opacity opacity = view -> ((ControlButton) view).getProperties().opacity;
         if (show) gg.projects.mobile.controls.DrawerMotion.reveal(this, buttons, opacity);
         else gg.projects.mobile.controls.DrawerMotion.conceal(this, buttons, opacity, () -> !areButtonsVisible);

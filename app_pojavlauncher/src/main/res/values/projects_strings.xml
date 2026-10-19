@@ -270,4 +270,8 @@
     </plurals>
     <!-- M15: the hide button of the on-screen controls while they are hidden (capitals like the control labels). -->
     <string name="projects_control_show">SHOW</string>
+    <!-- M16: why a MODLAR key does nothing now, shown beside the key in the game. The menu names are the game's own. -->
+    <string name="projects_modkey_unbound">This has no key in the game. Set one in Options › Controls.</string>
+    <string name="projects_modkey_unsendable">Its key can\'t be pressed on the screen. Change it in Options › Controls.</string>
+    <string name="projects_modkey_no_mod">%1$s isn\'t installed in this profile.</string>
 </resources>

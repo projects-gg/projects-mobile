@@ -54,8 +54,8 @@ public final class ControlSkin {
     private boolean glyphInked, altGlyphInked;
 
     // Shown state and where it is heading.
-    private float press, hold, on, alt;
-    private boolean pressTo, holdTo, onTo, altTo;
+    private float press, hold, on, alt, dim;
+    private boolean pressTo, holdTo, onTo, altTo, dimTo;
     private long lastFrame;
 
     private static Typeface sTypeface;
@@ -141,6 +141,16 @@ public final class ControlSkin {
     }
 
     /**
+     * M16: a key that cannot act now (a MODLAR key without a key binding or without its mod) fades its
+     * glyph, label and ring; it still presses, but never shows as held.
+     */
+    public void setUnavailable(boolean value) {
+        if (dimTo == value) return;
+        dimTo = value;
+        kick();
+    }
+
+    /**
      * Shows another glyph and label in place of the button's own (an open drawer's close mark, the
      * hide button's "show" while the controls are hidden); a null label keeps the button's.
      */
@@ -169,6 +179,7 @@ public final class ControlSkin {
         hold = holdTo ? 1f : 0f;
         on = onTo ? 1f : 0f;
         alt = altTo ? 1f : 0f;
+        dim = dimTo ? 1f : 0f;
         lastFrame = 0;
         view.invalidate();
     }
@@ -193,8 +204,9 @@ public final class ControlSkin {
                 holdTo ? ControlStyle.HOLD_TAU_MS : ControlStyle.RELEASE_TAU_MS);
         on = ControlStyle.approach(on, onTo ? 1f : 0f, dt, ControlStyle.TOGGLE_TAU_MS);
         alt = ControlStyle.approach(alt, altTo ? 1f : 0f, dt, ControlStyle.TOGGLE_TAU_MS);
+        dim = ControlStyle.approach(dim, dimTo ? 1f : 0f, dt, ControlStyle.TOGGLE_TAU_MS);
         boolean moving = press != pressTarget || hold != (holdTo ? 1f : 0f) || on != (onTo ? 1f : 0f)
-                || alt != (altTo ? 1f : 0f);
+                || alt != (altTo ? 1f : 0f) || dim != (dimTo ? 1f : 0f);
         if (!moving) lastFrame = 0;
         return moving;
     }
@@ -222,16 +234,18 @@ public final class ControlSkin {
         int save = canvas.save();
         canvas.scale(scale, scale, w / 2f, h / 2f);
 
-        fillPaint.setColor(ControlStyle.fill(baseFill, press, hold, on));
+        // M16: an unavailable key never looks held (nothing is going on) and fades its ink and ring.
+        float held = hold * (1f - dim);
+        fillPaint.setColor(ControlStyle.fill(baseFill, press, held, on));
         canvas.drawPath(shape, fillPaint);
         if (ringDp > 0f) {
-            ringPaint.setColor(ControlStyle.ring(baseRing, press, hold, on));
-            ringPaint.setStrokeWidth(ControlStyle.ringWidth(ringDp * dp, dp, press, hold, on));
+            ringPaint.setColor(ControlStyle.faded(ControlStyle.ring(baseRing, press, held, on), dim, ControlStyle.UNAVAILABLE_RING));
+            ringPaint.setStrokeWidth(ControlStyle.ringWidth(ringDp * dp, dp, press, held, on));
             canvas.drawPath(shape, ringPaint);
         }
 
-        int ink = ControlStyle.ink(press, hold, on);
-        int labelInk = ControlStyle.label(press, hold, on);
+        int ink = ControlStyle.faded(ControlStyle.ink(press, held, on), dim, ControlStyle.UNAVAILABLE_INK);
+        int labelInk = ControlStyle.faded(ControlStyle.label(press, held, on), dim, ControlStyle.UNAVAILABLE_INK);
         float wDp = w / dp, hDp = h / dp;
         float glyphPx = ControlStyle.glyphDp(wDp, hDp) * dp;
         boolean hasGlyph = glyph != null;

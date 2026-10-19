@@ -142,6 +142,8 @@ public class MainActivity extends BaseActivity implements ControlButtonMenuListe
         initLayout(R.layout.activity_basemain);
         // Projects fork (M14): the loading screen until Minecraft draws its first frame.
         gg.projects.mobile.launch.LaunchCurtain.attach(this, minecraftGLView);
+        // Projects fork (M16): the MODLAR keys follow this game folder's key bindings and loaded mods.
+        gg.projects.mobile.controls.ModKeysLive.attach(new File(gameDirPath));
         CallbackBridge.addGrabListener(touchpad);
         CallbackBridge.addGrabListener(minecraftGLView);
 

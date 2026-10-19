@@ -87,6 +87,22 @@ public final class ControlStyle {
         return mix(mix(mix(LABEL, INK_PRESSED, press), INK_HELD, hold), INK_ON, on);
     }
 
+    /**
+     * An unavailable key (M16: a MODLAR key without a key binding or without its mod) keeps its fill,
+     * so the panel keeps its shape, and fades its glyph and label to this share of their alpha...
+     */
+    static final float UNAVAILABLE_INK = 0.38f;
+    /** ...and its ring to this one. */
+    static final float UNAVAILABLE_RING = 0.5f;
+
+    /** {@code argb} with its alpha scaled from 1 towards {@code share} as {@code dim} goes from 0 to 1. */
+    public static int faded(int argb, float dim, float share) {
+        if (dim <= 0f) return argb;
+        float scale = 1f - (1f - share) * Math.min(1f, dim);
+        int alpha = Math.round(((argb >>> 24) & 0xff) * scale);
+        return (alpha << 24) | (argb & 0x00ffffff);
+    }
+
     /** Ring width: a hair heavier while pressed, held or on. */
     public static float ringWidth(float base, float dp, float press, float hold, float on) {
         float lift = Math.max(press, Math.max(hold, on));

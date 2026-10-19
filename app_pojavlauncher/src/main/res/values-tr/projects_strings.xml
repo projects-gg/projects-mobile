@@ -262,4 +262,8 @@
     </plurals>
     <!-- M15: the hide button of the on-screen controls while they are hidden (capitals like the control labels). -->
     <string name="projects_control_show">GÖSTER</string>
+    <!-- M16: why a MODLAR key does nothing now, shown beside the key in the game. The menu names are the game's own. -->
+    <string name="projects_modkey_unbound">Bu eylemin oyunda tuşu yok. Seçenekler › Kontroller\'den bir tuş ver.</string>
+    <string name="projects_modkey_unsendable">Bu tuşa ekrandan basılamıyor. Seçenekler › Kontroller\'den değiştir.</string>
+    <string name="projects_modkey_no_mod">%1$s bu profilde yüklü değil.</string>
 </resources>

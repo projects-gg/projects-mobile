@@ -52,6 +52,23 @@ public class ControlStyleTest {
     }
 
     @Test
+    public void anUnavailableKeyFadesItsInkAndRingButKeepsItsFill() {
+        // M16: a MODLAR key without a key binding or without its mod.
+        assertEquals(ControlStyle.INK, ControlStyle.faded(ControlStyle.INK, 0f, ControlStyle.UNAVAILABLE_INK));
+        int ink = ControlStyle.faded(ControlStyle.INK, 1f, ControlStyle.UNAVAILABLE_INK);
+        assertEquals(ControlStyle.INK & 0xFFFFFF, ink & 0xFFFFFF);
+        assertEquals(Math.round(255 * ControlStyle.UNAVAILABLE_INK), (ink >>> 24) & 0xff);
+        int ring = ControlStyle.faded(BASE_RING, 1f, ControlStyle.UNAVAILABLE_RING);
+        assertEquals(Math.round(0x4D * ControlStyle.UNAVAILABLE_RING), (ring >>> 24) & 0xff);
+        // Halfway and past the end.
+        int half = ControlStyle.faded(0xFF000000, 0.5f, 0.5f);
+        assertEquals(Math.round(255 * 0.75f), (half >>> 24) & 0xff);
+        assertEquals(ControlStyle.faded(0xFF000000, 1f, 0.5f), ControlStyle.faded(0xFF000000, 3f, 0.5f));
+        // Still readable as a key, clearly quieter than a ready one.
+        assertTrue(ControlStyle.UNAVAILABLE_INK >= 0.3f && ControlStyle.UNAVAILABLE_INK <= 0.5f);
+    }
+
+    @Test
     public void theKeyIsChamfered() {
         assertEquals("40 % of half the shorter side", 9.6f, ControlStyle.chamfer(56, 48, 40), 1e-4);
         assertEquals(0f, ControlStyle.chamfer(48, 48, 0), 1e-6);

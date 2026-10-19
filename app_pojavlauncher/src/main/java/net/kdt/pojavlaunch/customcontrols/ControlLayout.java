@@ -54,6 +54,9 @@ public class ControlLayout extends FrameLayout {
 	private boolean mControlVisible = false;
 
 	private EditControlSideDialog mControlDialog = null;
+	// Projects fork (M16): why a MODLAR key cannot act, beside it; the keys follow the game's bindings.
+	private gg.projects.mobile.controls.ControlHint mModHint;
+	private final Runnable mModKeysChanged = this::refreshModKeys;
 	private ControlHandleView mHandleView;
 	private ControlButtonMenuListener mMenuListener;
 	public ActionRow mActionRow = null;
@@ -90,6 +93,7 @@ public class ControlLayout extends FrameLayout {
 		}
 
 		removeAllButtons();
+		hideModHint();
 		if(mLayout != null) {
 			mLayout.mControlDataList = null;
 			mLayout = null;
@@ -255,6 +259,7 @@ public class ControlLayout extends FrameLayout {
 		if (mModifiable) return; // Not using on custom controls activity
 
 		mControlVisible = isVisible;
+		if (!isVisible) hideModHint();
 		for(ControlInterface button : getButtonChildren()){
 			button.setVisible(((button.getProperties().displayInGame && isGrabbing()) || (button.getProperties().displayInMenu && !isGrabbing())) && isVisible);
 			// Projects fork (M15): the hide button says "show" while the controls are hidden.
@@ -267,6 +272,50 @@ public class ControlLayout extends FrameLayout {
 		for (ControlInterface button : getButtonChildren()) {
 			if (button instanceof ControlDrawer && button != except) ((ControlDrawer) button).close();
 		}
+	}
+
+	/**
+	 * Projects fork (M16): shows why the MODLAR key {@code key} cannot act, beside it; it stays while
+	 * {@code held} ({@link #releaseModHint} starts its time).
+	 */
+	public void showModHint(View key, String reason, boolean held) {
+		if (mModifiable) return;
+		if (mModHint == null) {
+			mModHint = new gg.projects.mobile.controls.ControlHint(getContext());
+			addView(mModHint);
+		}
+		mModHint.show(key, reason, held);
+	}
+
+	/** Projects fork (M16): the finger left the key; the reason stays long enough to be read. */
+	public void releaseModHint() {
+		if (mModHint != null) mModHint.release();
+	}
+
+	/** Projects fork (M16): the reason goes (its panel closed, the controls hid, a new layout). */
+	public void hideModHint() {
+		if (mModHint != null) mModHint.hide();
+	}
+
+	/** Projects fork (M16): the game's key bindings or its mods changed: the MODLAR keys look again. */
+	private void refreshModKeys() {
+		if (mModifiable) return;
+		for (ControlInterface button : getButtonChildren()) {
+			if (button instanceof ControlButton) ((ControlButton) button).refreshModKey();
+		}
+	}
+
+	@Override
+	protected void onAttachedToWindow() {
+		super.onAttachedToWindow();
+		gg.projects.mobile.controls.ModKeysLive.addListener(mModKeysChanged);
+		refreshModKeys();
+	}
+
+	@Override
+	protected void onDetachedFromWindow() {
+		gg.projects.mobile.controls.ModKeysLive.removeListener(mModKeysChanged);
+		super.onDetachedFromWindow();
 	}
 
 	public void setModifiable(boolean isModifiable) {
