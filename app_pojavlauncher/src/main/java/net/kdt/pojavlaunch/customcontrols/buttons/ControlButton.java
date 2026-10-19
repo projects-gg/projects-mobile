@@ -155,10 +155,8 @@ public class ControlButton extends TextView implements ControlInterface {
     /** Projects fork (M15): the pressed look follows the finger, or the key for a swipeable button. */
     protected void refreshPressed() {
         if (mSkin == null || mProperties == null) return;
-        // A swipeable key is pressed while its key is down; a toggle's key mirrors its latch, so a
-        // toggle (swipeable or not) shows the finger.
-        boolean pressed = mProperties.isSwipeable && !mProperties.isToggle ? isActivated()
-                : mFingerDown || (!mProperties.isToggle && isActivated());
+        boolean pressed = gg.projects.mobile.controls.ControlStyle.shownPressed(
+                mProperties.isSwipeable, mProperties.isToggle, mFingerDown, isActivated());
         if (pressed == mShownPressed) return;
         mShownPressed = pressed;
         mSkin.setPressed(pressed);

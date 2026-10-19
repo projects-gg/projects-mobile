@@ -142,6 +142,21 @@ public class ControlStyleTest {
     }
 
     @Test
+    public void thePressedLookFollowsTheFingerOrTheKey() {
+        // An ordinary key: the finger or its key (a key pressed by sliding onto it counts).
+        assertTrue(ControlStyle.shownPressed(false, false, true, false));
+        assertTrue(ControlStyle.shownPressed(false, false, false, true));
+        assertFalse(ControlStyle.shownPressed(false, false, false, false));
+        // A swipeable key: only while its key is down (the finger slid off: not pressed).
+        assertFalse(ControlStyle.shownPressed(true, false, true, false));
+        assertTrue(ControlStyle.shownPressed(true, false, false, true));
+        // A toggle, swipeable or not: the finger, never its latch (that shows as "on").
+        assertFalse(ControlStyle.shownPressed(false, true, false, true));
+        assertFalse(ControlStyle.shownPressed(true, true, false, true));
+        assertTrue(ControlStyle.shownPressed(true, true, true, false));
+    }
+
+    @Test
     public void joystickChevronsFollowTheDirection() {
         // GamepadJoystick: 0 east, 1 north-east, 2 north ... 7 south-east, -1 none.
         assertTrue(ControlStyle.chevronLit(2, 1));

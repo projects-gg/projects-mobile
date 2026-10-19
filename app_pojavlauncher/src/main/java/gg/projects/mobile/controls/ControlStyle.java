@@ -181,6 +181,17 @@ public final class ControlStyle {
     }
 
     /**
+     * Whether a key looks pressed: a swipeable key while its key is down (a finger can slide onto it
+     * or off it), a toggle while the finger is on it (its key mirrors the latch, which shows as "on"),
+     * any other key while the finger is on it or its key is down.
+     */
+    public static boolean shownPressed(boolean swipeable, boolean toggle, boolean fingerDown, boolean keyDown) {
+        if (toggle) return fingerDown;
+        if (swipeable) return keyDown;
+        return fingerDown || keyDown;
+    }
+
+    /**
      * True when walking in {@code direction} (GamepadJoystick's 0..7: 0 east, counter-clockwise; -1
      * none) lights the joystick chevron of {@code quarter} (0 east, 1 north, 2 west, 3 south): its
      * own direction and the two diagonals beside it.
