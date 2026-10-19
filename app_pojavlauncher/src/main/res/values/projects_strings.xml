@@ -268,4 +268,6 @@
         <item quantity="one">%d task in progress</item>
         <item quantity="other">%d tasks in progress</item>
     </plurals>
+    <!-- M15: the hide button of the on-screen controls while they are hidden (capitals like the control labels). -->
+    <string name="projects_control_show">SHOW</string>
 </resources>

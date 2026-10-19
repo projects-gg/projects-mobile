@@ -125,6 +125,10 @@ public class ControlLayout extends FrameLayout {
 		setModified(sanitizedModified);
 		mButtons = null;
 		getButtonChildren(); // Force refresh
+		// Projects fork (M15): the hide button starts in the state the controls are in.
+		for (ControlInterface button : mButtons) {
+			if (button instanceof ControlButton) ((ControlButton) button).onControlsShown(mModifiable || mControlVisible);
+		}
 	} // loadLayout
 
 	//CONTROL BUTTON
@@ -253,6 +257,15 @@ public class ControlLayout extends FrameLayout {
 		mControlVisible = isVisible;
 		for(ControlInterface button : getButtonChildren()){
 			button.setVisible(((button.getProperties().displayInGame && isGrabbing()) || (button.getProperties().displayInMenu && !isGrabbing())) && isVisible);
+			// Projects fork (M15): the hide button says "show" while the controls are hidden.
+			if (button instanceof ControlButton) ((ControlButton) button).onControlsShown(isVisible);
+		}
+	}
+
+	/** Projects fork (M15): closes every open drawer but {@code except} (one panel at a time). */
+	public void closeDrawers(ControlDrawer except) {
+		for (ControlInterface button : getButtonChildren()) {
+			if (button instanceof ControlDrawer && button != except) ((ControlDrawer) button).close();
 		}
 	}
 
@@ -265,6 +278,8 @@ public class ControlLayout extends FrameLayout {
 			// In edit mode, all controls have to be shown
 			for(ControlInterface button : getButtonChildren()){
 				button.setVisible(true);
+				// Projects fork (M15): and the hide button as itself.
+				if (button instanceof ControlButton) ((ControlButton) button).onControlsShown(true);
 			}
 		}
 	}

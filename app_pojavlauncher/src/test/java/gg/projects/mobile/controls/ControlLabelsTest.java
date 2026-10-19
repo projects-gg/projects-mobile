@@ -25,8 +25,10 @@ import gg.projects.mobile.content.AtomicFiles;
 public class ControlLabelsTest {
     private static final File DEFAULT_LAYOUT = new File("src/main/assets/default.json");
     private static final File ENGLISH_LAYOUT = new File("src/main/assets/default_en.json");
+    /** The Turkish default of 0.1.4 and 0.1.5 (before M15), kept as it was installed. */
+    private static final File LAYOUT_015 = new File("src/test/resources/controls/default-0.1.5.json");
 
-    /** The English labels 0.1.0 to 0.1.3 shipped, in file order, as written in the JSON. */
+    /** The English labels 0.1.0 to 0.1.3 shipped, in the 0.1.5 file's order, as written in the JSON. */
     private static final String[][] ENGLISH = {
             {"ZIPLA", "Jump"},
             {"EL\\nDE\\u011E\\u0130\\u015E", "Off\\nHand"},
@@ -101,21 +103,22 @@ public class ControlLabelsTest {
     @Test
     public void theDefaultLayoutIsTurkishAndInCapitals() throws IOException {
         List<String> names = labelsInCapitalsThatFit(DEFAULT_LAYOUT);
-        assertTrue(names.contains("TUŞLARI\nGİZLE"));
+        assertTrue(names.contains("GİZLE"));
         assertTrue(names.contains("EĞİL"));
+        assertTrue(names.contains("YOL NOKTASI"));
         // Key names players know stay.
-        assertTrue(names.contains("CTRL"));
         assertTrue(names.contains("SHIFT"));
         assertTrue(names.contains("F3"));
         assertFalse(names.contains("Hide\nGUI"));
+        assertFalse(names.contains("HIDE"));
     }
 
     @Test
     public void theEnglishLayoutIsTheSameLayoutWithEnglishLabels() throws IOException {
         List<String> names = labelsInCapitalsThatFit(ENGLISH_LAYOUT);
-        assertTrue(names.contains("HIDE\nBUTTONS"));
+        assertTrue(names.contains("HIDE"));
         assertTrue(names.contains("SNEAK"));
-        assertTrue(names.contains("CTRL") && names.contains("SHIFT") && names.contains("F3"));
+        assertTrue(names.contains("SHIFT") && names.contains("F3"));
         for (String name : names) {
             assertFalse("no Turkish left: " + name, name.matches("(?s).*[ÇĞİÖŞÜçğıöşü].*"));
         }
@@ -160,9 +163,10 @@ public class ControlLabelsTest {
         byte[] edited = layout.toString().getBytes(StandardCharsets.UTF_8);
         assertFalse(ControlLabels.isUntouchedDefault(edited, turkish, english));
         JsonObject translated = JsonParser.parseString(ControlLabels.translate(layout.toString(), false)).getAsJsonObject();
-        JsonObject movedJump = translated.getAsJsonArray("mControlDataList").get(0).getAsJsonObject();
-        assertEquals("JUMP", movedJump.get("name").getAsString());
-        assertEquals("0.5 * ${screen_width}", movedJump.get("dynamicX").getAsString());
+        JsonObject movedPause = translated.getAsJsonArray("mControlDataList").get(0).getAsJsonObject();
+        assertEquals("PAUSE", movedPause.get("name").getAsString());
+        assertEquals("0.5 * ${screen_width}", movedPause.get("dynamicX").getAsString());
+        assertEquals("the glyph stays with the button", "pause", movedPause.get("icon").getAsString());
         assertEquals("the player's own label stays", "BENİM TUŞUM",
                 translated.getAsJsonArray("mControlDataList").get(1).getAsJsonObject().get("name").getAsString());
         assertEquals("already in that language: nothing to do", null, ControlLabels.translate(text(DEFAULT_LAYOUT), true));
@@ -176,7 +180,7 @@ public class ControlLabelsTest {
         // On an English app the Turkish default labels become English and upstream's stay as they are.
         JsonObject englishAgain = JsonParser.parseString(ControlLabels.translate(old.toString(), false)).getAsJsonObject();
         assertEquals("Hide\nGUI", englishAgain.getAsJsonArray("mControlDataList").get(1).getAsJsonObject().get("name").getAsString());
-        assertEquals("MENU", englishAgain.getAsJsonArray("mControlDataList").get(2).getAsJsonObject().get("name").getAsString());
+        assertEquals("CHAT", englishAgain.getAsJsonArray("mControlDataList").get(2).getAsJsonObject().get("name").getAsString());
         assertEquals("not a layout", null, ControlLabels.translate("[1, 2]", false));
         assertEquals(null, ControlLabels.translate("{ broken", false));
     }
@@ -190,6 +194,8 @@ public class ControlLabelsTest {
             // Written in capitals: the same with or without the "all caps" setting, and root
             // upper-casing cannot turn a Turkish i into I.
             assertEquals(name, ControlLabels.upper(name), name);
+            // A key with a glyph fits its small label itself (ControlLayoutTest checks the room).
+            if (button.has("icon")) continue;
             // A single word per line has to fit its button (14 sp capitals, about 9 dp each).
             double width = button.get("width").getAsDouble();
             for (String line : name.split("\n")) {
@@ -203,8 +209,8 @@ public class ControlLabelsTest {
     @Test
     public void onlyAnUntouchedEarlierDefaultIsReplaced() throws IOException {
         String current = text(DEFAULT_LAYOUT);
-        // The earlier English default: the same file with the old labels (only the names changed).
-        String english = current;
+        // The earliest English default: the 0.1.5 file with the old labels (only the names changed).
+        String english = text(LAYOUT_015);
         for (String[] label : ENGLISH) {
             String turkish = "\"name\":\"" + label[0] + "\"";
             int at = english.indexOf(turkish);

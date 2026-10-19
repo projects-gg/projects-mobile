@@ -10,4 +10,6 @@
     <item name="projects_haptic_strong" type="id" />
     <!-- View tag: the press style a view was given (Press), so it is attached once. -->
     <item name="projects_press_style" type="id" />
+    <!-- View tag: a control drawer's button fading out (DrawerMotion), so it takes no new touch. -->
+    <item name="projects_drawer_leaving" type="id" />
 </resources>

@@ -260,4 +260,6 @@
         <item quantity="one">%d işlem sürüyor</item>
         <item quantity="other">%d işlem sürüyor</item>
     </plurals>
+    <!-- M15: the hide button of the on-screen controls while they are hidden (capitals like the control labels). -->
+    <string name="projects_control_show">GÖSTER</string>
 </resources>

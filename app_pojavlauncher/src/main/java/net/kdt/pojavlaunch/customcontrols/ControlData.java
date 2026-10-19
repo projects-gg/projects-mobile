@@ -69,6 +69,11 @@ public class ControlData {
     public boolean displayInMenu;
     private float width;         //Dp instead of Px now
     private float height;        //Dp instead of Px now
+    /**
+     * Projects fork (M15): a glyph name of gg.projects.mobile.controls.ControlStyle; a button with
+     * one is drawn as a Projects key (glyph and label), without one it keeps upstream's look.
+     */
+    public String icon;
 
     public ControlData() {
         this("button");
@@ -153,6 +158,7 @@ public class ControlData {
                 controlData.isSwipeable,
                 controlData.passThruEnabled
         );
+        this.icon = controlData.icon;
     }
 
     public static ControlData[] getSpecialButtons() {
@@ -248,6 +254,8 @@ public class ControlData {
         keyValueMap.put("screen_height", "DUMMY_DATA");
         keyValueMap.put("margin", Integer.toString((int) ControlInterface.getMarginDistance()));
         keyValueMap.put("preferred_scale", "DUMMY_DATA");
+        // Projects fork (M15): the display cutout's width when the game draws under it, else 0.
+        keyValueMap.put("inset", "0");
 
         conversionMap = new WeakReference<>(keyValueMap);
     }
@@ -306,6 +314,7 @@ public class ControlData {
         valueMap.put("screen_width", Integer.toString(CallbackBridge.physicalWidth));
         valueMap.put("screen_height", Integer.toString(CallbackBridge.physicalHeight));
         valueMap.put("preferred_scale", Float.toString(LauncherPreferences.PREF_BUTTONSIZE));
+        valueMap.put("inset", Integer.toString(gg.projects.mobile.controls.ControlInsets.horizontal()));
 
         return valueMap;
     }

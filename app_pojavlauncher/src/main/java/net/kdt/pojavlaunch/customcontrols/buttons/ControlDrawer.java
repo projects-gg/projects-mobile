@@ -51,9 +51,27 @@ public class ControlDrawer extends ControlButton {
 
     private void switchButtonVisibility(){
         areButtonsVisible = !areButtonsVisible;
-        int visibility = areButtonsVisible ? VISIBLE : GONE;
-        for(ControlButton button : buttons){
-            button.getControlView().setVisibility(visibility);
+        // Projects fork (M15): one panel at a time, buttons that grow out of the drawer, the drawer
+        // button gold with a close mark while open, and a latch felt on open and close.
+        if (areButtonsVisible) parentLayout.closeDrawers(this);
+        showButtons(areButtonsVisible);
+        gg.projects.mobile.ui.Haptics.toggle(this, areButtonsVisible);
+    }
+
+    /** Projects fork (M15): closes the drawer if it is open (another drawer opened). */
+    public void close() {
+        if (!areButtonsVisible || parentLayout.getModifiable()) return;
+        areButtonsVisible = false;
+        showButtons(false);
+    }
+
+    private void showButtons(boolean show) {
+        gg.projects.mobile.controls.DrawerMotion.Opacity opacity = view -> ((ControlButton) view).getProperties().opacity;
+        if (show) gg.projects.mobile.controls.DrawerMotion.reveal(this, buttons, opacity);
+        else gg.projects.mobile.controls.DrawerMotion.conceal(this, buttons, opacity, () -> !areButtonsVisible);
+        if (mSkin != null) {
+            mSkin.setOn(show);
+            mSkin.setAlt(show, "close", null);
         }
     }
 
@@ -141,9 +159,22 @@ public class ControlDrawer extends ControlButton {
     public boolean onTouchEvent(MotionEvent event) {
         if(!getControlLayoutParent().getModifiable()){
             switch (event.getActionMasked()){
+                case MotionEvent.ACTION_DOWN: // 0
+                case MotionEvent.ACTION_POINTER_DOWN: // 5
+                    // Projects fork (M15): the drawer button presses like the others.
+                    mFingerDown = true;
+                    refreshPressed();
+                    gg.projects.mobile.ui.Haptics.press(this);
+                    break;
                 case MotionEvent.ACTION_UP: // 1
                 case MotionEvent.ACTION_POINTER_UP: // 6
+                    mFingerDown = false;
+                    refreshPressed();
                     switchButtonVisibility();
+                    break;
+                case MotionEvent.ACTION_CANCEL: // 3
+                    mFingerDown = false;
+                    refreshPressed();
                     break;
             }
             return true;
