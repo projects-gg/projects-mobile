@@ -253,6 +253,15 @@ public class ControlLayout extends FrameLayout {
 		mControlVisible = isVisible;
 		for(ControlInterface button : getButtonChildren()){
 			button.setVisible(((button.getProperties().displayInGame && isGrabbing()) || (button.getProperties().displayInMenu && !isGrabbing())) && isVisible);
+			// Projects fork (M15): the hide button says "show" while the controls are hidden.
+			if (button instanceof ControlButton) ((ControlButton) button).onControlsShown(isVisible);
+		}
+	}
+
+	/** Projects fork (M15): closes every open drawer but {@code except} (one panel at a time). */
+	public void closeDrawers(ControlDrawer except) {
+		for (ControlInterface button : getButtonChildren()) {
+			if (button instanceof ControlDrawer && button != except) ((ControlDrawer) button).close();
 		}
 	}
 

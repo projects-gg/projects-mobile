@@ -40,11 +40,31 @@ public final class ControlLabels {
     /** The English default layout's asset. */
     public static final String ENGLISH_ASSET = "default_en.json";
 
-    /** Turkish default label to English (CTRL, SHIFT and F3 are the same in both). */
+    /**
+     * Turkish default label to English (CTRL, SHIFT and F3 are the same in both): this version's
+     * layout (M15) first, then the labels 0.1.4 and 0.1.5 used, so a layout the player edited from
+     * one of those still follows the language.
+     */
     static final Map<String, String> ENGLISH_LABELS;
 
     static {
         Map<String, String> labels = new LinkedHashMap<>();
+        // 0.1.6 (M15): one line each; the glyph says the rest.
+        labels.put("GİZLE", "HIDE");
+        labels.put("MODLAR", "MODS");
+        labels.put("KAMERA", "CAMERA");
+        labels.put("OYUNCULAR", "PLAYERS");
+        labels.put("EL DEĞİŞ", "SWAP HANDS");
+        labels.put("BLOK SEÇ", "PICK BLOCK");
+        labels.put("YAKINLAŞ", "ZOOM");
+        labels.put("PARLAKLIK", "BRIGHTNESS");
+        labels.put("MİKROFON", "MICROPHONE");
+        labels.put("YOL NOKTASI", "WAYPOINT");
+        labels.put("HARİTA", "MAP");
+        labels.put("SALDIR", "ATTACK");
+        labels.put("KULLAN", "USE");
+        labels.put("SAĞ TIK", "RIGHT CLICK");
+        // 0.1.4 and 0.1.5 (several still in use).
         labels.put("ZIPLA", "JUMP");
         labels.put("EL\nDEĞİŞ", "OFF\nHAND");
         labels.put("MENÜ", "MENU");
@@ -82,12 +102,15 @@ public final class ControlLabels {
     }
 
     /**
-     * SHA-256 of upstream's English default layout ({@code assets/default.json}) as 0.1.0 to 0.1.3
-     * installed it, line endings normalized to LF (the APKs built on Windows carry CRLF, upstream's
-     * CI builds LF).
+     * SHA-256 of the default layouts earlier versions installed, line endings normalized to LF (the
+     * APKs built on Windows carry CRLF, upstream's CI builds LF): upstream's English one of 0.1.0 to
+     * 0.1.3, the Turkish one of 0.1.4 and 0.1.5 and the English one of 0.1.5 (the layout before the
+     * M15 redesign). An untouched one of these is replaced by this version's layout.
      */
     private static final Set<String> OLD_DEFAULTS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
-            "d92a182bde65a19c1c9edb1291f8dde2ff9efcbb95b9a7745c3e591b85f7516a")));
+            "d92a182bde65a19c1c9edb1291f8dde2ff9efcbb95b9a7745c3e591b85f7516a",
+            "bbc73ba76be9fd51e9cb938dc3373dea04458e119d10098f541f6264fbda700a",
+            "cb6c4bef9d985c1a3adf31c4b41674c0f51611ed874762eb2dbcadb492802341")));
 
     /**
      * True when {@code installed} is an earlier version's default layout, byte for byte apart from

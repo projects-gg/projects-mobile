@@ -255,4 +255,6 @@
     <string name="projects_launch_slow">Bu biraz sürebilir.</string>
     <string name="projects_launch_show_log">Kaydı göster</string>
     <string name="projects_launch_close">Oyunu kapat</string>
+    <!-- M15: the hide button of the on-screen controls while they are hidden (capitals like the control labels). -->
+    <string name="projects_control_show">GÖSTER</string>
 </resources>

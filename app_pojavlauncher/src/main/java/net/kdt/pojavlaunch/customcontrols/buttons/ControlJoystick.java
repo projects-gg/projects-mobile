@@ -11,6 +11,8 @@ import static net.kdt.pojavlaunch.customcontrols.gamepad.GamepadJoystick.DIRECTI
 import static net.kdt.pojavlaunch.customcontrols.gamepad.GamepadJoystick.DIRECTION_WEST;
 
 import android.annotation.SuppressLint;
+import android.graphics.Canvas;
+import android.view.MotionEvent;
 import android.view.View;
 
 import net.kdt.pojavlaunch.LwjglGlfwKeycode;
@@ -37,6 +39,8 @@ public class ControlJoystick extends JoystickView implements ControlInterface {
     private ControlJoystickData mControlData;
     private int mLastDirectionInt = GamepadJoystick.DIRECTION_NONE;
     private int mCurrentDirectionInt = GamepadJoystick.DIRECTION_NONE;
+    // Projects fork (M15): the Projects look and feedback for a joystick the layout marks.
+    private gg.projects.mobile.controls.JoystickSkin mSkin;
     public ControlJoystick(ControlLayout parent, ControlJoystickData data) {
         super(parent.getContext());
         init(data, parent);
@@ -66,6 +70,7 @@ public class ControlJoystick extends JoystickView implements ControlInterface {
                 if (mLastDirectionInt != mCurrentDirectionInt) {
                     sendDirectionalKeycode(mLastDirectionInt, false);
                     sendDirectionalKeycode(mCurrentDirectionInt, true);
+                    if (mSkin != null) mSkin.setDirection(mCurrentDirectionInt);
                 }
             }
 
@@ -90,6 +95,11 @@ public class ControlJoystick extends JoystickView implements ControlInterface {
     public void setProperties(ControlData properties, boolean changePos) {
         mControlData = (ControlJoystickData) properties;
         mControlData.isHideable = true;
+        if (gg.projects.mobile.controls.JoystickSkin.wants(mControlData)) {
+            if (mSkin == null) mSkin = new gg.projects.mobile.controls.JoystickSkin(this);
+        } else {
+            mSkin = null;
+        }
         ControlInterface.super.setProperties(properties, changePos);
         postDelayed(() -> {
             setForwardLockDistance(mControlData.forwardLock ? (int) Tools.dpToPx(60) : 0);
@@ -112,6 +122,10 @@ public class ControlJoystick extends JoystickView implements ControlInterface {
 
     @Override
     public void setBackground() {
+        if (mSkin != null) {
+            mSkin.apply(getProperties());
+            return;
+        }
         setBorderWidth((int) Tools.dpToPx(getProperties().strokeWidth * (getControlLayoutParent().getLayoutScale()/100f)));
         setBorderColor(getProperties().strokeColor);
         setBackgroundColor(getProperties().bgColor);
@@ -119,6 +133,36 @@ public class ControlJoystick extends JoystickView implements ControlInterface {
 
     @Override
     public void sendKeyPresses(boolean isDown) {/*STUB since non swipeable*/ }
+
+    /** Projects fork (M15): the chevrons over the library's base and knob. */
+    @Override
+    protected void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
+        if (mSkin != null) mSkin.drawOver(canvas);
+    }
+
+    /** Projects fork (M15): a thumb on the base lights the joystick and is felt once. */
+    @SuppressLint("ClickableViewAccessibility")
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        boolean handled = super.onTouchEvent(event);
+        if (mSkin == null || getControlLayoutParent() == null || getControlLayoutParent().getModifiable()) return handled;
+        switch (event.getActionMasked()) {
+            case MotionEvent.ACTION_DOWN:
+                float dx = event.getX() - getWidth() / 2f, dy = event.getY() - getHeight() / 2f;
+                float reach = Math.min(getWidth(), getHeight()) / 2f * gg.projects.mobile.controls.JoystickSkin.BASE_RATIO;
+                if (dx * dx + dy * dy <= reach * reach) {
+                    mSkin.setActive(true);
+                    gg.projects.mobile.ui.Haptics.rowPress(this);
+                }
+                break;
+            case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_CANCEL:
+                mSkin.setActive(false);
+                break;
+        }
+        return handled;
+    }
 
     @Override
     public void loadEditValues(EditControlSideDialog editControlPopup) {

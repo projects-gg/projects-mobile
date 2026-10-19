@@ -40,6 +40,14 @@ public class ControlButton extends TextView implements ControlInterface {
     protected boolean mIsToggled = false;
     protected boolean mIsPointerOutOfBounds = false;
 
+    // Projects fork (M15): the Projects look for buttons with a glyph, and press feedback.
+    protected gg.projects.mobile.controls.ControlSkin mSkin;
+    protected boolean mFingerDown;
+    private boolean mShownPressed;
+    private final Runnable mHeld = () -> {
+        if (mShownPressed && mSkin != null) mSkin.setHeld(true);
+    };
+
     public ControlButton(ControlLayout layout, ControlData properties) {
         super(layout.getContext());
         mControlLayout = layout;
@@ -83,13 +91,81 @@ public class ControlButton extends TextView implements ControlInterface {
         }
 
         setText(properties.name);
+        mSkin = gg.projects.mobile.controls.ControlSkin.attach(this, mSkin, properties, LauncherPreferences.PREF_BUTTON_ALL_CAPS);
+        if (mSkin != null) {
+            mSkin.setOn(mProperties.isToggle && mIsToggled);
+            // The hide button shows "show" while the other controls are hidden.
+            if (properties.containsKeycode(ControlData.SPECIALBTN_TOGGLECTRL) && getParent() instanceof ControlLayout)
+                onControlsShown(((ControlLayout) getParent()).areControlVisible());
+        }
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
+        if (mSkin != null) {
+            mSkin.draw(canvas);
+            return;
+        }
         super.onDraw(canvas);
         if (mIsToggled || (!mProperties.isToggle && isActivated()))
             canvas.drawRoundRect(0, 0, getWidth(), getHeight(), mComputedRadius, mComputedRadius, mRectPaint);
+    }
+
+    /** Projects fork (M15): a skinned button draws its own key, so it has no background drawable. */
+    @Override
+    public void setBackground() {
+        if (mSkin != null) {
+            setBackground((android.graphics.drawable.Drawable) null);
+            invalidate();
+            return;
+        }
+        ControlInterface.super.setBackground();
+    }
+
+    /** Projects fork (M15): the hide button's glyph and label follow whether the controls are shown. */
+    public void onControlsShown(boolean shown) {
+        if (mSkin == null || !mProperties.containsKeycode(ControlData.SPECIALBTN_TOGGLECTRL)) return;
+        mSkin.setAlt(!shown, "show", getContext().getString(R.string.projects_control_show));
+    }
+
+    /** Projects fork (M15): a press clicks down and ticks up (a toggle latches instead, see triggerToggle). */
+    @Override
+    public void setActivated(boolean activated) {
+        boolean was = isActivated();
+        super.setActivated(activated);
+        if (was == activated || mProperties == null) return;
+        if (!mProperties.isToggle) {
+            if (activated) gg.projects.mobile.ui.Haptics.press(this);
+            else gg.projects.mobile.ui.Haptics.release(this);
+        }
+        refreshPressed();
+    }
+
+    /** Projects fork (M15): the pressed look follows the finger, or the key for a swipeable button. */
+    protected void refreshPressed() {
+        if (mSkin == null || mProperties == null) return;
+        boolean pressed = mProperties.isSwipeable ? isActivated()
+                : mFingerDown || (!mProperties.isToggle && isActivated());
+        if (pressed == mShownPressed) return;
+        mShownPressed = pressed;
+        mSkin.setPressed(pressed);
+        removeCallbacks(mHeld);
+        if (pressed && !mProperties.isToggle && !(this instanceof ControlDrawer)) {
+            postDelayed(mHeld, gg.projects.mobile.controls.ControlStyle.HOLD_AFTER_MS);
+        } else {
+            mSkin.setHeld(false);
+        }
+    }
+
+    @Override
+    protected void onVisibilityChanged(View changedView, int visibility) {
+        super.onVisibilityChanged(changedView, visibility);
+        // Projects fork (M15): a key that disappears mid-press does not come back pressed.
+        if (visibility != VISIBLE && mSkin != null && mFingerDown) {
+            mFingerDown = false;
+            refreshPressed();
+            mSkin.settle();
+        }
     }
 
 
@@ -150,14 +226,21 @@ public class ControlButton extends TextView implements ControlInterface {
 
             case MotionEvent.ACTION_DOWN: // 0
             case MotionEvent.ACTION_POINTER_DOWN: // 5
+                // Projects fork (M15): the finger shows on the key; a toggle clicks down here and latches on release.
+                mFingerDown = true;
+                refreshPressed();
                 if(!getProperties().isToggle){
                     sendKeyPresses(true);
+                } else {
+                    gg.projects.mobile.ui.Haptics.press(this);
                 }
                 break;
 
             case MotionEvent.ACTION_UP: // 1
             case MotionEvent.ACTION_CANCEL: // 3
             case MotionEvent.ACTION_POINTER_UP: // 6
+                mFingerDown = false;
+                refreshPressed();
                 if(getProperties().passThruEnabled){
                     View gameSurface = getControlLayoutParent().getGameSurface();
                     if(gameSurface != null) gameSurface.dispatchTouchEvent(event);
@@ -186,6 +269,9 @@ public class ControlButton extends TextView implements ControlInterface {
             mIsToggled = !mIsToggled;
             invalidate();
             sendKeyPresses(mIsToggled);
+            // Projects fork (M15): the latch is felt and seen (gold while on).
+            gg.projects.mobile.ui.Haptics.toggle(this, mIsToggled);
+            if (mSkin != null) mSkin.setOn(mIsToggled);
             return true;
         }
         return false;
