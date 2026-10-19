@@ -97,6 +97,14 @@
         android:summary="@string/projects_based_on"
         android:icon="@drawable/projects_pref_info"
         />
+    <!-- Projects fork (M17): small and quiet under About (Mojang's usage guidelines; the owner's choice
+         of place, 18 October 2026). -->
+    <Preference
+        android:key="projects_not_affiliated"
+        android:layout="@layout/projects_preference_footnote"
+        android:selectable="false"
+        android:title="@string/projects_not_affiliated"
+        />
 
 
 
