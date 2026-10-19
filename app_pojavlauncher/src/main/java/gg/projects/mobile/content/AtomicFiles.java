@@ -31,16 +31,23 @@ public final class AtomicFiles {
         return out.toByteArray();
     }
 
-    /** Writes {@code bytes} to a temporary sibling, syncs it, then renames it over {@code target}. */
+    /**
+     * Writes {@code bytes} to a temporary sibling, syncs it, then renames it over {@code target}. The
+     * sibling has a name of its own (M17), so two writers of one file never share it: the last
+     * rename wins and neither deletes what the other wrote.
+     */
     public static void write(File target, byte[] bytes) throws IOException {
         File parent = target.getAbsoluteFile().getParentFile();
         if (parent != null && !parent.isDirectory() && !parent.mkdirs() && !parent.isDirectory()) {
             throw new IOException("cannot create " + parent);
         }
-        File tmp = new File(parent, target.getName() + ".tmp");
+        File tmp = File.createTempFile(target.getName() + ".tmp", null, parent);
         try (FileOutputStream out = new FileOutputStream(tmp)) {
             out.write(bytes);
             out.getFD().sync();
+        } catch (IOException | RuntimeException e) {
+            tmp.delete();
+            throw e;
         }
         if (!tmp.renameTo(target)) {
             // Some file systems (Windows, used by unit tests) refuse to rename over a file.

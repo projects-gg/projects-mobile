@@ -244,6 +244,7 @@ public class ContentRepositoryTest {
         AtomicFiles.write(target, "one".getBytes(StandardCharsets.UTF_8));
         AtomicFiles.write(target, "two".getBytes(StandardCharsets.UTF_8));
         assertEquals("two", new String(AtomicFiles.read(target, 10), StandardCharsets.UTF_8));
-        assertFalse(new File(target.getPath() + ".tmp").exists());
+        // M17: the temporary sibling has a name of its own and never stays behind.
+        assertEquals(Arrays.asList("y.json"), Arrays.asList(target.getParentFile().list()));
     }
 }
