@@ -103,7 +103,7 @@ public final class ModKeysLive {
     private static void read(boolean force) {
         File file = sOptions;
         if (file == null) return;
-        Map<String, String> next;
+        // One read at a time, and the bindings set inside: a slower read of an older file never wins.
         synchronized (ModKeysLive.class) {
             long length = file.length();
             long modified = file.lastModified();
@@ -124,10 +124,10 @@ public final class ModKeysLive {
                     return;
                 }
             }
-            next = ModKeys.keyBindings(lines);
+            Map<String, String> next = ModKeys.keyBindings(lines);
+            if (next.equals(sBindings)) return;
+            sBindings = Collections.unmodifiableMap(next);
         }
-        if (next.equals(sBindings)) return;
-        sBindings = Collections.unmodifiableMap(next);
         logBindings();
         notifyChanged();
     }
