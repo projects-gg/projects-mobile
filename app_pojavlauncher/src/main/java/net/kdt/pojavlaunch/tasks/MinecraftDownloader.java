@@ -66,6 +66,8 @@ public class MinecraftDownloader {
     private AtomicLong mKnownCounter; // ... settled without reading them
     private AtomicLong mHashedCounter, mHashedBytes; // ... hashed, and how much was read
     private AtomicLong mDownloadedCounter; // files the download pass has finished
+    private StringBuilder mLaps;
+    private long mLapAt;
     private static final double ONE_MEGABYTE = (1024d * 1024d);
     public static final String MINECRAFT_RES = "https://resources.download.minecraft.net/";
     private static final String MAVEN_CENTRAL_REPO1 = "https://repo1.maven.org/maven2/";
@@ -169,8 +171,11 @@ public class MinecraftDownloader {
         mHashedBytes = new AtomicLong(0);
         mDownloadedCounter = new AtomicLong(0);
         long started = SystemClock.elapsedRealtime();
+        mLaps = new StringBuilder();
+        mLapAt = started;
         File checkedStore = checkedStore();
         mChecked = CheckedFiles.load(checkedStore, new File(Tools.DIR_GAME_HOME), CheckedFiles.day(System.currentTimeMillis()));
+        lap("store");
 
         downloadAndProcessMetadata(activity, verInfo, versionName);
         long metadataDone = SystemClock.elapsedRealtime();
@@ -203,15 +208,23 @@ public class MinecraftDownloader {
         }
         long downloadDone = SystemClock.elapsedRealtime();
         Log.i(CHECK_TAG, String.format(Locale.ROOT,
-                "%s: metadata %d ms; check %d files in %d ms (%d unchanged, %d hashed %.1f MB, %d to download); "
+                "%s: metadata %d ms (%s); check %d files in %d ms (%d unchanged, %d hashed %.1f MB, %d to download); "
                         + "download %d files %.1f MB in %d ms; %d files known",
-                versionName, metadataDone - started, checkedFiles, checkDone - metadataDone, mKnownCounter.get(),
+                versionName, metadataDone - started, mLaps, checkedFiles, checkDone - metadataDone, mKnownCounter.get(),
                 mHashedCounter.get(), mHashedBytes.get() / ONE_MEGABYTE, needed.size(), mDownloadedCounter.get(),
                 mInternetUsageCounter.get() / ONE_MEGABYTE, downloadDone - checkDone, mChecked.size()));
         if (!done) return;
         ensureJarFileCopy();
         extractNatives(versionName);
         Log.i(CHECK_TAG, String.format(Locale.ROOT, "%s ready in %d ms", versionName, SystemClock.elapsedRealtime() - started));
+    }
+
+    /** Projects fork (M16): the metadata steps' times for the check's log line. */
+    private void lap(String step) {
+        long now = SystemClock.elapsedRealtime();
+        if (mLaps.length() > 0) mLaps.append(", ");
+        mLaps.append(step).append(' ').append(now - mLapAt);
+        mLapAt = now;
     }
 
     /** Projects fork (M16): where {@link CheckedFiles} keeps what the check knows (the app's own storage). */
@@ -399,12 +412,15 @@ public class MinecraftDownloader {
         } else {
             throw new IOException("Unable to read Version JSON for version " + versionName);
         }
+        lap(versionName + ".json");
 
         if(activity != null && !NewJREUtil.installNewJreIfNeeded(activity, verInfo)){
             throw new RuntimeException(activity.getString(R.string.exception_failed_to_unpack_jre17));
         }
+        lap("java");
 
         JAssets assets = downloadAssetsIndex(verInfo);
+        lap("asset index");
         if(assets != null) scheduleAssetDownloads(assets);
 
 
@@ -414,6 +430,7 @@ public class MinecraftDownloader {
         if(verInfo.libraries != null) scheduleLibraryDownloads(verInfo.libraries);
 
         if(verInfo.logging != null) scheduleLoggingAssetDownloadIfNeeded(verInfo.logging);
+        lap("files");
 
         if(Tools.isValidString(verInfo.inheritsFrom)) {
             JMinecraftVersionList.Version inheritedVersion = AsyncMinecraftDownloader.getListedVersion(verInfo.inheritsFrom);
