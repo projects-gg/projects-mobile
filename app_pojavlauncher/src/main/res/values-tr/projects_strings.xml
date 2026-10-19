@@ -167,8 +167,10 @@
     <string name="projects_link_no_app">Bağlantıyı açacak bir uygulama yok.</string>
 
     <!-- Upstream screens: the account screen, settings, the profile editor and version lists. -->
-    <string name="projects_auth_microsoft">Microsoft hesabı</string>
-    <string name="projects_auth_local">Çevrim dışı hesap</string>
+    <!-- M16: the two ways in, said as what they do. "Çevrim dışı hesap" read as "can't play online",
+         yet a name-only account plays on Projects (the server asks for its password, AuthMe). -->
+    <string name="projects_auth_microsoft">Microsoft ile giriş yap</string>
+    <string name="projects_auth_local">Oyuncu adıyla oyna</string>
     <string name="projects_login_started">Giriş yapılıyor…</string>
     <string name="projects_pref_autojre_title">Otomatik Java seçimini kapat</string>
     <string name="projects_pref_autojre_summary">“%1$s” için Java sürümü otomatik seçilmez.</string>

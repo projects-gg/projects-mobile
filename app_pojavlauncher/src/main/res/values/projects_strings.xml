@@ -171,8 +171,10 @@
     <string name="projects_link_no_app">No app can open this link.</string>
 
     <!-- Upstream screens: the account screen, settings, the profile editor and version lists. -->
-    <string name="projects_auth_microsoft">Microsoft account</string>
-    <string name="projects_auth_local">Local account</string>
+    <!-- M16: the two ways in, said as what they do. "Offline/local account" read as "can't play online",
+         yet a name-only account plays on Projects (the server asks for its password, AuthMe). -->
+    <string name="projects_auth_microsoft">Sign in with Microsoft</string>
+    <string name="projects_auth_local">Play with a username</string>
     <string name="projects_login_started">Signing in…</string>
     <string name="projects_pref_autojre_title">Disable automatic JRE selection</string>
     <string name="projects_pref_autojre_summary">Stops automatic selection of which runtime to use in “%1$s”</string>
