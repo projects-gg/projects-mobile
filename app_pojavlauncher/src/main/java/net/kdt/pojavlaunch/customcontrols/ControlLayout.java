@@ -279,6 +279,15 @@ public class ControlLayout extends FrameLayout {
 	 * {@code held} ({@link #releaseModHint} starts its time).
 	 */
 	public void showModHint(View key, String reason, boolean held) {
+		showModHint(key, reason, held, null);
+	}
+
+	/**
+	 * Projects fork (M17): the reason with a button under it (the one-tap key fix, or "Geri al" once it
+	 * is asked for). Only the button takes touches; the line stays longer so it can be reached.
+	 */
+	public void showModHint(View key, String reason, boolean held,
+							@androidx.annotation.Nullable gg.projects.mobile.controls.ControlHint.Action action) {
 		if (mModifiable) return;
 		if (mModHint == null) {
 			mModHint = new gg.projects.mobile.controls.ControlHint(getContext());
@@ -293,7 +302,7 @@ public class ControlLayout extends FrameLayout {
 				clear.union(button.getX(), button.getY(), button.getX() + button.getWidth(), button.getY() + button.getHeight());
 			}
 		}
-		mModHint.show(key, clear, reason, held);
+		mModHint.show(key, clear, reason, held, action);
 	}
 
 	/** Projects fork (M16): the finger left the key; the reason stays long enough to be read. */

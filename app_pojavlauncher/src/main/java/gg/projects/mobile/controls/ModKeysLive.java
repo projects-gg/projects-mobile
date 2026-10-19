@@ -1,5 +1,6 @@
 package gg.projects.mobile.controls;
 
+import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -9,6 +10,7 @@ import androidx.annotation.Nullable;
 
 import net.kdt.pojavlaunch.Logger;
 import net.kdt.pojavlaunch.PojavApplication;
+import net.kdt.pojavlaunch.prefs.LauncherPreferences;
 import net.kdt.pojavlaunch.utils.MCOptionUtils;
 
 import java.io.File;
@@ -22,6 +24,7 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import gg.projects.mobile.content.AtomicFiles;
+import gg.projects.mobile.join.ProjectsProfile;
 
 /**
  * The MODLAR keys' view of the running game (M16), in the game process: the key bindings of the
@@ -31,6 +34,9 @@ import gg.projects.mobile.content.AtomicFiles;
  * Controls reaches the buttons) and when the panel opens if it changed since. Nothing polls; the
  * log is read only until the mods are known. Before {@link #attach} (the controls editor) nothing
  * is known and the buttons send their own keys.
+ *
+ * <p>M17: in the Projects profile a clash the one-tap key fix solves ({@link KeyFix}) offers the fix
+ * on the key's reason line; asked for there, it waits until the game is closed ({@link KeyFixer}).
  */
 public final class ModKeysLive {
     private ModKeysLive() {}
@@ -50,6 +56,20 @@ public final class ModKeysLive {
     private static final Object LOG_LOCK = new Object();
     /** The log was read to its answer once in this process (the mods, or that they cannot be told). */
     private static volatile boolean sModsSettled;
+    /** M17: the game runs the Projects profile (the one-tap key fix is for its pack). */
+    private static volatile boolean sProjects;
+    /** M17: a key fix of this game folder waits for the game to close. */
+    private static volatile boolean sFixQueued;
+
+    /** M17: what the reason line of a clashing MODLAR key offers. */
+    public enum Fix {
+        /** Nothing: the fix does not solve this key's clash (the player's own keys, another profile). */
+        NONE,
+        /** "Tuş çakışmalarını düzelt". */
+        OFFER,
+        /** Asked for: it is made once the game is closed ("Geri al" takes it back). */
+        QUEUED,
+    }
 
     private static final Runnable READ = () -> PojavApplication.sExecutorService.execute(() -> read(false));
     // Strong references: MCOptionUtils and Logger keep only what they are given.
@@ -61,13 +81,21 @@ public final class ModKeysLive {
 
     /** The game activity starts the profile whose folder is {@code gameDir}. */
     @MainThread
-    public static void attach(File gameDir) {
+    public static void attach(Context context, File gameDir) {
         sOptions = new File(gameDir, "options.txt");
         synchronized (ModKeysLive.class) {
             sReadLength = -1;
             sReadModified = -1;
         }
+        sProjects = ProjectsProfile.KEY.equals(
+                LauncherPreferences.DEFAULT_PREF.getString(LauncherPreferences.PREF_KEY_CURRENT_PROFILE, ""));
+        final Context app = context.getApplicationContext();
         PojavApplication.sExecutorService.execute(() -> read(true));
+        // M17: the fix's table and whether a fix waits (asked for earlier while this game ran).
+        KeyFixer.run(() -> {
+            KeyFixer.pairs(app);
+            sFixQueued = sProjects && KeyFixer.queued(app, gameDir);
+        });
         MCOptionUtils.addMCOptionListener(OPTIONS_CHANGED);
         // The mods are known once per game process: an activity created again keeps the answer.
         if (!sModsSettled && sParser == null) {
@@ -84,6 +112,43 @@ public final class ModKeysLive {
     public static ModKeys.Binding binding(ModKeys.Action action) {
         if (sOptions == null) return null;
         return ModKeys.resolve(action, sBindings, sMods);
+    }
+
+    /**
+     * M17: whether the one-tap key fix solves {@code action}'s clash in the running game's options.txt
+     * (the Projects profile only), and whether the player already asked for it.
+     */
+    public static Fix fix(Context context, ModKeys.Action action) {
+        if (sOptions == null || !sProjects) return Fix.NONE;
+        if (!KeyFix.covers(KeyFixer.plan(context, sBindings), action.mapping)) return Fix.NONE;
+        return sFixQueued ? Fix.QUEUED : Fix.OFFER;
+    }
+
+    /**
+     * M17: the player asked for the fix on a reason line ({@code queue}), or took it back. The game
+     * keeps its keys until it closes, so the fix waits for that ({@link KeyFixer#queue}).
+     */
+    public static void queueFix(Context context, boolean queue) {
+        File options = sOptions;
+        if (options == null || !sProjects) return;
+        final File gameDir = options.getParentFile();
+        final Context app = context.getApplicationContext();
+        // The line answers at once; a write that fails puts the state back and says so. The key fix's
+        // own thread keeps "düzelt" and a quick "Geri al" in order.
+        sFixQueued = queue;
+        KeyFixer.run(() -> {
+            try {
+                if (queue) KeyFixer.queue(app, gameDir);
+                else KeyFixer.unqueue(app);
+            } catch (IOException | RuntimeException e) {
+                Log.w(TAG, "key fix not queued", e);
+                MAIN.post(() -> {
+                    sFixQueued = !queue;
+                    android.widget.Toast.makeText(app, net.kdt.pojavlaunch.R.string.projects_keyfix_failed,
+                            android.widget.Toast.LENGTH_LONG).show();
+                });
+            }
+        });
     }
 
     /** The MODLAR panel opens: reads options.txt again if it changed (a stat, nothing else otherwise). */

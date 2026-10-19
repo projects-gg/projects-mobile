@@ -120,6 +120,8 @@ public class ControlButton extends TextView implements ControlInterface {
         mUnavailablePress = true;
         gg.projects.mobile.ui.Haptics.reject(this);
         if (mSkin != null) mSkin.setUnavailable(true);
+        // M17: a clash the one-tap key fix solves says what it is and offers the fix under it.
+        if (binding.state == gg.projects.mobile.controls.ModKeys.State.CONFLICT && showFixHint(binding.action, true)) return;
         String reason;
         switch (binding.state) {
             case NO_MOD:
@@ -136,6 +138,28 @@ public class ControlButton extends TextView implements ControlInterface {
                 break;
         }
         mControlLayout.showModHint(this, reason, true);
+    }
+
+    /**
+     * Projects fork (M17): the reason of a clash the one-tap key fix solves, with its button: "Tuş
+     * çakışmalarını düzelt", or once asked for, that it is fixed when the game is opened again and
+     * "Geri al". The running game keeps its keys, so the fix is made once it is closed. False when the
+     * fix does not cover this key (the player's own keys, another profile).
+     */
+    private boolean showFixHint(gg.projects.mobile.controls.ModKeys.Action action, boolean held) {
+        gg.projects.mobile.controls.ModKeysLive.Fix fix = gg.projects.mobile.controls.ModKeysLive.fix(getContext(), action);
+        if (fix == gg.projects.mobile.controls.ModKeysLive.Fix.NONE || mControlLayout == null) return false;
+        final boolean queued = fix == gg.projects.mobile.controls.ModKeysLive.Fix.QUEUED;
+        String reason = getContext().getString(R.string.projects_modkey_conflict_short);
+        if (queued) reason += '\n' + getContext().getString(R.string.projects_keyfix_queued);
+        gg.projects.mobile.controls.ControlHint.Action button = new gg.projects.mobile.controls.ControlHint.Action(
+                getContext().getString(queued ? R.string.projects_undo : R.string.projects_keyfix_action),
+                () -> {
+                    gg.projects.mobile.controls.ModKeysLive.queueFix(getContext(), !queued);
+                    showFixHint(action, false);
+                });
+        mControlLayout.showModHint(this, reason, held, button);
+        return true;
     }
 
     @Override
