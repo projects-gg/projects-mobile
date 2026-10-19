@@ -46,7 +46,8 @@ public final class ModKeysLive {
     private static volatile Set<String> sMods;
     private static long sReadLength = -1, sReadModified = -1;
     private static final List<Runnable> sListeners = new CopyOnWriteArrayList<>();
-    private static LoadedMods sParser;
+    private static volatile LoadedMods sParser;
+    private static final Object LOG_LOCK = new Object();
     /** The log was read to its answer once in this process (the mods, or that they cannot be told). */
     private static volatile boolean sModsSettled;
 
@@ -132,12 +133,15 @@ public final class ModKeysLive {
         notifyChanged();
     }
 
+    /** The game's log, from the native logger's thread and from whoever appends to it: one at a time. */
     private static void onLog(String chunk) {
-        LoadedMods parser = sParser;
-        if (parser == null || !parser.feed(chunk)) return;
-        sMods = parser.mods();
-        sModsSettled = true;
-        sParser = null;
+        synchronized (LOG_LOCK) {
+            LoadedMods parser = sParser;
+            if (parser == null || !parser.feed(chunk)) return;
+            sMods = parser.mods();
+            sModsSettled = true;
+            sParser = null;
+        }
         // Removing a listener while the logger iterates is safe (a copy-on-write list).
         Logger.removeLogListener(LOG);
         Log.i(TAG, sMods == null ? "mods: unknown" : "mods: " + sMods.size() + " loaded");
