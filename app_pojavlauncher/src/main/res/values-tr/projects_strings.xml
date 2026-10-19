@@ -255,4 +255,8 @@
     <string name="projects_launch_slow">Bu biraz sürebilir.</string>
     <string name="projects_launch_show_log">Kaydı göster</string>
     <string name="projects_launch_close">Oyunu kapat</string>
+    <plurals name="projects_tasks_in_progress">
+        <item quantity="one">%d işlem sürüyor</item>
+        <item quantity="other">%d işlem sürüyor</item>
+    </plurals>
 </resources>

@@ -118,7 +118,8 @@ public class ProgressLayout extends ConstraintLayout implements View.OnClickList
     public void onUpdateTaskCount(int tc) {
         post(()->{
             if(tc > 0) {
-                mTaskNumberDisplayer.setText(getContext().getString(R.string.progresslayout_tasks_in_progress, tc));
+                // Projects fork (M14): a plural ("1 task", not "1 tasks"; Turkish "1 işlem sürüyor").
+                mTaskNumberDisplayer.setText(getResources().getQuantityString(R.plurals.projects_tasks_in_progress, tc, tc));
                 setVisibility(VISIBLE);
             }else
                 setVisibility(GONE);

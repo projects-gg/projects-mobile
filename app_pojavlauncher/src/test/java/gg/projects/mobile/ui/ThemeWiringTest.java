@@ -80,6 +80,14 @@ public class ThemeWiringTest {
     }
 
     @Test
+    public void dialogTextsBreakIntoEvenLines() throws Exception {
+        // "…telefondan kaldırılsın / mı?": a question's last word alone on its line.
+        String upstream = read(new File(RES, "values/styles.xml"));
+        assertTrue(style(upstream, "ProjectsAlertDialog").contains("<item name=\"android:textViewStyle\">@style/ProjectsDialogText</item>"));
+        assertTrue(style(upstream, "ProjectsDialogText").contains(">balanced</item>"));
+    }
+
+    @Test
     public void theLaunchScreenHasAStillSheenBeforeAndroid71() throws Exception {
         // drawable-v25 holds the render-thread animation (gradients need 7.0, render-thread vectors 7.1);
         // without a plain drawable of the same name the screen would not open on Android 5 to 7.0.

@@ -34,11 +34,11 @@
     <string name="mcl_options">Seçenekler</string>
     <string name="mcl_option_customcontrol">Özel kontroller</string>
     <string name="mcl_setting_title_use_surface_view">Alternatif yüzey işleyicisi kullan</string>
-    <string name="mcl_setting_subtitle_use_surface_view">GPU\'ya bağlı durumlarda performansı arttırabilir.</string>
+    <string name="mcl_setting_subtitle_use_surface_view">GPU\'ya bağlı durumlarda performansı artırabilir.</string>
     <string name="mcl_setting_title_ignore_notch">Çentiği görmezden gel</string>
     <string name="mcl_setting_subtitle_ignore_notch">Çentiği görmezden gelir ve ekranı kameranın yanına genişletir.\nDaha sürükleyici bir deneyim sunar.</string>
-    <string name="mcl_setting_title_resolution_scaler">Çözünürlük Ölçekleyicisi</string>
-    <string name="mcl_setting_subtitle_resolution_scaler">Oyun çözünürlüğünü düşürmenizi sağlar. %100 full çözünürlüktür.</string>
+    <string name="mcl_setting_title_resolution_scaler">Çözünürlük ölçekleyicisi</string>
+    <string name="mcl_setting_subtitle_resolution_scaler">Düşük değer oyunu akıcılaştırır. %100 tam çözünürlüktür.</string>
     <string name="mcl_setting_title_longpresstrigger">Uzun basma tetiklenme gecikmesi</string>
     <string name="mcl_setting_subtitle_longpresstrigger">Blokları yok etmek ve eşyaları düşürmek için uzun basma tetiklenme gecikmesini değiştirin.</string>
     <string name="mcl_setting_title_buttonscale">Düğmelerin ölçeklemesini ayarla</string>
@@ -180,9 +180,9 @@
     <string name="preference_misc_description">Sürüm listesi ve kütüphane kontrolü</string>
     <string name="preference_experimental_description">Dikkatli kullan; bunlar için destek verilmez.</string>
     <string name="preference_sustained_performance_title">Kısıtlı performans modunu aç</string>
-    <string name="preference_sustained_performance_description">Üst performansı kısıtlayarak ısınmayı limitle.</string>
+    <string name="preference_sustained_performance_description">En yüksek performansı sınırlayarak ısınmayı azaltır.</string>
     <string name="preference_force_vsync_title">VSync\'i zorla</string>
-    <string name="preference_force_vsync_description">Üst performansı kısıtlayarak ısınmayı limitle.</string>
+    <string name="preference_force_vsync_description">En yüksek performansı sınırlayarak ısınmayı azaltır.</string>
     <string name="preference_edit_controls_title">Özel kontrolleri düzenle</string>
     <string name="preference_edit_controls_summary">İhtiyaçlarınıza göre kontrol şemasını ayarlayın.</string>
     <string name="preference_category_gyro_controls">Jiroskop kontrolleri</string>

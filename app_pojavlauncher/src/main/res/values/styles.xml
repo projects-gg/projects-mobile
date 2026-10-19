@@ -29,6 +29,13 @@
         <item name="android:textAppearanceListItem">@style/TextAppearance.Projects.ListItem</item>
         <item name="android:textAppearanceListItemSmall">@style/TextAppearance.Projects.ListItem</item>
         <item name="android:windowTitleStyle">@style/ProjectsDialogTitle</item>
+        <item name="android:textViewStyle">@style/ProjectsDialogText</item>
+    </style>
+
+    <!-- M14: a question's last word never sits alone on a line ("…kaldırılsın / mı?"): dialog
+         texts break into lines of even length (Android 6+). -->
+    <style name="ProjectsDialogText" parent="android:Widget.Material.TextView">
+        <item name="android:breakStrategy" tools:targetApi="23">balanced</item>
     </style>
 
     <!-- M14: dialog titles in Tektur like every screen title (design.md: dialog title 17). -->

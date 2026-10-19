@@ -65,7 +65,9 @@ public class ProgressService extends Service implements TaskCountListener {
             }
         }
         Log.d("ProgressService", "Started!");
-        mNotificationBuilder.setContentText(getString(R.string.progresslayout_tasks_in_progress, ProgressKeeper.getTaskCount()));
+        // Projects fork (M14): a plural ("1 task", not "1 tasks").
+        int tasks = ProgressKeeper.getTaskCount();
+        mNotificationBuilder.setContentText(getResources().getQuantityString(R.plurals.projects_tasks_in_progress, tasks, tasks));
         Notification notification = mNotificationBuilder.build();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             startForeground(NotificationUtils.NOTIFICATION_ID_PROGRESS_SERVICE, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MANIFEST);
@@ -93,7 +95,7 @@ public class ProgressService extends Service implements TaskCountListener {
     public void onUpdateTaskCount(int taskCount) {
         Tools.MAIN_HANDLER.post(()->{
             if(taskCount > 0) {
-                mNotificationBuilder.setContentText(getString(R.string.progresslayout_tasks_in_progress, taskCount));
+                mNotificationBuilder.setContentText(getResources().getQuantityString(R.plurals.projects_tasks_in_progress, taskCount, taskCount));
                 notificationManagerCompat.notify(1, mNotificationBuilder.build());
             }else{
                 stopSelf();
