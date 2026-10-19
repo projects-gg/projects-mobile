@@ -12,8 +12,9 @@ import java.util.Set;
  * says which key that mapping uses ({@code key_<mapping>:<key>}): the launchers' table in a new file
  * (zoom C, gamma X, push-to-talk Caps Lock), the mods' own defaults in one the game saved before
  * 0.1.6 (zoom V, gamma G, push-to-talk none), or whatever the player picked in the game's Controls.
- * The button sends that key. A mapping without a key, a key the screen cannot press and a mod the
- * game did not load make the button unavailable, and it says why ({@link State}).
+ * The button sends that key. A mapping without a key, a key the screen cannot press, a key another
+ * mapping uses in normal play (the game fires both) and a mod the game did not load make the button
+ * unavailable, and it says why ({@link State}).
  *
  * <p>A button is a mod key only while it still has the glyph and the key the layout gave it: a key
  * the player changed in the controls editor is the player's and is sent as it is. Plain Java,
@@ -69,8 +70,27 @@ public final class ModKeys {
         UNBOUND,
         /** The mapping's key is one the screen cannot press (a scan code, a mouse button past 5). */
         UNSENDABLE,
+        /**
+         * Another mapping that acts in normal play has the same key, and the game fires every mapping
+         * of a pressed key: in a file saved before 0.1.6 zoom shares V with Simple Voice Chat's menu,
+         * so the button opened that menu instead of zooming.
+         */
+        CONFLICT,
         /** The game did not load the mod. */
         NO_MOD,
+    }
+
+    /**
+     * Mappings that act only with F3 held, in creative's hotbar, as a spectator, in Replay Mod or on a
+     * server's dialog (Quick Actions): sharing their key is no clash in normal play (KEYS1's
+     * inventory, ProLauncher2 crates/pl-mc/testdata/key-bindings).
+     */
+    private static final java.util.Set<String> CONTEXT_ONLY = Collections.unmodifiableSet(new java.util.HashSet<>(java.util.Arrays.asList(
+            "key.saveToolbarActivator", "key.loadToolbarActivator", "key.spectatorHotbar", "key.spectatorOutlines",
+            "key.toggleSpectatorShaderEffects", "key.quickActions")));
+
+    static boolean contextOnly(String mapping) {
+        return mapping.startsWith("key.debug.") || mapping.startsWith("key.replaymod.") || CONTEXT_ONLY.contains(mapping);
     }
 
     /** How a mod key is bound now. */
@@ -171,8 +191,22 @@ public final class ModKeys {
         if (key.equals(UNBOUND_KEY)) return new Binding(action, State.UNBOUND, new int[0], input);
         Integer code = code(key);
         if (code == null) return new Binding(action, State.UNSENDABLE, new int[0], input);
+        if (bindings != null && sharedInPlay(action, input, bindings)) {
+            return new Binding(action, State.CONFLICT, new int[0], input);
+        }
         int[] keys = modifier == 0 ? new int[]{code} : new int[]{modifier, code};
         return new Binding(action, State.READY, keys, input);
+    }
+
+    /** Another mapping of the file that acts in normal play has {@code input} (modifier included). */
+    private static boolean sharedInPlay(Action action, String input, Map<String, String> bindings) {
+        String mine = input.trim().toLowerCase(Locale.ROOT);
+        for (Map.Entry<String, String> entry : bindings.entrySet()) {
+            String mapping = entry.getKey();
+            if (mapping.equals(action.mapping) || contextOnly(mapping) || entry.getValue() == null) continue;
+            if (entry.getValue().trim().toLowerCase(Locale.ROOT).equals(mine)) return true;
+        }
+        return false;
     }
 
     /**

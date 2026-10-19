@@ -96,7 +96,8 @@ public final class ControlHint extends View {
         boolean again = showing && getVisibility() == VISIBLE;
         int margin = Math.round(12 * dp);
         int padX = Math.round(12 * dp), padY = Math.round(9 * dp);
-        int maxText = Math.max(Math.round(120 * dp), Math.min(Math.round(236 * dp), parent.getWidth() - 2 * margin) - 2 * padX);
+        // Wide enough for each of the two sentences (what, then how to fix it) to keep its own line.
+        int maxText = Math.max(Math.round(120 * dp), Math.min(Math.round(336 * dp), parent.getWidth() - 2 * margin) - 2 * padX);
         if (text == null || !message.equals(shown)) {
             text = layout(message, maxText);
             shown = message;

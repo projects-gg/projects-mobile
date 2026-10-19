@@ -272,9 +272,11 @@
     </plurals>
     <!-- M15: the hide button of the on-screen controls while they are hidden (capitals like the control labels). -->
     <string name="projects_control_show">SHOW</string>
-    <!-- M16: why a MODLAR key does nothing now, shown beside the key in the game. The menu names are the game's own. -->
-    <string name="projects_modkey_unbound">This has no key in the game. Set one in Options › Controls.</string>
-    <string name="projects_modkey_unsendable">Its key can\'t be pressed on the screen. Change it in Options › Controls.</string>
+    <!-- M16: why a MODLAR key does nothing now, shown beside the key in the game: what, then how to fix it,
+         a line each (the menu path kept on one line). The menu names are the game's own. -->
+    <string name="projects_modkey_unbound">This has no key in the game.\nSet one in Options&#160;›&#160;Controls.</string>
+    <string name="projects_modkey_unsendable">Its key can\'t be pressed on the screen.\nChange it in Options&#160;›&#160;Controls.</string>
+    <string name="projects_modkey_conflict">Another action in the game uses this key too.\nChange one in Options&#160;›&#160;Controls.</string>
     <string name="projects_modkey_no_mod">%1$s isn\'t installed in this profile.</string>
     <!-- M16: the start's file check before the game opens (files only checked, nothing downloaded). -->
     <string name="projects_check_files">Checking game files… (%1$d/%2$d)</string>

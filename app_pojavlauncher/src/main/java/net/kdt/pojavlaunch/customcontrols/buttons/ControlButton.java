@@ -128,6 +128,9 @@ public class ControlButton extends TextView implements ControlInterface {
             case UNSENDABLE:
                 reason = getContext().getString(R.string.projects_modkey_unsendable);
                 break;
+            case CONFLICT:
+                reason = getContext().getString(R.string.projects_modkey_conflict);
+                break;
             default:
                 reason = getContext().getString(R.string.projects_modkey_unbound);
                 break;

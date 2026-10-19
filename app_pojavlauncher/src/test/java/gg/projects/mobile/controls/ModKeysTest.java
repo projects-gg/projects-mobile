@@ -156,6 +156,51 @@ public class ModKeysTest {
     }
 
     @Test
+    public void aKeyAnotherActionUsesInPlayIsAClash() {
+        // A file the game saved before 0.1.6: zoom and Simple Voice Chat's menu both on V (pressing the
+        // button opened the voice chat's set-up instead of zooming, seen on the emulator).
+        Map<String, String> old = options(
+                "key_key.wi_zoom.zoom:key.keyboard.v",
+                "key_key.voice_chat:key.keyboard.v",
+                "key_key.gammautils.gammaToggle:key.keyboard.g",
+                "key_key.quickActions:key.keyboard.g",
+                "key_key.debug.showChunkBorders:key.keyboard.g",
+                "key_key.debug.dumpVersion:key.keyboard.v");
+        ModKeys.Binding zoom = ModKeys.resolve(ModKeys.Action.ZOOM, old);
+        assertEquals(ModKeys.State.CONFLICT, zoom.state);
+        assertEquals(0, zoom.keys.length);
+        // G is also Quick Actions (only on a server's dialog) and an F3 combination: no clash in play.
+        assertArrayEquals(new int[]{G}, ModKeys.resolve(ModKeys.Action.BRIGHTNESS, old).keys);
+        // Without its own line zoom is on its default V, which still clashes.
+        assertEquals(ModKeys.State.CONFLICT, ModKeys.resolve(ModKeys.Action.ZOOM, options("key_key.voice_chat:key.keyboard.v")).state);
+        // A modifier makes another key.
+        assertEquals(ModKeys.State.READY, ModKeys.resolve(ModKeys.Action.ZOOM,
+                options("key_key.wi_zoom.zoom:key.keyboard.v:SHIFT", "key_key.voice_chat:key.keyboard.v")).state);
+    }
+
+    @Test
+    public void theLaunchersTableClashesWithNothingOnceTheGameSavedTheFile() throws IOException {
+        // The table's keys beside every mapping of the Projects pack that shares them (KEYS1's
+        // inventory): creative's hotbar, F3 combinations, Replay Mod's viewer, Quick Actions.
+        String json = new String(AtomicFiles.read(new File("src/main/assets/key-bindings.json"), 64 * 1024), StandardCharsets.UTF_8);
+        List<String> lines = new ArrayList<>(FirstOptions.keyLines(json));
+        lines.addAll(Arrays.asList(
+                "key_key.saveToolbarActivator:key.keyboard.c", "key_key.loadToolbarActivator:key.keyboard.x",
+                "key_key.debug.crash:key.keyboard.c", "key_key.debug.copyLocation:key.keyboard.c",
+                "key_key.debug.showHitboxes:key.keyboard.b", "key_key.debug.showChunkBorders:key.keyboard.g",
+                "key_key.replaymod.marker:key.keyboard.m", "key_key.replaymod.lighting:key.keyboard.z",
+                "key_key.replaymod.playeroverview:key.keyboard.b", "key_key.replaymod.clearkeyframes:key.keyboard.c",
+                "key_key.replaymod.keyframerepository:key.keyboard.x", "key_key.quickActions:key.keyboard.g",
+                "key_key.voice_chat:key.keyboard.v", "key_key.mute_microphone:key.keyboard.m",
+                "key_gui.xaero_new_waypoint:key.keyboard.b", "key_gui.xaero_enlarge_map:key.keyboard.z",
+                "key_key.hide_icons:key.keyboard.unknown", "key_key.whisper:key.keyboard.unknown"));
+        Map<String, String> keys = ModKeys.keyBindings(lines);
+        for (ModKeys.Action action : ModKeys.Action.values()) {
+            assertEquals(action.name(), ModKeys.State.READY, ModKeys.resolve(action, keys).state);
+        }
+    }
+
+    @Test
     public void withoutALineTheModsOwnKeyApplies() {
         Map<String, String> none = Collections.emptyMap();
         assertArrayEquals(new int[]{V}, ModKeys.resolve(ModKeys.Action.ZOOM, none).keys);
