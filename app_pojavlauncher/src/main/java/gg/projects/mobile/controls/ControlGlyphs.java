@@ -45,6 +45,7 @@ final class ControlGlyphs {
             case "mic": return R.drawable.projects_ctl_mic;
             case "waypoint": return R.drawable.projects_ctl_waypoint;
             case "map": return R.drawable.projects_ctl_map;
+            case "talk": return R.drawable.projects_ctl_talk;
             default: return 0;
         }
     }

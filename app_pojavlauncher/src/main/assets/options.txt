@@ -94,3 +94,4 @@ soundCategory_hostile:1.0
 soundCategory_neutral:1.0
 soundCategory_player:1.0
 soundCategory_ambient:1.0
+tutorialStep:none

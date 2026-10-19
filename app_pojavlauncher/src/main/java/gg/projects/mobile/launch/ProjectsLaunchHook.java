@@ -51,8 +51,9 @@ public final class ProjectsLaunchHook {
     }
 
     /**
-     * Writes the first options into {@code gameDir} when it has none: the app's language and the
-     * version's data number. Runs in the game activity before upstream creates an empty
+     * Writes the first options into {@code gameDir} when it has none: the app's language, the
+     * version's data number, no keyboard tutorial and, for the Projects profile, the pack's key
+     * bindings ({@link FirstOptions}). Runs in the game activity before upstream creates an empty
      * {@code options.txt}. {@code versionId} is the launched version (a loader's own id is fine: the
      * vanilla version it inherits from decides the language code, and the downloader copies its jar).
      */
@@ -67,11 +68,28 @@ public final class ProjectsLaunchHook {
                 minecraft = inherits;
                 jars.add(clientJar(inherits));
             }
-            FirstOptions.Result result = FirstOptions.seed(gameDir, minecraft, jars, LanguageManager.isTurkish(context));
+            FirstOptions.Result result = FirstOptions.seed(gameDir, minecraft, jars, LanguageManager.isTurkish(context),
+                    projectsKeys(context));
             if (result != FirstOptions.Result.EXISTS) Log.i(TAG, "first options for " + minecraft + ": " + result);
         } catch (Exception e) {
             // Never block a launch because of the first options; the game starts with its defaults.
             Log.w(TAG, "first options skipped", e);
+        }
+    }
+
+    /**
+     * The Projects profile's first options also bind the pack's mods to keys that clash with nothing
+     * (the shared table {@code assets/key-bindings.json}; the on-screen MODLAR keys send the same
+     * keys). Other profiles get none.
+     */
+    private static List<String> projectsKeys(Context context) {
+        String profileKey = LauncherPreferences.DEFAULT_PREF.getString(LauncherPreferences.PREF_KEY_CURRENT_PROFILE, "");
+        if (!ProjectsProfile.KEY.equals(profileKey)) return new ArrayList<>();
+        try (InputStream in = context.getAssets().open("key-bindings.json")) {
+            return FirstOptions.keyLines(new String(AtomicFiles.readBounded(in, 64 * 1024), StandardCharsets.UTF_8));
+        } catch (IOException | RuntimeException e) {
+            Log.w(TAG, "key table unavailable", e);
+            return new ArrayList<>();
         }
     }
 

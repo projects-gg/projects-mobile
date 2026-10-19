@@ -61,6 +61,7 @@ public final class ControlLabels {
         labels.put("MİKROFON", "MICROPHONE");
         labels.put("YOL NOKTASI", "WAYPOINT");
         labels.put("HARİTA", "MAP");
+        labels.put("KONUŞ", "TALK");
         labels.put("SALDIR", "ATTACK");
         labels.put("KULLAN", "USE");
         labels.put("SAĞ TIK", "RIGHT CLICK");

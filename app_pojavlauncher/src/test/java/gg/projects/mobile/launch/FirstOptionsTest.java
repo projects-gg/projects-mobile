@@ -89,7 +89,7 @@ public class FirstOptionsTest {
         File game = new File(temp.getRoot(), "custom_instances/projects");
         assertEquals(FirstOptions.Result.WRITTEN, FirstOptions.seed(game, "26.1.2", Collections.singletonList(jar), true));
         // No GUI scale: the game's "Auto" keeps buttons finger-sized on a phone.
-        assertEquals("version:4790\nlang:tr_tr\n", read(game));
+        assertEquals("version:4790\nlang:tr_tr\ntutorialStep:none\n", read(game));
         // Only once: from then on the file is the game's and the player's.
         write(game, "version:4790\nlang:en_us\nguiScale:3\nrenderDistance:6\n");
         assertEquals(FirstOptions.Result.EXISTS, FirstOptions.seed(game, "26.1.2", Collections.singletonList(jar), true));
@@ -117,16 +117,16 @@ public class FirstOptionsTest {
         File game = temp.newFolder("stopped");
         write(game, "");
         assertEquals(FirstOptions.Result.WRITTEN, FirstOptions.seed(game, "1.21.1", Collections.singletonList(jar), true));
-        assertEquals("version:3955\nlang:tr_tr\n", read(game));
+        assertEquals("version:3955\nlang:tr_tr\ntutorialStep:none\n", read(game));
 
         write(game, "overrideHeight:1080\nfullscreen:off\r\noverrideWidth:2400\n\n");
         assertEquals(FirstOptions.Result.WRITTEN, FirstOptions.seed(game, "1.21.1", Collections.singletonList(jar), true));
-        assertEquals("version:3955\nlang:tr_tr\noverrideHeight:1080\nfullscreen:off\noverrideWidth:2400\n", read(game));
+        assertEquals("version:3955\nlang:tr_tr\ntutorialStep:none\noverrideHeight:1080\nfullscreen:off\noverrideWidth:2400\n", read(game));
 
         // Its own lines from a launch that stopped early are written again, the window kept.
         write(game, "lang:tr_tr\noverrideWidth:2400\nversion:3955\n");
         assertEquals(FirstOptions.Result.WRITTEN, FirstOptions.seed(game, "1.21.1", Collections.singletonList(jar), true));
-        assertEquals("version:3955\nlang:tr_tr\noverrideWidth:2400\n", read(game));
+        assertEquals("version:3955\nlang:tr_tr\ntutorialStep:none\noverrideWidth:2400\n", read(game));
     }
 
     @Test
@@ -135,7 +135,7 @@ public class FirstOptionsTest {
         File vanilla = clientJar("26.1.2.jar", "{\"world_version\":4790}");
         File game = temp.newFolder("fabric");
         assertEquals(FirstOptions.Result.WRITTEN, FirstOptions.seed(game, "26.1.2", Arrays.asList(missing, vanilla), true));
-        assertEquals("version:4790\nlang:tr_tr\n", read(game));
+        assertEquals("version:4790\nlang:tr_tr\ntutorialStep:none\n", read(game));
     }
 
     @Test
@@ -145,10 +145,10 @@ public class FirstOptionsTest {
         // Older versions have no onboarding: the language alone is safe.
         File old = temp.newFolder("old");
         assertEquals(FirstOptions.Result.WRITTEN, FirstOptions.seed(old, "1.12.2", Collections.singletonList(noJson), true));
-        assertEquals("lang:tr_tr\n", read(old));
+        assertEquals("lang:tr_tr\ntutorialStep:none\n", read(old));
         File older = temp.newFolder("older");
         assertEquals(FirstOptions.Result.WRITTEN, FirstOptions.seed(older, "1.8.9", Collections.singletonList(noJson), true));
-        assertEquals("lang:tr_TR\n", read(older));
+        assertEquals("lang:tr_TR\ntutorialStep:none\n", read(older));
         // From 1.19.3 on, the game would switch the onboarding off: better nothing than that.
         File modern = temp.newFolder("modern");
         assertEquals(FirstOptions.Result.SKIPPED, FirstOptions.seed(modern, "1.21.4", Collections.singletonList(noJson), true));
@@ -185,16 +185,59 @@ public class FirstOptionsTest {
         File jar = clientJar("26.1.2-en.jar", "{\"world_version\":4790}");
         File game = new File(temp.getRoot(), "english");
         assertEquals(FirstOptions.Result.WRITTEN, FirstOptions.seed(game, "26.1.2", Collections.singletonList(jar), false));
-        assertEquals("version:4790\nlang:en_us\n", read(game));
+        assertEquals("version:4790\nlang:en_us\ntutorialStep:none\n", read(game));
         // A folder the game never saved into follows the app's language at the next start.
         assertEquals(FirstOptions.Result.WRITTEN, FirstOptions.seed(game, "26.1.2", Collections.singletonList(jar), true));
-        assertEquals("version:4790\nlang:tr_tr\n", read(game));
+        assertEquals("version:4790\nlang:tr_tr\ntutorialStep:none\n", read(game));
 
         assertEquals("en_us", FirstOptions.gameLanguage("1.21.1", false));
         assertEquals("en_US", FirstOptions.gameLanguage("1.10.2", false));
         assertEquals("en_us", FirstOptions.gameLanguage("26.1.2", false));
         assertEquals("tr_TR", FirstOptions.gameLanguage("16w31a", true));
         assertEquals("tr_tr", FirstOptions.gameLanguage("16w32a", true));
+    }
+
+    @Test
+    public void theProjectsProfileGetsThePacksKeysOnlyInAFileTheAppCreates() throws Exception {
+        File jar = clientJar("26.1.2-keys.jar", "{\"world_version\":4790}");
+        List<String> keys = Arrays.asList("key_key.wi_zoom.zoom:key.keyboard.c", "key_iris.keybind.reload:key.keyboard.unknown");
+        File game = new File(temp.getRoot(), "projects");
+        assertEquals(FirstOptions.Result.WRITTEN, FirstOptions.seed(game, "26.1.2", Collections.singletonList(jar), true, keys));
+        assertEquals("version:4790\nlang:tr_tr\ntutorialStep:none\nkey_key.wi_zoom.zoom:key.keyboard.c\n"
+                + "key_iris.keybind.reload:key.keyboard.unknown\n", read(game));
+        // A start that stopped before the game saved its options: the same file again, the window kept.
+        write(game, read(game) + "overrideWidth:2400\n");
+        assertEquals(FirstOptions.Result.WRITTEN, FirstOptions.seed(game, "26.1.2", Collections.singletonList(jar), true, keys));
+        assertEquals("version:4790\nlang:tr_tr\ntutorialStep:none\nkey_key.wi_zoom.zoom:key.keyboard.c\n"
+                + "key_iris.keybind.reload:key.keyboard.unknown\noverrideWidth:2400\n", read(game));
+        // The player's (or the game's, or the pack's) keys stay theirs.
+        String played = "version:4790\nlang:tr_tr\nkey_key.wi_zoom.zoom:key.keyboard.v\nfov:0.5\n";
+        write(game, played);
+        assertEquals(FirstOptions.Result.EXISTS, FirstOptions.seed(game, "26.1.2", Collections.singletonList(jar), true, keys));
+        assertEquals(played, read(game));
+    }
+
+    @Test
+    public void theSharedKeyTableGivesTheDesktopsLines() throws Exception {
+        // assets/key-bindings.json: a copy of ProLauncher2's crates/pl-mc/data/key-bindings.json (KEYS1).
+        String json = new String(java.nio.file.Files.readAllBytes(new File("src/main/assets/key-bindings.json").toPath()),
+                StandardCharsets.UTF_8);
+        assertEquals(Arrays.asList(
+                "key_key.wi_zoom.zoom:key.keyboard.c",
+                "key_key.gammautils.gammaToggle:key.keyboard.x",
+                "key_key.push_to_talk:key.keyboard.caps.lock",
+                "key_key.hide_icons:key.keyboard.unknown",
+                "key_iris.keybind.reload:key.keyboard.unknown"), FirstOptions.keyLines(json));
+    }
+
+    @Test
+    public void aBrokenKeyTableGivesNoLines() {
+        assertTrue(FirstOptions.keyLines(null).isEmpty());
+        assertTrue(FirstOptions.keyLines("not json").isEmpty());
+        assertTrue(FirstOptions.keyLines("{\"bindings\":{}}").isEmpty());
+        assertEquals("an entry that could break the file is left out", Collections.singletonList("key_a.b:key.keyboard.c"),
+                FirstOptions.keyLines("{\"bindings\":[{\"name\":\"a.b\",\"key\":\"key.keyboard.c\"},"
+                        + "{\"name\":\"x\\ny\",\"key\":\"key.keyboard.c\"},{\"name\":\"z:\",\"key\":\"k\"},{\"name\":\"q\"}]}"));
     }
 
     @Test

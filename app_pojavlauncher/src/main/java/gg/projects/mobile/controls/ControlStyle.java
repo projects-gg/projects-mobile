@@ -23,7 +23,7 @@ public final class ControlStyle {
             "pause", "back", "chat", "keyboard", "inventory", "more", "mods", "menu", "hide", "show",
             "close", "jump", "sneak", "sprint", "attack", "use", "rightclick", "leftclick", "shift",
             "view", "drop", "swap", "players", "hud", "debug", "mouse", "pick", "zoom", "bright", "mic",
-            "waypoint", "map")));
+            "waypoint", "map", "talk")));
 
     /** The joystick's marker: a joystick with it gets the Projects look. */
     public static final String STICK = "stick";

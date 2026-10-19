@@ -24,8 +24,10 @@ import gg.projects.mobile.content.AtomicFiles;
  * The options a new game folder starts with, as on the desktop (pl-mc's {@code seed_options}):
  * right before a launch, a folder without an {@code options.txt} gets {@code version:<data
  * version>} and the app's language as the game language (Turkish or English, see
- * {@code AppLanguage}). The game fills in everything else, and a file the player, the game or a
- * pack wrote is never touched, so later changes stay the player's.
+ * {@code AppLanguage}), plus {@code tutorialStep:none} (the keyboard tutorial means nothing on a
+ * phone); the Projects profile's folder also gets the pack's conflict-free key bindings
+ * ({@link #keyLines}, the desktop's table). The game fills in everything else, and a file the
+ * player, the game or a pack wrote is never touched, so later changes stay the player's.
  *
  * <p>The {@code version} line matters: without it the game takes the file for one from before
  * data versions existed and runs its options data fixers from the start, and one of them (1.19.3
@@ -61,12 +63,19 @@ public final class FirstOptions {
     /** Lines upstream writes before every launch: the window size, not a setting of the player's. */
     private static final Set<String> WINDOW_KEYS = Collections.unmodifiableSet(new HashSet<>(
             Arrays.asList("fullscreen", "overrideWidth", "overrideHeight")));
+    /**
+     * Every new game folder on a phone (0.1.6): Minecraft's keyboard tutorial ("Move with W, A, S and
+     * D") does not apply to touch controls. The game has the option from 1.12 on and ignores it before.
+     */
+    static final String PHONE_LINE = "tutorialStep:none";
     /** Lines {@link #seed} writes. */
     private static final Set<String> SEEDED_KEYS = Collections.unmodifiableSet(new HashSet<>(
-            Arrays.asList("version", "lang")));
+            Arrays.asList("version", "lang", "tutorialStep")));
     private static final long MAX_OPTIONS_BYTES = 1024 * 1024;
     /** {@code version.json} inside a client jar is a few hundred bytes; anything far bigger is not it. */
     private static final long MAX_VERSION_JSON_BYTES = 64 * 1024;
+    /** The shared key table is a few kilobytes. */
+    private static final long MAX_KEY_TABLE_BYTES = 64 * 1024;
 
     /**
      * Writes the first options into {@code gameDir} when it has none (see the class comment).
@@ -74,11 +83,21 @@ public final class FirstOptions {
      * version comes from the first readable jar of {@code clientJars}.
      */
     public static Result seed(File gameDir, String minecraft, List<File> clientJars, boolean turkish) throws IOException {
+        return seed(gameDir, minecraft, clientJars, turkish, Collections.<String>emptyList());
+    }
+
+    /**
+     * {@link #seed} with {@code extra} lines after the language, the Projects profile's key
+     * bindings ({@link #keyLines}). They go only into a file this class creates: the player's, the
+     * game's or the pack's own {@code options.txt} keeps its keys.
+     */
+    public static Result seed(File gameDir, String minecraft, List<File> clientJars, boolean turkish,
+                              List<String> extra) throws IOException {
         File file = new File(gameDir, FILE_NAME);
         List<String> kept = new ArrayList<>();
         if (file.exists()) {
             String existing = new String(AtomicFiles.read(file, MAX_OPTIONS_BYTES), StandardCharsets.UTF_8);
-            if (!launcherOnly(existing, kept)) return Result.EXISTS;
+            if (!launcherOnly(existing, kept, keysOf(extra))) return Result.EXISTS;
         }
         Integer dataVersion = null;
         for (File jar : clientJars) {
@@ -89,16 +108,23 @@ public final class FirstOptions {
         StringBuilder content = new StringBuilder();
         if (dataVersion != null) content.append("version:").append(dataVersion).append('\n');
         content.append("lang:").append(gameLanguage(minecraft, turkish)).append('\n');
+        content.append(PHONE_LINE).append('\n');
+        for (String line : extra) content.append(line).append('\n');
         for (String line : kept) content.append(line).append('\n');
         AtomicFiles.write(file, content.toString().getBytes(StandardCharsets.UTF_8));
         return Result.WRITTEN;
     }
 
+    static boolean launcherOnly(String content, List<String> windowLines) {
+        return launcherOnly(content, windowLines, Collections.<String>emptySet());
+    }
+
     /**
      * True when {@code content} holds nothing but upstream's window lines and lines this class
-     * writes; the window lines go into {@code windowLines}. A line without a colon is not ours.
+     * writes (also {@code extraKeys}); the window lines go into {@code windowLines}. A line without
+     * a colon is not ours.
      */
-    static boolean launcherOnly(String content, List<String> windowLines) {
+    static boolean launcherOnly(String content, List<String> windowLines, Set<String> extraKeys) {
         for (String raw : content.split("\r?\n", -1)) {
             String line = raw.trim();
             if (line.isEmpty()) continue;
@@ -106,9 +132,53 @@ public final class FirstOptions {
             if (colon <= 0) return false;
             String key = line.substring(0, colon);
             if (WINDOW_KEYS.contains(key)) windowLines.add(line);
-            else if (!SEEDED_KEYS.contains(key)) return false;
+            else if (!SEEDED_KEYS.contains(key) && !extraKeys.contains(key)) return false;
         }
         return true;
+    }
+
+    private static Set<String> keysOf(List<String> lines) {
+        Set<String> keys = new HashSet<>();
+        for (String line : lines) {
+            int colon = line.indexOf(':');
+            if (colon > 0) keys.add(line.substring(0, colon));
+        }
+        return keys;
+    }
+
+    /**
+     * The {@code options.txt} lines of the shared key table ({@code assets/key-bindings.json}, a copy
+     * of ProLauncher2's {@code crates/pl-mc/data/key-bindings.json}: the desktop writes the same
+     * lines). Each binding is {@code key_<name>:<key>}; a malformed entry is left out, a malformed
+     * table gives none.
+     */
+    public static List<String> keyLines(String json) {
+        List<String> lines = new ArrayList<>();
+        if (json == null || json.length() > MAX_KEY_TABLE_BYTES) return lines;
+        try {
+            JsonElement root = JsonParser.parseString(json);
+            if (!root.isJsonObject()) return lines;
+            JsonElement bindings = ((JsonObject) root).get("bindings");
+            if (bindings == null || !bindings.isJsonArray()) return lines;
+            for (JsonElement entry : bindings.getAsJsonArray()) {
+                if (!entry.isJsonObject()) continue;
+                String name = string((JsonObject) entry, "name");
+                String key = string((JsonObject) entry, "key");
+                if (name == null || key == null || !KEY_PART.matcher(name).matches() || !KEY_PART.matcher(key).matches()) continue;
+                lines.add("key_" + name + ":" + key);
+            }
+        } catch (RuntimeException e) {
+            lines.clear();
+        }
+        return lines;
+    }
+
+    /** A key binding's name or key: letters, digits, dots and underscores (no line breaks, no colons). */
+    private static final java.util.regex.Pattern KEY_PART = java.util.regex.Pattern.compile("[A-Za-z0-9_.]{1,100}");
+
+    private static String string(JsonObject object, String field) {
+        JsonElement value = object.get(field);
+        return value != null && value.isJsonPrimitive() && ((JsonPrimitive) value).isString() ? value.getAsString() : null;
     }
 
     /**

@@ -24,8 +24,8 @@ const k = "${preferred_scale} / 100"; // offsets between keys follow the button 
 
 // GLFW key codes and upstream's special buttons (ControlData.SPECIALBTN_*).
 const K = {
-  SPACE: 32, ESC: 256, TAB: 258, F1: 290, F3: 292, F5: 294, LSHIFT: 340, LCTRL: 341,
-  B: 66, E: 69, F: 70, G: 71, M: 77, Q: 81, T: 84, V: 86, Z: 90,
+  SPACE: 32, ESC: 256, TAB: 258, CAPS: 280, F1: 290, F3: 292, F5: 294, LSHIFT: 340, LCTRL: 341,
+  B: 66, C: 67, E: 69, F: 70, M: 77, Q: 81, T: 84, X: 88, Z: 90,
   KEYBOARD: -1, TOGGLECTRL: -2, MOUSE_LEFT: -3, MOUSE_RIGHT: -4, VIRTUALMOUSE: -5, MOUSE_MID: -6, MENU: -9,
 };
 
@@ -114,16 +114,20 @@ export const CONTROLS = [
       { icon: "mouse", tr: "FARE", en: "MOUSE", keys: [K.VIRTUALMOUSE], ...tile(7) },
       { icon: "debug", tr: "F3", en: "F3", keys: [K.F3], ...tile(8) },
     ] },
-  // Keys the Projects pack's mods use (their own defaults): WI Zoom, Gamma Utils, Simple Voice
-  // Chat, Xaero's Better PvP. In a game without the mod they do nothing.
+  // Keys of the Projects pack's mods: WI Zoom, Gamma Utils, Simple Voice Chat, Xaero's Better PvP.
+  // Zoom, brightness and push-to-talk follow the launchers' conflict-free table (ProLauncher2
+  // crates/pl-mc/data/key-bindings.json, copied to assets/key-bindings.json), which a new options.txt
+  // of the Projects profile gets; the others keep the mods' own defaults. Zoom and talk act while
+  // held. In a game without the mod they do nothing.
   { drawer: true, icon: "mods", tr: "MODLAR", en: "MODS", keys: [], ...GAME, style: "secondary",
     x: { edge: "left", off: 142 }, y: { edge: "top", off: ROW2_Y }, w: 44, h: ROW2_H,
     subs: [
-      { icon: "zoom", tr: "YAKINLAŞ", en: "ZOOM", keys: [K.V], ...tile(0) },
-      { icon: "bright", tr: "PARLAKLIK", en: "BRIGHTNESS", keys: [K.G], ...tile(1) },
+      { icon: "zoom", tr: "YAKINLAŞ", en: "ZOOM", keys: [K.C], ...tile(0) },
+      { icon: "bright", tr: "PARLAKLIK", en: "BRIGHTNESS", keys: [K.X], ...tile(1) },
       { icon: "mic", tr: "MİKROFON", en: "MICROPHONE", keys: [K.M], ...tile(2) },
       { icon: "waypoint", tr: "YOL NOKTASI", en: "WAYPOINT", keys: [K.B], ...tile(3) },
       { icon: "map", tr: "HARİTA", en: "MAP", keys: [K.Z], ...tile(4) },
+      { icon: "talk", tr: "KONUŞ", en: "TALK", keys: [K.CAPS], ...tile(5) },
     ] },
   // Bottom-left.
   { joystick: true, icon: "stick", tr: "", en: "", keys: [], ...GAME, style: "stick",
