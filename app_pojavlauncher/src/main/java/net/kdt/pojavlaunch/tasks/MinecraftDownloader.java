@@ -6,6 +6,12 @@ import android.app.Activity;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Build;
+import android.os.SystemClock;
+import android.system.ErrnoException;
+import android.system.Os;
+import android.system.OsConstants;
+import android.system.StructStat;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -35,6 +41,8 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -43,7 +51,21 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
+import gg.projects.mobile.launch.CheckedFiles;
+
 public class MinecraftDownloader {
+    // Projects fork (M16): the start's file check in two passes. Upstream hashed every file (some
+    // 600 MB, 10-12 s on the emulator, minutes on slow storage) and sent a HEAD request and a .sha1
+    // request for each Fabric library before every start, while its progress line said "Downloading".
+    // Now the check pass settles each file (one stat when it is unchanged since its hash last matched,
+    // CheckedFiles; a hash with a large buffer otherwise) and shows "Checking game files"; the download
+    // pass then fetches only what is missing or wrong, with its real size.
+    private static final String CHECK_TAG = "ProjectsFileCheck";
+    private CheckedFiles mChecked;
+    private AtomicLong mCheckedCounter; // files the check pass has settled or marked for download
+    private AtomicLong mKnownCounter; // ... settled without reading them
+    private AtomicLong mHashedCounter, mHashedBytes; // ... hashed, and how much was read
+    private AtomicLong mDownloadedCounter; // files the download pass has finished
     private static final double ONE_MEGABYTE = (1024d * 1024d);
     public static final String MINECRAFT_RES = "https://resources.download.minecraft.net/";
     private static final String MAVEN_CENTRAL_REPO1 = "https://repo1.maven.org/maven2/";
@@ -141,43 +163,130 @@ public class MinecraftDownloader {
         mInternetUsageCounter = new AtomicLong(0);
         mDownloaderThreadException = new AtomicReference<>(null);
         mUseFileCounter = false;
+        mCheckedCounter = new AtomicLong(0);
+        mKnownCounter = new AtomicLong(0);
+        mHashedCounter = new AtomicLong(0);
+        mHashedBytes = new AtomicLong(0);
+        mDownloadedCounter = new AtomicLong(0);
+        long started = SystemClock.elapsedRealtime();
+        File checkedStore = checkedStore();
+        mChecked = CheckedFiles.load(checkedStore, new File(Tools.DIR_GAME_HOME), CheckedFiles.day(System.currentTimeMillis()));
 
         downloadAndProcessMetadata(activity, verInfo, versionName);
+        long metadataDone = SystemClock.elapsedRealtime();
 
-        ArrayBlockingQueue<Runnable> taskQueue =
-                new ArrayBlockingQueue<>(mScheduledDownloadTasks.size(), false);
-        ThreadPoolExecutor downloaderPool =
-                new ThreadPoolExecutor(4, 4, 500, TimeUnit.MILLISECONDS, taskQueue);
+        // Projects fork (M16): first every file is checked ("Checking game files", by count)...
+        long checkedFiles = mTotalFileCount;
+        long checkDone;
+        List<DownloaderTask> needed = new ArrayList<>();
+        boolean done;
+        try {
+            if (!runPool(mScheduledDownloadTasks, this::reportCheckProgress)) return;
+            checkDone = SystemClock.elapsedRealtime();
+            for (DownloaderTask task : mScheduledDownloadTasks) {
+                if (task.mNeedsDownload) needed.add(task);
+            }
+            // ...then only what is missing or wrong is downloaded, its total known before it starts.
+            prepareDownloadPass(needed);
+            done = runPool(needed, () -> {
+                double speed = speedCalculator.feed(mInternetUsageCounter.get()) / ONE_MEGABYTE;
+                if (mUseFileCounter) reportProgressFileCounter(speed);
+                else reportProgressSizeCounter(speed);
+            });
+        } finally {
+            // What was checked stays known, also when a download failed or was cancelled.
+            try {
+                mChecked.save(checkedStore);
+            } catch (IOException e) {
+                Log.w(CHECK_TAG, "checked files not saved", e);
+            }
+        }
+        long downloadDone = SystemClock.elapsedRealtime();
+        Log.i(CHECK_TAG, String.format(Locale.ROOT,
+                "%s: metadata %d ms; check %d files in %d ms (%d unchanged, %d hashed %.1f MB, %d to download); "
+                        + "download %d files %.1f MB in %d ms; %d files known",
+                versionName, metadataDone - started, checkedFiles, checkDone - metadataDone, mKnownCounter.get(),
+                mHashedCounter.get(), mHashedBytes.get() / ONE_MEGABYTE, needed.size(), mDownloadedCounter.get(),
+                mInternetUsageCounter.get() / ONE_MEGABYTE, downloadDone - checkDone, mChecked.size()));
+        if (!done) return;
+        ensureJarFileCopy();
+        extractNatives(versionName);
+        Log.i(CHECK_TAG, String.format(Locale.ROOT, "%s ready in %d ms", versionName, SystemClock.elapsedRealtime() - started));
+    }
 
+    /** Projects fork (M16): where {@link CheckedFiles} keeps what the check knows (the app's own storage). */
+    private static File checkedStore() {
+        return new File(Tools.DIR_DATA, "projects" + File.separator + "checked-files.txt");
+    }
+
+    /**
+     * Projects fork (M16): runs {@code tasks} on four threads (upstream's pool) and reports progress
+     * about 30 times a second. False when the wait was interrupted (the download was cancelled); a
+     * task's exception is thrown.
+     */
+    private boolean runPool(List<DownloaderTask> tasks, Runnable report) throws Exception {
+        if (tasks.isEmpty()) return true;
+        ArrayBlockingQueue<Runnable> taskQueue = new ArrayBlockingQueue<>(tasks.size(), false);
+        ThreadPoolExecutor pool = new ThreadPoolExecutor(4, 4, 500, TimeUnit.MILLISECONDS, taskQueue);
         // I have tried pre-filling the queue directly instead of doing this, but it didn't work.
         // What a shame.
-        for(DownloaderTask scheduledTask : mScheduledDownloadTasks) downloaderPool.execute(scheduledTask);
-        downloaderPool.shutdown();
-
+        for (DownloaderTask task : tasks) pool.execute(task);
+        pool.shutdown();
         try {
-            while (mDownloaderThreadException.get() == null &&
-                    !downloaderPool.awaitTermination(33, TimeUnit.MILLISECONDS)) {
-                double speed = speedCalculator.feed(mInternetUsageCounter.get()) / ONE_MEGABYTE;
-                if(mUseFileCounter) reportProgressFileCounter(speed);
-                else reportProgressSizeCounter(speed);
+            while (mDownloaderThreadException.get() == null && !pool.awaitTermination(33, TimeUnit.MILLISECONDS)) {
+                report.run();
             }
-            Exception thrownException = mDownloaderThreadException.get();
-            if(thrownException != null) {
-                throw thrownException;
-            } else {
-                ensureJarFileCopy();
-                extractNatives(versionName);
-            }
-        }catch (InterruptedException e) {
+        } catch (InterruptedException e) {
             // Interrupted while waiting, which means that the download was cancelled.
             // Kill all downloading threads immediately, and ignore any exceptions thrown by them
-            downloaderPool.shutdownNow();
+            pool.shutdownNow();
+            return false;
         }
+        Exception thrownException = mDownloaderThreadException.get();
+        if (thrownException != null) {
+            pool.shutdownNow();
+            throw thrownException;
+        }
+        return true;
+    }
+
+    /**
+     * Projects fork (M16): the download pass's tasks and its total. Sizes the metadata does not give
+     * are asked for now, only for the files that are downloaded (upstream asked for every such file
+     * before every start); when one cannot be had, progress counts files instead.
+     */
+    private void prepareDownloadPass(List<DownloaderTask> needed) {
+        mTotalSize = 0;
+        mUseFileCounter = false;
+        mProcessedFileCounter.set(0);
+        mProcessedSizeCounter.set(0);
+        for (DownloaderTask task : needed) {
+            task.mDownloadPass = true;
+            long size = task.mDownloadSize;
+            if (size <= 0 && !mUseFileCounter) {
+                size = DownloadMirror.getContentLengthMirrored(task.mDownloadClass, task.mTargetUrl);
+                if (size < 0) {
+                    mUseFileCounter = true;
+                    Log.i("MinecraftDownloader", "Failed to determine size of " + task.mTargetPath.getName() + ", switching to file counter");
+                }
+            }
+            if (size > 0) mTotalSize += size;
+        }
+        if (mTotalSize <= 0) mUseFileCounter = true;
+        mTotalFileCount = needed.size();
+    }
+
+    /** Projects fork (M16): the check pass's line, files checked of all (nothing is downloaded in it). */
+    private void reportCheckProgress() {
+        long checked = mCheckedCounter.get();
+        int progress = (int) ((checked * 100L) / Math.max(1, mTotalFileCount));
+        ProgressLayout.setProgress(ProgressLayout.DOWNLOAD_MINECRAFT, progress,
+                R.string.projects_check_files, checked, mTotalFileCount);
     }
 
     private void reportProgressFileCounter(double speed) {
         long dlFileCounter = mProcessedFileCounter.get();
-        int progress = (int)((dlFileCounter * 100L) / mTotalFileCount);
+        int progress = (int)((dlFileCounter * 100L) / Math.max(1, mTotalFileCount));
         ProgressLayout.setProgress(ProgressLayout.DOWNLOAD_MINECRAFT, progress,
                 R.string.newdl_downloading_game_files, dlFileCounter,
                 mTotalFileCount, speed);
@@ -320,23 +429,12 @@ public class MinecraftDownloader {
 
     private void scheduleDownload(File targetFile, int downloadClass, String url, String sha1,
                                   long size, boolean skipIfFailed) throws IOException {
-        FileUtils.ensureParentDirectory(targetFile);
+        // Projects fork (M16): nothing is touched or asked for here. Upstream made every file's parent
+        // folder and sent a HEAD request for each file without a size before every start; the
+        // download pass does both for the files it downloads (prepareDownloadPass, DownloaderTask).
         mTotalFileCount++;
-        // Only attempt to check size if we still use the size counter and didn't switch to file counter.
-        if(size <= 0 && !mUseFileCounter) {
-            size = DownloadMirror.getContentLengthMirrored(downloadClass, url);
-        }
-        if(size < 0) {
-            // If we were unable to get the content length ourselves, we automatically fall back
-            // to tracking the progress using the file counter.
-            size = 0;
-            mUseFileCounter = true;
-            Log.i("MinecraftDownloader", "Failed to determine size of "+targetFile.getName()+", switching to file counter");
-        }else {
-            mTotalSize += size;
-        }
         mScheduledDownloadTasks.add(
-                new DownloaderTask(targetFile, downloadClass, url, sha1, size, skipIfFailed)
+                new DownloaderTask(targetFile, downloadClass, url, sha1, Math.max(0, size), skipIfFailed)
         );
     }
 
@@ -387,6 +485,10 @@ public class MinecraftDownloader {
                         ? "https://libraries.minecraft.net/"
                         : dependentLibrary.url.replace("http://","https://")) + libArtifactPath;
                 skipIfFailed = true;
+                // Projects fork (M16): Fabric's and Quilt's entries give the SHA-1 and size themselves
+                // (from the same repository as the .sha1 upstream fetched before every start).
+                if (dependentLibrary.sha1 != null && dependentLibrary.sha1.trim().length() == 40) sha1 = dependentLibrary.sha1.trim();
+                if (dependentLibrary.size > 0) size = dependentLibrary.size;
             }
             if(!LauncherPreferences.PREF_CHECK_LIBRARY_SHA) sha1 = null;
             scheduleDownload(new File(Tools.DIR_HOME_LIBRARY, libArtifactPath),
@@ -461,6 +563,28 @@ public class MinecraftDownloader {
         return tlb;
     }
 
+    /**
+     * Projects fork (M16): what identifies a file's content without reading it ({@link CheckedFiles}),
+     * or null when it is missing or not a regular file. One stat call.
+     */
+    private static CheckedFiles.Stamp stampOf(File file) {
+        try {
+            StructStat st = Os.stat(file.getAbsolutePath());
+            if (!OsConstants.S_ISREG(st.st_mode)) return null;
+            long modified, changed;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+                modified = st.st_mtim.tv_sec * 1_000_000_000L + st.st_mtim.tv_nsec;
+                changed = st.st_ctim.tv_sec * 1_000_000_000L + st.st_ctim.tv_nsec;
+            } else {
+                modified = st.st_mtime * 1_000_000_000L;
+                changed = st.st_ctime * 1_000_000_000L;
+            }
+            return new CheckedFiles.Stamp(st.st_size, modified, changed, st.st_ino);
+        } catch (ErrnoException e) {
+            return null;
+        }
+    }
+
     private final class DownloaderTask implements Runnable, Tools.DownloaderFeedback {
         private final File mTargetPath;
         private final String mTargetUrl;
@@ -469,6 +593,10 @@ public class MinecraftDownloader {
         private final boolean mSkipIfFailed;
         private int mLastCurr;
         private final long mDownloadSize;
+        // Projects fork (M16): which pass runs the task, and what the check pass found.
+        boolean mDownloadPass;
+        volatile boolean mNeedsDownload;
+        private CheckedFiles.Stamp mStamp;
 
         DownloaderTask(File targetPath, int downloadClass, String targetUrl, String targetSha1,
                        long downloadSize, boolean skipIfFailed) {
@@ -548,38 +676,82 @@ public class MinecraftDownloader {
         @Override
         public void run() {
             try {
-                runCatching();
+                if (mDownloadPass) downloadPass();
+                else checkPass();
             }catch (Exception e) {
                 mDownloaderThreadException.set(e);
             }
         }
 
-        private void runCatching() throws Exception {
-            if(mDownloadClass == DownloadMirror.DOWNLOAD_CLASS_LIBRARIES && !Tools.isValidString(mTargetSha1)) {
-                // If we're downloading a library, try to get sha1 since it might be available as a file
-                tryGetLibrarySha1();
-            }
-            if(Tools.isValidString(mTargetSha1)) {
-                verifyFileSha1();
-            }else {
-                mTargetSha1 = null; // Nullify SHA1 as DownloadUtils.ensureSha1 only checks for null,
-                                    // not for string validity
-                if(mTargetPath.exists()) finishWithoutDownloading();
-                else downloadFile();
+        /**
+         * Projects fork (M16): the check pass. A file unchanged since its hash last matched is settled
+         * by its stamp; another one is hashed (or, without a hash to compare, settled by being there,
+         * as upstream did); what is missing or wrong waits for the download pass.
+         */
+        private void checkPass() throws Exception {
+            try {
+                mStamp = stampOf(mTargetPath);
+                if (mStamp != null && knownGood()) {
+                    mKnownCounter.incrementAndGet();
+                    return;
+                }
+                if(mDownloadClass == DownloadMirror.DOWNLOAD_CLASS_LIBRARIES && !Tools.isValidString(mTargetSha1)) {
+                    // If we're downloading a library, try to get sha1 since it might be available as a file
+                    tryGetLibrarySha1();
+                }
+                if(Tools.isValidString(mTargetSha1)) {
+                    if (mStamp != null && hashMatches()) return;
+                }else {
+                    mTargetSha1 = null; // Nullify SHA1 as DownloadUtils.ensureSha1 only checks for null,
+                                        // not for string validity
+                    if(mTargetPath.exists()) return;
+                }
+                mNeedsDownload = true;
+            } finally {
+                mCheckedCounter.incrementAndGet();
             }
         }
-        
-        private void verifyFileSha1() throws Exception {
-            if(mTargetPath.isFile() && mTargetPath.canRead() && Tools.compareSHA1(mTargetPath, mTargetSha1)) {
-                finishWithoutDownloading();
-            } else {
-                // Rely on the download function to throw an IOE in case if the file is not
-                // writable/not a file/etc...
-                downloadFile();
+
+        /** Unchanged since it was checked, with the size the metadata gives and the hash it expects. */
+        private boolean knownGood() {
+            if (mDownloadSize > 0 && mStamp.size != mDownloadSize) return false;
+            String known = mChecked.known(mTargetPath, mStamp);
+            if (known == null) return false;
+            // A library the metadata names no hash for: the one recorded was checked against its
+            // repository's .sha1 when it was recorded.
+            return !Tools.isValidString(mTargetSha1) || known.equalsIgnoreCase(mTargetSha1.trim());
+        }
+
+        /** Hashes the file (32 KB reads; upstream read 1 KB at a time) and remembers a match. */
+        private boolean hashMatches() {
+            try {
+                String actual = CheckedFiles.sha1(mTargetPath, getLocalBuffer());
+                mHashedCounter.incrementAndGet();
+                mHashedBytes.addAndGet(mStamp.size);
+                if (!actual.equalsIgnoreCase(mTargetSha1.trim())) return false;
+                mChecked.put(mTargetPath, mStamp, actual);
+                return true;
+            } catch (IOException e) {
+                // Unreadable: downloaded again (upstream counted a read error as a match).
+                Log.w(CHECK_TAG, "could not read " + mTargetPath.getName(), e);
+                return false;
             }
         }
-        
-        private void downloadFile() throws Exception {
+
+        /** Projects fork (M16): the download pass; a verified download is remembered with its new stamp. */
+        private void downloadPass() throws Exception {
+            FileUtils.ensureParentDirectory(mTargetPath);
+            mChecked.forget(mTargetPath);
+            if (downloadFile() && Tools.isValidString(mTargetSha1)) {
+                CheckedFiles.Stamp stamp = stampOf(mTargetPath);
+                if (stamp != null) mChecked.put(mTargetPath, stamp, mTargetSha1.trim());
+            }
+            mDownloadedCounter.incrementAndGet();
+        }
+
+        /** Upstream's download with its SHA-1 check; true unless a failure was skipped. */
+        private boolean downloadFile() throws Exception {
+            boolean verified = true;
             try {
                 DownloadUtils.ensureSha1(mTargetPath, mTargetSha1, () -> {
                     DownloadMirror.downloadFileMirrored(mDownloadClass, mTargetUrl, mTargetPath,
@@ -588,13 +760,10 @@ public class MinecraftDownloader {
                 });
             }catch (Exception e) {
                 if(!mSkipIfFailed) throw e;
+                verified = false;
             }
             mProcessedFileCounter.incrementAndGet();
-        }
-
-        private void finishWithoutDownloading() {
-            mProcessedFileCounter.incrementAndGet();
-            mProcessedSizeCounter.addAndGet(mDownloadSize);
+            return verified;
         }
 
         @Override

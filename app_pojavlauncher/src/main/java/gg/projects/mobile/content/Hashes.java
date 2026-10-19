@@ -36,8 +36,12 @@ public final class Hashes {
     }
 
     public static String fileHex(File file, String algorithm) throws IOException {
+        return fileHex(file, algorithm, new byte[64 * 1024]);
+    }
+
+    /** {@link #fileHex(File, String)} reading through {@code buffer} (a caller's reused one). */
+    public static String fileHex(File file, String algorithm, byte[] buffer) throws IOException {
         MessageDigest md = digest(algorithm);
-        byte[] buffer = new byte[64 * 1024];
         try (InputStream in = new FileInputStream(file)) {
             int read;
             while ((read = in.read(buffer)) != -1) md.update(buffer, 0, read);

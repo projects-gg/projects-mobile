@@ -266,4 +266,6 @@
     <string name="projects_modkey_unbound">Bu eylemin oyunda tuşu yok. Seçenekler › Kontroller\'den bir tuş ver.</string>
     <string name="projects_modkey_unsendable">Bu tuşa ekrandan basılamıyor. Seçenekler › Kontroller\'den değiştir.</string>
     <string name="projects_modkey_no_mod">%1$s bu profilde yüklü değil.</string>
+    <!-- M16: the start's file check before the game opens (files only checked, nothing downloaded). -->
+    <string name="projects_check_files">Oyun dosyaları denetleniyor… (%1$d/%2$d)</string>
 </resources>

@@ -274,4 +274,6 @@
     <string name="projects_modkey_unbound">This has no key in the game. Set one in Options › Controls.</string>
     <string name="projects_modkey_unsendable">Its key can\'t be pressed on the screen. Change it in Options › Controls.</string>
     <string name="projects_modkey_no_mod">%1$s isn\'t installed in this profile.</string>
+    <!-- M16: the start's file check before the game opens (files only checked, nothing downloaded). -->
+    <string name="projects_check_files">Checking game files… (%1$d/%2$d)</string>
 </resources>
