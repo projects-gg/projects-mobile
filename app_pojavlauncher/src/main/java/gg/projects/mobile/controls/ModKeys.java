@@ -73,7 +73,8 @@ public final class ModKeys {
         /**
          * Another mapping that acts in normal play has the same key, and the game fires every mapping
          * of a pressed key: in a file saved before 0.1.6 zoom shares V with Simple Voice Chat's menu,
-         * so the button opened that menu instead of zooming.
+         * so the button opened that menu instead of zooming, and Gamma Utils' toggle shares G with the
+         * game's Quick Actions.
          */
         CONFLICT,
         /** The game did not load the mod. */
@@ -81,16 +82,15 @@ public final class ModKeys {
     }
 
     /**
-     * Mappings that act only with F3 held, in creative's hotbar, as a spectator, in Replay Mod or on a
-     * server's dialog (Quick Actions): sharing their key is no clash in normal play (KEYS1's
-     * inventory, ProLauncher2 crates/pl-mc/testdata/key-bindings).
+     * Mappings that act only with F3 held, in creative's hotbar, as a spectator or in Replay Mod's
+     * viewer: sharing their key is no clash in normal play. One rule with the one-tap fix and the
+     * desktop ({@link KeyFix#actsInPlay}, pl-mc {@code acts_in_play}; KEYS1's inventory, ProLauncher2
+     * crates/pl-mc/testdata/key-bindings): F3 itself counts, and so do Quick Actions (the lead's
+     * decision A, 20 October): G opens whatever dialog a server offers, and a Paper server can add one
+     * at any time, so Gamma Utils' toggle on G is a clash like zoom on V.
      */
-    private static final java.util.Set<String> CONTEXT_ONLY = Collections.unmodifiableSet(new java.util.HashSet<>(java.util.Arrays.asList(
-            "key.saveToolbarActivator", "key.loadToolbarActivator", "key.spectatorHotbar", "key.spectatorOutlines",
-            "key.toggleSpectatorShaderEffects", "key.quickActions")));
-
     static boolean contextOnly(String mapping) {
-        return mapping.startsWith("key.debug.") || mapping.startsWith("key.replaymod.") || CONTEXT_ONLY.contains(mapping);
+        return !KeyFix.actsInPlay(mapping);
     }
 
     /** How a mod key is bound now. */

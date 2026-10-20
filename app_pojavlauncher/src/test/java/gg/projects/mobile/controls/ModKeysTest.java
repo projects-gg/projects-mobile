@@ -169,8 +169,19 @@ public class ModKeysTest {
         ModKeys.Binding zoom = ModKeys.resolve(ModKeys.Action.ZOOM, old);
         assertEquals(ModKeys.State.CONFLICT, zoom.state);
         assertEquals(0, zoom.keys.length);
-        // G is also Quick Actions (only on a server's dialog) and an F3 combination: no clash in play.
-        assertArrayEquals(new int[]{G}, ModKeys.resolve(ModKeys.Action.BRIGHTNESS, old).keys);
+        // G is also the game's Quick Actions, which opens whatever dialog a server offers: a clash like
+        // V (the lead's decision A, the desktop's rule). An F3 combination on G alone is none.
+        assertEquals(ModKeys.State.CONFLICT, ModKeys.resolve(ModKeys.Action.BRIGHTNESS, old).state);
+        assertArrayEquals(new int[]{G}, ModKeys.resolve(ModKeys.Action.BRIGHTNESS,
+                options("key_key.gammautils.gammaToggle:key.keyboard.g", "key_key.debug.showChunkBorders:key.keyboard.g")).keys);
+        // F3 itself acts in play (the desktop's acts_in_play): a mod key on F3 clashes with it.
+        assertEquals(ModKeys.State.CONFLICT, ModKeys.resolve(ModKeys.Action.ZOOM,
+                options("key_key.wi_zoom.zoom:key.keyboard.f3", "key_key.debug.overlay:key.keyboard.f3")).state);
+        // One rule with the one-tap fix: whatever acts in play for the fix clashes for the keys.
+        for (String mapping : new String[]{"key.quickActions", "key.debug.overlay", "key.replaymod.settings", "key.saveToolbarActivator",
+                "key.debug.crash", "key.replaymod.marker", "key.spectatorHotbar", "key.voice_chat"}) {
+            assertEquals(mapping, KeyFix.actsInPlay(mapping), !ModKeys.contextOnly(mapping));
+        }
         // Without its own line zoom is on its default V, which still clashes.
         assertEquals(ModKeys.State.CONFLICT, ModKeys.resolve(ModKeys.Action.ZOOM, options("key_key.voice_chat:key.keyboard.v")).state);
         // A modifier makes another key.
