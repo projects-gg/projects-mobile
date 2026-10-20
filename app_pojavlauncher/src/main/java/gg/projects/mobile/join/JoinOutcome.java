@@ -94,7 +94,26 @@ public final class JoinOutcome {
         }
     }
 
+    /**
+     * M18: runs the file check of a start whose pack finished away from the home screen (the launcher
+     * activity, also while it is in the background). Returns true when the check started.
+     */
+    public interface FilesStarter {
+        boolean startFiles(String profileKey);
+    }
+
     private static WeakReference<Home> sHome = new WeakReference<>(null);
+    private static WeakReference<FilesStarter> sFilesStarter = new WeakReference<>(null);
+
+    @MainThread
+    public static void setFilesStarter(FilesStarter starter) {
+        sFilesStarter = new WeakReference<>(starter);
+    }
+
+    @MainThread
+    public static void clearFilesStarter(FilesStarter starter) {
+        if (sFilesStarter.get() == starter) sFilesStarter.clear();
+    }
     /** A ready outcome's sync notice (in memory only; the mark itself is in the preferences). */
     @Nullable
     private static SyncNotice sReadyNotice;
@@ -165,6 +184,14 @@ public final class JoinOutcome {
             return;
         }
         sReadyNotice = notice;
+        // M18: the game's own files (Java, Minecraft, its libraries) come next, away from the home screen
+        // too, so "Projects hazır" means the game opens at once (before, Play still had them to download).
+        // Their check ends here again, through filesReadyAway, or in failed.
+        FilesStarter starter = sFilesStarter.get();
+        if (starter != null && starter.startFiles(profileKey)) {
+            Log.i(TAG, "pack ready while away from the home screen; the game files come next");
+            return;
+        }
         away(context.getApplicationContext());
     }
 

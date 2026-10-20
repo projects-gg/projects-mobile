@@ -69,7 +69,7 @@ import java.text.ParseException;
 import java.util.List;
 import java.util.Locale;
 
-public class LauncherActivity extends BaseActivity {
+public class LauncherActivity extends BaseActivity implements gg.projects.mobile.join.JoinOutcome.FilesStarter {
     public static final String SETTING_FRAGMENT_TAG = "SETTINGS_FRAGMENT";
 
     public final ActivityResultLauncher<Object> modInstallerLauncher =
@@ -169,9 +169,20 @@ public class LauncherActivity extends BaseActivity {
     };
 
     private final ExtraListener<Boolean> mLaunchGameListener = (key, value) -> {
+        launchGame(true);
+        return false;
+    };
+
+    /**
+     * Play: the checks, then the file check and the game. Projects fork (M18): a method of its own, so a
+     * Projects start whose pack finished away from the home screen goes on with the game files there too
+     * ({@link gg.projects.mobile.join.JoinOutcome.FilesStarter}). Returns true when the file check started.
+     */
+    private boolean launchGame(boolean pressed) {
         // Projects fork (M14): the play press confirms when the start goes ahead and rejects when it
-        // is refused (the haptic and a short shake tell the truth, the toast says why).
-        View feedback = gg.projects.mobile.ui.PlayButtons.playButtonOf(this);
+        // is refused (the haptic and a short shake tell the truth, the toast says why). M18: none for a
+        // start the app goes on with by itself while the player is away.
+        View feedback = pressed ? gg.projects.mobile.ui.PlayButtons.playButtonOf(this) : null;
         if(ProgressLayout.hasProcesses()){
             gg.projects.mobile.ui.PlayButtons.reject(feedback);
             Toast.makeText(this, R.string.tasks_ongoing, Toast.LENGTH_LONG).show();
@@ -268,8 +279,17 @@ public class LauncherActivity extends BaseActivity {
                 normalizedVersionId,
                 new ContextAwareDoneListener(this, normalizedVersionId)
         );
-        return false;
-    };
+        return true;
+    }
+
+    /** Projects fork (M18): the game files of a Projects start whose pack finished while the player was away. */
+    @Override
+    public boolean startFiles(String profileKey) {
+        if (isFinishing() || isDestroyed()) return false;
+        // The game process and the file check read the choice from disk.
+        LauncherPreferences.DEFAULT_PREF.edit().putString(LauncherPreferences.PREF_KEY_CURRENT_PROFILE, profileKey).commit();
+        return launchGame(false);
+    }
 
     private final TaskCountListener mDoubleLaunchPreventionListener = taskCount -> {
         // Hide the notification that starts the game if there are tasks executing.
@@ -349,6 +369,8 @@ public class LauncherActivity extends BaseActivity {
         ExtraCore.addExtraListener(ExtraConstants.SELECT_AUTH_METHOD, mSelectAuthMethod);
 
         ExtraCore.addExtraListener(ExtraConstants.LAUNCH_GAME, mLaunchGameListener);
+        // Projects fork (M18): a Projects start that ends its pack away from the home screen runs its file check here.
+        gg.projects.mobile.join.JoinOutcome.setFilesStarter(this);
 
         new AsyncVersionList().getVersionList(versions -> ExtraCore.setValue(ExtraConstants.RELEASE_TABLE, versions), false);
 
@@ -410,6 +432,7 @@ public class LauncherActivity extends BaseActivity {
         ExtraCore.removeExtraListenerFromValue(ExtraConstants.BACK_PREFERENCE, mBackPreferenceListener);
         ExtraCore.removeExtraListenerFromValue(ExtraConstants.SELECT_AUTH_METHOD, mSelectAuthMethod);
         ExtraCore.removeExtraListenerFromValue(ExtraConstants.LAUNCH_GAME, mLaunchGameListener);
+        gg.projects.mobile.join.JoinOutcome.clearFilesStarter(this);
 
         getSupportFragmentManager().unregisterFragmentLifecycleCallbacks(mFragmentCallbackListener);
     }
