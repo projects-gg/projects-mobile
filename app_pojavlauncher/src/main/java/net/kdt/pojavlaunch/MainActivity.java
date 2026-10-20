@@ -146,6 +146,8 @@ public class MainActivity extends BaseActivity implements ControlButtonMenuListe
                 gg.projects.mobile.join.PlayChoice.hasModFiles(new File(gameDirPath, "mods").list()));
         // Projects fork (M16): the MODLAR keys follow this game folder's key bindings and loaded mods.
         gg.projects.mobile.controls.ModKeysLive.attach(this, new File(gameDirPath));
+        // Projects fork (M19): the player's own crew call, started in the launcher, stays on while it runs.
+        gg.projects.mobile.social.SocialService.keepOwnCallInGame(this);
         CallbackBridge.addGrabListener(touchpad);
         CallbackBridge.addGrabListener(minecraftGLView);
 

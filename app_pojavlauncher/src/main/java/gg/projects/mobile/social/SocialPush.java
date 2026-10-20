@@ -31,6 +31,12 @@ public final class SocialPush {
         SessionStore.Saved saved = new SessionStore(app, debug.override ? "session-debug.json" : "session.json").load();
         String signedIn = saved.token == null ? null : saved.userId;
         SocialPrefs prefs = new SocialPrefs(app);
+        if (!prefs.lastConfig()[0] && !debug.forceFriends) {
+            // Friends were turned off in the signed config: nothing of the feature shows (the registration goes
+            // when the app next runs; a push sent before that is dropped here).
+            Log.i(TAG, "push dropped (" + message.type + "): friends are off");
+            return;
+        }
         long now = SocialService.nowSeconds();
         Set<String> wanted = new HashSet<>();
         if (prefs.wantsRequests()) wanted.add(PushMessage.REQUEST);

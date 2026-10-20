@@ -49,6 +49,8 @@ public final class PresenceConnection {
     private final Map<Integer, Reply> mReplies = new HashMap<>();
     private int mNextRid = 1;
     private boolean mEnded;
+    /** A refused upgrade's Retry-After (seconds; 0 when none). */
+    private volatile long mRetryAfter;
 
     private PresenceConnection(SocialApi api, String token, Listener listener) {
         mListener = listener;
@@ -86,7 +88,15 @@ public final class PresenceConnection {
             @Override
             public void onFailure(WebSocket webSocket, Throwable t, @Nullable Response response) {
                 int status = response == null ? 0 : response.code();
-                Log.i(TAG, "presence socket failed: " + t.getClass().getSimpleName() + (status == 0 ? "" : " HTTP " + status));
+                if (response != null && (status == 429 || status == 503)) {
+                    try {
+                        String header = response.header("Retry-After");
+                        mRetryAfter = header == null ? 0 : Math.max(0, Math.min(3600, Long.parseLong(header.trim())));
+                    } catch (NumberFormatException e) {
+                        mRetryAfter = 0;
+                    }
+                }
+                if (!mEnded) Log.i(TAG, "presence socket failed: " + t.getClass().getSimpleName() + (status == 0 ? "" : " HTTP " + status));
                 // A refused upgrade with 401 is a session that ended, like close code 4001.
                 MAIN.post(() -> end(status == 401 ? 4001 : 0, true));
             }
@@ -162,5 +172,10 @@ public final class PresenceConnection {
 
     public boolean ended() {
         return mEnded;
+    }
+
+    /** Seconds the service asked to wait before the next try (a refused upgrade's Retry-After). */
+    public long retryAfterSeconds() {
+        return mRetryAfter;
     }
 }

@@ -5,6 +5,7 @@
 <resources>
     <string name="projects_social_title">Friends</string>
     <string name="projects_social_someone">A friend</string>
+    <string name="projects_social_someone_unknown">Someone</string>
     <string name="projects_crew_someone">A crewmate</string>
     <string name="projects_social_server_projects">Projects</string>
     <string name="projects_social_on_projects">On Projects</string>
@@ -36,6 +37,11 @@
         <item quantity="other">%d of your crew are on Projects</item>
     </plurals>
     <string name="projects_social_pending">You have a request or invite waiting</string>
+    <plurals name="projects_social_home_requests">
+        <item quantity="one">Friend request</item>
+        <item quantity="other">%d friend requests</item>
+    </plurals>
+    <string name="projects_crew_home_invite">Crew invite</string>
 
     <!-- Sign-in -->
     <string name="projects_social_consent_title">Play with your friends</string>
@@ -119,7 +125,6 @@
     <string name="projects_social_dismiss">Dismiss</string>
     <string name="projects_social_friend_added">You and %1$s are now friends</string>
     <string name="projects_social_friends_since">Friends since %1$s</string>
-    <string name="projects_social_more">More</string>
 
     <!-- Add a friend -->
     <string name="projects_social_add">Add friend</string>
@@ -175,7 +180,6 @@
     <string name="projects_crew_moderator">Moderator</string>
     <string name="projects_crew_you">You</string>
     <string name="projects_crew_privacy">Your crew sees your name, picture and what you play, never another server\'s address.</string>
-    <string name="projects_crew_open">Open crew</string>
     <string name="projects_crew_row_none">Create or join a crew</string>
     <string name="projects_crew_invite_to">Invite to crew</string>
 
@@ -219,11 +223,10 @@
     <string name="projects_crew_invite_title">Invite friends</string>
     <string name="projects_crew_invite">Invite</string>
     <string name="projects_crew_invite_sent">Invited</string>
-    <string name="projects_crew_invite_member">In the crew</string>
     <string name="projects_crew_invite_none">No friends to invite.</string>
 
     <string name="projects_crew_remove">Remove from crew</string>
-    <string name="projects_crew_remove_ask">%1$s leaves the crew and the crew code changes.</string>
+    <string name="projects_crew_remove_ask">%1$s is removed from the crew and the crew code changes.</string>
     <string name="projects_crew_removed">%1$s removed from the crew</string>
     <string name="projects_crew_hand_over">Hand over leadership</string>
     <string name="projects_crew_hand_over_ask">%1$s becomes the leader, and you become a member.</string>
@@ -255,7 +258,6 @@
     <string name="projects_crew_call_said_yes">Coming</string>
     <string name="projects_crew_call_said_soon">Soon</string>
     <string name="projects_crew_call_said_no">Can\'t come</string>
-    <string name="projects_crew_call_answered">Answer sent</string>
 
     <string name="projects_crew_notifications">Crew notifications</string>
     <string name="projects_crew_calls">Crew calls</string>
@@ -266,6 +268,7 @@
     <string name="projects_crew_mute_hour">1 hour</string>
     <string name="projects_crew_mute_eight">8 hours</string>
     <string name="projects_crew_mute_morning">Until tomorrow morning</string>
+    <string name="projects_crew_mute_this_morning">Until morning</string>
     <string name="projects_crew_mute_forever">Until I unmute</string>
     <string name="projects_crew_today_at">Today %1$s</string>
     <string name="projects_crew_tomorrow_at">Tomorrow %1$s</string>
@@ -297,7 +300,7 @@
     <string name="projects_social_error_hand_over_first">Hand the leader role to another member before you leave.</string>
     <string name="projects_social_error_blocked_in_crew">You\'ve blocked someone in this crew.</string>
     <string name="projects_social_error_crew_invites_full">The crew has too many invites waiting. Try again later.</string>
-    <string name="projects_social_error_crew_name">A crew name has 3 to 24 letters, digits or spaces.</string>
+    <string name="projects_social_error_crew_name">A crew name has 3 to 24 characters: letters, digits, spaces and \' &amp; ! _ -</string>
     <string name="projects_social_error_crew_name_rejected">That name can\'t be used. Pick another one.</string>
     <string name="projects_social_error_crew_tag">A tag has 2 to 4 letters or digits.</string>
     <string name="projects_social_error_crew_motto">A motto has up to 40 letters, digits, spaces and \' &amp; ! _ - , ?</string>

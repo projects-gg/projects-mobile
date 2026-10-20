@@ -42,6 +42,13 @@ public final class PushRegistrar {
     @MainThread
     static void sync(final Context context, final SocialService service, final Runnable done) {
         final String user = service.signedInId();
+        if (user != null && service.enabled() && !service.state().loaded()) {
+            // What the service announces (features: push) comes with the list: nothing is changed before it,
+            // or every cold start would end the registration and make it again.
+            done.run();
+            return;
+        }
+        final String session = service.token();
         final List<String> kinds = service.wantedKinds();
         final SocialPrefs prefs = service.prefs();
         boolean push = service.gate().push && service.enabled();
@@ -51,6 +58,7 @@ public final class PushRegistrar {
             if (user != null && registered.startsWith(user + "|")) {
                 // Nothing wanted any more: the service stops sending to this phone.
                 service.io().execute(() -> {
+                    service.api().bind(session);
                     try {
                         service.api().deletePushDevice();
                         service.main().post(() -> {
@@ -60,6 +68,8 @@ public final class PushRegistrar {
                     } catch (SocialProblem problem) {
                         Log.i(TAG, "push registration not removed: " + problem.kind);
                         service.main().post(done);
+                    } finally {
+                        service.api().bind(null);
                     }
                 });
             } else {
@@ -68,7 +78,7 @@ public final class PushRegistrar {
             return;
         }
         if (debugToken != null) {
-            register(context, service, user, kinds, debugToken, done);
+            register(context, service, session, user, kinds, debugToken, done);
             return;
         }
         FirebaseMessaging messaging;
@@ -86,13 +96,13 @@ public final class PushRegistrar {
                 done.run();
                 return;
             }
-            register(context, service, user, kinds, task.getResult(), done);
+            register(context, service, session, user, kinds, task.getResult(), done);
         });
     }
 
     /** {@code PUT /v1/push/device} unless the same registration was made today. */
-    private static void register(final Context context, final SocialService service, final String user, final List<String> kinds,
-                                 final String token, final Runnable done) {
+    private static void register(final Context context, final SocialService service, final String session, final String user,
+                                 final List<String> kinds, final String token, final Runnable done) {
         final SocialPrefs prefs = service.prefs();
         StringBuilder joined = new StringBuilder();
         for (String kind : kinds) joined.append(joined.length() == 0 ? "" : ",").append(kind);
@@ -102,6 +112,7 @@ public final class PushRegistrar {
             return;
         }
         service.io().execute(() -> {
+            service.api().bind(session);
             try {
                 service.api().putPushDevice(token, context.getPackageName(), kinds);
                 service.main().post(() -> {
@@ -112,6 +123,8 @@ public final class PushRegistrar {
             } catch (SocialProblem problem) {
                 Log.i(TAG, "push not registered: " + problem.kind);
                 service.main().post(done);
+            } finally {
+                service.api().bind(null);
             }
         });
     }

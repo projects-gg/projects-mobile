@@ -73,7 +73,11 @@ public final class SocialRoutes {
             intent = new Intent(from, LauncherActivity.class)
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         } else {
-            intent = new Intent(from, TestStorageActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            // As the home screen's icon does: an existing task (its launcher gone with the process) comes back
+            // as it was instead of a second launcher piled on it; otherwise the app starts.
+            intent = from.getPackageManager().getLaunchIntentForPackage(from.getPackageName());
+            if (intent == null) intent = new Intent(from, TestStorageActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
         }
         from.startActivity(intent);
     }
@@ -106,7 +110,7 @@ public final class SocialRoutes {
         Bundle args = new Bundle();
         switch (target) {
             case CREW:
-                if (arg != null) args.putString(CrewFragment.ARG_CALL, arg);
+                // The crew page shows its call at the top.
                 Tools.swapFragment(activity, CrewFragment.class, CrewFragment.TAG, args);
                 break;
             case ADD:

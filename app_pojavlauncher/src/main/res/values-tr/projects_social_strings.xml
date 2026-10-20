@@ -4,6 +4,7 @@
 <resources>
     <string name="projects_social_title">Arkadaşlar</string>
     <string name="projects_social_someone">Bir arkadaşın</string>
+    <string name="projects_social_someone_unknown">Biri</string>
     <string name="projects_crew_someone">Bir ekip arkadaşın</string>
     <string name="projects_social_server_projects">Projects</string>
     <string name="projects_social_on_projects">Projects\'te</string>
@@ -34,6 +35,11 @@
         <item quantity="other">Ekibinden %d kişi Projects\'te</item>
     </plurals>
     <string name="projects_social_pending">Seni bekleyen istek ya da davet var</string>
+    <plurals name="projects_social_home_requests">
+        <item quantity="one">Arkadaşlık isteği</item>
+        <item quantity="other">%d arkadaşlık isteği</item>
+    </plurals>
+    <string name="projects_crew_home_invite">Ekip daveti</string>
 
     <string name="projects_social_consent_title">Arkadaşlarınla birlikte oyna</string>
     <string name="projects_social_consent_body">Discord hesabınla giriş yaparsın. Arkadaşların adını, profil fotoğrafını ve ne oynadığını görür; e-postan, şifren ve mesajların bize gelmez.</string>
@@ -47,7 +53,7 @@
     <string name="projects_social_signing_in">Giriş yapılıyor</string>
     <string name="projects_social_sign_in_failed">Giriş tamamlanamadı. Yeniden dene.</string>
     <string name="projects_social_unavailable">Arkadaşlar şu an kullanılamıyor. Biraz sonra tekrar dene.</string>
-    <string name="projects_social_signed_out_remote">Arkadaşlar oturumun kapandı.</string>
+    <string name="projects_social_signed_out_remote">Arkadaşlar\'dan çıkış yapıldı.</string>
 
     <string name="projects_social_invites">Davetler</string>
     <string name="projects_social_requests">İstekler</string>
@@ -105,14 +111,13 @@
     <string name="projects_social_block_ask">Engellediğin kişi seni bulamaz, sana istek ya da davet gönderemez.</string>
     <string name="projects_social_blocked">%1$s engellendi</string>
     <string name="projects_social_unblock">Engeli kaldır</string>
-    <string name="projects_social_unblocked">%1$s artık engelli değil</string>
+    <string name="projects_social_unblocked">%1$s engellenenlerden çıkarıldı</string>
     <string name="projects_social_accept">Kabul et</string>
     <string name="projects_social_decline">Reddet</string>
     <string name="projects_social_cancel_request">İsteği geri al</string>
     <string name="projects_social_dismiss">Kapat</string>
     <string name="projects_social_friend_added">%1$s ile artık arkadaşsınız</string>
     <string name="projects_social_friends_since">%1$s tarihinden beri arkadaşsınız</string>
-    <string name="projects_social_more">Diğer</string>
 
     <string name="projects_social_add">Arkadaş ekle</string>
     <string name="projects_social_your_code">Kodun</string>
@@ -165,7 +170,6 @@
     <string name="projects_crew_moderator">Moderatör</string>
     <string name="projects_crew_you">Sen</string>
     <string name="projects_crew_privacy">Ekibindekiler adını, fotoğrafını ve ne oynadığını görür; başka sunucuların adresini görmez.</string>
-    <string name="projects_crew_open">Ekibi aç</string>
     <string name="projects_crew_row_none">Ekip kur ya da katıl</string>
     <string name="projects_crew_invite_to">Ekibe davet et</string>
 
@@ -209,11 +213,10 @@
     <string name="projects_crew_invite_title">Arkadaşlarını davet et</string>
     <string name="projects_crew_invite">Davet et</string>
     <string name="projects_crew_invite_sent">Davet edildi</string>
-    <string name="projects_crew_invite_member">Ekipte</string>
     <string name="projects_crew_invite_none">Davet edecek arkadaşın yok.</string>
 
     <string name="projects_crew_remove">Ekipten çıkar</string>
-    <string name="projects_crew_remove_ask">%1$s ekipten çıkar ve ekip kodu yenilenir.</string>
+    <string name="projects_crew_remove_ask">%1$s ekipten çıkarılır ve ekip kodu yenilenir.</string>
     <string name="projects_crew_removed">%1$s ekipten çıkarıldı</string>
     <string name="projects_crew_hand_over">Liderliği devret</string>
     <string name="projects_crew_hand_over_ask">%1$s lider olur, sen üye olursun.</string>
@@ -245,7 +248,6 @@
     <string name="projects_crew_call_said_yes">Geliyor</string>
     <string name="projects_crew_call_said_soon">Birazdan</string>
     <string name="projects_crew_call_said_no">Gelemiyor</string>
-    <string name="projects_crew_call_answered">Yanıtın gönderildi</string>
 
     <string name="projects_crew_notifications">Ekip bildirimleri</string>
     <string name="projects_crew_calls">Ekip çağrıları</string>
@@ -256,6 +258,7 @@
     <string name="projects_crew_mute_hour">1 saat</string>
     <string name="projects_crew_mute_eight">8 saat</string>
     <string name="projects_crew_mute_morning">Yarın sabaha kadar</string>
+    <string name="projects_crew_mute_this_morning">Sabaha kadar</string>
     <string name="projects_crew_mute_forever">Ben açana kadar</string>
     <string name="projects_crew_today_at">Bugün %1$s</string>
     <string name="projects_crew_tomorrow_at">Yarın %1$s</string>
@@ -286,7 +289,7 @@
     <string name="projects_social_error_hand_over_first">Ayrılmadan önce liderliği başka bir üyeye devret.</string>
     <string name="projects_social_error_blocked_in_crew">Bu ekipte engellediğin biri var.</string>
     <string name="projects_social_error_crew_invites_full">Ekibin bekleyen çok daveti var. Biraz sonra tekrar dene.</string>
-    <string name="projects_social_error_crew_name">Ekip adı 3 ile 24 karakter arasında olmalı: harf, rakam ve boşluk.</string>
+    <string name="projects_social_error_crew_name">Ekip adı 3 ile 24 karakter arasında olmalı: harf, rakam, boşluk ve \' &amp; ! _ -</string>
     <string name="projects_social_error_crew_name_rejected">Bu ad kullanılamaz. Başka bir tane seç.</string>
     <string name="projects_social_error_crew_tag">Etiket 2 ile 4 harf ya da rakam olmalı.</string>
     <string name="projects_social_error_crew_motto">Slogan en fazla 40 karakter olabilir: harf, rakam, boşluk ve \' &amp; ! _ - , ?</string>

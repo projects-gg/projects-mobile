@@ -183,6 +183,10 @@
         <meta-data
             android:name="firebase_analytics_collection_deactivated"
             android:value="true" />
+        <!-- M19: Android 5.0-7.1 take an invite's or a crew call's notification away at its end. -->
+        <receiver
+            android:name="gg.projects.mobile.social.SocialNotificationExpiry"
+            android:exported="false" />
 
         <!-- Projects fork: event reminders ("Hatırlat"). -->
         <receiver

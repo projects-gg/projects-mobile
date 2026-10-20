@@ -116,13 +116,32 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
     private static boolean sOfferAsked;
     /** M19: "Katıl" on the friends screens: the next home screen starts Projects as "Projects'e katıl" does. */
     private static boolean sJoinRequested;
+    /** M19: when it was asked for; a home screen coming back much later (another app, hours on) does not start it. */
+    private static long sJoinRequestedAt;
+    /** M19: the card on screen now, if any (main thread only). */
+    @Nullable
+    private static ProjectsHomeCard sResumedCard;
 
     /**
      * M19: a friend's or the crew's "Katıl" (after its question): the home screen comes back and starts
-     * the Projects profile through its join, with every check "Projects'e katıl" makes.
+     * the Projects profile through its join, with every check "Projects'e katıl" makes. Asked on the home
+     * screen itself (its friends row), the start begins at once.
      */
     public static void requestJoin() {
+        ProjectsHomeCard card = sResumedCard;
+        if (card != null && card.mResumed && card.mFragment.isAdded() && card.mFragment.getView() != null) {
+            sJoinRequested = false;
+            card.startRequestedJoin();
+            return;
+        }
         sJoinRequested = true;
+        sJoinRequestedAt = android.os.SystemClock.elapsedRealtime();
+    }
+
+    private void startRequestedJoin() {
+        mJoinButton.postDelayed(() -> {
+            if (mResumed && mFragment.isAdded() && mFragment.getView() != null) join(mJoinButton);
+        }, 350);
     }
 
     /** M19: Android's notification question came already (the home card's or the first start's). */
@@ -426,12 +445,11 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
             mNotifyOfferDue = offer;
             render(System.currentTimeMillis());
         }
-        // M19: "Katıl" from the friends screens, once the home screen has settled.
+        // M19: "Katıl" from the friends screens, once the home screen has settled (only when just asked for).
+        sResumedCard = this;
         if (sJoinRequested) {
             sJoinRequested = false;
-            mJoinButton.postDelayed(() -> {
-                if (mResumed && mFragment.isAdded() && mFragment.getView() != null) join(mJoinButton);
-            }, 350);
+            if (android.os.SystemClock.elapsedRealtime() - sJoinRequestedAt < 30_000) startRequestedJoin();
         }
     }
 
@@ -442,6 +460,7 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
 
     public void onPause() {
         mResumed = false;
+        if (sResumedCard == this) sResumedCard = null;
         JoinOutcome.homePaused(this);
         NewsSeenStore.removeListener(mSeenChanged);
         ProjectsContent.removeListener(this);

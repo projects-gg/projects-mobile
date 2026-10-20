@@ -34,13 +34,20 @@ public final class SocialLinkActivity extends Activity {
         SocialService service = SocialService.get(this);
         if (!service.enabled()) return;
         if ("auth".equalsIgnoreCase(data.getHost())) {
-            service.onAuthLink(SocialCodes.authCodeFromDeepLink(link));
+            // Only the app's own waiting sign-in brings the launcher up (any web page can open this link).
+            if (!service.onAuthLink(SocialCodes.authCodeFromDeepLink(link))) return;
             SocialRoutes.set(SocialRoutes.FRIENDS, null);
             SocialRoutes.bringUp(this);
         } else if ("friend".equalsIgnoreCase(data.getHost())) {
             String code = SocialCodes.friendCodeFromDeepLink(link);
             if (code == null) return;
-            SocialRoutes.set(SocialRoutes.ADD, code);
+            if (service.signedIn()) {
+                SocialRoutes.set(SocialRoutes.ADD, code);
+            } else {
+                // Sign in first, on the friends screen; the code waits and opens "Arkadaş ekle" after.
+                service.setPendingFriendCode(code);
+                SocialRoutes.set(SocialRoutes.FRIENDS, null);
+            }
             SocialRoutes.bringUp(this);
         }
     }

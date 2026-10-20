@@ -24,6 +24,8 @@ public final class SocialPrefs {
     private static final String KEY_PUSH_REGISTERED = "push_registered";
     private static final String KEY_CREW_AUDIBLE = "crew_audible";
     private static final String KEY_CALLED_AT = "called_at";
+    /** M19: the player's own crew call runs until then (seconds, this phone's clock); the game's process keeps it. */
+    private static final String KEY_OWN_CALL_UNTIL = "own_call_until";
 
     private final SharedPreferences mPrefs;
 
@@ -130,6 +132,15 @@ public final class SocialPrefs {
     }
 
     /** When the player last called the crew from this phone (Unix seconds), for the 5-minute wait. */
+    public long ownCallUntil() {
+        return mPrefs.getLong(KEY_OWN_CALL_UNTIL, 0);
+    }
+
+    /** Written at once (commit): the game's process reads it right after the launcher's goes. */
+    public void setOwnCallUntil(long seconds) {
+        mPrefs.edit().putLong(KEY_OWN_CALL_UNTIL, seconds).commit();
+    }
+
     public long calledAt() {
         return mPrefs.getLong(KEY_CALLED_AT, 0);
     }
@@ -157,6 +168,6 @@ public final class SocialPrefs {
     /** Signed out: the choices about other players go; the notification switches stay. */
     public void clearAccount() {
         mPrefs.edit().remove(KEY_FAVOURITES).remove(KEY_ENDED_CALLS).remove(KEY_PUSH_REGISTERED)
-                .remove(KEY_CREW_AUDIBLE).remove(KEY_CALLED_AT).apply();
+                .remove(KEY_CREW_AUDIBLE).remove(KEY_CALLED_AT).remove(KEY_OWN_CALL_UNTIL).apply();
     }
 }

@@ -83,8 +83,16 @@ public class ContextAwareDoneListener implements AsyncMinecraftDownloader.DoneLi
         }
         try {
             Intent gameStartIntent = createGameStartIntent(activity);
+            // Projects fork (M19): the player's own crew call ends with its last socket. While one runs, the
+            // game's process takes it over and this process goes a few seconds later instead of at once.
+            long handOver = gg.projects.mobile.social.SocialService.handOverOwnCall(activity);
             activity.startActivity(gameStartIntent);
             activity.finish();
+            if (handOver > 0) {
+                new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(
+                        () -> android.os.Process.killProcess(android.os.Process.myPid()), handOver);
+                return;
+            }
             android.os.Process.killProcess(android.os.Process.myPid()); //You should kill yourself, NOW!
         } catch (Throwable e) {
             Tools.showError(activity.getBaseContext(), e);

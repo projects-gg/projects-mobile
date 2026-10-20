@@ -99,7 +99,8 @@ public final class SocialNotifications {
 
     public static void showRequest(Context context, String sender, @Nullable String name) {
         Context c = LanguageManager.wrap(context);
-        String who = name == null || name.isEmpty() ? c.getString(R.string.projects_social_someone) : name;
+        // Not a friend yet: "Biri" ("Someone"), not "Bir arkadaşın".
+        String who = name == null || name.isEmpty() ? c.getString(R.string.projects_social_someone_unknown) : name;
         post(c, CHANNEL_REQUESTS, requestTag(sender), ID_REQUEST,
                 c.getString(R.string.projects_social_push_request, who), null,
                 NotificationCompat.PRIORITY_DEFAULT, 0, SocialOpenActivity.open(c, SocialRoutes.FRIENDS, null));
@@ -138,7 +139,11 @@ public final class SocialNotifications {
                 .setOnlyAlertOnce(true)
                 .setContentIntent(open);
         if (text != null) builder.setContentText(text);
-        if (timeoutMs > 0) builder.setTimeoutAfter(timeoutMs);
+        if (timeoutMs > 0) {
+            builder.setTimeoutAfter(timeoutMs);
+            // Before Android 8.0 the timeout does nothing: an alarm takes it away at its end.
+            if (Build.VERSION.SDK_INT < 26) SocialNotificationExpiry.schedule(c, tag, id, timeoutMs);
+        }
         try {
             NotificationManagerCompat.from(c).notify(tag, id, builder.build());
         } catch (SecurityException e) {

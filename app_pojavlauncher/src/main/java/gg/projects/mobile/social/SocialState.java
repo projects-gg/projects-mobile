@@ -395,6 +395,22 @@ public final class SocialState {
         if (call != null && me != null) mCalls.put(callId, call.withAnswer(me, answer));
     }
 
+    /** The player's answer to a call (null: none yet). */
+    @Nullable
+    public String myAnswer(String callId) {
+        Call call = mCalls.get(callId);
+        String me = myId();
+        return call == null || me == null ? null : call.answers.get(me);
+    }
+
+    /** An answer that was not sent: the one before it comes back. */
+    public void restoreAnswer(String callId, @Nullable String previous) {
+        Call call = mCalls.get(callId);
+        String me = myId();
+        if (call == null || me == null) return;
+        mCalls.put(callId, previous == null ? call.withoutAnswer(me) : call.withAnswer(me, previous));
+    }
+
     /** The socket closed: presence is unknown until the next {@code hello}; invites and calls stay. */
     public void setOffline() {
         mLive = false;

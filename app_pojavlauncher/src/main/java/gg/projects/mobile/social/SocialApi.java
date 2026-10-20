@@ -36,6 +36,8 @@ public final class SocialApi {
     private final String mUserAgent;
     @Nullable
     private volatile String mToken;
+    /** The session a worker thread's requests belong to (set around each task), when not the current one. */
+    private final ThreadLocal<String> mBoundToken = new ThreadLocal<>();
 
     public SocialApi(String base, String userAgent) {
         mBase = base.endsWith("/") ? base : base + "/";
@@ -72,6 +74,15 @@ public final class SocialApi {
     @Nullable
     String token() {
         return mToken;
+    }
+
+    /**
+     * Binds this worker thread's requests to one session's token until {@code null} is bound again: a
+     * request queued before a sign-out or a new sign-in still goes as the session that asked for it.
+     */
+    void bind(@Nullable String token) {
+        if (token == null) mBoundToken.remove();
+        else mBoundToken.set(token);
     }
 
     // ---- account and sign-in ----
@@ -296,7 +307,8 @@ public final class SocialApi {
                     .url(mBase + path)
                     .header("User-Agent", mUserAgent)
                     .header("Accept", "application/json");
-            String token = mToken;
+            String bound = mBoundToken.get();
+            String token = bound != null ? bound : mToken;
             if (authorized) {
                 if (token == null) throw new SocialProblem(SocialProblem.Kind.SIGNED_OUT, 401, "no session", 0);
                 request.header("Authorization", "Bearer " + token);

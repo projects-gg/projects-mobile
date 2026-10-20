@@ -134,6 +134,12 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     private boolean mPushSyncing;
     /** The socket told the hub the player is in game (their own call runs while the game plays). */
     private boolean mPlayingSent;
+    /** A push sync was asked for while one ran: it runs again after. */
+    private boolean mPushAgain;
+    /** M19: the game's process keeps the player's own crew call (the launcher's process is gone below the game). */
+    private boolean mGameKeeper;
+    /** Socket messages that change what {@code GET /v1/friends} answers (a list read meanwhile is read again). */
+    private int mListChanges;
 
     private SocialService(Context app) {
         mApp = app;
@@ -312,11 +318,67 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
                 gameStarting(projectsSelected());
             }
             long left = mState.secondsLeft(own, nowSeconds());
+            mMain.removeCallbacks(mBackgroundClose);
             mMain.postDelayed(mBackgroundClose, Math.max(5_000, Math.min(60_000, left * 1000L + 2_000)));
             return;
         }
+        if (mGameKeeper) {
+            // The call is over: the game's socket goes (the player is not shown in game without one).
+            mGameKeeper = false;
+            mPrefs.setOwnCallUntil(0);
+        }
         closeConnection();
         changed();
+    }
+
+    /**
+     * M19, the launcher starting the game: upstream ends the launcher's process right away, which would end
+     * the player's own crew call with its socket. When one runs, the game's process is told to keep it and
+     * the launcher's process goes this many milliseconds later (its socket holds the call meanwhile); 0
+     * when there is none.
+     */
+    @MainThread
+    public static long handOverOwnCall(Context context) {
+        try {
+            if (!exists()) return 0;
+            SocialService service = get(context);
+            Call own = service.mState.ownCall(nowSeconds());
+            if (own == null || service.mToken == null || !service.mLiveSocket) {
+                service.mPrefs.setOwnCallUntil(0);
+                return 0;
+            }
+            service.mPrefs.setOwnCallUntil(nowSeconds() + service.mState.secondsLeft(own, nowSeconds()));
+            return 10_000;
+        } catch (RuntimeException e) {
+            Log.w(TAG, "crew call not handed over", e);
+            return 0;
+        }
+    }
+
+    /**
+     * M19, the game's process starting: when the player's own crew call was running (the launcher wrote it
+     * down), one socket keeps it until it ends, telling the hub the player is in game (on Projects, a call
+     * the crew can join). Nothing else runs here: no list, no push registration.
+     */
+    @MainThread
+    public static void keepOwnCallInGame(Context context) {
+        try {
+            SocialPrefs prefs = new SocialPrefs(context);
+            long until = prefs.ownCallUntil();
+            if (until <= nowSeconds()) return;
+            SocialService service = get(context);
+            if (service.mToken == null || !service.enabled()) {
+                prefs.setOwnCallUntil(0);
+                return;
+            }
+            service.mGameKeeper = true;
+            service.mPlayingSent = true;
+            service.ensureConnected();
+            // Never past the call's end, whatever the socket says.
+            service.mMain.postDelayed(service.mBackgroundClose, Math.max(5_000, (until - nowSeconds()) * 1000L + 2_000));
+        } catch (RuntimeException e) {
+            Log.w(TAG, "crew call not kept in game", e);
+        }
     }
 
     /** The profile Play starts is the Projects profile (its start joins projects.gg). */
@@ -343,7 +405,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     private void ensureConnected() {
         mMain.removeCallbacks(mReconnect);
         if (mToken == null || !enabled() || mReplaced || mConnection != null) return;
-        boolean wanted = mUiStarted > 0 || mState.ownCall(nowSeconds()) != null;
+        boolean wanted = mUiStarted > 0 || mState.ownCall(nowSeconds()) != null || (mGameKeeper && !mLiveSocket);
         if (!wanted) return;
         mConnection = PresenceConnection.open(mApi, mToken, this);
         changed();
@@ -384,15 +446,33 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
             mBackoff.healthy();
             // A new socket starts in the launcher: still in game, the hub hears it again.
             if (mPlayingSent && mUiStarted == 0) gameStarting(projectsSelected());
-            // After a reconnect the list may have moved on.
-            refresh(false);
+            // After a reconnect the list may have moved on (the game's process reads no list).
+            if (!mGameKeeper) refresh(false);
         } else if (type.equals("bye")) {
             return;
+        }
+        switch (type) {
+            case "friend_added":
+            case "friend_removed":
+            case "request":
+            case "request_cancelled":
+            case "team":
+            case "team_invite":
+            case "team_notifications":
+                mListChanges++;
+                break;
+            default:
+                break;
         }
         List<SocialState.Notice> notices = mState.apply(message, now);
         if (type.equals("team_notifications") || type.equals("hello")) mPrefs.setCrewSettings(mState.teamNotifications());
         handleNotices(notices);
         changed();
+        if (mGameKeeper && mUiStarted == 0 && (type.equals("hello") || type.equals("call_end"))) {
+            // The game's socket: kept only while the player's own call is there.
+            mMain.removeCallbacks(mBackgroundClose);
+            closeIfIdle();
+        }
     }
 
     @Override
@@ -417,7 +497,8 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
                 break;
         }
         if (failed) mUnavailable = true;
-        long delay = code == 4008 ? mBackoff.atLeastMs(60) : mBackoff.nextDelayMs();
+        long retryAfter = connection.retryAfterSeconds();
+        long delay = code == 4008 ? mBackoff.atLeastMs(60) : retryAfter > 0 ? mBackoff.atLeastMs(retryAfter) : mBackoff.nextDelayMs();
         mMain.postDelayed(mReconnect, delay);
         changed();
     }
@@ -434,13 +515,17 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         mLastTry = now;
         mFetching = true;
         changed();
+        final String token = mToken;
+        final int changesBefore = mListChanges;
         mIo.execute(() -> {
+            mApi.bind(token);
             try {
                 final JsonObject me = mApi.me();
                 final JsonObject friends = mApi.friends();
                 mMain.post(() -> {
                     mFetching = false;
-                    if (mToken == null) return;
+                    // An answer for a session that is gone (signed out, or signed in again meanwhile) is dropped.
+                    if (!token.equals(mToken)) return;
                     Me parsed = Me.read(me);
                     if (parsed != null) {
                         mState.setMe(parsed);
@@ -454,10 +539,16 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
                     changed();
                     syncPush();
                     ensureConnected();
+                    if (mListChanges != changesBefore) {
+                        // The socket changed the lists while this was read: read once more (the newer answer wins).
+                        mLastFetch = 0;
+                        refresh(false);
+                    }
                 });
             } catch (final SocialProblem problem) {
                 mMain.post(() -> {
                     mFetching = false;
+                    if (!token.equals(mToken)) return;
                     if (problem.kind == SocialProblem.Kind.SIGNED_OUT) {
                         sessionEnded(false);
                         return;
@@ -465,6 +556,8 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
                     mUnavailable = true;
                     changed();
                 });
+            } finally {
+                mApi.bind(null);
             }
         });
     }
@@ -546,13 +639,16 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         changed();
     }
 
-    /** {@code projects://auth/done?c=<code>} came back: claimed only for this app's own waiting sign-in. */
+    /**
+     * {@code projects://auth/done?c=<code>} came back: claimed only for this app's own waiting sign-in.
+     * False when it was not for one (a link any web page can open): then nothing else happens either.
+     */
     @MainThread
-    public void onAuthLink(@Nullable String code) {
+    public boolean onAuthLink(@Nullable String code) {
         final SignInFlow.Attempt attempt = mSignIn.onDeepLink(code, nowSeconds());
         if (attempt == null || code == null) {
             Log.i(TAG, "sign-in link ignored: no sign-in of this app waits");
-            return;
+            return false;
         }
         mStore.save(null, null, null, null);
         mSignInStatus = SignInStatus.CLAIMING;
@@ -570,6 +666,26 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
                 });
             }
         });
+        return true;
+    }
+
+    /** A friend link ({@code projects://friend/<code>}) opened before signing in: kept for after the sign-in. */
+    @Nullable
+    private String mPendingFriendCode;
+
+    @MainThread
+    public void setPendingFriendCode(@Nullable String code) {
+        mPendingFriendCode = code;
+    }
+
+    /** The friend code a link brought before the sign-in, once signed in (cleared by reading it). */
+    @MainThread
+    @Nullable
+    public String takePendingFriendCode() {
+        if (mToken == null) return null;
+        String code = mPendingFriendCode;
+        mPendingFriendCode = null;
+        return code;
     }
 
     private void signedIn(JsonObject answer) {
@@ -617,11 +733,15 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         final String token = mToken;
         if (token == null) return;
         mIo.execute(() -> {
+            // The token leaves the phone at once (below): the request carries it itself.
+            mApi.bind(token);
             try {
                 // Sign-out also ends this session's push registration on the service.
                 mApi.logout();
             } catch (SocialProblem ignored) {
                 // Signed out on the phone anyway; the session expires on the service by itself.
+            } finally {
+                mApi.bind(null);
             }
         });
         forgetSession();
@@ -632,18 +752,24 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     /** "Verilerimi sil": the account and everything in it, then signed out. */
     @MainThread
     public void deleteAccount(final Result<Void> result) {
-        if (mToken == null) return;
+        final String token = mToken;
+        if (token == null) return;
         mIo.execute(() -> {
+            mApi.bind(token);
             try {
                 mApi.deleteAccount();
                 mMain.post(() -> {
-                    forgetSession();
-                    PushRegistrar.forget(mApp);
-                    changed();
+                    if (token.equals(mToken)) {
+                        forgetSession();
+                        PushRegistrar.forget(mApp);
+                        changed();
+                    }
                     result.ok(null);
                 });
             } catch (final SocialProblem problem) {
                 mMain.post(() -> result.failed(problem));
+            } finally {
+                mApi.bind(null);
             }
         });
     }
@@ -675,16 +801,29 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     /** Registers this phone for pushes, refreshes or ends its registration, as the switches say. */
     @MainThread
     public void syncPush() {
-        if (mPushSyncing) return;
+        if (mGameKeeper) return;
+        if (mPushSyncing) {
+            // A switch changed (or the list came) while one ran: once more after it.
+            mPushAgain = true;
+            return;
+        }
         mPushSyncing = true;
-        PushRegistrar.sync(mApp, this, () -> mPushSyncing = false);
+        PushRegistrar.sync(mApp, this, () -> {
+            mPushSyncing = false;
+            if (mPushAgain) {
+                mPushAgain = false;
+                syncPush();
+            }
+        });
     }
 
-    /** FCM gave this phone a new token. */
+    /** FCM gave this phone a new token: registered once the list says what the service announces. */
     @MainThread
     public void onNewPushToken() {
         mPrefs.setPushRegistered("");
-        if (mToken != null) syncPush();
+        if (mToken == null || !enabled()) return;
+        if (mState.loaded()) syncPush();
+        else refresh(false);
     }
 
     /** What the push registration asks for, given the switches, the channels and the service. */
@@ -791,23 +930,30 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     }
 
     private <T> void run(final Call0<T> call, final Result<T> result, final OnOk<T> apply) {
-        if (mToken == null) {
+        final String token = mToken;
+        if (token == null) {
             result.failed(new SocialProblem(SocialProblem.Kind.SIGNED_OUT, 401, null, 0));
             return;
         }
         mIo.execute(() -> {
+            mApi.bind(token);
             try {
                 final T value = call.run();
                 mMain.post(() -> {
+                    // The session that asked is gone (signed out, or another sign-in): its answer changes nothing.
+                    if (!token.equals(mToken)) return;
                     if (apply != null) apply.apply(value);
                     changed();
                     result.ok(value);
                 });
             } catch (final SocialProblem problem) {
                 mMain.post(() -> {
+                    if (!token.equals(mToken)) return;
                     if (problem.kind == SocialProblem.Kind.SIGNED_OUT) sessionEnded(false);
                     result.failed(problem);
                 });
+            } finally {
+                mApi.bind(null);
             }
         });
     }
@@ -909,12 +1055,15 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     }
 
     private void refreshMeOnly() {
+        final String token = mToken;
+        if (token == null) return;
         mIo.execute(() -> {
+            mApi.bind(token);
             try {
                 final JsonObject me = mApi.me();
                 mMain.post(() -> {
                     Me parsed = Me.read(me);
-                    if (parsed != null && mToken != null) {
+                    if (parsed != null && token.equals(mToken)) {
                         mState.setMe(parsed);
                         mStore.save(mToken, parsed.profile.id, me, null);
                         changed();
@@ -922,6 +1071,8 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
                 });
             } catch (SocialProblem ignored) {
                 // The next refresh brings it.
+            } finally {
+                mApi.bind(null);
             }
         });
     }
@@ -1006,16 +1157,21 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     }
 
     private void refreshTeam() {
+        final String token = mToken;
+        if (token == null) return;
         mIo.execute(() -> {
+            mApi.bind(token);
             try {
                 final JsonObject answer = mApi.teams();
                 mMain.post(() -> {
-                    if (mToken == null) return;
+                    if (!token.equals(mToken)) return;
                     applyTeamAnswer(answer);
                     changed();
                 });
             } catch (SocialProblem ignored) {
                 // The socket's "team" message or the next refresh brings it.
+            } finally {
+                mApi.bind(null);
             }
         });
     }
@@ -1091,16 +1247,33 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     }
 
     /** Geliyorum / Birazdan / Gelemem: shown at once, confirmed by the socket. */
-    public void answerCall(String callId, String answer, Result<Void> result) {
-        if (!Call.isAnswer(answer)) return;
+    public void answerCall(final String callId, String answer, final Result<Void> result) {
+        if (!Call.isAnswer(answer)) {
+            result.failed(new SocialProblem(SocialProblem.Kind.FAILED, 0, "bad_request", 0));
+            return;
+        }
         JsonObject message = new JsonObject();
         message.addProperty("t", "call_answer");
         message.addProperty("call", callId);
         message.addProperty("answer", answer);
+        final String previous = mState.myAnswer(callId);
         mState.answerLocally(callId, answer);
         SocialNotifications.cancelCall(mApp, callId);
         changed();
-        socketRequest(message, result, null);
+        socketRequest(message, new Result<Void>() {
+            @Override
+            public void ok(Void value) {
+                result.ok(value);
+            }
+
+            @Override
+            public void failed(SocialProblem problem) {
+                // Not sent: the screen shows the answer the crew has.
+                mState.restoreAnswer(callId, previous);
+                changed();
+                result.failed(problem);
+            }
+        }, null);
     }
 
     /** "Bitir": the player's own call. */
