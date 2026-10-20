@@ -1,0 +1,5 @@
+{"t":"hello","v":1,"status":"online","keepaliveSeconds":45,"friends":[],"team":[],"invites":[]}
+{"t":"presence","presence":{"id":"100000000000000012","state":"launcher","status":"online","game":null,"avatar":"discord","avatarHash":null}}
+{"t":"presence","presence":{"id":"100000000000000012","state":"playing","status":"online","game":{"where":"projects","host":"play.projects.gg"},"avatar":"discord","avatarHash":null}}
+{"t":"invite","invite":{"id":"1","from":"100000000000000012","at":1792536704,"server":{"where":"projects","host":"play.projects.gg"},"quiet":false}}
+{"t":"request","from":{"id":"100000000000000014","username":"ece","displayName":"Ece","avatar":"discord","avatarHash":null}}

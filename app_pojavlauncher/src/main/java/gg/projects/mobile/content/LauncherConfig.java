@@ -30,6 +30,16 @@ public final class LauncherConfig {
     JsonElement newsFeedJson;
     @SerializedName("recommendedMinecraftVersion")
     JsonElement recommendedMinecraftVersionJson;
+    @SerializedName("features")
+    JsonElement featuresJson;
+
+    /**
+     * M19: {@code features.friends} (the friends feature: Discord sign-in, friends, presence) and
+     * {@code features.teams} (crews inside it). Off unless the config says {@code true}; any other
+     * value reads as off, so a broken entry never turns a feature on.
+     */
+    public transient boolean friendsFeature;
+    public transient boolean teamsFeature;
 
     /** Studio's events, hidden ones included (they take a feed event with their id off the card). */
     public transient List<EventCountdown> events = Collections.emptyList();
@@ -144,10 +154,22 @@ public final class LauncherConfig {
         JsonElement recommended = config.recommendedMinecraftVersionJson;
         config.recommendedMinecraftVersion = recommended != null && recommended.isJsonPrimitive()
                 && recommended.getAsJsonPrimitive().isString() ? recommended.getAsString() : null;
+        // M19: Friends and crews follow the desktop's flags; teams only within friends.
+        JsonObject features = config.featuresJson != null && config.featuresJson.isJsonObject()
+                ? config.featuresJson.getAsJsonObject() : null;
+        config.friendsFeature = isTrue(features, "friends");
+        config.teamsFeature = config.friendsFeature && isTrue(features, "teams");
         config.eventsJson = null;
         config.newsFeedJson = null;
         config.recommendedMinecraftVersionJson = null;
+        config.featuresJson = null;
         return config;
+    }
+
+    private static boolean isTrue(JsonObject object, String key) {
+        if (object == null) return false;
+        JsonElement value = object.get(key);
+        return value != null && value.isJsonPrimitive() && value.getAsJsonPrimitive().isBoolean() && value.getAsBoolean();
     }
 
     /** The Discord invite to open, or null when the config has no usable one. */

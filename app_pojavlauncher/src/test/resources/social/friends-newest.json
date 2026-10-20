@@ -1,0 +1,110 @@
+{
+ "friends": [
+  {
+   "id": "100000000000000012",
+   "username": "kaan",
+   "displayName": "Kaan",
+   "avatar": "discord",
+   "avatarHash": null,
+   "since": "2026-10-21",
+   "lastSeen": "today"
+  },
+  {
+   "id": "100000000000000013",
+   "username": "deniz",
+   "displayName": "Deniz",
+   "avatar": "discord",
+   "avatarHash": null,
+   "since": "2026-10-21",
+   "lastSeen": "today"
+  }
+ ],
+ "incoming": [
+  {
+   "id": "100000000000000014",
+   "username": "ece",
+   "displayName": "Ece",
+   "avatar": "discord",
+   "avatarHash": null,
+   "sentAt": 1792536699
+  }
+ ],
+ "outgoing": [],
+ "blocked": [],
+ "limits": {
+  "friends": 200,
+  "outgoingRequests": 50,
+  "teamMembers": 30,
+  "groups": 20
+ },
+ "groups": {
+  "version": 0,
+  "groups": [],
+  "members": {}
+ },
+ "team": {
+  "id": "6f123f0e8c52ebbd",
+  "name": "Gece Kurtlari",
+  "tag": "GKR",
+  "emblem": "flame",
+  "color": "teal",
+  "frame": "shield",
+  "motto": "Gece bizimdir",
+  "code": "TKM-QEVG-YRB4",
+  "createdOn": "2026-10-21",
+  "members": [
+   {
+    "id": "100000000000000012",
+    "username": "kaan",
+    "displayName": "Kaan",
+    "avatar": "discord",
+    "avatarHash": null,
+    "role": "founder",
+    "moderator": false,
+    "joinedAt": 1792536698
+   },
+   {
+    "id": "100000000000000011",
+    "username": "ayse",
+    "displayName": "Ayse",
+    "avatar": "discord",
+    "avatarHash": null,
+    "role": "member",
+    "moderator": false,
+    "joinedAt": 1792536698
+   },
+   {
+    "id": "100000000000000013",
+    "username": "deniz",
+    "displayName": "Deniz",
+    "avatar": "discord",
+    "avatarHash": null,
+    "role": "member",
+    "moderator": false,
+    "joinedAt": 1792536698
+   }
+  ],
+  "permissions": {
+   "invite": "members",
+   "call": "members",
+   "kick": "moderators",
+   "edit": "leader"
+  }
+ },
+ "teamInvited": [],
+ "teamInvites": [],
+ "teamFeatures": [
+  "look",
+  "calls",
+  "roles",
+  "mute"
+ ],
+ "teamNotifications": {
+  "calls": true,
+  "muted": true,
+  "muteUntil": 1792540302
+ },
+ "features": [
+  "push"
+ ]
+}
