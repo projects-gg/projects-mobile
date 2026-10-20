@@ -27,7 +27,13 @@ import java.util.Map;
  * load and writes them all once it ran with them), a key the player changed never counts, and a
  * clash is left alone when the table's new key already belongs to another mapping that acts in
  * normal play. The fix changes only those lines' values; every other byte (the order, unknown lines,
- * line endings) stays. Push-to-talk, unbound by default, is no clash. Plain Java, JVM-tested.
+ * line endings) stays.
+ *
+ * <p>The same fix gives a binding without a key the table's one ({@code bindIfUnbound}: Simple Voice
+ * Chat's push-to-talk gets Caps Lock; the lead's decision B of 20 October, both launchers): only
+ * while its line says exactly {@code key.keyboard.unknown} (no line means the mod was not loaded, and
+ * a key the player chose is theirs), and not while another mapping that acts in play has that key.
+ * A phone's soft keyboard cannot give it Caps Lock in the game's Key Binds. Plain Java, JVM-tested.
  */
 public final class KeyFix {
     private KeyFix() {}
@@ -44,18 +50,27 @@ public final class KeyFix {
             {"iris.keybind.reload", "gui.xaero_quick_eat"},
     };
 
+    /**
+     * The bindings that get the table's key while they have none, for a table that does not say so
+     * yet. The table's own {@code bindIfUnbound} wins where it has one.
+     */
+    private static final String[] BIND_IF_UNBOUND = {"key.push_to_talk"};
+
     /** The table is a few kilobytes. */
     private static final int MAX_TABLE_CHARS = 64 * 1024;
 
-    /** One clash the fix can solve. */
+    /** One line the fix can change: a clash it ends, or a binding without a key it gives one. */
     public static final class Pair {
         /** The binding the table moves, e.g. {@code key.wi_zoom.zoom}. */
         public final String mapping;
-        /** Its mod's own key, which it shares with {@link #partner}. */
+        /**
+         * The value its line must still have: its mod's own key, which it shares with
+         * {@link #partner}; {@link ModKeys#UNBOUND_KEY} for a binding that only gets a key.
+         */
         public final String modDefault;
         /** The table's key for it ({@link ModKeys#UNBOUND_KEY} leaves it without one). */
         public final String target;
-        /** The mapping it clashes with on {@link #modDefault}. */
+        /** The mapping it clashes with on {@link #modDefault}; null for a binding that only gets a key. */
         public final String partner;
 
         Pair(String mapping, String modDefault, String target, String partner) {
@@ -64,6 +79,11 @@ public final class KeyFix {
             this.target = target;
             this.partner = partner;
         }
+
+        /** True for a binding that only gets a key while it has none (push-to-talk): no clash, no partner. */
+        public boolean binds() {
+            return partner == null;
+        }
     }
 
     /** One line the fix writes: the binding's value from {@link #before} to {@link #after}. */
@@ -71,11 +91,14 @@ public final class KeyFix {
         public final String mapping;
         public final String before;
         public final String after;
+        /** True when it ends a clash; false when it gives a binding without a key one (push-to-talk). */
+        public final boolean clash;
 
-        Change(String mapping, String before, String after) {
+        Change(String mapping, String before, String after, boolean clash) {
             this.mapping = mapping;
             this.before = before;
             this.after = after;
+            this.clash = clash;
         }
 
         @Override
@@ -85,9 +108,9 @@ public final class KeyFix {
     }
 
     /**
-     * The clashes the shared key table solves ({@code bindings[]}: {@code name}, {@code key},
-     * {@code default} and {@code clashesWith}; the built-in list where a binding has no
-     * {@code clashesWith}). An unreadable table gives none.
+     * What the shared key table fixes ({@code bindings[]}: {@code name}, {@code key}, {@code default},
+     * {@code clashesWith} and {@code bindIfUnbound}; the built-in lists where a binding has neither
+     * field). An unreadable table gives nothing.
      */
     public static List<Pair> pairs(String tableJson) {
         List<Pair> pairs = new ArrayList<>();
@@ -102,8 +125,16 @@ public final class KeyFix {
                 JsonObject binding = (JsonObject) entry;
                 String name = string(binding, "name");
                 String key = string(binding, "key");
+                if (name == null || key == null) continue;
+                // A binding without a key gets the table's one.
+                Boolean bind = bool(binding, "bindIfUnbound");
+                if ((bind != null ? bind : builtInBind(name)) && !key.equals(ModKeys.UNBOUND_KEY)) {
+                    pairs.add(new Pair(name, ModKeys.UNBOUND_KEY, key, null));
+                }
+                // A binding that shares its mod's key with another mapping moves to the table's key.
+                // A mapping without a key fires nothing, so it never clashes.
                 String modDefault = string(binding, "default");
-                if (name == null || key == null || modDefault == null || key.equals(modDefault)) continue;
+                if (modDefault == null || key.equals(modDefault) || modDefault.equals(ModKeys.UNBOUND_KEY)) continue;
                 String partner = string(binding, "clashesWith");
                 if (partner == null) partner = builtInPartner(name);
                 if (partner == null || partner.equals(name)) continue;
@@ -115,9 +146,16 @@ public final class KeyFix {
         return pairs;
     }
 
-    private static String builtInPartner(String name) {
+    /** The built-in partner of {@code name} ({@link #CLASHES}), or null. */
+    static String builtInPartner(String name) {
         for (String[] clash : CLASHES) if (clash[0].equals(name)) return clash[1];
         return null;
+    }
+
+    /** True when the built-in list gives {@code name} the table's key while it has none. */
+    static boolean builtInBind(String name) {
+        for (String bind : BIND_IF_UNBOUND) if (bind.equals(name)) return true;
+        return false;
     }
 
     private static String string(JsonObject object, String field) {
@@ -125,10 +163,16 @@ public final class KeyFix {
         return value != null && value.isJsonPrimitive() && ((JsonPrimitive) value).isString() ? value.getAsString() : null;
     }
 
+    private static Boolean bool(JsonObject object, String field) {
+        JsonElement value = object.get(field);
+        return value != null && value.isJsonPrimitive() && ((JsonPrimitive) value).isBoolean() ? value.getAsBoolean() : null;
+    }
+
     /**
      * False for mappings that act only outside normal play: F3 combinations, creative mode's hotbar
      * modifiers, spectator keys and Replay Mod (its viewer and recording). F3 itself and Replay Mod's
-     * settings screen act in play. The desktop's {@code acts_in_play}, word for word.
+     * settings screen act in play. The desktop's {@code acts_in_play}, word for word; the MODLAR keys
+     * use the same rule ({@link ModKeys}).
      */
     static boolean actsInPlay(String name) {
         switch (name) {
@@ -148,16 +192,18 @@ public final class KeyFix {
 
     /**
      * What the fix changes in a file with these key bindings ({@link ModKeys#keyBindings}, the last
-     * line of a mapping counting): empty when nothing clashes any more (a 0.1.6 file, or the player
-     * moved one of the two).
+     * line of a mapping counting): empty when there is nothing to fix (a 0.1.6 file, or the player
+     * moved one of the two and gave push-to-talk a key).
      */
     public static List<Change> plan(Map<String, String> bindings, List<Pair> pairs) {
         List<Change> changes = new ArrayList<>();
         if (bindings == null || pairs == null) return changes;
         for (Pair pair : pairs) {
-            if (!pair.modDefault.equals(bindings.get(pair.mapping)) || !pair.modDefault.equals(bindings.get(pair.partner))) continue;
+            // Written, and exactly on the old key (or exactly without one): a key the player chose never counts.
+            if (!pair.modDefault.equals(bindings.get(pair.mapping))) continue;
+            if (!pair.binds() && !pair.modDefault.equals(bindings.get(pair.partner))) continue;
             if (!pair.target.equals(ModKeys.UNBOUND_KEY) && taken(pair.target, pair.mapping, bindings)) continue;
-            changes.add(new Change(pair.mapping, pair.modDefault, pair.target));
+            changes.add(new Change(pair.mapping, pair.modDefault, pair.target, !pair.binds()));
         }
         return changes;
     }
@@ -166,6 +212,13 @@ public final class KeyFix {
     public static boolean covers(List<Change> changes, String mapping) {
         if (changes == null) return false;
         for (Change change : changes) if (change.mapping.equals(mapping)) return true;
+        return false;
+    }
+
+    /** True when {@code changes} ends a clash, not only gives push-to-talk its key (what the offer says). */
+    public static boolean hasClash(List<Change> changes) {
+        if (changes == null) return false;
+        for (Change change : changes) if (change.clash) return true;
         return false;
     }
 
@@ -196,14 +249,14 @@ public final class KeyFix {
     /**
      * Takes a fix back on {@code current}, given the file as it was before ({@code backup}): when
      * nothing else changed since, the old file comes back byte for byte; when the game saved the file
-     * meanwhile, only the lines still on the table's keys go back to their old key (the desktop's
-     * {@code undo_key_fix}).
+     * meanwhile, only the lines still on the table's keys go back to their old value (the desktop's
+     * {@code undo_key_fix}), push-to-talk's included.
      */
     public static String undo(String current, String backup, List<Pair> pairs) {
         List<Change> fixed = plan(bindings(backup), pairs);
         if (apply(backup, fixed).equals(current)) return backup;
         List<Change> back = new ArrayList<>();
-        for (Change change : fixed) back.add(new Change(change.mapping, change.after, change.before));
+        for (Change change : fixed) back.add(new Change(change.mapping, change.after, change.before, change.clash));
         return apply(current, back);
     }
 

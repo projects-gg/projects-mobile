@@ -291,6 +291,12 @@
     <string name="projects_keyfix_failed">The keys couldn\'t be changed. Try again.</string>
     <string name="projects_undo">Undo</string>
     <string name="projects_modkey_conflict_short">Another action in the game uses this key too.</string>
+    <!-- M17, decision B: push-to-talk without a key gets one from the same one-tap fix. -->
+    <string name="projects_modkey_unbound_short">This has no key in the game.</string>
+    <string name="projects_keyfix_bind_action">Set a key</string>
+    <string name="projects_keyfix_talk_title">Push to talk has no key</string>
+    <string name="projects_keyfix_talk_body">You need one to talk in voice chat.</string>
+    <string name="projects_keyfix_bound">Push to talk key set</string>
     <!-- M17: a Projects start that ends while the player is away from the home screen: no game starts by
          itself; the notification says so and the home screen has Play ready. -->
     <string name="projects_ready_title">Projects is ready</string>

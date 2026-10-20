@@ -81,7 +81,8 @@ import gg.projects.mobile.reminders.Reminders;
  * <p>M17: the story falls back to Minecraft's own newest update when there is no Projects story
  * (never the patch notes tile or the event card, never a "new" dot); a live event on the server
  * offers "Katıl" where the bell goes; an options.txt saved before 0.1.6 with the mods' clashing keys
- * gets a one-tap fix, offered once ({@link KeyFixer}), with "Geri al" ({@link UndoBar}); and the
+ * or without a push-to-talk key gets a one-tap fix, offered once ({@link KeyFixer}), with "Geri al"
+ * ({@link UndoBar}); and the
  * card is the home screen of {@link JoinOutcome}: a start that ended while the player was away
  * shows its failure, or Play ready, when the player is back.
  */
@@ -153,6 +154,8 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
     private final Drawable mAllNewsDot;
     // M17: the key fix's offer, the event's "Katıl" and the undo bar over the play bar.
     private final View mKeyFix;
+    private final TextView mKeyFixTitle;
+    private final TextView mKeyFixBody;
     private final Button mKeyFixButton;
     private final View mKeyFixClose;
     private final View mEventActions;
@@ -179,6 +182,7 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
     private String mNewsShown;
     private String mEventShown;
     private String mPatchShown;
+    private String mKeyFixShown;
     @Nullable
     private HomeContent.Event mEventBound;
     private int mEventCount;
@@ -277,6 +281,8 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         mModsCount = root.findViewById(R.id.projects_mods_row_count);
         mModsBadge = root.findViewById(R.id.projects_mods_row_badge);
         mKeyFix = root.findViewById(R.id.projects_keyfix);
+        mKeyFixTitle = root.findViewById(R.id.projects_keyfix_title);
+        mKeyFixBody = root.findViewById(R.id.projects_keyfix_body);
         mKeyFixButton = root.findViewById(R.id.projects_keyfix_fix);
         mKeyFixClose = root.findViewById(R.id.projects_keyfix_close);
         mEventActions = root.findViewById(R.id.projects_event_actions);
@@ -519,8 +525,11 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         boolean news = state == CONTENT && top != null;
         boolean allNews = state == SKELETON || (home != null && (!home.news.isEmpty() || !home.minecraft.isEmpty()));
         boolean keyFix = mKeyFixPlan != null && !mKeyFixPlan.isEmpty();
+        // M17: a clash to fix, or only push-to-talk without a key (decision B): the offer says which.
+        boolean keyFixClash = keyFix && KeyFix.hasClash(mKeyFixPlan);
+        String keyFixShown = keyFix ? (keyFixClash ? "clash" : "talk") : null;
         String structure = state + "|" + noticeShown + "|" + (offline != null) + "|" + messageTitle + "|" + retry + "|" + allNews
-                + "|" + keyFix
+                + "|" + keyFixShown
                 + "|" + (news ? newsShown : "") + "|" + (state == CONTENT ? eventShown + "|" + others + "|" + eventOpens + "|" + patchShown : "");
 
         boolean changed = mStructure != null && !structure.equals(mStructure);
@@ -541,6 +550,10 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
                     && !mPatchShown.equals(patchShown)) {
                 CardMotion.crossfade(mPatch);
             }
+            if (keyFixShown != null && mKeyFix.getVisibility() == View.VISIBLE && mKeyFixShown != null
+                    && !mKeyFixShown.equals(keyFixShown)) {
+                CardMotion.crossfade(mKeyFix);
+            }
             CardMotion.beginLayoutChange(mSceneRoot);
         }
         mStructure = structure;
@@ -556,8 +569,16 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
 
         show(mSkeleton, state == SKELETON);
         show(mMessage, state == MESSAGE);
-        // M17: the key fix's offer, whatever the news says.
+        // M17: the key fix's offer, whatever the news says. The button names what it does: "Tuş
+        // çakışmalarını düzelt" (push-to-talk comes along when it has no key), or "Tuş ata" when that
+        // is all there is to fix.
+        if (keyFix) {
+            setText(mKeyFixTitle, activity.getString(keyFixClash ? R.string.projects_keyfix_title : R.string.projects_keyfix_talk_title));
+            setText(mKeyFixBody, activity.getString(keyFixClash ? R.string.projects_keyfix_body : R.string.projects_keyfix_talk_body));
+            setText(mKeyFixButton, activity.getString(keyFixClash ? R.string.projects_keyfix_action : R.string.projects_keyfix_bind_action));
+        }
         show(mKeyFix, keyFix);
+        mKeyFixShown = keyFixShown;
         if (!keyFix) mKeyFixButton.setEnabled(true);
         if (state == MESSAGE) {
             setText(mMessageTitle, activity.getString(messageTitle));
@@ -1213,7 +1234,8 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
 
     /**
      * Looks at the Projects profile's options.txt off the main thread: a fix asked for in the game is
-     * made now that the game is closed (with "Geri al"); otherwise the clashes are offered once.
+     * made now that the game is closed (with "Geri al"); otherwise the fix is offered once, for a clash
+     * or for push-to-talk without a key.
      */
     private void checkKeyFix() {
         final Context app = mFragment.requireContext().getApplicationContext();
@@ -1255,6 +1277,7 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
     private void fixKeys() {
         if (mKeyFixPlan == null) return;
         mKeyFixButton.setEnabled(false);
+        final boolean offeredClash = KeyFix.hasClash(mKeyFixPlan);
         final Context app = mFragment.requireContext().getApplicationContext();
         final int token = ++mKeyFixToken;
         KeyFixer.run(() -> {
@@ -1307,21 +1330,25 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
                         mUndoBar.showResult(mFragment.getString(R.string.projects_keyfix_undone), R.drawable.projects_ic_keyboard);
                     });
                 } else if (mUndoBar != null) {
-                    // Nothing clashed any more (the keys were changed in the game meanwhile).
-                    mUndoBar.show(mFragment.getString(R.string.projects_keyfix_done), null);
+                    // Nothing to fix any more (the keys were changed in the game meanwhile).
+                    mUndoBar.show(mFragment.getString(offeredClash ? R.string.projects_keyfix_done : R.string.projects_keyfix_bound), null);
                 }
             });
         });
     }
 
-    /** "Tuş çakışmaları düzeltildi" with "Geri al", which puts the old keys back. */
+    /**
+     * "Tuş çakışmaları düzeltildi" ("Bas-konuş tuşu atandı" when push-to-talk was all) with "Geri al",
+     * which puts the old keys back.
+     */
     private void showFixed(final KeyFixer.Applied applied) {
+        int done = KeyFix.hasClash(applied.changes) ? R.string.projects_keyfix_done : R.string.projects_keyfix_bound;
         if (mUndoBar == null) {
-            Toast.makeText(mFragment.requireContext(), R.string.projects_keyfix_done, Toast.LENGTH_SHORT).show();
+            Toast.makeText(mFragment.requireContext(), done, Toast.LENGTH_SHORT).show();
             return;
         }
         final Context app = mFragment.requireContext().getApplicationContext();
-        mUndoBar.show(mFragment.getString(R.string.projects_keyfix_done), () -> KeyFixer.run(() -> {
+        mUndoBar.show(mFragment.getString(done), () -> KeyFixer.run(() -> {
             boolean undone;
             try {
                 undone = KeyFixer.undo(app, applied);

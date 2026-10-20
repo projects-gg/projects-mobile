@@ -35,8 +35,9 @@ import gg.projects.mobile.join.ProjectsProfile;
  * log is read only until the mods are known. Before {@link #attach} (the controls editor) nothing
  * is known and the buttons send their own keys.
  *
- * <p>M17: in the Projects profile a clash the one-tap key fix solves ({@link KeyFix}) offers the fix
- * on the key's reason line; asked for there, it waits until the game is closed ({@link KeyFixer}).
+ * <p>M17: in the Projects profile a clash the one-tap key fix solves ({@link KeyFix}), and
+ * push-to-talk without a key, which the same fix gives one, offer the fix on the key's reason line;
+ * asked for there, it waits until the game is closed ({@link KeyFixer}).
  */
 public final class ModKeysLive {
     private ModKeysLive() {}
@@ -61,11 +62,11 @@ public final class ModKeysLive {
     /** M17: a key fix of this game folder waits for the game to close. */
     private static volatile boolean sFixQueued;
 
-    /** M17: what the reason line of a clashing MODLAR key offers. */
+    /** M17: what the reason line of a clashing MODLAR key, or of push-to-talk without a key, offers. */
     public enum Fix {
-        /** Nothing: the fix does not solve this key's clash (the player's own keys, another profile). */
+        /** Nothing: the fix does not solve this key's problem (the player's own keys, another profile). */
         NONE,
-        /** "Tuş çakışmalarını düzelt". */
+        /** "Tuş çakışmalarını düzelt" on a clash, "Tuş ata" on push-to-talk without a key. */
         OFFER,
         /** Asked for: it is made once the game is closed ("Geri al" takes it back). */
         QUEUED,
@@ -115,8 +116,9 @@ public final class ModKeysLive {
     }
 
     /**
-     * M17: whether the one-tap key fix solves {@code action}'s clash in the running game's options.txt
-     * (the Projects profile only), and whether the player already asked for it.
+     * M17: whether the one-tap key fix changes {@code action}'s line in the running game's options.txt
+     * (a clash it ends, or push-to-talk without a key; the Projects profile only), and whether the
+     * player already asked for it.
      */
     public static Fix fix(Context context, ModKeys.Action action) {
         if (sOptions == null || !sProjects) return Fix.NONE;

@@ -282,6 +282,11 @@
     <string name="projects_keyfix_failed">Tuşlar değiştirilemedi. Tekrar dene.</string>
     <string name="projects_undo">Geri al</string>
     <string name="projects_modkey_conflict_short">Bu tuşu oyunda başka bir eylem de kullanıyor.</string>
+    <string name="projects_modkey_unbound_short">Bu eylemin oyunda tuşu yok.</string>
+    <string name="projects_keyfix_bind_action">Tuş ata</string>
+    <string name="projects_keyfix_talk_title">Bas-konuş tuşu yok</string>
+    <string name="projects_keyfix_talk_body">Sesli sohbette konuşmak için bir tuş gerekiyor.</string>
+    <string name="projects_keyfix_bound">Bas-konuş tuşu atandı</string>
     <!-- M17: a Projects start that ends while the player is away from the home screen. -->
     <string name="projects_ready_title">Projects hazır</string>
     <string name="projects_ready_body">Kurulum bitti. Başlatmak için Oyna\'ya bas.</string>
