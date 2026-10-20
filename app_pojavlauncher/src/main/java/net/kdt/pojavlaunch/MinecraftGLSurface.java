@@ -95,6 +95,13 @@ public class MinecraftGLSurface extends View implements GrabListener, DirectGame
     private boolean mLastGrabState = false;
     public static boolean sdlEnabled = false;
     boolean useSurfaceView = LauncherPreferences.PREF_USE_ALTERNATE_SURFACE;
+    /** Projects fork (M18): the game may draw with Mojang's Vulkan renderer (gg.projects.mobile.launch.GameSurface). */
+    private boolean mGameMayUseVulkan;
+
+    /** Projects fork (M18): set before {@link #start} by the game activity, from the version's libraries. */
+    public void setGameMayUseVulkan(boolean mayUseVulkan) {
+        mGameMayUseVulkan = mayUseVulkan;
+    }
 
     public MinecraftGLSurface(Context context) {
         this(context, null);
@@ -140,6 +147,11 @@ public class MinecraftGLSurface extends View implements GrabListener, DirectGame
                     !Tools.hasMods("angelica") &&
                     !Tools.hasMods("lwjgl3ify-3");
         } catch (NullPointerException ignored){}
+        // Projects fork (M18): Minecraft's own Vulkan renderer (26.2+) has Kopper's orientation issue on
+        // SurfaceView too: the game drew sideways in landscape.
+        if (mGameMayUseVulkan) useSurfaceView = false;
+        android.util.Log.i("ProjectsSurface", (useSurfaceView ? "SurfaceView" : "TextureView")
+                + (mGameMayUseVulkan ? " (the game may draw with Vulkan)" : ""));
         if(useSurfaceView){
             SurfaceView surfaceView = new SurfaceView(getContext());
             mSurface = surfaceView;

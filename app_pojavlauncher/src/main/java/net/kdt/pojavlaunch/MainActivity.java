@@ -260,6 +260,9 @@ public class MainActivity extends BaseActivity implements ControlButtonMenuListe
             version = version == null ? minecraftProfile.lastVersionId : version;
 
             JMinecraftVersionList.Version mVersionInfo = Tools.getVersionInfo(version);
+            // Projects fork (M18): Minecraft 26.2+ may draw with its own Vulkan renderer: the surface it
+            // gets must not pass the display's rotation (gg.projects.mobile.launch.GameSurface).
+            minecraftGLView.setGameMayUseVulkan(gg.projects.mobile.launch.GameSurface.mayUseVulkan(libraryNames(mVersionInfo)));
             isInputStackCall = mVersionInfo.arguments != null;
             CallbackBridge.nativeSetUseInputStackQueue(isInputStackCall);
 
@@ -304,6 +307,16 @@ public class MainActivity extends BaseActivity implements ControlButtonMenuListe
         } catch (Throwable e) {
             Tools.showError(this, e, true);
         }
+    }
+
+    /** Projects fork (M18): the Maven names of a version's libraries (its parents' are merged in). */
+    private static String[] libraryNames(JMinecraftVersionList.Version version) {
+        if (version == null || version.libraries == null) return new String[0];
+        String[] names = new String[version.libraries.length];
+        for (int i = 0; i < names.length; i++) {
+            names[i] = version.libraries[i] == null ? null : version.libraries[i].name;
+        }
+        return names;
     }
 
     private void loadControls() {
