@@ -63,6 +63,7 @@ import gg.projects.mobile.controls.KeyFix;
 import gg.projects.mobile.controls.KeyFixer;
 import gg.projects.mobile.join.DefaultProfiles;
 import gg.projects.mobile.join.JoinOutcome;
+import gg.projects.mobile.join.NotifyAsk;
 import gg.projects.mobile.join.PlayChoice;
 import gg.projects.mobile.join.ProjectsJoin;
 import gg.projects.mobile.join.ProjectsProfile;
@@ -105,6 +106,14 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
     private static final int START_FROM_PLAY = 1;
     private static final int START_FROM_JOIN = 2;
     private static final int START_FROM_EVENT = 3;
+    /**
+     * M18 (0.1.9): the home card's own notification question was answered or set aside. A tester who
+     * updated with everything downloaded opened the app looking for the question, saw none (it came only
+     * with the first Projects start) and allowed notifications in Android's settings himself.
+     */
+    private static final String KEY_NOTIFY_OFFER_DONE = "projects_notify_offer_done";
+    /** M18 (0.1.9): Android's question was opened from that card (static: the card may be built again meanwhile). */
+    private static boolean sOfferAsked;
     private static final android.os.Handler MAIN = new android.os.Handler(android.os.Looper.getMainLooper());
     /** M17: a fix made while no home screen was there to show it; the next one shows it with "Geri al". */
     @Nullable
@@ -174,6 +183,11 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
     private final TextView mKeyFixBody;
     private final Button mKeyFixButton;
     private final View mKeyFixClose;
+    // M18 (0.1.9): the notification question on the card, while it is due on this visit.
+    private final View mNotifyOffer;
+    private final Button mNotifyOfferAllow;
+    private final View mNotifyOfferClose;
+    private boolean mNotifyOfferDue;
     private final View mEventActions;
     private final View mEventGap;
     private final Button mEventJoin;
@@ -301,6 +315,9 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         mKeyFixBody = root.findViewById(R.id.projects_keyfix_body);
         mKeyFixButton = root.findViewById(R.id.projects_keyfix_fix);
         mKeyFixClose = root.findViewById(R.id.projects_keyfix_close);
+        mNotifyOffer = root.findViewById(R.id.projects_notify_offer);
+        mNotifyOfferAllow = root.findViewById(R.id.projects_notify_offer_allow);
+        mNotifyOfferClose = root.findViewById(R.id.projects_notify_offer_close);
         mEventActions = root.findViewById(R.id.projects_event_actions);
         mEventGap = root.findViewById(R.id.projects_event_gap);
         mEventJoin = root.findViewById(R.id.projects_event_join);
@@ -334,6 +351,12 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         Press.attach(mEventJoin, Press.Style.BUTTON);
         mKeyFixButton.setOnClickListener(v -> fixKeys());
         mKeyFixClose.setOnClickListener(v -> setKeyFixAside());
+        // M18 (0.1.9): the notification question looks and presses like the key fix's offer.
+        mNotifyOfferAllow.setBackground(ChamferDrawable.outlined(context));
+        Press.attach(mNotifyOfferAllow, Press.Style.BUTTON);
+        Press.attach(mNotifyOfferClose, Press.Style.ICON);
+        mNotifyOfferAllow.setOnClickListener(v -> allowNotificationsFromOffer());
+        mNotifyOfferClose.setOnClickListener(v -> setNotifyOfferAside());
         mEventJoin.setOnClickListener(v -> join(mEventJoin));
         mJoinButton.setOnClickListener(v -> join(mJoinButton));
         mModsRow.setOnClickListener(v -> openMods());
@@ -374,6 +397,12 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         // in the game is made now that the game is closed, or offered once.
         JoinOutcome.homeResumed(mFragment.requireContext(), this);
         checkKeyFix();
+        // M18 (0.1.9): the notification question, until it is answered (also from Android's settings).
+        boolean offer = notifyOfferDue(mFragment.requireContext());
+        if (offer != mNotifyOfferDue) {
+            mNotifyOfferDue = offer;
+            render(System.currentTimeMillis());
+        }
     }
 
     /** An article was opened somewhere: its dot goes out. */
@@ -545,7 +574,7 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         boolean keyFixClash = keyFix && KeyFix.hasClash(mKeyFixPlan);
         String keyFixShown = keyFix ? (keyFixClash ? "clash" : "talk") : null;
         String structure = state + "|" + noticeShown + "|" + (offline != null) + "|" + messageTitle + "|" + retry + "|" + allNews
-                + "|" + keyFixShown
+                + "|" + keyFixShown + "|" + mNotifyOfferDue
                 + "|" + (news ? newsShown : "") + "|" + (state == CONTENT ? eventShown + "|" + others + "|" + eventOpens + "|" + patchShown : "");
 
         boolean changed = mStructure != null && !structure.equals(mStructure);
@@ -594,6 +623,7 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
             setText(mKeyFixButton, activity.getString(keyFixClash ? R.string.projects_keyfix_action : R.string.projects_keyfix_bind_action));
         }
         show(mKeyFix, keyFix);
+        show(mNotifyOffer, mNotifyOfferDue);
         mKeyFixShown = keyFixShown;
         if (!keyFix) mKeyFixButton.setEnabled(true);
         if (state == MESSAGE) {
@@ -944,6 +974,12 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
                 && ContextCompat.checkSelfPermission(activity, Manifest.permission.POST_NOTIFICATIONS)
                 != android.content.pm.PackageManager.PERMISSION_GRANTED) {
             mPendingBell = new PendingBell(bell, event);
+            // M18 (0.1.9): Android asks now; the card's own question would only repeat it.
+            LauncherPreferences.DEFAULT_PREF.edit().putBoolean(KEY_NOTIFY_OFFER_DONE, true).apply();
+            if (mNotifyOfferDue) {
+                mNotifyOfferDue = false;
+                render(System.currentTimeMillis());
+            }
             mNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS);
         } else {
             showNotificationsOff(activity);
@@ -952,6 +988,11 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
 
     /** The answer to the notification permission asked for by {@link #onBell} or by a first start. */
     public void onNotificationPermission(boolean granted) {
+        if (sOfferAsked) {
+            // M18 (0.1.9): the card's question: the card is already gone, whatever the answer.
+            sOfferAsked = false;
+            return;
+        }
         int start = sStartAfterPermission;
         if (start != 0) {
             // M18: the start goes on whatever the answer; without notifications the home screen tells
@@ -1243,9 +1284,17 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
      * ({@link #onNotificationPermission}). Returns true when the start waits for that answer.
      */
     private boolean askNotificationsFirst(FragmentActivity activity, View pressed) {
-        if (mNotificationPermission == null || !JoinOutcome.needsPermission(activity)) return false;
-        if (LauncherPreferences.DEFAULT_PREF.getBoolean(KEY_START_NOTIFY_ASKED, false)) return false;
-        LauncherPreferences.DEFAULT_PREF.edit().putBoolean(KEY_START_NOTIFY_ASKED, true).apply();
+        if (mNotificationPermission == null || !NotifyAsk.startAsks(Build.VERSION.SDK_INT, !JoinOutcome.needsPermission(activity),
+                LauncherPreferences.DEFAULT_PREF.getBoolean(KEY_START_NOTIFY_ASKED, false))) {
+            return false;
+        }
+        LauncherPreferences.DEFAULT_PREF.edit().putBoolean(KEY_START_NOTIFY_ASKED, true)
+                .putBoolean(KEY_NOTIFY_OFFER_DONE, true).apply();
+        // M18 (0.1.9): the card's question, if it was still there, gives way to this one.
+        if (mNotifyOfferDue) {
+            mNotifyOfferDue = false;
+            render(System.currentTimeMillis());
+        }
         sStartAfterPermission = pressed == mJoinButton ? START_FROM_JOIN : pressed == mEventJoin ? START_FROM_EVENT : START_FROM_PLAY;
         try {
             mNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS);
@@ -1257,6 +1306,43 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
             sStartAfterPermission = 0;
             return false;
         }
+    }
+
+    /**
+     * M18 (0.1.9): the card asks on the home screen, once: Android 13+, notifications not allowed, and
+     * neither the card nor a Projects start asked before. It stays until it is answered, set aside or a
+     * start asks instead; allowed in Android's settings meanwhile, it goes on the next visit.
+     */
+    private boolean notifyOfferDue(Context context) {
+        if (mNotificationPermission == null) return false;
+        return NotifyAsk.offerDue(Build.VERSION.SDK_INT, !JoinOutcome.needsPermission(context),
+                LauncherPreferences.DEFAULT_PREF.getBoolean(KEY_NOTIFY_OFFER_DONE, false),
+                LauncherPreferences.DEFAULT_PREF.getBoolean(KEY_START_NOTIFY_ASKED, false));
+    }
+
+    /** "İzin ver": Android's own question now. The card goes, and no start asks again, whatever the answer. */
+    private void allowNotificationsFromOffer() {
+        LauncherPreferences.DEFAULT_PREF.edit().putBoolean(KEY_NOTIFY_OFFER_DONE, true)
+                .putBoolean(KEY_START_NOTIFY_ASKED, true).apply();
+        mNotifyOfferDue = false;
+        render(System.currentTimeMillis());
+        if (mNotificationPermission == null) return;
+        sOfferAsked = true;
+        try {
+            mNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS);
+        } catch (RuntimeException e) {
+            sOfferAsked = false;
+        }
+    }
+
+    /**
+     * "Şimdi değil" (×): the card never comes back. The first Projects start still asks once (the lead's
+     * fallback): the moment a download may start is the "later" the player asked for.
+     */
+    private void setNotifyOfferAside() {
+        LauncherPreferences.DEFAULT_PREF.edit().putBoolean(KEY_NOTIFY_OFFER_DONE, true).apply();
+        mNotifyOfferDue = false;
+        render(System.currentTimeMillis());
     }
 
     // ---- JoinOutcome.Home (M17) ----

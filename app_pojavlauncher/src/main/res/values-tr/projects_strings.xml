@@ -301,6 +301,8 @@
     <string name="projects_ready_channel">Projects hazır</string>
     <string name="projects_ready_channel_description">Projects oynamaya hazır olunca ya da hazırlanamayınca haber verir.</string>
     <string name="projects_notify_reason">Projects hazır olunca bildirimle haber verelim.</string>
+    <string name="projects_notify_offer_title">İndirme bitince haber verelim mi?</string>
+    <string name="projects_notify_offer_allow">İzin ver</string>
     <!-- M18: Play on a profile of the player's own with a mod loader and no mods. -->
     <string name="projects_modless_title">Bu profilde mod yok</string>
     <string name="projects_modless_body">Projects modları yalnız Projects profilinde çalışır.</string>
