@@ -52,6 +52,18 @@ public final class VersionLabel {
     }
 
     /**
+     * M18: true when {@code versionId} runs a mod loader that reads the mods folder (Fabric, Quilt,
+     * Forge, NeoForge); OptiFine and plain versions do not.
+     */
+    public static boolean isModLoader(String versionId) {
+        if (versionId == null) return false;
+        String id = versionId.trim();
+        if (id.isEmpty() || OPTIFINE.matcher(id).matches()) return false;
+        return FABRIC.matcher(id).matches() || QUILT.matcher(id).matches() || FORGE.matcher(id).matches()
+                || id.toLowerCase(Locale.ROOT).startsWith("neoforge-");
+    }
+
+    /**
      * The default profile Amethyst ships ("(Default)", or "Default" when the list was empty) gets a
      * name in the player's language; any other name stays as the player wrote it.
      */

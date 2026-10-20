@@ -1,8 +1,12 @@
 package gg.projects.mobile.join;
 
+import android.content.SharedPreferences;
+import android.util.Log;
+
 import androidx.annotation.WorkerThread;
 
 import net.kdt.pojavlaunch.Tools;
+import net.kdt.pojavlaunch.prefs.LauncherPreferences;
 import net.kdt.pojavlaunch.value.launcherprofiles.LauncherProfiles;
 import net.kdt.pojavlaunch.value.launcherprofiles.MinecraftProfile;
 
@@ -24,6 +28,7 @@ public final class ProjectsProfile {
     /** Static icon name resolved by ProfileIconCache. */
     public static final String ICON = "projects";
     public static final String GAME_DIR = "./custom_instances/projects";
+    private static final String TAG = "ProjectsProfile";
 
     @WorkerThread
     public static MinecraftProfile find() {
@@ -62,6 +67,45 @@ public final class ProjectsProfile {
 
     public static File gameDir(MinecraftProfile profile) {
         return Tools.getGameDirPath(profile);
+    }
+
+    /** M18: the app's preference that {@link #seedOnce} ran on this install. */
+    private static final String KEY_SEEDED = "projects_profile_seeded";
+
+    /**
+     * M18: OYNA plays Projects from the app's first start. Before, a new install had only upstream's
+     * default profile, which Play started as plain vanilla (no mods, no server); the Projects profile
+     * appeared with the first "Projects'e katıl". Once per install: when the Projects profile does not
+     * exist yet it is created on {@code version} (the recommended Minecraft version; its first join moves
+     * it to the pack's loader version) and selected, unless the player chose a profile of their own
+     * ({@link PlayChoice#selectProjectsAtFirstStart}). An install that has the profile keeps its selection.
+     * Returns true when the selection changed (the play bar shows it).
+     */
+    public static boolean seedOnce(SharedPreferences prefs, String version) {
+        if (prefs.getBoolean(KEY_SEEDED, false)) return false;
+        boolean select = false;
+        try {
+            LauncherProfiles.load();
+            boolean existed = LauncherProfiles.mainProfileJson.profiles.containsKey(KEY);
+            if (!existed) {
+                String current = prefs.getString(LauncherPreferences.PREF_KEY_CURRENT_PROFILE, "");
+                MinecraftProfile chosen = LauncherProfiles.mainProfileJson.profiles.get(current);
+                select = PlayChoice.selectProjectsAtFirstStart(false, chosen != null, chosen == null ? null : chosen.name);
+                MinecraftProfile profile = ensure(version);
+                File dir = gameDir(profile);
+                if (!dir.isDirectory() && !dir.mkdirs()) Log.w(TAG, "cannot create " + dir);
+                Log.i(TAG, "Projects profile created for Play" + (select ? " and selected" : ""));
+            }
+        } catch (RuntimeException e) {
+            // An unreadable profile file is upstream's to report; Play keeps what it had.
+            Log.w(TAG, "Projects profile not created", e);
+            return false;
+        }
+        SharedPreferences.Editor edit = prefs.edit().putBoolean(KEY_SEEDED, true);
+        if (select) edit.putString(LauncherPreferences.PREF_KEY_CURRENT_PROFILE, KEY);
+        // The game runs in another process and reads the selection from disk.
+        edit.commit();
+        return select;
     }
 
     /** The profile's game directory, also before the profile exists (where it will be created). */

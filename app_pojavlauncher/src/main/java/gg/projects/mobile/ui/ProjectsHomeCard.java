@@ -36,12 +36,17 @@ import net.kdt.pojavlaunch.Tools;
 import net.kdt.pojavlaunch.extra.ExtraConstants;
 import net.kdt.pojavlaunch.extra.ExtraCore;
 import net.kdt.pojavlaunch.prefs.LauncherPreferences;
+import net.kdt.pojavlaunch.value.launcherprofiles.LauncherProfiles;
+import net.kdt.pojavlaunch.value.launcherprofiles.MinecraftProfile;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.TimeZone;
 
 import gg.projects.mobile.ProjectsContent;
@@ -58,6 +63,7 @@ import gg.projects.mobile.controls.KeyFix;
 import gg.projects.mobile.controls.KeyFixer;
 import gg.projects.mobile.join.DefaultProfiles;
 import gg.projects.mobile.join.JoinOutcome;
+import gg.projects.mobile.join.PlayChoice;
 import gg.projects.mobile.join.ProjectsJoin;
 import gg.projects.mobile.join.ProjectsProfile;
 import gg.projects.mobile.join.SyncNotice;
@@ -1103,6 +1109,56 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
      */
     public void playThroughJoin(View playButton) {
         join(playButton);
+    }
+
+    /** M18: profiles the player chose to play although they have no mods ("Yine de oyna"). */
+    private static final String KEY_MODLESS_CONFIRMED = "projects_modless_profiles_confirmed";
+
+    /**
+     * M18: OYNA on a profile of the player's own that runs a mod loader with no mods in its folder, such
+     * as upstream's "Fabric" profile from the profile list (the 0.1.7 tester's report: "Fabric 26.1.2"
+     * chosen, every mod ticked in "Modlar", no mods in the game). The pack's mods are only in the
+     * Projects profile, so Play asks once per such profile: "Projects ile oyna" starts Projects as OYNA
+     * does, "Yine de oyna" starts this profile and is remembered. Returns true when the question took
+     * over the press ({@link PlayChoice#offerProjects}).
+     */
+    public boolean offerProjectsInstead(final View playButton) {
+        final FragmentActivity activity = mFragment.getActivity();
+        if (activity == null || !mFragment.isAdded()) return false;
+        final String current = LauncherPreferences.DEFAULT_PREF.getString(LauncherPreferences.PREF_KEY_CURRENT_PROFILE, "");
+        if (current.isEmpty() || ProjectsProfile.KEY.equals(current)) return false;
+        if (LauncherProfiles.mainProfileJson == null || LauncherProfiles.mainProfileJson.profiles == null) return false;
+        MinecraftProfile profile = LauncherProfiles.mainProfileJson.profiles.get(current);
+        if (profile == null) return false;
+        Snapshot snapshot = ProjectsContent.current();
+        boolean published = snapshot != null && snapshot.index != null && snapshot.index.packs != null && !snapshot.index.packs.isEmpty();
+        Set<String> confirmed = LauncherPreferences.DEFAULT_PREF.getStringSet(KEY_MODLESS_CONFIRMED, Collections.<String>emptySet());
+        boolean hasMods = false;
+        if (published && !confirmed.contains(current) && VersionLabel.isModLoader(profile.lastVersionId)) {
+            hasMods = PlayChoice.hasModFiles(new File(Tools.getGameDirPath(profile), "mods").list());
+        }
+        if (!PlayChoice.offerProjects(profile.lastVersionId, hasMods, published, confirmed.contains(current))) return false;
+        new AlertDialog.Builder(activity)
+                .setTitle(R.string.projects_modless_title)
+                .setMessage(R.string.projects_modless_body)
+                .setPositiveButton(R.string.projects_modless_play_projects, (d, w) -> {
+                    if (!mFragment.isAdded() || mFragment.getView() == null) return;
+                    // The play bar shows Projects at once when it exists; a first join creates and selects it.
+                    if (LauncherProfiles.mainProfileJson != null && LauncherProfiles.mainProfileJson.profiles != null
+                            && LauncherProfiles.mainProfileJson.profiles.containsKey(ProjectsProfile.KEY)) {
+                        select(ProjectsProfile.KEY);
+                    }
+                    join(playButton);
+                })
+                .setNegativeButton(R.string.projects_modless_play_anyway, (d, w) -> {
+                    Set<String> keys = new HashSet<>(LauncherPreferences.DEFAULT_PREF.getStringSet(KEY_MODLESS_CONFIRMED,
+                            Collections.<String>emptySet()));
+                    keys.add(current);
+                    LauncherPreferences.DEFAULT_PREF.edit().putStringSet(KEY_MODLESS_CONFIRMED, keys).apply();
+                    ExtraCore.setValue(ExtraConstants.LAUNCH_GAME, true);
+                })
+                .show();
+        return true;
     }
 
     private void join(View pressed) {

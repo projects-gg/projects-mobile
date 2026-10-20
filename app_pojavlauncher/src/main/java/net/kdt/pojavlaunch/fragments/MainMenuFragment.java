@@ -92,6 +92,9 @@ public class MainMenuFragment extends Fragment {
                 mProjectsCard.playThroughJoin(mPlayButton);
                 return;
             }
+            // Projects fork (M18): a loader profile of the player's own without mods (upstream's "Fabric"
+            // profile) asks once whether Projects, which has the mods, was meant.
+            if (mProjectsCard.offerProjectsInstead(mPlayButton)) return;
             ExtraCore.setValue(ExtraConstants.LAUNCH_GAME, true);
         });
         // Projects fork (M14): OYNA's gold face in its socket; the launch check confirms or rejects
@@ -101,6 +104,15 @@ public class MainMenuFragment extends Fragment {
         if (menuGroup != null) menuGroup.setClipToOutline(true);
 
         mShareLogsButton.setOnClickListener((v) -> shareLog(requireContext()));
+
+        // Projects fork (M18): a new install plays Projects: its profile is there and chosen from the first
+        // start (upstream's default profile, plain vanilla, was the only one and so Play's choice).
+        if (gg.projects.mobile.join.ProjectsProfile.seedOnce(LauncherPreferences.DEFAULT_PREF,
+                gg.projects.mobile.join.DefaultProfiles.recommended())) {
+            mVersionSpinner.reloadProfiles();
+            int projects = mVersionSpinner.getProfileAdapter().resolveProfileIndex(gg.projects.mobile.join.ProjectsProfile.KEY);
+            if (projects >= 0) mVersionSpinner.setProfileSelection(projects);
+        }
 
         mProjectsCard = new ProjectsHomeCard(this, view, mVersionSpinner, mPlayButton, mNotificationPermission);
         // Projects fork: "Tekrar başlat" after Sodium kept the game from starting.

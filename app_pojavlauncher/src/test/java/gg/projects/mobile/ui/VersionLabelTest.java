@@ -40,6 +40,23 @@ public class VersionLabelTest {
     }
 
     @Test
+    public void modLoadersAreTheVersionsThatReadAModsFolder() {
+        // M18: upstream's "Fabric" profile from the profile list, and the other loaders.
+        assertTrue(VersionLabel.isModLoader("fabric-loader-0.19.5-26.1.2"));
+        assertTrue(VersionLabel.isModLoader("quilt-loader-0.26.4-1.21.1"));
+        assertTrue(VersionLabel.isModLoader("1.20.1-forge-47.2.0"));
+        assertTrue(VersionLabel.isModLoader("1.7.10-Forge10.13.4.1614-1.7.10"));
+        assertTrue(VersionLabel.isModLoader("neoforge-21.1.77"));
+        assertTrue(VersionLabel.isModLoader("neoforge-26.1.0.12"));
+        assertFalse(VersionLabel.isModLoader("26.1.2"));
+        assertFalse(VersionLabel.isModLoader("latest-release"));
+        assertFalse(VersionLabel.isModLoader("1.20.1-OptiFine_HD_U_I6"));
+        assertFalse(VersionLabel.isModLoader("lwjgl3ify-3.0.0-1.7.10"));
+        assertFalse(VersionLabel.isModLoader(null));
+        assertFalse(VersionLabel.isModLoader(" "));
+    }
+
+    @Test
     public void onlyTheBundledDefaultProfileIsRenamed() {
         assertTrue(VersionLabel.isDefaultName("(Default)"));
         assertTrue(VersionLabel.isDefaultName("Default"));
