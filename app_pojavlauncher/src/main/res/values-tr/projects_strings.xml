@@ -297,4 +297,6 @@
     <string name="projects_event_join">Katıl</string>
     <!-- M17: Settings, under About: small and quiet. -->
     <string name="projects_not_affiliated">Mojang veya Minecraft ile bağlantılı değildir.</string>
+    <!-- M18: another profile's game files could not be prepared (upstream's dialog showed its stack trace). -->
+    <string name="projects_game_failed_title">Oyun hazırlanamadı</string>
 </resources>

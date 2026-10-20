@@ -53,7 +53,24 @@ public class ContextAwareDoneListener implements AsyncMinecraftDownloader.DoneLi
                     true, gg.projects.mobile.join.ProjectsJoin.details(throwable));
             return;
         }
-        Tools.showErrorRemote(mErrorString, throwable);
+        // Projects fork (M18): another profile's failure is said in the app's words too, with "Tekrar dene"; the
+        // technical details stay behind "Ayrıntıları kopyala" (upstream's dialog opened on its stack trace). With
+        // the app in the background upstream's error screen stays.
+        final boolean network = gg.projects.mobile.join.FailureKind.isNetwork(throwable, false);
+        final String details = gg.projects.mobile.join.ProjectsJoin.details(throwable);
+        ContextExecutor.execute(new ContextExecutorTask() {
+            @Override
+            public void executeWithActivity(Activity activity) {
+                gg.projects.mobile.ui.ProjectsUi.showError(activity, R.string.projects_game_failed_title,
+                        network ? R.string.projects_files_failed_network : R.string.projects_files_failed_generic, details,
+                        () -> net.kdt.pojavlaunch.extra.ExtraCore.setValue(net.kdt.pojavlaunch.extra.ExtraConstants.LAUNCH_GAME, true));
+            }
+
+            @Override
+            public void executeWithApplication(Context context) {
+                Tools.showErrorRemote(mErrorString, throwable);
+            }
+        });
     }
 
     @Override

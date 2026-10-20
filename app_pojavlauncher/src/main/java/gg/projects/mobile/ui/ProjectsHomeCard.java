@@ -1172,7 +1172,10 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
     public void showFailure(JoinOutcome.Failure failure) {
         FragmentActivity activity = mFragment.getActivity();
         if (activity == null || !mFragment.isAdded()) return;
-        ProjectsUi.showError(activity, R.string.projects_join_failed_title, JoinOutcome.message(failure), failure.details);
+        // M18: one tap starts it again (the join retries every step: the pack, the loader, the game files).
+        ProjectsUi.showError(activity, R.string.projects_join_failed_title, JoinOutcome.message(failure), failure.details, () -> {
+            if (mFragment.isAdded() && mFragment.getView() != null) join(mPlayButton);
+        });
     }
 
     @Override

@@ -310,4 +310,6 @@
     <string name="projects_event_join">Join</string>
     <!-- M17: Settings, under About: small and quiet (the owner's decision of 18 October 2026). -->
     <string name="projects_not_affiliated">Not affiliated with Mojang or Minecraft.</string>
+    <!-- M18: another profile's game files could not be prepared (upstream's dialog showed its stack trace). -->
+    <string name="projects_game_failed_title">The game couldn\'t be prepared</string>
 </resources>

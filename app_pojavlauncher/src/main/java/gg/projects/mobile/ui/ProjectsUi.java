@@ -315,10 +315,24 @@ public final class ProjectsUi {
 
     /** An error that says what happened, with "copy details" for support (no codes in the text). */
     public static void showError(final Activity activity, int title, int message, final String details) {
+        showError(activity, title, message, details, null);
+    }
+
+    /**
+     * M18: with {@code retry}, the main button is "Tekrar dene" and "Kapat" closes; the technical details
+     * stay behind "Ayrıntıları kopyala", for support only.
+     */
+    public static void showError(final Activity activity, int title, int message, final String details,
+                                 @Nullable final Runnable retry) {
         AlertDialog.Builder builder = new AlertDialog.Builder(activity)
                 .setTitle(title)
-                .setMessage(message)
-                .setPositiveButton(android.R.string.ok, null);
+                .setMessage(message);
+        if (retry != null) {
+            builder.setPositiveButton(R.string.projects_retry, (d, w) -> retry.run())
+                    .setNegativeButton(R.string.projects_close, null);
+        } else {
+            builder.setPositiveButton(android.R.string.ok, null);
+        }
         if (details != null && !details.isEmpty()) {
             builder.setNeutralButton(R.string.projects_copy_details, (d, w) -> {
                 ClipboardManager clipboard = (ClipboardManager) activity.getSystemService(Context.CLIPBOARD_SERVICE);
