@@ -42,9 +42,11 @@ Third-party components added by this fork:
   - OkHttp and Okio (com.squareup.okhttp3:okhttp, com.squareup.okio:okio), Apache License 2.0,
     Copyright Square, Inc.; with the Kotlin standard library (org.jetbrains.kotlin), Apache
     License 2.0, Copyright JetBrains s.r.o.
-  - Firebase Cloud Messaging (com.google.firebase:firebase-messaging and the Firebase and Google
-    Play services client libraries it brings), Apache License 2.0, Copyright Google LLC. Delivery
-    uses Google Play services on the phone, which is not part of this app.
+  - Firebase Cloud Messaging (com.google.firebase:firebase-messaging and the Firebase libraries it
+    brings), Apache License 2.0, Copyright Google LLC. The Google Play services client libraries it
+    brings (com.google.android.gms:play-services-*) are under the Android Software Development Kit
+    License (https://developer.android.com/studio/terms). Delivery uses Google Play services on the
+    phone, which is not part of this app.
   - ZXing core (com.google.zxing:core), Apache License 2.0, Copyright ZXing authors, to draw the
     friend code's QR code.
   The Apache License 2.0 text: https://www.apache.org/licenses/LICENSE-2.0
