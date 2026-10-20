@@ -172,8 +172,8 @@ public class AddFriendFragment extends Fragment implements SocialService.Listene
         SocialService service = SocialService.get(requireContext());
         service.addListener(this);
         if (!service.signedIn()) {
-            // A friend link opened before signing in: sign in first, on the friends screen.
-            requireActivity().onBackPressed();
+            // Signed out meanwhile: back where the player came from (the friends screen signs in).
+            SocialUi.leave(this);
             return;
         }
         render();

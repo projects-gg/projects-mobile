@@ -18,6 +18,7 @@ import net.kdt.pojavlaunch.Tools;
 import java.util.List;
 
 import gg.projects.mobile.social.HomeLine;
+import gg.projects.mobile.social.SocialModel;
 import gg.projects.mobile.social.SocialModel.Invite;
 import gg.projects.mobile.social.SocialModel.Profile;
 import gg.projects.mobile.social.SocialService;
@@ -157,6 +158,22 @@ public final class SocialHomeRow implements SocialService.Listener {
                         : context.getResources().getQuantityString(R.plurals.projects_social_home_projects_with, line.count - 1, first, line.count - 1);
                 text = context.getString(R.string.projects_social_title);
                 join = true;
+                break;
+            }
+            case REQUEST: {
+                Profile from = line.faces.isEmpty() ? null : line.faces.get(0);
+                title = context.getString(R.string.projects_social_push_request,
+                        from == null ? context.getString(R.string.projects_social_someone_unknown) : from.name());
+                text = context.getResources().getQuantityString(R.plurals.projects_social_home_requests, line.count, line.count);
+                gold = true;
+                break;
+            }
+            case CREW_INVITE: {
+                SocialModel.TeamInvite invite = line.teamInvite;
+                title = invite == null ? context.getString(R.string.projects_crew_home_invite)
+                        : context.getString(R.string.projects_crew_invited_you, invite.from.name(), invite.team.name);
+                text = context.getString(R.string.projects_crew_home_invite);
+                gold = true;
                 break;
             }
             case ONLINE:

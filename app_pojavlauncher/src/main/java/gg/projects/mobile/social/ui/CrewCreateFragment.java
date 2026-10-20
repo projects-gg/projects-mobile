@@ -127,8 +127,9 @@ public class CrewCreateFragment extends Fragment {
         mPreviewName.setText(name.isEmpty() ? getString(R.string.projects_crew_name) : name);
         mPreviewName.setAlpha(name.isEmpty() ? 0.5f : 1f);
         String tag = CrewRules.tagOf(mTag.getText().toString());
-        mPreviewTag.setText(tag.isEmpty() ? "TAG" : tag);
-        mPreviewTag.setAlpha(tag.isEmpty() ? 0.5f : 1f);
+        // The tag shows once written (the desktop's preview).
+        mPreviewTag.setText(tag);
+        mPreviewTag.setVisibility(tag.isEmpty() ? View.GONE : View.VISIBLE);
         CrewViews.tintTag(mPreviewTag, mColor);
         String motto = CrewRules.clean(mMotto.getText().toString());
         mPreviewMotto.setText(motto);
@@ -188,7 +189,7 @@ public class CrewCreateFragment extends Fragment {
                 mBusy = false;
                 Haptics.confirm(button);
                 SocialUi.toast(activity, activity.getString(R.string.projects_crew_created, name));
-                if (isAdded()) activity.onBackPressed();
+                SocialUi.leave(CrewCreateFragment.this);
             }
 
             @Override

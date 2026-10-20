@@ -95,6 +95,9 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
     private ImageButton mAddAction;
     private ImageButton mSettingsAction;
     private boolean mRemoteSignOutShown;
+    /** The invite a notification tap came for: asked about once it is in the list. */
+    @Nullable
+    private String mPendingInvite;
     private final Runnable mTick = this::render;
 
     /** Android's notification question from the list's offer. */
@@ -119,7 +122,6 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
                 v -> Tools.swapFragment(requireActivity(), SocialSettingsFragment.class, SocialSettingsFragment.TAG, null));
         mList = view.findViewById(R.id.projects_social_list);
         mList.setLayoutManager(new LinearLayoutManager(view.getContext()));
-        mAdapter.setHasStableIds(true);
         mList.setAdapter(mAdapter);
         if (Motion.enabled(view.getContext())) {
             DefaultItemAnimator animator = new DefaultItemAnimator();
@@ -184,6 +186,12 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
         service.surfaceShown(SocialService.Surface.FRIENDS, true);
         service.refresh(false);
         if (service.takeSignedOutRemotely()) mRemoteSignOutShown = true;
+        // A notification's invite: its question comes as soon as the invite is known (once).
+        Bundle args = getArguments();
+        if (args != null && args.getString(ARG_INVITE) != null) {
+            mPendingInvite = args.getString(ARG_INVITE);
+            args.remove(ARG_INVITE);
+        }
         render();
     }
 
@@ -197,6 +205,16 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
     }
 
     @Override
+    public void onDestroyView() {
+        // The adapter is the fragment's and outlives this view (back stack): let go of the old list.
+        if (mList != null) {
+            mList.removeCallbacks(mTick);
+            mList.setAdapter(null);
+        }
+        super.onDestroyView();
+    }
+
+    @Override
     public void onSocialChanged() {
         render();
     }
@@ -207,7 +225,7 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
         SocialService service = SocialService.get(context);
         if (!service.enabled()) {
             // Friends were turned off while the screen was open.
-            requireActivity().onBackPressed();
+            SocialUi.leave(this);
             return;
         }
         boolean signedIn = service.signedIn();
@@ -220,6 +238,14 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
             return;
         }
         mRemoteSignOutShown = false;
+        // A friend link opened before the sign-in: "Arkadaş ekle" with its code, now.
+        String pendingCode = isResumed() ? service.takePendingFriendCode() : null;
+        if (pendingCode != null) {
+            Bundle add = new Bundle();
+            add.putString(AddFriendFragment.ARG_CODE, pendingCode);
+            SocialUi.open(this, AddFriendFragment.class, AddFriendFragment.TAG, add);
+        }
+        answerPendingInvite(service);
         mAdapter.submit(buildRows(service));
         // Invites and calls end at their time without a message: the screen looks again then.
         mList.removeCallbacks(mTick);
@@ -446,6 +472,24 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
         }
     }
 
+    /** "Birlikte oyna" from a notification: the join question at once (or the other server's address). */
+    private void answerPendingInvite(SocialService service) {
+        if (mPendingInvite == null || !isResumed()) return;
+        long now = SocialService.nowSeconds();
+        for (Invite invite : service.state().invites(now)) {
+            if (!mPendingInvite.equals(invite.id)) continue;
+            mPendingInvite = null;
+            if (invite.onProjects()) {
+                SocialUi.joinProjects(requireActivity());
+            } else if (invite.host != null) {
+                SocialUi.otherServer(requireActivity(), invite.host);
+            }
+            return;
+        }
+        // Not there once the socket told the open invites (expired or taken back): nothing to ask.
+        if (service.connection() == SocialService.Connection.LIVE && service.state().loaded()) mPendingInvite = null;
+    }
+
     private void closeBanner(Banner banner) {
         if ("notify".equals(banner.kind)) {
             SocialService.get(requireContext()).prefs().setOfferDone();
@@ -512,7 +556,7 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
                     public void ok(com.google.gson.JsonObject value) {
                         Haptics.confirm(button);
                         SocialUi.toast(activity, activity.getString(R.string.projects_crew_joined, invite.team.name));
-                        Tools.swapFragment(activity, CrewFragment.class, CrewFragment.TAG, null);
+                        SocialUi.open(SocialFragment.this, CrewFragment.class, CrewFragment.TAG);
                     }
 
                     @Override
@@ -577,6 +621,12 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
     private final class Adapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         private List<Row> mRows = new ArrayList<>();
         private final Map<String, Long> mIds = new HashMap<>();
+
+        /** Stable ids once, here: the adapter outlives the fragment's view (back stack), and RecyclerView refuses the
+         *  change while a list is attached. */
+        Adapter() {
+            setHasStableIds(true);
+        }
 
         void submit(final List<Row> rows) {
             final List<Row> old = mRows;

@@ -47,6 +47,24 @@ public class HomeLineTest {
     }
 
     @Test
+    public void aRequestThenACrewInviteBeforeTheOnlineCount() {
+        SocialState state = SocialStateTest.signedIn(true);
+        assertEquals(HomeLine.Kind.NOBODY_ONLINE, HomeLine.of(true, false, state, NONE, true, NOW).kind);
+        state.apply(SocialStateTest.json("{\"t\":\"team_invite\",\"invite\":{\"team\":{\"id\":\"9af2216431944e68\",\"name\":\"Gece\"},"
+                + "\"from\":" + SocialStateTest.profile("100000000000000006", "Ece") + ",\"sentAt\":" + NOW + "}}"), NOW);
+        HomeLine invite = HomeLine.of(true, false, state, NONE, true, NOW);
+        assertEquals(HomeLine.Kind.CREW_INVITE, invite.kind);
+        assertEquals("Gece", invite.teamInvite.team.name);
+        assertEquals("Ece", invite.faces.get(0).name());
+        assertEquals("without crews it does not show", HomeLine.Kind.NOBODY_ONLINE, HomeLine.of(true, false, state, NONE, false, NOW).kind);
+        state.apply(SocialStateTest.json("{\"t\":\"request\",\"from\":" + SocialStateTest.profile("100000000000000005", "Can") + "}"), NOW);
+        HomeLine request = HomeLine.of(true, false, state, NONE, true, NOW);
+        assertEquals("a request comes first", HomeLine.Kind.REQUEST, request.kind);
+        assertEquals("Can", request.faces.get(0).name());
+        assertEquals(1, request.count);
+    }
+
+    @Test
     public void noFriendsYet() {
         SocialState state = new SocialState();
         state.applyFriends(SocialModel.FriendsData.read(SocialStateTest.json("{\"friends\":[],\"incoming\":[],\"outgoing\":[],\"blocked\":[],\"limits\":{}}")));

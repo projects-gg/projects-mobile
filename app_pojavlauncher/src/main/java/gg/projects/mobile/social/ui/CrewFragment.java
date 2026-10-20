@@ -71,7 +71,6 @@ import gg.projects.mobile.ui.ScreenHeader;
  */
 public class CrewFragment extends Fragment implements SocialService.Listener {
     public static final String TAG = "ProjectsCrewFragment";
-    public static final String ARG_CALL = "call";
 
     private static final int T_CARD = 0;
     private static final int T_CALL = 1;
@@ -105,7 +104,6 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         mBell = header.addAction(R.drawable.projects_ic_bell, R.string.projects_crew_notifications, v -> CrewSheets.notifications(requireActivity()));
         mList = view.findViewById(R.id.projects_crew_list);
         mList.setLayoutManager(new LinearLayoutManager(view.getContext()));
-        mAdapter.setHasStableIds(true);
         mList.setAdapter(mAdapter);
         if (Motion.enabled(view.getContext())) {
             DefaultItemAnimator animator = new DefaultItemAnimator();
@@ -165,7 +163,9 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         super.onResume();
         SocialService service = SocialService.get(requireContext());
         if (!service.signedIn()) {
-            Tools.swapFragment(requireActivity(), SocialFragment.class, SocialFragment.TAG, null);
+            // Signed out meanwhile (elsewhere or by the service): the crew page goes away. Not a swap to the
+            // friends screen: back from there would come here again.
+            SocialUi.leave(this);
             return;
         }
         service.addListener(this);
@@ -184,6 +184,16 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
     }
 
     @Override
+    public void onDestroyView() {
+        // The adapter is the fragment's and outlives this view (back stack): let go of the old list.
+        if (mList != null) {
+            mList.removeCallbacks(mTick);
+            mList.setAdapter(null);
+        }
+        super.onDestroyView();
+    }
+
+    @Override
     public void onSocialChanged() {
         render();
     }
@@ -193,7 +203,7 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         SocialService service = SocialService.get(requireContext());
         SocialGate gate = service.gate();
         if (!service.enabled() || !service.signedIn() || (service.state().loaded() && !gate.teams)) {
-            requireActivity().onBackPressed();
+            SocialUi.leave(this);
             return;
         }
         Team team = service.state().team();
@@ -280,8 +290,10 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
             rows.add(new Row(T_HEADER, "h-" + group.getKey(), text, text));
             for (Member m : group.getValue()) {
                 SocialModel.Presence p = state.presence(m.profile.id);
+                // The player's own row shows their status (their presence is not sent to themselves).
+                String mine = m.profile.id.equals(state.myId()) && state.me() != null ? state.me().status : "";
                 rows.add(new Row(T_MEMBER, "m-" + m.profile.id, m.profile.name() + m.profile.faceKey() + m.founder + m.moderator
-                        + p.state + p.dnd + p.where + p.host + state.isFriend(m.profile.id), m));
+                        + p.state + p.dnd + p.where + p.host + state.isFriend(m.profile.id) + mine, m));
             }
         }
         if (!team.code.isEmpty()) rows.add(new Row(T_CODE, "code", team.code, team.code));
@@ -305,6 +317,12 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
     private final class Adapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         private List<Row> mRows = new ArrayList<>();
         private final Map<String, Long> mIds = new HashMap<>();
+
+        /** Stable ids once, here: the adapter outlives the fragment's view (back stack), and RecyclerView refuses the
+         *  change while a list is attached. */
+        Adapter() {
+            setHasStableIds(true);
+        }
 
         void submit(final List<Row> rows) {
             final List<Row> old = mRows;
@@ -585,7 +603,8 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
             for (Map.Entry<String, String> e : call.answers.entrySet()) {
                 if (!answers[i].equals(e.getValue())) continue;
                 Profile p = state.profile(e.getKey());
-                String name = e.getKey().equals(state.myId()) ? context.getString(R.string.projects_crew_you) : p == null ? "?" : p.name();
+                String name = e.getKey().equals(state.myId()) ? context.getString(R.string.projects_crew_you)
+                        : p == null ? context.getString(R.string.projects_crew_someone) : p.name();
                 if (names.length() > 0) names.append(", ");
                 names.append(name);
             }
@@ -607,13 +626,8 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
             button.setBackground(ChamferDrawable.outlined(context));
             button.setTextColor(ContextCompat.getColor(context, R.color.projects_bone_100));
         }
-        if (primary && !chosen) {
-            Drawable play = ContextCompat.getDrawable(context, R.drawable.projects_join_glyph);
-            button.setCompoundDrawablesRelativeWithIntrinsicBounds(play, null, null, null);
-            button.setCompoundDrawablePadding(Math.round(4 * context.getResources().getDisplayMetrics().density));
-        } else {
-            button.setCompoundDrawablesRelativeWithIntrinsicBounds(null, null, null, null);
-        }
+        // "Geliyorum" to a call from Projects also opens the game: its text is gold until it is chosen.
+        if (primary && !chosen) button.setTextColor(ContextCompat.getColor(context, R.color.projects_gold_300));
         button.setSelected(chosen);
         button.setOnClickListener(v -> answer(button, call, answer));
     }
@@ -730,10 +744,22 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
 
     // ---- without a crew ----
 
+    /** Crew invites with an answer on its way (their buttons stay off until it comes). */
+    private final java.util.Set<String> mInviteBusy = new java.util.HashSet<>();
+    /** What the invite rows show now: they are built again only when it changes (not for every presence). */
+    private String mInvitesShown = "";
+
     private void renderNone(SocialService service) {
         Context context = requireContext();
-        mInvites.removeAllViews();
         List<TeamInvite> invites = service.state().teamInvites();
+        StringBuilder key = new StringBuilder();
+        for (TeamInvite invite : invites) {
+            key.append(invite.team.id).append(mInviteBusy.contains(invite.team.id) ? "*" : "")
+                    .append(invite.team.name).append(invite.from.name()).append(';');
+        }
+        if (key.toString().equals(mInvitesShown) && mInvites.getChildCount() > 0 == !invites.isEmpty()) return;
+        mInvitesShown = key.toString();
+        mInvites.removeAllViews();
         if (!invites.isEmpty()) {
             TextView header = (TextView) LayoutInflater.from(context).inflate(R.layout.item_projects_social_header, mInvites, false);
             header.setText(getString(R.string.projects_crew_invites));
@@ -768,33 +794,47 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         Press.attach(decline, Press.Style.ICON);
         final FragmentActivity activity = requireActivity();
         final SocialService service = SocialService.get(activity);
+        final String teamId = invite.team.id;
+        boolean busy = mInviteBusy.contains(teamId);
+        accept.setEnabled(!busy);
+        decline.setEnabled(!busy);
         accept.setOnClickListener(v -> {
+            if (!mInviteBusy.add(teamId)) return;
             accept.setEnabled(false);
-            service.acceptTeamInvite(invite.team.id, new SocialService.Result<JsonObject>() {
+            decline.setEnabled(false);
+            service.acceptTeamInvite(teamId, new SocialService.Result<JsonObject>() {
                 @Override
                 public void ok(JsonObject value) {
+                    mInviteBusy.remove(teamId);
                     Haptics.confirm(accept);
                     SocialUi.toast(activity, activity.getString(R.string.projects_crew_joined, invite.team.name));
+                    render();
                 }
 
                 @Override
                 public void failed(SocialProblem problem) {
-                    accept.setEnabled(true);
+                    mInviteBusy.remove(teamId);
                     SocialUi.toastProblem(activity, problem, accept);
+                    render();
                 }
             });
         });
         decline.setOnClickListener(v -> {
+            if (!mInviteBusy.add(teamId)) return;
+            accept.setEnabled(false);
             decline.setEnabled(false);
-            service.declineTeamInvite(invite.team.id, new SocialService.Result<Void>() {
+            service.declineTeamInvite(teamId, new SocialService.Result<Void>() {
                 @Override
                 public void ok(Void value) {
+                    mInviteBusy.remove(teamId);
+                    render();
                 }
 
                 @Override
                 public void failed(SocialProblem problem) {
-                    decline.setEnabled(true);
+                    mInviteBusy.remove(teamId);
                     SocialUi.toastProblem(activity, problem, decline);
+                    render();
                 }
             });
         });

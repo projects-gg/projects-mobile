@@ -20,7 +20,6 @@ import androidx.core.content.res.ResourcesCompat;
 
 import net.kdt.pojavlaunch.R;
 
-import java.util.Locale;
 
 import gg.projects.mobile.social.SocialModel.Profile;
 
@@ -91,7 +90,9 @@ public final class AvatarView extends View {
         }
         String key = profile.id + "|" + profile.faceKey();
         String name = profile.name().trim();
-        mLetterText = name.isEmpty() ? "?" : name.substring(0, name.offsetByCodePoints(0, 1)).toUpperCase(new Locale("tr", "TR"));
+        // Upper case in the app's language (Turkish "i" is "İ", English "i" is "I").
+        mLetterText = name.isEmpty() ? "?" : name.substring(0, name.offsetByCodePoints(0, 1))
+                .toUpperCase(gg.projects.mobile.language.LanguageManager.effectiveLocale(getContext()));
         if (key.equals(mKey) && mBitmap != null) return;
         mKey = key;
         Bitmap cached = SocialFaces.cached(profile);

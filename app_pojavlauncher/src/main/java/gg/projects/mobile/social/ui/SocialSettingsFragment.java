@@ -64,7 +64,7 @@ public class SocialSettingsFragment extends Fragment implements SocialService.Li
         super.onResume();
         SocialService service = SocialService.get(requireContext());
         if (!service.signedIn()) {
-            requireActivity().onBackPressed();
+            SocialUi.leave(this);
             return;
         }
         service.addListener(this);
@@ -250,9 +250,22 @@ public class SocialSettingsFragment extends Fragment implements SocialService.Li
         unblock.setBackground(ChamferDrawable.outlined(context));
         Press.attach(unblock, Press.Style.BUTTON);
         final FragmentActivity activity = requireActivity();
+        final String unblocked = getString(R.string.projects_social_unblocked, blocked.name());
         unblock.setOnClickListener(v -> {
             unblock.setEnabled(false);
-            SocialService.get(activity).unblock(blocked.id, FriendCard.done(activity, getString(R.string.projects_social_unblocked, blocked.name())));
+            SocialService.get(activity).unblock(blocked.id, new SocialService.Result<Void>() {
+                @Override
+                public void ok(Void value) {
+                    SocialUi.toast(activity, unblocked);
+                }
+
+                @Override
+                public void failed(SocialProblem problem) {
+                    // Still blocked: the button works again.
+                    unblock.setEnabled(true);
+                    SocialUi.toastProblem(activity, problem, unblock);
+                }
+            });
         });
         row.addView(unblock);
         return row;

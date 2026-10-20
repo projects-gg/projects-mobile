@@ -11,7 +11,9 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
+import androidx.fragment.app.FragmentManager;
 
 import net.kdt.pojavlaunch.R;
 import net.kdt.pojavlaunch.Tools;
@@ -27,6 +29,28 @@ import gg.projects.mobile.ui.ProjectsHomeCard;
 /** Shared pieces of the friends screens: texts for presence and problems, the join question. */
 public final class SocialUi {
     private SocialUi() {}
+
+    /**
+     * Leaves a friends screen (as back does), safely from {@code onResume} or an answer that comes late:
+     * nothing while the activity saves its state, and asking twice pops it once (the screens are opened
+     * with {@link Tools#swapFragment}, whose back stack entry is the class name).
+     */
+    public static void leave(Fragment fragment) {
+        if (!fragment.isAdded() || fragment.isRemoving()) return;
+        FragmentManager manager = fragment.getParentFragmentManager();
+        if (manager.isStateSaved()) return;
+        manager.popBackStack(fragment.getClass().getName(), FragmentManager.POP_BACK_STACK_INCLUSIVE);
+    }
+
+    /** Opens a screen from a fragment that is on screen now (an answer that comes after the player left opens nothing). */
+    public static void open(Fragment from, Class<? extends Fragment> screen, String tag) {
+        open(from, screen, tag, null);
+    }
+
+    public static void open(Fragment from, Class<? extends Fragment> screen, String tag, @Nullable android.os.Bundle args) {
+        if (!from.isAdded() || !from.isResumed() || from.getParentFragmentManager().isStateSaved()) return;
+        Tools.swapFragment(from.requireActivity(), screen, tag, args);
+    }
 
     /** Where a friend or crewmate is, in a few words. */
     public static String presenceText(Context context, Presence presence) {

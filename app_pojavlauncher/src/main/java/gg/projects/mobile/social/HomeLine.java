@@ -17,7 +17,8 @@ import gg.projects.mobile.social.SocialModel.Profile;
  * The main menu's "Arkadaşlar" row: one line, the most useful thing first (the desktop's Home
  * priority, TEAM3-L, with invites added: on the phone the row is where an invite waits). A crewmate's
  * call the player has not answered, then a "Birlikte oyna" invite, then crewmates on Projects (two or
- * more), then friends on Projects, then how many friends are online. Pure Java.
+ * more), then friends on Projects, then a friend request or a crew invite that waits, then how many
+ * friends are online. Pure Java.
  */
 public final class HomeLine {
     public enum Kind {
@@ -31,6 +32,10 @@ public final class HomeLine {
         INVITE,
         CREW_ON_PROJECTS,
         FRIENDS_ON_PROJECTS,
+        /** Someone asked to be the player's friend (the first of them). */
+        REQUEST,
+        /** A crew invite waits. */
+        CREW_INVITE,
         ONLINE,
         NOBODY_ONLINE,
         NO_FRIENDS
@@ -41,6 +46,9 @@ public final class HomeLine {
     public final Call call;
     @Nullable
     public final Invite invite;
+    /** The crew invite of {@link Kind#CREW_INVITE}. */
+    @Nullable
+    public final SocialModel.TeamInvite teamInvite;
     /** The faces the row shows (at most three). */
     public final List<Profile> faces;
     /** People the line counts (crewmates or friends on Projects, friends online). */
@@ -49,9 +57,15 @@ public final class HomeLine {
     public final boolean pending;
 
     private HomeLine(Kind kind, @Nullable Call call, @Nullable Invite invite, List<Profile> faces, int count, boolean pending) {
+        this(kind, call, invite, null, faces, count, pending);
+    }
+
+    private HomeLine(Kind kind, @Nullable Call call, @Nullable Invite invite, @Nullable SocialModel.TeamInvite teamInvite,
+                     List<Profile> faces, int count, boolean pending) {
         this.kind = kind;
         this.call = call;
         this.invite = invite;
+        this.teamInvite = teamInvite;
         this.faces = Collections.unmodifiableList(faces);
         this.count = count;
         this.pending = pending;
@@ -94,6 +108,18 @@ public final class HomeLine {
             List<Profile> faces = new ArrayList<>();
             for (Friend f : onProjects) if (faces.size() < 3) faces.add(f.profile);
             return new HomeLine(Kind.FRIENDS_ON_PROJECTS, null, null, faces, onProjects.size(), pending);
+        }
+        // Something that waits for the player's answer says so before how many are online.
+        if (!state.incoming().isEmpty()) {
+            List<Profile> faces = new ArrayList<>();
+            faces.add(state.incoming().get(0).profile);
+            return new HomeLine(Kind.REQUEST, null, null, faces, state.incoming().size(), pending);
+        }
+        if (teams && !state.teamInvites().isEmpty()) {
+            SocialModel.TeamInvite teamInvite = state.teamInvites().get(0);
+            List<Profile> faces = new ArrayList<>();
+            faces.add(teamInvite.from);
+            return new HomeLine(Kind.CREW_INVITE, null, null, teamInvite, faces, state.teamInvites().size(), pending);
         }
         if (state.friends().isEmpty()) return new HomeLine(Kind.NO_FRIENDS, null, null, none, 0, pending);
         int online = state.onlineCount();

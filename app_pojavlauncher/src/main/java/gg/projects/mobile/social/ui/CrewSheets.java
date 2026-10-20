@@ -66,9 +66,29 @@ final class CrewSheets {
         calls.setTextColor(ContextCompat.getColor(activity, R.color.projects_bone_100));
         calls.setMinHeight(Math.round(56 * dp));
         calls.setChecked(gate.mute ? notifications.calls : service.prefs().wantsCallsLocally());
-        calls.setOnCheckedChangeListener((button, on) -> {
-            Haptics.toggle(button, on);
-            service.setCrewCalls(on, result(activity, null));
+        calls.setOnCheckedChangeListener(new android.widget.CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(android.widget.CompoundButton button, boolean on) {
+                Haptics.toggle(button, on);
+                // One change at a time (the service's answers could come back out of order); a failed one goes back.
+                button.setEnabled(false);
+                final android.widget.CompoundButton.OnCheckedChangeListener self = this;
+                service.setCrewCalls(on, new SocialService.Result<TeamNotifications>() {
+                    @Override
+                    public void ok(TeamNotifications value) {
+                        button.setEnabled(true);
+                    }
+
+                    @Override
+                    public void failed(SocialProblem problem) {
+                        button.setOnCheckedChangeListener(null);
+                        button.setChecked(!on);
+                        button.setOnCheckedChangeListener(self);
+                        button.setEnabled(true);
+                        SocialUi.toastProblem(activity, problem, button);
+                    }
+                });
+            }
         });
         content.addView(calls, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
@@ -111,7 +131,9 @@ final class CrewSheets {
                     : activity.getString(R.string.projects_crew_today_at, CrewViews.time(activity, MutePresets.nextMorning(now, TimeZone.getDefault())));
             addPreset(activity, content, dialog, MutePresets.Preset.HOUR, activity.getString(R.string.projects_crew_mute_hour), null);
             addPreset(activity, content, dialog, MutePresets.Preset.EIGHT_HOURS, activity.getString(R.string.projects_crew_mute_eight), null);
-            addPreset(activity, content, dialog, MutePresets.Preset.MORNING, activity.getString(R.string.projects_crew_mute_morning), morning);
+            // Between midnight and 08:00 the next morning is today's: "Sabaha kadar".
+            addPreset(activity, content, dialog, MutePresets.Preset.MORNING, activity.getString(MutePresets.morningIsTomorrow(now, TimeZone.getDefault())
+                    ? R.string.projects_crew_mute_morning : R.string.projects_crew_mute_this_morning), morning);
             addPreset(activity, content, dialog, MutePresets.Preset.UNTIL_UNMUTED, activity.getString(R.string.projects_crew_mute_forever), null);
         }
         dialog.show();
