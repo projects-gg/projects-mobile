@@ -36,6 +36,8 @@ import gg.projects.mobile.content.PackSyncApplier;
 import gg.projects.mobile.content.PackSyncPlanner;
 import gg.projects.mobile.content.RootIndex;
 import gg.projects.mobile.content.Snapshot;
+import gg.projects.mobile.launch.LoaderJson;
+import gg.projects.mobile.launch.LoaderRepair;
 import gg.projects.mobile.launch.QuickPlay;
 import gg.projects.mobile.servers.ServersDat;
 
@@ -161,6 +163,10 @@ public final class ProjectsJoin {
                     Log.i(TAG, "no verified content to sync with; launching the installed set");
                 }
                 addServers(gameDir, new ArrayList<PackManifest.PackServer>());
+                // M18: the installed set starts as it is, but its loader's version JSON has to be there (an
+                // install that stopped after the profile moved to the loader had none): fetched when it can be;
+                // when not, the start's own check says what is missing.
+                if (existing != null) LoaderRepair.ensure(new File(Tools.DIR_HOME_VERSION), existing.lastVersionId);
                 break;
             default:
                 Installed installed = installPack(app, snapshot, choice.pack);
@@ -225,11 +231,19 @@ public final class ProjectsJoin {
         return null;
     }
 
-    /** Installs the loader's version JSON when missing. Returns false when a GUI step remains. */
+    /** Installs the loader's version JSON when missing or broken. Returns false when a GUI step remains. */
     @WorkerThread
     private static boolean installLoader(Context app, ModLoader loader) throws IOException {
         String versionId = loader.getVersionId();
-        if (new File(Tools.DIR_HOME_VERSION, versionId + "/" + versionId + ".json").isFile()) return true;
+        File json = new File(Tools.DIR_HOME_VERSION, versionId + "/" + versionId + ".json");
+        // M18: being there is not enough: a write cut short left a file no start could read.
+        if (LoaderJson.usable(json, versionId)) return true;
+        if (LoaderRepair.canFetch(versionId)) {
+            // Fabric and Quilt: the JSON straight from the loader's server, written whole or not at all.
+            ProgressLayout.setProgress(ProgressLayout.INSTALL_MODPACK, 100, R.string.projects_join_preparing);
+            LoaderRepair.fetch(versionId, json);
+            return true;
+        }
         if (loader.requiresGuiInstallation()) {
             // Upstream's flow: download the installer, then a notification starts the GUI.
             loader.getDownloadTask(new NotificationDownloadListener(app, loader)).run();

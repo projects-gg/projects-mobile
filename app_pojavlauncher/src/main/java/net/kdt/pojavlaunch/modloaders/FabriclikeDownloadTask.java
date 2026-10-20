@@ -56,7 +56,9 @@ public class FabriclikeDownloadTask implements Runnable, Tools.DownloaderFeedbac
         File versionJsonDir = new File(Tools.DIR_HOME_VERSION, versionId);
         File versionJsonFile = new File(versionJsonDir, versionId+".json");
         FileUtils.ensureDirectory(versionJsonDir);
-        Tools.write(versionJsonFile.getAbsolutePath(), fabricJson);
+        // Projects fork (M18): written whole or not at all; a write cut short left a file that every later
+        // start of the profile failed on ("Unable to read Version JSON").
+        gg.projects.mobile.content.AtomicFiles.write(versionJsonFile, fabricJson.getBytes(java.nio.charset.StandardCharsets.UTF_8));
         if(mCreateProfile) {
             LauncherProfiles.load();
             MinecraftProfile fabricProfile = new MinecraftProfile();

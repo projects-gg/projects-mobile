@@ -411,7 +411,13 @@ public class MinecraftDownloader {
     private boolean downloadAndProcessMetadata(Activity activity, JMinecraftVersionList.Version verInfo, String versionName) throws IOException, MirrorTamperedException {
         File versionJsonFile;
         if(verInfo != null) versionJsonFile = downloadGameJson(verInfo);
-        else versionJsonFile = createGameJsonPath(versionName);
+        else {
+            versionJsonFile = createGameJsonPath(versionName);
+            // Projects fork (M18): a Fabric or Quilt version whose JSON is missing or broken (an install
+            // that stopped early, an interrupted write) is fetched again from the loader's own server
+            // instead of failing the start with "Unable to read Version JSON".
+            gg.projects.mobile.launch.LoaderRepair.ensure(new File(Tools.DIR_HOME_VERSION), versionName);
+        }
         if(versionJsonFile.canRead())  {
             verInfo = Tools.GLOBAL_GSON.fromJson(Tools.read(versionJsonFile), JMinecraftVersionList.Version.class);
         } else {
