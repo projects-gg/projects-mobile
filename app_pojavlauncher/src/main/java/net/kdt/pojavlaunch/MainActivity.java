@@ -140,8 +140,10 @@ public class MainActivity extends BaseActivity implements ControlButtonMenuListe
         // Start the service a bit early
         ContextCompat.startForegroundService(this, gameServiceIntent);
         initLayout(R.layout.activity_basemain);
-        // Projects fork (M14): the loading screen until Minecraft draws its first frame.
-        gg.projects.mobile.launch.LaunchCurtain.attach(this, minecraftGLView);
+        // Projects fork (M14): the loading screen until Minecraft draws its first frame (M18: it says
+        // "Modlar yükleniyor" only when the game folder has mods).
+        gg.projects.mobile.launch.LaunchCurtain.attach(this, minecraftGLView,
+                gg.projects.mobile.join.PlayChoice.hasModFiles(new File(gameDirPath, "mods").list()));
         // Projects fork (M16): the MODLAR keys follow this game folder's key bindings and loaded mods.
         gg.projects.mobile.controls.ModKeysLive.attach(this, new File(gameDirPath));
         CallbackBridge.addGrabListener(touchpad);

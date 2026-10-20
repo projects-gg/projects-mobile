@@ -129,6 +129,11 @@ public final class LaunchCurtain extends FrameLayout implements Logger.eventLogL
     private final LiftRules.State mRules = new LiftRules.State();
 
     private volatile int mStage = LaunchStages.PREPARING;
+    /**
+     * M18: the game folder has mods. Without any, a mod loader's start keeps the line it had: the 0.1.7
+     * tester read "Modlar yükleniyor" over a Fabric profile with no mods, and looked for mods in the game.
+     */
+    private final boolean mModsInFolder;
     /** Written by the logger thread. */
     private volatile long mResourcesAt;
     private volatile long mLastLogAt;
@@ -148,9 +153,10 @@ public final class LaunchCurtain extends FrameLayout implements Logger.eventLogL
     private boolean mLifted;
     private boolean mRemoved;
 
-    private LaunchCurtain(Activity activity, MinecraftGLSurface game) {
+    private LaunchCurtain(Activity activity, MinecraftGLSurface game, boolean modsInFolder) {
         super(activity);
         mGame = game;
+        mModsInFolder = modsInFolder;
         mMotion = Motion.enabled(activity);
         setWillNotDraw(false);
         setClickable(true);
@@ -234,14 +240,18 @@ public final class LaunchCurtain extends FrameLayout implements Logger.eventLogL
 
     // ---- Entry points (MainActivity, MinecraftGLSurface) ----
 
-    /** Covers {@code activity} until {@code game} shows Minecraft's first frame. */
-    public static void attach(Activity activity, MinecraftGLSurface game) {
+    /**
+     * Covers {@code activity} until {@code game} shows Minecraft's first frame. {@code modsInFolder}: the
+     * game folder's mods folder holds mods (M18: a mod loader starting without any is not "Modlar
+     * yükleniyor").
+     */
+    public static void attach(Activity activity, MinecraftGLSurface game, boolean modsInFolder) {
         if (sGameShown || sActive != null || game == null) return;
         ViewGroup content = activity.findViewById(android.R.id.content);
         if (content == null) return;
         LaunchCurtain curtain;
         try {
-            curtain = new LaunchCurtain(activity, game);
+            curtain = new LaunchCurtain(activity, game, modsInFolder);
         } catch (RuntimeException e) {
             // A drawable that cannot be read on this device must not keep the game from starting.
             Log.w(TAG, "launch screen unavailable", e);
@@ -466,6 +476,7 @@ public final class LaunchCurtain extends FrameLayout implements Logger.eventLogL
         mLastLogAt = now;
         synchronized (this) {
             int stage = LaunchStages.advance(mStage, text);
+            if (stage == LaunchStages.MODS && !mModsInFolder) stage = mStage;
             if (stage > mStage) {
                 mStage = stage;
                 mMain.post(() -> showStage(true));
