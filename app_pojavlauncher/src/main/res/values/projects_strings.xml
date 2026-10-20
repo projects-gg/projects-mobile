@@ -310,6 +310,10 @@
     <string name="projects_event_join">Join</string>
     <!-- M17: Settings, under About: small and quiet (the owner's decision of 18 October 2026). -->
     <string name="projects_not_affiliated">Not affiliated with Mojang or Minecraft.</string>
+    <!-- M18: the channel of "Projects is ready" and its failure (Android's notification settings). -->
+    <string name="projects_ready_channel">Projects ready</string>
+    <string name="projects_ready_channel_description">Tells you when Projects is ready to play, or when it could not be set up.</string>
+    <string name="projects_notify_reason">We\'ll send a notification when Projects is ready.</string>
     <!-- M18: Play on a profile of the player's own with a mod loader and no mods. -->
     <string name="projects_modless_title">This profile has no mods</string>
     <string name="projects_modless_body">The Projects mods only run in the Projects profile.</string>

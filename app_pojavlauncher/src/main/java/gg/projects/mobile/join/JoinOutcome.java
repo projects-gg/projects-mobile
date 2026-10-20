@@ -1,6 +1,8 @@
 package gg.projects.mobile.join;
 
 import android.Manifest;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
@@ -18,7 +20,6 @@ import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 
 import net.kdt.pojavlaunch.R;
-import net.kdt.pojavlaunch.Tools;
 
 import java.lang.ref.WeakReference;
 
@@ -29,7 +30,8 @@ import java.lang.ref.WeakReference;
  * of the app, another app, the phone locked) never starts the game by itself: a notification says
  * "Projects hazır" (a tap opens the app, where Play is ready and the profile chosen) or that it
  * failed, and the home screen shows the failure when the player comes back. Nothing ends silently:
- * without notifications (Android 13+ asks for them) the home screen still shows what happened.
+ * without notifications (Android 13+ asks for them; since M18 the app asks once, at the player's first
+ * Projects start) the home screen still shows what happened.
  *
  * <p>The home screen registers itself while it is resumed ({@link #homeResumed}). The install keeps
  * running in the background either way: upstream's progress service holds the process in the
@@ -44,6 +46,12 @@ public final class JoinOutcome {
     /** Notification ids, apart from upstream's 1 to 5 and the reminders' 0x5xxxxxxx. */
     static final int NOTIFY_READY = 0x4A170001;
     static final int NOTIFY_FAILED = 0x4A170002;
+    /**
+     * M18: "Projects hazır" and its failure have their own channel, at high importance: the player left
+     * the app on purpose and waits for this one, so it pops up over another app (upstream's one channel,
+     * shared with the silent progress notification, only lists it in the shade).
+     */
+    static final String CHANNEL_ID = "projects_ready";
     private static final String PREFS = "projects_join_outcome";
     private static final String KEY_READY_AT = "readyAt";
     private static final String KEY_FAILED_AT = "failedAt";
@@ -227,20 +235,39 @@ public final class JoinOutcome {
         return failure.network ? R.string.projects_join_failed_network : R.string.projects_join_failed_generic;
     }
 
+    /**
+     * M18: true when Android 13+ would hide this app's notifications until the player allows them (the
+     * app asks once, when the player first starts Projects: {@code ProjectsHomeCard}).
+     */
+    public static boolean needsPermission(Context context) {
+        return Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED;
+    }
+
+    private static void ensureChannel(Context app) {
+        if (Build.VERSION.SDK_INT < 26) return;
+        NotificationManager manager = app.getSystemService(NotificationManager.class);
+        if (manager == null) return;
+        NotificationChannel channel = new NotificationChannel(CHANNEL_ID, app.getString(R.string.projects_ready_channel),
+                NotificationManager.IMPORTANCE_HIGH);
+        channel.setDescription(app.getString(R.string.projects_ready_channel_description));
+        manager.createNotificationChannel(channel);
+    }
+
     private static void notifyPlayer(Context app, int id, String title, String text, String category) {
-        if (Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(app, Manifest.permission.POST_NOTIFICATIONS)
-                != PackageManager.PERMISSION_GRANTED) {
+        if (needsPermission(app)) {
             Log.i(TAG, "notifications not allowed; the home screen tells it on return");
             return;
         }
-        Tools.buildNotificationChannel(app);
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(app, app.getString(R.string.notif_channel_id))
+        ensureChannel(app);
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(app, CHANNEL_ID)
                 .setSmallIcon(R.drawable.notif_icon)
                 .setColor(ContextCompat.getColor(app, R.color.projects_gold_500))
                 .setContentTitle(title)
                 .setContentText(text)
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(text))
                 .setCategory(category)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setAutoCancel(true)
                 .setOnlyAlertOnce(true)
                 .setTimeoutAfter(READY_KEPT_MS);

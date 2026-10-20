@@ -297,6 +297,10 @@
     <string name="projects_event_join">Katıl</string>
     <!-- M17: Settings, under About: small and quiet. -->
     <string name="projects_not_affiliated">Mojang veya Minecraft ile bağlantılı değildir.</string>
+    <!-- M18: the channel of "Projects hazır" and its failure (Android's notification settings). -->
+    <string name="projects_ready_channel">Projects hazır</string>
+    <string name="projects_ready_channel_description">Projects oynamaya hazır olunca ya da hazırlanamayınca haber verir.</string>
+    <string name="projects_notify_reason">Projects hazır olunca bildirimle haber verelim.</string>
     <!-- M18: Play on a profile of the player's own with a mod loader and no mods. -->
     <string name="projects_modless_title">Bu profilde mod yok</string>
     <string name="projects_modless_body">Projects modları yalnız Projects profilinde çalışır.</string>

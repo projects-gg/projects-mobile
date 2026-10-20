@@ -95,6 +95,16 @@ import gg.projects.mobile.reminders.Reminders;
 public final class ProjectsHomeCard implements ProjectsContent.Listener, ProjectsUi.BellHandler, JoinOutcome.Home {
     /** M17: the key fix was offered on the home card once (fixed, set aside, or seen before a game). */
     private static final String KEY_FIX_OFFERED = "projects_keyfix_offered";
+    /** M18: Android's notification question came with a Projects start once (asked at most once). */
+    private static final String KEY_START_NOTIFY_ASKED = "projects_start_notifications_asked";
+    /**
+     * M18: the button whose start waits for the answer to that question (0: none, else one of the
+     * {@code START_FROM_*}); static, as the card may be built again while Android asks.
+     */
+    private static int sStartAfterPermission;
+    private static final int START_FROM_PLAY = 1;
+    private static final int START_FROM_JOIN = 2;
+    private static final int START_FROM_EVENT = 3;
     private static final android.os.Handler MAIN = new android.os.Handler(android.os.Looper.getMainLooper());
     /** M17: a fix made while no home screen was there to show it; the next one shows it with "Geri al". */
     @Nullable
@@ -940,8 +950,17 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         }
     }
 
-    /** The answer to the notification permission asked for by {@link #onBell}. */
+    /** The answer to the notification permission asked for by {@link #onBell} or by a first start. */
     public void onNotificationPermission(boolean granted) {
+        int start = sStartAfterPermission;
+        if (start != 0) {
+            // M18: the start goes on whatever the answer; without notifications the home screen tells
+            // how it went when the player is back (JoinOutcome).
+            sStartAfterPermission = 0;
+            if (!mFragment.isAdded() || mFragment.getView() == null) return;
+            join(start == START_FROM_JOIN ? mJoinButton : start == START_FROM_EVENT ? mEventJoin : mPlayButton);
+            return;
+        }
         PendingBell pending = mPendingBell;
         mPendingBell = null;
         FragmentActivity activity = mFragment.getActivity();
@@ -1182,6 +1201,11 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
             ExtraCore.setValue(ExtraConstants.SELECT_AUTH_METHOD, true);
             return;
         }
+        // M18: the first start asks Android once whether the app may notify: a start can download for
+        // minutes, and "Projects hazır" is how a player who left meanwhile learns it is done (Android 13+
+        // hides it until allowed, and the app no longer asks at its first start). The start follows the
+        // answer, whatever it is.
+        if (askNotificationsFirst(activity, pressed)) return;
         // M17: the offer of the key fix was seen before a game; it does not come back.
         if (mKeyFix.getVisibility() == View.VISIBLE) markKeyFixOffered();
         // M17: the outcome goes to whichever home screen is up when it comes (JoinOutcome): the game
@@ -1210,6 +1234,28 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
             boolean sheen = PlayButtons.confirm(pressed);
             if (sheen && pressed == mJoinButton) mJoinButton.postDelayed(mShowJoining, PlayButtonDrawable.SHEEN_MS);
             else setJoining(true);
+        }
+    }
+
+    /**
+     * M18: on Android 13+, while the app may not notify, the first Projects start shows Android's own
+     * question first (once; never at the app's start, Decision 10) and starts when it is answered
+     * ({@link #onNotificationPermission}). Returns true when the start waits for that answer.
+     */
+    private boolean askNotificationsFirst(FragmentActivity activity, View pressed) {
+        if (mNotificationPermission == null || !JoinOutcome.needsPermission(activity)) return false;
+        if (LauncherPreferences.DEFAULT_PREF.getBoolean(KEY_START_NOTIFY_ASKED, false)) return false;
+        LauncherPreferences.DEFAULT_PREF.edit().putBoolean(KEY_START_NOTIFY_ASKED, true).apply();
+        sStartAfterPermission = pressed == mJoinButton ? START_FROM_JOIN : pressed == mEventJoin ? START_FROM_EVENT : START_FROM_PLAY;
+        try {
+            mNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS);
+            // The reason in one line under Android's question; no screen of our own in front of it.
+            Toast.makeText(activity, R.string.projects_notify_reason, Toast.LENGTH_LONG).show();
+            return true;
+        } catch (RuntimeException e) {
+            // No question could be shown: start at once.
+            sStartAfterPermission = 0;
+            return false;
         }
     }
 
