@@ -14,6 +14,8 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.annotation.ColorRes;
+import androidx.annotation.DrawableRes;
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
@@ -29,8 +31,10 @@ import gg.projects.mobile.mods.Motion;
  * curve while it fades in (240 ms) and leaves faster (160 ms). It stays 6 s, longer than a plain
  * message because it holds a decision, and waits while a finger is on it. After "Geri al" its line
  * changes in place to what happened and it leaves soon after. A success shows as the jade mark; the
- * sentence stays bone. TalkBack reads it as it appears. With animations off it just appears and
- * goes.
+ * answer to "Geri al" as a quiet ash mark in the same place, so the line never moves. The sentence
+ * stays bone. The surface is opaque and a step lighter than the card under it: it floats, and
+ * nothing shows through it. TalkBack reads it as it appears. With animations off it just appears
+ * and goes.
  */
 @SuppressLint("ViewConstructor")
 public final class UndoBar extends LinearLayout {
@@ -54,7 +58,7 @@ public final class UndoBar extends LinearLayout {
         setPaddingRelative(Math.round(14 * dp), Math.round(2 * dp), Math.round(4 * dp), Math.round(2 * dp));
         GradientDrawable surface = new GradientDrawable();
         surface.setCornerRadius(10 * dp);
-        surface.setColor(0xF5121016); // obsidian-900 at 96 %: near-solid, the menu does not show through
+        surface.setColor(ContextCompat.getColor(context, R.color.projects_obsidian_800));
         surface.setStroke(Math.max(1, Math.round(dp)), 0x29F3EBDD); // bone hairline
         setBackground(surface);
         setElevation(6 * dp);
@@ -62,8 +66,7 @@ public final class UndoBar extends LinearLayout {
         setAccessibilityLiveRegion(ACCESSIBILITY_LIVE_REGION_POLITE);
 
         mMark = new ImageView(context);
-        mMark.setImageResource(R.drawable.projects_ic_check_circle);
-        mMark.setImageTintList(ContextCompat.getColorStateList(context, R.color.projects_jade_400));
+        setMark(R.drawable.projects_ic_check_circle, R.color.projects_jade_400);
         mMark.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
         addView(mMark, new LayoutParams(Math.round(20 * dp), Math.round(20 * dp)));
 
@@ -119,7 +122,9 @@ public final class UndoBar extends LinearLayout {
     public void show(CharSequence message, @Nullable Runnable onUndo) {
         removeCallbacks(mLeave);
         mText.setText(message);
-        mMark.setVisibility(VISIBLE);
+        mMark.animate().cancel();
+        mMark.setAlpha(1f);
+        setMark(R.drawable.projects_ic_check_circle, R.color.projects_jade_400);
         boolean undo = onUndo != null;
         mAction.setVisibility(undo ? VISIBLE : GONE);
         if (undo) {
@@ -134,11 +139,15 @@ public final class UndoBar extends LinearLayout {
         postDelayed(mLeave, undo ? STAY_MS : RESULT_STAY_MS + 1200);
     }
 
-    /** After "Geri al": the line says what happened, in place, and the bar leaves soon after. */
-    public void showResult(CharSequence message) {
+    /**
+     * After "Geri al": the line says what happened, in place, beside {@code mark} in ash (where the
+     * jade check was), and the bar leaves soon after.
+     */
+    public void showResult(CharSequence message, @DrawableRes int mark) {
         removeCallbacks(mLeave);
         if (!mShowing) {
             show(message, null);
+            setMark(mark, R.color.projects_ash_400);
             return;
         }
         if (Motion.enabled(getContext())) {
@@ -151,12 +160,23 @@ public final class UndoBar extends LinearLayout {
                         mAction.setVisibility(GONE);
                         mAction.setAlpha(1f);
                     }).start();
+            mMark.animate().cancel();
+            mMark.animate().alpha(0f).setDuration(90).setInterpolator(Motion.EASE_OUT).withEndAction(() -> {
+                setMark(mark, R.color.projects_ash_400);
+                mMark.animate().alpha(1f).setDuration(140).setInterpolator(Motion.EASE_OUT).start();
+            }).start();
         } else {
             mText.setText(message);
             mAction.setVisibility(GONE);
+            setMark(mark, R.color.projects_ash_400);
         }
-        mMark.setVisibility(GONE);
         postDelayed(mLeave, RESULT_STAY_MS);
+    }
+
+    private void setMark(@DrawableRes int mark, @ColorRes int tint) {
+        mMark.setImageResource(mark);
+        mMark.setImageTintList(ContextCompat.getColorStateList(getContext(), tint));
+        mMark.setVisibility(VISIBLE);
     }
 
     private void enter() {

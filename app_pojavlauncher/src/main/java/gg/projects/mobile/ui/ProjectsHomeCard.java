@@ -1304,7 +1304,7 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
                     Haptics.confirm(mKeyFixButton);
                     mUndoBar.show(mFragment.getString(R.string.projects_keyfix_queued), () -> {
                         KeyFixer.run(() -> KeyFixer.unqueue(app));
-                        mUndoBar.showResult(mFragment.getString(R.string.projects_keyfix_undone));
+                        mUndoBar.showResult(mFragment.getString(R.string.projects_keyfix_undone), R.drawable.projects_ic_keyboard);
                     });
                 } else if (mUndoBar != null) {
                     // Nothing clashed any more (the keys were changed in the game meanwhile).
@@ -1332,7 +1332,7 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
             final boolean back = undone;
             MAIN.post(() -> {
                 if (!mFragment.isAdded()) return;
-                if (back) mUndoBar.showResult(mFragment.getString(R.string.projects_keyfix_undone));
+                if (back) mUndoBar.showResult(mFragment.getString(R.string.projects_keyfix_undone), R.drawable.projects_ic_keyboard);
                 else mUndoBar.dismiss();
             });
         }));

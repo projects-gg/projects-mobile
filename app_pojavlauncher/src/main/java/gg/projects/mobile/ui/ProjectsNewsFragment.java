@@ -290,6 +290,16 @@ public class ProjectsNewsFragment extends Fragment implements ProjectsContent.Li
             Row row = mRows.get(position);
             if (holder instanceof NewsHolder && row.item != null) ((NewsHolder) holder).bind(mSnapshot, row.item);
             View view = holder.itemView;
+            if (row.item == null) {
+                // M17: the heading parts Minecraft's updates from the Projects posts above it; with no
+                // Projects post it opens the list, as close under the title as a first post.
+                ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) view.getLayoutParams();
+                int top = Math.round((position == 0 ? 8 : 22) * view.getResources().getDisplayMetrics().density);
+                if (params.topMargin != top) {
+                    params.topMargin = top;
+                    view.setLayoutParams(params);
+                }
+            }
             if (mAnimateRows && !mShown.contains(row.id) && position < 8) {
                 view.setAlpha(0f);
                 view.setTranslationY(14 * view.getResources().getDisplayMetrics().density);
