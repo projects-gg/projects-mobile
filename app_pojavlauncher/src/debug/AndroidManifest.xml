@@ -5,5 +5,11 @@
         <!-- Debug builds only: the game's exit screen can be opened from adb, so a start that Sodium
              broke can be played on an emulator without breaking the game. -->
         <activity android:name="net.kdt.pojavlaunch.ExitActivity" android:exported="true" />
+        <!-- Debug builds only (M19): a friends push sent from adb (DebugPushReceiver); only the shell
+             (which holds DUMP) may send it, not another app. -->
+        <receiver
+            android:name="gg.projects.mobile.social.DebugPushReceiver"
+            android:exported="true"
+            android:permission="android.permission.DUMP" />
     </application>
 </manifest>

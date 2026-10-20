@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- M19: the friends screen. Signed out: why and how to sign in with Discord. Signed in: the player,
+     the crew, invites, requests and friends by where they are. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_app"
+    android:orientation="vertical">
+
+    <gg.projects.mobile.ui.ScreenHeader
+        android:id="@+id/projects_social_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="4dp"
+        android:text="@string/projects_social_title" />
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/projects_social_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingBottom="24dp"
+            android:visibility="gone" />
+
+        <ScrollView
+            android:id="@+id/projects_social_consent"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fillViewport="true"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:paddingHorizontal="24dp"
+                android:paddingTop="24dp"
+                android:paddingBottom="24dp">
+
+                <ImageView
+                    android:layout_width="64dp"
+                    android:layout_height="64dp"
+                    android:background="@drawable/projects_social_icon_tile"
+                    android:importantForAccessibility="no"
+                    android:padding="16dp"
+                    android:src="@drawable/projects_ic_users"
+                    android:tint="@color/projects_gold_300" />
+
+                <TextView
+                    android:id="@+id/projects_consent_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:fontFamily="@font/tektur_semibold"
+                    android:gravity="center"
+                    android:text="@string/projects_social_consent_title"
+                    android:textColor="@color/projects_bone_100"
+                    android:textSize="20sp" />
+
+                <TextView
+                    android:id="@+id/projects_consent_body"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:fontFamily="@font/figtree_regular"
+                    android:gravity="center"
+                    android:maxWidth="420dp"
+                    android:text="@string/projects_social_consent_body"
+                    android:textColor="@color/projects_ash_300"
+                    android:textSize="15sp" />
+
+                <TextView
+                    android:id="@+id/projects_consent_message"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:accessibilityLiveRegion="polite"
+                    android:fontFamily="@font/figtree_regular"
+                    android:gravity="center"
+                    android:maxWidth="420dp"
+                    android:textColor="@color/projects_flare_400"
+                    android:textSize="14sp"
+                    android:visibility="gone"
+                    tools:text="Giriş tamamlanamadı. Yeniden dene."
+                    tools:visibility="visible" />
+
+                <Button
+                    android:id="@+id/projects_consent_sign_in"
+                    style="?android:attr/borderlessButtonStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:layout_marginTop="20dp"
+                    android:background="@drawable/projects_discord_button"
+                    android:drawableStart="@drawable/projects_ic_discord_glyph"
+                    android:drawablePadding="10dp"
+                    android:fontFamily="@font/figtree_semibold"
+                    android:maxWidth="420dp"
+                    android:paddingHorizontal="20dp"
+                    android:text="@string/projects_social_sign_in"
+                    android:textAllCaps="false"
+                    android:textColor="#FFFFFFFF"
+                    android:textSize="16sp" />
+
+                <LinearLayout
+                    android:id="@+id/projects_consent_waiting"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:background="@drawable/projects_social_section_background"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical"
+                    android:padding="16dp"
+                    android:visibility="gone"
+                    tools:visibility="visible">
+
+                    <ProgressBar
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:indeterminateTint="@color/projects_gold_400" />
+
+                    <TextView
+                        android:id="@+id/projects_consent_waiting_title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:accessibilityLiveRegion="polite"
+                        android:fontFamily="@font/figtree_semibold"
+                        android:gravity="center"
+                        android:text="@string/projects_social_waiting"
+                        android:textColor="@color/projects_bone_100"
+                        android:textSize="15sp" />
+
+                    <TextView
+                        android:id="@+id/projects_consent_waiting_note"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:fontFamily="@font/figtree_regular"
+                        android:gravity="center"
+                        android:text="@string/projects_social_waiting_note"
+                        android:textColor="@color/projects_ash_400"
+                        android:textSize="13sp" />
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:orientation="horizontal">
+
+                        <Button
+                            android:id="@+id/projects_consent_reopen"
+                            style="?android:attr/borderlessButtonStyle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/figtree_semibold"
+                            android:minHeight="44dp"
+                            android:text="@string/projects_social_reopen"
+                            android:textAllCaps="false"
+                            android:textColor="@color/projects_bone_100"
+                            android:textSize="14sp" />
+
+                        <Button
+                            android:id="@+id/projects_consent_cancel"
+                            style="?android:attr/borderlessButtonStyle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:fontFamily="@font/figtree_semibold"
+                            android:minHeight="44dp"
+                            android:text="@string/projects_social_cancel"
+                            android:textAllCaps="false"
+                            android:textColor="@color/projects_ash_300"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/projects_consent_privacy"
+                    android:layout_width="wrap_content"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/projects_link_ripple"
+                    android:clickable="true"
+                    android:drawableEnd="@drawable/projects_ic_arrow_square_out_small"
+                    android:drawablePadding="6dp"
+                    android:focusable="true"
+                    android:fontFamily="@font/figtree_semibold"
+                    android:gravity="center"
+                    android:paddingHorizontal="12dp"
+                    android:text="@string/projects_social_privacy"
+                    android:textColor="@color/projects_gold_300"
+                    android:textSize="14sp" />
+            </LinearLayout>
+        </ScrollView>
+    </FrameLayout>
+</LinearLayout>

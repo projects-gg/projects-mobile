@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- M19: a short message on the friends screen (the service away, the account opened elsewhere, the
+     notification question) with its one action and, for the question, × ("Şimdi değil"). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="12dp"
+    android:layout_marginTop="10dp"
+    android:background="@drawable/projects_social_section_background"
+    android:orientation="vertical"
+    android:paddingStart="14dp"
+    android:paddingTop="2dp"
+    android:paddingEnd="2dp"
+    android:paddingBottom="10dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:id="@+id/projects_banner_icon"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginTop="12dp"
+            android:importantForAccessibility="no"
+            android:src="@drawable/projects_ic_bell"
+            android:tint="@color/projects_gold_300" />
+
+        <TextView
+            android:id="@+id/projects_banner_text"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="11dp"
+            android:layout_marginEnd="10dp"
+            android:layout_marginBottom="2dp"
+            android:layout_weight="1"
+            android:accessibilityLiveRegion="polite"
+            android:fontFamily="@font/figtree_semibold"
+            android:textColor="@color/projects_bone_100"
+            android:textSize="14sp"
+            tools:text="Arkadaşlar şu an kullanılamıyor." />
+
+        <ImageButton
+            android:id="@+id/projects_banner_close"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/projects_icon_button_ripple"
+            android:contentDescription="@string/projects_not_now"
+            android:padding="14dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/projects_ic_x"
+            android:tint="@color/projects_ash_400"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/projects_banner_action"
+        style="?android:attr/borderlessButtonStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="30dp"
+        android:layout_marginTop="4dp"
+        android:fontFamily="@font/figtree_semibold"
+        android:minHeight="44dp"
+        android:textAllCaps="false"
+        android:textColor="@color/projects_bone_100"
+        android:textSize="14sp"
+        tools:text="Tekrar dene" />
+</LinearLayout>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- M19: a role badge on a crew member ("Lider", "Moderatör"): gold ink on a faint gold chip. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <corners android:radius="4dp" />
+    <solid android:color="#26F6D58E" />
+</shape>

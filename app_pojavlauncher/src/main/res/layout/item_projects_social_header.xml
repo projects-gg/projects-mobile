@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- M19: a section of the friends screen ("Oyunda", "İstekler"): quiet, sentence case, with its count. -->
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="16dp"
+    android:layout_marginTop="18dp"
+    android:layout_marginEnd="16dp"
+    android:layout_marginBottom="2dp"
+    android:accessibilityHeading="true"
+    android:fontFamily="@font/figtree_semibold"
+    android:textColor="@color/projects_ash_300"
+    android:textSize="13sp" />

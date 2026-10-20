@@ -52,6 +52,29 @@ public final class ScreenHeader extends LinearLayout {
         mCaption.setVisibility(caption == null ? View.GONE : View.VISIBLE);
     }
 
+    /**
+     * M19: an icon action at the header's end (the friends screen's "Arkadaş ekle" and settings),
+     * a 48 dp target with the icon buttons' ripple and press.
+     */
+    public android.widget.ImageButton addAction(@androidx.annotation.DrawableRes int icon,
+                                                @androidx.annotation.StringRes int description, View.OnClickListener listener) {
+        LinearLayout row = findViewById(R.id.projects_header_row);
+        android.widget.ImageButton button = new android.widget.ImageButton(getContext());
+        int size = Math.round(48 * getResources().getDisplayMetrics().density);
+        int pad = Math.round(12 * getResources().getDisplayMetrics().density);
+        button.setBackgroundResource(R.drawable.projects_icon_button_ripple);
+        button.setImageResource(icon);
+        button.setImageTintList(androidx.core.content.ContextCompat.getColorStateList(getContext(), R.color.projects_bone_100));
+        button.setScaleType(android.widget.ImageView.ScaleType.FIT_CENTER);
+        button.setPadding(pad, pad, pad, pad);
+        button.setContentDescription(getContext().getString(description));
+        button.setOnClickListener(listener);
+        Press.attach(button, Press.Style.ICON);
+        if (row.getPaddingEnd() > 0) row.setPaddingRelative(row.getPaddingStart(), row.getPaddingTop(), Math.round(4 * getResources().getDisplayMetrics().density), row.getPaddingBottom());
+        row.addView(button, new LinearLayout.LayoutParams(size, size));
+        return button;
+    }
+
     @Nullable
     private static Activity activityOf(Context context) {
         while (context instanceof ContextWrapper) {

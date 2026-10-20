@@ -35,6 +35,16 @@
 				android:layout_marginEnd="12dp"
 				android:layout_marginBottom="6dp" />
 
+			<!-- M19: friends and the crew (shown while Friends are on) -->
+			<include
+				layout="@layout/view_projects_social_row"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:layout_marginStart="12dp"
+				android:layout_marginTop="6dp"
+				android:layout_marginEnd="12dp"
+				android:layout_marginBottom="6dp" />
+
 			<LinearLayout
 				android:id="@+id/projects_menu_group"
 				android:layout_width="match_parent"

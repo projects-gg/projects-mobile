@@ -42,6 +42,7 @@ public class MainMenuFragment extends Fragment {
 
     private mcVersionSpinner mVersionSpinner;
     private ProjectsHomeCard mProjectsCard;
+    private gg.projects.mobile.social.ui.SocialHomeRow mSocialRow;
     // Projects fork: the event reminder's bell asks for the notification permission when it is tapped.
     private final ActivityResultLauncher<String> mNotificationPermission = registerForActivityResult(
             new ActivityResultContracts.RequestPermission(), granted -> {
@@ -115,6 +116,8 @@ public class MainMenuFragment extends Fragment {
         }
 
         mProjectsCard = new ProjectsHomeCard(this, view, mVersionSpinner, mPlayButton, mNotificationPermission);
+        // Projects fork (M19): the "Arkadaşlar" row (friends on Projects, a crew call, an invite).
+        mSocialRow = new gg.projects.mobile.social.ui.SocialHomeRow(this, view);
         // Projects fork: "Tekrar başlat" after Sodium kept the game from starting.
         if (gg.projects.mobile.launch.ProjectsRelaunch.take(requireActivity())) view.postDelayed(() -> startAgain(40), 500);
 
@@ -161,12 +164,14 @@ public class MainMenuFragment extends Fragment {
         super.onResume();
         mVersionSpinner.reloadProfiles();
         mProjectsCard.onResume();
+        mSocialRow.onResume();
     }
 
     @Override
     public void onPause() {
         super.onPause();
         mProjectsCard.onPause();
+        mSocialRow.onPause();
     }
 
     private void runInstallerWithConfirmation(boolean isCustomArgs) {

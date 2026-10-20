@@ -75,6 +75,27 @@ def getProjectsVersionName = {
 // PROJECTS_KEYSTORE_FILE, PROJECTS_KEYSTORE_PASSWORD, PROJECTS_KEY_ALIAS, PROJECTS_KEY_PASSWORD
 def projectsKeystore = System.getenv("PROJECTS_KEYSTORE_FILE")
 
+// Projects fork (M19): Firebase Cloud Messaging for the friends feature, without the google-services
+// plugin. The Firebase config file (app_pojavlauncher/google-services.json) is git-ignored and never in
+// the public repository: the release script copies it in for the build. When it is there, the client of
+// the build's application id becomes the resources Firebase starts from; without it the app builds the
+// same and phone notifications are simply off (BuildConfig.PROJECTS_FIREBASE false).
+def projectsFirebase = { String packageName ->
+    def file = project.file('google-services.json')
+    if (!file.isFile()) return null
+    def json = new groovy.json.JsonSlurper().parse(file)
+    def client = json.client?.find { it?.client_info?.android_client_info?.package_name == packageName }
+    if (client == null) return null
+    def apiKey = client.api_key?.find { it?.current_key }?.current_key
+    def appId = client.client_info?.mobilesdk_app_id
+    def projectId = json.project_info?.project_id
+    def senderId = json.project_info?.project_number
+    if (!apiKey || !appId || !projectId || !senderId) return null
+    return [apiKey: apiKey.toString(), appId: appId.toString(), projectId: projectId.toString(), senderId: senderId.toString()]
+}
+def projectsFirebaseRelease = projectsFirebase('gg.projects.mobile')
+def projectsFirebaseDebug = projectsFirebase('gg.projects.mobile.debug')
+
 def getCFApiKey = {
     String key = System.getenv("CURSEFORGE_API_KEY");
     if(key != null) return key;
@@ -144,6 +165,14 @@ android {
             resValue 'string', 'application_package', 'gg.projects.mobile.debug'
             resValue 'string', 'storageProviderAuthorities', 'gg.projects.mobile.scoped.gamefolder.debug'
             resValue 'string', 'shareProviderAuthority', 'gg.projects.mobile.scoped.controlfolder.debug'
+            // M19: the debug app's own Firebase client (when the config file is there).
+            buildConfigField 'boolean', 'PROJECTS_FIREBASE', projectsFirebaseDebug != null ? 'true' : 'false'
+            if (projectsFirebaseDebug != null) {
+                resValue 'string', 'google_app_id', projectsFirebaseDebug.appId
+                resValue 'string', 'google_api_key', projectsFirebaseDebug.apiKey
+                resValue 'string', 'gcm_defaultSenderId', projectsFirebaseDebug.senderId
+                resValue 'string', 'project_id', projectsFirebaseDebug.projectId
+            }
         }
         proguard {
             initWith debug
@@ -168,6 +197,14 @@ android {
             resValue "string", "app_short_name", "Projects"
             resValue 'string', 'storageProviderAuthorities', 'gg.projects.mobile.scoped.gamefolder'
             resValue 'string', 'application_package', 'gg.projects.mobile'
+            // M19: the app's Firebase client (when the config file is there).
+            buildConfigField 'boolean', 'PROJECTS_FIREBASE', projectsFirebaseRelease != null ? 'true' : 'false'
+            if (projectsFirebaseRelease != null) {
+                resValue 'string', 'google_app_id', projectsFirebaseRelease.appId
+                resValue 'string', 'google_api_key', projectsFirebaseRelease.apiKey
+                resValue 'string', 'gcm_defaultSenderId', projectsFirebaseRelease.senderId
+                resValue 'string', 'project_id', projectsFirebaseRelease.projectId
+            }
         }
         gplay {
             // Google Play: sign the bundle with the upload key (same PROJECTS_* variables).
@@ -280,6 +317,14 @@ dependencies {
 
     // Projects fork: Ed25519 verification of the signed content index
     implementation 'org.bouncycastle:bcprov-jdk15to18:1.86'
+    // Projects fork (M19): Friends and crews. OkHttp talks to the friends service (HTTPS and the presence
+    // WebSocket with protocol pings); Firebase Cloud Messaging brings phone notifications (messaging only,
+    // no Analytics; the 33.x BoM is the last whose messaging keeps minSdk 21); ZXing's core draws the
+    // friend code's QR (3.3.3: the last core for Android below 7 without Java 8 library calls).
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    implementation platform('com.google.firebase:firebase-bom:33.16.0')
+    implementation 'com.google.firebase:firebase-messaging'
+    implementation 'com.google.zxing:core:3.3.3'
     testImplementation 'junit:junit:4.13.2'
 }
 apply from: rootProject.file('gradle/prefab_bypass.gradle')

@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- M19: one person (or crew invite) on the friends screen: the face with its presence dot, the name
+     and where they are, and up to two actions ("Katıl", "Kabul et" + ×, "İsteği geri al"). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="8dp"
+    android:background="@drawable/projects_row_ripple"
+    android:gravity="center_vertical"
+    android:minHeight="64dp"
+    android:orientation="horizontal"
+    android:paddingStart="8dp"
+    android:paddingTop="6dp"
+    android:paddingEnd="4dp"
+    android:paddingBottom="6dp">
+
+    <FrameLayout
+        android:layout_width="46dp"
+        android:layout_height="46dp">
+
+        <gg.projects.mobile.social.ui.AvatarView
+            android:id="@+id/projects_person_avatar"
+            android:layout_width="46dp"
+            android:layout_height="46dp" />
+
+        <gg.projects.mobile.social.ui.CrewMarkView
+            android:id="@+id/projects_person_mark"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:visibility="gone" />
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/projects_person_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:fontFamily="@font/figtree_semibold"
+                android:maxLines="1"
+                android:textColor="@color/projects_bone_100"
+                android:textSize="15sp"
+                tools:text="Ayşe" />
+
+            <TextView
+                android:id="@+id/projects_person_badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/projects_social_badge"
+                android:fontFamily="@font/figtree_semibold"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="1dp"
+                android:textColor="@color/projects_gold_300"
+                android:textSize="11sp"
+                android:visibility="gone"
+                tools:text="Lider"
+                tools:visibility="visible" />
+
+            <ImageView
+                android:id="@+id/projects_person_star"
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:layout_marginStart="6dp"
+                android:contentDescription="@string/projects_social_favorite_mark"
+                android:src="@drawable/projects_ic_star_fill"
+                android:tint="@color/projects_gold_400"
+                android:visibility="gone" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/projects_person_line"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="1dp"
+            android:ellipsize="end"
+            android:fontFamily="@font/figtree_regular"
+            android:maxLines="1"
+            android:textColor="@color/projects_ash_400"
+            android:textSize="13sp"
+            tools:text="Projects'te" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/projects_person_action"
+        style="?android:attr/borderlessButtonStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:fontFamily="@font/figtree_semibold"
+        android:minWidth="0dp"
+        android:minHeight="44dp"
+        android:textAllCaps="false"
+        android:textColor="@color/projects_bone_100"
+        android:textSize="14sp"
+        android:visibility="gone"
+        tools:text="Katıl"
+        tools:visibility="visible" />
+
+    <ImageButton
+        android:id="@+id/projects_person_secondary"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:layout_marginStart="2dp"
+        android:background="@drawable/projects_icon_button_ripple"
+        android:padding="12dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/projects_ic_x"
+        android:tint="@color/projects_ash_400"
+        android:visibility="gone" />
+</LinearLayout>

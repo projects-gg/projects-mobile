@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- M19: the friend code's QR on a light tile (cameras read dark modules on light), soft corners. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <corners android:radius="10dp" />
+    <solid android:color="@color/projects_bone_50" />
+</shape>

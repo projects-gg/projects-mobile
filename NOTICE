@@ -23,6 +23,9 @@ Changes made by this fork (2026, Projects / projects.gg):
   - Projects integration: Ed25519-verified news from the Projects content index, the
     "Projects'e katil" join flow (Projects profile, official pack sync, server list entry and
     auto-join of play.projects.gg), and the mod screen for the official pack's optional mods.
+  - Friends and crews (0.2.0): Discord sign-in to the Projects friends service, friends and
+    crews with live status, and phone notifications through Firebase Cloud Messaging. The
+    Firebase configuration is not part of the source; builds without it have no notifications.
   The full list of changes is the git history of the "projects" branch on top of upstream.
 
 Third-party components added by this fork:
@@ -36,12 +39,23 @@ Third-party components added by this fork:
   - Phosphor Icons (a few icons converted to Android vector drawables), MIT license,
     Copyright (c) 2020 Phosphor Icons
     (app_pojavlauncher/src/main/assets/licenses/PHOSPHOR_ICONS_LICENSE)
+  - OkHttp and Okio (com.squareup.okhttp3:okhttp, com.squareup.okio:okio), Apache License 2.0,
+    Copyright Square, Inc.; with the Kotlin standard library (org.jetbrains.kotlin), Apache
+    License 2.0, Copyright JetBrains s.r.o.
+  - Firebase Cloud Messaging (com.google.firebase:firebase-messaging and the Firebase and Google
+    Play services client libraries it brings), Apache License 2.0, Copyright Google LLC. Delivery
+    uses Google Play services on the phone, which is not part of this app.
+  - ZXing core (com.google.zxing:core), Apache License 2.0, Copyright ZXing authors, to draw the
+    friend code's QR code.
+  The Apache License 2.0 text: https://www.apache.org/licenses/LICENSE-2.0
 
 All notices of upstream and of the components it bundles are kept unchanged (see README.md
 "Credits & Dependencies" and app_pojavlauncher/src/main/assets/licenses).
 
-The Projects name, logo and mascot artwork are brand assets of Projects. The license of the
-code does not grant permission to use them to identify other products.
+The Projects name, logo and mascot artwork, and the bundled profile pictures
+(app_pojavlauncher/src/main/assets/avatars, the same as the Projects desktop launcher's), are
+assets of Projects. The license of the code does not grant permission to use them to identify
+other products.
 
 Minecraft is a trademark of Mojang AB / Microsoft. This project is not affiliated with Mojang,
 Microsoft, AngelAuraMC or the PojavLauncher Team.

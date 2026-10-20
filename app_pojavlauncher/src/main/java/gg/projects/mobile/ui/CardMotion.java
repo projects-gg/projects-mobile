@@ -30,15 +30,15 @@ import gg.projects.mobile.mods.Motion;
  * </ul>
  * Both can be interrupted: a new change starts from what is on screen.
  */
-final class CardMotion {
+public final class CardMotion {
     private CardMotion() {}
 
-    static boolean canAnimate(View view) {
+    public static boolean canAnimate(View view) {
         return Motion.enabled(view.getContext()) && view.isAttachedToWindow() && view.isLaidOut() && view.isShown();
     }
 
     /** Animates the next layout change under {@code sceneRoot}. */
-    static void beginLayoutChange(ViewGroup sceneRoot) {
+    public static void beginLayoutChange(ViewGroup sceneRoot) {
         if (!canAnimate(sceneRoot)) return;
         TransitionSet set = new TransitionSet();
         set.setOrdering(TransitionSet.ORDERING_TOGETHER);
@@ -60,7 +60,7 @@ final class CardMotion {
      * Call before {@code block} is re-bound with other content: its current look fades out where it
      * is while the new content rises in. No-op when it is not on screen.
      */
-    static void crossfade(final View block) {
+    public static void crossfade(final View block) {
         Object running = block.getTag(R.id.projects_motion_ghost);
         if (running instanceof Animator) ((Animator) running).end();
         if (!canAnimate(block) || block.getVisibility() != View.VISIBLE || block.getWidth() == 0 || block.getHeight() == 0) return;
@@ -110,7 +110,7 @@ final class CardMotion {
     }
 
     /** Fades a view that just became visible in place (used where no layout change runs). */
-    static void fadeIn(View view) {
+    public static void fadeIn(View view) {
         if (!canAnimate(view)) return;
         view.animate().cancel();
         view.setAlpha(0f);

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- M19: "Ekibi çağır" while no call is open, with the wait after the last call under it. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="12dp"
+    android:layout_marginTop="10dp"
+    android:gravity="center_horizontal"
+    android:orientation="vertical">
+
+    <Button
+        android:id="@+id/projects_call_start"
+        style="?android:attr/borderlessButtonStyle"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:drawableStart="@drawable/projects_ic_megaphone"
+        android:drawablePadding="10dp"
+        android:fontFamily="@font/figtree_semibold"
+        android:gravity="center"
+        android:paddingHorizontal="20dp"
+        android:text="@string/projects_crew_call_start"
+        android:textAllCaps="false"
+        android:textColor="@color/projects_bone_100"
+        android:textSize="15sp" />
+
+    <TextView
+        android:id="@+id/projects_call_wait"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:accessibilityLiveRegion="polite"
+        android:fontFamily="@font/figtree_regular"
+        android:textColor="@color/projects_ash_400"
+        android:textSize="13sp"
+        android:visibility="gone"
+        tools:text="4 dk sonra yeniden çağırabilirsin."
+        tools:visibility="visible" />
+</LinearLayout>

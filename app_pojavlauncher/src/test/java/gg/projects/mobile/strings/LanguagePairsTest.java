@@ -75,6 +75,9 @@ public class LanguagePairsTest {
     public void everyProjectsTextExistsInBothLanguages() throws Exception {
         Map<String, String> english = texts(new File(RES, "values/projects_strings.xml"));
         Map<String, String> turkish = texts(new File(RES, "values-tr/projects_strings.xml"));
+        // M19: the friends and crews texts live in their own file pair.
+        english.putAll(texts(new File(RES, "values/projects_social_strings.xml")));
+        turkish.putAll(texts(new File(RES, "values-tr/projects_social_strings.xml")));
         TreeSet<String> missingTurkish = new TreeSet<>(english.keySet());
         missingTurkish.removeAll(turkish.keySet());
         TreeSet<String> missingEnglish = new TreeSet<>(turkish.keySet());
@@ -105,7 +108,7 @@ public class LanguagePairsTest {
 
     @Test
     public void theEnglishInterfaceHasNoTurkishLeft() throws Exception {
-        for (String file : new String[]{"values/projects_strings.xml", "values/strings.xml"}) {
+        for (String file : new String[]{"values/projects_strings.xml", "values/projects_social_strings.xml", "values/strings.xml"}) {
             for (Map.Entry<String, String> text : texts(new File(RES, file)).entrySet()) {
                 if (TURKISH_ON_PURPOSE.contains(text.getKey())) continue;
                 assertTrue(file + ": " + text.getKey() + " = " + text.getValue(), !TURKISH_LETTER.matcher(text.getValue()).find());

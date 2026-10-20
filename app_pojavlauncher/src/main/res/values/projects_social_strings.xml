@@ -1,0 +1,364 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- M19: Friends and crews ("Arkadaşlar", "Ekip"). Turkish lives in values-tr/projects_social_strings.xml.
+     Short, sentence case; the desktop's words (tr-social.ts, tr-teams.ts). A sentence only where an
+     action cannot be undone or its result is not obvious. -->
+<resources>
+    <string name="projects_social_title">Friends</string>
+    <string name="projects_social_someone">A friend</string>
+    <string name="projects_crew_someone">A crewmate</string>
+    <string name="projects_social_server_projects">Projects</string>
+    <string name="projects_social_on_projects">On Projects</string>
+
+    <string name="projects_social_channel_invites">Invites</string>
+    <string name="projects_social_channel_calls">Crew calls</string>
+    <string name="projects_social_channel_requests">Friend requests</string>
+    <string name="projects_social_push_request">%1$s wants to add you</string>
+    <string name="projects_social_push_invite">%1$s invites you to play</string>
+
+    <!-- The main menu's row -->
+    <string name="projects_social_home_signed_out">Play with your friends</string>
+    <string name="projects_social_home_connect">Connect with Discord</string>
+    <plurals name="projects_social_home_online">
+        <item quantity="one">%d friend online</item>
+        <item quantity="other">%d friends online</item>
+    </plurals>
+    <string name="projects_social_home_nobody">No one\'s online right now</string>
+    <string name="projects_social_home_no_friends">No friends yet</string>
+    <string name="projects_social_home_unavailable">Not available right now</string>
+    <string name="projects_social_home_loading">Connecting</string>
+    <string name="projects_social_home_projects_alone">%1$s is on Projects</string>
+    <plurals name="projects_social_home_projects_with">
+        <item quantity="one">%1$s and %2$d other friend are on Projects</item>
+        <item quantity="other">%1$s and %2$d other friends are on Projects</item>
+    </plurals>
+    <plurals name="projects_crew_home_projects">
+        <item quantity="one">%d of your crew is on Projects</item>
+        <item quantity="other">%d of your crew are on Projects</item>
+    </plurals>
+    <string name="projects_social_pending">You have a request or invite waiting</string>
+
+    <!-- Sign-in -->
+    <string name="projects_social_consent_title">Play with your friends</string>
+    <string name="projects_social_consent_body">You sign in with your Discord account. Your friends see your name, profile picture and what you\'re playing; your email, password and messages never reach us.</string>
+    <string name="projects_social_privacy">Privacy</string>
+    <string name="projects_social_privacy_url">https://projects.gg/gizlilik/#friends</string>
+    <string name="projects_social_sign_in">Sign in with Discord</string>
+    <string name="projects_social_waiting">Approve Discord in your browser</string>
+    <string name="projects_social_waiting_note">Once you approve, you\'ll continue here.</string>
+    <string name="projects_social_reopen">Open the browser again</string>
+    <string name="projects_social_cancel">Cancel</string>
+    <string name="projects_social_signing_in">Signing in</string>
+    <string name="projects_social_sign_in_failed">Couldn\'t finish signing in. Try again.</string>
+    <string name="projects_social_unavailable">Friends isn\'t available right now. Try again in a bit.</string>
+    <string name="projects_social_signed_out_remote">You were signed out of Friends.</string>
+
+    <!-- The list -->
+    <string name="projects_social_invites">Invites</string>
+    <string name="projects_social_requests">Requests</string>
+    <string name="projects_social_playing">In game</string>
+    <string name="projects_social_online">Online</string>
+    <string name="projects_social_offline">Offline</string>
+    <string name="projects_social_sent">Sent requests</string>
+    <string name="projects_social_empty_title">No friends yet</string>
+    <string name="projects_social_empty_body">Share your code or enter a friend\'s code.</string>
+    <string name="projects_social_wants_to_add">Wants to add you</string>
+    <string name="projects_social_waiting_reply">Waiting for a reply</string>
+    <string name="projects_social_invited_you">Invited you to play</string>
+    <string name="projects_social_service_unavailable">Friends isn\'t available right now.</string>
+    <string name="projects_social_replaced">Your account was opened on another device.</string>
+    <string name="projects_social_reconnect">Reconnect</string>
+    <string name="projects_social_notify_offer">Get notified about invites and calls?</string>
+
+    <!-- Presence -->
+    <string name="projects_social_presence_singleplayer">Singleplayer</string>
+    <string name="projects_social_presence_other">On another server</string>
+    <string name="projects_social_presence_other_host">On %1$s</string>
+    <string name="projects_social_presence_playing">In game</string>
+    <string name="projects_social_presence_launcher">In the launcher</string>
+    <string name="projects_social_presence_offline">Offline</string>
+    <string name="projects_social_presence_dnd">Do not disturb</string>
+    <string name="projects_social_seen_today">Seen today</string>
+    <string name="projects_social_seen_yesterday">Seen yesterday</string>
+    <string name="projects_social_seen_week">Seen this week</string>
+    <string name="projects_social_seen_long">Away for a while</string>
+
+    <!-- The player's own status -->
+    <string name="projects_social_status_online">Online</string>
+    <string name="projects_social_status_dnd">Do not disturb</string>
+    <string name="projects_social_status_invisible">Invisible</string>
+    <string name="projects_social_status_change">Change your status</string>
+    <string name="projects_social_status_failed">Couldn\'t change your status.</string>
+
+    <!-- Actions -->
+    <string name="projects_social_join">Join</string>
+    <string name="projects_social_join_title">Open Minecraft?</string>
+    <string name="projects_social_join_body">The game will open and connect to Projects.</string>
+    <string name="projects_social_yes">Yes</string>
+    <string name="projects_social_no">No</string>
+    <string name="projects_social_game_open_title">Minecraft is open</string>
+    <string name="projects_social_game_open_body">Join Projects from Multiplayer in the game.</string>
+    <string name="projects_social_invite_other_body">Join %1$s from Multiplayer in the game.</string>
+    <string name="projects_social_copy_address">Copy address</string>
+    <string name="projects_social_address_copied">Address copied</string>
+    <string name="projects_social_message">Message on Discord</string>
+    <string name="projects_social_favorite">Add to favorites</string>
+    <string name="projects_social_unfavorite">Remove from favorites</string>
+    <string name="projects_social_favorite_mark">Favorite</string>
+    <string name="projects_social_remove">Remove friend</string>
+    <string name="projects_social_remove_ask">Remove %1$s from your list?</string>
+    <string name="projects_social_removed">%1$s removed from your friends</string>
+    <string name="projects_social_block">Block</string>
+    <string name="projects_social_block_title">Block %1$s?</string>
+    <string name="projects_social_block_ask">People you block can\'t find you or send you requests or invites.</string>
+    <string name="projects_social_blocked">%1$s blocked</string>
+    <string name="projects_social_unblock">Unblock</string>
+    <string name="projects_social_unblocked">%1$s unblocked</string>
+    <string name="projects_social_accept">Accept</string>
+    <string name="projects_social_decline">Decline</string>
+    <string name="projects_social_cancel_request">Cancel request</string>
+    <string name="projects_social_dismiss">Dismiss</string>
+    <string name="projects_social_friend_added">You and %1$s are now friends</string>
+    <string name="projects_social_friends_since">Friends since %1$s</string>
+    <string name="projects_social_more">More</string>
+
+    <!-- Add a friend -->
+    <string name="projects_social_add">Add friend</string>
+    <string name="projects_social_your_code">Your code</string>
+    <string name="projects_social_copy_code">Copy code</string>
+    <string name="projects_social_copied">Copied</string>
+    <string name="projects_social_share">Share</string>
+    <string name="projects_social_share_text">Add me as a friend on Projects Launcher: %1$s</string>
+    <string name="projects_social_qr">QR code for your code</string>
+    <string name="projects_social_rotate">Get a new code</string>
+    <string name="projects_social_rotate_ask">Your old code stops working.</string>
+    <string name="projects_social_rotated">Your new code is ready</string>
+    <string name="projects_social_friend_code">Friend\'s code</string>
+    <string name="projects_social_find">Find</string>
+    <string name="projects_social_send">Send request</string>
+    <string name="projects_social_sent_ok">Request sent</string>
+    <string name="projects_social_now_friends">You\'re now friends</string>
+    <string name="projects_social_invalid_code">Codes start with PRJ, followed by 8 letters or numbers.</string>
+    <string name="projects_social_rel_friend">You\'re already friends</string>
+    <string name="projects_social_rel_outgoing">Your request is waiting for a reply</string>
+    <string name="projects_social_rel_blocked">You\'ve blocked this person</string>
+    <string name="projects_social_rel_self">That\'s your code</string>
+
+    <!-- Friend settings -->
+    <string name="projects_social_settings">Friend settings</string>
+    <string name="projects_social_share_server">Show the address when I\'m on other servers</string>
+    <string name="projects_social_share_last_seen">Show when I was last seen</string>
+    <string name="projects_social_notifications">Notifications</string>
+    <string name="projects_social_notifications_off">Notifications are off on this phone.</string>
+    <string name="projects_social_blocked_title">Blocked</string>
+    <string name="projects_social_blocked_empty">You haven\'t blocked anyone.</string>
+    <string name="projects_social_account">Account</string>
+    <string name="projects_social_sign_out">Sign out</string>
+    <string name="projects_social_delete_data">Delete my data</string>
+    <string name="projects_social_delete_title">Delete your data?</string>
+    <string name="projects_social_delete_body">Your friends list, requests and settings backup are permanently deleted.</string>
+    <string name="projects_social_delete_confirm">Delete permanently</string>
+    <string name="projects_social_deleted">Your data was deleted</string>
+
+    <!-- Crews -->
+    <string name="projects_crew_title">Crew</string>
+    <string name="projects_crew_members">%1$d/%2$d members</string>
+    <plurals name="projects_crew_member_count">
+        <item quantity="one">%d member</item>
+        <item quantity="other">%d members</item>
+    </plurals>
+    <string name="projects_crew_founded">Founded %1$s</string>
+    <plurals name="projects_crew_online">
+        <item quantity="one">%d online</item>
+        <item quantity="other">%d online</item>
+    </plurals>
+    <string name="projects_crew_leader">Leader</string>
+    <string name="projects_crew_moderator">Moderator</string>
+    <string name="projects_crew_you">You</string>
+    <string name="projects_crew_privacy">Your crew sees your name, picture and what you play, never another server\'s address.</string>
+    <string name="projects_crew_open">Open crew</string>
+    <string name="projects_crew_row_none">Create or join a crew</string>
+    <string name="projects_crew_invite_to">Invite to crew</string>
+
+    <string name="projects_crew_join_title">Join with a code</string>
+    <string name="projects_crew_code">Crew code</string>
+    <string name="projects_crew_find">Find</string>
+    <string name="projects_crew_join">Join crew</string>
+    <string name="projects_crew_joined">You joined %1$s</string>
+    <string name="projects_crew_not_code">That\'s not a crew code.</string>
+    <string name="projects_crew_rel_member">You\'re already in this crew.</string>
+    <string name="projects_crew_rel_elsewhere">Leave your crew first.</string>
+    <string name="projects_crew_rel_blocked">You\'ve blocked someone in this crew.</string>
+    <string name="projects_crew_rel_full">The crew is full.</string>
+
+    <string name="projects_crew_create">Create a crew</string>
+    <string name="projects_crew_name">Crew name</string>
+    <string name="projects_crew_tag">Tag</string>
+    <string name="projects_crew_emblem">Emblem</string>
+    <string name="projects_crew_color">Colour</string>
+    <string name="projects_crew_frame">Frame</string>
+    <string name="projects_crew_motto">Motto</string>
+    <string name="projects_crew_motto_optional">Optional</string>
+    <string name="projects_crew_create_submit">Create crew</string>
+    <string name="projects_crew_created">%1$s is ready</string>
+    <string name="projects_crew_name_short">At least 3 letters or digits.</string>
+    <string name="projects_crew_name_long">24 characters at most.</string>
+    <string name="projects_crew_name_chars">Only letters, digits, spaces and \' &amp; ! _ - are allowed.</string>
+    <string name="projects_crew_tag_invalid">2 to 4 letters or digits.</string>
+    <string name="projects_crew_motto_long">40 characters at most.</string>
+    <string name="projects_crew_motto_chars">Only letters, digits, spaces and \' &amp; ! _ - , ? are allowed.</string>
+    <string name="projects_crew_motto_letters">At least one letter or digit.</string>
+    <string name="projects_crew_count">%1$d/%2$d</string>
+
+    <string name="projects_crew_invites">Crew invites</string>
+    <string name="projects_crew_invited_by">%1$s invited you</string>
+    <string name="projects_crew_invited_you">%1$s invited you to %2$s</string>
+    <string name="projects_crew_kicked">You were removed from %1$s</string>
+    <string name="projects_crew_disbanded">%1$s was disbanded</string>
+    <string name="projects_crew_copy">Copy</string>
+    <string name="projects_crew_share_text">Join my crew on Projects Launcher with this code: %1$s</string>
+    <string name="projects_crew_invite_title">Invite friends</string>
+    <string name="projects_crew_invite">Invite</string>
+    <string name="projects_crew_invite_sent">Invited</string>
+    <string name="projects_crew_invite_member">In the crew</string>
+    <string name="projects_crew_invite_none">No friends to invite.</string>
+
+    <string name="projects_crew_remove">Remove from crew</string>
+    <string name="projects_crew_remove_ask">%1$s leaves the crew and the crew code changes.</string>
+    <string name="projects_crew_removed">%1$s removed from the crew</string>
+    <string name="projects_crew_hand_over">Hand over leadership</string>
+    <string name="projects_crew_hand_over_ask">%1$s becomes the leader, and you become a member.</string>
+    <string name="projects_crew_hand_over_ask_moderator">%1$s becomes the leader, and you become a moderator.</string>
+    <string name="projects_crew_handed_over">%1$s is the leader now</string>
+    <string name="projects_crew_leave">Leave crew</string>
+    <string name="projects_crew_leave_ask">You\'ll need the crew code to come back.</string>
+    <string name="projects_crew_left">You left the crew</string>
+    <string name="projects_crew_close">Close crew</string>
+    <string name="projects_crew_close_ask">The crew is deleted.</string>
+    <string name="projects_crew_disband">Disband crew</string>
+    <string name="projects_crew_disband_ask">The crew is deleted for everyone. This can\'t be undone.</string>
+    <string name="projects_crew_disbanded_done">Crew disbanded</string>
+
+    <string name="projects_crew_call_start">Call the crew</string>
+    <plurals name="projects_crew_call_wait">
+        <item quantity="one">You can call again in %d min.</item>
+        <item quantity="other">You can call again in %d min.</item>
+    </plurals>
+    <string name="projects_crew_call_sent">Crew called</string>
+    <string name="projects_crew_call_mine">Your call is on</string>
+    <string name="projects_crew_call_theirs">%1$s is calling the crew</string>
+    <string name="projects_crew_call_ready">Ready to play?</string>
+    <string name="projects_crew_call_left">%d min</string>
+    <string name="projects_crew_call_end">End</string>
+    <string name="projects_crew_call_yes">Coming</string>
+    <string name="projects_crew_call_soon">Soon</string>
+    <string name="projects_crew_call_no">Can\'t</string>
+    <string name="projects_crew_call_said_yes">Coming</string>
+    <string name="projects_crew_call_said_soon">Soon</string>
+    <string name="projects_crew_call_said_no">Can\'t come</string>
+    <string name="projects_crew_call_answered">Answer sent</string>
+
+    <string name="projects_crew_notifications">Crew notifications</string>
+    <string name="projects_crew_calls">Crew calls</string>
+    <string name="projects_crew_mute">Mute</string>
+    <string name="projects_crew_unmute">Unmute</string>
+    <string name="projects_crew_muted">Muted</string>
+    <string name="projects_crew_muted_until">Muted · %1$s</string>
+    <string name="projects_crew_mute_hour">1 hour</string>
+    <string name="projects_crew_mute_eight">8 hours</string>
+    <string name="projects_crew_mute_morning">Until tomorrow morning</string>
+    <string name="projects_crew_mute_forever">Until I unmute</string>
+    <string name="projects_crew_today_at">Today %1$s</string>
+    <string name="projects_crew_tomorrow_at">Tomorrow %1$s</string>
+
+    <!-- What went wrong (the service's codes are never shown) -->
+    <string name="projects_social_error_unavailable">That can\'t be done right now. Try again in a bit.</string>
+    <string name="projects_social_error_signed_out">Your session ended. Sign in again.</string>
+    <string name="projects_social_error_rate_limited">You tried that too often. Try again in a bit.</string>
+    <string name="projects_social_error_not_a_code">That\'s not a friend code.</string>
+    <string name="projects_social_error_no_one">Nobody has this code.</string>
+    <string name="projects_social_error_own_code">That\'s your own code.</string>
+    <string name="projects_social_error_already_friends">You\'re already friends.</string>
+    <string name="projects_social_error_already_requested">Your request is already sent.</string>
+    <string name="projects_social_error_you_blocked">You\'ve blocked this person. Unblock them first.</string>
+    <string name="projects_social_error_list_full">Your friends list is full.</string>
+    <string name="projects_social_error_their_list_full">This person\'s friends list is full.</string>
+    <string name="projects_social_error_too_many_requests">You have too many pending requests. Try again once some are answered.</string>
+    <string name="projects_social_error_they_have_too_many">This person has too many pending requests. Try again in a bit.</string>
+    <string name="projects_social_error_request_gone">This request isn\'t valid anymore.</string>
+    <string name="projects_social_error_friend_gone">This person isn\'t on your friends list anymore.</string>
+    <string name="projects_social_error_no_crew">No crew has this code.</string>
+    <string name="projects_social_error_crew_invite_gone">This invite isn\'t valid anymore.</string>
+    <string name="projects_social_error_member_gone">This player isn\'t in the crew anymore.</string>
+    <string name="projects_social_error_already_in_crew">You\'re already in a crew. Leave it first.</string>
+    <string name="projects_social_error_already_member">This player is already in the crew.</string>
+    <string name="projects_social_error_crew_full">The crew is full.</string>
+    <string name="projects_social_error_leader_only">Only the crew\'s leader can do that.</string>
+    <string name="projects_social_error_not_permitted">You don\'t have permission to do that.</string>
+    <string name="projects_social_error_hand_over_first">Hand the leader role to another member before you leave.</string>
+    <string name="projects_social_error_blocked_in_crew">You\'ve blocked someone in this crew.</string>
+    <string name="projects_social_error_crew_invites_full">The crew has too many invites waiting. Try again later.</string>
+    <string name="projects_social_error_crew_name">A crew name has 3 to 24 letters, digits or spaces.</string>
+    <string name="projects_social_error_crew_name_rejected">That name can\'t be used. Pick another one.</string>
+    <string name="projects_social_error_crew_tag">A tag has 2 to 4 letters or digits.</string>
+    <string name="projects_social_error_crew_motto">A motto has up to 40 letters, digits, spaces and \' &amp; ! _ - , ?</string>
+    <string name="projects_social_error_crew_motto_rejected">That motto can\'t be used. Try another one.</string>
+    <string name="projects_social_error_crew_text_today">A crew\'s name, tag and motto can change 10 times a day. Try again tomorrow.</string>
+    <string name="projects_social_error_call_active">Your crew already has a call on.</string>
+    <string name="projects_social_error_call_ended">This call has ended.</string>
+    <string name="projects_social_error_not_in_crew">You\'re not in a crew anymore.</string>
+    <string name="projects_social_error_failed">Something went wrong. Try again in a bit.</string>
+
+    <!-- Crew colours, frames and emblems (names for TalkBack and the picker) -->
+    <string name="projects_crew_color_gold">Gold</string>
+    <string name="projects_crew_color_copper">Copper</string>
+    <string name="projects_crew_color_crimson">Crimson</string>
+    <string name="projects_crew_color_rose">Rose</string>
+    <string name="projects_crew_color_purple">Purple</string>
+    <string name="projects_crew_color_navy">Navy</string>
+    <string name="projects_crew_color_blue">Blue</string>
+    <string name="projects_crew_color_teal">Teal</string>
+    <string name="projects_crew_color_green">Green</string>
+    <string name="projects_crew_color_silver">Silver</string>
+    <string name="projects_crew_color_ivory">Ivory</string>
+    <string name="projects_crew_color_obsidian">Obsidian</string>
+    <string name="projects_crew_frame_cut">Cut</string>
+    <string name="projects_crew_frame_shield">Shield</string>
+    <string name="projects_crew_frame_banner">Banner</string>
+    <string name="projects_crew_frame_hex">Hexagon</string>
+    <string name="projects_crew_emblem_sword">Sword</string>
+    <string name="projects_crew_emblem_shield">Shield</string>
+    <string name="projects_crew_emblem_axe">Axe</string>
+    <string name="projects_crew_emblem_crown">Crown</string>
+    <string name="projects_crew_emblem_trophy">Trophy</string>
+    <string name="projects_crew_emblem_flag">Flag</string>
+    <string name="projects_crew_emblem_target">Target</string>
+    <string name="projects_crew_emblem_skull">Skull</string>
+    <string name="projects_crew_emblem_ghost">Ghost</string>
+    <string name="projects_crew_emblem_flame">Flame</string>
+    <string name="projects_crew_emblem_bolt">Bolt</string>
+    <string name="projects_crew_emblem_sun">Sun</string>
+    <string name="projects_crew_emblem_moon">Moon</string>
+    <string name="projects_crew_emblem_star">Star</string>
+    <string name="projects_crew_emblem_planet">Planet</string>
+    <string name="projects_crew_emblem_snowflake">Snowflake</string>
+    <string name="projects_crew_emblem_waves">Waves</string>
+    <string name="projects_crew_emblem_leaf">Leaf</string>
+    <string name="projects_crew_emblem_tree">Tree</string>
+    <string name="projects_crew_emblem_cactus">Cactus</string>
+    <string name="projects_crew_emblem_paw">Paw</string>
+    <string name="projects_crew_emblem_cat">Cat</string>
+    <string name="projects_crew_emblem_horse">Horse</string>
+    <string name="projects_crew_emblem_bird">Bird</string>
+    <string name="projects_crew_emblem_fish">Fish</string>
+    <string name="projects_crew_emblem_butterfly">Butterfly</string>
+    <string name="projects_crew_emblem_heart">Heart</string>
+    <string name="projects_crew_emblem_diamond">Diamond</string>
+    <string name="projects_crew_emblem_cube">Cube</string>
+    <string name="projects_crew_emblem_rocket">Rocket</string>
+    <string name="projects_crew_emblem_potion">Potion</string>
+    <string name="projects_crew_emblem_wand">Wand</string>
+    <string name="projects_crew_emblem_castle">Castle</string>
+    <string name="projects_crew_emblem_controller">Controller</string>
+    <string name="projects_crew_emblem_alien">Alien</string>
+    <string name="projects_crew_emblem_robot">Robot</string>
+</resources>

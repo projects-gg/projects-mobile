@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- M19: the crew page. In a crew: its card, the call, members by where they are, the code, inviting
+     friends and leaving. Without one: crew invites, joining with a code and creating a crew. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_app"
+    android:orientation="vertical">
+
+    <gg.projects.mobile.ui.ScreenHeader
+        android:id="@+id/projects_crew_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="4dp"
+        android:text="@string/projects_crew_title" />
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/projects_crew_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingBottom="24dp"
+            android:visibility="gone" />
+
+        <ScrollView
+            android:id="@+id/projects_crew_none"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fillViewport="true"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingStart="16dp"
+                android:paddingTop="8dp"
+                android:paddingEnd="16dp"
+                android:paddingBottom="24dp">
+
+                <LinearLayout
+                    android:id="@+id/projects_crew_invites"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:accessibilityHeading="true"
+                    android:fontFamily="@font/figtree_semibold"
+                    android:labelFor="@+id/projects_crew_join_code"
+                    android:text="@string/projects_crew_join_title"
+                    android:textColor="@color/projects_bone_100"
+                    android:textSize="15sp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:orientation="horizontal">
+
+                    <EditText
+                        android:id="@+id/projects_crew_join_code"
+                        android:layout_width="0dp"
+                        android:layout_height="52dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/projects_input"
+                        android:fontFamily="@font/figtree_regular"
+                        android:hint="EKP-XXXX-XXXX"
+                        android:imeOptions="actionSearch"
+                        android:importantForAutofill="no"
+                        android:inputType="textCapCharacters|textNoSuggestions|textVisiblePassword"
+                        android:maxLength="40"
+                        android:maxLines="1"
+                        android:paddingHorizontal="14dp"
+                        android:textColor="@color/projects_bone_100"
+                        android:textColorHint="@color/projects_obsidian_600"
+                        android:textSize="16sp"
+                        tools:ignore="HardcodedText" />
+
+                    <com.kdt.mcgui.MineButton
+                        android:id="@+id/projects_crew_join_find"
+                        android:layout_width="wrap_content"
+                        android:layout_height="52dp"
+                        android:layout_marginStart="8dp"
+                        android:minWidth="88dp"
+                        android:paddingHorizontal="16dp"
+                        android:text="@string/projects_crew_find"
+                        android:textSize="15sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/projects_crew_join_message"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:accessibilityLiveRegion="polite"
+                    android:fontFamily="@font/figtree_regular"
+                    android:textColor="@color/projects_flare_400"
+                    android:textSize="13sp"
+                    android:visibility="gone" />
+
+                <LinearLayout
+                    android:id="@+id/projects_crew_join_result"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/projects_social_section_background"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="12dp"
+                    android:visibility="gone"
+                    tools:visibility="visible">
+
+                    <gg.projects.mobile.social.ui.CrewMarkView
+                        android:id="@+id/projects_crew_join_mark"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/projects_crew_join_name"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:ellipsize="end"
+                            android:fontFamily="@font/figtree_semibold"
+                            android:maxLines="1"
+                            android:textColor="@color/projects_bone_100"
+                            android:textSize="16sp"
+                            tools:text="Gece Kurtları" />
+
+                        <TextView
+                            android:id="@+id/projects_crew_join_line"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/figtree_regular"
+                            android:textColor="@color/projects_ash_400"
+                            android:textSize="13sp"
+                            tools:text="7 üye" />
+                    </LinearLayout>
+
+                    <Button
+                        android:id="@+id/projects_crew_join_submit"
+                        style="?android:attr/borderlessButtonStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:fontFamily="@font/figtree_semibold"
+                        android:minHeight="44dp"
+                        android:text="@string/projects_crew_join"
+                        android:textAllCaps="false"
+                        android:textColor="@color/projects_bone_100"
+                        android:textSize="14sp" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="24dp"
+                    android:background="@color/projects_obsidian_700" />
+
+                <com.kdt.mcgui.MineButton
+                    android:id="@+id/projects_crew_create"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:layout_marginTop="20dp"
+                    android:text="@string/projects_crew_create"
+                    android:textSize="16sp" />
+            </LinearLayout>
+        </ScrollView>
+    </FrameLayout>
+</LinearLayout>

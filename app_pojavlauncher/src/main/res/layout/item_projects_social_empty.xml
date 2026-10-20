@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- M19: no friends yet: what to do, and the one button that does it. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:paddingHorizontal="24dp"
+    android:paddingTop="32dp"
+    android:paddingBottom="24dp">
+
+    <ImageView
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:background="@drawable/projects_social_icon_tile"
+        android:importantForAccessibility="no"
+        android:padding="14dp"
+        android:src="@drawable/projects_ic_users"
+        android:tint="@color/projects_gold_300" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:fontFamily="@font/figtree_semibold"
+        android:gravity="center"
+        android:text="@string/projects_social_empty_title"
+        android:textColor="@color/projects_bone_100"
+        android:textSize="16sp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:fontFamily="@font/figtree_regular"
+        android:gravity="center"
+        android:text="@string/projects_social_empty_body"
+        android:textColor="@color/projects_ash_400"
+        android:textSize="14sp" />
+
+    <com.kdt.mcgui.MineButton
+        android:id="@+id/projects_social_empty_add"
+        android:layout_width="wrap_content"
+        android:layout_height="48dp"
+        android:layout_marginTop="16dp"
+        android:minWidth="180dp"
+        android:paddingHorizontal="20dp"
+        android:text="@string/projects_social_add"
+        android:textSize="15sp" />
+</LinearLayout>

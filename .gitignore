@@ -14,3 +14,7 @@ app_pojavlauncher/.cxx/
 /jre_lwjgl3glfw/**/build/
 /jre_lwjgl3glfw/**/.gradle/
 /app_pojavlauncher/curseforge_key.txt
+
+# Projects fork (M19): the Firebase config file is copied in for a build and never committed.
+/app_pojavlauncher/google-services.json
+google-services.json

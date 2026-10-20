@@ -114,6 +114,29 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
     private static final String KEY_NOTIFY_OFFER_DONE = "projects_notify_offer_done";
     /** M18 (0.1.9): Android's question was opened from that card (static: the card may be built again meanwhile). */
     private static boolean sOfferAsked;
+    /** M19: "Katıl" on the friends screens: the next home screen starts Projects as "Projects'e katıl" does. */
+    private static boolean sJoinRequested;
+
+    /**
+     * M19: a friend's or the crew's "Katıl" (after its question): the home screen comes back and starts
+     * the Projects profile through its join, with every check "Projects'e katıl" makes.
+     */
+    public static void requestJoin() {
+        sJoinRequested = true;
+    }
+
+    /** M19: Android's notification question came already (the home card's or the first start's). */
+    public static boolean notificationsAskedBefore() {
+        return LauncherPreferences.DEFAULT_PREF != null
+                && LauncherPreferences.DEFAULT_PREF.getBoolean(KEY_START_NOTIFY_ASKED, false);
+    }
+
+    /** M19: the friends screen asked: the home card's question and the first start's are answered too. */
+    public static void markNotificationsAnswered() {
+        if (LauncherPreferences.DEFAULT_PREF == null) return;
+        LauncherPreferences.DEFAULT_PREF.edit().putBoolean(KEY_NOTIFY_OFFER_DONE, true)
+                .putBoolean(KEY_START_NOTIFY_ASKED, true).apply();
+    }
     private static final android.os.Handler MAIN = new android.os.Handler(android.os.Looper.getMainLooper());
     /** M17: a fix made while no home screen was there to show it; the next one shows it with "Geri al". */
     @Nullable
@@ -402,6 +425,13 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         if (offer != mNotifyOfferDue) {
             mNotifyOfferDue = offer;
             render(System.currentTimeMillis());
+        }
+        // M19: "Katıl" from the friends screens, once the home screen has settled.
+        if (sJoinRequested) {
+            sJoinRequested = false;
+            mJoinButton.postDelayed(() -> {
+                if (mResumed && mFragment.isAdded() && mFragment.getView() != null) join(mJoinButton);
+            }, 350);
         }
     }
 

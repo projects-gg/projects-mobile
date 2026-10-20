@@ -171,6 +171,44 @@
         <item name="android:textSize">11sp</item>
     </style>
 
+    <!-- M19: forms on the friends screens ("Ekip kur"): a label, the desktop-like text field, a line for
+         what is wrong with it (flare, read out as it changes). -->
+    <style name="ProjectsFormLabel">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">18dp</item>
+        <item name="android:fontFamily">@font/figtree_semibold</item>
+        <item name="android:textColor">@color/projects_bone_100</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+
+    <style name="ProjectsFormInput">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">52dp</item>
+        <item name="android:layout_marginTop">8dp</item>
+        <item name="android:background">@drawable/projects_input</item>
+        <item name="android:fontFamily">@font/figtree_regular</item>
+        <item name="android:importantForAutofill">no</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:paddingStart">14dp</item>
+        <item name="android:paddingEnd">14dp</item>
+        <item name="android:textColor">@color/projects_bone_100</item>
+        <item name="android:textColorHint">@color/projects_obsidian_600</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:imeOptions">actionNext</item>
+    </style>
+
+    <style name="ProjectsFormError">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">6dp</item>
+        <item name="android:accessibilityLiveRegion">polite</item>
+        <item name="android:fontFamily">@font/figtree_regular</item>
+        <item name="android:textColor">@color/projects_flare_400</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:visibility">gone</item>
+    </style>
+
     <!-- The game's exit message (0.1.5): no window of its own behind the branded dialog, which
          appears once the launcher looked at the failed start (a fraction of a second). -->
     <style name="ProjectsExitTheme" parent="AppTheme">

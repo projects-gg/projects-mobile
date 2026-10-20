@@ -381,6 +381,22 @@ public class LauncherActivity extends BaseActivity implements gg.projects.mobile
         mProgressLayout.observe(ProgressLayout.INSTALL_MODPACK);
         mProgressLayout.observe(ProgressLayout.AUTHENTICATE_MICROSOFT);
         mProgressLayout.observe(ProgressLayout.DOWNLOAD_VERSION_LIST);
+        // Projects fork (M19): notification taps and projects:// links find this launcher.
+        gg.projects.mobile.social.SocialRoutes.launcherCreated();
+    }
+
+    /** Projects fork (M19): back from a projects:// link or a friends notification (CLEAR_TOP). */
+    @Override
+    protected void onNewIntent(android.content.Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+    }
+
+    /** Projects fork (M19): the place a notification or link asked for, once the fragments may change. */
+    @Override
+    protected void onPostResume() {
+        super.onPostResume();
+        gg.projects.mobile.social.SocialRoutes.consume(this);
     }
 
     @Override
@@ -415,12 +431,15 @@ public class LauncherActivity extends BaseActivity implements gg.projects.mobile
         super.onStart();
         getSupportFragmentManager().registerFragmentLifecycleCallbacks(mFragmentCallbackListener, true);
         registerReceiver(mTimeZoneReceiver, new android.content.IntentFilter(android.content.Intent.ACTION_TIMEZONE_CHANGED));
+        // Projects fork (M19): the friends' presence socket is open while the launcher is on screen.
+        gg.projects.mobile.social.SocialService.get(this).uiStarted();
     }
 
     @Override
     protected void onStop() {
         super.onStop();
         unregisterReceiver(mTimeZoneReceiver);
+        gg.projects.mobile.social.SocialService.get(this).uiStopped();
     }
 
     @Override
@@ -433,6 +452,7 @@ public class LauncherActivity extends BaseActivity implements gg.projects.mobile
         ExtraCore.removeExtraListenerFromValue(ExtraConstants.SELECT_AUTH_METHOD, mSelectAuthMethod);
         ExtraCore.removeExtraListenerFromValue(ExtraConstants.LAUNCH_GAME, mLaunchGameListener);
         gg.projects.mobile.join.JoinOutcome.clearFilesStarter(this);
+        gg.projects.mobile.social.SocialRoutes.launcherDestroyed();
 
         getSupportFragmentManager().unregisterFragmentLifecycleCallbacks(mFragmentCallbackListener);
     }

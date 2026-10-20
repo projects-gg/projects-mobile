@@ -1,0 +1,867 @@
+package gg.projects.mobile.social.ui;
+
+import android.Manifest;
+import android.animation.Animator;
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.graphics.drawable.Drawable;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Bundle;
+import android.provider.Settings;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
+import androidx.recyclerview.widget.DefaultItemAnimator;
+import androidx.recyclerview.widget.DiffUtil;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import net.kdt.pojavlaunch.R;
+import net.kdt.pojavlaunch.Tools;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import gg.projects.mobile.mods.Motion;
+import gg.projects.mobile.social.SocialGate;
+import gg.projects.mobile.social.SocialModel.Call;
+import gg.projects.mobile.social.SocialModel.Friend;
+import gg.projects.mobile.social.SocialModel.Invite;
+import gg.projects.mobile.social.SocialModel.Me;
+import gg.projects.mobile.social.SocialModel.Member;
+import gg.projects.mobile.social.SocialModel.Presence;
+import gg.projects.mobile.social.SocialModel.Profile;
+import gg.projects.mobile.social.SocialModel.Request;
+import gg.projects.mobile.social.SocialModel.Team;
+import gg.projects.mobile.social.SocialModel.TeamInvite;
+import gg.projects.mobile.social.SocialNotifications;
+import gg.projects.mobile.social.SocialProblem;
+import gg.projects.mobile.social.SocialService;
+import gg.projects.mobile.social.SocialState;
+import gg.projects.mobile.ui.ChamferDrawable;
+import gg.projects.mobile.ui.Haptics;
+import gg.projects.mobile.ui.Press;
+import gg.projects.mobile.ui.ProjectsHomeCard;
+import gg.projects.mobile.ui.ProjectsUi;
+import gg.projects.mobile.ui.ScreenHeader;
+
+/**
+ * The friends screen (M19). Signed out: the desktop's consent screen (what is shared, what never
+ * reaches the service, "Gizlilik") and "Discord ile giriş yap". Signed in: the player and their
+ * status, the crew, "Birlikte oyna" invites, crew invites and friend requests, then friends by where
+ * they are (in game, online, offline; favourites first) and the requests the player sent. Live while
+ * it is on screen; rows that come, go or move glide like the news list.
+ */
+public class SocialFragment extends Fragment implements SocialService.Listener {
+    public static final String TAG = "ProjectsSocialFragment";
+    public static final String ARG_INVITE = "invite";
+
+    private static final int T_ME = 0;
+    private static final int T_BANNER = 1;
+    private static final int T_CREW = 2;
+    private static final int T_HEADER = 3;
+    private static final int T_PERSON = 4;
+    private static final int T_EMPTY = 5;
+
+    private final Adapter mAdapter = new Adapter();
+    private RecyclerView mList;
+    private View mConsent;
+    private TextView mConsentMessage;
+    private Button mSignIn;
+    private View mWaiting;
+    private TextView mWaitingTitle;
+    private View mWaitingNote;
+    private View mReopen;
+    private ImageButton mAddAction;
+    private ImageButton mSettingsAction;
+    private boolean mRemoteSignOutShown;
+    private final Runnable mTick = this::render;
+
+    /** Android's notification question from the list's offer. */
+    private final ActivityResultLauncher<String> mPermission = registerForActivityResult(
+            new ActivityResultContracts.RequestPermission(), granted -> {
+                if (!isAdded()) return;
+                SocialService service = SocialService.get(requireContext());
+                if (granted) service.syncPush();
+                render();
+            });
+
+    public SocialFragment() {
+        super(R.layout.fragment_projects_social);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        ScreenHeader header = view.findViewById(R.id.projects_social_header);
+        mAddAction = header.addAction(R.drawable.projects_ic_user_plus, R.string.projects_social_add,
+                v -> Tools.swapFragment(requireActivity(), AddFriendFragment.class, AddFriendFragment.TAG, null));
+        mSettingsAction = header.addAction(R.drawable.projects_ic_gear_six, R.string.projects_social_settings,
+                v -> Tools.swapFragment(requireActivity(), SocialSettingsFragment.class, SocialSettingsFragment.TAG, null));
+        mList = view.findViewById(R.id.projects_social_list);
+        mList.setLayoutManager(new LinearLayoutManager(view.getContext()));
+        mAdapter.setHasStableIds(true);
+        mList.setAdapter(mAdapter);
+        if (Motion.enabled(view.getContext())) {
+            DefaultItemAnimator animator = new DefaultItemAnimator();
+            animator.setSupportsChangeAnimations(false);
+            animator.setAddDuration(Motion.ENTER_MS);
+            animator.setMoveDuration(Motion.ENTER_MS);
+            animator.setRemoveDuration(Motion.EXIT_MS);
+            mList.setItemAnimator(animator);
+        } else {
+            mList.setItemAnimator(null);
+        }
+        mConsent = view.findViewById(R.id.projects_social_consent);
+        mConsentMessage = view.findViewById(R.id.projects_consent_message);
+        mSignIn = view.findViewById(R.id.projects_consent_sign_in);
+        mWaiting = view.findViewById(R.id.projects_consent_waiting);
+        mWaitingTitle = view.findViewById(R.id.projects_consent_waiting_title);
+        mWaitingNote = view.findViewById(R.id.projects_consent_waiting_note);
+        mReopen = view.findViewById(R.id.projects_consent_reopen);
+        View cancel = view.findViewById(R.id.projects_consent_cancel);
+        View privacy = view.findViewById(R.id.projects_consent_privacy);
+        Drawable glyph = ContextCompat.getDrawable(view.getContext(), R.drawable.projects_ic_discord_glyph);
+        if (glyph != null) {
+            float dp = getResources().getDisplayMetrics().density;
+            glyph.setBounds(0, 0, Math.round(22 * dp), Math.round(16.7f * dp));
+            mSignIn.setCompoundDrawablesRelative(glyph, null, null, null);
+        }
+        Press.attach(mSignIn, Press.Style.BUTTON);
+        Press.attach(mReopen, Press.Style.BUTTON);
+        Press.attach(cancel, Press.Style.BUTTON);
+        Press.attach(privacy, Press.Style.BUTTON);
+        mSignIn.setOnClickListener(v -> SocialService.get(requireContext()).beginSignIn(requireActivity()));
+        mReopen.setOnClickListener(v -> SocialService.get(requireContext()).reopenSignInPage(requireActivity()));
+        cancel.setOnClickListener(v -> SocialService.get(requireContext()).cancelSignIn());
+        privacy.setOnClickListener(v -> ProjectsUi.openUrl(requireActivity(), getString(R.string.projects_social_privacy_url)));
+    }
+
+    /** Slide up and fade in; leave a little faster (as the news and mod screens). */
+    @Nullable
+    @Override
+    public Animator onCreateAnimator(int transit, boolean enter, int nextAnim) {
+        View view = getView();
+        if (view == null || !Motion.enabled(view.getContext())) return null;
+        float distance = 28 * view.getResources().getDisplayMetrics().density;
+        AnimatorSet set = new AnimatorSet();
+        if (enter) {
+            set.playTogether(ObjectAnimator.ofFloat(view, View.ALPHA, 0f, 1f), ObjectAnimator.ofFloat(view, View.TRANSLATION_Y, distance, 0f));
+            set.setDuration(Motion.ENTER_MS);
+            set.setInterpolator(Motion.EASE_OUT);
+        } else {
+            set.playTogether(ObjectAnimator.ofFloat(view, View.ALPHA, 1f, 0f), ObjectAnimator.ofFloat(view, View.TRANSLATION_Y, 0f, distance * 0.6f));
+            set.setDuration(Motion.EXIT_MS);
+            set.setInterpolator(Motion.EASE_IN);
+        }
+        return set;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        SocialService service = SocialService.get(requireContext());
+        service.addListener(this);
+        service.surfaceShown(SocialService.Surface.FRIENDS, true);
+        service.refresh(false);
+        if (service.takeSignedOutRemotely()) mRemoteSignOutShown = true;
+        render();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        SocialService service = SocialService.get(requireContext());
+        service.removeListener(this);
+        service.surfaceShown(SocialService.Surface.FRIENDS, false);
+        if (mList != null) mList.removeCallbacks(mTick);
+    }
+
+    @Override
+    public void onSocialChanged() {
+        render();
+    }
+
+    private void render() {
+        if (!isAdded() || getView() == null) return;
+        Context context = requireContext();
+        SocialService service = SocialService.get(context);
+        if (!service.enabled()) {
+            // Friends were turned off while the screen was open.
+            requireActivity().onBackPressed();
+            return;
+        }
+        boolean signedIn = service.signedIn();
+        mAddAction.setVisibility(signedIn ? View.VISIBLE : View.GONE);
+        mSettingsAction.setVisibility(signedIn ? View.VISIBLE : View.GONE);
+        mConsent.setVisibility(signedIn ? View.GONE : View.VISIBLE);
+        mList.setVisibility(signedIn ? View.VISIBLE : View.GONE);
+        if (!signedIn) {
+            renderConsent(service);
+            return;
+        }
+        mRemoteSignOutShown = false;
+        mAdapter.submit(buildRows(service));
+        // Invites and calls end at their time without a message: the screen looks again then.
+        mList.removeCallbacks(mTick);
+        long now = SocialService.nowSeconds();
+        long next = Long.MAX_VALUE;
+        for (Invite invite : service.state().invites(now)) next = Math.min(next, invite.expires - now);
+        for (Call call : service.state().calls(now)) next = Math.min(next, service.state().secondsLeft(call, now));
+        if (next != Long.MAX_VALUE && next > 0) mList.postDelayed(mTick, Math.min(next, 3600) * 1000L + 500);
+    }
+
+    private void renderConsent(SocialService service) {
+        SocialService.SignInStatus status = service.signInStatus();
+        boolean waiting = status == SocialService.SignInStatus.WAITING || status == SocialService.SignInStatus.CLAIMING;
+        mWaiting.setVisibility(waiting ? View.VISIBLE : View.GONE);
+        mSignIn.setVisibility(waiting ? View.GONE : View.VISIBLE);
+        mSignIn.setEnabled(status != SocialService.SignInStatus.CHECKING);
+        mSignIn.setAlpha(status == SocialService.SignInStatus.CHECKING ? 0.6f : 1f);
+        boolean claiming = status == SocialService.SignInStatus.CLAIMING;
+        mWaitingTitle.setText(claiming ? R.string.projects_social_signing_in : R.string.projects_social_waiting);
+        mWaitingNote.setVisibility(claiming ? View.GONE : View.VISIBLE);
+        mReopen.setVisibility(claiming ? View.GONE : View.VISIBLE);
+        String message = null;
+        if (status == SocialService.SignInStatus.FAILED) message = getString(R.string.projects_social_sign_in_failed);
+        else if (status == SocialService.SignInStatus.UNAVAILABLE) message = getString(R.string.projects_social_unavailable);
+        else if (mRemoteSignOutShown && status == SocialService.SignInStatus.IDLE) message = getString(R.string.projects_social_signed_out_remote);
+        mConsentMessage.setText(message);
+        mConsentMessage.setVisibility(message == null ? View.GONE : View.VISIBLE);
+    }
+
+    // ---- rows ----
+
+    /** One row of the list. */
+    private static final class Row {
+        final int type;
+        final String id;
+        /** What it shows: a row re-binds only when this changes. */
+        final String content;
+        @Nullable
+        final Object data;
+
+        Row(int type, String id, String content, @Nullable Object data) {
+            this.type = type;
+            this.id = id;
+            this.content = content;
+            this.data = data;
+        }
+    }
+
+    private static final class Banner {
+        final int text;
+        final int action;
+        final boolean closable;
+        final String kind;
+
+        Banner(String kind, int text, int action, boolean closable) {
+            this.kind = kind;
+            this.text = text;
+            this.action = action;
+            this.closable = closable;
+        }
+    }
+
+    /** A person row's data: who, what the line says, which actions. */
+    private static final class Person {
+        final String kind;
+        @Nullable
+        final Profile profile;
+        @Nullable
+        final Object item;
+
+        Person(String kind, @Nullable Profile profile, @Nullable Object item) {
+            this.kind = kind;
+            this.profile = profile;
+            this.item = item;
+        }
+    }
+
+    private List<Row> buildRows(SocialService service) {
+        Context context = requireContext();
+        SocialState state = service.state();
+        SocialGate gate = service.gate();
+        long now = SocialService.nowSeconds();
+        Set<String> favourites = service.prefs().favourites();
+        List<Row> rows = new ArrayList<>();
+        Me me = state.me();
+        if (me != null) rows.add(new Row(T_ME, "me", me.profile.name() + "|" + me.status + "|" + me.profile.faceKey(), me));
+
+        SocialService.Connection connection = service.connection();
+        if (connection == SocialService.Connection.REPLACED) {
+            rows.add(new Row(T_BANNER, "banner", "replaced", new Banner("replaced", R.string.projects_social_replaced, R.string.projects_social_reconnect, false)));
+        } else if (connection == SocialService.Connection.UNAVAILABLE) {
+            rows.add(new Row(T_BANNER, "banner", "unavailable", new Banner("unavailable", R.string.projects_social_service_unavailable, R.string.projects_retry, false)));
+        } else if (gate.push && !SocialNotifications.canNotify(context) && !service.prefs().offerDone()) {
+            rows.add(new Row(T_BANNER, "banner", "notify", new Banner("notify", R.string.projects_social_notify_offer, R.string.projects_notify_offer_allow, true)));
+        }
+
+        if (gate.teams) {
+            Team team = state.team();
+            String content;
+            if (team == null) {
+                content = "none|" + state.teamInvites().size();
+            } else {
+                Call call = state.unansweredCall(now);
+                Call own = state.ownCall(now);
+                content = team.id + "|" + team.name + "|" + team.tag + "|" + team.emblem + team.color + team.frame + "|"
+                        + onlineInCrew(state, team) + "|" + (call == null ? "" : call.id + call.kind) + "|" + (own == null ? "" : own.id);
+            }
+            rows.add(new Row(T_CREW, "crew", content, team));
+        }
+
+        List<Invite> invites = state.invites(now);
+        if (!invites.isEmpty()) {
+            rows.add(header("h-invites", getString(R.string.projects_social_invites)));
+            for (Invite invite : invites) {
+                Profile from = state.profile(invite.fromId);
+                if (from == null) continue;
+                rows.add(new Row(T_PERSON, "invite-" + invite.id, "invite|" + from.name() + from.faceKey() + "|" + invite.where + invite.host,
+                        new Person("invite", from, invite)));
+            }
+        }
+        if (gate.teams && state.team() == null && !state.teamInvites().isEmpty()) {
+            rows.add(header("h-crew-invites", getString(R.string.projects_crew_invites)));
+            for (TeamInvite invite : state.teamInvites()) {
+                rows.add(new Row(T_PERSON, "team-invite-" + invite.team.id, "teaminvite|" + invite.team.name + invite.team.emblem
+                        + invite.team.color + invite.team.frame + "|" + invite.from.name(), new Person("teaminvite", invite.from, invite)));
+            }
+        }
+        List<Request> incoming = state.incoming();
+        if (!incoming.isEmpty()) {
+            rows.add(header("h-requests", getString(R.string.projects_social_requests)));
+            for (Request request : incoming) {
+                rows.add(new Row(T_PERSON, "in-" + request.profile.id, "in|" + request.profile.name() + request.profile.faceKey(),
+                        new Person("in", request.profile, request)));
+            }
+        }
+        SocialState.Sections sections = state.sections(favourites);
+        addFriends(rows, "playing", R.string.projects_social_playing, sections.playing, state, favourites);
+        addFriends(rows, "online", R.string.projects_social_online, sections.online, state, favourites);
+        addFriends(rows, "offline", R.string.projects_social_offline, sections.offline, state, favourites);
+        List<Request> outgoing = state.outgoing();
+        if (!outgoing.isEmpty()) {
+            rows.add(header("h-sent", getString(R.string.projects_social_sent)));
+            for (Request request : outgoing) {
+                rows.add(new Row(T_PERSON, "out-" + request.profile.id, "out|" + request.profile.name() + request.profile.faceKey(),
+                        new Person("out", request.profile, request)));
+            }
+        }
+        if (state.loaded() && state.friends().isEmpty() && incoming.isEmpty() && outgoing.isEmpty()) {
+            rows.add(new Row(T_EMPTY, "empty", "empty", null));
+        }
+        return rows;
+    }
+
+    private static int onlineInCrew(SocialState state, Team team) {
+        int n = 0;
+        for (Member m : team.members) {
+            if (!m.profile.id.equals(state.myId()) && state.presence(m.profile.id).online()) n++;
+        }
+        return n;
+    }
+
+    private Row header(String id, String title) {
+        return new Row(T_HEADER, id, title, title);
+    }
+
+    private void addFriends(List<Row> rows, String id, int title, List<Friend> friends, SocialState state, Set<String> favourites) {
+        if (friends.isEmpty()) return;
+        rows.add(header("h-" + id, getString(title) + " · " + friends.size()));
+        for (Friend f : friends) {
+            Presence p = state.presence(f.profile.id);
+            rows.add(new Row(T_PERSON, "f-" + f.profile.id, "f|" + f.profile.name() + f.profile.faceKey() + "|" + p.state + p.dnd + p.where
+                    + p.host + "|" + f.lastSeen + "|" + favourites.contains(f.profile.id), new Person("friend", f.profile, f)));
+        }
+    }
+
+    // ---- actions ----
+
+    private void onBanner(Banner banner) {
+        SocialService service = SocialService.get(requireContext());
+        switch (banner.kind) {
+            case "replaced":
+                service.reconnect();
+                break;
+            case "unavailable":
+                service.refresh(true);
+                service.reconnect();
+                break;
+            case "notify":
+                askNotifications();
+                break;
+            default:
+                break;
+        }
+    }
+
+    /**
+     * The list's notification question (once): Android's own question while it may still ask, else
+     * the app's notification settings. Marks the home card's question answered too (M18: nothing asks
+     * after an answer).
+     */
+    private void askNotifications() {
+        FragmentActivity activity = requireActivity();
+        SocialService service = SocialService.get(activity);
+        service.prefs().setOfferDone();
+        boolean neverAsked = !ProjectsHomeCard.notificationsAskedBefore();
+        ProjectsHomeCard.markNotificationsAnswered();
+        if (Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(activity, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED
+                && (neverAsked || ActivityCompat.shouldShowRequestPermissionRationale(activity, Manifest.permission.POST_NOTIFICATIONS))) {
+            try {
+                mPermission.launch(Manifest.permission.POST_NOTIFICATIONS);
+                return;
+            } catch (RuntimeException ignored) {
+                // Settings below.
+            }
+        }
+        Intent intent = Build.VERSION.SDK_INT >= 26
+                ? new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, activity.getPackageName())
+                : new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", activity.getPackageName(), null));
+        try {
+            activity.startActivity(intent);
+        } catch (RuntimeException e) {
+            render();
+        }
+    }
+
+    private void closeBanner(Banner banner) {
+        if ("notify".equals(banner.kind)) {
+            SocialService.get(requireContext()).prefs().setOfferDone();
+            render();
+        }
+    }
+
+    private void onPerson(Person person, View row) {
+        FragmentActivity activity = requireActivity();
+        switch (person.kind) {
+            case "friend":
+                if (person.profile != null) FriendCard.show(activity, person.profile.id);
+                break;
+            case "teaminvite":
+                Tools.swapFragment(activity, CrewFragment.class, CrewFragment.TAG, null);
+                break;
+            default:
+                if (person.profile != null && SocialService.get(activity).state().isFriend(person.profile.id)) {
+                    FriendCard.show(activity, person.profile.id);
+                }
+                break;
+        }
+    }
+
+    private void onPrimary(Person person, final View button) {
+        final FragmentActivity activity = requireActivity();
+        final SocialService service = SocialService.get(activity);
+        switch (person.kind) {
+            case "friend":
+            case "invite": {
+                Invite invite = person.item instanceof Invite ? (Invite) person.item : null;
+                if (invite != null && !invite.onProjects()) {
+                    if (invite.host != null) SocialUi.otherServer(activity, invite.host);
+                    return;
+                }
+                SocialUi.joinProjects(activity);
+                break;
+            }
+            case "in": {
+                final Profile from = person.profile;
+                if (from == null) return;
+                button.setEnabled(false);
+                service.accept(from.id, new SocialService.Result<com.google.gson.JsonObject>() {
+                    @Override
+                    public void ok(com.google.gson.JsonObject value) {
+                        Haptics.confirm(button);
+                        SocialUi.toast(activity, activity.getString(R.string.projects_social_friend_added, from.name()));
+                    }
+
+                    @Override
+                    public void failed(SocialProblem problem) {
+                        button.setEnabled(true);
+                        SocialUi.toastProblem(activity, problem, button);
+                    }
+                });
+                break;
+            }
+            case "teaminvite": {
+                final TeamInvite invite = (TeamInvite) person.item;
+                if (invite == null) return;
+                button.setEnabled(false);
+                service.acceptTeamInvite(invite.team.id, new SocialService.Result<com.google.gson.JsonObject>() {
+                    @Override
+                    public void ok(com.google.gson.JsonObject value) {
+                        Haptics.confirm(button);
+                        SocialUi.toast(activity, activity.getString(R.string.projects_crew_joined, invite.team.name));
+                        Tools.swapFragment(activity, CrewFragment.class, CrewFragment.TAG, null);
+                    }
+
+                    @Override
+                    public void failed(SocialProblem problem) {
+                        button.setEnabled(true);
+                        SocialUi.toastProblem(activity, problem, button);
+                    }
+                });
+                break;
+            }
+            default:
+                break;
+        }
+    }
+
+    private void onSecondary(Person person, final View button) {
+        final FragmentActivity activity = requireActivity();
+        final SocialService service = SocialService.get(activity);
+        SocialService.Result<Void> quiet = new SocialService.Result<Void>() {
+            @Override
+            public void ok(Void value) {
+            }
+
+            @Override
+            public void failed(SocialProblem problem) {
+                button.setEnabled(true);
+                SocialUi.toastProblem(activity, problem, button);
+            }
+        };
+        switch (person.kind) {
+            case "invite":
+                if (person.item instanceof Invite) {
+                    service.dismissInvite(((Invite) person.item).id);
+                    SocialNotifications.cancelInvite(activity, ((Invite) person.item).fromId);
+                }
+                break;
+            case "in":
+                if (person.profile != null) {
+                    button.setEnabled(false);
+                    service.decline(person.profile.id, quiet);
+                }
+                break;
+            case "out":
+                if (person.profile != null) {
+                    button.setEnabled(false);
+                    service.cancelRequest(person.profile.id, quiet);
+                }
+                break;
+            case "teaminvite":
+                if (person.item instanceof TeamInvite) {
+                    button.setEnabled(false);
+                    service.declineTeamInvite(((TeamInvite) person.item).team.id, quiet);
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
+    // ---- adapter ----
+
+    private final class Adapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+        private List<Row> mRows = new ArrayList<>();
+        private final Map<String, Long> mIds = new HashMap<>();
+
+        void submit(final List<Row> rows) {
+            final List<Row> old = mRows;
+            mRows = rows;
+            if (old.isEmpty()) {
+                notifyDataSetChanged();
+                return;
+            }
+            DiffUtil.calculateDiff(new DiffUtil.Callback() {
+                @Override
+                public int getOldListSize() {
+                    return old.size();
+                }
+
+                @Override
+                public int getNewListSize() {
+                    return rows.size();
+                }
+
+                @Override
+                public boolean areItemsTheSame(int o, int n) {
+                    return old.get(o).id.equals(rows.get(n).id);
+                }
+
+                @Override
+                public boolean areContentsTheSame(int o, int n) {
+                    return old.get(o).content.equals(rows.get(n).content);
+                }
+            }).dispatchUpdatesTo(this);
+        }
+
+        @Override
+        public long getItemId(int position) {
+            String id = mRows.get(position).id;
+            Long stable = mIds.get(id);
+            if (stable == null) {
+                stable = (long) mIds.size();
+                mIds.put(id, stable);
+            }
+            return stable;
+        }
+
+        @Override
+        public int getItemViewType(int position) {
+            return mRows.get(position).type;
+        }
+
+        @Override
+        public int getItemCount() {
+            return mRows.size();
+        }
+
+        @NonNull
+        @Override
+        public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            LayoutInflater inflater = LayoutInflater.from(parent.getContext());
+            View view;
+            switch (viewType) {
+                case T_ME:
+                    view = inflater.inflate(R.layout.item_projects_social_me, parent, false);
+                    Press.attach(view, Press.Style.CARD);
+                    break;
+                case T_BANNER:
+                    view = inflater.inflate(R.layout.item_projects_social_banner, parent, false);
+                    Button action = view.findViewById(R.id.projects_banner_action);
+                    action.setBackground(ChamferDrawable.outlined(parent.getContext()));
+                    Press.attach(action, Press.Style.BUTTON);
+                    Press.attach(view.findViewById(R.id.projects_banner_close), Press.Style.ICON);
+                    break;
+                case T_CREW:
+                    view = inflater.inflate(R.layout.item_projects_social_crew, parent, false);
+                    Press.attach(view, Press.Style.CARD);
+                    break;
+                case T_HEADER:
+                    view = inflater.inflate(R.layout.item_projects_social_header, parent, false);
+                    break;
+                case T_EMPTY:
+                    view = inflater.inflate(R.layout.item_projects_social_empty, parent, false);
+                    break;
+                case T_PERSON:
+                default:
+                    view = inflater.inflate(R.layout.item_projects_social_person, parent, false);
+                    Press.attach(view, Press.Style.ROW);
+                    Button primary = view.findViewById(R.id.projects_person_action);
+                    primary.setBackground(ChamferDrawable.outlined(parent.getContext()));
+                    Press.attach(primary, Press.Style.BUTTON);
+                    Press.attach(view.findViewById(R.id.projects_person_secondary), Press.Style.ICON);
+                    break;
+            }
+            return new RecyclerView.ViewHolder(view) {};
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+            Row row = mRows.get(position);
+            View view = holder.itemView;
+            Context context = view.getContext();
+            switch (row.type) {
+                case T_ME:
+                    bindMe(view, (Me) row.data);
+                    break;
+                case T_BANNER:
+                    bindBanner(view, (Banner) row.data);
+                    break;
+                case T_CREW:
+                    bindCrew(view, (Team) row.data);
+                    break;
+                case T_HEADER:
+                    ((TextView) view).setText((String) row.data);
+                    break;
+                case T_EMPTY:
+                    View add = view.findViewById(R.id.projects_social_empty_add);
+                    add.setOnClickListener(v -> Tools.swapFragment(requireActivity(), AddFriendFragment.class, AddFriendFragment.TAG, null));
+                    break;
+                case T_PERSON:
+                default:
+                    bindPerson(view, (Person) row.data, context);
+                    break;
+            }
+        }
+    }
+
+    private void bindMe(View view, Me me) {
+        AvatarView avatar = view.findViewById(R.id.projects_me_avatar);
+        avatar.setProfile(me.profile);
+        avatar.setSurfaceColor(ContextCompat.getColor(view.getContext(), R.color.projects_obsidian_900));
+        avatar.setDot(SocialUi.statusDot(me.status));
+        ((TextView) view.findViewById(R.id.projects_me_name)).setText(me.profile.name());
+        ((TextView) view.findViewById(R.id.projects_me_status)).setText(SocialUi.statusLabel(me.status));
+        view.setContentDescription(me.profile.name() + ", " + getString(SocialUi.statusLabel(me.status)) + ". "
+                + getString(R.string.projects_social_status_change));
+        view.setOnClickListener(v -> StatusSheet.show(requireActivity()));
+    }
+
+    private void bindBanner(View view, final Banner banner) {
+        ((TextView) view.findViewById(R.id.projects_banner_text)).setText(banner.text);
+        ImageView icon = view.findViewById(R.id.projects_banner_icon);
+        icon.setImageResource("notify".equals(banner.kind) ? R.drawable.projects_ic_bell : R.drawable.projects_ic_warning);
+        Button action = view.findViewById(R.id.projects_banner_action);
+        action.setText(banner.action);
+        action.setOnClickListener(v -> onBanner(banner));
+        View close = view.findViewById(R.id.projects_banner_close);
+        close.setVisibility(banner.closable ? View.VISIBLE : View.GONE);
+        close.setOnClickListener(v -> closeBanner(banner));
+    }
+
+    private void bindCrew(View view, @Nullable Team team) {
+        Context context = view.getContext();
+        CrewMarkView mark = view.findViewById(R.id.projects_crew_row_mark);
+        View icon = view.findViewById(R.id.projects_crew_row_icon);
+        TextView name = view.findViewById(R.id.projects_crew_row_name);
+        TextView tag = view.findViewById(R.id.projects_crew_row_tag);
+        TextView line = view.findViewById(R.id.projects_crew_row_line);
+        SocialService service = SocialService.get(context);
+        if (team == null) {
+            mark.setVisibility(View.GONE);
+            icon.setVisibility(View.VISIBLE);
+            name.setText(R.string.projects_crew_row_none);
+            tag.setVisibility(View.GONE);
+            int invites = service.state().teamInvites().size();
+            line.setVisibility(invites > 0 ? View.VISIBLE : View.GONE);
+            line.setText(invites > 0 ? getString(R.string.projects_crew_invites) + " · " + invites : "");
+        } else {
+            mark.setVisibility(View.VISIBLE);
+            icon.setVisibility(View.GONE);
+            mark.setLook(team.emblem, team.color, team.frame);
+            name.setText(team.name);
+            tag.setVisibility(team.tag.isEmpty() ? View.GONE : View.VISIBLE);
+            tag.setText(team.tag);
+            CrewViews.tintTag(tag, team.color);
+            long now = SocialService.nowSeconds();
+            Call call = service.state().unansweredCall(now);
+            Call own = service.state().ownCall(now);
+            if (call != null) {
+                Profile caller = service.state().profile(call.from);
+                line.setText(getString(R.string.projects_crew_call_theirs, caller == null ? getString(R.string.projects_crew_someone) : caller.name()));
+                line.setTextColor(ContextCompat.getColor(context, R.color.projects_gold_300));
+            } else if (own != null) {
+                line.setText(R.string.projects_crew_call_mine);
+                line.setTextColor(ContextCompat.getColor(context, R.color.projects_gold_300));
+            } else {
+                int online = onlineInCrew(service.state(), team);
+                line.setText(context.getResources().getQuantityString(R.plurals.projects_crew_online, online, online));
+                line.setTextColor(ContextCompat.getColor(context, R.color.projects_ash_400));
+            }
+            line.setVisibility(View.VISIBLE);
+        }
+        view.setOnClickListener(v -> Tools.swapFragment(requireActivity(), CrewFragment.class, CrewFragment.TAG, null));
+    }
+
+    private void bindPerson(final View view, final Person person, Context context) {
+        AvatarView avatar = view.findViewById(R.id.projects_person_avatar);
+        CrewMarkView mark = view.findViewById(R.id.projects_person_mark);
+        TextView name = view.findViewById(R.id.projects_person_name);
+        TextView line = view.findViewById(R.id.projects_person_line);
+        View star = view.findViewById(R.id.projects_person_star);
+        View badge = view.findViewById(R.id.projects_person_badge);
+        final Button primary = view.findViewById(R.id.projects_person_action);
+        final ImageButton secondary = view.findViewById(R.id.projects_person_secondary);
+        SocialService service = SocialService.get(context);
+        SocialState state = service.state();
+        badge.setVisibility(View.GONE);
+        star.setVisibility(View.GONE);
+        primary.setVisibility(View.GONE);
+        primary.setEnabled(true);
+        secondary.setVisibility(View.GONE);
+        secondary.setEnabled(true);
+        line.setTextColor(ContextCompat.getColor(context, R.color.projects_ash_400));
+        avatar.setSurfaceColor(ContextCompat.getColor(context, R.color.projects_obsidian_950));
+        boolean teamInvite = "teaminvite".equals(person.kind);
+        avatar.setVisibility(teamInvite ? View.GONE : View.VISIBLE);
+        mark.setVisibility(teamInvite ? View.VISIBLE : View.GONE);
+        if (!teamInvite) avatar.setProfile(person.profile);
+        avatar.setDot(AvatarView.Dot.NONE);
+        avatar.setDimmed(false);
+        switch (person.kind) {
+            case "friend": {
+                Friend friend = (Friend) person.item;
+                Presence presence = state.presence(friend.profile.id);
+                name.setText(friend.profile.name());
+                line.setText(SocialUi.presenceText(context, presence));
+                if (presence.onProjects()) line.setTextColor(ContextCompat.getColor(context, R.color.projects_jade_400));
+                avatar.setDot(SocialUi.dot(presence));
+                avatar.setDimmed(!presence.online());
+                star.setVisibility(service.prefs().favourites().contains(friend.profile.id) ? View.VISIBLE : View.GONE);
+                if (presence.onProjects()) {
+                    primary.setVisibility(View.VISIBLE);
+                    primary.setText(R.string.projects_social_join);
+                }
+                break;
+            }
+            case "invite": {
+                Invite invite = (Invite) person.item;
+                name.setText(person.profile == null ? "" : person.profile.name());
+                String where = invite.onProjects() ? getString(R.string.projects_social_server_projects)
+                        : invite.host != null ? invite.host : null;
+                line.setText(where == null ? getString(R.string.projects_social_invited_you)
+                        : getString(R.string.projects_social_invited_you) + " · " + where);
+                line.setTextColor(ContextCompat.getColor(context, R.color.projects_gold_300));
+                avatar.setDot(person.profile == null ? AvatarView.Dot.NONE : SocialUi.dot(state.presence(person.profile.id)));
+                if (invite.onProjects()) {
+                    primary.setVisibility(View.VISIBLE);
+                    primary.setText(R.string.projects_social_join);
+                } else if (invite.host != null) {
+                    primary.setVisibility(View.VISIBLE);
+                    primary.setText(R.string.projects_social_copy_address);
+                }
+                secondary.setVisibility(View.VISIBLE);
+                secondary.setImageResource(R.drawable.projects_ic_x);
+                secondary.setContentDescription(getString(R.string.projects_social_dismiss));
+                break;
+            }
+            case "teaminvite": {
+                TeamInvite invite = (TeamInvite) person.item;
+                mark.setLook(invite.team.emblem, invite.team.color, invite.team.frame);
+                name.setText(invite.team.name);
+                line.setText(getString(R.string.projects_crew_invited_by, invite.from.name()));
+                primary.setVisibility(View.VISIBLE);
+                primary.setText(R.string.projects_social_accept);
+                secondary.setVisibility(View.VISIBLE);
+                secondary.setImageResource(R.drawable.projects_ic_x);
+                secondary.setContentDescription(getString(R.string.projects_social_decline));
+                break;
+            }
+            case "in":
+                name.setText(person.profile == null ? "" : person.profile.name());
+                line.setText(R.string.projects_social_wants_to_add);
+                primary.setVisibility(View.VISIBLE);
+                primary.setText(R.string.projects_social_accept);
+                secondary.setVisibility(View.VISIBLE);
+                secondary.setImageResource(R.drawable.projects_ic_x);
+                secondary.setContentDescription(getString(R.string.projects_social_decline));
+                break;
+            case "out":
+                name.setText(person.profile == null ? "" : person.profile.name());
+                line.setText(R.string.projects_social_waiting_reply);
+                secondary.setVisibility(View.VISIBLE);
+                secondary.setImageResource(R.drawable.projects_ic_x);
+                secondary.setContentDescription(getString(R.string.projects_social_cancel_request));
+                break;
+            default:
+                break;
+        }
+        primary.setOnClickListener(v -> onPrimary(person, primary));
+        secondary.setOnClickListener(v -> onSecondary(person, secondary));
+        view.setOnClickListener(v -> onPerson(person, view));
+    }
+}
