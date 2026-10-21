@@ -16,12 +16,15 @@ import java.util.Map;
 import java.util.Set;
 
 import gg.projects.mobile.social.SocialModel.Call;
+import gg.projects.mobile.social.SocialModel.ChatState;
+import gg.projects.mobile.social.SocialModel.Crew;
 import gg.projects.mobile.social.SocialModel.Friend;
 import gg.projects.mobile.social.SocialModel.FriendsData;
 import gg.projects.mobile.social.SocialModel.Invite;
 import gg.projects.mobile.social.SocialModel.Limits;
 import gg.projects.mobile.social.SocialModel.Me;
 import gg.projects.mobile.social.SocialModel.Member;
+import gg.projects.mobile.social.SocialModel.ModNotice;
 import gg.projects.mobile.social.SocialModel.Presence;
 import gg.projects.mobile.social.SocialModel.Profile;
 import gg.projects.mobile.social.SocialModel.Request;
@@ -30,11 +33,16 @@ import gg.projects.mobile.social.SocialModel.TeamInvite;
 import gg.projects.mobile.social.SocialModel.TeamNotifications;
 
 /**
- * What the app knows about the player's friends and crew: the friend list from the service, made
+ * What the app knows about the player's friends and crews: the friend list from the service, made
  * live by the presence socket's messages (services/social README "Presence WebSocket"). Pure Java
  * and JVM-tested; every change returns the {@link Notice}s the app may announce. Times are Unix
  * seconds by the phone's clock; crew calls follow the hub's clock through the offset {@code hello}
  * and {@code call} carry.
+ *
+ * <p>M20 (SOC7): a player may be in several crews ({@code crews}, the primary first; a service
+ * without {@code multi} has one, its {@code team}), calls name the crews they go to and carry their
+ * server, and the socket brings the chat state, moderators' notes and the end of a restricted
+ * account's session. Chat messages themselves are {@link ChatBook}'s.
  */
 public final class SocialState {
     @Nullable
@@ -44,9 +52,9 @@ public final class SocialState {
     private final List<Request> mOutgoing = new ArrayList<>();
     private final List<Profile> mBlocked = new ArrayList<>();
     private Limits mLimits = new Limits(0, 0, 0);
-    @Nullable
-    private Team mTeam;
-    private final Set<String> mTeamInvited = new HashSet<>();
+    /** The player's crews in their order; the first is the primary crew. */
+    private final List<Crew> mCrews = new ArrayList<>();
+    private int mCrewLimit;
     private final List<TeamInvite> mTeamInvites = new ArrayList<>();
     private Set<String> mTeamFeatures = new HashSet<>();
     private TeamNotifications mTeamNotifications = TeamNotifications.DEFAULT;
@@ -62,10 +70,22 @@ public final class SocialState {
     /** The hub's clock minus the phone's (seconds). */
     private long mClockOffset;
     private boolean mLive;
+    /** The capabilities the hub took from the socket's query ({@code hello.caps}). */
+    private Set<String> mCaps = new HashSet<>();
+    private ChatState mChat = ChatState.UNKNOWN;
+    /** {@code bye} with {@code restricted}: until when (Unix seconds; 0: for good); null when not restricted. */
+    @Nullable
+    private Long mRestrictedUntil;
 
     /** Something the app may tell the player about. */
     public static final class Notice {
-        public enum Kind { REQUEST, INVITE, CALL, CALL_ENDED, FRIEND_ADDED, TEAM_INVITE, TEAM_GONE }
+        public enum Kind {
+            REQUEST, INVITE, CALL, CALL_ENDED, FRIEND_ADDED, TEAM_INVITE, TEAM_GONE,
+            /** M20: a moderator's note came live ({@link #modNotice}). */
+            MOD_NOTICE,
+            /** M20: the account was suspended or banned ({@link #until}; 0 for good). */
+            RESTRICTED
+        }
 
         public final Kind kind;
         @Nullable
@@ -87,9 +107,23 @@ public final class SocialState {
         /** CALL and CALL_ENDED: the call's id. */
         @Nullable
         public final String callId;
+        /** TEAM_GONE: Projects' moderators did it. */
+        public final boolean byStaff;
+        /** CALL: an open call moved to another server (not a new one). */
+        public final boolean moved;
+        @Nullable
+        public final ModNotice modNotice;
+        /** RESTRICTED: until when (Unix seconds; 0 for good). */
+        public final long until;
 
         Notice(Kind kind, @Nullable Profile who, @Nullable Invite invite, @Nullable Call call,
                @Nullable TeamInvite teamInvite, @Nullable String reason, @Nullable String teamName, boolean byMe) {
+            this(kind, who, invite, call, teamInvite, reason, teamName, byMe, call == null ? null : call.id, false, false, null, 0);
+        }
+
+        private Notice(Kind kind, @Nullable Profile who, @Nullable Invite invite, @Nullable Call call,
+                       @Nullable TeamInvite teamInvite, @Nullable String reason, @Nullable String teamName, boolean byMe,
+                       @Nullable String callId, boolean byStaff, boolean moved, @Nullable ModNotice modNotice, long until) {
             this.kind = kind;
             this.who = who;
             this.invite = invite;
@@ -98,19 +132,11 @@ public final class SocialState {
             this.reason = reason;
             this.teamName = teamName;
             this.byMe = byMe;
-            this.callId = call == null ? null : call.id;
-        }
-
-        private Notice(String endedCallId, @Nullable String reason) {
-            this.kind = Kind.CALL_ENDED;
-            this.who = null;
-            this.invite = null;
-            this.call = null;
-            this.teamInvite = null;
-            this.reason = reason;
-            this.teamName = null;
-            this.byMe = false;
-            this.callId = endedCallId;
+            this.callId = callId;
+            this.byStaff = byStaff;
+            this.moved = moved;
+            this.modNotice = modNotice;
+            this.until = until;
         }
 
         static Notice of(Kind kind, @Nullable Profile who) {
@@ -118,7 +144,23 @@ public final class SocialState {
         }
 
         static Notice callEnded(String callId, @Nullable String reason) {
-            return new Notice(callId, reason);
+            return new Notice(Kind.CALL_ENDED, null, null, null, null, reason, null, false, callId, false, false, null, 0);
+        }
+
+        static Notice call(@Nullable Profile caller, Call call, boolean moved) {
+            return new Notice(Kind.CALL, caller, null, call, null, null, null, false, call.id, false, moved, null, 0);
+        }
+
+        static Notice teamGone(@Nullable String reason, String name, boolean byMe, boolean byStaff) {
+            return new Notice(Kind.TEAM_GONE, null, null, null, null, reason, name, byMe, null, byStaff, false, null, 0);
+        }
+
+        static Notice modNotice(ModNotice notice) {
+            return new Notice(Kind.MOD_NOTICE, null, null, null, null, notice.kind, null, false, null, true, false, notice, 0);
+        }
+
+        static Notice restricted(long until) {
+            return new Notice(Kind.RESTRICTED, null, null, null, null, "restricted", null, false, null, true, false, null, until);
         }
     }
 
@@ -171,13 +213,44 @@ public final class SocialState {
         return mLimits;
     }
 
+    /** The primary crew (the one apps that know one crew show), or null. */
     @Nullable
     public Team team() {
-        return mTeam;
+        return mCrews.isEmpty() ? null : mCrews.get(0).team;
     }
 
+    /** Friends the player invited to the primary crew who have not answered. */
     public Set<String> teamInvited() {
-        return Collections.unmodifiableSet(mTeamInvited);
+        return mCrews.isEmpty() ? Collections.<String>emptySet() : mCrews.get(0).invited;
+    }
+
+    /** TEAM4: every crew of the player in their order (the primary first). */
+    public List<Crew> crews() {
+        return Collections.unmodifiableList(new ArrayList<>(mCrews));
+    }
+
+    @Nullable
+    public Crew crew(@Nullable String id) {
+        if (id == null) return null;
+        for (Crew c : mCrews) if (c.id().equals(id)) return c;
+        return null;
+    }
+
+    public List<String> crewIds() {
+        List<String> out = new ArrayList<>();
+        for (Crew c : mCrews) out.add(c.id());
+        return out;
+    }
+
+    /** {@code crewLimit} of the service (0: it did not say; then one crew). */
+    public int crewLimit() {
+        return mCrewLimit;
+    }
+
+    /** The player is in as many crews as the service allows: founding and joining wait. */
+    public boolean atCrewLimit() {
+        int limit = mCrewLimit > 0 ? mCrewLimit : 1;
+        return mCrews.size() >= limit;
     }
 
     public List<TeamInvite> teamInvites() {
@@ -205,6 +278,21 @@ public final class SocialState {
     /** The service has crews (it announces their limit): the first crew release or later. */
     public boolean serviceHasTeams() {
         return mLimits.teamMembers > 0;
+    }
+
+    /** The capabilities the hub took ({@code hello.caps}); empty before the first {@code hello}. */
+    public Set<String> caps() {
+        return Collections.unmodifiableSet(mCaps);
+    }
+
+    public ChatState chat() {
+        return mChat;
+    }
+
+    /** The account was suspended ({@code until} &gt; 0) or banned (0); null when not. */
+    @Nullable
+    public Long restrictedUntil() {
+        return mRestrictedUntil;
     }
 
     /** Presence of a friend or teammate; offline when unknown. */
@@ -245,9 +333,50 @@ public final class SocialState {
         return out;
     }
 
+    /** Open calls that name {@code crewId} (from an older service: every call names the primary crew). */
+    public List<Call> calls(long nowSeconds, String crewId) {
+        List<Call> out = new ArrayList<>();
+        for (Call call : calls(nowSeconds)) if (callCrewIds(call).contains(crewId)) out.add(call);
+        return out;
+    }
+
     @Nullable
     public Call call(String id) {
         return mCalls.get(id);
+    }
+
+    /** The player's crews a call names, in the player's order (an older service's call: the primary crew). */
+    public List<String> callCrewIds(Call call) {
+        List<String> out = new ArrayList<>();
+        if (call.crews.isEmpty()) {
+            if (!mCrews.isEmpty()) out.add(mCrews.get(0).id());
+            return out;
+        }
+        for (Crew c : mCrews) if (call.crews.contains(c.id())) out.add(c.id());
+        return out;
+    }
+
+    /** The crews of {@link #callCrewIds}. */
+    public List<Crew> callCrews(Call call) {
+        List<Crew> out = new ArrayList<>();
+        for (String id : callCrewIds(call)) {
+            Crew c = crew(id);
+            if (c != null) out.add(c);
+        }
+        return out;
+    }
+
+    /**
+     * A call reaches the player loudly: crew calls on, not every crew muted (the all-crews mute) and
+     * at least one crew the call names not muted on its own (TEAM4's per-crew mute).
+     */
+    public boolean callAudible(Call call, long nowSeconds) {
+        long hub = hubNow(nowSeconds);
+        if (!mTeamNotifications.callsAudible(hub)) return false;
+        List<Crew> crews = callCrews(call);
+        if (crews.isEmpty()) return true;
+        for (Crew c : crews) if (!c.mute.mutedAt(hub)) return true;
+        return false;
     }
 
     /** The call the player started, while it is open. */
@@ -275,17 +404,24 @@ public final class SocialState {
         return Math.max(0, call.until - hubNow(nowSeconds));
     }
 
-    /** A crewmate's or friend's profile by id (the crew's member list knows teammates who are not friends). */
+    /** A crewmate's or friend's profile by id (the crews' member lists know teammates who are not friends). */
     @Nullable
     public Profile profile(String id) {
         Friend f = mFriends.get(id);
         if (f != null) return f.profile;
-        if (mTeam != null) {
-            Member m = mTeam.member(id);
+        for (Crew c : mCrews) {
+            Member m = c.team.member(id);
             if (m != null) return m.profile;
         }
         if (mMe != null && mMe.profile.id.equals(id)) return mMe.profile;
         return null;
+    }
+
+    /** The player's crews {@code userId} is in too (in the player's order). */
+    public List<Crew> crewsOf(String userId) {
+        List<Crew> out = new ArrayList<>();
+        for (Crew c : mCrews) if (c.team.member(userId) != null) out.add(c);
+        return out;
     }
 
     // ---- changes from the service's answers ----
@@ -305,33 +441,89 @@ public final class SocialState {
         mBlocked.clear();
         mBlocked.addAll(data.blocked);
         mLimits = data.limits;
-        mTeam = data.team;
-        mTeamInvited.clear();
-        mTeamInvited.addAll(data.teamInvited);
+        mCrews.clear();
+        if (data.crews != null) {
+            mCrews.addAll(data.crews);
+        } else if (data.team != null) {
+            mCrews.add(new Crew(data.team, data.teamInvited, TeamNotifications.DEFAULT));
+        }
+        mCrewLimit = data.crewLimit;
         mTeamInvites.clear();
         mTeamInvites.addAll(data.teamInvites);
         mTeamFeatures = new HashSet<>(data.teamFeatures);
         mTeamNotifications = data.teamNotifications;
         mFeatures = data.features == null ? null : new HashSet<>(data.features);
         mLoaded = true;
+        mRestrictedUntil = null;
         prunePresence();
-        if (mTeam == null) mCalls.clear();
+        pruneCalls();
     }
 
+    /**
+     * A crew answer of a service without several crews ({@code {team, invited}}): the player's one crew
+     * (null: none any more).
+     */
     public void setTeam(@Nullable Team team, @Nullable Set<String> invited) {
-        mTeam = team;
-        if (invited != null) {
-            mTeamInvited.clear();
-            mTeamInvited.addAll(invited);
-        }
         if (team == null) {
+            mCrews.clear();
             mCalls.clear();
-            mTeamInvited.clear();
         } else {
+            Crew before = crew(team.id);
+            Set<String> keep = invited != null ? invited : before != null ? before.invited : Collections.<String>emptySet();
+            mCrews.clear();
+            mCrews.add(new Crew(team, keep, before != null ? before.mute : TeamNotifications.DEFAULT));
             // An answered invite to the crew the player is in now is gone.
             removeTeamInvite(team.id);
+            pruneCalls();
         }
         prunePresence();
+    }
+
+    /**
+     * TEAM4: an answer about one crew ({@code {team, invited}} of a join, an invite's acceptance, a
+     * change): it takes that crew's place, or comes last when it is new.
+     */
+    public void upsertCrew(Team team, @Nullable Set<String> invited) {
+        for (int i = 0; i < mCrews.size(); i++) {
+            Crew c = mCrews.get(i);
+            if (c.id().equals(team.id)) {
+                Crew next = c.withTeam(team);
+                if (invited != null) next = next.withInvited(invited);
+                mCrews.set(i, next);
+                removeTeamInvite(team.id);
+                prunePresence();
+                return;
+            }
+        }
+        mCrews.add(new Crew(team, invited == null ? Collections.<String>emptySet() : invited, TeamNotifications.DEFAULT));
+        removeTeamInvite(team.id);
+        prunePresence();
+    }
+
+    /** TEAM4: the player is no longer in {@code crewId} (left, removed, or it ended). */
+    public void removeCrew(String crewId) {
+        for (int i = mCrews.size() - 1; i >= 0; i--) if (mCrews.get(i).id().equals(crewId)) mCrews.remove(i);
+        pruneCalls();
+        prunePresence();
+    }
+
+    /** TEAM4: the crews in a new order (unknown ids are skipped, crews it leaves out keep their place after it). */
+    public void setCrewOrder(List<String> order) {
+        List<Crew> next = new ArrayList<>();
+        for (String id : order) {
+            Crew c = crew(id);
+            if (c != null && !next.contains(c)) next.add(c);
+        }
+        for (Crew c : mCrews) if (!next.contains(c)) next.add(c);
+        mCrews.clear();
+        mCrews.addAll(next);
+    }
+
+    /** TEAM4: the player's mute of one crew. */
+    public void setCrewMute(String crewId, TeamNotifications mute) {
+        for (int i = 0; i < mCrews.size(); i++) {
+            if (mCrews.get(i).id().equals(crewId)) mCrews.set(i, mCrews.get(i).withMute(mute));
+        }
     }
 
     public void setTeamNotifications(TeamNotifications notifications) {
@@ -379,8 +571,16 @@ public final class SocialState {
         for (int i = mTeamInvites.size() - 1; i >= 0; i--) if (mTeamInvites.get(i).team.id.equals(teamId)) mTeamInvites.remove(i);
     }
 
+    /** The player invited a friend to the primary crew. */
     public void addTeamInvited(String friendId) {
-        mTeamInvited.add(friendId);
+        if (!mCrews.isEmpty()) mCrews.set(0, mCrews.get(0).withInvitedAdded(friendId));
+    }
+
+    /** TEAM4: the player invited a friend to {@code crewId}. */
+    public void addCrewInvited(String crewId, String friendId) {
+        for (int i = 0; i < mCrews.size(); i++) {
+            if (mCrews.get(i).id().equals(crewId)) mCrews.set(i, mCrews.get(i).withInvitedAdded(friendId));
+        }
     }
 
     /** The player closed an invite ("Kapat"): it stays away until it expires. */
@@ -411,6 +611,11 @@ public final class SocialState {
         mCalls.put(callId, previous == null ? call.withoutAnswer(me) : call.withAnswer(me, previous));
     }
 
+    /** The notices the player has seen go (the service is told separately). */
+    public void noticesSeen(Set<String> ids) {
+        if (mMe != null) mMe = mMe.withoutNotices(ids);
+    }
+
     /** The socket closed: presence is unknown until the next {@code hello}; invites and calls stay. */
     public void setOffline() {
         mLive = false;
@@ -425,8 +630,8 @@ public final class SocialState {
         mOutgoing.clear();
         mBlocked.clear();
         mLimits = new Limits(0, 0, 0);
-        mTeam = null;
-        mTeamInvited.clear();
+        mCrews.clear();
+        mCrewLimit = 0;
         mTeamInvites.clear();
         mTeamFeatures = new HashSet<>();
         mTeamNotifications = TeamNotifications.DEFAULT;
@@ -438,6 +643,9 @@ public final class SocialState {
         mDismissedInvites.clear();
         mLive = false;
         mClockOffset = 0;
+        mCaps = new HashSet<>();
+        mChat = ChatState.UNKNOWN;
+        mRestrictedUntil = null;
     }
 
     // ---- changes from the presence socket ----
@@ -532,6 +740,14 @@ public final class SocialState {
             case "team_notifications":
                 mTeamNotifications = TeamNotifications.read(Json.obj(message, "notifications"));
                 break;
+            case "crew_notifications": {
+                String crew = Json.str(message, "crew");
+                if (crew != null) setCrewMute(crew, TeamNotifications.read(Json.obj(message, "notifications")));
+                break;
+            }
+            case "crew_order":
+                setCrewOrder(Json.strings(message, "order"));
+                break;
             case "call":
                 onCall(message, nowSeconds, notices);
                 break;
@@ -552,6 +768,26 @@ public final class SocialState {
                 }
                 break;
             }
+            case "chat_state":
+                mChat = ChatState.read(Json.obj(message, "chat"));
+                break;
+            case "notice": {
+                ModNotice notice = ModNotice.read(Json.obj(message, "notice"));
+                if (notice != null && mMe != null) {
+                    boolean known = false;
+                    for (ModNotice n : mMe.notices) if (n.id.equals(notice.id)) known = true;
+                    mMe = mMe.withNotice(notice);
+                    if (!known) notices.add(Notice.modNotice(notice));
+                }
+                break;
+            }
+            case "bye":
+                if ("restricted".equals(Json.str(message, "reason"))) {
+                    Long until = Json.numOrNull(message, "until");
+                    mRestrictedUntil = until == null ? 0L : until;
+                    notices.add(Notice.restricted(mRestrictedUntil));
+                }
+                break;
             default:
                 break;
         }
@@ -563,6 +799,8 @@ public final class SocialState {
         if (Json.has(message, "now")) mClockOffset = Json.num(message, "now", nowSeconds) - nowSeconds;
         String status = Json.str(message, "status");
         if (mMe != null && SocialModel.Status.isKnown(status)) mMe = mMe.withStatus(status);
+        mCaps = new HashSet<>(Json.strings(message, "caps"));
+        mChat = ChatState.read(Json.obj(message, "chat"));
         mPresence.clear();
         for (JsonObject p : Json.objects(message, "friends")) {
             Presence presence = Presence.read(p);
@@ -590,24 +828,26 @@ public final class SocialState {
         JsonObject wire = Json.obj(message, "team");
         String by = Json.str(message, "by");
         boolean byMe = by != null && by.equals(myId());
+        boolean byStaff = "staff".equals(by);
+        String crewId = Json.str(message, "crew");
         if (wire == null) {
-            Team before = mTeam;
-            mTeam = null;
-            mCalls.clear();
-            mTeamInvited.clear();
-            prunePresence();
-            if (before != null) {
-                notices.add(new Notice(Notice.Kind.TEAM_GONE, null, null, null, null, Json.str(message, "reason"),
-                        before.name, byMe));
-            }
+            // No longer in that crew (a service from before several crews names none: its one crew).
+            String id = crewId != null ? crewId : mCrews.isEmpty() ? null : mCrews.get(0).id();
+            Crew before = crew(id);
+            if (before == null) return;
+            removeCrew(before.id());
+            notices.add(Notice.teamGone(Json.str(message, "reason"), before.team.name, byMe, byStaff));
             return;
         }
         Team team = Team.read(wire);
         if (team == null) return;
-        mTeam = team;
-        removeTeamInvite(team.id);
+        if (crewId == null && crew(team.id) == null) {
+            // An older service: its one crew is this one now.
+            setTeam(team, null);
+            return;
+        }
+        upsertCrew(team, null);
         // Invites whose sender lost the right are withdrawn by the service; the next list says so.
-        prunePresence();
     }
 
     private void onCall(JsonObject message, long nowSeconds, List<Notice> notices) {
@@ -617,10 +857,13 @@ public final class SocialState {
         Call before = mCalls.put(call.id, call);
         boolean quiet = Json.bool(message, "quiet", false);
         boolean mine = call.from.equals(myId());
-        // Announced only when it is new or just became "join", and not quiet (README).
-        boolean announce = !quiet && !mine && (before == null || (!before.joinable() && call.joinable()));
+        // Announced when it is new, just became "join", or (with callServer) its server changed; never when quiet (README).
+        boolean becameJoin = before != null && !Call.JOIN.equals(before.kind) && Call.JOIN.equals(call.kind);
+        boolean moved = before != null && call.serverWhere != null
+                && (!eq(before.serverWhere, call.serverWhere) || !eq(before.serverHost, call.serverHost));
+        boolean announce = !quiet && !mine && (before == null || becameJoin || moved);
         if (announce && call.until > hubNow(nowSeconds)) {
-            notices.add(new Notice(Notice.Kind.CALL, profile(call.from), null, call, null, null, null, false));
+            notices.add(Notice.call(profile(call.from), call, before != null));
         }
     }
 
@@ -650,12 +893,29 @@ public final class SocialState {
     }
 
     private boolean isTeammate(String id) {
-        return mTeam != null && mTeam.member(id) != null;
+        for (Crew c : mCrews) if (c.team.member(id) != null) return true;
+        return false;
     }
 
     private void prunePresence() {
         for (String id : new ArrayList<>(mPresence.keySet())) {
             if (!mFriends.containsKey(id) && !isTeammate(id)) mPresence.remove(id);
+        }
+    }
+
+    /** Calls whose crews the player is no longer in go (the service also ends them for the player). */
+    private void pruneCalls() {
+        if (mCrews.isEmpty()) {
+            mCalls.clear();
+            return;
+        }
+        for (String id : new ArrayList<>(mCalls.keySet())) {
+            Call call = mCalls.get(id);
+            if (call == null || call.crews.isEmpty()) continue;
+            List<String> left = new ArrayList<>();
+            for (String crew : call.crews) if (crew(crew) != null) left.add(crew);
+            if (left.isEmpty()) mCalls.remove(id);
+            else if (left.size() != call.crews.size()) mCalls.put(id, call.withCrews(left));
         }
     }
 
@@ -738,12 +998,18 @@ public final class SocialState {
         return Place.OFFLINE;
     }
 
-    /** The crew's members by place (leader, moderators, then by name within each). */
+    /** The primary crew's members by place (leader, moderators, then by name within each). */
     public Map<Place, List<Member>> roster() {
+        return roster(mCrews.isEmpty() ? null : mCrews.get(0).id());
+    }
+
+    /** A crew's members by place (leader, moderators, then by name within each). */
+    public Map<Place, List<Member>> roster(@Nullable String crewId) {
         Map<Place, List<Member>> out = new LinkedHashMap<>();
         for (Place place : Place.values()) out.put(place, new ArrayList<Member>());
-        if (mTeam == null) return out;
-        for (Member m : mTeam.members) out.get(place(m.profile.id)).add(m);
+        Crew crew = crew(crewId);
+        if (crew == null) return out;
+        for (Member m : crew.team.members) out.get(place(m.profile.id)).add(m);
         for (List<Member> list : out.values()) {
             Collections.sort(list, (a, b) -> {
                 int founder = Boolean.compare(b.founder, a.founder);
@@ -756,14 +1022,54 @@ public final class SocialState {
         return out;
     }
 
-    /** Crewmates (the player left out) on projects.gg. */
+    /** Crewmates of every crew (each once; the player left out) on projects.gg. */
     public List<Member> crewOnProjects() {
         List<Member> out = new ArrayList<>();
-        if (mTeam == null) return out;
-        for (Member m : mTeam.members) {
+        Set<String> seen = new HashSet<>();
+        for (Crew c : mCrews) {
+            for (Member m : c.team.members) {
+                if (m.profile.id.equals(myId()) || !seen.add(m.profile.id)) continue;
+                if (presence(m.profile.id).onProjects()) out.add(m);
+            }
+        }
+        return out;
+    }
+
+    /** One crew's members (the player left out) on projects.gg. */
+    public List<Member> crewOnProjects(String crewId) {
+        List<Member> out = new ArrayList<>();
+        Crew crew = crew(crewId);
+        if (crew == null) return out;
+        for (Member m : crew.team.members) {
             if (!m.profile.id.equals(myId()) && presence(m.profile.id).onProjects()) out.add(m);
         }
         return out;
+    }
+
+    /** The crew with the most members on projects.gg (the home line's tap opens it), or null. */
+    @Nullable
+    public Crew busiestCrewOnProjects() {
+        Crew best = null;
+        int most = 0;
+        for (Crew c : mCrews) {
+            int n = crewOnProjects(c.id()).size();
+            if (n > most) {
+                most = n;
+                best = c;
+            }
+        }
+        return best;
+    }
+
+    /** Crewmates of a crew (the player left out) online: in the launcher or in game. */
+    public int onlineInCrew(String crewId) {
+        Crew crew = crew(crewId);
+        if (crew == null) return 0;
+        int n = 0;
+        for (Member m : crew.team.members) {
+            if (!m.profile.id.equals(myId()) && presence(m.profile.id).online()) n++;
+        }
+        return n;
     }
 
     /** Friends on projects.gg, favourites first. */

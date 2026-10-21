@@ -2,6 +2,9 @@ package gg.projects.mobile.social;
 
 import androidx.annotation.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -11,16 +14,20 @@ import java.util.Set;
  * format version ({@code "1"}; others are ignored) and {@code to} the recipient, so a message for an
  * account the app is no longer signed in to is dropped. Pure Java and JVM-tested; the Android side
  * only posts or cancels what {@link #decide} says.
+ *
+ * <p>M20: {@code message} (a direct message; never its text: "Ayşe sana mesaj gönderdi"), and a
+ * call's {@code where}, {@code host} and {@code crews}.
  */
 public final class PushMessage {
     public static final String REQUEST = "request";
     public static final String INVITE = "invite";
     public static final String CALL = "call";
     public static final String CALL_END = "call_end";
+    public static final String MESSAGE = "message";
 
     public final String type;
     public final String to;
-    /** The other player: the sender of a request or invite, the caller. */
+    /** The other player: the sender of a request, invite or message, the caller. */
     public final String sender;
     /** Their display name (plain text, bounded); may be empty. */
     public final String name;
@@ -33,14 +40,20 @@ public final class PushMessage {
     /** Call: {@code join} or {@code ready}. */
     @Nullable
     public final String kind;
-    /** Invite: {@code projects} or {@code other}. */
+    /** Invite and call: {@code projects} or {@code other}. */
     @Nullable
     public final String where;
     @Nullable
     public final String host;
+    /** Message: its conversation ({@code d:<id>:<id>}). */
+    @Nullable
+    public final String conv;
+    /** Call: the crews it names (the player keeps those they are in). */
+    public final List<String> crews;
 
     private PushMessage(String type, String to, String sender, String name, @Nullable String id, long at, long until,
-                        @Nullable String kind, @Nullable String where, @Nullable String host) {
+                        @Nullable String kind, @Nullable String where, @Nullable String host, @Nullable String conv,
+                        List<String> crews) {
         this.type = type;
         this.to = to;
         this.sender = sender;
@@ -51,6 +64,8 @@ public final class PushMessage {
         this.kind = kind;
         this.where = where;
         this.host = host;
+        this.conv = conv;
+        this.crews = Collections.unmodifiableList(crews);
     }
 
     /** The message in {@code data}, or null when it is not one this app reads. */
@@ -61,11 +76,12 @@ public final class PushMessage {
         String to = data.get("to");
         if (type == null || !SocialModel.isUserId(to)) return null;
         String name = clean(data.get("name"));
+        List<String> none = Collections.emptyList();
         switch (type) {
             case REQUEST: {
                 String sender = data.get("sender");
                 if (!SocialModel.isUserId(sender)) return null;
-                return new PushMessage(type, to, sender, name, null, number(data.get("at")), 0, null, null, null);
+                return new PushMessage(type, to, sender, name, null, number(data.get("at")), 0, null, null, null, null, none);
             }
             case INVITE: {
                 String sender = data.get("sender");
@@ -74,11 +90,8 @@ public final class PushMessage {
                 long at = number(data.get("at"));
                 long expires = number(data.get("expires"));
                 if (expires <= 0) expires = at > 0 ? at + SocialModel.Invite.LIFETIME_SECONDS : 0;
-                String host = data.get("host");
-                if (host != null && !host.matches("[A-Za-z0-9.-]{1,253}")) host = null;
-                String where = data.get("where");
-                where = where == null ? null : ("projects".equals(where) ? "projects" : "other");
-                return new PushMessage(type, to, sender, name, id, at, expires, null, where, host);
+                return new PushMessage(type, to, sender, name, id, at, expires, null, where(data.get("where")),
+                        host(data.get("host")), null, none);
             }
             case CALL: {
                 String caller = data.get("caller");
@@ -87,17 +100,46 @@ public final class PushMessage {
                 long until = number(data.get("until"));
                 if (until <= 0) return null;
                 String kind = SocialModel.Call.JOIN.equals(data.get("kind")) ? SocialModel.Call.JOIN : SocialModel.Call.READY;
-                return new PushMessage(type, to, caller, name, id, number(data.get("at")), until, kind, null, null);
+                List<String> crews = new ArrayList<>();
+                String list = data.get("crews");
+                if (list != null) {
+                    for (String crew : list.split(",")) {
+                        String c = crew.trim();
+                        if (SocialModel.isCrewId(c) && !crews.contains(c) && crews.size() < 10) crews.add(c);
+                    }
+                }
+                return new PushMessage(type, to, caller, name, id, number(data.get("at")), until, kind,
+                        where(data.get("where")), host(data.get("host")), null, crews);
             }
             case CALL_END: {
                 String id = data.get("call");
                 if (!isId(id)) return null;
                 String caller = data.get("caller");
-                return new PushMessage(type, to, SocialModel.isUserId(caller) ? caller : "", "", id, 0, 0, null, null, null);
+                return new PushMessage(type, to, SocialModel.isUserId(caller) ? caller : "", "", id, 0, 0, null, null, null,
+                        null, none);
+            }
+            case MESSAGE: {
+                String sender = data.get("sender");
+                String conv = data.get("conv");
+                // Only direct messages push, and only between the two players of the conversation.
+                if (!SocialModel.isUserId(sender) || !ChatConv.isDirect(conv) || !sender.equals(ChatConv.other(conv, to))) {
+                    return null;
+                }
+                return new PushMessage(type, to, sender, name, null, number(data.get("at")), 0, null, null, null, conv, none);
             }
             default:
                 return null;
         }
+    }
+
+    @Nullable
+    private static String where(@Nullable String where) {
+        return where == null ? null : ("projects".equals(where) ? "projects" : "other");
+    }
+
+    @Nullable
+    private static String host(@Nullable String host) {
+        return host != null && host.matches("[A-Za-z0-9.-]{1,253}") ? host : null;
     }
 
     private static boolean isId(@Nullable String id) {
@@ -135,6 +177,7 @@ public final class PushMessage {
         switch (type) {
             case REQUEST: return "request:" + sender;
             case INVITE: return "invite:" + sender;
+            case MESSAGE: return "message:" + conv;
             default: return "call:" + id;
         }
     }
@@ -148,23 +191,30 @@ public final class PushMessage {
         public final String why;
         /** SHOW: how long the notification stays (ms; 0: until opened). */
         public final long timeoutMs;
+        /** SHOW: without sound or a heads-up (a conversation muted on this phone). */
+        public final boolean silent;
 
-        private Decision(Action action, String why, long timeoutMs) {
+        private Decision(Action action, String why, long timeoutMs, boolean silent) {
             this.action = action;
             this.why = why;
             this.timeoutMs = timeoutMs;
+            this.silent = silent;
         }
 
         static Decision show(long timeoutMs) {
-            return new Decision(Action.SHOW, "", timeoutMs);
+            return new Decision(Action.SHOW, "", timeoutMs, false);
+        }
+
+        static Decision showSilently(long timeoutMs) {
+            return new Decision(Action.SHOW, "", timeoutMs, true);
         }
 
         static Decision cancel() {
-            return new Decision(Action.CANCEL, "", 0);
+            return new Decision(Action.CANCEL, "", 0, false);
         }
 
         static Decision drop(String why) {
-            return new Decision(Action.DROP, why, 0);
+            return new Decision(Action.DROP, why, 0, false);
         }
     }
 
@@ -177,6 +227,12 @@ public final class PushMessage {
      */
     public Decision decide(@Nullable String signedIn, long nowSeconds, Set<String> endedCalls, Set<String> wanted,
                            boolean crewAudible) {
+        return decide(signedIn, nowSeconds, endedCalls, wanted, crewAudible, Collections.<String>emptySet());
+    }
+
+    /** @param mutedConversations conversations muted on this phone now: their messages show silently */
+    public Decision decide(@Nullable String signedIn, long nowSeconds, Set<String> endedCalls, Set<String> wanted,
+                           boolean crewAudible, Set<String> mutedConversations) {
         if (signedIn == null || !signedIn.equals(to)) return Decision.drop("not for the signed-in account");
         switch (type) {
             case REQUEST:
@@ -193,6 +249,11 @@ public final class PushMessage {
                 return Decision.show((until - nowSeconds) * 1000L);
             case CALL_END:
                 return Decision.cancel();
+            case MESSAGE:
+                if (!wanted.contains(MESSAGE)) return Decision.drop("messages off");
+                // A message push lives a day at FCM: one far older than that is not news.
+                if (at > 0 && nowSeconds - at > 86_400) return Decision.drop("expired");
+                return mutedConversations.contains(conv) ? Decision.showSilently(0) : Decision.show(0);
             default:
                 return Decision.drop("unknown");
         }

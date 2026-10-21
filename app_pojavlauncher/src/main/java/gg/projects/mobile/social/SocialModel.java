@@ -121,15 +121,31 @@ public final class SocialModel {
         public final boolean shareLastSeen;
         @Nullable
         public final String createdOn;
+        /** SPAM1: a new Discord account's limits, or null (also from services before SPAM1). */
+        @Nullable
+        public final Limited limited;
+        /** MOD1: moderators' one-time notes not shown yet, oldest first. */
+        public final List<ModNotice> notices;
+        /** The service has reports and moderation (MOD1): its {@code me} carries {@code notices}. */
+        public final boolean moderation;
 
         public Me(Profile profile, String friendCode, String status, boolean shareServer, boolean shareLastSeen,
                   @Nullable String createdOn) {
+            this(profile, friendCode, status, shareServer, shareLastSeen, createdOn, null,
+                    Collections.<ModNotice>emptyList(), false);
+        }
+
+        public Me(Profile profile, String friendCode, String status, boolean shareServer, boolean shareLastSeen,
+                  @Nullable String createdOn, @Nullable Limited limited, List<ModNotice> notices, boolean moderation) {
             this.profile = profile;
             this.friendCode = friendCode;
             this.status = status;
             this.shareServer = shareServer;
             this.shareLastSeen = shareLastSeen;
             this.createdOn = createdOn;
+            this.limited = limited;
+            this.notices = Collections.unmodifiableList(new ArrayList<>(notices));
+            this.moderation = moderation;
         }
 
         @Nullable
@@ -139,13 +155,121 @@ public final class SocialModel {
             JsonObject privacy = Json.obj(o, "privacy");
             String status = Json.str(o, "status", Status.ONLINE);
             if (!Status.isKnown(status)) status = Status.ONLINE;
+            List<ModNotice> notices = new ArrayList<>();
+            for (JsonObject n : Json.objects(o, "notices")) {
+                ModNotice notice = ModNotice.read(n);
+                if (notice != null) notices.add(notice);
+            }
+            boolean moderation = o != null && (o.has("notices") || o.has("limited"));
             return new Me(profile, Json.str(o, "friendCode", ""), status,
                     Json.bool(privacy, "shareServer", false), Json.bool(privacy, "shareLastSeen", true),
-                    Json.str(o, "createdOn"));
+                    Json.str(o, "createdOn"), Limited.read(Json.obj(o, "limited")), notices, moderation);
         }
 
         public Me withStatus(String newStatus) {
-            return new Me(profile, friendCode, newStatus, shareServer, shareLastSeen, createdOn);
+            return new Me(profile, friendCode, newStatus, shareServer, shareLastSeen, createdOn, limited, notices, moderation);
+        }
+
+        /** The same account without the notices the player has seen (they go from the service too). */
+        public Me withoutNotices(Set<String> seen) {
+            List<ModNotice> left = new ArrayList<>();
+            for (ModNotice n : notices) if (!seen.contains(n.id)) left.add(n);
+            return new Me(profile, friendCode, status, shareServer, shareLastSeen, createdOn, limited, left, moderation);
+        }
+
+        /** With a notice that came live ({@code {"t":"notice"}}), unless it is there already. */
+        public Me withNotice(ModNotice notice) {
+            for (ModNotice n : notices) if (n.id.equals(notice.id)) return this;
+            List<ModNotice> next = new ArrayList<>(notices);
+            next.add(notice);
+            return new Me(profile, friendCode, status, shareServer, shareLastSeen, createdOn, limited, next, true);
+        }
+    }
+
+    /**
+     * SPAM1 ({@code me.limited}): what a Discord account younger than the service's threshold may not
+     * do yet, until {@code until} (Unix seconds). Keys the app does not know are kept and ignored.
+     */
+    public static final class Limited {
+        public static final String CREW_FOUND = "crew_found";
+        public static final String CREW_INVITES = "crew_invites";
+        public static final String CODE_LOOKUPS = "code_lookups";
+        public static final String SETTINGS_BACKUP = "settings_backup";
+        public static final String CHAT_MESSAGES = "chat_messages";
+
+        public final long until;
+        /** key → the daily cap ({@code perDay}; 0 when the item has none). */
+        public final Map<String, Integer> items;
+
+        public Limited(long until, Map<String, Integer> items) {
+            this.until = until;
+            this.items = Collections.unmodifiableMap(new LinkedHashMap<>(items));
+        }
+
+        @Nullable
+        public static Limited read(@Nullable JsonObject o) {
+            if (o == null) return null;
+            long until = Json.num(o, "until", 0);
+            if (until <= 0) return null;
+            Map<String, Integer> items = new LinkedHashMap<>();
+            for (JsonObject item : Json.objects(o, "items")) {
+                String key = Json.str(item, "key");
+                if (key != null && key.matches("[a-z_]{1,32}")) items.put(key, (int) Math.max(0, Json.num(item, "perDay", 0)));
+            }
+            return new Limited(until, items);
+        }
+
+        /** Still limited at {@code nowSeconds} (the limits lift by themselves). */
+        public boolean active(long nowSeconds) {
+            return nowSeconds < until;
+        }
+
+        public boolean has(String key) {
+            return items.containsKey(key);
+        }
+
+        public int perDay(String key) {
+            Integer value = items.get(key);
+            return value == null ? 0 : value;
+        }
+
+        /** Whole days until {@code until} ("3 gün sonra açılır"): at least 1 while it is ahead, 0 after. */
+        public static int daysLeft(long until, long nowSeconds) {
+            long left = until - nowSeconds;
+            if (left <= 0) return 0;
+            return (int) Math.min(366, Math.max(1, (left + 86_399) / 86_400));
+        }
+    }
+
+    /** MOD1 ({@code me.notices}, {@code {"t":"notice"}}): a moderator's one-time note to the player. */
+    public static final class ModNotice {
+        public static final String WARNING = "warning";
+        public static final String PROFILE_RESET = "profile_reset";
+
+        public final String id;
+        /** {@code warning} or {@code profile_reset} (others are kept, shown as a warning). */
+        public final String kind;
+        public final long at;
+        @Nullable
+        public final String reason;
+
+        public ModNotice(String id, String kind, long at, @Nullable String reason) {
+            this.id = id;
+            this.kind = kind;
+            this.at = at;
+            this.reason = reason;
+        }
+
+        @Nullable
+        public static ModNotice read(@Nullable JsonObject o) {
+            String id = Json.str(o, "id");
+            if (id == null) {
+                Long number = Json.numOrNull(o, "id");
+                if (number != null) id = String.valueOf(number);
+            }
+            if (id == null || !id.matches("[A-Za-z0-9_:-]{1,64}")) return null;
+            String kind = Json.str(o, "kind", WARNING);
+            return new ModNotice(id, kind, Json.num(o, "at", 0), Json.str(o, "reason"));
         }
     }
 
@@ -456,14 +580,26 @@ public final class SocialModel {
         public final String createdOn;
         public final List<Member> members;
         public final Permissions permissions;
+        /**
+         * MOD1: Projects' moderators reset the crew's name, tag and motto; they stay locked until then
+         * (Unix seconds). Null when not locked (and from services before MOD1).
+         */
+        @Nullable
+        public final Long textLockedUntil;
 
         public Team(TeamSummary summary, String code, @Nullable String createdOn, List<Member> members, Permissions permissions) {
+            this(summary, code, createdOn, members, permissions, null);
+        }
+
+        public Team(TeamSummary summary, String code, @Nullable String createdOn, List<Member> members, Permissions permissions,
+                    @Nullable Long textLockedUntil) {
             super(summary.id, summary.name, summary.tag, summary.emblem, summary.color, summary.frame, summary.motto,
                     members.size());
             this.code = code;
             this.createdOn = createdOn;
             this.members = Collections.unmodifiableList(members);
             this.permissions = permissions;
+            this.textLockedUntil = textLockedUntil;
         }
 
         @Nullable
@@ -477,7 +613,12 @@ public final class SocialModel {
                 if (member != null && seen.add(member.profile.id)) members.add(member);
             }
             return new Team(summary, Json.str(o, "code", ""), Json.str(o, "createdOn"), members,
-                    Permissions.read(Json.obj(o, "permissions")));
+                    Permissions.read(Json.obj(o, "permissions")), Json.numOrNull(o, "textLockedUntil"));
+        }
+
+        /** The moderators' lock on the crew's texts is on at {@code nowSeconds}. */
+        public boolean textLocked(long nowSeconds) {
+            return textLockedUntil != null && nowSeconds < textLockedUntil;
         }
 
         @Nullable
@@ -554,10 +695,123 @@ public final class SocialModel {
         }
     }
 
+    /** A crew id as the API sends it (16 hex characters today; letters, digits, _ and - at most). */
+    public static boolean isCrewId(@Nullable String id) {
+        return id != null && id.matches("[A-Za-z0-9_-]{1,64}");
+    }
+
+    /**
+     * One of the player's crews (TEAM4, {@code crews[]} of {@code GET /v1/friends} with {@code multi}):
+     * the crew as members see it, the friends the player invited to it who have not answered, and the
+     * player's own mute of it. A service without {@code multi} has one: its {@code team}.
+     */
+    public static final class Crew {
+        public final Team team;
+        public final Set<String> invited;
+        /** The player's mute of this crew ({@code calls} is always on here: it is the all-crews switch). */
+        public final TeamNotifications mute;
+
+        public Crew(Team team, Set<String> invited, TeamNotifications mute) {
+            this.team = team;
+            this.invited = Collections.unmodifiableSet(new HashSet<>(invited));
+            this.mute = mute;
+        }
+
+        @Nullable
+        public static Crew read(@Nullable JsonObject o) {
+            Team team = Team.read(Json.obj(o, "team"));
+            if (team == null) return null;
+            return new Crew(team, ids(o, "invited"), TeamNotifications.read(Json.obj(o, "notifications")));
+        }
+
+        public String id() {
+            return team.id;
+        }
+
+        public Crew withTeam(Team next) {
+            return new Crew(next, invited, mute);
+        }
+
+        public Crew withInvited(Set<String> next) {
+            return new Crew(team, next, mute);
+        }
+
+        public Crew withInvitedAdded(String friendId) {
+            Set<String> next = new HashSet<>(invited);
+            next.add(friendId);
+            return new Crew(team, next, mute);
+        }
+
+        public Crew withMute(TeamNotifications next) {
+            return new Crew(team, invited, next);
+        }
+    }
+
+    /** User ids of an array of strings or of {@code {id}} objects. */
+    static Set<String> ids(@Nullable JsonObject o, String key) {
+        Set<String> out = new HashSet<>();
+        for (JsonElement e : Json.arr(o, key)) {
+            if (e.isJsonPrimitive() && isUserId(e.getAsString())) out.add(e.getAsString());
+            else if (e.isJsonObject()) {
+                String id = Json.str(e.getAsJsonObject(), "id");
+                if (isUserId(id)) out.add(id);
+            }
+        }
+        return out;
+    }
+
+    /**
+     * CHAT1 ({@code hello.chat}, {@code chat_state}): whether the service takes chat messages now, keeps
+     * them for devices that were away, the player's daily limit and a moderator's mute.
+     */
+    public static final class ChatState {
+        public final boolean on;
+        public final boolean mailbox;
+        /** Unix seconds when the mailbox opens again; null while not known. */
+        @Nullable
+        public final Long mailboxBack;
+        public final int perDay;
+        /** Unix seconds until which the player may not send; null when they may. */
+        @Nullable
+        public final Long mutedUntil;
+
+        public ChatState(boolean on, boolean mailbox, @Nullable Long mailboxBack, int perDay, @Nullable Long mutedUntil) {
+            this.on = on;
+            this.mailbox = mailbox;
+            this.mailboxBack = mailboxBack;
+            this.perDay = perDay;
+            this.mutedUntil = mutedUntil;
+        }
+
+        /** Before the first {@code hello}: assumed on (the composer shows; the service answers anyway). */
+        public static final ChatState UNKNOWN = new ChatState(true, true, null, 0, null);
+
+        public static ChatState read(@Nullable JsonObject o) {
+            if (o == null) return UNKNOWN;
+            return new ChatState(Json.bool(o, "on", true), Json.bool(o, "mailbox", true), Json.numOrNull(o, "mailboxBack"),
+                    (int) Json.num(o, "perDay", 0), Json.numOrNull(o, "mutedUntil"));
+        }
+
+        public boolean mutedAt(long hubNowSeconds) {
+            return mutedUntil != null && hubNowSeconds < mutedUntil;
+        }
+
+        /** The mailbox is off (messages reach only those online) at {@code hubNowSeconds}. */
+        public boolean liveOnlyAt(long hubNowSeconds) {
+            return on && !mailbox && (mailboxBack == null || hubNowSeconds < mailboxBack);
+        }
+
+        public ChatState withMutedUntil(@Nullable Long until) {
+            return new ChatState(on, mailbox, mailboxBack, perDay, until);
+        }
+    }
+
     /** An open crew call ("Ekibi çağır"). */
     public static final class Call {
         public static final String JOIN = "join";
         public static final String READY = "ready";
+        /** Where a call is: on projects.gg, on another server, or (an older service) "Hazır mısın?". */
+        public enum Place { PROJECTS, OTHER, READY }
 
         public final String id;
         public final String from;
@@ -567,14 +821,33 @@ public final class SocialModel {
         public final long until;
         /** Answers by user id: {@code yes}, {@code soon} or {@code no}. */
         public final Map<String, String> answers;
+        /**
+         * SOC7 ({@code crews} capability): the player's crews the call names, in the player's order
+         * (for the caller: all); empty from older services (the primary crew).
+         */
+        public final List<String> crews;
+        /** SOC7 ({@code callServer}): {@code projects} or {@code other}; null from older services. */
+        @Nullable
+        public final String serverWhere;
+        /** The server's address as the caller's launcher reported it ({@code play.projects.gg}, another host). */
+        @Nullable
+        public final String serverHost;
 
         public Call(String id, String from, String kind, long at, long until, Map<String, String> answers) {
+            this(id, from, kind, at, until, answers, Collections.<String>emptyList(), null, null);
+        }
+
+        public Call(String id, String from, String kind, long at, long until, Map<String, String> answers,
+                    List<String> crews, @Nullable String serverWhere, @Nullable String serverHost) {
             this.id = id;
             this.from = from;
             this.kind = kind;
             this.at = at;
             this.until = until;
             this.answers = Collections.unmodifiableMap(answers);
+            this.crews = Collections.unmodifiableList(new ArrayList<>(crews));
+            this.serverWhere = serverWhere;
+            this.serverHost = serverHost;
         }
 
         @Nullable
@@ -591,7 +864,25 @@ public final class SocialModel {
                     if (isUserId(e.getKey()) && isAnswer(value)) answers.put(e.getKey(), value);
                 }
             }
-            return new Call(id, from, kind, Json.num(o, "at", 0), Json.num(o, "until", 0), answers);
+            List<String> crews = new ArrayList<>();
+            for (String crew : Json.strings(o, "crews")) if (isCrewId(crew) && !crews.contains(crew)) crews.add(crew);
+            JsonObject server = Json.obj(o, "server");
+            String where = null;
+            String host = null;
+            if (server != null) {
+                String w = Json.str(server, "where");
+                host = cleanHost(Json.str(server, "host"));
+                where = "projects".equals(w) || isProjectsHost(host) ? "projects" : "other";
+            }
+            return new Call(id, from, kind, Json.num(o, "at", 0), Json.num(o, "until", 0), answers, crews, where, host);
+        }
+
+        /** A host name as the service passes it on, or null when it does not look like one. */
+        @Nullable
+        static String cleanHost(@Nullable String host) {
+            if (host == null) return null;
+            String h = host.trim();
+            return h.matches("[A-Za-z0-9.:\\[\\]-]{1,260}") ? h : null;
         }
 
         public static boolean isAnswer(@Nullable String value) {
@@ -601,17 +892,43 @@ public final class SocialModel {
         public Call withAnswer(String userId, String answer) {
             Map<String, String> next = new LinkedHashMap<>(answers);
             if (isAnswer(answer)) next.put(userId, answer);
-            return new Call(id, from, kind, at, until, next);
+            return new Call(id, from, kind, at, until, next, crews, serverWhere, serverHost);
         }
 
         public Call withoutAnswer(String userId) {
             Map<String, String> next = new LinkedHashMap<>(answers);
             next.remove(userId);
-            return new Call(id, from, kind, at, until, next);
+            return new Call(id, from, kind, at, until, next, crews, serverWhere, serverHost);
         }
 
+        /** The same call naming only {@code crews} (a crew of the player's ended or the player left it). */
+        public Call withCrews(List<String> crews) {
+            return new Call(id, from, kind, at, until, answers, crews, serverWhere, serverHost);
+        }
+
+        /**
+         * Where it is: with {@code callServer} the call's server; from an older service {@code join}
+         * means projects.gg and {@code ready} "Hazır mısın?" (another server, or the launcher).
+         */
+        public Place place() {
+            if (serverWhere != null) return "projects".equals(serverWhere) ? Place.PROJECTS : Place.OTHER;
+            return JOIN.equals(kind) ? Place.PROJECTS : Place.READY;
+        }
+
+        /** "Geliyorum" takes the player to projects.gg. */
+        public boolean onProjects() {
+            return place() == Place.PROJECTS;
+        }
+
+        /** The other server's address ("Geliyorum" shows it), or null. */
+        @Nullable
+        public String otherHost() {
+            return place() == Place.OTHER && serverHost != null && !serverHost.isEmpty() ? serverHost : null;
+        }
+
+        /** Kept for M19's callers: a call the player can join on projects.gg. */
         public boolean joinable() {
-            return JOIN.equals(kind);
+            return onProjects();
         }
 
         public int count(String answer) {
@@ -656,10 +973,23 @@ public final class SocialModel {
         /** {@code features} (null: a service from before pushes). */
         @Nullable
         public final Set<String> features;
+        /** TEAM4: every crew of the player in their order, the primary first; null from services before it. */
+        @Nullable
+        public final List<Crew> crews;
+        /** TEAM4: how many crews a player may be in (0: the service did not say). */
+        public final int crewLimit;
 
         public FriendsData(List<Friend> friends, List<Request> incoming, List<Request> outgoing, List<Profile> blocked,
                            Limits limits, @Nullable Team team, Set<String> teamInvited, List<TeamInvite> teamInvites,
                            Set<String> teamFeatures, TeamNotifications teamNotifications, @Nullable Set<String> features) {
+            this(friends, incoming, outgoing, blocked, limits, team, teamInvited, teamInvites, teamFeatures, teamNotifications,
+                    features, null, 0);
+        }
+
+        public FriendsData(List<Friend> friends, List<Request> incoming, List<Request> outgoing, List<Profile> blocked,
+                           Limits limits, @Nullable Team team, Set<String> teamInvited, List<TeamInvite> teamInvites,
+                           Set<String> teamFeatures, TeamNotifications teamNotifications, @Nullable Set<String> features,
+                           @Nullable List<Crew> crews, int crewLimit) {
             this.friends = friends;
             this.incoming = incoming;
             this.outgoing = outgoing;
@@ -671,6 +1001,8 @@ public final class SocialModel {
             this.teamFeatures = teamFeatures;
             this.teamNotifications = teamNotifications;
             this.features = features;
+            this.crews = crews;
+            this.crewLimit = crewLimit;
         }
 
         public static FriendsData read(@Nullable JsonObject o) {
@@ -705,9 +1037,19 @@ public final class SocialModel {
                 if (invite != null) teamInvites.add(invite);
             }
             Set<String> features = Json.has(o, "features") ? new HashSet<>(Json.strings(o, "features")) : null;
+            List<Crew> crews = null;
+            if (o != null && o.has("crews") && o.get("crews").isJsonArray()) {
+                crews = new ArrayList<>();
+                Set<String> crewIds = new HashSet<>();
+                for (JsonObject c : Json.objects(o, "crews")) {
+                    Crew crew = Crew.read(c);
+                    if (crew != null && crewIds.add(crew.id())) crews.add(crew);
+                }
+            }
             return new FriendsData(friends, incoming, outgoing, blocked, Limits.read(Json.obj(o, "limits")),
                     Team.read(Json.obj(o, "team")), invited, teamInvites, new HashSet<>(Json.strings(o, "teamFeatures")),
-                    TeamNotifications.read(Json.obj(o, "teamNotifications")), features);
+                    TeamNotifications.read(Json.obj(o, "teamNotifications")), features, crews,
+                    (int) Math.max(0, Json.num(o, "crewLimit", 0)));
         }
 
         private static List<Request> requests(@Nullable JsonObject o, String key) {

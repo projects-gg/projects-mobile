@@ -6,14 +6,17 @@ import java.util.Set;
 
 /**
  * What of the friends feature the app shows, from three sources (the desktop's rules,
- * content-format.md "features.friends", "features.teams"; services/social README):
+ * content-format.md "features.friends", "features.teams", "features.chat"; services/social README):
  * <ul>
- * <li>the signed launcher config turns Friends on ({@code features.friends}) and crews within it
- * ({@code features.teams}); a debug build may force both for local tests;</li>
+ * <li>the signed launcher config turns Friends on ({@code features.friends}), crews within it
+ * ({@code features.teams}) and chat ({@code features.chat}); a debug build may force them for local
+ * tests;</li>
  * <li>the service decides the rest by what it announces: crews need its crew limit (a service
  * without the team routes has none), each crew addition its {@code teamFeatures} entry
- * ({@code look}, {@code calls}, {@code roles}, {@code mute}) and phone notifications {@code push}
- * in {@code features} (a service from before pushes has no such field);</li>
+ * ({@code look}, {@code calls}, {@code roles}, {@code mute}, {@code multi}, {@code callServer}),
+ * chat and phone notifications their {@code features} entries ({@code chat}, {@code push}; a
+ * service from before pushes has no such field), reports and moderators' notes a {@code me} that
+ * carries {@code notices} (MOD1);</li>
  * <li>phone notifications also need Firebase in this build (the config file was there when it
  * was built).</li>
  * </ul>
@@ -28,8 +31,17 @@ public final class SocialGate {
     public final boolean roles;
     public final boolean mute;
     public final boolean push;
+    /** TEAM4: several crews per player ({@code crews}, {@code multi: true}, the order, a mute per crew). */
+    public final boolean multi;
+    /** CALL1: calls start only from a multiplayer server and carry it. */
+    public final boolean callServer;
+    /** CHAT1: crew chat and direct messages. */
+    public final boolean chat;
+    /** MOD1: "Rapor et" and moderators' notes. */
+    public final boolean reports;
 
-    private SocialGate(boolean friends, boolean teams, boolean look, boolean calls, boolean roles, boolean mute, boolean push) {
+    private SocialGate(boolean friends, boolean teams, boolean look, boolean calls, boolean roles, boolean mute, boolean push,
+                       boolean multi, boolean callServer, boolean chat, boolean reports) {
         this.friends = friends;
         this.teams = teams;
         this.look = look;
@@ -37,9 +49,13 @@ public final class SocialGate {
         this.roles = roles;
         this.mute = mute;
         this.push = push;
+        this.multi = multi;
+        this.callServer = callServer;
+        this.chat = chat;
+        this.reports = reports;
     }
 
-    public static final SocialGate OFF = new SocialGate(false, false, false, false, false, false, false);
+    public static final SocialGate OFF = new SocialGate(false, false, false, false, false, false, false, false, false, false, false);
 
     /**
      * @param configFriends {@code features.friends} of the signed config (or a debug override)
@@ -51,15 +67,29 @@ public final class SocialGate {
      */
     public static SocialGate of(boolean configFriends, boolean configTeams, int serviceTeamLimit,
                                 Set<String> teamFeatures, @Nullable Set<String> features, boolean firebase) {
+        return of(configFriends, configTeams, false, serviceTeamLimit, teamFeatures, features, firebase, false);
+    }
+
+    /**
+     * @param configChat {@code features.chat} of the signed config (or a debug override)
+     * @param moderation the service's {@code me} carries {@code notices} (reports and moderation, MOD1)
+     */
+    public static SocialGate of(boolean configFriends, boolean configTeams, boolean configChat, int serviceTeamLimit,
+                                Set<String> teamFeatures, @Nullable Set<String> features, boolean firebase, boolean moderation) {
         if (!configFriends) return OFF;
         boolean teams = configTeams && serviceTeamLimit > 0;
         boolean push = firebase && features != null && features.contains("push");
+        boolean chat = configChat && features != null && features.contains("chat");
         return new SocialGate(true, teams,
                 teams && teamFeatures.contains("look"),
                 teams && teamFeatures.contains("calls"),
                 teams && teamFeatures.contains("roles"),
                 // Mute is the player's own setting: it comes with calls, which it silences.
                 teams && teamFeatures.contains("mute"),
-                push);
+                push,
+                teams && teamFeatures.contains("multi"),
+                teams && teamFeatures.contains("callServer"),
+                chat,
+                moderation);
     }
 }
