@@ -9,27 +9,29 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * The reminder alarm, and the moments Android drops alarms (a restart, an app update) or allows
- * exact ones again: tells what is due and sets the alarm for the next reminder. Only these actions
- * do anything; the work runs off the main thread.
+ * The reminder alarms (events, and M21's crew plans), and the moments Android drops alarms (a
+ * restart, an app update) or allows exact ones again: tells what is due and sets the alarm for the
+ * next reminder. Only these actions do anything; the work runs off the main thread.
  */
 public final class ReminderReceiver extends BroadcastReceiver {
     private static final ExecutorService EXECUTOR = Executors.newSingleThreadExecutor();
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        String action = intent == null ? null : intent.getAction();
-        if (!Reminders.ACTION_RING.equals(action)
-                && !Intent.ACTION_BOOT_COMPLETED.equals(action)
-                && !Intent.ACTION_MY_PACKAGE_REPLACED.equals(action)
-                && !"android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED".equals(action)) {
-            return;
-        }
+        final String action = intent == null ? null : intent.getAction();
+        final boolean plans = PlanAlarms.ACTION_RING.equals(action);
+        final boolean events = Reminders.ACTION_RING.equals(action);
+        // A restart, an update or the exact-alarm switch drops or changes both alarms: both are set again.
+        final boolean both = Intent.ACTION_BOOT_COMPLETED.equals(action)
+                || Intent.ACTION_MY_PACKAGE_REPLACED.equals(action)
+                || "android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED".equals(action);
+        if (!plans && !events && !both) return;
         final Context app = context.getApplicationContext();
         final PendingResult pending = goAsync();
         EXECUTOR.execute(() -> {
             try {
-                Reminders.ring(app);
+                if (events || both) Reminders.ring(app);
+                if (plans || both) PlanAlarms.ring(app);
             } catch (RuntimeException e) {
                 Log.w("ReminderReceiver", "reminders could not be checked", e);
             } finally {

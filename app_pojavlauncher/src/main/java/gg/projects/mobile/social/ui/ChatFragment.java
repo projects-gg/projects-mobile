@@ -82,6 +82,8 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
     private static final int T_MESSAGE = 0;
     private static final int T_DAY = 1;
     private static final int T_NEW = 2;
+    /** M21: a crew plan as a local line at the time it was made ("Ayşe Cumartesi 21:00 için plan yaptı"). */
+    private static final int T_PLAN = 3;
     /** Messages of one player closer together than this form a group (one name, one face, one time). */
     private static final long GROUP_MS = 5 * 60_000L;
 
@@ -640,10 +642,28 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
         String me = service.state().myId();
         if (me == null) return rows;
         List<ChatBook.Entry> entries = book.entries(mConv);
+        // M21 (TEAM5): the crew's plans as local lines when they were made (the mailbox holds nothing of plans).
+        List<SocialModel.Plan> plans = new ArrayList<>();
+        long nowSeconds = SocialService.nowSeconds();
+        if (ChatConv.isCrew(mConv) && service.gate().plans) {
+            plans.addAll(service.state().plans(nowSeconds, ChatConv.crewId(mConv)));
+            java.util.Collections.sort(plans, (a, b) -> a.createdAt != b.createdAt ? Long.compare(a.createdAt, b.createdAt) : a.id.compareTo(b.id));
+        }
+        // How many plan lines come before each message (a line between two messages ends their group).
+        int[] plansBefore = new int[entries.size() + 1];
+        int k = 0;
+        for (int i = 0; i < entries.size(); i++) {
+            long at = timeOf(entries.get(i));
+            while (k < plans.size() && plans.get(k).createdAt * 1000L <= at) k++;
+            plansBefore[i] = k;
+        }
+        plansBefore[entries.size()] = plans.size();
         long lastDay = -1;
+        int emitted = 0;
         for (int i = 0; i < entries.size(); i++) {
             ChatBook.Entry e = entries.get(i);
             long at = timeOf(e);
+            for (; emitted < plansBefore[i]; emitted++) lastDay = addPlanLine(context, service, rows, plans.get(emitted), lastDay, nowSeconds);
             long day = dayOf(at);
             if (day != lastDay) {
                 String label = dayLabel(context, at);
@@ -655,8 +675,12 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
             }
             ChatBook.Entry prev = i > 0 ? entries.get(i - 1) : null;
             ChatBook.Entry next = i + 1 < entries.size() ? entries.get(i + 1) : null;
-            boolean first = prev == null || !together(prev, e, me) || (mUnreadAt > 0 && e.message != null && e.message.id == mUnreadAt);
-            boolean last = next == null || !together(e, next, me) || (mUnreadAt > 0 && next.message != null && next.message.id == mUnreadAt);
+            boolean lineBefore = i > 0 && plansBefore[i] > plansBefore[i - 1];
+            boolean lineAfter = plansBefore[i + 1] > plansBefore[i];
+            boolean first = prev == null || !together(prev, e, me) || (mUnreadAt > 0 && e.message != null && e.message.id == mUnreadAt)
+                    || lineBefore;
+            boolean last = next == null || !together(e, next, me) || (mUnreadAt > 0 && next.message != null && next.message.id == mUnreadAt)
+                    || lineAfter;
             String state = e.failed() ? "failed:" + e.outbox.failure : e.pending() ? "pending" : "sent";
             // "Bağlantı bekleniyor" under a waiting message follows the socket, so the row knows it too.
             boolean waiting = e.outbox != null && service.connection() != SocialService.Connection.LIVE;
@@ -670,7 +694,26 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
             }
             rows.add(new Row(T_MESSAGE, e.key(), content, e, null, first, last));
         }
+        for (; emitted < plans.size(); emitted++) lastDay = addPlanLine(context, service, rows, plans.get(emitted), lastDay, nowSeconds);
         return rows;
+    }
+
+    /** A plan's local line (with the day above it when it is another day); returns the day it is on. */
+    private long addPlanLine(Context context, SocialService service, List<Row> rows, SocialModel.Plan plan, long lastDay, long nowSeconds) {
+        long at = plan.createdAt * 1000L;
+        long day = dayOf(at);
+        if (day != lastDay) {
+            String label = dayLabel(context, at);
+            rows.add(new Row(T_DAY, "day:" + day, label, null, label, false, false));
+        }
+        String me = service.state().myId();
+        Profile maker = service.state().profile(plan.by);
+        // The player's own plan says "Yarın 23:30 için plan yaptın" (the sentence starts with the day).
+        String text = plan.by.equals(me) ? getString(R.string.projects_plans_made_you, PlanViews.when(context, plan.at, nowSeconds))
+                : getString(R.string.projects_plans_made, maker == null ? getString(R.string.projects_crew_someone) : maker.name(),
+                        PlanViews.when(context, plan.at, nowSeconds, true));
+        rows.add(new Row(T_PLAN, "plan:" + plan.id, "plan|" + text, null, text, false, false));
+        return day;
     }
 
     /** Two lines of one group: the same player, the same day, at most five minutes apart. */
@@ -826,9 +869,23 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
 
     private void bindDay(View view, Row row) {
         boolean unread = row.type == T_NEW;
+        boolean plan = row.type == T_PLAN;
         TextView text = view.findViewById(R.id.projects_day_text);
         text.setText(row.label);
-        text.setTextColor(ContextCompat.getColor(view.getContext(), unread ? R.color.projects_gold_300 : R.color.projects_ash_400));
+        text.setTextColor(ContextCompat.getColor(view.getContext(), unread || plan ? R.color.projects_gold_300 : R.color.projects_ash_400));
+        // M21: a plan's line carries the calendar glyph.
+        android.graphics.drawable.Drawable glyph = null;
+        if (plan) {
+            glyph = ContextCompat.getDrawable(view.getContext(), R.drawable.projects_ic_calendar);
+            if (glyph != null) {
+                glyph = glyph.mutate();
+                glyph.setTint(ContextCompat.getColor(view.getContext(), R.color.projects_gold_300));
+                int size = Math.round(14 * view.getResources().getDisplayMetrics().density);
+                glyph.setBounds(0, 0, size, size);
+            }
+        }
+        text.setCompoundDrawablesRelative(glyph, null, null, null);
+        text.setCompoundDrawablePadding(Math.round(6 * view.getResources().getDisplayMetrics().density));
         text.setBackgroundResource(unread ? 0 : R.drawable.projects_pill_background);
         view.findViewById(R.id.projects_day_line_start).setVisibility(unread ? View.VISIBLE : View.GONE);
         view.findViewById(R.id.projects_day_line_end).setVisibility(unread ? View.VISIBLE : View.GONE);

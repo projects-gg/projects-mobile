@@ -61,6 +61,17 @@ public final class SocialPrefs {
         return mPrefs.getBoolean(KEY_WANT_MESSAGES, true);
     }
 
+    private static final String KEY_WANT_PLAN_REMINDERS = "notify_plan_reminders";
+
+    /** M21: "Plan hatırlatmaları": 10 minutes before a plan the player is coming to (local; nothing is sent). */
+    public boolean wantsPlanReminders() {
+        return mPrefs.getBoolean(KEY_WANT_PLAN_REMINDERS, true);
+    }
+
+    public void setWantsPlanReminders(boolean on) {
+        mPrefs.edit().putBoolean(KEY_WANT_PLAN_REMINDERS, on).apply();
+    }
+
     public void setWants(String kind, boolean on) {
         String key = PushMessage.REQUEST.equals(kind) ? KEY_WANT_REQUESTS
                 : PushMessage.INVITE.equals(kind) ? KEY_WANT_INVITES

@@ -77,6 +77,22 @@ public final class SocialProblem extends Exception {
         MESSAGE_GONE,
         CHAT_NOT_PERMITTED,
         CHAT_TOO_OLD,
+        /** TEAM5: the crew approves newcomers and the join went without {@code request} ({@code team_approval_required}). */
+        APPROVAL_REQUIRED,
+        /** TEAM5: no such waiting join request any more ({@code team_request_not_found}). */
+        JOIN_REQUEST_GONE,
+        /** TEAM5: the crew has 20 join requests waiting ({@code limit_team_requests}). */
+        CREW_REQUESTS_FULL,
+        /** TEAM5: the player has 3 join requests waiting ({@code limit_outgoing_team_requests}). */
+        TOO_MANY_JOIN_REQUESTS,
+        /** TEAM5 plans (socket): not a quarter hour, past, or more than 7 days ahead. */
+        PLAN_TIME,
+        /** TEAM5: the crew has 3 upcoming plans. */
+        PLANS_FULL,
+        /** TEAM5: the crew has a plan at that time ({@link #plan}: its id). */
+        PLAN_EXISTS,
+        /** TEAM5: not a plan the player sees, or it is over. */
+        PLAN_GONE,
         /** Anything else: "Bir sorun oluştu." */
         FAILED
     }
@@ -97,6 +113,9 @@ public final class SocialProblem extends Exception {
     /** {@code reason} of a {@code chat_rejected} ({@code link}, {@code phone}, {@code words}). */
     @Nullable
     public final String reason;
+    /** TEAM5: {@code plan} of a {@code plan_exists} (the plan at that time); null otherwise. */
+    @Nullable
+    public final String plan;
 
     public SocialProblem(Kind kind, int status, @Nullable String code, long retryAfter) {
         this(kind, status, code, retryAfter, null, null, null);
@@ -104,6 +123,11 @@ public final class SocialProblem extends Exception {
 
     public SocialProblem(Kind kind, int status, @Nullable String code, long retryAfter, @Nullable Long until,
                          @Nullable String item, @Nullable String reason) {
+        this(kind, status, code, retryAfter, until, item, reason, null);
+    }
+
+    public SocialProblem(Kind kind, int status, @Nullable String code, long retryAfter, @Nullable Long until,
+                         @Nullable String item, @Nullable String reason, @Nullable String plan) {
         super(kind + (code == null ? "" : " (" + code + ")") + " HTTP " + status);
         this.kind = kind;
         this.status = status;
@@ -112,17 +136,18 @@ public final class SocialProblem extends Exception {
         this.until = until;
         this.item = item;
         this.reason = reason;
+        this.plan = plan;
     }
 
     public static SocialProblem unavailable(@Nullable String why) {
         return new SocialProblem(Kind.UNAVAILABLE, 0, why, 0);
     }
 
-    /** A refusal on the presence socket ({@code {"t":"error","code",…}}). */
+    /** A refusal on the presence socket ({@code {"t":"error","code",…}}; TEAM5: {@code item} and {@code plan} too). */
     public static SocialProblem ofSocket(JsonObject error) {
         String code = Json.str(error, "code", "bad_request");
         return new SocialProblem(socketKind(code), 0, code, Json.num(error, "retryAfter", 0), Json.numOrNull(error, "until"),
-                null, Json.str(error, "reason"));
+                Json.str(error, "item"), Json.str(error, "reason"), Json.str(error, "plan"));
     }
 
     /** What a socket refusal means; the crew and chat codes differ from the HTTP ones. */
@@ -142,6 +167,11 @@ public final class SocialProblem extends Exception {
             case "message_not_found": return Kind.MESSAGE_GONE;
             case "chat_not_permitted": return Kind.CHAT_NOT_PERMITTED;
             case "chat_too_old": return Kind.CHAT_TOO_OLD;
+            case "account_limited": return Kind.ACCOUNT_LIMITED;
+            case "plan_time": return Kind.PLAN_TIME;
+            case "limit_team_plans": return Kind.PLANS_FULL;
+            case "plan_exists": return Kind.PLAN_EXISTS;
+            case "plan_not_found": return Kind.PLAN_GONE;
             case "unavailable":
             case "internal": return Kind.UNAVAILABLE;
             default: return Kind.FAILED;
@@ -220,6 +250,10 @@ public final class SocialProblem extends Exception {
             case "team_text_locked": return Kind.TEXT_LOCKED;
             case "target_not_found": return Kind.TARGET_GONE;
             case "limit_blocks": return Kind.BLOCKS_FULL;
+            case "team_approval_required": return Kind.APPROVAL_REQUIRED;
+            case "team_request_not_found": return Kind.JOIN_REQUEST_GONE;
+            case "limit_team_requests": return Kind.CREW_REQUESTS_FULL;
+            case "limit_outgoing_team_requests": return Kind.TOO_MANY_JOIN_REQUESTS;
             default: return status >= 500 ? Kind.UNAVAILABLE : Kind.FAILED;
         }
     }

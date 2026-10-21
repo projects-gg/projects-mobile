@@ -1,0 +1,46 @@
+{
+ "id": "1561807348278755328",
+ "username": "yeni",
+ "displayName": "Yeni",
+ "avatar": "discord",
+ "avatarHash": null,
+ "discordAvatarHash": null,
+ "friendCode": "PRJ-CS84-SMW1",
+ "status": "online",
+ "privacy": {
+  "shareServer": false,
+  "shareLastSeen": true
+ },
+ "createdOn": "2026-10-21",
+ "settings": null,
+ "limited": {
+  "until": 1793039089,
+  "items": [
+   {
+    "key": "crew_found"
+   },
+   {
+    "key": "crew_invites",
+    "perDay": 5
+   },
+   {
+    "key": "code_lookups",
+    "perDay": 10
+   },
+   {
+    "key": "settings_backup"
+   },
+   {
+    "key": "chat_messages",
+    "perDay": 100
+   },
+   {
+    "key": "crew_link"
+   },
+   {
+    "key": "crew_plans"
+   }
+  ]
+ },
+ "notices": []
+}

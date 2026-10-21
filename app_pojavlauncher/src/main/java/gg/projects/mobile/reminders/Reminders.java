@@ -204,7 +204,7 @@ public final class Reminders {
         return 0x50000000 | (eventId.hashCode() & 0x0FFFFFFF);
     }
 
-    private static int immutable() {
+    static int immutable() {
         return Build.VERSION.SDK_INT >= 23 ? PendingIntent.FLAG_IMMUTABLE : 0;
     }
 
@@ -240,8 +240,8 @@ public final class Reminders {
         if (manager != null) manager.createNotificationChannel(channel);
     }
 
-    /** The game process shows its screen (MainActivity runs in ":game"). */
-    private static boolean isGameOnScreen(Context context) {
+    /** The game process shows its screen (MainActivity runs in ":game"); M21's plan reminders ask it too. */
+    static boolean isGameOnScreen(Context context) {
         ActivityManager manager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
         List<ActivityManager.RunningAppProcessInfo> processes = manager == null ? null : manager.getRunningAppProcesses();
         if (processes == null) return false;

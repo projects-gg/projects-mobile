@@ -498,4 +498,109 @@
     <string name="projects_social_error_blocks_full">Engel listen dolu.</string>
     <string name="projects_social_error_call_needs_server">Ekibini çağırmak için çok oyunculu bir sunucuda olmalısın.</string>
     <string name="projects_social_error_call_server_hidden">“Başka sunuculardaysam adresini göster” kapalı.</string>
+    <!-- M21 (TEAM5): katılma istekleri, davet bağlantıları, katılma ayarı ve ekip planları (masaüstünün metinleri, team2.md Ek A) -->
+    <string name="projects_requests_title">Katılma istekleri</string>
+    <string name="projects_requests_mine">Katılma isteklerin</string>
+    <string name="projects_requests_send">Katılma isteği gönder</string>
+    <string name="projects_requests_approval">Liderler onaylayınca katılırsın.</string>
+    <string name="projects_requests_pending">İsteğin bekliyor</string>
+    <string name="projects_requests_withdraw">Geri çek</string>
+    <string name="projects_requests_withdrawn">İsteğin geri çekildi</string>
+    <string name="projects_requests_sent">İsteğin gönderildi. Liderler onaylayınca katılırsın.</string>
+    <string name="projects_requests_asked">%1$s istedi</string>
+    <string name="projects_requests_accepted">%1$s ekibe katıldı</string>
+    <string name="projects_requests_notice">%1$s ekibine katılmak istiyor</string>
+    <string name="projects_requests_notice_crew">%1$s, %2$s ekibine katılmak istiyor</string>
+    <string name="projects_requests_player_limit">Bu oyuncu şu an başka bir ekibe katılamıyor.</string>
+    <string name="projects_requests_today">Günde en çok 10 katılma isteği gönderebilirsin.</string>
+    <plurals name="projects_requests_count">
+        <item quantity="one">%d katılma isteği</item>
+        <item quantity="other">%d katılma isteği</item>
+    </plurals>
+    <string name="projects_time_just_now">az önce</string>
+    <plurals name="projects_time_minutes_ago">
+        <item quantity="one">%d dk önce</item>
+        <item quantity="other">%d dk önce</item>
+    </plurals>
+    <plurals name="projects_time_hours_ago">
+        <item quantity="one">%d sa önce</item>
+        <item quantity="other">%d sa önce</item>
+    </plurals>
+    <plurals name="projects_time_days_ago">
+        <item quantity="one">%d gün önce</item>
+        <item quantity="other">%d gün önce</item>
+    </plurals>
+
+    <string name="projects_link_title">Davet bağlantısı</string>
+    <string name="projects_link_create">Davet bağlantısı oluştur</string>
+    <string name="projects_link_ready">Davet bağlantısı hazır</string>
+    <string name="projects_link_copy">Bağlantıyı kopyala</string>
+    <string name="projects_link_copied">Bağlantı kopyalandı</string>
+    <string name="projects_link_share">Bağlantıyı paylaş</string>
+    <string name="projects_link_share_text">Projects Launcher\'da ekibime katıl: %1$s</string>
+    <string name="projects_link_more">Bağlantı seçenekleri</string>
+    <string name="projects_link_renew">Yeni bağlantı</string>
+    <string name="projects_link_renew_ask">Eski bağlantı hemen çalışmaz olur.</string>
+    <string name="projects_link_renewed">Yeni bağlantı hazır</string>
+    <string name="projects_link_off">Bağlantıyı kapat</string>
+    <string name="projects_link_off_ask">Bağlantı artık çalışmaz.</string>
+    <string name="projects_link_closed">Bağlantı kapatıldı</string>
+    <string name="projects_join_approve">Yeni üyeleri onayla</string>
+
+    <string name="projects_plans_title">Planlar</string>
+    <string name="projects_plans_make">Plan yap</string>
+    <string name="projects_plans_by">%1$s planladı</string>
+    <string name="projects_plans_by_you">Sen planladın</string>
+    <string name="projects_plans_started_line">Başladı</string>
+    <string name="projects_plans_yes">Geliyorum</string>
+    <string name="projects_plans_maybe">Belki</string>
+    <string name="projects_plans_no">Gelemem</string>
+    <string name="projects_plans_said_yes">Geliyor</string>
+    <string name="projects_plans_said_maybe">Belki</string>
+    <string name="projects_plans_said_no">Gelemiyor</string>
+    <string name="projects_plans_today">Bugün</string>
+    <string name="projects_plans_tomorrow">Yarın</string>
+    <string name="projects_plans_today_inline">bugün</string>
+    <string name="projects_plans_tomorrow_inline">yarın</string>
+    <string name="projects_plans_when">%1$s %2$s</string>
+    <string name="projects_plans_made">%1$s %2$s için plan yaptı</string>
+    <string name="projects_plans_more">Plan seçenekleri</string>
+    <string name="projects_plans_cancel">Planı sil</string>
+    <string name="projects_plans_cancel_ask">Plan herkes için silinir.</string>
+    <string name="projects_plans_cancelled">Plan silindi</string>
+    <string name="projects_plans_day">Gün</string>
+    <string name="projects_plans_time">Saat</string>
+    <string name="projects_plans_full">Ekipte en çok 3 plan olabilir.</string>
+    <string name="projects_plans_today_limit">Günde en çok 5 plan yapabilirsin.</string>
+    <string name="projects_plans_answers_limit">Yanıtını bugün çok değiştirdin. Yarın yeniden dene.</string>
+    <string name="projects_plans_channel">Plan hatırlatmaları</string>
+    <plurals name="projects_plans_remind">
+        <item quantity="one">%1$s planına %2$d dakika kaldı</item>
+        <item quantity="other">%1$s planına %2$d dakika kaldı</item>
+    </plurals>
+    <string name="projects_plans_started">%1$s planı başladı</string>
+    <string name="projects_plans_home_title">%1$s planı</string>
+    <plurals name="projects_plans_coming">
+        <item quantity="one">%d geliyor</item>
+        <item quantity="other">%d geliyor</item>
+    </plurals>
+    <string name="projects_plans_row">Plan · %1$s</string>
+    <plurals name="projects_limited_no_link">
+        <item quantity="one">Discord hesabın yeni olduğu için davet bağlantısı oluşturamazsın. %d gün sonra açılır.</item>
+        <item quantity="other">Discord hesabın yeni olduğu için davet bağlantısı oluşturamazsın. %d gün sonra açılır.</item>
+    </plurals>
+    <plurals name="projects_limited_no_plans">
+        <item quantity="one">Discord hesabın yeni olduğu için plan yapamazsın. %d gün sonra açılır.</item>
+        <item quantity="other">Discord hesabın yeni olduğu için plan yapamazsın. %d gün sonra açılır.</item>
+    </plurals>
+    <string name="projects_limited_crew_link">Ekip davet bağlantısı oluşturamazsın</string>
+    <string name="projects_limited_crew_plans">Ekip planı yapamazsın</string>
+    <string name="projects_social_error_approval_required">Bu ekibe liderler onaylayınca katılınır.</string>
+    <string name="projects_social_error_join_request_gone">Bu istek artık geçerli değil.</string>
+    <string name="projects_social_error_crew_requests_full">Bu ekibin bekleyen çok isteği var. Biraz sonra tekrar dene.</string>
+    <string name="projects_social_error_too_many_join_requests">Bekleyen 3 isteğin var. Önce birini geri çek.</string>
+    <string name="projects_social_error_plan_time">Bu saat seçilemez. Önümüzdeki 7 günden bir saat seç.</string>
+    <string name="projects_social_error_plan_exists">Bu saatte zaten bir plan var.</string>
+    <string name="projects_social_error_plan_gone">Bu plan artık yok.</string>
+    <string name="projects_plans_made_you">%1$s için plan yaptın</string>
 </resources>

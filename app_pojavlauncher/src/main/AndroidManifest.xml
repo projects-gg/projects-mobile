@@ -162,6 +162,9 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="projects" android:host="auth" />
                 <data android:scheme="projects" android:host="friend" />
+                <!-- M21: a crew invite link's page opens projects://crew/<link> ("ekip" is taken too). -->
+                <data android:scheme="projects" android:host="crew" />
+                <data android:scheme="projects" android:host="ekip" />
             </intent-filter>
         </activity>
         <activity

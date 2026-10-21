@@ -255,6 +255,13 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
             add.putString(AddFriendFragment.ARG_CODE, pendingCode);
             SocialUi.open(this, AddFriendFragment.class, AddFriendFragment.TAG, add);
         }
+        // M21: a crew invite link opened before the sign-in: the crew page looks it up, now.
+        String pendingLink = pendingCode == null && isResumed() ? service.takePendingCrewLink() : null;
+        if (pendingLink != null) {
+            Bundle crew = new Bundle();
+            crew.putString(CrewFragment.ARG_LINK, pendingLink);
+            SocialUi.open(this, CrewFragment.class, CrewFragment.TAG, crew);
+        }
         answerPendingInvite(service);
         mAdapter.submit(buildRows(service));
         // MOD1: a warning or a reset picture, once, on the first screen that sees it.
@@ -265,6 +272,9 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
         long next = Long.MAX_VALUE;
         for (Invite invite : service.state().invites(now)) next = Math.min(next, invite.expires - now);
         for (Call call : service.state().calls(now)) next = Math.min(next, service.state().secondsLeft(call, now));
+        // M21: a plan starts or ends with no message (the crew rows say "Plan · Başladı").
+        long hub = service.state().hubNow(now);
+        for (SocialModel.Plan plan : service.state().plans(now)) next = Math.min(next, plan.at > hub ? plan.at - hub : plan.until - hub);
         if (next != Long.MAX_VALUE && next > 0) mList.postDelayed(mTick, Math.min(next, 3600) * 1000L + 500);
     }
 
@@ -389,9 +399,12 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
                 Team team = crew.team;
                 Call call = unanswered(state, crew, now);
                 Call own = own(state, crew, now);
+                SocialModel.Plan plan = gate.plans ? nextPlan(state, crew, now) : null;
                 String content = team.id + "|" + team.name + "|" + team.tag + "|" + team.emblem + team.color + team.frame + "|"
                         + state.onlineInCrew(team.id) + "|" + (call == null ? "" : call.id + call.place() + call.crews) + "|"
-                        + (own == null ? "" : own.id) + "|" + crew.mute.mutedAt(state.hubNow(now));
+                        + (own == null ? "" : own.id) + "|" + crew.mute.mutedAt(state.hubNow(now))
+                        + "|" + (gate.requests ? state.requests(team.id, now).size() : 0)
+                        + "|" + (plan == null ? "" : plan.id + plan.at + plan.underWay(state.hubNow(now)));
                 rows.add(new Row(T_CREW, "crew-" + team.id, content, crew));
             }
         }
@@ -438,6 +451,16 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
             rows.add(new Row(T_EMPTY, "empty", "empty", null));
         }
         return rows;
+    }
+
+    /** M21: the crew's next plan, when it runs now or starts within a day (the crew row says it). */
+    @Nullable
+    private static SocialModel.Plan nextPlan(SocialState state, Crew crew, long now) {
+        long hub = state.hubNow(now);
+        for (SocialModel.Plan p : state.plans(now, crew.id())) {
+            if (p.underWay(hub) || p.at - hub < 86_400) return p;
+        }
+        return null;
     }
 
     /** A crewmate's call naming this crew that the player has not answered yet. */
@@ -925,6 +948,18 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
             } else if (own != null) {
                 line.setText(R.string.projects_crew_call_mine);
                 line.setTextColor(ContextCompat.getColor(context, R.color.projects_gold_300));
+            } else if (service.gate().requests && !service.state().requests(team.id, now).isEmpty()) {
+                // M21: join requests wait for the player's answer.
+                int n = service.state().requests(team.id, now).size();
+                line.setText(context.getResources().getQuantityString(R.plurals.projects_requests_count, n, n));
+                line.setTextColor(ContextCompat.getColor(context, R.color.projects_gold_300));
+            } else if (service.gate().plans && nextPlan(service.state(), crew, now) != null) {
+                // M21: the crew's next plan today or tomorrow ("Plan · Bugün 22:00"; "Plan · Başladı" while it runs).
+                SocialModel.Plan plan = nextPlan(service.state(), crew, now);
+                boolean under = plan.underWay(service.state().hubNow(now));
+                line.setText(getString(R.string.projects_plans_row, under ? getString(R.string.projects_plans_started_line)
+                        : PlanViews.when(context, plan.at, now)));
+                line.setTextColor(ContextCompat.getColor(context, under ? R.color.projects_jade_400 : R.color.projects_ash_300));
             } else {
                 int online = service.state().onlineInCrew(team.id);
                 String text = context.getResources().getQuantityString(R.plurals.projects_crew_online, online, online);

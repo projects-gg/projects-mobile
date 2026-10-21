@@ -92,6 +92,21 @@ final class CrewSheets {
         });
         content.addView(calls, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
+        if (gate.plans) {
+            // M21 (TEAM5): "Plan hatırlatmaları", this phone's own (10 minutes before a plan the player is coming to).
+            final SwitchCompat plans = new SwitchCompat(activity);
+            plans.setText(R.string.projects_plans_channel);
+            plans.setTextSize(16);
+            plans.setTextColor(ContextCompat.getColor(activity, R.color.projects_bone_100));
+            plans.setMinHeight(Math.round(56 * dp));
+            plans.setChecked(service.prefs().wantsPlanReminders());
+            plans.setOnCheckedChangeListener((button, on) -> {
+                Haptics.toggle(button, on);
+                service.setPlanReminders(on);
+            });
+            content.addView(plans, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        }
+
         if (gate.mute) {
             long now = service.state().hubNow(SocialService.nowSeconds());
             if (notifications.mutedAt(now)) {

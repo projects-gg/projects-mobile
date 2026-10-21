@@ -53,6 +53,9 @@ public final class AccountNotes {
         if (limited.has(Limited.CHAT_MESSAGES)) {
             item(activity, content, activity.getString(R.string.projects_limited_chat, limited.perDay(Limited.CHAT_MESSAGES)));
         }
+        // M21 (TEAM5): invite links and plans (joining, asking to join and answering plans stay free).
+        if (limited.has(Limited.CREW_LINK)) item(activity, content, activity.getString(R.string.projects_limited_crew_link));
+        if (limited.has(Limited.CREW_PLANS)) item(activity, content, activity.getString(R.string.projects_limited_crew_plans));
         TextView lifts = new TextView(activity);
         lifts.setText(R.string.projects_limited_lifts);
         lifts.setTextSize(13);

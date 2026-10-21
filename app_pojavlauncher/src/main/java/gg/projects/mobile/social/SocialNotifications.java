@@ -38,12 +38,15 @@ public final class SocialNotifications {
     public static final String CHANNEL_REQUESTS = "projects_social_requests";
     /** M20: direct messages ("Mesajlar"; never their text: "Ayşe sana mesaj gönderdi"). */
     public static final String CHANNEL_MESSAGES = "projects_social_messages";
+    /** M21: crew plan reminders ("Plan hatırlatmaları"; local, 10 minutes before a plan the player is coming to). */
+    public static final String CHANNEL_PLANS = "projects_social_plans";
 
     /** Ids apart from upstream's (1 to 5), the reminders' and "Projects hazır"'s; the tag tells them apart. */
     static final int ID_REQUEST = 0x5A000001;
     static final int ID_INVITE = 0x5A000002;
     static final int ID_CALL = 0x5A000003;
     static final int ID_MESSAGE = 0x5A000004;
+    static final int ID_PLAN = 0x5A000005;
 
     /** Creates (or renames, in the app's language) the channels. */
     public static void ensureChannels(Context context) {
@@ -64,10 +67,14 @@ public final class SocialNotifications {
         NotificationChannel messages = new NotificationChannel(CHANNEL_MESSAGES, c.getString(R.string.projects_chat_channel),
                 NotificationManager.IMPORTANCE_HIGH);
         messages.setGroup(GROUP);
+        NotificationChannel plans = new NotificationChannel(CHANNEL_PLANS, c.getString(R.string.projects_plans_channel),
+                NotificationManager.IMPORTANCE_HIGH);
+        plans.setGroup(GROUP);
         manager.createNotificationChannel(invites);
         manager.createNotificationChannel(calls);
         manager.createNotificationChannel(requests);
         manager.createNotificationChannel(messages);
+        manager.createNotificationChannel(plans);
     }
 
     /** Notifications can show at all (Android 13+'s permission and the app's switch). */
@@ -106,6 +113,10 @@ public final class SocialNotifications {
 
     static String messageTag(String conv) {
         return "message:" + conv;
+    }
+
+    static String planTag(String plan) {
+        return "plan:" + plan;
     }
 
     public static void showRequest(Context context, String sender, @Nullable String name) {
@@ -194,6 +205,46 @@ public final class SocialNotifications {
         NotificationManagerCompat.from(context).cancel(messageTag(conv), ID_MESSAGE);
     }
 
+    /**
+     * M21: a crew plan's reminder: the crew's name over "21:00 planına 10 dakika kaldı" ("21:00 planı
+     * başladı" when the alarm came late); a tap opens the crew. It goes by itself when the plan is over.
+     */
+    public static void showPlanReminder(Context context, String plan, String crew, @Nullable String crewName, long at,
+                                        int minutesLeft, long timeoutMs) {
+        Context c = LanguageManager.wrap(context);
+        String time = android.text.format.DateFormat.getTimeFormat(c).format(new java.util.Date(at * 1000L));
+        String text = minutesLeft > 0
+                ? c.getResources().getQuantityString(R.plurals.projects_plans_remind, minutesLeft, time, minutesLeft)
+                : c.getString(R.string.projects_plans_started, time);
+        String title = crewName == null || crewName.isEmpty() ? c.getString(R.string.projects_plans_title) : crewName;
+        if (!canNotify(c)) return;
+        ensureChannels(c);
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(c, CHANNEL_PLANS)
+                .setSmallIcon(R.drawable.notif_icon)
+                .setColor(ContextCompat.getColor(c, R.color.projects_gold_500))
+                .setContentTitle(title)
+                .setContentText(text)
+                // The text says when; Android's own "in 9m" beside it would round the other way.
+                .setShowWhen(false)
+                .setCategory(NotificationCompat.CATEGORY_REMINDER)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true)
+                .setContentIntent(SocialOpenActivity.open(c, SocialRoutes.CREW, crew));
+        if (timeoutMs > 0) {
+            builder.setTimeoutAfter(timeoutMs);
+            if (Build.VERSION.SDK_INT < 26) SocialNotificationExpiry.schedule(c, planTag(plan), ID_PLAN, timeoutMs);
+        }
+        try {
+            NotificationManagerCompat.from(c).notify(planTag(plan), ID_PLAN, builder.build());
+        } catch (SecurityException e) {
+            Log.w(TAG, "notification not shown", e);
+        }
+    }
+
+    public static void cancelPlanReminder(Context context, String plan) {
+        NotificationManagerCompat.from(context).cancel(planTag(plan), ID_PLAN);
+    }
+
     private static void post(Context c, String channel, String tag, int id, String title, @Nullable String text, int priority,
                              long timeoutMs, PendingIntent open) {
         if (!canNotify(c)) return;
@@ -237,7 +288,7 @@ public final class SocialNotifications {
         if (manager == null) return;
         try {
             for (StatusBarNotification n : manager.getActiveNotifications()) {
-                if (n.getId() == ID_MESSAGE) manager.cancel(n.getTag(), n.getId());
+                if (n.getId() == ID_MESSAGE || n.getId() == ID_PLAN) manager.cancel(n.getTag(), n.getId());
             }
         } catch (RuntimeException e) {
             Log.w(TAG, "notifications not listed", e);

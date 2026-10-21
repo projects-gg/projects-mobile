@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- M19: the crew's code (EKP-XXXX-XXXX), to copy or share; anyone with it can join. -->
+<!-- M19: the crew's code (EKP-XXXX-XXXX), to copy or share; anyone with it can join. M21: the same row
+     shows the crew's invite link (its label, the link, copy, share and, for whoever manages it, "more"). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -21,6 +22,7 @@
         android:orientation="vertical">
 
         <TextView
+            android:id="@+id/projects_crew_code_label"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:fontFamily="@font/figtree_semibold"
@@ -62,4 +64,16 @@
         android:scaleType="fitCenter"
         android:src="@drawable/projects_ic_share"
         android:tint="@color/projects_bone_100" />
+
+    <ImageButton
+        android:id="@+id/projects_crew_code_more"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="@drawable/projects_icon_button_ripple"
+        android:contentDescription="@string/projects_link_more"
+        android:padding="12dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/projects_ic_dots"
+        android:tint="@color/projects_bone_100"
+        android:visibility="gone" />
 </LinearLayout>

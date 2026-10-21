@@ -17,8 +17,9 @@ import java.util.regex.Pattern;
 
 /**
  * The friends service's data as the app keeps it (services/social README: "HTTP API", "Teams",
- * "Crew calls", "Crew notifications", "Push notifications"). Every reader is lenient: unknown fields
- * are ignored and a missing one takes its default, so older and newer services both read.
+ * "Joining a crew", "Crew calls", "Crew plans", "Crew notifications", "Push notifications"). Every
+ * reader is lenient: unknown fields are ignored and a missing one takes its default, so older and
+ * newer services both read.
  */
 public final class SocialModel {
     private SocialModel() {}
@@ -196,6 +197,10 @@ public final class SocialModel {
         public static final String CODE_LOOKUPS = "code_lookups";
         public static final String SETTINGS_BACKUP = "settings_backup";
         public static final String CHAT_MESSAGES = "chat_messages";
+        /** TEAM5: making or renewing a crew's invite link (listed with {@code link} in {@code teamFeatures}). */
+        public static final String CREW_LINK = "crew_link";
+        /** TEAM5: making crew plans; answering them is fine (listed with {@code plans}). */
+        public static final String CREW_PLANS = "crew_plans";
 
         public final long until;
         /** key → the daily cap ({@code perDay}; 0 when the item has none). */
@@ -477,24 +482,35 @@ public final class SocialModel {
         public static final String LEADER = "leader";
 
         public final String invite;
+        /** Calling the crew, and (TEAM5) making plans. */
         public final String call;
         public final String kick;
         public final String edit;
+        /** TEAM5 ({@code requests}): answering join requests and the invite link ({@code moderators} or {@code leader}). */
+        public final String admit;
 
         public Permissions(String invite, String call, String kick, String edit) {
+            this(invite, call, kick, edit, MODERATORS);
+        }
+
+        public Permissions(String invite, String call, String kick, String edit, String admit) {
             this.invite = invite;
             this.call = call;
             this.kick = kick;
             this.edit = edit;
+            this.admit = admit;
         }
 
         /** The service's defaults (and what a service without roles behaves like). */
-        public static final Permissions DEFAULTS = new Permissions(MEMBERS, MEMBERS, MODERATORS, LEADER);
+        public static final Permissions DEFAULTS = new Permissions(MEMBERS, MEMBERS, MODERATORS, LEADER, MODERATORS);
 
         public static Permissions read(@Nullable JsonObject o) {
             if (o == null) return DEFAULTS;
+            // admit is never "members" (the service takes moderators or leader): a member's row never answers requests.
+            String admit = level(Json.str(o, "admit"), MODERATORS);
             return new Permissions(level(Json.str(o, "invite"), MEMBERS), level(Json.str(o, "call"), MEMBERS),
-                    level(Json.str(o, "kick"), MODERATORS), level(Json.str(o, "edit"), LEADER));
+                    level(Json.str(o, "kick"), MODERATORS), level(Json.str(o, "edit"), LEADER),
+                    MEMBERS.equals(admit) ? MODERATORS : admit);
         }
 
         /** An unknown level counts as {@link #LEADER}: the narrowest reading (the desktop's rule). */
@@ -537,6 +553,11 @@ public final class SocialModel {
 
     /** A crew's look and name (what invites and lookups show). */
     public static class TeamSummary {
+        /** TEAM5 {@code join}: the code and the invite link let anyone in at once (the default, and every older crew). */
+        public static final String JOIN_OPEN = "open";
+        /** TEAM5 {@code join}: newcomers with the code or the link ask; the leader (or moderators) take them in. */
+        public static final String JOIN_APPROVAL = "approval";
+
         public final String id;
         public final String name;
         public final String tag;
@@ -546,9 +567,16 @@ public final class SocialModel {
         @Nullable
         public final String motto;
         public final int memberCount;
+        /** {@link #JOIN_OPEN} or {@link #JOIN_APPROVAL} (an unknown value reads as approval: the careful side). */
+        public final String join;
 
         public TeamSummary(String id, String name, String tag, String emblem, String color, String frame,
                            @Nullable String motto, int memberCount) {
+            this(id, name, tag, emblem, color, frame, motto, memberCount, JOIN_OPEN);
+        }
+
+        public TeamSummary(String id, String name, String tag, String emblem, String color, String frame,
+                           @Nullable String motto, int memberCount, String join) {
             this.id = id;
             this.name = name;
             this.tag = tag;
@@ -557,6 +585,7 @@ public final class SocialModel {
             this.frame = frame;
             this.motto = motto;
             this.memberCount = memberCount;
+            this.join = join;
         }
 
         @Nullable
@@ -569,7 +598,18 @@ public final class SocialModel {
             int members = Json.has(o, "members") && o.get("members").isJsonArray()
                     ? o.getAsJsonArray("members").size() : (int) Json.num(o, "members", 0);
             return new TeamSummary(id, name, Json.str(o, "tag", ""), Json.str(o, "emblem", "shield"),
-                    CrewLook.color(Json.str(o, "color")), CrewLook.frame(Json.str(o, "frame")), motto, members);
+                    CrewLook.color(Json.str(o, "color")), CrewLook.frame(Json.str(o, "frame")), motto, members,
+                    joinOf(Json.str(o, "join")));
+        }
+
+        static String joinOf(@Nullable String join) {
+            if (join == null || JOIN_OPEN.equals(join)) return JOIN_OPEN;
+            return JOIN_APPROVAL;
+        }
+
+        /** Newcomers with the code or the link ask first (TEAM5). */
+        public boolean approval() {
+            return JOIN_APPROVAL.equals(join);
         }
     }
 
@@ -586,6 +626,9 @@ public final class SocialModel {
          */
         @Nullable
         public final Long textLockedUntil;
+        /** TEAM5: the crew's invite link as {@code XXXX-XXXX-XXXX}, or null (none, or a service from before links). */
+        @Nullable
+        public final String link;
 
         public Team(TeamSummary summary, String code, @Nullable String createdOn, List<Member> members, Permissions permissions) {
             this(summary, code, createdOn, members, permissions, null);
@@ -593,13 +636,19 @@ public final class SocialModel {
 
         public Team(TeamSummary summary, String code, @Nullable String createdOn, List<Member> members, Permissions permissions,
                     @Nullable Long textLockedUntil) {
+            this(summary, code, createdOn, members, permissions, textLockedUntil, null);
+        }
+
+        public Team(TeamSummary summary, String code, @Nullable String createdOn, List<Member> members, Permissions permissions,
+                    @Nullable Long textLockedUntil, @Nullable String link) {
             super(summary.id, summary.name, summary.tag, summary.emblem, summary.color, summary.frame, summary.motto,
-                    members.size());
+                    members.size(), summary.join);
             this.code = code;
             this.createdOn = createdOn;
             this.members = Collections.unmodifiableList(members);
             this.permissions = permissions;
             this.textLockedUntil = textLockedUntil;
+            this.link = link;
         }
 
         @Nullable
@@ -613,7 +662,13 @@ public final class SocialModel {
                 if (member != null && seen.add(member.profile.id)) members.add(member);
             }
             return new Team(summary, Json.str(o, "code", ""), Json.str(o, "createdOn"), members,
-                    Permissions.read(Json.obj(o, "permissions")), Json.numOrNull(o, "textLockedUntil"));
+                    Permissions.read(Json.obj(o, "permissions")), Json.numOrNull(o, "textLockedUntil"),
+                    SocialCodes.normalizeInviteLink(Json.str(o, "link")));
+        }
+
+        /** The same crew with another invite link (null: switched off), as an answer of its own route says. */
+        public Team withLink(@Nullable String newLink) {
+            return new Team(this, code, createdOn, new ArrayList<>(members), permissions, textLockedUntil, newLink);
         }
 
         /** The moderators' lock on the crew's texts is on at {@code nowSeconds}. */
@@ -658,6 +713,148 @@ public final class SocialModel {
             Profile from = Profile.read(Json.obj(o, "from"));
             if (team == null || from == null) return null;
             return new TeamInvite(team, from, Json.num(o, "sentAt", 0));
+        }
+    }
+
+    /** How long a join request waits before it goes (README "Joining a crew"); nothing is sent then. */
+    public static final long JOIN_REQUEST_TTL_SECONDS = 7 * 86_400L;
+
+    /**
+     * TEAM5: someone asked to join a crew the player may answer for ({@code crews[].requests},
+     * {@code team_requests}): who and when.
+     */
+    public static final class JoinRequest {
+        public final Profile from;
+        public final long sentAt;
+
+        public JoinRequest(Profile from, long sentAt) {
+            this.from = from;
+            this.sentAt = sentAt;
+        }
+
+        @Nullable
+        public static JoinRequest read(@Nullable JsonObject o) {
+            JsonObject inner = Json.obj(o, "from");
+            Profile from = Profile.read(inner != null ? inner : o);
+            if (from == null) return null;
+            return new JoinRequest(from, Json.num(o, "sentAt", 0));
+        }
+
+        /** Still waiting at {@code nowSeconds} (launchers drop it 7 days after it was sent). */
+        public boolean waiting(long nowSeconds) {
+            return sentAt <= 0 || nowSeconds < sentAt + JOIN_REQUEST_TTL_SECONDS;
+        }
+    }
+
+    /** TEAM5: the player's own waiting join request to a crew that approves newcomers ({@code teamRequests}). */
+    public static final class MyRequest {
+        public final TeamSummary team;
+        public final long sentAt;
+
+        public MyRequest(TeamSummary team, long sentAt) {
+            this.team = team;
+            this.sentAt = sentAt;
+        }
+
+        @Nullable
+        public static MyRequest read(@Nullable JsonObject o) {
+            TeamSummary team = TeamSummary.read(Json.obj(o, "team"));
+            if (team == null) return null;
+            return new MyRequest(team, Json.num(o, "sentAt", 0));
+        }
+
+        public boolean waiting(long nowSeconds) {
+            return sentAt <= 0 || nowSeconds < sentAt + JOIN_REQUEST_TTL_SECONDS;
+        }
+    }
+
+    /**
+     * TEAM5 ("Planlar", README "Crew plans"): a time to meet on Projects and who is coming. No text,
+     * ever. {@code at} is a whole quarter of an hour; the plan is over at {@code until} ({@code at} + 2
+     * hours) by the hub's clock, when nothing is sent.
+     */
+    public static final class Plan {
+        public static final String YES = "yes";
+        public static final String MAYBE = "maybe";
+        public static final String NO = "no";
+        /** {@code at} is a multiple of this (15 minutes). */
+        public static final long STEP_SECONDS = 900;
+        /** At most this far ahead. */
+        public static final long AHEAD_SECONDS = 7 * 86_400L;
+        /** A plan is over this long after its time. */
+        public static final long AFTER_SECONDS = 2 * 3_600L;
+        /** Upcoming plans per crew. */
+        public static final int PER_CREW = 3;
+
+        public final String id;
+        public final String crew;
+        public final String by;
+        public final long at;
+        public final long until;
+        public final long createdAt;
+        /** Answers by user id: {@code yes}, {@code maybe} or {@code no} (only those the player may see). */
+        public final Map<String, String> answers;
+
+        public Plan(String id, String crew, String by, long at, long until, long createdAt, Map<String, String> answers) {
+            this.id = id;
+            this.crew = crew;
+            this.by = by;
+            this.at = at;
+            this.until = until;
+            this.createdAt = createdAt;
+            this.answers = Collections.unmodifiableMap(new LinkedHashMap<>(answers));
+        }
+
+        @Nullable
+        public static Plan read(@Nullable JsonObject o) {
+            String id = Json.str(o, "id");
+            String crew = Json.str(o, "crew");
+            String by = Json.str(o, "by");
+            long at = Json.num(o, "at", 0);
+            if (id == null || !id.matches("[A-Za-z0-9_-]{1,64}") || !isCrewId(crew) || !isUserId(by) || at <= 0) return null;
+            Map<String, String> answers = new LinkedHashMap<>();
+            JsonObject a = Json.obj(o, "answers");
+            if (a != null) {
+                for (Map.Entry<String, JsonElement> e : a.entrySet()) {
+                    String value = e.getValue().isJsonPrimitive() ? e.getValue().getAsString() : null;
+                    if (isUserId(e.getKey()) && isAnswer(value)) answers.put(e.getKey(), value);
+                }
+            }
+            long until = Json.num(o, "until", 0);
+            if (until <= at) until = at + AFTER_SECONDS;
+            return new Plan(id, crew, by, at, until, Json.num(o, "createdAt", 0), answers);
+        }
+
+        public static boolean isAnswer(@Nullable String value) {
+            return YES.equals(value) || MAYBE.equals(value) || NO.equals(value);
+        }
+
+        public Plan withAnswer(String userId, @Nullable String answer) {
+            Map<String, String> next = new LinkedHashMap<>(answers);
+            if (answer == null) next.remove(userId);
+            else if (isAnswer(answer)) next.put(userId, answer);
+            return new Plan(id, crew, by, at, until, createdAt, next);
+        }
+
+        public int count(String answer) {
+            int n = 0;
+            for (String value : answers.values()) if (answer.equals(value)) n++;
+            return n;
+        }
+
+        /** Not over at {@code hubNowSeconds}. */
+        public boolean live(long hubNowSeconds) {
+            return hubNowSeconds < until;
+        }
+
+        /** Its time has come and it is not over: they are meeting now. */
+        public boolean underWay(long hubNowSeconds) {
+            return hubNowSeconds >= at && hubNowSeconds < until;
+        }
+
+        /** Still ahead (counts towards the crew's 3 upcoming plans). */
+        public boolean upcoming(long hubNowSeconds) {
+            return at > hubNowSeconds;
         }
     }
 
@@ -710,18 +907,25 @@ public final class SocialModel {
         public final Set<String> invited;
         /** The player's mute of this crew ({@code calls} is always on here: it is the all-crews switch). */
         public final TeamNotifications mute;
+        /** TEAM5: the crew's waiting join requests, oldest first, while the player may answer them (else empty). */
+        public final List<JoinRequest> requests;
 
         public Crew(Team team, Set<String> invited, TeamNotifications mute) {
+            this(team, invited, mute, Collections.<JoinRequest>emptyList());
+        }
+
+        public Crew(Team team, Set<String> invited, TeamNotifications mute, List<JoinRequest> requests) {
             this.team = team;
             this.invited = Collections.unmodifiableSet(new HashSet<>(invited));
             this.mute = mute;
+            this.requests = Collections.unmodifiableList(new ArrayList<>(requests));
         }
 
         @Nullable
         public static Crew read(@Nullable JsonObject o) {
             Team team = Team.read(Json.obj(o, "team"));
             if (team == null) return null;
-            return new Crew(team, ids(o, "invited"), TeamNotifications.read(Json.obj(o, "notifications")));
+            return new Crew(team, ids(o, "invited"), TeamNotifications.read(Json.obj(o, "notifications")), joinRequests(o, "requests"));
         }
 
         public String id() {
@@ -729,22 +933,37 @@ public final class SocialModel {
         }
 
         public Crew withTeam(Team next) {
-            return new Crew(next, invited, mute);
+            return new Crew(next, invited, mute, requests);
         }
 
         public Crew withInvited(Set<String> next) {
-            return new Crew(team, next, mute);
+            return new Crew(team, next, mute, requests);
         }
 
         public Crew withInvitedAdded(String friendId) {
             Set<String> next = new HashSet<>(invited);
             next.add(friendId);
-            return new Crew(team, next, mute);
+            return new Crew(team, next, mute, requests);
         }
 
         public Crew withMute(TeamNotifications next) {
-            return new Crew(team, invited, next);
+            return new Crew(team, invited, next, requests);
         }
+
+        public Crew withRequests(List<JoinRequest> next) {
+            return new Crew(team, invited, mute, next);
+        }
+    }
+
+    /** Join requests of an array of {@code {from, sentAt}}, each player once (oldest first, as the service sends them). */
+    static List<JoinRequest> joinRequests(@Nullable JsonObject o, String key) {
+        List<JoinRequest> out = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
+        for (JsonObject r : Json.objects(o, key)) {
+            JoinRequest request = JoinRequest.read(r);
+            if (request != null && seen.add(request.from.id)) out.add(request);
+        }
+        return out;
     }
 
     /** User ids of an array of strings or of {@code {id}} objects. */
@@ -978,6 +1197,8 @@ public final class SocialModel {
         public final List<Crew> crews;
         /** TEAM4: how many crews a player may be in (0: the service did not say). */
         public final int crewLimit;
+        /** TEAM5: the player's own waiting join requests, newest first (empty from services before them). */
+        public final List<MyRequest> teamRequests;
 
         public FriendsData(List<Friend> friends, List<Request> incoming, List<Request> outgoing, List<Profile> blocked,
                            Limits limits, @Nullable Team team, Set<String> teamInvited, List<TeamInvite> teamInvites,
@@ -990,6 +1211,15 @@ public final class SocialModel {
                            Limits limits, @Nullable Team team, Set<String> teamInvited, List<TeamInvite> teamInvites,
                            Set<String> teamFeatures, TeamNotifications teamNotifications, @Nullable Set<String> features,
                            @Nullable List<Crew> crews, int crewLimit) {
+            this(friends, incoming, outgoing, blocked, limits, team, teamInvited, teamInvites, teamFeatures, teamNotifications,
+                    features, crews, crewLimit, Collections.<MyRequest>emptyList());
+        }
+
+        public FriendsData(List<Friend> friends, List<Request> incoming, List<Request> outgoing, List<Profile> blocked,
+                           Limits limits, @Nullable Team team, Set<String> teamInvited, List<TeamInvite> teamInvites,
+                           Set<String> teamFeatures, TeamNotifications teamNotifications, @Nullable Set<String> features,
+                           @Nullable List<Crew> crews, int crewLimit, List<MyRequest> teamRequests) {
+            this.teamRequests = Collections.unmodifiableList(new ArrayList<>(teamRequests));
             this.friends = friends;
             this.incoming = incoming;
             this.outgoing = outgoing;
@@ -1046,10 +1276,16 @@ public final class SocialModel {
                     if (crew != null && crewIds.add(crew.id())) crews.add(crew);
                 }
             }
+            List<MyRequest> mine = new ArrayList<>();
+            Set<String> asked = new HashSet<>();
+            for (JsonObject r : Json.objects(o, "teamRequests")) {
+                MyRequest request = MyRequest.read(r);
+                if (request != null && asked.add(request.team.id)) mine.add(request);
+            }
             return new FriendsData(friends, incoming, outgoing, blocked, Limits.read(Json.obj(o, "limits")),
                     Team.read(Json.obj(o, "team")), invited, teamInvites, new HashSet<>(Json.strings(o, "teamFeatures")),
                     TeamNotifications.read(Json.obj(o, "teamNotifications")), features, crews,
-                    (int) Math.max(0, Json.num(o, "crewLimit", 0)));
+                    (int) Math.max(0, Json.num(o, "crewLimit", 0)), mine);
         }
 
         private static List<Request> requests(@Nullable JsonObject o, String key) {

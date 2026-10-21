@@ -1,0 +1,19 @@
+{
+ "status": 202,
+ "body": {
+  "request": {
+   "team": {
+    "id": "4fdb29ce4949654f",
+    "name": "Gece Kartalları",
+    "tag": "GK",
+    "emblem": "moon",
+    "color": "navy",
+    "frame": "shield",
+    "motto": "",
+    "members": 1,
+    "join": "approval"
+   },
+   "sentAt": 1792607089
+  }
+ }
+}

@@ -99,7 +99,8 @@ public class SocialSettingsFragment extends Fragment implements SocialService.Li
                 .append(SocialNotifications.canNotify(context)).append('|').append(gate.teams).append(gate.calls).append(gate.mute)
                 .append('|').append(service.state().teamNotifications().calls).append(service.prefs().wantsInvites())
                 .append(service.prefs().wantsRequests()).append(service.prefs().wantsCallsLocally())
-                .append(gate.chat).append(service.prefs().wantsMessages()).append('|');
+                .append(gate.chat).append(service.prefs().wantsMessages()).append(gate.plans)
+                .append(service.prefs().wantsPlanReminders()).append('|');
         for (Profile p : service.state().blocked()) key.append(p.id).append(',');
         if (key.toString().equals(mShown)) return;
         mShown = key.toString();
@@ -152,6 +153,10 @@ public class SocialSettingsFragment extends Fragment implements SocialService.Li
                 service.prefs().setWants(PushMessage.MESSAGE, on);
                 service.syncPush();
             });
+        }
+        if (gate.plans) {
+            // M21 (TEAM5): 10 minutes before a plan the player is coming to; set on this phone only.
+            toggle(R.string.projects_plans_channel, service.prefs().wantsPlanReminders(), service::setPlanReminders);
         }
         toggle(R.string.projects_social_channel_requests, service.prefs().wantsRequests(), on -> {
             service.prefs().setWants(PushMessage.REQUEST, on);

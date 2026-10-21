@@ -163,17 +163,24 @@
                         android:textSize="13sp"
                         android:visibility="gone" />
 
+                    <!-- M21: the action goes under the crew (the request's "Katılma isteği gönder" is long; the name keeps
+                         the width). -->
                     <LinearLayout
                         android:id="@+id/projects_crew_join_result"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
                         android:background="@drawable/projects_social_section_background"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
+                        android:orientation="vertical"
                         android:padding="12dp"
                         android:visibility="gone"
                         tools:visibility="visible">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
 
                         <gg.projects.mobile.social.ui.CrewMarkView
                             android:id="@+id/projects_crew_join_mark"
@@ -207,15 +214,18 @@
                                 android:textSize="13sp"
                                 tools:text="7 üye" />
                         </LinearLayout>
+                    </LinearLayout>
 
                         <Button
                             android:id="@+id/projects_crew_join_submit"
                             style="?android:attr/borderlessButtonStyle"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="8dp"
+                            android:layout_gravity="end"
+                            android:layout_marginTop="10dp"
                             android:fontFamily="@font/figtree_semibold"
                             android:minHeight="44dp"
+                            android:paddingHorizontal="18dp"
                             android:text="@string/projects_crew_join"
                             android:textAllCaps="false"
                             android:textColor="@color/projects_bone_100"

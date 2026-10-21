@@ -21,10 +21,13 @@ import gg.projects.mobile.social.SocialModel.Crew;
 import gg.projects.mobile.social.SocialModel.Friend;
 import gg.projects.mobile.social.SocialModel.FriendsData;
 import gg.projects.mobile.social.SocialModel.Invite;
+import gg.projects.mobile.social.SocialModel.JoinRequest;
 import gg.projects.mobile.social.SocialModel.Limits;
 import gg.projects.mobile.social.SocialModel.Me;
 import gg.projects.mobile.social.SocialModel.Member;
 import gg.projects.mobile.social.SocialModel.ModNotice;
+import gg.projects.mobile.social.SocialModel.MyRequest;
+import gg.projects.mobile.social.SocialModel.Plan;
 import gg.projects.mobile.social.SocialModel.Presence;
 import gg.projects.mobile.social.SocialModel.Profile;
 import gg.projects.mobile.social.SocialModel.Request;
@@ -43,6 +46,11 @@ import gg.projects.mobile.social.SocialModel.TeamNotifications;
  * without {@code multi} has one, its {@code team}), calls name the crews they go to and carry their
  * server, and the socket brings the chat state, moderators' notes and the end of a restricted
  * account's session. Chat messages themselves are {@link ChatBook}'s.
+ *
+ * <p>M21 (TEAM5): the player's own join requests ({@code teamRequests}) and, for those who may answer,
+ * each crew's waiting ones ({@code crews[].requests}, live through {@code team_requests}); the crew's
+ * invite link and join setting ride on the crew card; plans come only from the socket ({@code
+ * hello.plans}, {@code plan}, {@code plans}, {@code plan_removed}) and are over by the hub's clock.
  */
 public final class SocialState {
     @Nullable
@@ -76,6 +84,12 @@ public final class SocialState {
     /** {@code bye} with {@code restricted}: until when (Unix seconds; 0: for good); null when not restricted. */
     @Nullable
     private Long mRestrictedUntil;
+    /** TEAM5: the player's own waiting join requests, newest first. */
+    private final List<MyRequest> mMyRequests = new ArrayList<>();
+    /** TEAM5: the plans of the player's crews the player sees, by id (from the socket only). */
+    private final Map<String, Plan> mPlans = new LinkedHashMap<>();
+    /** TEAM5: a {@code hello} with plans came (the socket took {@code plans}): {@link #mPlans} is the hub's view. */
+    private boolean mPlansKnown;
 
     /** Something the app may tell the player about. */
     public static final class Notice {
@@ -84,7 +98,15 @@ public final class SocialState {
             /** M20: a moderator's note came live ({@link #modNotice}). */
             MOD_NOTICE,
             /** M20: the account was suspended or banned ({@link #until}; 0 for good). */
-            RESTRICTED
+            RESTRICTED,
+            /** TEAM5: {@link #who} asked to join {@link #crewId}, a crew the player may answer for. */
+            JOIN_REQUEST,
+            /** TEAM5: the player's join request to {@link #crewId} was accepted (its crew came). */
+            REQUEST_ACCEPTED,
+            /** TEAM5: {@link #who} made {@link #plan} in one of the player's crews (not quiet). */
+            PLAN,
+            /** TEAM5: a plan was cancelled ({@link #planId}). */
+            PLAN_REMOVED
         }
 
         public final Kind kind;
@@ -115,6 +137,15 @@ public final class SocialState {
         public final ModNotice modNotice;
         /** RESTRICTED: until when (Unix seconds; 0 for good). */
         public final long until;
+        /** TEAM5: the crew of JOIN_REQUEST, REQUEST_ACCEPTED, PLAN and PLAN_REMOVED. */
+        @Nullable
+        public final String crewId;
+        /** TEAM5: PLAN's plan. */
+        @Nullable
+        public final Plan plan;
+        /** TEAM5: PLAN's and PLAN_REMOVED's plan id. */
+        @Nullable
+        public final String planId;
 
         Notice(Kind kind, @Nullable Profile who, @Nullable Invite invite, @Nullable Call call,
                @Nullable TeamInvite teamInvite, @Nullable String reason, @Nullable String teamName, boolean byMe) {
@@ -124,6 +155,13 @@ public final class SocialState {
         private Notice(Kind kind, @Nullable Profile who, @Nullable Invite invite, @Nullable Call call,
                        @Nullable TeamInvite teamInvite, @Nullable String reason, @Nullable String teamName, boolean byMe,
                        @Nullable String callId, boolean byStaff, boolean moved, @Nullable ModNotice modNotice, long until) {
+            this(kind, who, invite, call, teamInvite, reason, teamName, byMe, callId, byStaff, moved, modNotice, until, null, null, null);
+        }
+
+        private Notice(Kind kind, @Nullable Profile who, @Nullable Invite invite, @Nullable Call call,
+                       @Nullable TeamInvite teamInvite, @Nullable String reason, @Nullable String teamName, boolean byMe,
+                       @Nullable String callId, boolean byStaff, boolean moved, @Nullable ModNotice modNotice, long until,
+                       @Nullable String crewId, @Nullable Plan plan, @Nullable String planId) {
             this.kind = kind;
             this.who = who;
             this.invite = invite;
@@ -137,6 +175,29 @@ public final class SocialState {
             this.moved = moved;
             this.modNotice = modNotice;
             this.until = until;
+            this.crewId = crewId;
+            this.plan = plan;
+            this.planId = planId;
+        }
+
+        static Notice joinRequest(Profile who, String crewId, String teamName) {
+            return new Notice(Kind.JOIN_REQUEST, who, null, null, null, null, teamName, false, null, false, false, null, 0,
+                    crewId, null, null);
+        }
+
+        static Notice requestAccepted(String crewId, String teamName) {
+            return new Notice(Kind.REQUEST_ACCEPTED, null, null, null, null, null, teamName, false, null, false, false, null, 0,
+                    crewId, null, null);
+        }
+
+        static Notice plan(@Nullable Profile maker, Plan plan, @Nullable String teamName) {
+            return new Notice(Kind.PLAN, maker, null, null, null, null, teamName, false, null, false, false, null, 0,
+                    plan.crew, plan, plan.id);
+        }
+
+        static Notice planRemoved(String planId, @Nullable String crewId, boolean byMe) {
+            return new Notice(Kind.PLAN_REMOVED, null, null, null, null, null, null, byMe, null, false, false, null, 0,
+                    crewId, null, planId);
         }
 
         static Notice of(Kind kind, @Nullable Profile who) {
@@ -424,6 +485,151 @@ public final class SocialState {
         return out;
     }
 
+    // ---- joining a crew (TEAM5) ----
+
+    /** The player's own join requests that still wait at {@code nowSeconds}, newest first. */
+    public List<MyRequest> myRequests(long nowSeconds) {
+        List<MyRequest> out = new ArrayList<>();
+        for (MyRequest r : mMyRequests) if (r.waiting(nowSeconds) && crew(r.team.id) == null) out.add(r);
+        return out;
+    }
+
+    /** The player's waiting join request to {@code teamId}, or null. */
+    @Nullable
+    public MyRequest myRequest(String teamId, long nowSeconds) {
+        for (MyRequest r : myRequests(nowSeconds)) if (r.team.id.equals(teamId)) return r;
+        return null;
+    }
+
+    /** The player may answer {@code crewId}'s join requests and manage its invite link ({@code permissions.admit}). */
+    public boolean mayAdmit(@Nullable String crewId) {
+        Crew c = crew(crewId);
+        String me = myId();
+        return c != null && me != null && c.team.allows(me, c.team.permissions.admit);
+    }
+
+    /** The waiting join requests of {@code crewId} the player may answer, oldest first. */
+    public List<JoinRequest> requests(@Nullable String crewId, long nowSeconds) {
+        List<JoinRequest> out = new ArrayList<>();
+        Crew c = crew(crewId);
+        if (c == null || !mayAdmit(crewId)) return out;
+        for (JoinRequest r : c.requests) if (r.waiting(nowSeconds) && c.team.member(r.from.id) == null) out.add(r);
+        return out;
+    }
+
+    /** The newest join request of any crew the player may answer for (the home line names it), or null. */
+    @Nullable
+    public JoinRequest newestRequest(long nowSeconds) {
+        JoinRequest newest = null;
+        for (Crew c : mCrews) {
+            for (JoinRequest r : requests(c.id(), nowSeconds)) if (newest == null || r.sentAt > newest.sentAt) newest = r;
+        }
+        return newest;
+    }
+
+    /** The crew a join request (of {@link #newestRequest}) waits in, or null. */
+    @Nullable
+    public Crew crewOfRequest(JoinRequest request, long nowSeconds) {
+        for (Crew c : mCrews) {
+            for (JoinRequest r : requests(c.id(), nowSeconds)) {
+                if (r.from.id.equals(request.from.id) && r.sentAt == request.sentAt) return c;
+            }
+        }
+        return null;
+    }
+
+    /** Join requests waiting for the player's answer, every crew together. */
+    public int requestCount(long nowSeconds) {
+        int n = 0;
+        for (Crew c : mCrews) n += requests(c.id(), nowSeconds).size();
+        return n;
+    }
+
+    // ---- plans (TEAM5) ----
+
+    /** A {@code hello} with plans came: the plans are the hub's (reminders may follow them). */
+    public boolean plansKnown() {
+        return mPlansKnown;
+    }
+
+    @Nullable
+    public Plan plan(@Nullable String id) {
+        return id == null ? null : mPlans.get(id);
+    }
+
+    /** Every plan of the player's crews that is not over by the hub's clock, soonest first. */
+    public List<Plan> plans(long nowSeconds) {
+        long hub = hubNow(nowSeconds);
+        List<Plan> out = new ArrayList<>();
+        for (Plan p : mPlans.values()) if (p.live(hub) && crew(p.crew) != null) out.add(p);
+        Collections.sort(out, (a, b) -> a.at != b.at ? Long.compare(a.at, b.at) : a.id.compareTo(b.id));
+        return out;
+    }
+
+    /** One crew's plans that are not over, soonest first. */
+    public List<Plan> plans(long nowSeconds, String crewId) {
+        List<Plan> out = new ArrayList<>();
+        for (Plan p : plans(nowSeconds)) if (p.crew.equals(crewId)) out.add(p);
+        return out;
+    }
+
+    /** The crew's plans still ahead (the service allows 3). */
+    public int upcomingPlans(long nowSeconds, String crewId) {
+        long hub = hubNow(nowSeconds);
+        int n = 0;
+        for (Plan p : plans(nowSeconds, crewId)) if (p.upcoming(hub)) n++;
+        return n;
+    }
+
+    /** The player may make plans in {@code crewId}: the right to call the crew covers plans. */
+    public boolean mayPlan(@Nullable String crewId) {
+        Crew c = crew(crewId);
+        String me = myId();
+        return c != null && me != null && c.team.allows(me, c.team.permissions.call);
+    }
+
+    /** Its maker, or the crew's leader or a moderator, may cancel a plan ("Planı sil"). */
+    public boolean mayCancel(Plan plan) {
+        String me = myId();
+        if (me == null) return false;
+        if (plan.by.equals(me)) return true;
+        Crew c = crew(plan.crew);
+        Member m = c == null ? null : c.team.member(me);
+        return m != null && (m.founder || m.moderator);
+    }
+
+    /** The player's answer to a plan (null: none yet). */
+    @Nullable
+    public String myPlanAnswer(String planId) {
+        Plan p = mPlans.get(planId);
+        String me = myId();
+        return p == null || me == null ? null : p.answers.get(me);
+    }
+
+    /**
+     * The soonest plan the player said "Geliyorum" or "Belki" to that runs now or starts within
+     * {@code windowSeconds} (the home line), or null.
+     */
+    @Nullable
+    public Plan soonPlan(long nowSeconds, long windowSeconds) {
+        return soonPlan(nowSeconds, windowSeconds, Plan.AFTER_SECONDS);
+    }
+
+    /** The same, only while the plan started at most {@code afterSeconds} ago. */
+    @Nullable
+    public Plan soonPlan(long nowSeconds, long windowSeconds, long afterSeconds) {
+        long hub = hubNow(nowSeconds);
+        String me = myId();
+        if (me == null) return null;
+        for (Plan p : plans(nowSeconds)) {
+            String answer = p.answers.get(me);
+            if (!Plan.YES.equals(answer) && !Plan.MAYBE.equals(answer)) continue;
+            if (hub >= p.at + afterSeconds) continue;
+            if (p.underWay(hub) || p.at - hub <= windowSeconds) return p;
+        }
+        return null;
+    }
+
     // ---- changes from the service's answers ----
 
     public void setMe(@Nullable Me me) {
@@ -453,10 +659,13 @@ public final class SocialState {
         mTeamFeatures = new HashSet<>(data.teamFeatures);
         mTeamNotifications = data.teamNotifications;
         mFeatures = data.features == null ? null : new HashSet<>(data.features);
+        mMyRequests.clear();
+        mMyRequests.addAll(data.teamRequests);
         mLoaded = true;
         mRestrictedUntil = null;
         prunePresence();
         pruneCalls();
+        prunePlans();
     }
 
     /**
@@ -467,14 +676,19 @@ public final class SocialState {
         if (team == null) {
             mCrews.clear();
             mCalls.clear();
+            mPlans.clear();
         } else {
             Crew before = crew(team.id);
             Set<String> keep = invited != null ? invited : before != null ? before.invited : Collections.<String>emptySet();
             mCrews.clear();
-            mCrews.add(new Crew(team, keep, before != null ? before.mute : TeamNotifications.DEFAULT));
-            // An answered invite to the crew the player is in now is gone.
+            Crew next = new Crew(team, keep, before != null ? before.mute : TeamNotifications.DEFAULT,
+                    before != null ? before.requests : Collections.<JoinRequest>emptyList());
+            mCrews.add(keepRequestsIfAllowed(next));
+            // An answered invite to the crew the player is in now is gone (and a join request to it).
             removeTeamInvite(team.id);
+            removeMyRequest(team.id);
             pruneCalls();
+            prunePlans();
         }
         prunePresence();
     }
@@ -489,7 +703,7 @@ public final class SocialState {
             if (c.id().equals(team.id)) {
                 Crew next = c.withTeam(team);
                 if (invited != null) next = next.withInvited(invited);
-                mCrews.set(i, next);
+                mCrews.set(i, keepRequestsIfAllowed(next));
                 removeTeamInvite(team.id);
                 prunePresence();
                 return;
@@ -497,14 +711,83 @@ public final class SocialState {
         }
         mCrews.add(new Crew(team, invited == null ? Collections.<String>emptySet() : invited, TeamNotifications.DEFAULT));
         removeTeamInvite(team.id);
+        removeMyRequest(team.id);
         prunePresence();
+    }
+
+    /** TEAM5: a crew card that shows the player's role lost {@code admit} drops the crew's join requests (README). */
+    private Crew keepRequestsIfAllowed(Crew crew) {
+        String me = myId();
+        if (crew.requests.isEmpty() || (me != null && crew.team.allows(me, crew.team.permissions.admit))) return crew;
+        return crew.withRequests(Collections.<JoinRequest>emptyList());
     }
 
     /** TEAM4: the player is no longer in {@code crewId} (left, removed, or it ended). */
     public void removeCrew(String crewId) {
         for (int i = mCrews.size() - 1; i >= 0; i--) if (mCrews.get(i).id().equals(crewId)) mCrews.remove(i);
         pruneCalls();
+        prunePlans();
         prunePresence();
+    }
+
+    // ---- TEAM5: join requests, the invite link, plans ----
+
+    /** The player asked to join (a {@code 202 {request}} answer): it waits in their list, newest first. */
+    public void addMyRequest(MyRequest request) {
+        removeMyRequest(request.team.id);
+        mMyRequests.add(0, request);
+    }
+
+    /** The player withdrew the request (or its crew came, or it went). */
+    public void removeMyRequest(String teamId) {
+        for (int i = mMyRequests.size() - 1; i >= 0; i--) if (mMyRequests.get(i).team.id.equals(teamId)) mMyRequests.remove(i);
+    }
+
+    /** A crew's waiting join requests as the service says them now ({@code team_requests}). */
+    public void setCrewRequests(String crewId, List<JoinRequest> requests) {
+        for (int i = 0; i < mCrews.size(); i++) {
+            if (mCrews.get(i).id().equals(crewId)) mCrews.set(i, mCrews.get(i).withRequests(requests));
+        }
+    }
+
+    /** One request answered here (accepted, declined, or its sender blocked): it goes at once. */
+    public void removeCrewRequest(String crewId, String userId) {
+        Crew c = crew(crewId);
+        if (c == null) return;
+        List<JoinRequest> left = new ArrayList<>();
+        for (JoinRequest r : c.requests) if (!r.from.id.equals(userId)) left.add(r);
+        setCrewRequests(crewId, left);
+    }
+
+    /** The crew's invite link as its own route answered ({@code POST}/{@code DELETE /v1/teams/:id/link}). */
+    public void setCrewLink(String crewId, @Nullable String link) {
+        for (int i = 0; i < mCrews.size(); i++) {
+            Crew c = mCrews.get(i);
+            if (c.id().equals(crewId)) mCrews.set(i, c.withTeam(c.team.withLink(link)));
+        }
+    }
+
+    /** A plan as the service stored it (the {@code ack} of the player's own new plan). */
+    public void putPlan(Plan plan) {
+        mPlans.put(plan.id, plan);
+    }
+
+    public void removePlan(String planId) {
+        mPlans.remove(planId);
+    }
+
+    /** The player's own answer, shown at once (the socket confirms it). */
+    public void answerPlanLocally(String planId, String answer) {
+        Plan p = mPlans.get(planId);
+        String me = myId();
+        if (p != null && me != null) mPlans.put(planId, p.withAnswer(me, answer));
+    }
+
+    /** An answer that did not go: the one before it comes back (null: none). */
+    public void restorePlanAnswer(String planId, @Nullable String previous) {
+        Plan p = mPlans.get(planId);
+        String me = myId();
+        if (p != null && me != null) mPlans.put(planId, p.withAnswer(me, previous));
     }
 
     /** TEAM4: the crews in a new order (unknown ids are skipped, crews it leaves out keep their place after it). */
@@ -646,6 +929,9 @@ public final class SocialState {
         mCaps = new HashSet<>();
         mChat = ChatState.UNKNOWN;
         mRestrictedUntil = null;
+        mMyRequests.clear();
+        mPlans.clear();
+        mPlansKnown = false;
     }
 
     // ---- changes from the presence socket ----
@@ -788,10 +1074,67 @@ public final class SocialState {
                     notices.add(Notice.restricted(mRestrictedUntil));
                 }
                 break;
+            case "team_requests":
+                onTeamRequests(message, nowSeconds, notices);
+                break;
+            case "plan": {
+                // Kept even before the list names its crew (the socket may speak first); read through plans().
+                Plan plan = Plan.read(Json.obj(message, "plan"));
+                if (plan == null) break;
+                Plan before = mPlans.put(plan.id, plan);
+                // Announced only when it is new to the player and not quiet (README "Crew plans").
+                Crew c = crew(plan.crew);
+                if (before == null && c != null && !Json.bool(message, "quiet", false) && !plan.by.equals(myId())
+                        && plan.live(hubNow(nowSeconds))) {
+                    notices.add(Notice.plan(profile(plan.by), plan, c.team.name));
+                }
+                break;
+            }
+            case "plans": {
+                // Everything the player sees of one crew's plans now (also an empty list): replace them.
+                String crewId = Json.str(message, "crew");
+                if (!SocialModel.isCrewId(crewId)) break;
+                for (String id : new ArrayList<>(mPlans.keySet())) {
+                    Plan p = mPlans.get(id);
+                    if (p != null && p.crew.equals(crewId)) mPlans.remove(id);
+                }
+                for (JsonObject wire : Json.objects(message, "plans")) {
+                    Plan plan = Plan.read(wire);
+                    if (plan != null && plan.crew.equals(crewId)) mPlans.put(plan.id, plan);
+                }
+                break;
+            }
+            case "plan_removed": {
+                String id = Json.str(message, "plan");
+                if (id == null) break;
+                Plan gone = mPlans.remove(id);
+                String by = Json.str(message, "by");
+                notices.add(Notice.planRemoved(id, gone != null ? gone.crew : Json.str(message, "crew"), by != null && by.equals(myId())));
+                break;
+            }
             default:
                 break;
         }
         return notices;
+    }
+
+    /**
+     * {@code team_requests}: a crew's waiting join requests changed, or the player gained the right to
+     * answer them; {@code added} is the player whose request is new.
+     */
+    private void onTeamRequests(JsonObject message, long nowSeconds, List<Notice> notices) {
+        String crewId = Json.str(message, "crew");
+        Crew c = crew(crewId);
+        if (c == null) return;
+        Set<String> before = new HashSet<>();
+        for (JoinRequest r : c.requests) before.add(r.from.id);
+        List<JoinRequest> requests = SocialModel.joinRequests(message, "requests");
+        setCrewRequests(c.id(), requests);
+        String added = Json.str(message, "added");
+        if (added == null || before.contains(added)) return;
+        for (JoinRequest r : requests) {
+            if (r.from.id.equals(added) && r.waiting(nowSeconds)) notices.add(Notice.joinRequest(r.from, c.id(), c.team.name));
+        }
     }
 
     private void onHello(JsonObject message, long nowSeconds) {
@@ -822,6 +1165,13 @@ public final class SocialState {
             Call call = Call.read(wire);
             if (call != null) mCalls.put(call.id, call);
         }
+        // TEAM5: every plan of the player's crews they see, upcoming or under way: keep exactly these.
+        mPlans.clear();
+        mPlansKnown = Json.has(message, "plans");
+        for (JsonObject wire : Json.objects(message, "plans")) {
+            Plan plan = Plan.read(wire);
+            if (plan != null) mPlans.put(plan.id, plan);
+        }
     }
 
     private void onTeam(JsonObject message, List<Notice> notices) {
@@ -846,8 +1196,16 @@ public final class SocialState {
             setTeam(team, null);
             return;
         }
+        // TEAM5: a crew the player asked to join that comes now was taken in (`by`: who accepted).
+        boolean accepted = crew(team.id) == null && !byMe && myRequestEver(team.id);
         upsertCrew(team, null);
+        if (accepted) notices.add(Notice.requestAccepted(team.id, team.name));
         // Invites whose sender lost the right are withdrawn by the service; the next list says so.
+    }
+
+    private boolean myRequestEver(String teamId) {
+        for (MyRequest r : mMyRequests) if (r.team.id.equals(teamId)) return true;
+        return false;
     }
 
     private void onCall(JsonObject message, long nowSeconds, List<Notice> notices) {
@@ -916,6 +1274,14 @@ public final class SocialState {
             for (String crew : call.crews) if (crew(crew) != null) left.add(crew);
             if (left.isEmpty()) mCalls.remove(id);
             else if (left.size() != call.crews.size()) mCalls.put(id, call.withCrews(left));
+        }
+    }
+
+    /** Plans of crews the player is no longer in go (the hub drops them for the player too). */
+    private void prunePlans() {
+        for (String id : new ArrayList<>(mPlans.keySet())) {
+            Plan p = mPlans.get(id);
+            if (p == null || crew(p.crew) == null) mPlans.remove(id);
         }
     }
 

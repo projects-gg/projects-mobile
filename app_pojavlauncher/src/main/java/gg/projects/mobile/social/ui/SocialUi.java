@@ -174,6 +174,14 @@ public final class SocialUi {
             case MESSAGE_GONE: id = R.string.projects_chat_gone; break;
             case CHAT_NOT_PERMITTED: id = R.string.projects_chat_not_allowed; break;
             case CHAT_TOO_OLD: id = R.string.projects_chat_too_old; break;
+            case APPROVAL_REQUIRED: id = R.string.projects_social_error_approval_required; break;
+            case JOIN_REQUEST_GONE: id = R.string.projects_social_error_join_request_gone; break;
+            case CREW_REQUESTS_FULL: id = R.string.projects_social_error_crew_requests_full; break;
+            case TOO_MANY_JOIN_REQUESTS: id = R.string.projects_social_error_too_many_join_requests; break;
+            case PLAN_TIME: id = R.string.projects_social_error_plan_time; break;
+            case PLANS_FULL: id = R.string.projects_plans_full; break;
+            case PLAN_EXISTS: id = R.string.projects_social_error_plan_exists; break;
+            case PLAN_GONE: id = R.string.projects_social_error_plan_gone; break;
             case FAILED:
             default: id = R.string.projects_social_error_failed; break;
         }
@@ -196,6 +204,14 @@ public final class SocialUi {
                 return context.getString(R.string.projects_limited_invites_today);
             case gg.projects.mobile.social.SocialModel.Limited.CODE_LOOKUPS:
                 return context.getString(R.string.projects_limited_lookups_today);
+            case gg.projects.mobile.social.SocialModel.Limited.CREW_LINK: {
+                int days = Math.max(1, gg.projects.mobile.social.SocialModel.Limited.daysLeft(problem.until == null ? now + 86_400 : problem.until, now));
+                return context.getResources().getQuantityString(R.plurals.projects_limited_no_link, days, days);
+            }
+            case gg.projects.mobile.social.SocialModel.Limited.CREW_PLANS: {
+                int days = Math.max(1, gg.projects.mobile.social.SocialModel.Limited.daysLeft(problem.until == null ? now + 86_400 : problem.until, now));
+                return context.getResources().getQuantityString(R.plurals.projects_limited_no_plans, days, days);
+            }
             default:
                 return context.getString(R.string.projects_limited_generic);
         }

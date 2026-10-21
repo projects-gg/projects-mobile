@@ -36,15 +36,20 @@ import java.util.concurrent.Executors;
 import gg.projects.mobile.ProjectsContent;
 import gg.projects.mobile.content.Snapshot;
 import gg.projects.mobile.language.LanguageManager;
+import gg.projects.mobile.reminders.PlanAlarms;
+import gg.projects.mobile.reminders.PlanReminders;
 import gg.projects.mobile.social.SocialModel.Call;
 import gg.projects.mobile.social.SocialModel.Crew;
 import gg.projects.mobile.social.SocialModel.Friend;
 import gg.projects.mobile.social.SocialModel.FriendsData;
 import gg.projects.mobile.social.SocialModel.Me;
+import gg.projects.mobile.social.SocialModel.MyRequest;
+import gg.projects.mobile.social.SocialModel.Plan;
 import gg.projects.mobile.social.SocialModel.Profile;
 import gg.projects.mobile.social.SocialModel.Request;
 import gg.projects.mobile.social.SocialModel.Team;
 import gg.projects.mobile.social.SocialModel.TeamNotifications;
+import gg.projects.mobile.social.ui.PlanViews;
 
 /**
  * The friends feature on the phone (M19): the session, the friend list and crews from the service,
@@ -62,6 +67,11 @@ import gg.projects.mobile.social.SocialModel.TeamNotifications;
  * phone does not start crew calls (CALL1: a call starts only from a multiplayer server in a game the
  * launcher reported, and the phone cannot say it is in game yet), so M19's socket that kept the
  * player's own call through the game is gone; answering calls works as before.
+ *
+ * <p>M21 (TEAM5): joining a crew that approves newcomers sends a join request (the same route, with
+ * {@code request}), the crew's leader or moderators answer them; invite links ({@code projects://crew/})
+ * and the join setting; crew plans on the socket (the {@code plans} capability) with local reminders
+ * ({@link PlanAlarms}, 10 minutes before a plan the player is coming to).
  */
 public final class SocialService implements ProjectsContent.Listener, PresenceConnection.Listener {
     private static final String TAG = "ProjectsSocial";
@@ -344,9 +354,11 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         mPrefs.setLastConfig(friends, teams, chat);
         if (same) return;
         if (!enabled()) {
-            // Turned off: the session is kept (the desktop's rule), the socket and the phone's pushes go.
+            // Turned off: the session is kept (the desktop's rule), the socket and the phone's pushes go, and
+            // the plan reminders (M21) with them.
             closeConnection();
             if (mToken != null) syncPush();
+            syncPlanReminders();
         } else {
             // Chat came or went: the socket asks again with the right capabilities.
             if (chatChanged && mConnection != null) closeConnection();
@@ -445,6 +457,9 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         caps.add("callServer");
         caps.add("crews");
         if (chatEnabled()) caps.add("chat");
+        // M21 (TEAM5): crew plans. Asked for always: the list that says whether the service has them may
+        // come after the socket opens, and a service without plans ignores the name.
+        caps.add("plans");
         return caps;
     }
 
@@ -508,6 +523,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
             case "team_notifications":
             case "crew_notifications":
             case "crew_order":
+            case "team_requests":
                 mListChanges++;
                 break;
             default:
@@ -518,6 +534,21 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         if (type.equals("team") || type.equals("crew_order")) rememberCrewNames();
         handleNotices(notices);
         if (type.equals("hello")) mChat.connected();
+        switch (type) {
+            case "hello":
+            case "plan":
+            case "plans":
+            case "plan_removed":
+            case "team":
+            case "status":
+            case "team_notifications":
+            case "crew_notifications":
+                // M21: the plan reminders follow what the socket says (and what keeps them quiet).
+                syncPlanReminders();
+                break;
+            default:
+                break;
+        }
         changed();
     }
 
@@ -593,6 +624,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
                     if (order != null) mState.setCrewOrder(order);
                     mPrefs.setCrewSettings(mState.teamNotifications());
                     rememberCrewNames();
+                    syncPlanReminders();
                     // CHAT1: the list says whether the service has chat; a socket that said hello before it
                     // syncs now (and then sends what waits).
                     mChat.connected();
@@ -771,6 +803,25 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         return code;
     }
 
+    /** M21: a crew invite link ({@code projects://crew/<link>}) opened before signing in. */
+    @Nullable
+    private String mPendingCrewLink;
+
+    @MainThread
+    public void setPendingCrewLink(@Nullable String link) {
+        mPendingCrewLink = link;
+    }
+
+    /** The invite link a link brought before the sign-in, once signed in (cleared by reading it). */
+    @MainThread
+    @Nullable
+    public String takePendingCrewLink() {
+        if (mToken == null) return null;
+        String link = mPendingCrewLink;
+        mPendingCrewLink = null;
+        return link;
+    }
+
     private void signedIn(JsonObject answer) {
         String token = Json.str(answer, "token");
         Me me = Me.read(Json.obj(answer, "me"));
@@ -886,6 +937,8 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         mOrderSent = null;
         mChat.close();
         SocialNotifications.cancelAll(mApp);
+        // M21: the plan reminders were this account's.
+        PlanAlarms.clear(mApp);
     }
 
     // ---- phone notifications ----
@@ -1027,6 +1080,35 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
                         if (text != null) Toast.makeText(context, text, Toast.LENGTH_LONG).show();
                     }
                     break;
+                case JOIN_REQUEST: {
+                    // TEAM5: "Ayşe ekibine katılmak istiyor" while the app is up (the service pushes none to
+                    // phones); the crew page shows the list itself. Quiet on do-not-disturb and while muted.
+                    if (!foreground || notice.who == null || notice.crewId == null || !gate().requests) break;
+                    if (surfaceShown(Surface.CREW) || crewQuiet(notice.crewId, mState.hubNow(now))) break;
+                    String text = mState.crews().size() > 1 && notice.teamName != null
+                            ? context.getString(R.string.projects_requests_notice_crew, notice.who.name(), notice.teamName)
+                            : context.getString(R.string.projects_requests_notice, notice.who.name());
+                    Toast.makeText(context, text, Toast.LENGTH_LONG).show();
+                    break;
+                }
+                case REQUEST_ACCEPTED:
+                    if (foreground && notice.teamName != null && gate().teams) {
+                        Toast.makeText(context, context.getString(R.string.projects_crew_joined, notice.teamName), Toast.LENGTH_LONG).show();
+                    }
+                    break;
+                case PLAN: {
+                    // TEAM5: "Ayşe Cumartesi 21:00 için plan yaptı" (the service already made it quiet for
+                    // do-not-disturb and muted crews); nothing is pushed for plans.
+                    if (!foreground || notice.plan == null || !gate().plans || surfaceShown(Surface.CREW)) break;
+                    String who = notice.who == null ? context.getString(R.string.projects_crew_someone) : notice.who.name();
+                    String text = context.getString(R.string.projects_plans_made, who, PlanViews.when(context, notice.plan.at, now, true));
+                    if (mState.crews().size() > 1 && notice.teamName != null) text = text + " · " + notice.teamName;
+                    Toast.makeText(context, text, Toast.LENGTH_LONG).show();
+                    break;
+                }
+                case PLAN_REMOVED:
+                    if (notice.planId != null) PlanAlarms.forget(mApp, notice.planId);
+                    break;
                 case RESTRICTED:
                     // The socket closes with 4001 next: onEnded ends the session with this.
                     break;
@@ -1163,6 +1245,8 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
             if (me != null) {
                 mState.setMe(me);
                 mStore.save(mToken, me.profile.id, answer, null);
+                // M21: "Rahatsız etmeyin" keeps plan reminders quiet.
+                syncPlanReminders();
             }
         });
     }
@@ -1258,13 +1342,107 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     }
 
     public void lookupTeam(String code, Result<JsonObject> result) {
+        lookupTeam(code, null, result);
+    }
+
+    /** M21: a crew by its code or (TEAM5) its invite link, exactly one of them. */
+    public void lookupTeam(@Nullable final String code, @Nullable final String link, Result<JsonObject> result) {
         final boolean multi = gate().multi;
-        run(() -> mApi.lookupTeam(code, multi), result, null);
+        run(() -> link != null ? mApi.lookupTeamByLink(link, multi) : mApi.lookupTeam(code, multi), result, null);
     }
 
     public void joinTeam(String code, Result<JsonObject> result) {
+        joinOrAsk(code, null, result);
+    }
+
+    /**
+     * "Ekibe katıl" or "Katılma isteği gönder" (TEAM5: the same request; the service joins the player to
+     * an open crew, or one they were invited to, and keeps a join request for one that approves
+     * newcomers: {@code {request}} in the answer).
+     */
+    public void joinOrAsk(@Nullable final String code, @Nullable final String link, Result<JsonObject> result) {
         final boolean multi = gate().multi;
-        run(() -> mApi.joinTeam(code, multi), result, this::applyTeamAnswer);
+        final boolean request = gate().requests;
+        run(() -> mApi.joinTeam(code, link, multi, request), result, answer -> {
+            JsonObject asked = Json.obj(answer, "request");
+            if (asked != null) {
+                MyRequest mine = MyRequest.read(asked);
+                if (mine != null) mState.addMyRequest(mine);
+            } else {
+                applyTeamAnswer(answer);
+            }
+        });
+    }
+
+    /** TEAM5 "Geri çek": the player's waiting join request goes (one already gone counts as withdrawn). */
+    public void withdrawJoinRequest(final String teamId, Result<Void> result) {
+        run(() -> {
+            try {
+                mApi.withdrawJoinRequest(teamId);
+            } catch (SocialProblem problem) {
+                if (problem.kind != SocialProblem.Kind.JOIN_REQUEST_GONE) throw problem;
+            }
+            return null;
+        }, result, value -> mState.removeMyRequest(teamId));
+    }
+
+    /** TEAM5 "Kabul et": the player comes into the crew; its card comes with the answer. */
+    public void acceptJoinRequest(final String teamId, final String userId, Result<JsonObject> result) {
+        run(() -> mApi.acceptJoinRequest(teamId, userId), result, answer -> {
+            mState.removeCrewRequest(teamId, userId);
+            applyTeamAnswer(answer);
+        });
+    }
+
+    /** TEAM5: a declined request goes silently (its sender is told nothing). */
+    public void declineJoinRequest(final String teamId, final String userId, Result<Void> result) {
+        run(() -> {
+            mApi.declineJoinRequest(teamId, userId);
+            return null;
+        }, result, value -> mState.removeCrewRequest(teamId, userId));
+    }
+
+    /** A request that is gone (answered on another device, withdrawn, a block): it leaves the list here. */
+    @MainThread
+    public void forgetJoinRequest(String teamId, String userId) {
+        mState.removeCrewRequest(teamId, userId);
+        changed();
+    }
+
+    /** TEAM5 "Engelle" on a request row: the usual block, which takes the request too. */
+    public void blockRequester(final String teamId, final Profile profile, Result<Void> result) {
+        run(() -> {
+            mApi.block(profile.id);
+            return null;
+        }, result, value -> {
+            mState.block(profile);
+            mState.removeCrewRequest(teamId, profile.id);
+            mPrefs.setFavourite(profile.id, false);
+        });
+    }
+
+    /** TEAM5: a new invite link for the crew ("Bağlantı oluştur", "Yeni bağlantı"); the old one stops at once. */
+    public void createInviteLink(final String teamId, Result<String> result) {
+        run(() -> {
+            String link = SocialCodes.normalizeInviteLink(Json.str(mApi.createInviteLink(teamId), "link"));
+            if (link == null) throw SocialProblem.unavailable("link");
+            return link;
+        }, result, link -> mState.setCrewLink(teamId, link));
+    }
+
+    /** TEAM5 "Bağlantıyı kapat". */
+    public void deleteInviteLink(final String teamId, Result<Void> result) {
+        run(() -> {
+            mApi.deleteInviteLink(teamId);
+            return null;
+        }, result, value -> mState.setCrewLink(teamId, null));
+    }
+
+    /** TEAM5 "Yeni üyeleri onayla" (the leader's): {@code join} {@code approval} or {@code open}. */
+    public void setJoinApproval(final String teamId, boolean approval, Result<JsonObject> result) {
+        final JsonObject body = new JsonObject();
+        body.addProperty("join", approval ? SocialModel.TeamSummary.JOIN_APPROVAL : SocialModel.TeamSummary.JOIN_OPEN);
+        run(() -> mApi.patchTeam(teamId, body), result, this::applyTeamAnswer);
     }
 
     public void acceptTeamInvite(final String teamId, Result<JsonObject> result) {
@@ -1306,6 +1484,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         if (gate().multi) mState.removeCrew(teamId);
         else mState.setTeam(null, null);
         rememberCrewNames();
+        syncPlanReminders();
     }
 
     public void inviteToTeam(final String teamId, final String friendId, Result<Void> result) {
@@ -1417,7 +1596,10 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     }
 
     private void patchCrewNotifications(final String teamId, final JsonObject body, Result<TeamNotifications> result) {
-        run(() -> TeamNotifications.read(mApi.crewNotifications(teamId, body)), result, value -> mState.setCrewMute(teamId, value));
+        run(() -> TeamNotifications.read(mApi.crewNotifications(teamId, body)), result, value -> {
+            mState.setCrewMute(teamId, value);
+            syncPlanReminders();
+        });
     }
 
     /** "Ekip çağrıları" (with {@code mute}: the service's setting, the same on every device). */
@@ -1439,6 +1621,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
             mState.setTeamNotifications(value);
             mPrefs.setCrewSettings(value);
             syncPush();
+            syncPlanReminders();
         });
     }
 
@@ -1458,6 +1641,174 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
             }
             result.failed(answer == null ? SocialProblem.unavailable("no answer") : SocialProblem.ofSocket(answer));
         });
+    }
+
+    /** A socket message whose whole answer the caller reads (a plan's {@code ack} carries the plan). */
+    private void socketAsk(final JsonObject message, final Result<JsonObject> result) {
+        PresenceConnection connection = mConnection;
+        if (connection == null || !mLiveSocket) {
+            result.failed(SocialProblem.unavailable("no socket"));
+            return;
+        }
+        connection.request(message, (PresenceConnection.Answer) answer -> {
+            if (answer != null && "ack".equals(Json.str(answer, "t"))) {
+                result.ok(answer);
+                return;
+            }
+            result.failed(answer == null ? SocialProblem.unavailable("no answer") : SocialProblem.ofSocket(answer));
+        });
+    }
+
+    // ---- plans (TEAM5; the socket only) ----
+
+    /** Plans can be made and answered now: the service has them and the socket took {@code plans}. */
+    public boolean plansLive() {
+        return gate().plans && mLiveSocket && mState.caps().contains("plans");
+    }
+
+    /** "Plan yap": a time on Projects for the crew ({@code at}: a whole quarter hour, Unix seconds). */
+    public void makePlan(final String crewId, long at, final Result<Plan> result) {
+        JsonObject message = new JsonObject();
+        message.addProperty("t", "plan");
+        message.addProperty("crew", crewId);
+        message.addProperty("at", at);
+        socketAsk(message, new Result<JsonObject>() {
+            @Override
+            public void ok(JsonObject answer) {
+                Plan plan = Plan.read(Json.obj(answer, "plan"));
+                if (plan == null) {
+                    result.failed(SocialProblem.unavailable("plan"));
+                    return;
+                }
+                mState.putPlan(plan);
+                syncPlanReminders();
+                changed();
+                result.ok(plan);
+            }
+
+            @Override
+            public void failed(SocialProblem problem) {
+                result.failed(problem);
+            }
+        });
+    }
+
+    /** Geliyorum / Belki / Gelemem to a plan: shown at once; a refusal brings the answer before back. */
+    public void answerPlan(final String planId, final String answer, final Result<Void> result) {
+        if (!Plan.isAnswer(answer)) {
+            result.failed(new SocialProblem(SocialProblem.Kind.FAILED, 0, "bad_request", 0));
+            return;
+        }
+        final String previous = mState.myPlanAnswer(planId);
+        if (answer.equals(previous)) {
+            result.ok(null);
+            return;
+        }
+        JsonObject message = new JsonObject();
+        message.addProperty("t", "plan_answer");
+        message.addProperty("plan", planId);
+        message.addProperty("answer", answer);
+        mState.answerPlanLocally(planId, answer);
+        changed();
+        socketRequest(message, new Result<Void>() {
+            @Override
+            public void ok(Void value) {
+                syncPlanReminders();
+                result.ok(value);
+            }
+
+            @Override
+            public void failed(SocialProblem problem) {
+                if (problem.kind == SocialProblem.Kind.PLAN_GONE) {
+                    // Over or cancelled meanwhile: it goes here too.
+                    mState.removePlan(planId);
+                    PlanAlarms.forget(mApp, planId);
+                } else {
+                    mState.restorePlanAnswer(planId, previous);
+                }
+                changed();
+                result.failed(problem);
+            }
+        }, null);
+    }
+
+    /** "Planı sil": its maker, the leader or a moderator; crewmates get {@code plan_removed}. */
+    public void cancelPlan(final String planId, final Result<Void> result) {
+        JsonObject message = new JsonObject();
+        message.addProperty("t", "plan_cancel");
+        message.addProperty("plan", planId);
+        socketRequest(message, new Result<Void>() {
+            @Override
+            public void ok(Void value) {
+                mState.removePlan(planId);
+                PlanAlarms.forget(mApp, planId);
+                changed();
+                result.ok(value);
+            }
+
+            @Override
+            public void failed(SocialProblem problem) {
+                if (problem.kind == SocialProblem.Kind.PLAN_GONE) {
+                    mState.removePlan(planId);
+                    PlanAlarms.forget(mApp, planId);
+                    changed();
+                }
+                result.failed(problem);
+            }
+        }, null);
+    }
+
+    /** "Plan hatırlatmaları" on this phone. */
+    @MainThread
+    public void setPlanReminders(boolean on) {
+        mPrefs.setWantsPlanReminders(on);
+        syncPlanReminders();
+        changed();
+    }
+
+    /**
+     * The plan reminders follow the plans the socket shows (once a {@code hello} with plans came in
+     * this process: until then the stored ones stand) and the player's answers, the crews' names and
+     * what keeps them quiet (do-not-disturb, muted crews).
+     */
+    private void syncPlanReminders() {
+        long now = nowSeconds();
+        boolean wanted = mToken != null && enabled() && mPrefs.wantsPlanReminders();
+        if (!wanted || (mState.loaded() && !gate().plans)) {
+            PlanAlarms.sync(mApp, Collections.<String, PlanReminders.Item>emptyMap(), now);
+            return;
+        }
+        String me = mState.myId();
+        if (me == null) return;
+        PlanAlarms.setQuiet(mApp, planQuiet());
+        if (!mState.plansKnown() || !mState.loaded()) return;
+        Map<String, String> names = new HashMap<>();
+        for (Crew c : mState.crews()) names.put(c.id(), c.team.name);
+        PlanAlarms.sync(mApp, PlanReminders.desired(mState.plans(now), me, names, mState.hubNow(now)), now);
+    }
+
+    private PlanReminders.Quiet planQuiet() {
+        Me me = mState.me();
+        boolean dnd = me != null && SocialModel.Status.DND.equals(me.status);
+        Map<String, Long> crews = new HashMap<>();
+        for (Crew c : mState.crews()) {
+            if (c.mute.muted) crews.put(c.id(), c.mute.muteUntil == null ? PlanReminders.FOREVER : c.mute.muteUntil);
+        }
+        return new PlanReminders.Quiet(dnd, muteEnd(mState.teamNotifications()), crews);
+    }
+
+    private static long muteEnd(TeamNotifications notifications) {
+        if (!notifications.muted) return 0;
+        return notifications.muteUntil == null ? PlanReminders.FOREVER : notifications.muteUntil;
+    }
+
+    /** The crew's notifications are silent now: do-not-disturb, every crew muted, or that one. */
+    boolean crewQuiet(String crewId, long hubNowSeconds) {
+        Me me = mState.me();
+        if (me != null && SocialModel.Status.DND.equals(me.status)) return true;
+        if (mState.teamNotifications().mutedAt(hubNowSeconds)) return true;
+        Crew c = mState.crew(crewId);
+        return c != null && c.mute.mutedAt(hubNowSeconds);
     }
 
     /** Geliyorum / Birazdan / Gelemem: shown at once, confirmed by the socket. */

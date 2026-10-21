@@ -251,6 +251,12 @@ public final class SocialApi {
         return require(send("POST", "v1/teams/lookup", multi(codeBody(code), multi), true, false));
     }
 
+    /** TEAM5: a crew by its invite link ({@code XXXX-XXXX-XXXX}); the answer is the code's, with {@code request}. */
+    @WorkerThread
+    public JsonObject lookupTeamByLink(String link, boolean multi) throws SocialProblem {
+        return require(send("POST", "v1/teams/lookup", multi(linkBody(link), multi), true, false));
+    }
+
     @WorkerThread
     public JsonObject joinTeam(String code) throws SocialProblem {
         return joinTeam(code, false);
@@ -259,6 +265,54 @@ public final class SocialApi {
     @WorkerThread
     public JsonObject joinTeam(String code, boolean multi) throws SocialProblem {
         return require(send("POST", "v1/teams/join", multi(codeBody(code), multi), true, false));
+    }
+
+    /**
+     * TEAM5: joins by the code or the invite link (exactly one of them); with {@code request} (only when
+     * the service lists {@code requests}) a crew that approves newcomers answers {@code 202 {request}}
+     * instead of {@code {team, invited}}.
+     */
+    @WorkerThread
+    public JsonObject joinTeam(@Nullable String code, @Nullable String link, boolean multi, boolean request) throws SocialProblem {
+        JsonObject body = link != null ? linkBody(link) : codeBody(code == null ? "" : code);
+        if (request) body.addProperty("request", true);
+        return require(send("POST", "v1/teams/join", multi(body, multi), true, false));
+    }
+
+    /** TEAM5: withdraws the player's waiting join request to {@code team} ({@code 204}). */
+    @WorkerThread
+    public void withdrawJoinRequest(String team) throws SocialProblem {
+        send("DELETE", "v1/teams/requests/" + segment(team), null, true, false);
+    }
+
+    /** TEAM5: takes {@code user} into {@code team} ({@code permissions.admit}): {@code {team, invited}}. */
+    @WorkerThread
+    public JsonObject acceptJoinRequest(String team, String user) throws SocialProblem {
+        return require(send("POST", "v1/teams/" + segment(team) + "/requests/" + id(user) + "/accept", null, true, false));
+    }
+
+    /** TEAM5: declines a join request, silently for its sender ({@code 204}). */
+    @WorkerThread
+    public void declineJoinRequest(String team, String user) throws SocialProblem {
+        send("POST", "v1/teams/" + segment(team) + "/requests/" + id(user) + "/decline", null, true, false);
+    }
+
+    /** TEAM5: a new invite link for the crew (the old one stops at once): {@code {link, url}}. */
+    @WorkerThread
+    public JsonObject createInviteLink(String team) throws SocialProblem {
+        return require(send("POST", "v1/teams/" + segment(team) + "/link", null, true, false));
+    }
+
+    /** TEAM5: the crew has no invite link any more ({@code 204}, also when it had none). */
+    @WorkerThread
+    public void deleteInviteLink(String team) throws SocialProblem {
+        send("DELETE", "v1/teams/" + segment(team) + "/link", null, true, false);
+    }
+
+    /** {@code PATCH /v1/teams/:id} with fields that are not the crew's texts (TEAM5's {@code join}): {@code {team, invited}}. */
+    @WorkerThread
+    public JsonObject patchTeam(String team, JsonObject changes) throws SocialProblem {
+        return require(send("PATCH", "v1/teams/" + segment(team), changes, true, false));
     }
 
     @WorkerThread
@@ -354,6 +408,12 @@ public final class SocialApi {
         return body;
     }
 
+    private static JsonObject linkBody(String link) {
+        JsonObject body = new JsonObject();
+        body.addProperty("link", link);
+        return body;
+    }
+
     /** A user id in a path: digits only (ids come from the service; anything else is refused). */
     private static String id(String userId) throws SocialProblem {
         if (!SocialModel.isUserId(userId)) throw new SocialProblem(SocialProblem.Kind.FAILED, 0, "bad id", 0);
@@ -433,7 +493,7 @@ public final class SocialApi {
 
     /** The path with ids taken out, for logs (no ids or codes in the log). */
     static String route(String path) {
-        return path.replaceAll("\\d{17,20}", ":id").replaceAll("/teams/(invites/)?[0-9a-f]{16}", "/teams/$1:team");
+        return path.replaceAll("\\d{17,20}", ":id").replaceAll("/teams/((?:invites|requests)/)?[0-9a-f]{16}", "/teams/$1:team");
     }
 
     private static String readBody(@Nullable ResponseBody body) throws IOException {

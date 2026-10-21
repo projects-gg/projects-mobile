@@ -8,8 +8,9 @@ import android.os.Bundle;
 /**
  * {@code projects://} links (M19): {@code projects://auth/done?c=<code>}, where the browser comes back
  * after the Discord sign-in, and {@code projects://friend/<code>}, which the QR landing page and
- * shared friend links open. No screen of its own: it hands the link on and leaves. A sign-in link
- * counts only while this app waits for a sign-in it started ({@link SignInFlow}).
+ * shared friend links open; M21: {@code projects://crew/<link>}, which a crew invite link's page
+ * opens. No screen of its own: it hands the link on and leaves. A sign-in link counts only while this
+ * app waits for a sign-in it started ({@link SignInFlow}).
  */
 public final class SocialLinkActivity extends Activity {
     @Override
@@ -46,6 +47,18 @@ public final class SocialLinkActivity extends Activity {
             } else {
                 // Sign in first, on the friends screen; the code waits and opens "Arkadaş ekle" after.
                 service.setPendingFriendCode(code);
+                SocialRoutes.set(SocialRoutes.FRIENDS, null);
+            }
+            SocialRoutes.bringUp(this);
+        } else if ("crew".equalsIgnoreCase(data.getHost()) || "ekip".equalsIgnoreCase(data.getHost())) {
+            // M21 (TEAM5): a crew's invite link from its page: the crew shows with "Katıl" (or "Katılma isteği
+            // gönder"); nothing is sent until the player confirms.
+            String crewLink = SocialCodes.inviteLinkFromDeepLink(link);
+            if (crewLink == null) return;
+            if (service.signedIn()) {
+                SocialRoutes.set(SocialRoutes.CREW_LINK, crewLink);
+            } else {
+                service.setPendingCrewLink(crewLink);
                 SocialRoutes.set(SocialRoutes.FRIENDS, null);
             }
             SocialRoutes.bringUp(this);

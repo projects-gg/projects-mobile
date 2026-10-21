@@ -1,0 +1,49 @@
+{
+ "approval_required": {
+  "status": 409,
+  "body": {
+   "error": {
+    "code": "team_approval_required",
+    "message": "This crew approves newcomers"
+   }
+  }
+ },
+ "request_gone": {
+  "status": 404,
+  "body": {
+   "error": {
+    "code": "team_request_not_found",
+    "message": "No such join request"
+   }
+  }
+ },
+ "plan_exists": {
+  "t": "error",
+  "code": "plan_exists",
+  "rid": 2,
+  "plan": "1c52b80d546782cf"
+ },
+ "plan_time": {
+  "t": "error",
+  "code": "plan_time",
+  "rid": 3
+ },
+ "limited_link": {
+  "status": 403,
+  "body": {
+   "error": {
+    "code": "account_limited",
+    "message": "A new Discord account cannot do this yet",
+    "until": 1793039089,
+    "item": "crew_link"
+   }
+  }
+ },
+ "limited_plan": {
+  "t": "error",
+  "code": "account_limited",
+  "rid": 1,
+  "item": "crew_plans",
+  "until": 1793039089
+ }
+}

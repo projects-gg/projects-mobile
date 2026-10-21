@@ -8,7 +8,8 @@ import java.util.regex.Pattern;
 
 /**
  * Friend codes ({@code PRJ-XXXX-XXXX}) and crew codes ({@code EKP-XXXX-XXXX}), both Crockford base32,
- * the share link and the deep links, as the desktop's {@code pl-social} codes.rs: input is
+ * crew invite links ({@code XXXX-XXXX-XXXX}, TEAM5), the share links and the deep links, as the
+ * desktop's {@code pl-social} codes.rs: input is
  * case-insensitive, spaces, hyphens and underscores are ignored, {@code I}/{@code L} read as 1 and
  * {@code O} as 0. Crews show {@code EKP-}; the service sends {@code TKM-} and takes either prefix or
  * the 8 symbols alone, so the app sends the symbols alone.
@@ -102,6 +103,8 @@ public final class SocialCodes {
     @Nullable
     public static String crewCodeIn(@Nullable String text) {
         if (text == null) return null;
+        // TEAM5: an invite link's last 8 symbols look like a code; a text with a link is the link's.
+        if (inviteLinkIn(text) != null) return null;
         String trimmed = text.trim();
         if (!trimmed.toUpperCase(Locale.ROOT).replaceAll("[\\s_-]", "").startsWith(FRIEND_PREFIX)) {
             String whole = normalizeCrewCode(trimmed);
@@ -161,6 +164,92 @@ public final class SocialCodes {
         String normalized = normalizeFriendCode(code);
         if (normalized == null) return null;
         return (serviceBase.endsWith("/") ? serviceBase : serviceBase + "/") + "f/" + normalized;
+    }
+
+    // ---- crew invite links (TEAM5) ----
+
+    private static final int LINK_LENGTH = 12;
+    /** What the invite link's page opens: {@code projects://crew/<link>} ({@code ekip} is taken too). */
+    public static final String CREW_DEEP_LINK_PREFIX = "projects://crew/";
+    private static final String CREW_DEEP_LINK_ALIAS = "projects://ekip/";
+    private static final Pattern LINK_IN_TEXT = Pattern.compile(
+            "(?i)(?:/e/|crew/|ekip/)([0-9A-Z]{4}[\\s_-]?[0-9A-Z]{4}[\\s_-]?[0-9A-Z]{4})(?![0-9A-Z])");
+
+    /**
+     * A crew invite link as the service shows it, {@code XXXX-XXXX-XXXX} (12 symbols of the code
+     * alphabet; case, spaces, hyphens and underscores ignored, {@code O} read as 0 and {@code I}/{@code L}
+     * as 1, as the service reads it), or null. The length tells it from codes, which have 8.
+     */
+    @Nullable
+    public static String normalizeInviteLink(@Nullable String input) {
+        if (input == null || input.length() > 40) return null;
+        StringBuilder text = new StringBuilder();
+        for (int i = 0; i < input.length(); i++) {
+            char c = input.charAt(i);
+            if (Character.isWhitespace(c) || c == '-' || c == '_') continue;
+            text.append(Character.toUpperCase(c));
+        }
+        if (text.length() != LINK_LENGTH) return null;
+        StringBuilder out = new StringBuilder(LINK_LENGTH + 2);
+        for (int i = 0; i < LINK_LENGTH; i++) {
+            if (i == 4 || i == 8) out.append('-');
+            char c = text.charAt(i);
+            if (c == 'O') c = '0';
+            else if (c == 'I' || c == 'L') c = '1';
+            if (c > 127 || ALPHABET.indexOf(c) < 0) return null;
+            out.append(c);
+        }
+        return out.toString();
+    }
+
+    /**
+     * The invite link in what a player pasted or typed: the whole text when it is the 12 symbols, else
+     * the link of a {@code <service>/e/<link>} address or a {@code projects://crew/<link>} link in it; null
+     * when there is none (a crew code is never taken for a link: it has 8 symbols).
+     */
+    @Nullable
+    public static String inviteLinkIn(@Nullable String text) {
+        if (text == null) return null;
+        String whole = normalizeInviteLink(text.trim());
+        if (whole != null) return whole;
+        String found = null;
+        Matcher m = LINK_IN_TEXT.matcher(text);
+        while (m.find()) {
+            String link = normalizeInviteLink(m.group(1));
+            if (link != null) found = link;
+        }
+        return found;
+    }
+
+    /** The link of {@code projects://crew/<link>} (or {@code projects://ekip/<link>}), normalised; null for anything else. */
+    @Nullable
+    public static String inviteLinkFromDeepLink(@Nullable String link) {
+        if (link == null) return null;
+        String prefix = link.regionMatches(true, 0, CREW_DEEP_LINK_PREFIX, 0, CREW_DEEP_LINK_PREFIX.length()) ? CREW_DEEP_LINK_PREFIX
+                : link.regionMatches(true, 0, CREW_DEEP_LINK_ALIAS, 0, CREW_DEEP_LINK_ALIAS.length()) ? CREW_DEEP_LINK_ALIAS : null;
+        if (prefix == null) return null;
+        String rest = link.substring(prefix.length());
+        int query = indexOfAny(rest, '?', '#');
+        if (query >= 0) rest = rest.substring(0, query);
+        while (rest.endsWith("/")) rest = rest.substring(0, rest.length() - 1);
+        try {
+            rest = java.net.URLDecoder.decode(rest, "UTF-8");
+        } catch (java.io.UnsupportedEncodingException | IllegalArgumentException e) {
+            return null;
+        }
+        return normalizeInviteLink(rest);
+    }
+
+    /** The invite link's address on this app's service: {@code <service>/e/XXXX-XXXX-XXXX}. */
+    public static String inviteLinkUrl(String serviceBase, String link) {
+        return (serviceBase.endsWith("/") ? serviceBase : serviceBase + "/") + "e/" + link;
+    }
+
+    /** The address as people read it, without its scheme: {@code social.projects.gg/e/XXXX-XXXX-XXXX}. */
+    public static String inviteLinkShort(String serviceBase, String link) {
+        String url = inviteLinkUrl(serviceBase, link);
+        int scheme = url.indexOf("://");
+        return scheme >= 0 ? url.substring(scheme + 3) : url;
     }
 
     private static int indexOfAny(String text, char a, char b) {

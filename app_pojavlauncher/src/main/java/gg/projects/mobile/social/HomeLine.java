@@ -17,10 +17,12 @@ import gg.projects.mobile.social.SocialModel.Profile;
 /**
  * The main menu's "Arkadaşlar" row: one line, the most useful thing first (the desktop's Home
  * priority, TEAM3-L, with invites added: on the phone the row is where an invite waits). A crewmate's
- * call the player has not answered, then a "Birlikte oyna" invite, then (M20) an unread direct
- * message, then crewmates on Projects (two or more, of every crew together, each once), then friends
- * on Projects, then a friend request or a crew invite that waits, then how many friends are online.
- * Pure Java.
+ * call the player has not answered, then a "Birlikte oyna" invite, then (M21) a crew plan the player
+ * is coming to that starts within 15 minutes or began at most 30 minutes ago, then (M20) an unread
+ * direct message, then
+ * crewmates on Projects (two or more, of every crew together, each once), then friends on Projects,
+ * then a friend request, (M21) a join request to answer or a crew invite that waits, then how many
+ * friends are online. Pure Java.
  */
 public final class HomeLine {
     public enum Kind {
@@ -34,10 +36,14 @@ public final class HomeLine {
         INVITE,
         /** M20: a friend wrote to the player ({@link #unread}). */
         MESSAGE,
+        /** M21: a plan the player is coming to runs now or starts soon ({@link #plan}). */
+        PLAN,
         CREW_ON_PROJECTS,
         FRIENDS_ON_PROJECTS,
         /** Someone asked to be the player's friend (the first of them). */
         REQUEST,
+        /** M21: someone asked to join a crew the player may answer for ({@link #joinRequest}, the newest). */
+        JOIN_REQUEST,
         /** A crew invite waits. */
         CREW_INVITE,
         ONLINE,
@@ -84,10 +90,29 @@ public final class HomeLine {
     public final Unread unread;
     /** M20: the player is in more than one crew (the line counts all of them). */
     public final boolean severalCrews;
+    /** M21: {@link Kind#PLAN}'s plan. */
+    @Nullable
+    public final SocialModel.Plan plan;
+    /** M21: {@link Kind#JOIN_REQUEST}'s request (its crew is {@link #crew}). */
+    @Nullable
+    public final SocialModel.JoinRequest joinRequest;
+
+    /** A plan shows from this long before its time (after its reminder)... */
+    public static final long PLAN_WINDOW_SECONDS = 15 * 60;
+    /** ...until this long after it started (the row is the way to the friends list too; the crew page keeps it). */
+    public static final long PLAN_AFTER_SECONDS = 30 * 60;
 
     private HomeLine(Kind kind, @Nullable Call call, @Nullable Invite invite, @Nullable SocialModel.TeamInvite teamInvite,
                      List<Profile> faces, int count, boolean pending, @Nullable Crew crew, @Nullable Unread unread,
                      boolean severalCrews) {
+        this(kind, call, invite, teamInvite, faces, count, pending, crew, unread, severalCrews, null, null);
+    }
+
+    private HomeLine(Kind kind, @Nullable Call call, @Nullable Invite invite, @Nullable SocialModel.TeamInvite teamInvite,
+                     List<Profile> faces, int count, boolean pending, @Nullable Crew crew, @Nullable Unread unread,
+                     boolean severalCrews, @Nullable SocialModel.Plan plan, @Nullable SocialModel.JoinRequest joinRequest) {
+        this.plan = plan;
+        this.joinRequest = joinRequest;
         this.kind = kind;
         this.call = call;
         this.invite = invite;
@@ -114,7 +139,8 @@ public final class HomeLine {
         List<Profile> none = new ArrayList<>();
         boolean several = teams && state.crews().size() > 1;
         if (!signedIn) return simple(Kind.SIGNED_OUT, none, 0, false, false);
-        boolean pending = !state.incoming().isEmpty() || (teams && !state.teamInvites().isEmpty());
+        boolean pending = !state.incoming().isEmpty() || (teams && !state.teamInvites().isEmpty())
+                || (teams && state.requestCount(nowSeconds) > 0);
         if (unavailable && !state.live()) return simple(Kind.UNAVAILABLE, none, 0, pending, several);
         if (!state.loaded()) return simple(Kind.LOADING, none, 0, pending, several);
         if (teams) {
@@ -135,6 +161,22 @@ public final class HomeLine {
             Profile from = state.profile(invite.fromId);
             if (from != null) faces.add(from);
             return new HomeLine(Kind.INVITE, null, invite, null, faces, invites.size(), pending, null, null, several);
+        }
+        if (teams) {
+            SocialModel.Plan plan = state.soonPlan(nowSeconds, PLAN_WINDOW_SECONDS, PLAN_AFTER_SECONDS);
+            if (plan != null) {
+                // Who is coming (the player left out), at most three faces.
+                List<Profile> faces = new ArrayList<>();
+                int coming = 0;
+                for (java.util.Map.Entry<String, String> e : plan.answers.entrySet()) {
+                    if (!SocialModel.Plan.YES.equals(e.getValue()) || e.getKey().equals(state.myId())) continue;
+                    coming++;
+                    Profile p = state.profile(e.getKey());
+                    if (p != null && faces.size() < 3) faces.add(p);
+                }
+                return new HomeLine(Kind.PLAN, null, null, null, faces, coming, pending, state.crew(plan.crew), null, several,
+                        plan, null);
+            }
         }
         if (unread != null && state.isFriend(unread.from)) {
             List<Profile> faces = new ArrayList<>();
@@ -162,6 +204,15 @@ public final class HomeLine {
             List<Profile> faces = new ArrayList<>();
             faces.add(state.incoming().get(0).profile);
             return simple(Kind.REQUEST, faces, state.incoming().size(), pending, several);
+        }
+        if (teams) {
+            SocialModel.JoinRequest request = state.newestRequest(nowSeconds);
+            if (request != null) {
+                List<Profile> faces = new ArrayList<>();
+                faces.add(request.from);
+                return new HomeLine(Kind.JOIN_REQUEST, null, null, null, faces, state.requestCount(nowSeconds), pending,
+                        state.crewOfRequest(request, nowSeconds), null, several, null, request);
+            }
         }
         if (teams && !state.teamInvites().isEmpty()) {
             SocialModel.TeamInvite teamInvite = state.teamInvites().get(0);

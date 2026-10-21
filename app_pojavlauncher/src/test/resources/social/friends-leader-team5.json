@@ -1,0 +1,137 @@
+{
+ "friends": [],
+ "incoming": [],
+ "outgoing": [],
+ "blocked": [],
+ "limits": {
+  "friends": 200,
+  "outgoingRequests": 50,
+  "teamMembers": 30,
+  "groups": 20
+ },
+ "groups": {
+  "version": 0,
+  "groups": [],
+  "members": {}
+ },
+ "team": {
+  "id": "4fdb29ce4949654f",
+  "name": "Gece Kartalları",
+  "tag": "GK",
+  "emblem": "moon",
+  "color": "navy",
+  "frame": "shield",
+  "motto": "",
+  "code": "TKM-HDEA-T5AJ",
+  "createdOn": "2026-10-21",
+  "members": [
+   {
+    "id": "100000000000000011",
+    "username": "ayse",
+    "displayName": "Ayse",
+    "avatar": "discord",
+    "avatarHash": null,
+    "role": "founder",
+    "moderator": false,
+    "joinedAt": 1792607089
+   }
+  ],
+  "permissions": {
+   "invite": "members",
+   "call": "members",
+   "kick": "moderators",
+   "edit": "leader",
+   "admit": "moderators"
+  },
+  "textLockedUntil": null,
+  "join": "approval",
+  "link": "VRCD-VG9V-C2JF"
+ },
+ "teamInvited": [],
+ "crews": [
+  {
+   "team": {
+    "id": "4fdb29ce4949654f",
+    "name": "Gece Kartalları",
+    "tag": "GK",
+    "emblem": "moon",
+    "color": "navy",
+    "frame": "shield",
+    "motto": "",
+    "code": "TKM-HDEA-T5AJ",
+    "createdOn": "2026-10-21",
+    "members": [
+     {
+      "id": "100000000000000011",
+      "username": "ayse",
+      "displayName": "Ayse",
+      "avatar": "discord",
+      "avatarHash": null,
+      "role": "founder",
+      "moderator": false,
+      "joinedAt": 1792607089
+     }
+    ],
+    "permissions": {
+     "invite": "members",
+     "call": "members",
+     "kick": "moderators",
+     "edit": "leader",
+     "admit": "moderators"
+    },
+    "textLockedUntil": null,
+    "join": "approval",
+    "link": "VRCD-VG9V-C2JF"
+   },
+   "invited": [],
+   "notifications": {
+    "muted": false,
+    "muteUntil": null
+   },
+   "requests": [
+    {
+     "from": {
+      "id": "100000000000000013",
+      "username": "kaan",
+      "displayName": "Kaan",
+      "avatar": "discord",
+      "avatarHash": null
+     },
+     "sentAt": 1792607089
+    },
+    {
+     "from": {
+      "id": "100000000000000014",
+      "username": "deniz",
+      "displayName": "Deniz",
+      "avatar": "discord",
+      "avatarHash": null
+     },
+     "sentAt": 1792607089
+    }
+   ]
+  }
+ ],
+ "crewLimit": 5,
+ "teamInvites": [],
+ "teamRequests": [],
+ "teamFeatures": [
+  "look",
+  "calls",
+  "roles",
+  "mute",
+  "multi",
+  "callServer",
+  "requests",
+  "link",
+  "plans"
+ ],
+ "teamNotifications": {
+  "calls": true,
+  "muted": false,
+  "muteUntil": null
+ },
+ "features": [
+  "chat"
+ ]
+}

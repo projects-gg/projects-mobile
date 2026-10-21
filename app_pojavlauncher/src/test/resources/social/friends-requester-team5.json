@@ -1,0 +1,57 @@
+{
+ "friends": [],
+ "incoming": [],
+ "outgoing": [],
+ "blocked": [],
+ "limits": {
+  "friends": 200,
+  "outgoingRequests": 50,
+  "teamMembers": 30,
+  "groups": 20
+ },
+ "groups": {
+  "version": 0,
+  "groups": [],
+  "members": {}
+ },
+ "team": null,
+ "teamInvited": [],
+ "crews": [],
+ "crewLimit": 5,
+ "teamInvites": [],
+ "teamRequests": [
+  {
+   "team": {
+    "id": "4fdb29ce4949654f",
+    "name": "Gece Kartalları",
+    "tag": "GK",
+    "emblem": "moon",
+    "color": "navy",
+    "frame": "shield",
+    "motto": "",
+    "members": 1,
+    "join": "approval"
+   },
+   "sentAt": 1792607089
+  }
+ ],
+ "teamFeatures": [
+  "look",
+  "calls",
+  "roles",
+  "mute",
+  "multi",
+  "callServer",
+  "requests",
+  "link",
+  "plans"
+ ],
+ "teamNotifications": {
+  "calls": true,
+  "muted": false,
+  "muteUntil": null
+ },
+ "features": [
+  "chat"
+ ]
+}

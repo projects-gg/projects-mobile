@@ -1,0 +1,47 @@
+{
+ "t": "hello",
+ "v": 1,
+ "status": "online",
+ "keepaliveSeconds": 45,
+ "friends": [],
+ "team": [
+  {
+   "id": "100000000000000011",
+   "state": "launcher",
+   "status": "online",
+   "game": null,
+   "avatar": "discord",
+   "avatarHash": null
+  }
+ ],
+ "invites": [],
+ "calls": [],
+ "caps": [
+  "callServer",
+  "crews",
+  "chat",
+  "plans"
+ ],
+ "chat": {
+  "on": true,
+  "mailbox": true,
+  "mailboxBack": null,
+  "perDay": 500,
+  "mutedUntil": null
+ },
+ "plans": [
+  {
+   "id": "1c52b80d546782cf",
+   "crew": "4fdb29ce4949654f",
+   "by": "100000000000000011",
+   "at": 1792611000,
+   "until": 1792618200,
+   "createdAt": 1792607089,
+   "answers": {
+    "100000000000000011": "yes",
+    "100000000000000013": "maybe"
+   }
+  }
+ ],
+ "now": 1792607089
+}

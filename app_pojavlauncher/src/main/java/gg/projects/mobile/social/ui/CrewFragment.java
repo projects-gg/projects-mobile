@@ -25,6 +25,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.AccessibilityDelegateCompat;
 import androidx.core.view.ViewCompat;
@@ -57,7 +58,10 @@ import gg.projects.mobile.social.SocialGate;
 import gg.projects.mobile.social.SocialModel;
 import gg.projects.mobile.social.SocialModel.Call;
 import gg.projects.mobile.social.SocialModel.Crew;
+import gg.projects.mobile.social.SocialModel.JoinRequest;
 import gg.projects.mobile.social.SocialModel.Member;
+import gg.projects.mobile.social.SocialModel.MyRequest;
+import gg.projects.mobile.social.SocialModel.Plan;
 import gg.projects.mobile.social.SocialModel.Profile;
 import gg.projects.mobile.social.SocialModel.Team;
 import gg.projects.mobile.social.SocialModel.TeamInvite;
@@ -87,6 +91,13 @@ import gg.projects.mobile.ui.ScreenHeader;
  * çok N ekipte olabilirsin." The crew's chat opens from its page; "Rapor et" reports the crew. The
  * phone does not call the crew (CALL1: calls start only from a multiplayer server, and the phone cannot
  * say it is in game yet).
+ *
+ * <p>M21 (TEAM5): those who may answer see the crew's join requests at the top ("Kabul et", ×, and
+ * "Engelle" / "Rapor et" on the row); "Planlar" shows the crew's plans with Geliyorum / Belki / Gelemem
+ * and "Plan yap"; under the code, the invite link (copy, share; "Yeni bağlantı" and "Bağlantıyı kapat"
+ * for whoever manages it) and, for the leader, "Yeni üyeleri onayla". "+" lists the player's own join
+ * requests ("Geri çek"); the code field takes an invite link too, and a {@code projects://crew/} link
+ * fills it and looks it up once. A crew that approves newcomers offers "Katılma isteği gönder".
  */
 public class CrewFragment extends Fragment implements SocialService.Listener {
     public static final String TAG = "ProjectsCrewFragment";
@@ -104,6 +115,12 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
     private static final int T_TEXT = 7;
     private static final int T_CHAT = 8;
     private static final int T_NOTICE = 9;
+    private static final int T_REQUEST = 10;
+    private static final int T_PLAN = 11;
+    private static final int T_LINK = 12;
+    private static final int T_SWITCH = 13;
+    /** M21: a crew invite link ({@code XXXX-XXXX-XXXX}) to look up on "+" (a {@code projects://crew/} link). */
+    public static final String ARG_LINK = "link";
 
     /** The crew a page that just made or joined one shows next (it comes with the answer). */
     @Nullable
@@ -133,6 +150,18 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
     private String mSelected;
     @Nullable
     private String mPendingArg;
+    /** M21: an invite link to look up once the list is there. */
+    @Nullable
+    private String mPendingLink;
+    /** M21: join requests with an answer on its way ("crew|user"), plans with one ("plan"). */
+    private final java.util.Set<String> mRequestBusy = new java.util.HashSet<>();
+    private final java.util.Set<String> mPlanBusy = new java.util.HashSet<>();
+    /** M21: own join requests being withdrawn (crew ids). */
+    private final java.util.Set<String> mWithdrawBusy = new java.util.HashSet<>();
+    /** M21: "Yeni üyeleri onayla" waits for the service. */
+    private boolean mApprovalBusy;
+    /** M21: crews "+" shows the player's waiting request to (its card, their list): one that comes is shown. */
+    private final java.util.Set<String> mAwaiting = new java.util.HashSet<>();
     private final Runnable mTick = this::render;
 
     public CrewFragment() {
@@ -149,6 +178,7 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         super.onCreate(savedInstanceState);
         Bundle args = getArguments();
         if (args != null) mPendingArg = args.getString(ARG_CREW);
+        if (args != null && savedInstanceState == null) mPendingLink = args.getString(ARG_LINK);
         if (savedInstanceState != null) mSelected = savedInstanceState.getString("selected");
     }
 
@@ -323,6 +353,27 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         // MOD1: a moderator's note shows on whichever friends screen is open when it comes.
         if (isResumed()) AccountNotes.showNotices(requireActivity());
         SocialState state = service.state();
+        // M21: an invite link opened from outside shows on "+" (looked up below, once).
+        String openLink = null;
+        if (mPendingLink != null && state.loaded()) {
+            openLink = mPendingLink;
+            mPendingLink = null;
+            if (gate.multi || state.crews().isEmpty()) mSelected = ADD;
+        }
+        // M21: a crew the player asked to join on "+" (its card or their list) that came now (accepted) shows itself.
+        if (ADD.equals(mSelected) && gate.multi) {
+            for (String id : mAwaiting) {
+                if (state.crew(id) == null) continue;
+                mSelected = id;
+                if (id.equals(mLookupTeam)) {
+                    mLookupTeam = null;
+                    mJoinResult.setVisibility(View.GONE);
+                    mJoinCode.setText("");
+                }
+                break;
+            }
+        }
+        mAwaiting.clear();
         resolveSelection(state, gate.multi);
         renderRail(state, gate);
         Crew crew = ADD.equals(mSelected) ? null : state.crew(mSelected);
@@ -341,10 +392,45 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
             // The call's minutes and its end, and a timed mute's end: twice a minute while there is one.
             boolean ticking = !state.calls(now).isEmpty() || (muted && (all.muteUntil != null || crew.mute.muteUntil != null))
                     || crew.team.textLocked(hub);
-            if (ticking) mList.postDelayed(mTick, 30_000);
+            if (ticking) {
+                mList.postDelayed(mTick, 30_000);
+            } else {
+                // M21: a plan starts or ends with no message: the page looks again then (nothing ticks meanwhile).
+                long next = nextPlanChange(state.plans(now, crew.id()), hub);
+                if (next > 0) mList.postDelayed(mTick, Math.min(next, 3600) * 1000L + 500);
+            }
         } else {
             renderNone(service);
         }
+        if (openLink != null) openInviteLink(service, openLink);
+    }
+
+    /** Seconds until one of {@code plans} starts or is over by the hub's clock (0: none). */
+    private static long nextPlanChange(List<Plan> plans, long hub) {
+        long next = 0;
+        for (Plan p : plans) {
+            long at = p.at > hub ? p.at - hub : p.until - hub;
+            if (at > 0 && (next == 0 || at < next)) next = at;
+        }
+        return next;
+    }
+
+    /** M21: a {@code projects://crew/} link: its crew on "+" through the code field (looked up once). */
+    private void openInviteLink(SocialService service, String link) {
+        SocialState state = service.state();
+        if (!service.gate().multi && !state.crews().isEmpty()) {
+            SocialUi.toast(requireContext(), getString(R.string.projects_crew_rel_elsewhere));
+            return;
+        }
+        if (service.gate().multi && state.atCrewLimit() && state.crewLimit() > 0) {
+            SocialUi.toast(requireContext(), getResources().getQuantityString(R.plurals.projects_crews_limit, state.crewLimit(), state.crewLimit()));
+            return;
+        }
+        String shown = SocialCodes.inviteLinkShort(service.serviceBase(), link);
+        mJoinCode.setText(shown);
+        mJoinCode.setSelection(shown.length());
+        mBusy = false;
+        lookup();
     }
 
     // ---- the rail (TEAM4) ----
@@ -376,7 +462,8 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
             boolean call = !state.calls(now, id).isEmpty();
             int unread = book == null ? 0 : book.unread(ChatConv.crew(id));
             out.put(id, c.team.name + c.team.tag + c.team.emblem + c.team.color + c.team.frame + "|" + call + "|" + unread
-                    + "|" + c.mute.mutedAt(hub) + "|" + id.equals(mSelected) + "|" + id.equals(state.crewIds().get(0)));
+                    + "|" + c.mute.mutedAt(hub) + "|" + id.equals(mSelected) + "|" + id.equals(state.crewIds().get(0))
+                    + "|" + state.requests(id, now).size());
         }
         return out;
     }
@@ -656,7 +743,9 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         ChatBook book = service.chat().book();
         boolean call = !state.calls(now, id).isEmpty();
         boolean unread = book != null && book.unread(ChatConv.crew(id)) > 0;
-        dot.setVisibility(call || unread ? View.VISIBLE : View.GONE);
+        // M21: join requests waiting for the player's answer light the dot too.
+        int requests = service.gate().requests ? state.requests(id, now).size() : 0;
+        dot.setVisibility(call || unread || requests > 0 ? View.VISIBLE : View.GONE);
         boolean isMuted = crew.mute.mutedAt(state.hubNow(now));
         muted.setVisibility(isMuted ? View.VISIBLE : View.GONE);
         boolean main = position == 0;
@@ -672,6 +761,9 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         if (unread) {
             int count = book.unread(ChatConv.crew(id));
             description.append(", ").append(getResources().getQuantityString(R.plurals.projects_chat_unread, count, count));
+        }
+        if (requests > 0) {
+            description.append(", ").append(getResources().getQuantityString(R.plurals.projects_requests_count, requests, requests));
         }
         if (isMuted) description.append(", ").append(getString(R.string.projects_crew_muted));
         view.setContentDescription(description);
@@ -719,6 +811,17 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         }
     }
 
+    /** M21: a join request row and the crew it waits in. */
+    private static final class RequestRow {
+        final String crew;
+        final JoinRequest request;
+
+        RequestRow(String crew, JoinRequest request) {
+            this.crew = crew;
+            this.request = request;
+        }
+    }
+
     private static final class Action {
         final String kind;
         final int icon;
@@ -763,6 +866,38 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
                         + "|" + ((left + 59) / 60) + "|" + call.crews, call));
             }
         }
+        // M21 (TEAM5): join requests for whoever may answer them, at the top: they wait for an answer.
+        if (gate.requests) {
+            List<JoinRequest> requests = state.requests(team.id, now);
+            if (!requests.isEmpty()) {
+                String text = getString(R.string.projects_requests_title) + " · " + requests.size();
+                rows.add(new Row(T_HEADER, "h-requests", text, text));
+                for (JoinRequest r : requests) {
+                    rows.add(new Row(T_REQUEST, "r-" + team.id + "-" + r.from.id, r.from.name() + r.from.faceKey() + "|"
+                            + PlanViews.ago(requireContext(), r.sentAt, now) + "|" + mRequestBusy.contains(team.id + "|" + r.from.id),
+                            new RequestRow(team.id, r)));
+                }
+            }
+        }
+        // M21 (TEAM5): "Planlar": the crew's plans and "Plan yap" for whoever may call the crew.
+        if (gate.plans) {
+            List<Plan> plans = state.plans(now, team.id);
+            boolean may = state.mayPlan(team.id);
+            if (!plans.isEmpty() || may) {
+                String text = plans.isEmpty() ? getString(R.string.projects_plans_title)
+                        : getString(R.string.projects_plans_title) + " · " + plans.size();
+                rows.add(new Row(T_HEADER, "h-plans", text, text));
+                for (Plan p : plans) {
+                    String mineAnswer = me == null ? null : p.answers.get(me);
+                    rows.add(new Row(T_PLAN, "p-" + p.id, p.at + "|" + p.by + "|" + p.answers + "|" + mineAnswer + "|" + p.underWay(hub)
+                            + "|" + state.mayCancel(p) + "|" + mPlanBusy.contains(p.id) + "|" + PlanViews.when(requireContext(), p.at, now), p));
+                }
+                if (may) {
+                    rows.add(new Row(T_ACTION, "plan-make", "plan-make", new Action("plan", R.drawable.projects_ic_calendar_plus,
+                            R.string.projects_plans_make, R.color.projects_gold_300)));
+                }
+            }
+        }
         Map<SocialState.Place, List<Member>> roster = state.roster(team.id);
         int[] titles = {R.string.projects_social_on_projects, R.string.projects_social_presence_playing,
                 R.string.projects_social_presence_launcher, R.string.projects_social_presence_offline};
@@ -781,6 +916,20 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
             }
         }
         if (!team.code.isEmpty()) rows.add(new Row(T_CODE, "code", team.code, team.code));
+        // M21 (TEAM5): the invite link under the code (every member shares it; who may admit manages it).
+        boolean admit = gate.requests && state.mayAdmit(team.id);
+        if (gate.link) {
+            if (team.link != null) {
+                rows.add(new Row(T_LINK, "link", team.link + "|" + admit, team.link));
+            } else if (admit) {
+                rows.add(new Row(T_ACTION, "link-make", "link-make", new Action("link", R.drawable.projects_ic_link,
+                        R.string.projects_link_create, R.color.projects_bone_100)));
+            }
+        }
+        Member leader = me == null ? null : team.member(me);
+        if (gate.requests && leader != null && leader.founder) {
+            rows.add(new Row(T_SWITCH, "approve", "approve|" + team.approval() + "|" + mApprovalBusy, team));
+        }
         if (me != null && team.allows(me, team.permissions.invite)) {
             rows.add(new Row(T_ACTION, "invite", "invite", new Action("invite", R.drawable.projects_ic_user_plus,
                     R.string.projects_crew_invite_title, R.color.projects_bone_100)));
@@ -888,10 +1037,27 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
                     view = inflater.inflate(R.layout.item_projects_social_header, parent, false);
                     break;
                 case T_CODE:
+                case T_LINK:
                     view = inflater.inflate(R.layout.item_projects_crew_code, parent, false);
                     Press.attach(view.findViewById(R.id.projects_crew_code_copy), Press.Style.ICON);
                     Press.attach(view.findViewById(R.id.projects_crew_code_share), Press.Style.ICON);
+                    Press.attach(view.findViewById(R.id.projects_crew_code_more), Press.Style.ICON);
                     break;
+                case T_PLAN:
+                    view = inflater.inflate(R.layout.item_projects_crew_plan, parent, false);
+                    for (int id : new int[]{R.id.projects_plan_yes, R.id.projects_plan_maybe, R.id.projects_plan_no}) {
+                        Press.attach(view.findViewById(id), Press.Style.BUTTON);
+                    }
+                    Press.attach(view.findViewById(R.id.projects_plan_more), Press.Style.ICON);
+                    break;
+                case T_SWITCH: {
+                    FrameLayout frame = new FrameLayout(context);
+                    int side = Math.round(12 * context.getResources().getDisplayMetrics().density);
+                    frame.setPadding(side, Math.round(6 * context.getResources().getDisplayMetrics().density), side, 0);
+                    frame.setLayoutParams(new RecyclerView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+                    view = frame;
+                    break;
+                }
                 case T_ACTION: {
                     FrameLayout frame = new FrameLayout(context);
                     int side = Math.round(12 * context.getResources().getDisplayMetrics().density);
@@ -923,6 +1089,7 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
                     view = text;
                     break;
                 }
+                case T_REQUEST:
                 case T_MEMBER:
                 default:
                     view = inflater.inflate(R.layout.item_projects_social_person, parent, false);
@@ -930,6 +1097,7 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
                     Button primary = view.findViewById(R.id.projects_person_action);
                     primary.setBackground(ChamferDrawable.outlined(context));
                     Press.attach(primary, Press.Style.BUTTON);
+                    Press.attach(view.findViewById(R.id.projects_person_secondary), Press.Style.ICON);
                     break;
             }
             return new RecyclerView.ViewHolder(view) {};
@@ -954,6 +1122,18 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
                     break;
                 case T_CODE:
                     bindCode(view, (String) row.data);
+                    break;
+                case T_LINK:
+                    bindLink(view, (String) row.data);
+                    break;
+                case T_REQUEST:
+                    bindRequest(view, (RequestRow) row.data);
+                    break;
+                case T_PLAN:
+                    bindPlan(view, (Plan) row.data);
+                    break;
+                case T_SWITCH:
+                    bindApproval((FrameLayout) view, (Team) row.data);
                     break;
                 case T_ACTION:
                     bindAction((FrameLayout) view, (Action) row.data);
@@ -1172,6 +1352,10 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
 
     private void bindCode(View view, final String code) {
         final String shownCode = SocialCodes.crewCode(code);
+        ((TextView) view.findViewById(R.id.projects_crew_code_label)).setText(R.string.projects_crew_code);
+        view.findViewById(R.id.projects_crew_code_more).setVisibility(View.GONE);
+        view.findViewById(R.id.projects_crew_code_copy).setContentDescription(getString(R.string.projects_crew_copy));
+        view.findViewById(R.id.projects_crew_code_share).setContentDescription(getString(R.string.projects_social_share));
         ((TextView) view.findViewById(R.id.projects_crew_code_text)).setText(shownCode);
         view.findViewById(R.id.projects_crew_code_copy).setOnClickListener(v -> {
             SocialUi.copy(requireContext(), getString(R.string.projects_crew_code), shownCode);
@@ -1200,6 +1384,12 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
             case "report":
                 ReportDialog.crew(activity, team, null);
                 break;
+            case "plan":
+                makePlan(action, crew);
+                break;
+            case "link":
+                makeLink(crew.id(), false);
+                break;
             case "leave":
                 SocialUi.confirm(activity, getString(R.string.projects_crew_leave), getString(R.string.projects_crew_leave_ask),
                         getString(R.string.projects_crew_leave), () -> service.leaveTeam(team.id, FriendCard.done(activity, getString(R.string.projects_crew_left))));
@@ -1215,6 +1405,443 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
             default:
                 break;
         }
+    }
+
+    // ---- join requests (TEAM5) ----
+
+    /** A player who asked to join: their face, "12 dk önce istedi", "Kabul et" and ×; the row: "Engelle", "Rapor et". */
+    private void bindRequest(View view, final RequestRow row) {
+        Context context = view.getContext();
+        final JoinRequest request = row.request;
+        AvatarView avatar = view.findViewById(R.id.projects_person_avatar);
+        avatar.setVisibility(View.VISIBLE);
+        view.findViewById(R.id.projects_person_mark).setVisibility(View.GONE);
+        avatar.setProfile(request.from);
+        avatar.setSurfaceColor(ContextCompat.getColor(context, R.color.projects_obsidian_950));
+        avatar.setDot(AvatarView.Dot.NONE);
+        avatar.setDimmed(false);
+        ((TextView) view.findViewById(R.id.projects_person_name)).setText(request.from.name());
+        view.findViewById(R.id.projects_person_badge).setVisibility(View.GONE);
+        view.findViewById(R.id.projects_person_star).setVisibility(View.GONE);
+        TextView line = view.findViewById(R.id.projects_person_line);
+        String asked = getString(R.string.projects_requests_asked, PlanViews.ago(context, request.sentAt, SocialService.nowSeconds()));
+        line.setText(asked);
+        line.setTextColor(ContextCompat.getColor(context, R.color.projects_ash_400));
+        final Button accept = view.findViewById(R.id.projects_person_action);
+        accept.setVisibility(View.VISIBLE);
+        accept.setText(R.string.projects_social_accept);
+        final ImageButton decline = view.findViewById(R.id.projects_person_secondary);
+        decline.setVisibility(View.VISIBLE);
+        decline.setContentDescription(getString(R.string.projects_social_decline));
+        boolean busy = mRequestBusy.contains(row.crew + "|" + request.from.id);
+        accept.setEnabled(!busy);
+        decline.setEnabled(!busy);
+        accept.setOnClickListener(v -> answerRequest(row, true, accept));
+        decline.setOnClickListener(v -> answerRequest(row, false, decline));
+        view.setOnClickListener(v -> requestMenu(row));
+        view.setContentDescription(request.from.name() + ", " + asked);
+    }
+
+    /** "Kabul et" or ×: the row goes when the service answers (a decline tells its sender nothing). */
+    private void answerRequest(final RequestRow row, final boolean accept, final View button) {
+        final FragmentActivity activity = requireActivity();
+        final SocialService service = SocialService.get(activity);
+        final String key = row.crew + "|" + row.request.from.id;
+        if (!mRequestBusy.add(key)) return;
+        render();
+        final String name = row.request.from.name();
+        SocialService.Result<Object> done = new SocialService.Result<Object>() {
+            @Override
+            public void ok(Object value) {
+                mRequestBusy.remove(key);
+                Haptics.confirm(button);
+                if (accept) SocialUi.toast(activity, activity.getString(R.string.projects_requests_accepted, name));
+                if (isAdded()) render();
+            }
+
+            @Override
+            public void failed(SocialProblem problem) {
+                mRequestBusy.remove(key);
+                if (problem.kind == SocialProblem.Kind.JOIN_REQUEST_GONE) {
+                    // Answered elsewhere, withdrawn or gone with a block: it leaves the list here too.
+                    service.forgetJoinRequest(row.crew, row.request.from.id);
+                    SocialUi.toastProblem(activity, problem, button);
+                } else if (accept && problem.kind == SocialProblem.Kind.CREW_LIMIT) {
+                    // The player who asked is in as many crews as they may be: the request keeps waiting.
+                    Haptics.reject(button);
+                    SocialUi.toast(activity, activity.getString(R.string.projects_requests_player_limit));
+                } else {
+                    SocialUi.toastProblem(activity, problem, button);
+                }
+                if (isAdded()) render();
+            }
+        };
+        if (accept) {
+            service.acceptJoinRequest(row.crew, row.request.from.id, new SocialService.Result<JsonObject>() {
+                @Override
+                public void ok(JsonObject value) {
+                    done.ok(value);
+                }
+
+                @Override
+                public void failed(SocialProblem problem) {
+                    done.failed(problem);
+                }
+            });
+        } else {
+            service.declineJoinRequest(row.crew, row.request.from.id, new SocialService.Result<Void>() {
+                @Override
+                public void ok(Void value) {
+                    done.ok(null);
+                }
+
+                @Override
+                public void failed(SocialProblem problem) {
+                    done.failed(problem);
+                }
+            });
+        }
+    }
+
+    /** A request row's own menu: "Engelle" (the request goes with it) and "Rapor et". */
+    private void requestMenu(final RequestRow row) {
+        final FragmentActivity activity = requireActivity();
+        final SocialService service = SocialService.get(activity);
+        final Profile who = row.request.from;
+        View sheet = LayoutInflater.from(activity).inflate(R.layout.dialog_projects_actions, null, false);
+        TextView quote = sheet.findViewById(R.id.projects_actions_quote);
+        quote.setText(who.name());
+        quote.setVisibility(View.VISIBLE);
+        LinearLayout actions = sheet.findViewById(R.id.projects_actions_list);
+        final AlertDialog dialog = new AlertDialog.Builder(activity).setView(sheet).create();
+        actions.addView(CrewViews.actionRow(activity, R.drawable.projects_ic_prohibit, getString(R.string.projects_social_block),
+                R.color.projects_flare_400, v -> {
+                    dialog.dismiss();
+                    SocialUi.confirm(activity, getString(R.string.projects_social_block_title, who.name()),
+                            getString(R.string.projects_social_block_ask), getString(R.string.projects_social_block),
+                            () -> service.blockRequester(row.crew, who, new SocialService.Result<Void>() {
+                                @Override
+                                public void ok(Void value) {
+                                    SocialUi.toast(activity, activity.getString(R.string.projects_social_blocked, who.name()));
+                                }
+
+                                @Override
+                                public void failed(SocialProblem problem) {
+                                    SocialUi.toastProblem(activity, problem, null);
+                                }
+                            }));
+                }));
+        if (service.gate().reports) {
+            actions.addView(CrewViews.actionRow(activity, R.drawable.projects_ic_flag, getString(R.string.projects_report),
+                    R.color.projects_ash_300, v -> {
+                        dialog.dismiss();
+                        ReportDialog.player(activity, who);
+                    }));
+        }
+        dialog.show();
+    }
+
+    // ---- plans (TEAM5) ----
+
+    private void bindPlan(View view, final Plan plan) {
+        Context context = view.getContext();
+        SocialService service = SocialService.get(context);
+        SocialState state = service.state();
+        long now = SocialService.nowSeconds();
+        long hub = state.hubNow(now);
+        boolean under = plan.underWay(hub);
+        TextView when = view.findViewById(R.id.projects_plan_when);
+        when.setText(PlanViews.when(context, plan.at, now));
+        TextView line = view.findViewById(R.id.projects_plan_line);
+        String by = PlanViews.by(context, state, plan);
+        line.setText(under ? by + " · " + getString(R.string.projects_plans_started_line) : by);
+        line.setTextColor(ContextCompat.getColor(context, under ? R.color.projects_jade_400 : R.color.projects_ash_400));
+        ((ImageView) view.findViewById(R.id.projects_plan_icon)).setImageTintList(
+                ContextCompat.getColorStateList(context, under ? R.color.projects_jade_400 : R.color.projects_gold_300));
+        View top = view.findViewById(R.id.projects_plan_top);
+        top.setContentDescription(when.getText() + ", " + line.getText());
+        View more = view.findViewById(R.id.projects_plan_more);
+        more.setVisibility(state.mayCancel(plan) ? View.VISIBLE : View.GONE);
+        more.setOnClickListener(v -> planMenu(plan));
+        String mine = state.myPlanAnswer(plan.id);
+        boolean busy = mPlanBusy.contains(plan.id);
+        bindPlanAnswer(view.findViewById(R.id.projects_plan_yes), plan, Plan.YES, mine, under, busy);
+        bindPlanAnswer(view.findViewById(R.id.projects_plan_maybe), plan, Plan.MAYBE, mine, under, busy);
+        bindPlanAnswer(view.findViewById(R.id.projects_plan_no), plan, Plan.NO, mine, under, busy);
+        TextView tally = view.findViewById(R.id.projects_plan_tally);
+        String text = PlanViews.tally(context, state, plan);
+        tally.setText(text);
+        tally.setVisibility(text.isEmpty() ? View.GONE : View.VISIBLE);
+    }
+
+    private void bindPlanAnswer(final Button button, final Plan plan, final String answer, @Nullable String current, boolean under,
+                                boolean busy) {
+        Context context = button.getContext();
+        boolean chosen = answer.equals(current);
+        if (chosen) {
+            button.setBackground(ChamferDrawable.primary(context));
+            button.setTextColor(ContextCompat.getColor(context, R.color.projects_on_gold));
+        } else {
+            button.setBackground(ChamferDrawable.outlined(context));
+            // While it runs "Geliyorum" takes the player to Projects: gold until it is chosen.
+            button.setTextColor(ContextCompat.getColor(context, under && Plan.YES.equals(answer) ? R.color.projects_gold_300
+                    : R.color.projects_bone_100));
+        }
+        button.setSelected(chosen);
+        button.setEnabled(!busy);
+        button.setOnClickListener(v -> answerPlan(button, plan, answer));
+    }
+
+    /**
+     * An answer shows at once (the socket confirms it); "Geliyorum" to a plan that runs now asks
+     * whether to open the game, as a call on Projects does.
+     */
+    private void answerPlan(final Button button, final Plan plan, final String answer) {
+        final FragmentActivity activity = requireActivity();
+        final SocialService service = SocialService.get(activity);
+        if (!service.plansLive()) {
+            SocialUi.toast(activity, getString(R.string.projects_social_error_unavailable));
+            Haptics.reject(button);
+            return;
+        }
+        if (answer.equals(service.state().myPlanAnswer(plan.id))) {
+            if (Plan.YES.equals(answer) && plan.underWay(service.state().hubNow(SocialService.nowSeconds()))) SocialUi.joinProjects(activity);
+            return;
+        }
+        Haptics.confirm(button);
+        service.answerPlan(plan.id, answer, new SocialService.Result<Void>() {
+            @Override
+            public void ok(Void value) {
+                if (!isAdded() || !Plan.YES.equals(answer)) return;
+                if (plan.underWay(service.state().hubNow(SocialService.nowSeconds()))) SocialUi.joinProjects(activity);
+            }
+
+            @Override
+            public void failed(SocialProblem problem) {
+                if (problem.kind == SocialProblem.Kind.RATE_LIMITED) {
+                    Haptics.reject(button);
+                    SocialUi.toast(activity, activity.getString(R.string.projects_plans_answers_limit));
+                } else if (problem.kind == SocialProblem.Kind.PLAN_GONE) {
+                    SocialUi.toast(activity, activity.getString(R.string.projects_social_error_plan_gone));
+                } else {
+                    SocialUi.toastProblem(activity, problem, button);
+                }
+            }
+        });
+    }
+
+    /** "Planı sil" (its maker, the leader or a moderator), asked once: it goes for everyone. */
+    private void planMenu(final Plan plan) {
+        final FragmentActivity activity = requireActivity();
+        final SocialService service = SocialService.get(activity);
+        View sheet = LayoutInflater.from(activity).inflate(R.layout.dialog_projects_actions, null, false);
+        TextView quote = sheet.findViewById(R.id.projects_actions_quote);
+        quote.setText(PlanViews.when(activity, plan.at, SocialService.nowSeconds()));
+        quote.setVisibility(View.VISIBLE);
+        LinearLayout actions = sheet.findViewById(R.id.projects_actions_list);
+        final AlertDialog dialog = new AlertDialog.Builder(activity).setView(sheet).create();
+        actions.addView(CrewViews.actionRow(activity, R.drawable.projects_ic_trash, getString(R.string.projects_plans_cancel),
+                R.color.projects_flare_400, v -> {
+                    dialog.dismiss();
+                    SocialUi.confirm(activity, getString(R.string.projects_plans_cancel), getString(R.string.projects_plans_cancel_ask),
+                            getString(R.string.projects_plans_cancel), () -> {
+                                if (!mPlanBusy.add(plan.id)) return;
+                                render();
+                                service.cancelPlan(plan.id, new SocialService.Result<Void>() {
+                                    @Override
+                                    public void ok(Void value) {
+                                        mPlanBusy.remove(plan.id);
+                                        SocialUi.toast(activity, activity.getString(R.string.projects_plans_cancelled));
+                                        if (isAdded()) render();
+                                    }
+
+                                    @Override
+                                    public void failed(SocialProblem problem) {
+                                        mPlanBusy.remove(plan.id);
+                                        if (problem.kind == SocialProblem.Kind.PLAN_GONE) {
+                                            SocialUi.toast(activity, activity.getString(R.string.projects_social_error_plan_gone));
+                                        } else {
+                                            SocialUi.toastProblem(activity, problem, null);
+                                        }
+                                        if (isAdded()) render();
+                                    }
+                                });
+                            });
+                }));
+        dialog.show();
+    }
+
+    /** "Plan yap": the reason in place for a new Discord account and at the crew's 3 plans, else the sheet. */
+    private void makePlan(Action action, Crew crew) {
+        final FragmentActivity activity = requireActivity();
+        SocialService service = SocialService.get(activity);
+        SocialModel.Me me = service.state().me();
+        long now = SocialService.nowSeconds();
+        View feedback = mList;
+        if (me != null && me.limited != null && me.limited.active(now) && me.limited.has(SocialModel.Limited.CREW_PLANS)) {
+            Haptics.reject(feedback);
+            SocialUi.toast(activity, PlanSheet.limitedText(activity, me.limited.until));
+            return;
+        }
+        if (service.state().upcomingPlans(now, crew.id()) >= Plan.PER_CREW) {
+            Haptics.reject(feedback);
+            SocialUi.toast(activity, getString(R.string.projects_plans_full));
+            return;
+        }
+        if (!service.plansLive()) {
+            Haptics.reject(feedback);
+            SocialUi.toast(activity, getString(R.string.projects_social_error_unavailable));
+            return;
+        }
+        PlanSheet.show(activity, crew.id(), plan -> {
+            if (isAdded()) render();
+        });
+    }
+
+    // ---- the invite link and the join setting (TEAM5) ----
+
+    /** The invite link: the 12 symbols; copy and share carry the whole address; "more" for whoever manages it. */
+    private void bindLink(View view, final String link) {
+        final FragmentActivity activity = requireActivity();
+        final SocialService service = SocialService.get(activity);
+        final String url = SocialCodes.inviteLinkUrl(service.serviceBase(), link);
+        ((TextView) view.findViewById(R.id.projects_crew_code_label)).setText(R.string.projects_link_title);
+        ((TextView) view.findViewById(R.id.projects_crew_code_text)).setText(link);
+        View copy = view.findViewById(R.id.projects_crew_code_copy);
+        copy.setContentDescription(getString(R.string.projects_link_copy));
+        copy.setOnClickListener(v -> {
+            SocialUi.copy(activity, getString(R.string.projects_link_title), url);
+            Haptics.confirm(v);
+            SocialUi.toast(activity, getString(R.string.projects_link_copied));
+        });
+        View share = view.findViewById(R.id.projects_crew_code_share);
+        share.setContentDescription(getString(R.string.projects_link_share));
+        share.setOnClickListener(v -> SocialUi.share(activity, getString(R.string.projects_link_share_text, url)));
+        Crew crew = shown();
+        boolean admit = crew != null && service.gate().requests && service.state().mayAdmit(crew.id());
+        View more = view.findViewById(R.id.projects_crew_code_more);
+        more.setVisibility(admit ? View.VISIBLE : View.GONE);
+        more.setOnClickListener(v -> linkMenu());
+    }
+
+    /** "Yeni bağlantı" and "Bağlantıyı kapat", each asked once (the old link stops at once). */
+    private void linkMenu() {
+        final FragmentActivity activity = requireActivity();
+        final SocialService service = SocialService.get(activity);
+        final Crew crew = shown();
+        if (crew == null) return;
+        View sheet = LayoutInflater.from(activity).inflate(R.layout.dialog_projects_actions, null, false);
+        TextView quote = sheet.findViewById(R.id.projects_actions_quote);
+        quote.setText(R.string.projects_link_title);
+        quote.setVisibility(View.VISIBLE);
+        LinearLayout actions = sheet.findViewById(R.id.projects_actions_list);
+        final AlertDialog dialog = new AlertDialog.Builder(activity).setView(sheet).create();
+        actions.addView(CrewViews.actionRow(activity, R.drawable.projects_ic_arrows_clockwise, getString(R.string.projects_link_renew),
+                R.color.projects_bone_100, v -> {
+                    dialog.dismiss();
+                    SocialUi.confirm(activity, getString(R.string.projects_link_renew), getString(R.string.projects_link_renew_ask),
+                            getString(R.string.projects_link_renew), () -> makeLink(crew.id(), true));
+                }));
+        actions.addView(CrewViews.actionRow(activity, R.drawable.projects_ic_x, getString(R.string.projects_link_off),
+                R.color.projects_flare_400, v -> {
+                    dialog.dismiss();
+                    SocialUi.confirm(activity, getString(R.string.projects_link_off), getString(R.string.projects_link_off_ask),
+                            getString(R.string.projects_link_off), () -> service.deleteInviteLink(crew.id(), new SocialService.Result<Void>() {
+                                @Override
+                                public void ok(Void value) {
+                                    SocialUi.toast(activity, activity.getString(R.string.projects_link_closed));
+                                }
+
+                                @Override
+                                public void failed(SocialProblem problem) {
+                                    SocialUi.toastProblem(activity, problem, null);
+                                }
+                            }));
+                }));
+        dialog.show();
+    }
+
+    /** "Davet bağlantısı oluştur" / "Yeni bağlantı": a new Discord account is told why not, in place. */
+    private void makeLink(final String crewId, final boolean renew) {
+        final FragmentActivity activity = requireActivity();
+        SocialService service = SocialService.get(activity);
+        SocialModel.Me me = service.state().me();
+        long now = SocialService.nowSeconds();
+        if (me != null && me.limited != null && me.limited.active(now) && me.limited.has(SocialModel.Limited.CREW_LINK)) {
+            int days = Math.max(1, SocialModel.Limited.daysLeft(me.limited.until, now));
+            Haptics.reject(mList);
+            SocialUi.toast(activity, getResources().getQuantityString(R.plurals.projects_limited_no_link, days, days));
+            return;
+        }
+        service.createInviteLink(crewId, new SocialService.Result<String>() {
+            @Override
+            public void ok(String link) {
+                Haptics.confirm(mList);
+                SocialUi.toast(activity, activity.getString(renew ? R.string.projects_link_renewed : R.string.projects_link_ready));
+            }
+
+            @Override
+            public void failed(SocialProblem problem) {
+                if (problem.kind == SocialProblem.Kind.ACCOUNT_LIMITED) {
+                    long at = SocialService.nowSeconds();
+                    int days = Math.max(1, SocialModel.Limited.daysLeft(problem.until == null ? at + 86_400 : problem.until, at));
+                    Haptics.reject(mList);
+                    SocialUi.toast(activity, activity.getResources().getQuantityString(R.plurals.projects_limited_no_link, days, days));
+                } else {
+                    SocialUi.toastProblem(activity, problem, mList);
+                }
+            }
+        });
+    }
+
+    /** "Yeni üyeleri onayla" (the leader's): newcomers with the code or the link ask first. */
+    private void bindApproval(FrameLayout frame, final Team team) {
+        frame.removeAllViews();
+        Context context = frame.getContext();
+        float dp = context.getResources().getDisplayMetrics().density;
+        SwitchCompat toggle = new SwitchCompat(context);
+        toggle.setText(R.string.projects_join_approve);
+        toggle.setTextSize(15);
+        toggle.setTextColor(ContextCompat.getColor(context, R.color.projects_bone_100));
+        try {
+            toggle.setTypeface(androidx.core.content.res.ResourcesCompat.getFont(context, R.font.figtree_semibold));
+        } catch (RuntimeException ignored) {
+            // The theme's font.
+        }
+        toggle.setMinHeight(Math.round(52 * dp));
+        toggle.setPaddingRelative(Math.round(10 * dp), 0, Math.round(10 * dp), 0);
+        toggle.setChecked(team.approval());
+        toggle.setEnabled(!mApprovalBusy);
+        toggle.setOnCheckedChangeListener((button, on) -> {
+            Haptics.toggle(button, on);
+            mApprovalBusy = true;
+            button.setEnabled(false);
+            final FragmentActivity activity = requireActivity();
+            SocialService.get(activity).setJoinApproval(team.id, on, new SocialService.Result<JsonObject>() {
+                @Override
+                public void ok(JsonObject value) {
+                    mApprovalBusy = false;
+                    if (isAdded()) render();
+                }
+
+                @Override
+                public void failed(SocialProblem problem) {
+                    mApprovalBusy = false;
+                    SocialUi.toastProblem(activity, problem, null);
+                    if (isAdded()) {
+                        // The switch shows the crew's setting again.
+                        mAdapter.notifyItemChanged(indexOfRow("approve"));
+                        render();
+                    }
+                }
+            });
+        });
+        frame.addView(toggle, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+    }
+
+    private int indexOfRow(String id) {
+        for (int i = 0; i < mAdapter.mRows.size(); i++) if (mAdapter.mRows.get(i).id.equals(id)) return i;
+        return -1;
     }
 
     private void bindMember(View view, final Member member) {
@@ -1241,8 +1868,10 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         }
         view.findViewById(R.id.projects_person_star).setVisibility(View.GONE);
         view.findViewById(R.id.projects_person_secondary).setVisibility(View.GONE);
+        view.setContentDescription(null);
         TextView line = view.findViewById(R.id.projects_person_line);
         Button join = view.findViewById(R.id.projects_person_action);
+        join.setEnabled(true);
         if (me) {
             SocialModel.Me self = state.me();
             String status = self == null ? SocialModel.Status.ONLINE : self.status;
@@ -1332,24 +1961,98 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         mLimitText.setVisibility(full ? View.VISIBLE : View.GONE);
         if (full) mLimitText.setText(getResources().getQuantityString(R.plurals.projects_crews_limit, state.crewLimit(), state.crewLimit()));
         mJoinGroup.setVisibility(full ? View.GONE : View.VISIBLE);
+        // M21: a crew the player asked to join that came meanwhile (accepted): its result card goes.
+        if (mLookupTeam != null && state.crew(mLookupTeam) != null) {
+            mLookupTeam = null;
+            mJoinResult.setVisibility(View.GONE);
+        }
         List<TeamInvite> invites = state.teamInvites();
+        long now = SocialService.nowSeconds();
+        List<MyRequest> mine = new ArrayList<>();
+        if (service.gate().requests) {
+            // The crew of the result card is not listed twice (the card says it waits).
+            boolean card = mJoinResult.getVisibility() == View.VISIBLE;
+            for (MyRequest r : state.myRequests(now)) {
+                mAwaiting.add(r.team.id);
+                if (!card || !r.team.id.equals(mLookupTeam)) mine.add(r);
+            }
+        }
         StringBuilder key = new StringBuilder();
         for (TeamInvite invite : invites) {
             key.append(invite.team.id).append(mInviteBusy.contains(invite.team.id) ? "*" : "")
                     .append(invite.team.name).append(invite.from.name()).append(';');
         }
-        if (key.toString().equals(mInvitesShown) && mInvites.getChildCount() > 0 == !invites.isEmpty()) return;
+        for (MyRequest r : mine) {
+            key.append("r:").append(r.team.id).append(mWithdrawBusy.contains(r.team.id) ? "*" : "").append(r.team.name)
+                    .append(r.team.emblem).append(r.team.color).append(r.team.frame).append(PlanViews.ago(context, r.sentAt, now)).append(';');
+        }
+        boolean any = !invites.isEmpty() || !mine.isEmpty();
+        if (key.toString().equals(mInvitesShown) && mInvites.getChildCount() > 0 == any) return;
         mInvitesShown = key.toString();
         mInvites.removeAllViews();
         if (!invites.isEmpty()) {
-            TextView header = (TextView) LayoutInflater.from(context).inflate(R.layout.item_projects_social_header, mInvites, false);
-            header.setText(getString(R.string.projects_crew_invites));
-            ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) header.getLayoutParams();
-            lp.setMarginStart(0);
-            lp.topMargin = Math.round(4 * getResources().getDisplayMetrics().density);
-            mInvites.addView(header);
+            mInvites.addView(noneHeader(context, getString(R.string.projects_crew_invites)));
             for (final TeamInvite invite : invites) mInvites.addView(inviteRow(invite));
         }
+        if (!mine.isEmpty()) {
+            mInvites.addView(noneHeader(context, getString(R.string.projects_requests_mine)));
+            for (MyRequest r : mine) mInvites.addView(myRequestRow(r));
+        }
+    }
+
+    private TextView noneHeader(Context context, String text) {
+        TextView header = (TextView) LayoutInflater.from(context).inflate(R.layout.item_projects_social_header, mInvites, false);
+        header.setText(text);
+        ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) header.getLayoutParams();
+        lp.setMarginStart(0);
+        lp.topMargin = Math.round(4 * getResources().getDisplayMetrics().density);
+        return header;
+    }
+
+    /** M21: one of the player's own join requests: the crew's mark, "İsteğin bekliyor · 2 sa önce", "Geri çek". */
+    private View myRequestRow(final MyRequest request) {
+        Context context = requireContext();
+        View row = LayoutInflater.from(context).inflate(R.layout.item_projects_social_person, mInvites, false);
+        ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) row.getLayoutParams();
+        lp.setMarginStart(0);
+        lp.setMarginEnd(0);
+        row.findViewById(R.id.projects_person_avatar).setVisibility(View.GONE);
+        CrewMarkView mark = row.findViewById(R.id.projects_person_mark);
+        mark.setVisibility(View.VISIBLE);
+        mark.setLook(request.team.emblem, request.team.color, request.team.frame);
+        ((TextView) row.findViewById(R.id.projects_person_name)).setText(request.team.name);
+        ((TextView) row.findViewById(R.id.projects_person_line)).setText(getString(R.string.projects_requests_pending) + " · "
+                + PlanViews.ago(context, request.sentAt, SocialService.nowSeconds()));
+        final Button withdraw = row.findViewById(R.id.projects_person_action);
+        withdraw.setVisibility(View.VISIBLE);
+        withdraw.setText(R.string.projects_requests_withdraw);
+        withdraw.setBackground(ChamferDrawable.outlined(context));
+        Press.attach(withdraw, Press.Style.BUTTON);
+        final String teamId = request.team.id;
+        withdraw.setEnabled(!mWithdrawBusy.contains(teamId));
+        final FragmentActivity activity = requireActivity();
+        withdraw.setOnClickListener(v -> {
+            if (!mWithdrawBusy.add(teamId)) return;
+            withdraw.setEnabled(false);
+            SocialService.get(activity).withdrawJoinRequest(teamId, new SocialService.Result<Void>() {
+                @Override
+                public void ok(Void value) {
+                    mWithdrawBusy.remove(teamId);
+                    Haptics.confirm(withdraw);
+                    SocialUi.toast(activity, activity.getString(R.string.projects_requests_withdrawn));
+                    if (isAdded()) render();
+                }
+
+                @Override
+                public void failed(SocialProblem problem) {
+                    mWithdrawBusy.remove(teamId);
+                    withdraw.setEnabled(true);
+                    SocialUi.toastProblem(activity, problem, withdraw);
+                    if (isAdded()) render();
+                }
+            });
+        });
+        return row;
     }
 
     private View inviteRow(final TeamInvite invite) {
@@ -1463,15 +2166,20 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
 
     private void lookup() {
         if (mBusy || !isAdded()) return;
-        final String code = SocialCodes.crewCodeIn(mJoinCode.getText().toString());
+        SocialService service = SocialService.get(requireContext());
+        String text = mJoinCode.getText().toString();
+        // M21 (TEAM5): an invite link (its address, a projects://crew/ link or its 12 symbols) or a crew code.
+        final String link = service.gate().link ? SocialCodes.inviteLinkIn(text) : null;
+        final String code = link == null ? SocialCodes.crewCodeIn(text) : null;
         mJoinResult.setVisibility(View.GONE);
-        if (code == null) {
+        mLookupTeam = null;
+        if (code == null && link == null) {
             showJoinMessage(getString(R.string.projects_crew_not_code));
             Haptics.reject(mJoinFind);
             return;
         }
         showJoinMessage(null);
-        String shownCode = SocialCodes.CREW_PREFIX + "-" + code;
+        String shownCode = link != null ? SocialCodes.inviteLinkShort(service.serviceBase(), link) : SocialCodes.CREW_PREFIX + "-" + code;
         mJoinCode.setText(shownCode);
         mJoinCode.setSelection(shownCode.length());
         InputMethodManager imm = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -1479,13 +2187,13 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         mBusy = true;
         mJoinFind.setEnabled(false);
         final FragmentActivity activity = requireActivity();
-        SocialService.get(activity).lookupTeam(code, new SocialService.Result<JsonObject>() {
+        SocialService.get(activity).lookupTeam(code, link, new SocialService.Result<JsonObject>() {
             @Override
             public void ok(JsonObject value) {
                 mBusy = false;
                 if (!isAdded()) return;
                 mJoinFind.setEnabled(true);
-                showLookup(code, value);
+                showLookup(code, link, value);
             }
 
             @Override
@@ -1499,7 +2207,11 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         });
     }
 
-    private void showLookup(final String code, JsonObject answer) {
+    /** The crew of the result card (M21: it goes when that crew comes, a request accepted). */
+    @Nullable
+    private String mLookupTeam;
+
+    private void showLookup(@Nullable final String code, @Nullable final String link, JsonObject answer) {
         final TeamSummary team = TeamSummary.read(Json.obj(answer, "team"));
         if (team == null) {
             showJoinMessage(getString(R.string.projects_social_error_no_crew));
@@ -1510,9 +2222,34 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         ((CrewMarkView) view.findViewById(R.id.projects_crew_join_mark)).setLook(team.emblem, team.color, team.frame);
         ((TextView) view.findViewById(R.id.projects_crew_join_name)).setText(team.tag.isEmpty() ? team.name : team.name + " [" + team.tag + "]");
         String relation = Json.str(answer, "relation", "none");
+        // TEAM5: the player's join request to it that waits (its time), else -1.
+        JsonObject request = Json.obj(answer, "request");
+        bindLookup(team, code, link, relation, request == null ? -1 : Json.num(request, "sentAt", 0));
+        // A crew found by its code or its invite link can be reported from here (the code or the link goes with it).
+        if (SocialService.get(requireContext()).gate().reports) {
+            mJoinResult.setOnLongClickListener(v -> {
+                ReportDialog.crew(requireActivity(), team, link != null ? link : SocialCodes.CREW_PREFIX + "-" + code);
+                return true;
+            });
+        }
+        mLookupTeam = team.id;
+        mJoinResult.setVisibility(View.VISIBLE);
+        gg.projects.mobile.ui.CardMotion.fadeIn(mJoinResult);
+    }
+
+    /**
+     * The result card's line and its one action: "Ekibe katıl", for a crew that approves newcomers
+     * "Katılma isteği gönder" (TEAM5), and "Geri çek" while the player's request waits ({@code sentAt} &ge; 0).
+     */
+    private void bindLookup(final TeamSummary team, @Nullable final String code, @Nullable final String link, final String relation,
+                            final long sentAt) {
+        View view = getView();
+        if (view == null) return;
+        SocialService service = SocialService.get(requireContext());
+        SocialState state = service.state();
         String line;
-        boolean canJoin = false;
-        SocialState state = SocialService.get(requireContext()).state();
+        boolean canAct = false;
+        int label = R.string.projects_crew_join;
         switch (relation) {
             case "member": line = getString(R.string.projects_crew_rel_member); break;
             case "elsewhere": line = getString(R.string.projects_crew_rel_elsewhere); break;
@@ -1523,48 +2260,91 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
                 line = getResources().getQuantityString(R.plurals.projects_crews_limit, limit, limit);
                 break;
             }
-            default:
-                line = getResources().getQuantityString(R.plurals.projects_crew_member_count, team.memberCount, team.memberCount)
-                        + (team.motto == null ? "" : " · " + team.motto);
-                canJoin = true;
+            default: {
+                String members = getResources().getQuantityString(R.plurals.projects_crew_member_count, team.memberCount, team.memberCount);
+                if (sentAt >= 0) {
+                    line = getString(R.string.projects_requests_pending) + " · " + PlanViews.ago(requireContext(), sentAt, SocialService.nowSeconds());
+                    label = R.string.projects_requests_withdraw;
+                } else if (team.approval() && service.gate().requests) {
+                    line = members + " · " + getString(R.string.projects_requests_approval);
+                    label = R.string.projects_requests_send;
+                } else {
+                    line = members + (team.motto == null ? "" : " · " + team.motto);
+                }
+                canAct = true;
                 break;
+            }
         }
         ((TextView) view.findViewById(R.id.projects_crew_join_line)).setText(line);
-        mJoinSubmit.setVisibility(canJoin ? View.VISIBLE : View.GONE);
+        mJoinSubmit.setText(label);
+        mJoinSubmit.setVisibility(canAct ? View.VISIBLE : View.GONE);
         mJoinSubmit.setEnabled(true);
-        final String name = team.name;
         mJoinSubmit.setOnClickListener(v -> {
-            final FragmentActivity activity = requireActivity();
-            mJoinSubmit.setEnabled(false);
-            SocialService.get(activity).joinTeam(code, new SocialService.Result<JsonObject>() {
-                @Override
-                public void ok(JsonObject value) {
-                    Haptics.confirm(mJoinSubmit);
-                    SocialUi.toast(activity, activity.getString(R.string.projects_crew_joined, name));
-                    Team joined = Team.read(Json.obj(value, "team"));
-                    if (joined != null && isAdded()) {
-                        mJoinCode.setText("");
-                        mJoinResult.setVisibility(View.GONE);
-                        select(joined.id);
-                    }
-                }
+            if (sentAt >= 0) withdrawFromCard(team, code, link, relation);
+            else joinFromCard(team, code, link, relation);
+        });
+    }
 
-                @Override
-                public void failed(SocialProblem problem) {
-                    mJoinSubmit.setEnabled(true);
+    private void joinFromCard(final TeamSummary team, @Nullable final String code, @Nullable final String link, final String relation) {
+        final FragmentActivity activity = requireActivity();
+        mJoinSubmit.setEnabled(false);
+        SocialService.get(activity).joinOrAsk(code, link, new SocialService.Result<JsonObject>() {
+            @Override
+            public void ok(JsonObject value) {
+                Haptics.confirm(mJoinSubmit);
+                JsonObject asked = Json.obj(value, "request");
+                if (asked != null) {
+                    // TEAM5: the crew approves newcomers: the request waits ("Geri çek" now).
+                    SocialUi.toast(activity, activity.getString(R.string.projects_requests_sent));
+                    if (isAdded()) {
+                        bindLookup(team, code, link, relation, Json.num(asked, "sentAt", SocialService.nowSeconds()));
+                        render();
+                    }
+                    return;
+                }
+                SocialUi.toast(activity, activity.getString(R.string.projects_crew_joined, team.name));
+                Team joined = Team.read(Json.obj(value, "team"));
+                if (joined != null && isAdded()) {
+                    mJoinCode.setText("");
+                    mJoinResult.setVisibility(View.GONE);
+                    mLookupTeam = null;
+                    select(joined.id);
+                }
+            }
+
+            @Override
+            public void failed(SocialProblem problem) {
+                mJoinSubmit.setEnabled(true);
+                if (problem.kind == SocialProblem.Kind.RATE_LIMITED && team.approval()) {
+                    Haptics.reject(mJoinSubmit);
+                    SocialUi.toast(activity, activity.getString(R.string.projects_requests_today));
+                } else {
                     SocialUi.toastProblem(activity, problem, mJoinSubmit);
                 }
-            });
+            }
         });
-        // A crew found by its code can be reported from here (its code goes with the report).
-        if (SocialService.get(requireContext()).gate().reports) {
-            mJoinResult.setOnLongClickListener(v -> {
-                ReportDialog.crew(requireActivity(), team, SocialCodes.CREW_PREFIX + "-" + code);
-                return true;
-            });
-        }
-        mJoinResult.setVisibility(View.VISIBLE);
-        gg.projects.mobile.ui.CardMotion.fadeIn(mJoinResult);
+    }
+
+    private void withdrawFromCard(final TeamSummary team, @Nullable final String code, @Nullable final String link, final String relation) {
+        final FragmentActivity activity = requireActivity();
+        mJoinSubmit.setEnabled(false);
+        SocialService.get(activity).withdrawJoinRequest(team.id, new SocialService.Result<Void>() {
+            @Override
+            public void ok(Void value) {
+                Haptics.confirm(mJoinSubmit);
+                SocialUi.toast(activity, activity.getString(R.string.projects_requests_withdrawn));
+                if (isAdded()) {
+                    bindLookup(team, code, link, relation, -1);
+                    render();
+                }
+            }
+
+            @Override
+            public void failed(SocialProblem problem) {
+                mJoinSubmit.setEnabled(true);
+                SocialUi.toastProblem(activity, problem, mJoinSubmit);
+            }
+        });
     }
 
     static ColorStateList tint(Context context, int color) {

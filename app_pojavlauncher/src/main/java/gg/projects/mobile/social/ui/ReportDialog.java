@@ -48,7 +48,7 @@ public final class ReportDialog {
         show(activity, Reports.Target.PLAYER, player, null, player.name(), null, null, null);
     }
 
-    /** {@code code}: only for a crew looked up by its code. */
+    /** {@code code}: only for a crew looked up by its code or (M21) its invite link. */
     public static void crew(FragmentActivity activity, TeamSummary crew, @Nullable String code) {
         show(activity, Reports.Target.CREW, null, crew, crew.name, code, null, null);
     }

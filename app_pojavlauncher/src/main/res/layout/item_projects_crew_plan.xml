@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- M21 (TEAM5): a crew plan, the crew call's card made for a time: the day and time (Tektur), who
+     planned it (jade "Başladı" while it runs), "more" for whoever may delete it, the three answers
+     (the player's own one marked) and who answered what. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="12dp"
+    android:layout_marginTop="10dp"
+    android:background="@drawable/projects_social_section_background"
+    android:orientation="vertical"
+    android:paddingStart="14dp"
+    android:paddingTop="12dp"
+    android:paddingEnd="6dp"
+    android:paddingBottom="14dp">
+
+    <LinearLayout
+        android:id="@+id/projects_plan_top"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:id="@+id/projects_plan_icon"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:background="@drawable/projects_social_icon_tile"
+            android:importantForAccessibility="no"
+            android:padding="10dp"
+            android:src="@drawable/projects_ic_calendar"
+            android:tint="@color/projects_gold_300" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/projects_plan_when"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/tektur_semibold"
+                android:letterSpacing="0.02"
+                android:textColor="@color/projects_bone_100"
+                android:textSize="16sp"
+                tools:text="Bugün 22:00" />
+
+            <TextView
+                android:id="@+id/projects_plan_line"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="1dp"
+                android:ellipsize="end"
+                android:fontFamily="@font/figtree_regular"
+                android:maxLines="1"
+                android:textColor="@color/projects_ash_400"
+                android:textSize="13sp"
+                tools:text="Ayşe planladı" />
+        </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/projects_plan_more"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/projects_icon_button_ripple"
+            android:contentDescription="@string/projects_plans_more"
+            android:padding="12dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/projects_ic_dots"
+            android:tint="@color/projects_ash_300"
+            android:visibility="gone"
+            tools:visibility="visible" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/projects_plan_answers"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:layout_marginEnd="8dp"
+        android:baselineAligned="false"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/projects_plan_yes"
+            style="?android:attr/borderlessButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:fontFamily="@font/figtree_semibold"
+            android:minHeight="48dp"
+            android:text="@string/projects_plans_yes"
+            android:textAllCaps="false"
+            android:textSize="14sp" />
+
+        <Button
+            android:id="@+id/projects_plan_maybe"
+            style="?android:attr/borderlessButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:fontFamily="@font/figtree_semibold"
+            android:minHeight="48dp"
+            android:text="@string/projects_plans_maybe"
+            android:textAllCaps="false"
+            android:textSize="14sp" />
+
+        <Button
+            android:id="@+id/projects_plan_no"
+            style="?android:attr/borderlessButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:fontFamily="@font/figtree_semibold"
+            android:minHeight="48dp"
+            android:text="@string/projects_plans_no"
+            android:textAllCaps="false"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/projects_plan_tally"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="8dp"
+        android:fontFamily="@font/figtree_regular"
+        android:textColor="@color/projects_ash_300"
+        android:textSize="13sp"
+        android:visibility="gone"
+        tools:text="Geliyor: Ece, Kaan · Belki: Deniz"
+        tools:visibility="visible" />
+</LinearLayout>

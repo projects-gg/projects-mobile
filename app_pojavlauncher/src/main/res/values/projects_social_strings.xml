@@ -510,4 +510,109 @@
     <string name="projects_social_error_blocks_full">Your block list is full.</string>
     <string name="projects_social_error_call_needs_server">Join a multiplayer server to call your crew.</string>
     <string name="projects_social_error_call_server_hidden">“Show the address when I\'m on other servers” is off.</string>
+    <!-- M21 (TEAM5): join requests, invite links, the join setting and crew plans (the desktop's wording, team2.md Ek A) -->
+    <string name="projects_requests_title">Join requests</string>
+    <string name="projects_requests_mine">Your join requests</string>
+    <string name="projects_requests_send">Ask to join</string>
+    <string name="projects_requests_approval">You\'ll join once a leader approves.</string>
+    <string name="projects_requests_pending">Your request is waiting</string>
+    <string name="projects_requests_withdraw">Withdraw</string>
+    <string name="projects_requests_withdrawn">Request withdrawn</string>
+    <string name="projects_requests_sent">Request sent. You\'ll join once a leader approves.</string>
+    <string name="projects_requests_asked">Asked %1$s</string>
+    <string name="projects_requests_accepted">%1$s joined the crew</string>
+    <string name="projects_requests_notice">%1$s wants to join your crew</string>
+    <string name="projects_requests_notice_crew">%1$s wants to join %2$s</string>
+    <string name="projects_requests_player_limit">This player can\'t join another crew right now.</string>
+    <string name="projects_requests_today">You can send up to 10 join requests a day.</string>
+    <plurals name="projects_requests_count">
+        <item quantity="one">%d join request</item>
+        <item quantity="other">%d join requests</item>
+    </plurals>
+    <string name="projects_time_just_now">just now</string>
+    <plurals name="projects_time_minutes_ago">
+        <item quantity="one">%d min ago</item>
+        <item quantity="other">%d min ago</item>
+    </plurals>
+    <plurals name="projects_time_hours_ago">
+        <item quantity="one">%d h ago</item>
+        <item quantity="other">%d h ago</item>
+    </plurals>
+    <plurals name="projects_time_days_ago">
+        <item quantity="one">%d day ago</item>
+        <item quantity="other">%d days ago</item>
+    </plurals>
+
+    <string name="projects_link_title">Invite link</string>
+    <string name="projects_link_create">Make an invite link</string>
+    <string name="projects_link_ready">Invite link ready</string>
+    <string name="projects_link_copy">Copy link</string>
+    <string name="projects_link_copied">Link copied</string>
+    <string name="projects_link_share">Share link</string>
+    <string name="projects_link_share_text">Join my crew on Projects Launcher: %1$s</string>
+    <string name="projects_link_more">Link options</string>
+    <string name="projects_link_renew">New link</string>
+    <string name="projects_link_renew_ask">The old link stops working at once.</string>
+    <string name="projects_link_renewed">New link ready</string>
+    <string name="projects_link_off">Switch off the link</string>
+    <string name="projects_link_off_ask">The link stops working.</string>
+    <string name="projects_link_closed">Link switched off</string>
+    <string name="projects_join_approve">Approve new members</string>
+
+    <string name="projects_plans_title">Plans</string>
+    <string name="projects_plans_make">Make a plan</string>
+    <string name="projects_plans_by">Planned by %1$s</string>
+    <string name="projects_plans_by_you">Planned by you</string>
+    <string name="projects_plans_started_line">Started</string>
+    <string name="projects_plans_yes">Coming</string>
+    <string name="projects_plans_maybe">Maybe</string>
+    <string name="projects_plans_no">Can\'t</string>
+    <string name="projects_plans_said_yes">Coming</string>
+    <string name="projects_plans_said_maybe">Maybe</string>
+    <string name="projects_plans_said_no">Can\'t come</string>
+    <string name="projects_plans_today">Today</string>
+    <string name="projects_plans_tomorrow">Tomorrow</string>
+    <string name="projects_plans_today_inline">today</string>
+    <string name="projects_plans_tomorrow_inline">tomorrow</string>
+    <string name="projects_plans_when">%1$s %2$s</string>
+    <string name="projects_plans_made">%1$s made a plan: %2$s</string>
+    <string name="projects_plans_more">Plan options</string>
+    <string name="projects_plans_cancel">Delete plan</string>
+    <string name="projects_plans_cancel_ask">The plan is deleted for everyone.</string>
+    <string name="projects_plans_cancelled">Plan deleted</string>
+    <string name="projects_plans_day">Day</string>
+    <string name="projects_plans_time">Time</string>
+    <string name="projects_plans_full">A crew can have up to 3 plans.</string>
+    <string name="projects_plans_today_limit">You can make up to 5 plans a day.</string>
+    <string name="projects_plans_answers_limit">You\'ve changed your answers too often today. Try again tomorrow.</string>
+    <string name="projects_plans_channel">Plan reminders</string>
+    <plurals name="projects_plans_remind">
+        <item quantity="one">Your %1$s plan starts in %2$d minute</item>
+        <item quantity="other">Your %1$s plan starts in %2$d minutes</item>
+    </plurals>
+    <string name="projects_plans_started">Your %1$s plan has started</string>
+    <string name="projects_plans_home_title">Plan with %1$s</string>
+    <plurals name="projects_plans_coming">
+        <item quantity="one">%d coming</item>
+        <item quantity="other">%d coming</item>
+    </plurals>
+    <string name="projects_plans_row">Plan · %1$s</string>
+    <plurals name="projects_limited_no_link">
+        <item quantity="one">Because your Discord account is new, you can\'t make invite links yet. It opens in %d day.</item>
+        <item quantity="other">Because your Discord account is new, you can\'t make invite links yet. It opens in %d days.</item>
+    </plurals>
+    <plurals name="projects_limited_no_plans">
+        <item quantity="one">Because your Discord account is new, you can\'t make plans yet. It opens in %d day.</item>
+        <item quantity="other">Because your Discord account is new, you can\'t make plans yet. It opens in %d days.</item>
+    </plurals>
+    <string name="projects_limited_crew_link">You can\'t make crew invite links</string>
+    <string name="projects_limited_crew_plans">You can\'t make crew plans</string>
+    <string name="projects_social_error_approval_required">This crew\'s leaders approve newcomers.</string>
+    <string name="projects_social_error_join_request_gone">This request isn\'t valid anymore.</string>
+    <string name="projects_social_error_crew_requests_full">This crew has too many requests waiting. Try again later.</string>
+    <string name="projects_social_error_too_many_join_requests">You have 3 requests waiting. Withdraw one first.</string>
+    <string name="projects_social_error_plan_time">That time can\'t be picked. Pick one in the next 7 days.</string>
+    <string name="projects_social_error_plan_exists">There\'s a plan at that time already.</string>
+    <string name="projects_social_error_plan_gone">This plan is gone.</string>
+    <string name="projects_plans_made_you">You made a plan: %1$s</string>
 </resources>

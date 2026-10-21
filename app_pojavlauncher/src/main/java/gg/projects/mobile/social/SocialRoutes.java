@@ -35,6 +35,8 @@ public final class SocialRoutes {
     public static final String ADD = "add";
     /** M20: a conversation ({@code c:<team>} or {@code d:<id>:<id>}). */
     public static final String CHAT = "chat";
+    /** M21: a crew invite link ({@code XXXX-XXXX-XXXX}): the crew page's "+" looks it up. */
+    public static final String CREW_LINK = "crew_link";
 
     @Nullable
     private static String sTarget;
@@ -116,6 +118,10 @@ public final class SocialRoutes {
             case CREW:
                 // The crew page shows its call at the top (the crew the call names, or the crew asked for).
                 if (arg != null) args.putString(CrewFragment.ARG_CREW, arg);
+                Tools.swapFragment(activity, CrewFragment.class, CrewFragment.TAG, args);
+                break;
+            case CREW_LINK:
+                if (arg != null) args.putString(CrewFragment.ARG_LINK, arg);
                 Tools.swapFragment(activity, CrewFragment.class, CrewFragment.TAG, args);
                 break;
             case CHAT:

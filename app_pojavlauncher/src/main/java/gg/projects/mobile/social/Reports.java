@@ -87,12 +87,17 @@ public final class Reports {
         return body(target, reason, note, block);
     }
 
-    /** {@code code}: only for a crew the player looked up by its code (null for their own crews and invites). */
+    /**
+     * {@code code}: only for a crew the player looked up by its code, or (TEAM5) by its invite link
+     * ({@code XXXX-XXXX-XXXX}, sent as {@code link}); null for their own crews and invites.
+     */
     public static JsonObject crew(String teamId, @Nullable String code, String reason, @Nullable String note) {
         JsonObject target = new JsonObject();
         target.addProperty("kind", "crew");
         target.addProperty("id", teamId);
-        if (code != null) target.addProperty("code", code);
+        String link = SocialCodes.normalizeInviteLink(code);
+        if (link != null) target.addProperty("link", link);
+        else if (code != null) target.addProperty("code", code);
         return body(target, reason, note, false);
     }
 

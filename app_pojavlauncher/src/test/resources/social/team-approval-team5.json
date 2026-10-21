@@ -1,0 +1,36 @@
+{
+ "team": {
+  "id": "4fdb29ce4949654f",
+  "name": "Gece Kartalları",
+  "tag": "GK",
+  "emblem": "moon",
+  "color": "navy",
+  "frame": "shield",
+  "motto": "",
+  "code": "TKM-HDEA-T5AJ",
+  "createdOn": "2026-10-21",
+  "members": [
+   {
+    "id": "100000000000000011",
+    "username": "ayse",
+    "displayName": "Ayse",
+    "avatar": "discord",
+    "avatarHash": null,
+    "role": "founder",
+    "moderator": false,
+    "joinedAt": 1792607089
+   }
+  ],
+  "permissions": {
+   "invite": "members",
+   "call": "members",
+   "kick": "moderators",
+   "edit": "leader",
+   "admit": "moderators"
+  },
+  "textLockedUntil": null,
+  "join": "approval",
+  "link": null
+ },
+ "invited": []
+}

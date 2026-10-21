@@ -13,7 +13,8 @@ import java.util.Set;
  * tests;</li>
  * <li>the service decides the rest by what it announces: crews need its crew limit (a service
  * without the team routes has none), each crew addition its {@code teamFeatures} entry
- * ({@code look}, {@code calls}, {@code roles}, {@code mute}, {@code multi}, {@code callServer}),
+ * ({@code look}, {@code calls}, {@code roles}, {@code mute}, {@code multi}, {@code callServer} and
+ * TEAM5's {@code requests}, {@code link}, {@code plans}),
  * chat and phone notifications their {@code features} entries ({@code chat}, {@code push}; a
  * service from before pushes has no such field), reports and moderators' notes a {@code me} that
  * carries {@code notices} (MOD1);</li>
@@ -39,9 +40,16 @@ public final class SocialGate {
     public final boolean chat;
     /** MOD1: "Rapor et" and moderators' notes. */
     public final boolean reports;
+    /** TEAM5: the join setting, join requests and {@code permissions.admit}. */
+    public final boolean requests;
+    /** TEAM5: crew invite links and their page. */
+    public final boolean link;
+    /** TEAM5: crew plans (on the presence socket). */
+    public final boolean plans;
 
     private SocialGate(boolean friends, boolean teams, boolean look, boolean calls, boolean roles, boolean mute, boolean push,
-                       boolean multi, boolean callServer, boolean chat, boolean reports) {
+                       boolean multi, boolean callServer, boolean chat, boolean reports, boolean requests, boolean link,
+                       boolean plans) {
         this.friends = friends;
         this.teams = teams;
         this.look = look;
@@ -53,9 +61,13 @@ public final class SocialGate {
         this.callServer = callServer;
         this.chat = chat;
         this.reports = reports;
+        this.requests = requests;
+        this.link = link;
+        this.plans = plans;
     }
 
-    public static final SocialGate OFF = new SocialGate(false, false, false, false, false, false, false, false, false, false, false);
+    public static final SocialGate OFF = new SocialGate(false, false, false, false, false, false, false, false, false, false, false,
+            false, false, false);
 
     /**
      * @param configFriends {@code features.friends} of the signed config (or a debug override)
@@ -90,6 +102,9 @@ public final class SocialGate {
                 teams && teamFeatures.contains("multi"),
                 teams && teamFeatures.contains("callServer"),
                 chat,
-                moderation);
+                moderation,
+                teams && teamFeatures.contains("requests"),
+                teams && teamFeatures.contains("link"),
+                teams && teamFeatures.contains("plans"));
     }
 }

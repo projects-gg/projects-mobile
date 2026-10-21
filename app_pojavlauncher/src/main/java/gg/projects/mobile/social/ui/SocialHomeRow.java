@@ -86,8 +86,10 @@ public final class SocialHomeRow implements SocialService.Listener {
         if (activity == null) return;
         HomeLine line = SocialService.get(activity).homeLine();
         android.os.Bundle args = new android.os.Bundle();
-        if (line.kind == HomeLine.Kind.CALL || line.kind == HomeLine.Kind.CREW_ON_PROJECTS) {
-            // M20: the crew the call names first, or the one with the most players on Projects.
+        if (line.kind == HomeLine.Kind.CALL || line.kind == HomeLine.Kind.CREW_ON_PROJECTS || line.kind == HomeLine.Kind.PLAN
+                || line.kind == HomeLine.Kind.JOIN_REQUEST) {
+            // M20: the crew the call names first, or the one with the most players on Projects; M21: the plan's
+            // crew, the crew a join request waits in.
             if (line.crew != null) args.putString(CrewFragment.ARG_CREW, line.crew.id());
             Tools.swapFragment(activity, CrewFragment.class, CrewFragment.TAG, args);
         } else if (line.kind == HomeLine.Kind.MESSAGE && line.unread != null) {
@@ -122,6 +124,19 @@ public final class SocialHomeRow implements SocialService.Listener {
         long now = SocialService.nowSeconds();
         long next = line.call != null ? service.state().secondsLeft(line.call, now)
                 : line.invite != null ? line.invite.expires - now : 0;
+        // M21: a plan comes 15 minutes before its time, says "Başladı" at it and goes when it is over.
+        long hub = service.state().hubNow(now);
+        if (line.plan != null) {
+            next = line.plan.at > hub ? line.plan.at - hub : line.plan.at + HomeLine.PLAN_AFTER_SECONDS - hub;
+        } else if (next <= 0) {
+            String me = service.state().myId();
+            for (SocialModel.Plan p : service.state().plans(now)) {
+                String answer = me == null ? null : p.answers.get(me);
+                if (!SocialModel.Plan.YES.equals(answer) && !SocialModel.Plan.MAYBE.equals(answer)) continue;
+                long in = p.at - HomeLine.PLAN_WINDOW_SECONDS - hub;
+                if (in > 0 && (next <= 0 || in < next)) next = in;
+            }
+        }
         if (next > 0) mRow.postDelayed(mTick, Math.min(next, 3600) * 1000L + 500);
         String title;
         String text;
@@ -195,6 +210,31 @@ public final class SocialHomeRow implements SocialService.Listener {
                 title = context.getString(R.string.projects_social_push_request,
                         from == null ? context.getString(R.string.projects_social_someone_unknown) : from.name());
                 text = context.getResources().getQuantityString(R.plurals.projects_social_home_requests, line.count, line.count);
+                gold = true;
+                break;
+            }
+            case PLAN: {
+                // M21: "Gece Kartalları planı" over "Bugün 22:00 · 3 geliyor" ("Başladı · 3 geliyor" with "Katıl").
+                SocialModel.Plan plan = line.plan;
+                String crewName = line.crew != null ? line.crew.team.name : "";
+                title = context.getString(R.string.projects_plans_home_title, crewName);
+                boolean under = plan != null && plan.underWay(hub);
+                String when = plan == null ? "" : under ? context.getString(R.string.projects_plans_started_line)
+                        : PlanViews.when(context, plan.at, now);
+                text = line.count > 0 ? when + " · " + context.getResources().getQuantityString(R.plurals.projects_plans_coming,
+                        line.count, line.count) : when;
+                gold = true;
+                join = under;
+                break;
+            }
+            case JOIN_REQUEST: {
+                // M21: "Ayşe ekibine katılmak istiyor" ("Ayşe, Gece Kartalları ekibine …" with several crews).
+                Profile from = line.faces.isEmpty() ? null : line.faces.get(0);
+                String who = from == null ? context.getString(R.string.projects_social_someone_unknown) : from.name();
+                title = line.severalCrews && line.crew != null
+                        ? context.getString(R.string.projects_requests_notice_crew, who, line.crew.team.name)
+                        : context.getString(R.string.projects_requests_notice, who);
+                text = context.getResources().getQuantityString(R.plurals.projects_requests_count, line.count, line.count);
                 gold = true;
                 break;
             }
