@@ -173,7 +173,7 @@
     <string name="projects_crew_row_none">Ekip kur ya da katıl</string>
     <string name="projects_crew_invite_to">Ekibe davet et</string>
 
-    <string name="projects_crew_join_title">Kodla katıl</string>
+    <string name="projects_crew_join_title">Kodla ya da bağlantıyla katıl</string>
     <string name="projects_crew_code">Ekip kodu</string>
     <string name="projects_crew_find">Bul</string>
     <string name="projects_crew_join">Ekibe katıl</string>
@@ -543,7 +543,7 @@
     <string name="projects_link_renew_ask">Eski bağlantı hemen çalışmaz olur.</string>
     <string name="projects_link_renewed">Yeni bağlantı hazır</string>
     <string name="projects_link_off">Bağlantıyı kapat</string>
-    <string name="projects_link_off_ask">Bağlantı artık çalışmaz.</string>
+    <string name="projects_link_off_ask">Bağlantı hemen çalışmaz olur.</string>
     <string name="projects_link_closed">Bağlantı kapatıldı</string>
     <string name="projects_join_approve">Yeni üyeleri onayla</string>
 
@@ -563,10 +563,10 @@
     <string name="projects_plans_today_inline">bugün</string>
     <string name="projects_plans_tomorrow_inline">yarın</string>
     <string name="projects_plans_when">%1$s %2$s</string>
-    <string name="projects_plans_made">%1$s %2$s için plan yaptı</string>
+    <string name="projects_plans_made">%1$s, %2$s için plan yaptı</string>
     <string name="projects_plans_more">Plan seçenekleri</string>
     <string name="projects_plans_cancel">Planı sil</string>
-    <string name="projects_plans_cancel_ask">Plan herkes için silinir.</string>
+    <string name="projects_plans_cancel_ask">Plan herkesten silinir.</string>
     <string name="projects_plans_cancelled">Plan silindi</string>
     <string name="projects_plans_day">Gün</string>
     <string name="projects_plans_time">Saat</string>

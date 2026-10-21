@@ -183,7 +183,7 @@
     <string name="projects_crew_row_none">Create or join a crew</string>
     <string name="projects_crew_invite_to">Invite to crew</string>
 
-    <string name="projects_crew_join_title">Join with a code</string>
+    <string name="projects_crew_join_title">Join with a code or link</string>
     <string name="projects_crew_code">Crew code</string>
     <string name="projects_crew_find">Find</string>
     <string name="projects_crew_join">Join crew</string>
@@ -514,11 +514,11 @@
     <string name="projects_requests_title">Join requests</string>
     <string name="projects_requests_mine">Your join requests</string>
     <string name="projects_requests_send">Ask to join</string>
-    <string name="projects_requests_approval">You\'ll join once a leader approves.</string>
+    <string name="projects_requests_approval">You\'ll join once its leaders approve.</string>
     <string name="projects_requests_pending">Your request is waiting</string>
     <string name="projects_requests_withdraw">Withdraw</string>
     <string name="projects_requests_withdrawn">Request withdrawn</string>
-    <string name="projects_requests_sent">Request sent. You\'ll join once a leader approves.</string>
+    <string name="projects_requests_sent">Request sent. You\'ll join once its leaders approve.</string>
     <string name="projects_requests_asked">Asked %1$s</string>
     <string name="projects_requests_accepted">%1$s joined the crew</string>
     <string name="projects_requests_notice">%1$s wants to join your crew</string>
@@ -555,7 +555,7 @@
     <string name="projects_link_renew_ask">The old link stops working at once.</string>
     <string name="projects_link_renewed">New link ready</string>
     <string name="projects_link_off">Switch off the link</string>
-    <string name="projects_link_off_ask">The link stops working.</string>
+    <string name="projects_link_off_ask">The link stops working at once.</string>
     <string name="projects_link_closed">Link switched off</string>
     <string name="projects_join_approve">Approve new members</string>
 
@@ -582,7 +582,7 @@
     <string name="projects_plans_cancelled">Plan deleted</string>
     <string name="projects_plans_day">Day</string>
     <string name="projects_plans_time">Time</string>
-    <string name="projects_plans_full">A crew can have up to 3 plans.</string>
+    <string name="projects_plans_full">A crew can have 3 plans at most.</string>
     <string name="projects_plans_today_limit">You can make up to 5 plans a day.</string>
     <string name="projects_plans_answers_limit">You\'ve changed your answers too often today. Try again tomorrow.</string>
     <string name="projects_plans_channel">Plan reminders</string>
@@ -612,7 +612,7 @@
     <string name="projects_social_error_crew_requests_full">This crew has too many requests waiting. Try again later.</string>
     <string name="projects_social_error_too_many_join_requests">You have 3 requests waiting. Withdraw one first.</string>
     <string name="projects_social_error_plan_time">That time can\'t be picked. Pick one in the next 7 days.</string>
-    <string name="projects_social_error_plan_exists">There\'s a plan at that time already.</string>
+    <string name="projects_social_error_plan_exists">There\'s already a plan at this time.</string>
     <string name="projects_social_error_plan_gone">This plan is gone.</string>
     <string name="projects_plans_made_you">You made a plan: %1$s</string>
 </resources>

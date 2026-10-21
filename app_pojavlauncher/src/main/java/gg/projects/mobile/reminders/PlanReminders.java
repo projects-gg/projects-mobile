@@ -18,8 +18,9 @@ import gg.projects.mobile.social.SocialModel.Plan;
  * rings 10 minutes before its time (README "Crew plans": reminders are the launcher's, set on the
  * player's own device). Plans reach the phone only while its socket is open, so the reminders keep a
  * copy of what they need (the crew's name, the time) and ring with the app closed; a plan cancelled
- * while the phone did not look still rings (the next look takes it away). The store, the alarm and the
- * notification are in {@link PlanAlarms}.
+ * while the phone did not look still rings (the next look takes it away). One missed (the phone off or
+ * asleep, a late alarm) says the plan started during its first quarter of an hour; later nothing (the
+ * desktop's rule). The store, the alarm and the notification are in {@link PlanAlarms}.
  *
  * <p>Quiet: nothing shows on do-not-disturb ("Rahatsız etmeyin"), while the crew or every crew is muted
  * ("Sessize al"), or while the game is on screen; the reminder then counts as told. An answer given
@@ -30,6 +31,8 @@ public final class PlanReminders {
 
     /** A reminder rings this long before the plan's time. */
     public static final long LEAD_SECONDS = 10 * 60L;
+    /** A reminder is still told this long after the plan's time ("… planı başladı"), not later. */
+    public static final long LATE_SECONDS = 15 * 60L;
     /** A mute without an end. */
     public static final long FOREVER = Long.MAX_VALUE;
 
@@ -55,6 +58,11 @@ public final class PlanReminders {
 
         public long ringsAt() {
             return at - LEAD_SECONDS;
+        }
+
+        /** Told before this moment only: a quarter of an hour after the plan's time (never after its end). */
+        public long tellsUntil() {
+            return Math.min(until, at + LATE_SECONDS);
         }
 
         Item fired(long when) {
@@ -138,11 +146,11 @@ public final class PlanReminders {
         return next.size() == stored.size() ? stored : next;
     }
 
-    /** Reminders to tell now, soonest plan first: not told, their moment has come, the plan not over. */
+    /** Reminders to tell now, soonest plan first: not told, their moment has come, the plan started at most 15 minutes ago. */
     public static List<Item> due(Map<String, Item> stored, long now) {
         List<Item> due = new ArrayList<>();
         for (Item item : stored.values()) {
-            if (item.firedAt == null && now >= item.ringsAt() && now < item.until) due.add(item);
+            if (item.firedAt == null && now >= item.ringsAt() && now < item.tellsUntil()) due.add(item);
         }
         Collections.sort(due, (a, b) -> Long.compare(a.at, b.at));
         return due;
@@ -162,7 +170,7 @@ public final class PlanReminders {
     public static Long nextRing(Map<String, Item> stored, long now) {
         Long next = null;
         for (Item item : stored.values()) {
-            if (item.firedAt != null || item.until <= now) continue;
+            if (item.firedAt != null || item.tellsUntil() <= now) continue;
             long at = Math.max(item.ringsAt(), now);
             if (next == null || at < next) next = at;
         }

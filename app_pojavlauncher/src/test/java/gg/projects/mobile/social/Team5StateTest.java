@@ -114,6 +114,13 @@ public class Team5StateTest {
         assertEquals(1, s.requestCount(NOW));
         assertEquals(CAN, s.newestRequest(NOW).from.id);
         assertEquals(GECE, s.crewOfRequest(s.newestRequest(NOW), NOW).id());
+        // A muted crew's requests wait on its page; the home line leaves them out (the desktop's friends button).
+        s.setCrewMute(GECE, new SocialModel.TeamNotifications(true, true, null));
+        assertEquals(0, s.requestCount(NOW));
+        assertNull(s.newestRequest(NOW));
+        assertEquals(1, s.requests(GECE, NOW).size());
+        s.setCrewMute(GECE, SocialModel.TeamNotifications.DEFAULT);
+        assertEquals(1, s.requestCount(NOW));
         // The player's own request to another crew.
         assertEquals(1, s.myRequests(NOW).size());
         assertEquals("Yeni Ufuklar", s.myRequest(YENI, NOW).team.name);

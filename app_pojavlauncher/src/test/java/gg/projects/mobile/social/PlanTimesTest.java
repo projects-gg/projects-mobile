@@ -65,12 +65,19 @@ public class PlanTimesTest {
     }
 
     @Test
-    public void theFirstChoiceIsTheNextWholeHourAtLeastTwentyMinutesAway() {
+    public void theFirstChoiceIsTonightAtNineLikeTheDesktops() {
+        // 15:10 and 20:30: tonight at 21:00.
+        assertEquals("20.10 21:00", clock(PlanTimes.defaultSlot(NOW - 6 * 3600 - 20 * 60, ISTANBUL), ISTANBUL));
+        assertEquals("20.10 21:00", clock(PlanTimes.defaultSlot(NOW - 3600, ISTANBUL), ISTANBUL));
+        // 20:40: 21:00 is less than half an hour away, so is 21:00 as the next whole hour: 22:00.
+        assertEquals("20.10 22:00", clock(PlanTimes.defaultSlot(NOW - 50 * 60, ISTANBUL), ISTANBUL));
+        // 21:30: the next whole hour, half an hour away.
         assertEquals("20.10 22:00", clock(PlanTimes.defaultSlot(NOW, ISTANBUL), ISTANBUL));
-        assertEquals("20.10 22:00", clock(PlanTimes.defaultSlot(NOW + 600, ISTANBUL), ISTANBUL));
-        assertEquals("20.10 23:00", clock(PlanTimes.defaultSlot(NOW + 660, ISTANBUL), ISTANBUL));
-        // 23:50: midnight is ten minutes away, 01:00 then.
-        assertEquals("21.10 01:00", clock(PlanTimes.defaultSlot(NOW + 2 * 3600 + 20 * 60, ISTANBUL), ISTANBUL));
+        assertEquals("20.10 23:00", clock(PlanTimes.defaultSlot(NOW + 600, ISTANBUL), ISTANBUL));
+        assertEquals("20.10 23:00", clock(PlanTimes.defaultSlot(NOW + 50 * 60, ISTANBUL), ISTANBUL));
+        // 23:20 and 23:50: midnight or later, so tomorrow at 21:00.
+        assertEquals("21.10 21:00", clock(PlanTimes.defaultSlot(NOW + 3600 + 50 * 60, ISTANBUL), ISTANBUL));
+        assertEquals("21.10 21:00", clock(PlanTimes.defaultSlot(NOW + 2 * 3600 + 20 * 60, ISTANBUL), ISTANBUL));
     }
 
     @Test

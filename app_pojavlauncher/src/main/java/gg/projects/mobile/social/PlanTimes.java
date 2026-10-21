@@ -22,8 +22,10 @@ public final class PlanTimes {
     public static final int DAYS = 7;
     /** A time must be at least this far ahead when it is sent (the hub's clock and the trip there). */
     public static final long MIN_LEAD_SECONDS = 60;
-    /** The first choice is the first whole hour at least this far ahead. */
-    static final long DEFAULT_LEAD_SECONDS = 20 * 60;
+    /** The first choice is at least this far ahead (the desktop's form). */
+    static final long DEFAULT_LEAD_SECONDS = 30 * 60;
+    /** The first choice's evening: tonight at 21:00 while that is far enough ahead. */
+    static final int EVENING_HOUR = 21;
 
     /** One day of the sheet: its local midnight and how many days from today it is. */
     public static final class Day {
@@ -84,21 +86,33 @@ public final class PlanTimes {
         return out;
     }
 
-    /** The sheet's first choice: the first whole hour at least 20 minutes ahead. */
+    /**
+     * The sheet's first choice, the desktop's: tonight at 21:00 while that is half an hour away or more,
+     * else the next whole hour at least half an hour away (before midnight), else tomorrow at 21:00.
+     */
     public static long defaultSlot(long hubNowSeconds, TimeZone zone) {
-        Calendar c = Calendar.getInstance(zone);
-        c.setTimeInMillis((hubNowSeconds + DEFAULT_LEAD_SECONDS) * 1000L);
-        boolean whole = c.get(Calendar.MINUTE) == 0 && c.get(Calendar.SECOND) == 0 && c.get(Calendar.MILLISECOND) == 0;
-        c.set(Calendar.MINUTE, 0);
-        c.set(Calendar.SECOND, 0);
-        c.set(Calendar.MILLISECOND, 0);
-        if (!whole) c.add(Calendar.HOUR_OF_DAY, 1);
-        long at = c.getTimeInMillis() / 1000L;
+        Calendar now = Calendar.getInstance(zone);
+        now.setTimeInMillis(hubNowSeconds * 1000L);
+        long at = hourOf(now, 0, EVENING_HOUR);
+        if (at - hubNowSeconds < DEFAULT_LEAD_SECONDS) {
+            at = hourOf(now, 0, now.get(Calendar.HOUR_OF_DAY) + 1);
+            if (at - hubNowSeconds < DEFAULT_LEAD_SECONDS) at += 3600;
+            if (at >= hourOf(now, 1, 0)) at = hourOf(now, 1, EVENING_HOUR);
+        }
         // A clock change can leave a time off the quarter grid; the next quarter hour then.
         long rest = mod(at, Plan.STEP_SECONDS);
         if (rest != 0) at += Plan.STEP_SECONDS - rest;
         while (!valid(at, hubNowSeconds) && at <= hubNowSeconds + Plan.AHEAD_SECONDS) at += Plan.STEP_SECONDS;
         return at;
+    }
+
+    /** Local {@code hour}:00 (Unix seconds) of the day {@code days} after {@code now}'s; hour 24 is the next midnight. */
+    private static long hourOf(Calendar now, int days, int hour) {
+        Calendar c = (Calendar) now.clone();
+        midnight(c);
+        c.add(Calendar.DAY_OF_MONTH, days);
+        c.set(Calendar.HOUR_OF_DAY, hour);
+        return c.getTimeInMillis() / 1000L;
     }
 
     /** {@code x mod y} for y &gt; 0, never negative (Math.floorMod needs Android 7). */

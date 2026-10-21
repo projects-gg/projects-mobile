@@ -517,11 +517,15 @@ public final class SocialState {
         return out;
     }
 
-    /** The newest join request of any crew the player may answer for (the home line names it), or null. */
+    /**
+     * The newest join request of any crew the player may answer for and has not muted (the home line
+     * names it), or null. Like the desktop's friends button, a muted crew's requests wait on its page.
+     */
     @Nullable
     public JoinRequest newestRequest(long nowSeconds) {
         JoinRequest newest = null;
         for (Crew c : mCrews) {
+            if (crewMuted(c, nowSeconds)) continue;
             for (JoinRequest r : requests(c.id(), nowSeconds)) if (newest == null || r.sentAt > newest.sentAt) newest = r;
         }
         return newest;
@@ -538,11 +542,17 @@ public final class SocialState {
         return null;
     }
 
-    /** Join requests waiting for the player's answer, every crew together. */
+    /** Join requests waiting for the player's answer, every crew the player has not muted together. */
     public int requestCount(long nowSeconds) {
         int n = 0;
-        for (Crew c : mCrews) n += requests(c.id(), nowSeconds).size();
+        for (Crew c : mCrews) if (!crewMuted(c, nowSeconds)) n += requests(c.id(), nowSeconds).size();
         return n;
+    }
+
+    /** The player muted this crew, or every crew, at the moment (the hub's clock). */
+    private boolean crewMuted(Crew c, long nowSeconds) {
+        long hub = hubNow(nowSeconds);
+        return mTeamNotifications.mutedAt(hub) || c.mute.mutedAt(hub);
     }
 
     // ---- plans (TEAM5) ----

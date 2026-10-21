@@ -71,7 +71,7 @@ public class PlanRemindersTest {
     }
 
     @Test
-    public void dueTenMinutesBeforeAndUntilThePlanIsOver() {
+    public void dueTenMinutesBeforeAndForAQuarterHourAfterTheStart() {
         Map<String, PlanReminders.Item> stored = PlanReminders.merge(new LinkedHashMap<String, PlanReminders.Item>(),
                 PlanReminders.desired(Collections.singletonList(plan("p1", GECE, NOW + 3600, "yes")), ME, names(), NOW), NOW);
         assertTrue(PlanReminders.due(stored, NOW + 2999).isEmpty());
@@ -79,6 +79,10 @@ public class PlanRemindersTest {
         assertEquals(10, PlanReminders.minutesUntil(NOW + 3600, NOW + 3000));
         assertEquals("a late alarm: the plan started", 0, PlanReminders.minutesUntil(NOW + 3600, NOW + 3700));
         assertEquals(1, PlanReminders.due(stored, NOW + 3700).size());
+        assertEquals("a quarter hour after the start: still told", 1, PlanReminders.due(stored, NOW + 3600 + 899).size());
+        assertTrue("later nothing (the desktop's rule)", PlanReminders.due(stored, NOW + 3600 + 900).isEmpty());
+        assertNull("and no alarm for it", PlanReminders.nextRing(stored, NOW + 3600 + 900));
+        assertFalse("kept while the plan runs, so it is not set again", PlanReminders.prune(stored, NOW + 3600 + 900).isEmpty());
         assertTrue("over", PlanReminders.due(stored, NOW + 3600 + 7200).isEmpty());
         assertTrue(PlanReminders.prune(stored, NOW + 3600 + 7200).isEmpty());
         assertEquals(1, PlanReminders.minutesUntil(NOW + 3600, NOW + 3599));
