@@ -145,10 +145,77 @@ public final class SocialUi {
             case CALL_ACTIVE: id = R.string.projects_social_error_call_active; break;
             case CALL_ENDED: id = R.string.projects_social_error_call_ended; break;
             case NOT_IN_CREW: id = R.string.projects_social_error_not_in_crew; break;
+            case CREW_LIMIT: {
+                int limit = SocialService.get(context).state().crewLimit();
+                if (limit > 0) return context.getResources().getQuantityString(R.plurals.projects_crews_limit, limit, limit);
+                id = R.string.projects_social_error_crew_limit;
+                break;
+            }
+            case CREWS_CHANGED: id = R.string.projects_crews_changed; break;
+            case CALL_NEEDS_SERVER: id = R.string.projects_social_error_call_needs_server; break;
+            case CALL_SERVER_HIDDEN: id = R.string.projects_social_error_call_server_hidden; break;
+            case ACCOUNT_LIMITED: return limitedText(context, problem);
+            case ACCOUNT_RESTRICTED: return restrictedText(context, problem.until == null ? 0 : problem.until);
+            case SIGNUPS_CLOSED: id = R.string.projects_social_signups_closed; break;
+            case TEXT_LOCKED: id = R.string.projects_social_error_text_locked; break;
+            case TARGET_GONE: id = R.string.projects_report_gone; break;
+            case BLOCKS_FULL: id = R.string.projects_social_error_blocks_full; break;
+            case CHAT_OFF: id = R.string.projects_chat_off; break;
+            case CHAT_MUTED:
+                if (problem.until != null) return context.getString(R.string.projects_chat_muted_until, moment(context, problem.until));
+                id = R.string.projects_chat_not_sent;
+                break;
+            case CHAT_REJECTED:
+                id = "link".equals(problem.reason) ? R.string.projects_chat_link
+                        : "phone".equals(problem.reason) ? R.string.projects_chat_phone
+                        : "words".equals(problem.reason) ? R.string.projects_chat_words : R.string.projects_chat_not_sent;
+                break;
+            case MESSAGE_GONE: id = R.string.projects_chat_gone; break;
+            case CHAT_NOT_PERMITTED: id = R.string.projects_social_error_not_permitted; break;
+            case CHAT_TOO_OLD: id = R.string.projects_chat_too_old; break;
             case FAILED:
             default: id = R.string.projects_social_error_failed; break;
         }
         return context.getString(id);
+    }
+
+    /**
+     * SPAM1: what a new Discord account may not do yet, where it happened ("Discord hesabın yeni olduğu
+     * için ekip kuramazsın. 3 gün sonra açılır."); a daily cap says "bugün".
+     */
+    public static String limitedText(Context context, SocialProblem problem) {
+        String item = problem.item == null ? "" : problem.item;
+        long now = SocialService.nowSeconds();
+        switch (item) {
+            case gg.projects.mobile.social.SocialModel.Limited.CREW_FOUND: {
+                int days = Math.max(1, gg.projects.mobile.social.SocialModel.Limited.daysLeft(problem.until == null ? now + 86_400 : problem.until, now));
+                return context.getResources().getQuantityString(R.plurals.projects_limited_no_crew, days, days);
+            }
+            case gg.projects.mobile.social.SocialModel.Limited.CREW_INVITES:
+                return context.getString(R.string.projects_limited_invites_today);
+            case gg.projects.mobile.social.SocialModel.Limited.CODE_LOOKUPS:
+                return context.getString(R.string.projects_limited_lookups_today);
+            default:
+                return context.getString(R.string.projects_limited_generic);
+        }
+    }
+
+    /** MOD1: "Hesabın 24 Ekim 21:30 tarihine kadar kısıtlandı." or "Hesabın kalıcı olarak kısıtlandı." */
+    public static String restrictedText(Context context, long until) {
+        if (until <= 0) return context.getString(R.string.projects_mod_restricted_forever);
+        return context.getString(R.string.projects_mod_restricted_until, moment(context, until));
+    }
+
+    /** A moment as the phone writes it: "22 Ekim 2026 21:30" (the date in the phone's language, then the time). */
+    public static String moment(Context context, long seconds) {
+        java.util.Date date = new java.util.Date(seconds * 1000L);
+        java.text.DateFormat day = java.text.DateFormat.getDateInstance(java.text.DateFormat.LONG, java.util.Locale.getDefault());
+        return day.format(date) + " " + android.text.format.DateFormat.getTimeFormat(context).format(date);
+    }
+
+    /** The community rules ("Topluluk kuralları"), in the browser. */
+    public static void openRules(Activity activity) {
+        gg.projects.mobile.ui.ProjectsUi.openUrl(activity, activity.getString(R.string.projects_mod_rules_url));
     }
 
     public static void toast(@Nullable Context context, String text) {

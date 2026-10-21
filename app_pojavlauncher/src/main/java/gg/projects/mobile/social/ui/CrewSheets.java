@@ -183,7 +183,7 @@ final class CrewSheets {
         return context.getString(R.string.projects_crew_muted_until, CrewViews.moment(context, notifications.muteUntil, nowSeconds));
     }
 
-    private static SocialService.Result<TeamNotifications> result(final FragmentActivity activity, final View feedback) {
+    static SocialService.Result<TeamNotifications> result(final FragmentActivity activity, final View feedback) {
         return new SocialService.Result<TeamNotifications>() {
             @Override
             public void ok(TeamNotifications value) {
@@ -200,10 +200,11 @@ final class CrewSheets {
     }
 
     /** "Arkadaşlarını davet et": friends who are not in the crew, each with "Davet et" (or "Davet edildi"). */
-    static void inviteFriends(final FragmentActivity activity) {
+    static void inviteFriends(final FragmentActivity activity, final String crewId) {
         final SocialService service = SocialService.get(activity);
-        final Team team = service.state().team();
-        if (team == null) return;
+        final SocialModel.Crew crew = service.state().crew(crewId);
+        if (crew == null) return;
+        final Team team = crew.team;
         float dp = activity.getResources().getDisplayMetrics().density;
         LinearLayout content = new LinearLayout(activity);
         content.setOrientation(LinearLayout.VERTICAL);
@@ -234,7 +235,7 @@ final class CrewSheets {
             invite.setVisibility(View.VISIBLE);
             invite.setBackground(ChamferDrawable.outlined(activity));
             Press.attach(invite, Press.Style.BUTTON);
-            boolean invited = service.state().teamInvited().contains(friend.profile.id);
+            boolean invited = crew.invited.contains(friend.profile.id);
             invite.setText(invited ? R.string.projects_crew_invite_sent : R.string.projects_crew_invite);
             invite.setEnabled(!invited);
             invite.setOnClickListener(v -> {
@@ -266,9 +267,10 @@ final class CrewSheets {
      * A crewmate's card: where they are, "Katıl", "Discord'dan mesaj at"; for the leader "Liderliği
      * devret", and "Ekipten çıkar" for whoever the crew's permissions let.
      */
-    static void member(final FragmentActivity activity, final String userId) {
+    static void member(final FragmentActivity activity, final String crewId, final String userId) {
         final SocialService service = SocialService.get(activity);
-        final Team team = service.state().team();
+        final SocialModel.Crew crew = service.state().crew(crewId);
+        final Team team = crew == null ? null : crew.team;
         final Member member = team == null ? null : team.member(userId);
         String me = service.state().myId();
         if (member == null || me == null) return;
@@ -294,6 +296,8 @@ final class CrewSheets {
         view.findViewById(R.id.projects_card_since).setVisibility(View.GONE);
         View join = view.findViewById(R.id.projects_card_join);
         join.setVisibility(presence.onProjects() ? View.VISIBLE : View.GONE);
+        view.findViewById(R.id.projects_card_buttons).setVisibility(presence.onProjects() ? View.VISIBLE : View.GONE);
+        join.setBackground(ChamferDrawable.outlined(activity));
         Press.attach(join, Press.Style.BUTTON);
         join.setOnClickListener(v -> {
             dialog.dismiss();
@@ -342,7 +346,99 @@ final class CrewSheets {
                                         FriendCard.done(activity, activity.getString(R.string.projects_crew_removed, member.profile.name()))));
                     }));
         }
+        if (service.gate().reports) {
+            // MOD1: a crewmate may be reported (any crew both are in).
+            actions.addView(CrewViews.divider(activity));
+            actions.addView(CrewViews.actionRow(activity, R.drawable.projects_ic_flag, activity.getString(R.string.projects_report),
+                    R.color.projects_ash_300, v -> {
+                        dialog.dismiss();
+                        ReportDialog.player(activity, member.profile);
+                    }));
+        }
         dialog.show();
+    }
+
+    /** "Hepsini sessize al": every crew together (the service's {@code teamNotifications}). */
+    static void muteAll(final FragmentActivity activity) {
+        final SocialService service = SocialService.get(activity);
+        TeamNotifications all = service.state().teamNotifications();
+        long now = service.state().hubNow(SocialService.nowSeconds());
+        String state = all.mutedAt(now) ? mutedText(activity, all, now) : null;
+        MuteSheet.show(activity, activity.getString(R.string.projects_crews_mute_all), null, state, now, null, null,
+                new MuteSheet.Choice() {
+                    @Override
+                    public void preset(MutePresets.Preset preset, View row) {
+                        service.mute(preset, result(activity, row));
+                    }
+
+                    @Override
+                    public void unmute(View button) {
+                        service.unmute(result(activity, button));
+                    }
+                });
+    }
+
+    /**
+     * TEAM4: "Ekibe davet et" for a player in several crews: the crews whose rules let them invite, each
+     * with "Davet et"; "Davet edildi", "Ekipte" and "Dolu" stay dim.
+     */
+    static void inviteToCrews(final FragmentActivity activity, final String friendId) {
+        final SocialService service = SocialService.get(activity);
+        String me = service.state().myId();
+        if (me == null) return;
+        float dp = activity.getResources().getDisplayMetrics().density;
+        LinearLayout content = new LinearLayout(activity);
+        content.setOrientation(LinearLayout.VERTICAL);
+        content.setPadding(Math.round(12 * dp), Math.round(8 * dp), Math.round(12 * dp), 0);
+        int limit = service.state().limits().teamMembers;
+        for (final SocialModel.Crew crew : service.state().crews()) {
+            final Team team = crew.team;
+            if (!team.allows(me, team.permissions.invite)) continue;
+            View row = android.view.LayoutInflater.from(activity).inflate(R.layout.item_projects_social_person, content, false);
+            ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) row.getLayoutParams();
+            lp.setMarginStart(0);
+            lp.setMarginEnd(0);
+            row.findViewById(R.id.projects_person_avatar).setVisibility(View.GONE);
+            CrewMarkView mark = row.findViewById(R.id.projects_person_mark);
+            mark.setVisibility(View.VISIBLE);
+            mark.setLook(team.emblem, team.color, team.frame);
+            ((TextView) row.findViewById(R.id.projects_person_name)).setText(team.name);
+            ((TextView) row.findViewById(R.id.projects_person_line)).setText(limit > 0
+                    ? activity.getString(R.string.projects_crew_members, team.members.size(), limit)
+                    : activity.getResources().getQuantityString(R.plurals.projects_crew_member_count, team.members.size(), team.members.size()));
+            final Button invite = row.findViewById(R.id.projects_person_action);
+            invite.setVisibility(View.VISIBLE);
+            invite.setBackground(ChamferDrawable.outlined(activity));
+            Press.attach(invite, Press.Style.BUTTON);
+            boolean member = team.member(friendId) != null;
+            boolean invited = crew.invited.contains(friendId);
+            boolean full = limit > 0 && team.members.size() >= limit;
+            invite.setText(member ? R.string.projects_crews_in_crew : invited ? R.string.projects_crew_invite_sent
+                    : full ? R.string.projects_crews_full : R.string.projects_crew_invite);
+            invite.setEnabled(!member && !invited && !full);
+            invite.setOnClickListener(v -> {
+                invite.setEnabled(false);
+                service.inviteToTeam(team.id, friendId, new SocialService.Result<Void>() {
+                    @Override
+                    public void ok(Void value) {
+                        Haptics.confirm(invite);
+                        invite.setText(R.string.projects_crew_invite_sent);
+                    }
+
+                    @Override
+                    public void failed(SocialProblem problem) {
+                        invite.setEnabled(true);
+                        SocialUi.toastProblem(activity, problem, invite);
+                    }
+                });
+            });
+            content.addView(row);
+        }
+        new AlertDialog.Builder(activity)
+                .setTitle(R.string.projects_crew_invite_to)
+                .setView(wrap(activity, content))
+                .setNegativeButton(R.string.projects_close, null)
+                .show();
     }
 
     private static boolean hasCrewPower(Team team, String me, Member member, SocialGate gate) {

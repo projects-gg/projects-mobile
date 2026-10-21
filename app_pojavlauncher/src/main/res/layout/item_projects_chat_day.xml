@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- M20: the day above its messages ("Bugün", "Dün", "21 Ekim"), or "Yeni mesajlar" above the first
+     unread one (gold, with a hairline). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center"
+    android:orientation="horizontal"
+    android:paddingHorizontal="16dp"
+    android:paddingTop="12dp"
+    android:paddingBottom="8dp">
+
+    <View
+        android:id="@+id/projects_day_line_start"
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:layout_weight="1"
+        android:background="@color/projects_obsidian_700"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/projects_day_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="10dp"
+        android:background="@drawable/projects_pill_background"
+        android:fontFamily="@font/figtree_semibold"
+        android:paddingHorizontal="10dp"
+        android:paddingVertical="3dp"
+        android:textColor="@color/projects_ash_400"
+        android:textSize="12sp"
+        tools:text="Bugün" />
+
+    <View
+        android:id="@+id/projects_day_line_end"
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:layout_weight="1"
+        android:background="@color/projects_obsidian_700"
+        android:visibility="gone" />
+</LinearLayout>

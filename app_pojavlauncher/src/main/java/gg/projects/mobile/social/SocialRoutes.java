@@ -16,6 +16,7 @@ import net.kdt.pojavlaunch.Tools;
 import java.util.List;
 
 import gg.projects.mobile.social.ui.AddFriendFragment;
+import gg.projects.mobile.social.ui.ChatFragment;
 import gg.projects.mobile.social.ui.CrewFragment;
 import gg.projects.mobile.social.ui.SocialFragment;
 
@@ -28,9 +29,12 @@ public final class SocialRoutes {
     private SocialRoutes() {}
 
     public static final String FRIENDS = "friends";
+    /** The crew page; M20: the argument is a crew id (that crew opens) or a call id (its first crew). */
     public static final String CREW = "crew";
     public static final String INVITE = "invite";
     public static final String ADD = "add";
+    /** M20: a conversation ({@code c:<team>} or {@code d:<id>:<id>}). */
+    public static final String CHAT = "chat";
 
     @Nullable
     private static String sTarget;
@@ -110,8 +114,17 @@ public final class SocialRoutes {
         Bundle args = new Bundle();
         switch (target) {
             case CREW:
-                // The crew page shows its call at the top.
+                // The crew page shows its call at the top (the crew the call names, or the crew asked for).
+                if (arg != null) args.putString(CrewFragment.ARG_CREW, arg);
                 Tools.swapFragment(activity, CrewFragment.class, CrewFragment.TAG, args);
+                break;
+            case CHAT:
+                if (arg == null || !ChatConv.valid(arg)) {
+                    Tools.swapFragment(activity, SocialFragment.class, SocialFragment.TAG, args);
+                    break;
+                }
+                args.putString(ChatFragment.ARG_CONV, arg);
+                Tools.swapFragment(activity, ChatFragment.class, ChatFragment.TAG, args);
                 break;
             case ADD:
                 if (arg != null) args.putString(AddFriendFragment.ARG_CODE, arg);

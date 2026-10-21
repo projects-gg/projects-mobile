@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- M20: one message. The player's own sit at the end on the dark gold, the others' at the start; in
+     crew chat a group of one player's messages starts with their name and ends with their face. The
+     time (and "düzenlendi", and the state of the player's own) closes the group; a message that did not
+     go says so under it with "Tekrar dene". -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/projects_msg_root"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="bottom|start"
+    android:orientation="horizontal"
+    android:paddingHorizontal="12dp"
+    android:paddingTop="2dp">
+
+    <FrameLayout
+        android:id="@+id/projects_msg_face_slot"
+        android:layout_width="34dp"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        tools:visibility="visible">
+
+        <gg.projects.mobile.social.ui.AvatarView
+            android:id="@+id/projects_msg_avatar"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_gravity="bottom|start"
+            android:layout_marginBottom="18dp" />
+    </FrameLayout>
+
+    <LinearLayout
+        android:id="@+id/projects_msg_column"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/projects_msg_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginBottom="2dp"
+            android:ellipsize="end"
+            android:fontFamily="@font/figtree_semibold"
+            android:maxLines="1"
+            android:textColor="@color/projects_ash_300"
+            android:textSize="12sp"
+            android:visibility="gone"
+            tools:text="Ece"
+            tools:visibility="visible" />
+
+        <TextView
+            android:id="@+id/projects_msg_bubble"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/figtree_regular"
+            android:lineSpacingExtra="2dp"
+            android:paddingStart="14dp"
+            android:paddingTop="9dp"
+            android:paddingEnd="14dp"
+            android:paddingBottom="9dp"
+            android:textColor="@color/projects_bone_100"
+            android:textIsSelectable="false"
+            android:textSize="15sp"
+            tools:background="@color/projects_chat_theirs"
+            tools:text="Ekip, 21:30'da buluşuyoruz" />
+
+        <LinearLayout
+            android:id="@+id/projects_msg_meta"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="6dp"
+            android:layout_marginTop="3dp"
+            android:layout_marginBottom="4dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/projects_msg_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/figtree_regular"
+                android:textColor="@color/projects_ash_400"
+                android:textSize="11sp"
+                tools:text="21:30 · düzenlendi" />
+
+            <ImageView
+                android:id="@+id/projects_msg_status"
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:layout_marginStart="4dp"
+                android:importantForAccessibility="no"
+                android:visibility="gone"
+                tools:src="@drawable/projects_ic_check"
+                tools:visibility="visible" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/projects_msg_failed"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="4dp"
+            android:layout_marginBottom="4dp"
+            android:background="@drawable/projects_row_ripple"
+            android:drawablePadding="6dp"
+            android:fontFamily="@font/figtree_semibold"
+            android:gravity="center_vertical"
+            android:minHeight="32dp"
+            android:paddingHorizontal="6dp"
+            android:textColor="@color/projects_flare_400"
+            android:textSize="12sp"
+            android:visibility="gone"
+            tools:text="Gönderilemedi · Tekrar dene"
+            tools:visibility="visible" />
+    </LinearLayout>
+</LinearLayout>

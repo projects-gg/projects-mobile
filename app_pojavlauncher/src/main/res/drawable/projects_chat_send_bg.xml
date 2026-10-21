@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- M20: the chat's send button, round like the field: gold while there is something to send (darker
+     while pressed), a quiet obsidian disc while there is not. -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="#40FFFFFF">
+    <item>
+        <selector>
+            <item android:state_enabled="false">
+                <shape android:shape="oval">
+                    <solid android:color="@color/projects_obsidian_700" />
+                </shape>
+            </item>
+            <item android:state_pressed="true">
+                <shape android:shape="oval">
+                    <solid android:color="@color/projects_gold_600" />
+                </shape>
+            </item>
+            <item>
+                <shape android:shape="oval">
+                    <solid android:color="@color/projects_gold_500" />
+                </shape>
+            </item>
+        </selector>
+    </item>
+</ripple>

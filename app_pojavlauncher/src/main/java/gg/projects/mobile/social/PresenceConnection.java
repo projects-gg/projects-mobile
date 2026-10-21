@@ -10,6 +10,7 @@ import androidx.annotation.Nullable;
 import com.google.gson.JsonObject;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import okhttp3.Request;
@@ -21,12 +22,19 @@ import okhttp3.WebSocketListener;
  * One presence WebSocket ({@code GET /v1/presence}; README "Presence WebSocket"). OkHttp sends the
  * protocol pings ({@link SocialApi}'s client: every 45 s, free for the service and answered without
  * waking the hub) and fails the socket when a pong does not come. Nothing else is sent on a timer:
- * only the player's own crew call messages, each with a {@code rid} whose {@code ack} or
- * {@code error} comes back to its callback (10 s at most). Every callback runs on the main thread.
+ * only the player's own messages, each with a {@code rid} whose {@code ack} or {@code error} comes back
+ * to its callback (10 s at most). Every callback runs on the main thread.
+ *
+ * <p>M20: the socket says what the app understands in its query ({@code ?caps=callServer,crews,chat});
+ * an older service ignores it. A chat message's {@code ack} carries the message as the service stored
+ * it, and a sync's answer ends with {@code chat_synced} (which echoes the {@code rid}): {@link
+ * #request(JsonObject, Answer)} hands those over whole.
  */
 public final class PresenceConnection {
     private static final String TAG = "ProjectsSocial";
     private static final long REPLY_TIMEOUT_MS = 10_000;
+    /** {@link Listener#onEnded}'s code for an upgrade refused with 403 (a restricted account). */
+    public static final int FORBIDDEN = 4403;
 
     public interface Listener {
         void onOpen(PresenceConnection connection);
@@ -42,20 +50,30 @@ public final class PresenceConnection {
         void onReply(@Nullable String error, long retryAfter);
     }
 
+    /** M20: the whole answer ({@code ack}, {@code error} or {@code chat_synced}); null when none came (no socket, timeout). */
+    public interface Answer {
+        void onAnswer(@Nullable JsonObject answer);
+    }
+
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
 
     private final Listener mListener;
     private final WebSocket mSocket;
-    private final Map<Integer, Reply> mReplies = new HashMap<>();
+    private final Map<Integer, Answer> mReplies = new HashMap<>();
     private int mNextRid = 1;
     private boolean mEnded;
     /** A refused upgrade's Retry-After (seconds; 0 when none). */
     private volatile long mRetryAfter;
 
-    private PresenceConnection(SocialApi api, String token, Listener listener) {
+    private PresenceConnection(SocialApi api, String token, List<String> caps, Listener listener) {
         mListener = listener;
+        StringBuilder url = new StringBuilder(api.base()).append("v1/presence");
+        if (!caps.isEmpty()) {
+            url.append("?caps=");
+            for (int i = 0; i < caps.size(); i++) url.append(i == 0 ? "" : ",").append(caps.get(i));
+        }
         Request request = new Request.Builder()
-                .url(api.base() + "v1/presence")
+                .url(url.toString())
                 .header("Authorization", "Bearer " + token)
                 .header("User-Agent", api.userAgent())
                 .build();
@@ -97,29 +115,32 @@ public final class PresenceConnection {
                     }
                 }
                 if (!mEnded) Log.i(TAG, "presence socket failed: " + t.getClass().getSimpleName() + (status == 0 ? "" : " HTTP " + status));
-                // A refused upgrade with 401 is a session that ended, like close code 4001.
-                MAIN.post(() -> end(status == 401 ? 4001 : 0, true));
+                // A refused upgrade with 401 is a session that ended, like close code 4001; 403 a restricted
+                // account (a request then says until when).
+                MAIN.post(() -> end(status == 401 ? 4001 : status == 403 ? FORBIDDEN : 0, true));
             }
         });
     }
 
     @MainThread
-    public static PresenceConnection open(SocialApi api, String token, Listener listener) {
-        return new PresenceConnection(api, token, listener);
+    public static PresenceConnection open(SocialApi api, String token, List<String> caps, Listener listener) {
+        return new PresenceConnection(api, token, caps, listener);
     }
 
     @MainThread
     private void deliver(JsonObject message) {
         if (mEnded) return;
         String type = Json.str(message, "t", "");
-        if (type.equals("ack") || type.equals("error")) {
+        if (type.equals("ack") || type.equals("error") || type.equals("chat_synced")) {
             Long rid = Json.numOrNull(message, "rid");
-            Reply reply = rid == null ? null : mReplies.remove(rid.intValue());
+            Answer reply = rid == null ? null : mReplies.remove(rid.intValue());
             if (reply != null) {
-                reply.onReply(type.equals("ack") ? null : Json.str(message, "code", "bad_request"), Json.num(message, "retryAfter", 0));
+                reply.onAnswer(message);
+                // The end of a sync is the chat's to read too (the hub's clock, "more").
+                if (!type.equals("chat_synced")) return;
+            } else if (type.equals("ack")) {
                 return;
             }
-            if (type.equals("ack")) return;
         }
         mListener.onMessage(this, message);
     }
@@ -128,29 +149,48 @@ public final class PresenceConnection {
     private void end(int code, boolean failed) {
         if (mEnded) return;
         mEnded = true;
-        for (Reply reply : mReplies.values()) reply.onReply("unavailable", 0);
-        mReplies.clear();
+        failAll();
         mListener.onEnded(this, code, failed);
     }
 
-    /** Sends {@code message} with a fresh {@code rid}; the reply comes to {@code reply}. */
+    private void failAll() {
+        Map<Integer, Answer> waiting = new HashMap<>(mReplies);
+        mReplies.clear();
+        for (Answer reply : waiting.values()) reply.onAnswer(null);
+    }
+
+    /** Sends {@code message} with a fresh {@code rid}; the code of its answer comes to {@code reply}. */
     @MainThread
     public void request(JsonObject message, final Reply reply) {
+        request(message, answer -> {
+            if (answer == null) {
+                reply.onReply("unavailable", 0);
+            } else if (Json.str(answer, "t", "").equals("error")) {
+                reply.onReply(Json.str(answer, "code", "bad_request"), Json.num(answer, "retryAfter", 0));
+            } else {
+                reply.onReply(null, 0);
+            }
+        });
+    }
+
+    /** Sends {@code message} with a fresh {@code rid}; its whole answer comes to {@code answer} (null: none came). */
+    @MainThread
+    public void request(JsonObject message, final Answer answer) {
         if (mEnded) {
-            reply.onReply("unavailable", 0);
+            answer.onAnswer(null);
             return;
         }
         final int rid = mNextRid++;
         message.addProperty("rid", rid);
-        mReplies.put(rid, reply);
+        mReplies.put(rid, answer);
         if (!mSocket.send(message.toString())) {
             mReplies.remove(rid);
-            reply.onReply("unavailable", 0);
+            answer.onAnswer(null);
             return;
         }
         MAIN.postDelayed(() -> {
-            Reply waiting = mReplies.remove(rid);
-            if (waiting != null) waiting.onReply("unavailable", 0);
+            Answer waiting = mReplies.remove(rid);
+            if (waiting != null) waiting.onAnswer(null);
         }, REPLY_TIMEOUT_MS);
     }
 
@@ -165,8 +205,7 @@ public final class PresenceConnection {
     public void close() {
         if (mEnded) return;
         mEnded = true;
-        for (Reply reply : mReplies.values()) reply.onReply("unavailable", 0);
-        mReplies.clear();
+        failAll();
         mSocket.close(1000, null);
     }
 

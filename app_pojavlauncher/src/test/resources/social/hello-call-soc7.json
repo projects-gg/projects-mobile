@@ -1,0 +1,54 @@
+{
+ "t": "hello",
+ "v": 1,
+ "status": "online",
+ "keepaliveSeconds": 45,
+ "friends": [
+  {
+   "id": "100000000000000012",
+   "state": "playing",
+   "status": "online",
+   "game": {
+    "where": "projects",
+    "host": "play.projects.gg"
+   },
+   "avatar": "discord",
+   "avatarHash": null
+  }
+ ],
+ "team": [],
+ "invites": [],
+ "calls": [
+  {
+   "id": "238ff683884d3643",
+   "from": "100000000000000012",
+   "kind": "join",
+   "at": 1792590973,
+   "until": 1792592173,
+   "answers": {
+    "100000000000000011": "yes"
+   },
+   "crews": [
+    "ba126fd6c93f8827",
+    "833148b7764eafc5"
+   ],
+   "server": {
+    "where": "projects",
+    "host": "play.projects.gg"
+   }
+  }
+ ],
+ "caps": [
+  "callServer",
+  "crews",
+  "chat"
+ ],
+ "chat": {
+  "on": true,
+  "mailbox": true,
+  "mailboxBack": null,
+  "perDay": 500,
+  "mutedUntil": null
+ },
+ "now": 1792590973
+}

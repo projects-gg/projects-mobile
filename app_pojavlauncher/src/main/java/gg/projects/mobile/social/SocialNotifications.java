@@ -36,11 +36,14 @@ public final class SocialNotifications {
     public static final String CHANNEL_INVITES = "projects_social_invites";
     public static final String CHANNEL_CALLS = "projects_social_calls";
     public static final String CHANNEL_REQUESTS = "projects_social_requests";
+    /** M20: direct messages ("Mesajlar"; never their text: "Ayşe sana mesaj gönderdi"). */
+    public static final String CHANNEL_MESSAGES = "projects_social_messages";
 
     /** Ids apart from upstream's (1 to 5), the reminders' and "Projects hazır"'s; the tag tells them apart. */
     static final int ID_REQUEST = 0x5A000001;
     static final int ID_INVITE = 0x5A000002;
     static final int ID_CALL = 0x5A000003;
+    static final int ID_MESSAGE = 0x5A000004;
 
     /** Creates (or renames, in the app's language) the channels. */
     public static void ensureChannels(Context context) {
@@ -58,9 +61,13 @@ public final class SocialNotifications {
         NotificationChannel requests = new NotificationChannel(CHANNEL_REQUESTS, c.getString(R.string.projects_social_channel_requests),
                 NotificationManager.IMPORTANCE_DEFAULT);
         requests.setGroup(GROUP);
+        NotificationChannel messages = new NotificationChannel(CHANNEL_MESSAGES, c.getString(R.string.projects_chat_channel),
+                NotificationManager.IMPORTANCE_HIGH);
+        messages.setGroup(GROUP);
         manager.createNotificationChannel(invites);
         manager.createNotificationChannel(calls);
         manager.createNotificationChannel(requests);
+        manager.createNotificationChannel(messages);
     }
 
     /** Notifications can show at all (Android 13+'s permission and the app's switch). */
@@ -97,6 +104,10 @@ public final class SocialNotifications {
         return "call:" + call;
     }
 
+    static String messageTag(String conv) {
+        return "message:" + conv;
+    }
+
     public static void showRequest(Context context, String sender, @Nullable String name) {
         Context c = LanguageManager.wrap(context);
         // Not a friend yet: "Biri" ("Someone"), not "Bir arkadaşın".
@@ -118,10 +129,69 @@ public final class SocialNotifications {
 
     public static void showCall(Context context, String callId, String caller, @Nullable String name, boolean join, long timeoutMs) {
         Context c = LanguageManager.wrap(context);
+        showCall(c, callId, null, callTitle(c, name, java.util.Collections.<String>emptyList(), false),
+                c.getString(join ? R.string.projects_social_on_projects : R.string.projects_crew_call_ready), timeoutMs);
+    }
+
+    /**
+     * M20: a crew call naming its crews and saying where it is ({@link #callTitle}, {@link #callPlace});
+     * a tap opens the first crew it names.
+     */
+    public static void showCall(Context context, String callId, @Nullable String crewId, String title, String place, long timeoutMs) {
+        Context c = LanguageManager.wrap(context);
+        post(c, CHANNEL_CALLS, callTag(callId), ID_CALL, title, place, NotificationCompat.PRIORITY_HIGH, timeoutMs,
+                SocialOpenActivity.open(c, SocialRoutes.CREW, crewId != null ? crewId : callId));
+    }
+
+    /**
+     * "Ayşe ekibi çağırıyor" (one crew, or the crew's own page); for a player in several crews "Ayşe, Gece
+     * Kartalları ekibini çağırıyor", "…, X ve Y ekiplerini çağırıyor" or "Ayşe 3 ekibi çağırıyor".
+     */
+    public static String callTitle(Context c, @Nullable String name, java.util.List<String> crewNames, boolean severalCrews) {
         String who = name == null || name.isEmpty() ? c.getString(R.string.projects_crew_someone) : name;
-        post(c, CHANNEL_CALLS, callTag(callId), ID_CALL, c.getString(R.string.projects_crew_call_theirs, who),
-                c.getString(join ? R.string.projects_social_on_projects : R.string.projects_crew_call_ready),
-                NotificationCompat.PRIORITY_HIGH, timeoutMs, SocialOpenActivity.open(c, SocialRoutes.CREW, callId));
+        if (!severalCrews || crewNames.isEmpty()) return c.getString(R.string.projects_crew_call_theirs, who);
+        if (crewNames.size() == 1) return c.getString(R.string.projects_crews_call_one, who, crewNames.get(0));
+        if (crewNames.size() == 2) return c.getString(R.string.projects_crews_call_two, who, crewNames.get(0), crewNames.get(1));
+        return c.getResources().getQuantityString(R.plurals.projects_crews_call_many, crewNames.size(), who, crewNames.size());
+    }
+
+    /** "Projects'te", "mc.example.com sunucusunda" ("Başka sunucuda" without its address) or "Hazır mısın?". */
+    public static String callPlace(Context c, SocialModel.Call.Place place, @Nullable String host) {
+        switch (place) {
+            case PROJECTS: return c.getString(R.string.projects_social_on_projects);
+            case OTHER:
+                return host != null && !host.isEmpty() ? c.getString(R.string.projects_social_presence_other_host, host)
+                        : c.getString(R.string.projects_social_presence_other);
+            case READY:
+            default: return c.getString(R.string.projects_crew_call_ready);
+        }
+    }
+
+    /** M20: "Ayşe sana mesaj gönderdi" (never the text); a tap opens the conversation. Silent for a muted one. */
+    public static void showMessage(Context context, String conv, @Nullable String name, boolean silent) {
+        Context c = LanguageManager.wrap(context);
+        String who = name == null || name.isEmpty() ? c.getString(R.string.projects_social_someone) : name;
+        if (!canNotify(c)) return;
+        ensureChannels(c);
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(c, CHANNEL_MESSAGES)
+                .setSmallIcon(R.drawable.notif_icon)
+                .setColor(ContextCompat.getColor(c, R.color.projects_gold_500))
+                .setContentTitle(c.getString(R.string.projects_chat_push, who))
+                .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+                .setPriority(silent ? NotificationCompat.PRIORITY_LOW : NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true)
+                .setOnlyAlertOnce(false)
+                .setSilent(silent)
+                .setContentIntent(SocialOpenActivity.open(c, SocialRoutes.CHAT, conv));
+        try {
+            NotificationManagerCompat.from(c).notify(messageTag(conv), ID_MESSAGE, builder.build());
+        } catch (SecurityException e) {
+            Log.w(TAG, "notification not shown", e);
+        }
+    }
+
+    public static void cancelMessage(Context context, String conv) {
+        NotificationManagerCompat.from(context).cancel(messageTag(conv), ID_MESSAGE);
     }
 
     private static void post(Context c, String channel, String tag, int id, String title, @Nullable String text, int priority,
@@ -162,6 +232,16 @@ public final class SocialNotifications {
     /** Signed out: none of the friends' notifications stays. */
     public static void cancelAll(Context context) {
         cancelMatching(context, true, true, true);
+        if (Build.VERSION.SDK_INT < 23) return;
+        NotificationManager manager = context.getSystemService(NotificationManager.class);
+        if (manager == null) return;
+        try {
+            for (StatusBarNotification n : manager.getActiveNotifications()) {
+                if (n.getId() == ID_MESSAGE) manager.cancel(n.getTag(), n.getId());
+            }
+        } catch (RuntimeException e) {
+            Log.w(TAG, "notifications not listed", e);
+        }
     }
 
     /**

@@ -31,6 +31,8 @@ public final class SocialDebug {
     public final String url;
     public final boolean forceFriends;
     public final boolean forceTeams;
+    /** M20: {@code chat}: crew chat and direct messages without the signed config's {@code features.chat}. */
+    public final boolean forceChat;
     public final boolean logBrowser;
     public final boolean override;
     /**
@@ -40,18 +42,19 @@ public final class SocialDebug {
     @Nullable
     public final String pushToken;
 
-    private SocialDebug(String url, boolean forceFriends, boolean forceTeams, boolean logBrowser, boolean override,
-                        @Nullable String pushToken) {
+    private SocialDebug(String url, boolean forceFriends, boolean forceTeams, boolean forceChat, boolean logBrowser,
+                        boolean override, @Nullable String pushToken) {
         this.url = url;
         this.forceFriends = forceFriends;
         this.forceTeams = forceTeams;
+        this.forceChat = forceChat;
         this.logBrowser = logBrowser;
         this.override = override;
         this.pushToken = pushToken;
     }
 
     public static SocialDebug read(Context context) {
-        SocialDebug production = new SocialDebug(PRODUCTION_URL, false, false, false, false, null);
+        SocialDebug production = new SocialDebug(PRODUCTION_URL, false, false, false, false, false, null);
         if (!BuildConfig.DEBUG) return production;
         File dir = context.getExternalFilesDir(null);
         File file = dir == null ? null : new File(dir, "projects-debug.json");
@@ -63,9 +66,10 @@ public final class SocialDebug {
             String pushToken = Json.str(social, "pushToken");
             if (pushToken != null && !pushToken.matches("[A-Za-z0-9_:-]{32,1024}")) pushToken = null;
             SocialDebug debug = new SocialDebug(url == null ? PRODUCTION_URL : url, Json.bool(social, "friends", false),
-                    Json.bool(social, "teams", false), "log".equals(Json.str(social, "browser")), true, pushToken);
+                    Json.bool(social, "teams", false), Json.bool(social, "chat", false), "log".equals(Json.str(social, "browser")),
+                    true, pushToken);
             Log.w(TAG, "debug friends override in use: " + debug.url + " friends=" + debug.forceFriends
-                    + " teams=" + debug.forceTeams + " browser=" + (debug.logBrowser ? "log" : "open"));
+                    + " teams=" + debug.forceTeams + " chat=" + debug.forceChat + " browser=" + (debug.logBrowser ? "log" : "open"));
             return debug;
         } catch (Exception e) {
             Log.w(TAG, "ignoring a broken projects-debug.json", e);

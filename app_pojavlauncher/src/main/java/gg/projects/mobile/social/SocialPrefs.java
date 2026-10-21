@@ -56,10 +56,72 @@ public final class SocialPrefs {
         return mPrefs.getBoolean(KEY_WANT_CALLS, true);
     }
 
+    /** M20: direct messages notify this phone ("Mesajlar"). */
+    public boolean wantsMessages() {
+        return mPrefs.getBoolean(KEY_WANT_MESSAGES, true);
+    }
+
     public void setWants(String kind, boolean on) {
         String key = PushMessage.REQUEST.equals(kind) ? KEY_WANT_REQUESTS
-                : PushMessage.INVITE.equals(kind) ? KEY_WANT_INVITES : KEY_WANT_CALLS;
+                : PushMessage.INVITE.equals(kind) ? KEY_WANT_INVITES
+                : PushMessage.MESSAGE.equals(kind) ? KEY_WANT_MESSAGES : KEY_WANT_CALLS;
         mPrefs.edit().putBoolean(key, on).apply();
+    }
+
+    private static final String KEY_WANT_MESSAGES = "notify_messages";
+    /** M20: conversations muted on this phone ("conv|until"), for pushes that come while the app sleeps. */
+    private static final String KEY_MUTED_CONVERSATIONS = "muted_conversations";
+    /** M20: the player's crews' names ("id|name"), so a call's notification can name its crew while the app sleeps. */
+    private static final String KEY_CREW_NAMES = "crew_names";
+
+    /** Conversations muted at {@code nowSeconds}. */
+    public Set<String> mutedConversations(long nowSeconds) {
+        Set<String> out = new HashSet<>();
+        for (String entry : mPrefs.getStringSet(KEY_MUTED_CONVERSATIONS, Collections.<String>emptySet())) {
+            int bar = entry.lastIndexOf('|');
+            if (bar <= 0) continue;
+            try {
+                long until = Long.parseLong(entry.substring(bar + 1));
+                if (until == ChatBook.MUTED_FOREVER || nowSeconds < until) out.add(entry.substring(0, bar));
+            } catch (NumberFormatException ignored) {
+                // A broken entry is forgotten.
+            }
+        }
+        return out;
+    }
+
+    /** The chat's own record of a conversation's mute, kept here too (0: unmuted). */
+    public void setConversationMuted(String conv, long untilSeconds, long nowSeconds) {
+        Set<String> next = new HashSet<>();
+        for (String entry : mPrefs.getStringSet(KEY_MUTED_CONVERSATIONS, Collections.<String>emptySet())) {
+            int bar = entry.lastIndexOf('|');
+            if (bar <= 0 || entry.substring(0, bar).equals(conv)) continue;
+            try {
+                long until = Long.parseLong(entry.substring(bar + 1));
+                if (until == ChatBook.MUTED_FOREVER || nowSeconds < until) next.add(entry);
+            } catch (NumberFormatException ignored) {
+                // dropped
+            }
+        }
+        if (untilSeconds == ChatBook.MUTED_FOREVER || untilSeconds > nowSeconds) next.add(conv + "|" + untilSeconds);
+        mPrefs.edit().putStringSet(KEY_MUTED_CONVERSATIONS, next).apply();
+    }
+
+    /** The crews' names as last known (id → name). */
+    public java.util.Map<String, String> crewNames() {
+        java.util.Map<String, String> out = new java.util.HashMap<>();
+        for (String entry : mPrefs.getStringSet(KEY_CREW_NAMES, Collections.<String>emptySet())) {
+            int bar = entry.indexOf('|');
+            if (bar > 0) out.put(entry.substring(0, bar), entry.substring(bar + 1));
+        }
+        return out;
+    }
+
+    public void setCrewNames(java.util.Map<String, String> names) {
+        Set<String> next = new HashSet<>();
+        for (java.util.Map.Entry<String, String> e : names.entrySet()) next.add(e.getKey() + "|" + e.getValue());
+        if (next.equals(mPrefs.getStringSet(KEY_CREW_NAMES, Collections.<String>emptySet()))) return;
+        mPrefs.edit().putStringSet(KEY_CREW_NAMES, next).apply();
     }
 
     public boolean offerDone() {
@@ -152,22 +214,25 @@ public final class SocialPrefs {
     private static final String KEY_CONFIG = "config_features";
 
     /**
-     * The signed config's {@code features.friends} / {@code features.teams} as last seen: a process
-     * started by a link or a push knows them before the content is read again.
+     * The signed config's {@code features.friends} / {@code features.teams} / {@code features.chat} as
+     * last seen: a process started by a link or a push knows them before the content is read again.
      */
     public boolean[] lastConfig() {
-        String value = mPrefs.getString(KEY_CONFIG, "00");
-        if (value == null || value.length() != 2) value = "00";
-        return new boolean[]{value.charAt(0) == '1', value.charAt(1) == '1'};
+        String value = mPrefs.getString(KEY_CONFIG, "000");
+        if (value == null || value.length() < 2) value = "000";
+        // 0.2.0 kept two flags; chat was not there then.
+        if (value.length() == 2) value = value + "0";
+        return new boolean[]{value.charAt(0) == '1', value.charAt(1) == '1', value.charAt(2) == '1'};
     }
 
-    public void setLastConfig(boolean friends, boolean teams) {
-        mPrefs.edit().putString(KEY_CONFIG, (friends ? "1" : "0") + (teams ? "1" : "0")).apply();
+    public void setLastConfig(boolean friends, boolean teams, boolean chat) {
+        mPrefs.edit().putString(KEY_CONFIG, (friends ? "1" : "0") + (teams ? "1" : "0") + (chat ? "1" : "0")).apply();
     }
 
     /** Signed out: the choices about other players go; the notification switches stay. */
     public void clearAccount() {
         mPrefs.edit().remove(KEY_FAVOURITES).remove(KEY_ENDED_CALLS).remove(KEY_PUSH_REGISTERED)
-                .remove(KEY_CREW_AUDIBLE).remove(KEY_CALLED_AT).remove(KEY_OWN_CALL_UNTIL).apply();
+                .remove(KEY_CREW_AUDIBLE).remove(KEY_CALLED_AT).remove(KEY_OWN_CALL_UNTIL)
+                .remove(KEY_MUTED_CONVERSATIONS).remove(KEY_CREW_NAMES).apply();
     }
 }

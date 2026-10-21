@@ -46,6 +46,11 @@ public final class ScreenHeader extends LinearLayout {
         mTitle.setText(title);
     }
 
+    /** M20: the title as it reads now (a sheet opened from the screen names it). */
+    public String getTitleText() {
+        return mTitle.getText().toString();
+    }
+
     /** A line under the title; null hides it. */
     public void setCaption(@Nullable CharSequence caption) {
         mCaption.setText(caption);

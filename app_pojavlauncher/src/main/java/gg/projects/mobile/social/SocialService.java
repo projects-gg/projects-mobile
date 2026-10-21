@@ -23,7 +23,10 @@ import net.kdt.pojavlaunch.R;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.TimeZone;
@@ -34,6 +37,7 @@ import gg.projects.mobile.ProjectsContent;
 import gg.projects.mobile.content.Snapshot;
 import gg.projects.mobile.language.LanguageManager;
 import gg.projects.mobile.social.SocialModel.Call;
+import gg.projects.mobile.social.SocialModel.Crew;
 import gg.projects.mobile.social.SocialModel.Friend;
 import gg.projects.mobile.social.SocialModel.FriendsData;
 import gg.projects.mobile.social.SocialModel.Me;
@@ -43,17 +47,21 @@ import gg.projects.mobile.social.SocialModel.Team;
 import gg.projects.mobile.social.SocialModel.TeamNotifications;
 
 /**
- * The friends feature on the phone (M19): the session, the friend list and crew from the service,
+ * The friends feature on the phone (M19): the session, the friend list and crews from the service,
  * the presence socket, the Discord sign-in and the phone notifications. One instance in the
  * launcher's process; every method runs on the main thread, network calls on two worker threads.
  *
  * <p>The socket is open only while the launcher's screens are on screen (closed 10 s after they
- * leave, so a quick look at another app keeps it), and while the player's own crew call runs, which
- * would end with the player's last socket: calling the crew and then starting the game keeps it
- * until the call ends. Without a socket the service sends phone notifications instead (soc6.md);
- * while the app keeps one in the background it turns what the socket brings into the same
- * notifications. The list is read when a screen shows and is older than a minute, and after a
- * reconnect: nothing polls.
+ * leave, so a quick look at another app keeps it). Without a socket the service sends phone
+ * notifications instead (soc6.md); while the app keeps one in the background it turns what the
+ * socket brings into the same notifications. The list is read when a screen shows and is older than
+ * a minute, and after a reconnect: nothing polls.
+ *
+ * <p>M20 (SOC7): several crews ({@code multi}), calls naming their crews and their server, crew chat
+ * and direct messages ({@link SocialChat}), reports, moderators' notes and restricted accounts. The
+ * phone does not start crew calls (CALL1: a call starts only from a multiplayer server in a game the
+ * launcher reported, and the phone cannot say it is in game yet), so M19's socket that kept the
+ * player's own call through the game is gone; answering calls works as before.
  */
 public final class SocialService implements ProjectsContent.Listener, PresenceConnection.Listener {
     private static final String TAG = "ProjectsSocial";
@@ -76,13 +84,13 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     }
 
     /** What the sign-in screen shows. */
-    public enum SignInStatus { IDLE, CHECKING, WAITING, CLAIMING, FAILED, UNAVAILABLE }
+    public enum SignInStatus { IDLE, CHECKING, WAITING, CLAIMING, FAILED, UNAVAILABLE, RESTRICTED, SIGNUPS_CLOSED }
 
     /** The connection as the screens tell it. */
     public enum Connection { OFF, CONNECTING, LIVE, UNAVAILABLE, REPLACED }
 
     /** A screen that shows friends' news itself (no notification needed while it is up). */
-    public enum Surface { HOME, FRIENDS, CREW }
+    public enum Surface { HOME, FRIENDS, CREW, CHAT }
 
     private static SocialService sInstance;
 
@@ -104,6 +112,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     private final SocialPrefs mPrefs;
     private final SocialState mState = new SocialState();
     private final SignInFlow mSignIn = new SignInFlow();
+    private final SocialChat mChat;
     private final ExecutorService mIo = Executors.newFixedThreadPool(2);
     private final Handler mMain = new Handler(Looper.getMainLooper());
     private final List<Listener> mListeners = new ArrayList<>();
@@ -115,6 +124,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     private String mToken;
     private boolean mConfigFriends;
     private boolean mConfigTeams;
+    private boolean mConfigChat;
     private boolean mConfigKnown;
 
     @Nullable
@@ -129,17 +139,25 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     private SignInStatus mSignInStatus = SignInStatus.IDLE;
     /** The session ended on the service's side: the friends screen says so once. */
     private boolean mSignedOutRemotely;
+    /**
+     * MOD1: the session ended because the account is suspended (until then, Unix seconds) or banned
+     * (0); null otherwise. The sign-in screen says so (and a claim refused the same way sets it).
+     */
+    @Nullable
+    private Long mRestrictedUntil;
+    /** The conversation on screen (the chat screen), null when none. */
+    @Nullable
+    private String mOpenConversation;
     private final Runnable mReconnect = this::ensureConnected;
     private final Runnable mBackgroundClose = this::closeIfIdle;
     private boolean mPushSyncing;
-    /** The socket told the hub the player is in game (their own call runs while the game plays). */
-    private boolean mPlayingSent;
     /** A push sync was asked for while one ran: it runs again after. */
     private boolean mPushAgain;
-    /** M19: the game's process keeps the player's own crew call (the launcher's process is gone below the game). */
-    private boolean mGameKeeper;
     /** Socket messages that change what {@code GET /v1/friends} answers (a list read meanwhile is read again). */
     private int mListChanges;
+    /** A crew order on its way (TEAM4): the list read meanwhile keeps it. */
+    @Nullable
+    private List<String> mOrderSent;
 
     private SocialService(Context app) {
         mApp = app;
@@ -147,9 +165,13 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         mApi = new SocialApi(mDebug.url, ProjectsContent.userAgent());
         mStore = new SessionStore(app, mDebug.override ? "session-debug.json" : "session.json");
         mPrefs = new SocialPrefs(app);
+        // M19's socket that kept the player's own call in the game is not used any more (see the class doc).
+        mPrefs.setOwnCallUntil(0);
         boolean[] config = mPrefs.lastConfig();
         mConfigFriends = config[0];
         mConfigTeams = config[1];
+        mConfigChat = config[2];
+        mChat = new SocialChat(new ChatHost());
         SessionStore.Saved saved = mStore.load();
         mToken = saved.token;
         mApi.setToken(mToken);
@@ -157,8 +179,57 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         if (mToken == null) {
             mSignIn.restore(saved.attempt, nowSeconds());
             if (mSignIn.phase() == SignInFlow.Phase.WAITING) mSignInStatus = SignInStatus.WAITING;
+        } else if (saved.userId != null) {
+            mChat.open(saved.userId);
         }
         ProjectsContent.addListener(this);
+    }
+
+    /** What the chat needs of this service. */
+    private final class ChatHost implements SocialChat.Host {
+        @Override
+        public Context context() {
+            return mApp;
+        }
+
+        @Override
+        public SocialState state() {
+            return mState;
+        }
+
+        @Override
+        public SocialGate gate() {
+            return SocialService.this.gate();
+        }
+
+        @Override
+        public SocialPrefs prefs() {
+            return mPrefs;
+        }
+
+        @Nullable
+        @Override
+        public PresenceConnection chatConnection() {
+            PresenceConnection connection = mConnection;
+            if (connection == null || !mLiveSocket || !mState.caps().contains("chat") || !gate().chat) return null;
+            return connection;
+        }
+
+        @Override
+        public boolean foreground() {
+            return mUiStarted > 0;
+        }
+
+        @Nullable
+        @Override
+        public String openConversation() {
+            return surfaceShown(Surface.CHAT) ? mOpenConversation : null;
+        }
+
+        @Override
+        public void changed() {
+            SocialService.this.changed();
+        }
     }
 
     // ---- reading ----
@@ -169,6 +240,10 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
 
     public SocialPrefs prefs() {
         return mPrefs;
+    }
+
+    public SocialChat chat() {
+        return mChat;
     }
 
     public boolean signedIn() {
@@ -182,8 +257,14 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     public SocialGate gate() {
         boolean friends = mConfigFriends || mDebug.forceFriends;
         boolean teams = mConfigTeams || mDebug.forceTeams;
-        return SocialGate.of(friends, teams, mState.limits().teamMembers, mState.teamFeatures(), mState.features(),
-                BuildConfig.PROJECTS_FIREBASE || mDebug.pushToken != null);
+        Me me = mState.me();
+        return SocialGate.of(friends, teams, chatEnabled(), mState.limits().teamMembers, mState.teamFeatures(), mState.features(),
+                BuildConfig.PROJECTS_FIREBASE || mDebug.pushToken != null, me != null && me.moderation);
+    }
+
+    /** Studio's {@code features.chat} (or the debug override): the socket asks for chat only then. */
+    private boolean chatEnabled() {
+        return (mConfigFriends || mDebug.forceFriends) && (mConfigChat || mDebug.forceChat);
     }
 
     /** Debug builds: a made-up FCM token to register instead of Firebase's (projects-debug.json). */
@@ -217,8 +298,14 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         return was;
     }
 
+    /** Suspended until then (Unix seconds), banned (0), or null: what the sign-in screen says. */
+    @Nullable
+    public Long restrictedUntil() {
+        return mRestrictedUntil;
+    }
+
     public HomeLine homeLine() {
-        return HomeLine.of(signedIn(), mUnavailable, mState, mPrefs.favourites(), gate().teams, nowSeconds());
+        return HomeLine.of(signedIn(), mUnavailable, mState, mPrefs.favourites(), gate().teams, nowSeconds(), mChat.unreadDirect());
     }
 
     public static long nowSeconds() {
@@ -246,20 +333,26 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         if (snapshot == null || snapshot.config == null) return;
         boolean friends = snapshot.config.friendsFeature;
         boolean teams = snapshot.config.teamsFeature;
-        boolean same = friends == mConfigFriends && teams == mConfigTeams;
+        boolean chat = snapshot.config.chatFeature;
+        boolean chatChanged = chat != mConfigChat;
+        boolean same = friends == mConfigFriends && teams == mConfigTeams && !chatChanged;
         if (mConfigKnown && same) return;
         mConfigKnown = true;
         mConfigFriends = friends;
         mConfigTeams = teams;
-        mPrefs.setLastConfig(friends, teams);
+        mConfigChat = chat;
+        mPrefs.setLastConfig(friends, teams, chat);
         if (same) return;
         if (!enabled()) {
             // Turned off: the session is kept (the desktop's rule), the socket and the phone's pushes go.
             closeConnection();
             if (mToken != null) syncPush();
         } else {
+            // Chat came or went: the socket asks again with the right capabilities.
+            if (chatChanged && mConnection != null) closeConnection();
             ensureConnected();
             if (mUiStarted > 0) refresh(false);
+            if (mToken != null) syncPush();
         }
         changed();
     }
@@ -271,10 +364,6 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     public void uiStarted() {
         mUiStarted++;
         mMain.removeCallbacks(mBackgroundClose);
-        if (mPlayingSent) {
-            mPlayingSent = false;
-            backInLauncher();
-        }
         if (mToken != null && enabled()) {
             ensureConnected();
             refresh(false);
@@ -302,93 +391,42 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         if (shown) SocialNotifications.cancelSeen(mApp, mState, surface == Surface.FRIENDS, surface == Surface.CREW);
     }
 
+    /** M20: the chat screen shows {@code conv} (null: it left). */
+    @MainThread
+    public void conversationShown(@Nullable String conv) {
+        mOpenConversation = conv;
+        surfaceShown(Surface.CHAT, conv != null);
+        if (conv != null) mChat.seen(conv);
+    }
+
     private boolean surfaceShown(Surface surface) {
         return mUiStarted > 0 && mSurfaces[surface.ordinal()] > 0;
     }
 
-    /** No screen and no call of the player's own: the socket goes, the phone's notifications take over. */
+    /** No screen: the socket goes, the phone's notifications take over. */
     private void closeIfIdle() {
         if (mUiStarted > 0) return;
-        Call own = mState.ownCall(nowSeconds());
-        if (own != null && mConnection != null) {
-            // The player's own call ends with their last socket: kept until the call is over. Started
-            // from here, the game shows the crew where the caller is (a call on Projects becomes "join").
-            if (!mPlayingSent && SocialRoutes.gameRunning(mApp)) {
-                mPlayingSent = true;
-                gameStarting(projectsSelected());
-            }
-            long left = mState.secondsLeft(own, nowSeconds());
-            mMain.removeCallbacks(mBackgroundClose);
-            mMain.postDelayed(mBackgroundClose, Math.max(5_000, Math.min(60_000, left * 1000L + 2_000)));
-            return;
-        }
-        if (mGameKeeper) {
-            // The call is over: the game's socket goes (the player is not shown in game without one).
-            mGameKeeper = false;
-            mPrefs.setOwnCallUntil(0);
-        }
         closeConnection();
         changed();
     }
 
     /**
-     * M19, the launcher starting the game: upstream ends the launcher's process right away, which would end
-     * the player's own crew call with its socket. When one runs, the game's process is told to keep it and
-     * the launcher's process goes this many milliseconds later (its socket holds the call meanwhile); 0
-     * when there is none.
+     * M19 handed the player's own crew call to the game's process here; the phone no longer starts
+     * calls (CALL1), so nothing is handed over and the launcher's process goes as upstream ends it.
      */
     @MainThread
     public static long handOverOwnCall(Context context) {
-        try {
-            if (!exists()) return 0;
-            SocialService service = get(context);
-            Call own = service.mState.ownCall(nowSeconds());
-            if (own == null || service.mToken == null || !service.mLiveSocket) {
-                service.mPrefs.setOwnCallUntil(0);
-                return 0;
-            }
-            service.mPrefs.setOwnCallUntil(nowSeconds() + service.mState.secondsLeft(own, nowSeconds()));
-            return 10_000;
-        } catch (RuntimeException e) {
-            Log.w(TAG, "crew call not handed over", e);
-            return 0;
-        }
+        return 0;
     }
 
-    /**
-     * M19, the game's process starting: when the player's own crew call was running (the launcher wrote it
-     * down), one socket keeps it until it ends, telling the hub the player is in game (on Projects, a call
-     * the crew can join). Nothing else runs here: no list, no push registration.
-     */
+    /** M19's keeper of the player's own call in the game's process: nothing to keep any more (CALL1). */
     @MainThread
     public static void keepOwnCallInGame(Context context) {
         try {
             SocialPrefs prefs = new SocialPrefs(context);
-            long until = prefs.ownCallUntil();
-            if (until <= nowSeconds()) return;
-            SocialService service = get(context);
-            if (service.mToken == null || !service.enabled()) {
-                prefs.setOwnCallUntil(0);
-                return;
-            }
-            service.mGameKeeper = true;
-            service.mPlayingSent = true;
-            service.ensureConnected();
-            // Never past the call's end, whatever the socket says.
-            service.mMain.postDelayed(service.mBackgroundClose, Math.max(5_000, (until - nowSeconds()) * 1000L + 2_000));
+            if (prefs.ownCallUntil() != 0) prefs.setOwnCallUntil(0);
         } catch (RuntimeException e) {
-            Log.w(TAG, "crew call not kept in game", e);
-        }
-    }
-
-    /** The profile Play starts is the Projects profile (its start joins projects.gg). */
-    private static boolean projectsSelected() {
-        try {
-            android.content.SharedPreferences prefs = net.kdt.pojavlaunch.prefs.LauncherPreferences.DEFAULT_PREF;
-            return prefs != null && gg.projects.mobile.join.ProjectsProfile.KEY.equals(
-                    prefs.getString(net.kdt.pojavlaunch.prefs.LauncherPreferences.PREF_KEY_CURRENT_PROFILE, ""));
-        } catch (RuntimeException e) {
-            return false;
+            Log.w(TAG, "crew call record not cleared", e);
         }
     }
 
@@ -401,13 +439,21 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
 
     // ---- the presence socket ----
 
+    /** What the socket says it understands (README "Capabilities"): older services ignore it. */
+    private List<String> caps() {
+        List<String> caps = new ArrayList<>();
+        caps.add("callServer");
+        caps.add("crews");
+        if (chatEnabled()) caps.add("chat");
+        return caps;
+    }
+
     @MainThread
     private void ensureConnected() {
         mMain.removeCallbacks(mReconnect);
         if (mToken == null || !enabled() || mReplaced || mConnection != null) return;
-        boolean wanted = mUiStarted > 0 || mState.ownCall(nowSeconds()) != null || (mGameKeeper && !mLiveSocket);
-        if (!wanted) return;
-        mConnection = PresenceConnection.open(mApi, mToken, this);
+        if (mUiStarted == 0) return;
+        mConnection = PresenceConnection.open(mApi, mToken, caps(), this);
         changed();
     }
 
@@ -418,6 +464,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         mLiveSocket = false;
         if (connection != null) connection.close();
         mState.setOffline();
+        mChat.disconnected();
     }
 
     /** "Yeniden bağlan" after the account was opened on another device. */
@@ -440,16 +487,16 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         if (connection != mConnection) return;
         long now = nowSeconds();
         String type = Json.str(message, "t", "");
+        if (mChat.onFrame(message)) {
+            changed();
+            return;
+        }
         if (type.equals("hello")) {
             mLiveSocket = true;
             mUnavailable = false;
             mBackoff.healthy();
-            // A new socket starts in the launcher: still in game, the hub hears it again.
-            if (mPlayingSent && mUiStarted == 0) gameStarting(projectsSelected());
-            // After a reconnect the list may have moved on (the game's process reads no list).
-            if (!mGameKeeper) refresh(false);
-        } else if (type.equals("bye")) {
-            return;
+            // After a reconnect the list may have moved on.
+            refresh(false);
         }
         switch (type) {
             case "friend_added":
@@ -459,6 +506,8 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
             case "team":
             case "team_invite":
             case "team_notifications":
+            case "crew_notifications":
+            case "crew_order":
                 mListChanges++;
                 break;
             default:
@@ -466,13 +515,10 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         }
         List<SocialState.Notice> notices = mState.apply(message, now);
         if (type.equals("team_notifications") || type.equals("hello")) mPrefs.setCrewSettings(mState.teamNotifications());
+        if (type.equals("team") || type.equals("crew_order")) rememberCrewNames();
         handleNotices(notices);
+        if (type.equals("hello")) mChat.connected();
         changed();
-        if (mGameKeeper && mUiStarted == 0 && (type.equals("hello") || type.equals("call_end"))) {
-            // The game's socket: kept only while the player's own call is there.
-            mMain.removeCallbacks(mBackgroundClose);
-            closeIfIdle();
-        }
     }
 
     @Override
@@ -481,17 +527,26 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         mConnection = null;
         mLiveSocket = false;
         mState.setOffline();
+        mChat.disconnected();
         switch (code) {
-            case 4001:
-                sessionEnded(false);
+            case 4001: {
+                // Signed out, revoked, expired or (after "bye") restricted: sign in again, no reconnect.
+                Long restricted = mState.restrictedUntil();
+                sessionEnded(false, restricted);
                 return;
+            }
             case 4002:
-                sessionEnded(true);
+                sessionEnded(true, null);
                 return;
             case 4000:
                 // Replaced by a newer connection of the same account: no automatic reconnect.
                 mReplaced = true;
                 changed();
+                return;
+            case PresenceConnection.FORBIDDEN:
+                // A restricted account: the list's answer says until when (and ends the session).
+                mLastTry = 0;
+                refresh(true);
                 return;
             default:
                 break;
@@ -530,9 +585,14 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
                     if (parsed != null) {
                         mState.setMe(parsed);
                         mStore.save(mToken, parsed.profile.id, me, null);
+                        mChat.open(parsed.profile.id);
                     }
+                    List<String> order = mOrderSent;
                     mState.applyFriends(FriendsData.read(friends));
+                    // An order the player just chose wins over a list read before it reached the service.
+                    if (order != null) mState.setCrewOrder(order);
                     mPrefs.setCrewSettings(mState.teamNotifications());
+                    rememberCrewNames();
                     mLastFetch = System.currentTimeMillis();
                     if (!mLiveSocket && mConnection == null) mUnavailable = false;
                     else if (mLiveSocket) mUnavailable = false;
@@ -550,7 +610,11 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
                     mFetching = false;
                     if (!token.equals(mToken)) return;
                     if (problem.kind == SocialProblem.Kind.SIGNED_OUT) {
-                        sessionEnded(false);
+                        sessionEnded(false, null);
+                        return;
+                    }
+                    if (problem.restricted()) {
+                        sessionEnded(false, problem.until == null ? 0L : problem.until);
                         return;
                     }
                     mUnavailable = true;
@@ -562,6 +626,13 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         });
     }
 
+    /** The crews' names for a call's push while the app sleeps (id → name). */
+    private void rememberCrewNames() {
+        Map<String, String> names = new HashMap<>();
+        for (Crew c : mState.crews()) names.put(c.id(), c.team.name);
+        mPrefs.setCrewNames(names);
+    }
+
     // ---- sign-in ----
 
     /** "Discord ile giriş yap": the browser opens only when the service answers. */
@@ -570,6 +641,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         if (mToken != null || mSignInStatus == SignInStatus.CHECKING || mSignInStatus == SignInStatus.CLAIMING) return;
         mSignIn.starting();
         mSignInStatus = SignInStatus.CHECKING;
+        mRestrictedUntil = null;
         changed();
         mIo.execute(() -> {
             try {
@@ -661,7 +733,15 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
             } catch (final SocialProblem problem) {
                 mMain.post(() -> {
                     mSignIn.reset();
-                    mSignInStatus = problem.kind == SocialProblem.Kind.UNAVAILABLE ? SignInStatus.UNAVAILABLE : SignInStatus.FAILED;
+                    if (problem.restricted()) {
+                        // MOD1: suspended or banned; the sign-in screen says until when, nothing technical.
+                        mRestrictedUntil = problem.until == null ? 0L : problem.until;
+                        mSignInStatus = SignInStatus.RESTRICTED;
+                    } else if (problem.kind == SocialProblem.Kind.SIGNUPS_CLOSED) {
+                        mSignInStatus = SignInStatus.SIGNUPS_CLOSED;
+                    } else {
+                        mSignInStatus = problem.kind == SocialProblem.Kind.UNAVAILABLE ? SignInStatus.UNAVAILABLE : SignInStatus.FAILED;
+                    }
                     changed();
                 });
             }
@@ -703,10 +783,12 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         mState.setMe(me);
         mStore.save(token, me.profile.id, Json.obj(answer, "me"), null);
         mSignInStatus = SignInStatus.IDLE;
+        mRestrictedUntil = null;
         mUnavailable = false;
         mReplaced = false;
         mLastFetch = 0;
         mBackoff.reset();
+        mChat.open(me.profile.id);
         changed();
         refresh(true);
         ensureConnected();
@@ -749,10 +831,11 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         changed();
     }
 
-    /** "Verilerimi sil": the account and everything in it, then signed out. */
+    /** "Verilerimi sil": the account and everything in it, then signed out (its chat history leaves the phone too). */
     @MainThread
     public void deleteAccount(final Result<Void> result) {
         final String token = mToken;
+        final String userId = signedInId();
         if (token == null) return;
         mIo.execute(() -> {
             mApi.bind(token);
@@ -760,6 +843,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
                 mApi.deleteAccount();
                 mMain.post(() -> {
                     if (token.equals(mToken)) {
+                        if (userId != null) mChat.deleteLocal(userId);
                         forgetSession();
                         PushRegistrar.forget(mApp);
                         changed();
@@ -774,10 +858,13 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         });
     }
 
-    private void sessionEnded(boolean deleted) {
-        Log.i(TAG, deleted ? "account deleted elsewhere" : "session ended");
+    /** @param restricted suspended until then, banned (0), or null for any other end */
+    private void sessionEnded(boolean deleted, @Nullable Long restricted) {
+        Log.i(TAG, deleted ? "account deleted elsewhere" : restricted != null ? "account restricted" : "session ended");
         forgetSession();
-        mSignedOutRemotely = !deleted;
+        mSignedOutRemotely = !deleted && restricted == null;
+        mRestrictedUntil = restricted;
+        if (restricted != null) mSignInStatus = SignInStatus.RESTRICTED;
         changed();
     }
 
@@ -793,6 +880,8 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         mUnavailable = false;
         mReplaced = false;
         mLastFetch = 0;
+        mOrderSent = null;
+        mChat.close();
         SocialNotifications.cancelAll(mApp);
     }
 
@@ -801,7 +890,6 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     /** Registers this phone for pushes, refreshes or ends its registration, as the switches say. */
     @MainThread
     public void syncPush() {
-        if (mGameKeeper) return;
         if (mPushSyncing) {
             // A switch changed (or the list came) while one ran: once more after it.
             mPushAgain = true;
@@ -835,6 +923,10 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         SocialGate gate = gate();
         boolean calls = gate.mute ? mState.teamNotifications().calls : mPrefs.wantsCallsLocally();
         if (gate.teams && calls && SocialNotifications.channelOn(mApp, SocialNotifications.CHANNEL_CALLS)) kinds.add(PushMessage.CALL);
+        // CHAT1: "message" must be asked for by name (an older registration never gets them).
+        if (gate.chat && mPrefs.wantsMessages() && SocialNotifications.channelOn(mApp, SocialNotifications.CHANNEL_MESSAGES)) {
+            kinds.add(PushMessage.MESSAGE);
+        }
         return kinds;
     }
 
@@ -857,11 +949,12 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
 
     /** The kinds the player keeps on, for pushes that come in (whatever the channels say: Android drops those). */
     Set<String> wantedForIncoming() {
-        Set<String> kinds = new java.util.HashSet<>();
+        Set<String> kinds = new HashSet<>();
         if (mPrefs.wantsRequests()) kinds.add(PushMessage.REQUEST);
         if (mPrefs.wantsInvites()) kinds.add(PushMessage.INVITE);
         boolean calls = gate().mute ? mState.teamNotifications().calls : mPrefs.wantsCallsLocally();
         if (calls) kinds.add(PushMessage.CALL);
+        if (mPrefs.wantsMessages()) kinds.add(PushMessage.MESSAGE);
         return kinds;
     }
 
@@ -886,10 +979,15 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
                 case CALL: {
                     Call call = notice.call;
                     if (call == null || !gate().calls) break;
-                    boolean audible = gate().mute ? mState.teamNotifications().callsAudible(now) : mPrefs.wantsCallsLocally();
+                    boolean audible = gate().mute ? mState.callAudible(call, now) : mPrefs.wantsCallsLocally();
                     if (!audible || surfaceShown(Surface.CREW) || surfaceShown(Surface.HOME) || surfaceShown(Surface.FRIENDS)) break;
-                    SocialNotifications.showCall(context, call.id, call.from, notice.who == null ? null : notice.who.name(),
-                            call.joinable(), mState.secondsLeft(call, now) * 1000L);
+                    List<Crew> crews = mState.callCrews(call);
+                    List<String> names = new ArrayList<>();
+                    for (Crew c : crews) names.add(c.team.name);
+                    String title = SocialNotifications.callTitle(context, notice.who == null ? null : notice.who.name(), names,
+                            mState.crews().size() > 1);
+                    SocialNotifications.showCall(context, call.id, crews.isEmpty() ? null : crews.get(0).id(), title,
+                            SocialNotifications.callPlace(context, call.place(), call.serverHost), mState.secondsLeft(call, now) * 1000L);
                     break;
                 }
                 case CALL_ENDED:
@@ -911,11 +1009,24 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
                     break;
                 case TEAM_GONE:
                     if (foreground && !notice.byMe && gate().teams) {
-                        String text = "kicked".equals(notice.reason)
-                                ? context.getString(R.string.projects_crew_kicked, notice.teamName)
-                                : "disbanded".equals(notice.reason) ? context.getString(R.string.projects_crew_disbanded, notice.teamName) : null;
+                        String text;
+                        if ("disbanded".equals(notice.reason) && notice.byStaff) {
+                            text = context.getString(R.string.projects_mod_crew_disbanded, notice.teamName);
+                        } else if ("kicked".equals(notice.reason)) {
+                            text = context.getString(R.string.projects_crew_kicked, notice.teamName);
+                        } else if ("disbanded".equals(notice.reason)) {
+                            text = context.getString(R.string.projects_crew_disbanded, notice.teamName);
+                        } else {
+                            text = null;
+                        }
                         if (text != null) Toast.makeText(context, text, Toast.LENGTH_LONG).show();
                     }
+                    break;
+                case RESTRICTED:
+                    // The socket closes with 4001 next: onEnded ends the session with this.
+                    break;
+                case MOD_NOTICE:
+                    // The screens show the note once (they read me.notices).
                     break;
                 default:
                     break;
@@ -949,7 +1060,8 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
             } catch (final SocialProblem problem) {
                 mMain.post(() -> {
                     if (!token.equals(mToken)) return;
-                    if (problem.kind == SocialProblem.Kind.SIGNED_OUT) sessionEnded(false);
+                    if (problem.kind == SocialProblem.Kind.SIGNED_OUT) sessionEnded(false, null);
+                    else if (problem.restricted()) sessionEnded(false, problem.until == null ? 0L : problem.until);
                     result.failed(problem);
                 });
             } finally {
@@ -1082,6 +1194,42 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         changed();
     }
 
+    // ---- reports and notices (MOD1) ----
+
+    /**
+     * "Rapor et": the report goes; with "Engelle" ({@code block} in the body) the player is blocked here
+     * too (the service blocks with it, best effort).
+     */
+    public void report(final JsonObject body, @Nullable final Profile block, Result<JsonObject> result) {
+        run(() -> mApi.report(body), result, answer -> {
+            if (block != null && Json.bool(body, "block", false)) {
+                mState.block(block);
+                mPrefs.setFavourite(block.id, false);
+            }
+        });
+    }
+
+    /** The player saw these moderators' notes: they go here at once, from the service when it answers. */
+    @MainThread
+    public void noticesSeen(final Set<String> ids) {
+        if (ids.isEmpty()) return;
+        mState.noticesSeen(ids);
+        changed();
+        final String token = mToken;
+        if (token == null) return;
+        final List<String> list = new ArrayList<>(ids);
+        mIo.execute(() -> {
+            mApi.bind(token);
+            try {
+                mApi.noticesSeen(list);
+            } catch (SocialProblem problem) {
+                Log.i(TAG, "notices not marked seen: " + problem.kind);
+            } finally {
+                mApi.bind(null);
+            }
+        });
+    }
+
     // ---- invites ("Birlikte oyna") ----
 
     public void dismissInvite(String inviteId) {
@@ -1091,23 +1239,32 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
 
     // ---- crews ----
 
+    /** A crew's answer ({@code {team, invited}}): with several crews that crew, else the player's one crew. */
     private void applyTeamAnswer(JsonObject answer) {
         Team team = Team.read(Json.obj(answer, "team"));
-        Set<String> invited = new java.util.HashSet<>();
+        Set<String> invited = new HashSet<>();
         for (String id : Json.strings(answer, "invited")) if (SocialModel.isUserId(id)) invited.add(id);
-        mState.setTeam(team, invited);
+        if (gate().multi) {
+            if (team != null) mState.upsertCrew(team, invited);
+        } else {
+            mState.setTeam(team, invited);
+        }
+        rememberCrewNames();
     }
 
     public void lookupTeam(String code, Result<JsonObject> result) {
-        run(() -> mApi.lookupTeam(code), result, null);
+        final boolean multi = gate().multi;
+        run(() -> mApi.lookupTeam(code, multi), result, null);
     }
 
     public void joinTeam(String code, Result<JsonObject> result) {
-        run(() -> mApi.joinTeam(code), result, this::applyTeamAnswer);
+        final boolean multi = gate().multi;
+        run(() -> mApi.joinTeam(code, multi), result, this::applyTeamAnswer);
     }
 
     public void acceptTeamInvite(final String teamId, Result<JsonObject> result) {
-        run(() -> mApi.acceptTeamInvite(teamId), result, answer -> {
+        final boolean multi = gate().multi;
+        run(() -> mApi.acceptTeamInvite(teamId, multi), result, answer -> {
             mState.removeTeamInvite(teamId);
             applyTeamAnswer(answer);
         });
@@ -1121,6 +1278,8 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     }
 
     public void createTeam(JsonObject body, Result<JsonObject> result) {
+        // A second crew (and every one with several crews) needs "multi"; an older service refuses the field.
+        if (gate().multi) body.addProperty("multi", true);
         run(() -> mApi.createTeam(body), result, this::applyTeamAnswer);
     }
 
@@ -1128,21 +1287,27 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         run(() -> {
             mApi.leaveTeam(teamId);
             return null;
-        }, result, value -> mState.setTeam(null, null));
+        }, result, value -> leftCrew(teamId));
     }
 
     public void disbandTeam(final String teamId, Result<Void> result) {
         run(() -> {
             mApi.disbandTeam(teamId);
             return null;
-        }, result, value -> mState.setTeam(null, null));
+        }, result, value -> leftCrew(teamId));
+    }
+
+    private void leftCrew(String teamId) {
+        if (gate().multi) mState.removeCrew(teamId);
+        else mState.setTeam(null, null);
+        rememberCrewNames();
     }
 
     public void inviteToTeam(final String teamId, final String friendId, Result<Void> result) {
         run(() -> {
             mApi.inviteToTeam(teamId, friendId);
             return null;
-        }, result, value -> mState.addTeamInvited(friendId));
+        }, result, value -> mState.addCrewInvited(teamId, friendId));
     }
 
     public void removeMember(final String teamId, final String userId, Result<Void> result) {
@@ -1157,6 +1322,12 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     }
 
     private void refreshTeam() {
+        if (gate().multi) {
+            // The crews' answer of several crews is the list's: read it whole.
+            mLastFetch = 0;
+            refresh(false);
+            return;
+        }
         final String token = mToken;
         if (token == null) return;
         mIo.execute(() -> {
@@ -1176,7 +1347,45 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         });
     }
 
-    /** "Sessize al": one of the presets (the hub's clock when known). */
+    /**
+     * TEAM4: the crews in a new order (the first is the primary crew), shown at once; a refusal
+     * brings the order back and reads the list again ({@code crews_changed}).
+     */
+    @MainThread
+    public void setCrewOrder(final List<String> order, final Result<Void> result) {
+        final List<String> before = mState.crewIds();
+        if (before.equals(order)) {
+            result.ok(null);
+            return;
+        }
+        mState.setCrewOrder(order);
+        mOrderSent = new ArrayList<>(order);
+        changed();
+        run(() -> {
+            mApi.crewOrder(order);
+            return null;
+        }, new Result<Void>() {
+            @Override
+            public void ok(Void value) {
+                if (order.equals(mOrderSent)) mOrderSent = null;
+                result.ok(null);
+            }
+
+            @Override
+            public void failed(SocialProblem problem) {
+                if (order.equals(mOrderSent)) mOrderSent = null;
+                mState.setCrewOrder(before);
+                changed();
+                if (problem.kind == SocialProblem.Kind.CREWS_CHANGED) {
+                    mLastFetch = 0;
+                    refresh(false);
+                }
+                result.failed(problem);
+            }
+        }, null);
+    }
+
+    /** "Sessize al": one of the presets (the hub's clock when known), for every crew. */
     public void mute(MutePresets.Preset preset, Result<TeamNotifications> result) {
         long now = mState.hubNow(nowSeconds());
         JsonObject body = Json.parseObject(MutePresets.body(preset, now, TimeZone.getDefault()));
@@ -1187,6 +1396,23 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         JsonObject body = new JsonObject();
         body.addProperty("muted", false);
         patchNotifications(body, result);
+    }
+
+    /** TEAM4: "Sessize al" for one crew (the player's own mute of it). */
+    public void muteCrew(final String teamId, MutePresets.Preset preset, Result<TeamNotifications> result) {
+        long now = mState.hubNow(nowSeconds());
+        JsonObject body = Json.parseObject(MutePresets.body(preset, now, TimeZone.getDefault()));
+        patchCrewNotifications(teamId, body, result);
+    }
+
+    public void unmuteCrew(final String teamId, Result<TeamNotifications> result) {
+        JsonObject body = new JsonObject();
+        body.addProperty("muted", false);
+        patchCrewNotifications(teamId, body, result);
+    }
+
+    private void patchCrewNotifications(final String teamId, final JsonObject body, Result<TeamNotifications> result) {
+        run(() -> TeamNotifications.read(mApi.crewNotifications(teamId, body)), result, value -> mState.setCrewMute(teamId, value));
     }
 
     /** "Ekip çağrıları" (with {@code mute}: the service's setting, the same on every device). */
@@ -1218,32 +1444,15 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
             result.failed(SocialProblem.unavailable("no socket"));
             return;
         }
-        connection.request(message, (error, retryAfter) -> {
-            if (error == null) {
+        connection.request(message, (PresenceConnection.Answer) answer -> {
+            if (answer != null && "ack".equals(Json.str(answer, "t"))) {
                 if (onAck != null) onAck.run();
                 changed();
                 result.ok(null);
                 return;
             }
-            SocialProblem.Kind kind;
-            switch (error) {
-                case "rate_limited": kind = SocialProblem.Kind.RATE_LIMITED; break;
-                case "call_active": kind = SocialProblem.Kind.CALL_ACTIVE; break;
-                case "call_not_found": kind = SocialProblem.Kind.CALL_ENDED; break;
-                case "team_not_permitted": kind = SocialProblem.Kind.NOT_PERMITTED; break;
-                case "team_not_found": kind = SocialProblem.Kind.NOT_IN_CREW; break;
-                case "unavailable": kind = SocialProblem.Kind.UNAVAILABLE; break;
-                default: kind = SocialProblem.Kind.FAILED; break;
-            }
-            result.failed(new SocialProblem(kind, 0, error, retryAfter));
+            result.failed(answer == null ? SocialProblem.unavailable("no answer") : SocialProblem.ofSocket(answer));
         });
-    }
-
-    /** "Ekibi çağır". */
-    public void startCall(Result<Void> result) {
-        JsonObject message = new JsonObject();
-        message.addProperty("t", "call");
-        socketRequest(message, result, () -> mPrefs.setCalledAt(nowSeconds()));
     }
 
     /** Geliyorum / Birazdan / Gelemem: shown at once, confirmed by the socket. */
@@ -1276,42 +1485,12 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         }, null);
     }
 
-    /** "Bitir": the player's own call. */
+    /** "Bitir": the player's own call (started on another device). */
     public void endCall(String callId, Result<Void> result) {
         JsonObject message = new JsonObject();
         message.addProperty("t", "call_end");
         message.addProperty("call", callId);
         socketRequest(message, result, null);
-    }
-
-    /** Seconds until the player may call the crew again (5 minutes after the last call from here). */
-    public long callWaitSeconds() {
-        long since = nowSeconds() - mPrefs.calledAt();
-        return since >= 0 && since < 300 ? 300 - since : 0;
-    }
-
-    /** The app started the game while the player's own call runs: the crew sees them on Projects. */
-    @MainThread
-    public void gameStarting(boolean projects) {
-        PresenceConnection connection = mConnection;
-        if (connection == null || !mLiveSocket) return;
-        JsonObject status = new JsonObject();
-        status.addProperty("t", "status");
-        status.addProperty("state", "playing");
-        // The Projects profile joins play.projects.gg; another profile's server is not known here.
-        if (projects) status.addProperty("host", "play.projects.gg");
-        connection.send(status);
-    }
-
-    /** Back in the launcher (its screens came back after a game). */
-    @MainThread
-    public void backInLauncher() {
-        PresenceConnection connection = mConnection;
-        if (connection == null || !mLiveSocket) return;
-        JsonObject status = new JsonObject();
-        status.addProperty("t", "status");
-        status.addProperty("state", "launcher");
-        connection.send(status);
     }
 
     /** For tests and the debug push path: the session's account id (null when signed out). */

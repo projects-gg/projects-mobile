@@ -44,7 +44,11 @@ import java.util.Set;
 
 import gg.projects.mobile.mods.Motion;
 import gg.projects.mobile.social.SocialGate;
+import gg.projects.mobile.social.SocialModel;
+import gg.projects.mobile.social.ChatBook;
+import gg.projects.mobile.social.ChatConv;
 import gg.projects.mobile.social.SocialModel.Call;
+import gg.projects.mobile.social.SocialModel.Crew;
 import gg.projects.mobile.social.SocialModel.Friend;
 import gg.projects.mobile.social.SocialModel.Invite;
 import gg.projects.mobile.social.SocialModel.Me;
@@ -82,6 +86,8 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
     private static final int T_HEADER = 3;
     private static final int T_PERSON = 4;
     private static final int T_EMPTY = 5;
+    /** M20: "Mesajlar" (CHAT1). */
+    private static final int T_MESSAGES = 6;
 
     private final Adapter mAdapter = new Adapter();
     private RecyclerView mList;
@@ -92,6 +98,7 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
     private TextView mWaitingTitle;
     private View mWaitingNote;
     private View mReopen;
+    private View mConsentRules;
     private ImageButton mAddAction;
     private ImageButton mSettingsAction;
     private boolean mRemoteSignOutShown;
@@ -140,6 +147,9 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
         mWaitingTitle = view.findViewById(R.id.projects_consent_waiting_title);
         mWaitingNote = view.findViewById(R.id.projects_consent_waiting_note);
         mReopen = view.findViewById(R.id.projects_consent_reopen);
+        mConsentRules = view.findViewById(R.id.projects_consent_rules);
+        Press.attach(mConsentRules, Press.Style.BUTTON);
+        mConsentRules.setOnClickListener(v -> SocialUi.openRules(requireActivity()));
         View cancel = view.findViewById(R.id.projects_consent_cancel);
         View privacy = view.findViewById(R.id.projects_consent_privacy);
         Drawable glyph = ContextCompat.getDrawable(view.getContext(), R.drawable.projects_ic_discord_glyph);
@@ -247,6 +257,8 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
         }
         answerPendingInvite(service);
         mAdapter.submit(buildRows(service));
+        // MOD1: a warning or a reset picture, once, on the first screen that sees it.
+        if (isResumed()) AccountNotes.showNotices(requireActivity());
         // Invites and calls end at their time without a message: the screen looks again then.
         mList.removeCallbacks(mTick);
         long now = SocialService.nowSeconds();
@@ -268,11 +280,20 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
         mWaitingNote.setVisibility(claiming ? View.GONE : View.VISIBLE);
         mReopen.setVisibility(claiming ? View.GONE : View.VISIBLE);
         String message = null;
+        boolean restricted = status == SocialService.SignInStatus.RESTRICTED;
         if (status == SocialService.SignInStatus.FAILED) message = getString(R.string.projects_social_sign_in_failed);
         else if (status == SocialService.SignInStatus.UNAVAILABLE) message = getString(R.string.projects_social_unavailable);
+        else if (restricted) {
+            Long until = service.restrictedUntil();
+            message = SocialUi.restrictedText(requireContext(), until == null ? 0 : until);
+        } else if (status == SocialService.SignInStatus.SIGNUPS_CLOSED) message = getString(R.string.projects_social_signups_closed);
         else if (mRemoteSignOutShown && status == SocialService.SignInStatus.IDLE) message = getString(R.string.projects_social_signed_out_remote);
         mConsentMessage.setText(message);
         mConsentMessage.setVisibility(message == null ? View.GONE : View.VISIBLE);
+        // MOD1: under "Hesabın … kısıtlandı.", the community rules; nothing technical.
+        mConsentRules.setVisibility(restricted ? View.VISIBLE : View.GONE);
+        mConsentMessage.setTextColor(ContextCompat.getColor(requireContext(), restricted
+                || status == SocialService.SignInStatus.SIGNUPS_CLOSED ? R.color.projects_ash_300 : R.color.projects_flare_400));
     }
 
     // ---- rows ----
@@ -342,18 +363,30 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
             rows.add(new Row(T_BANNER, "banner", "notify", new Banner("notify", R.string.projects_social_notify_offer, R.string.projects_notify_offer_allow, true)));
         }
 
+        if (service.chat().available()) {
+            // CHAT1: "Mesajlar" with how many are unread and the newest of them.
+            int unread = service.chat().unreadTotal();
+            List<ChatBook.Summary> summaries = service.chat().visibleSummaries();
+            ChatBook.Summary newest = summaries.isEmpty() ? null : summaries.get(0);
+            rows.add(new Row(T_MESSAGES, "messages", unread + "|" + (newest == null || newest.last == null ? ""
+                    : newest.conv + newest.last.key() + newest.last.text()), newest));
+        }
+
         if (gate.teams) {
-            Team team = state.team();
-            String content;
-            if (team == null) {
-                content = "none|" + state.teamInvites().size();
-            } else {
-                Call call = state.unansweredCall(now);
-                Call own = state.ownCall(now);
-                content = team.id + "|" + team.name + "|" + team.tag + "|" + team.emblem + team.color + team.frame + "|"
-                        + onlineInCrew(state, team) + "|" + (call == null ? "" : call.id + call.kind) + "|" + (own == null ? "" : own.id);
+            List<Crew> crews = state.crews();
+            if (crews.size() > 1) rows.add(header("h-crews", getString(R.string.projects_crews_title)));
+            if (crews.isEmpty()) {
+                rows.add(new Row(T_CREW, "crew", "none|" + state.teamInvites().size(), null));
             }
-            rows.add(new Row(T_CREW, "crew", content, team));
+            for (Crew crew : crews) {
+                Team team = crew.team;
+                Call call = unanswered(state, crew, now);
+                Call own = own(state, crew, now);
+                String content = team.id + "|" + team.name + "|" + team.tag + "|" + team.emblem + team.color + team.frame + "|"
+                        + state.onlineInCrew(team.id) + "|" + (call == null ? "" : call.id + call.place() + call.crews) + "|"
+                        + (own == null ? "" : own.id) + "|" + crew.mute.mutedAt(state.hubNow(now));
+                rows.add(new Row(T_CREW, "crew-" + team.id, content, crew));
+            }
         }
 
         List<Invite> invites = state.invites(now);
@@ -399,12 +432,20 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
         return rows;
     }
 
-    private static int onlineInCrew(SocialState state, Team team) {
-        int n = 0;
-        for (Member m : team.members) {
-            if (!m.profile.id.equals(state.myId()) && state.presence(m.profile.id).online()) n++;
+    /** A crewmate's call naming this crew that the player has not answered yet. */
+    @Nullable
+    private static Call unanswered(SocialState state, Crew crew, long now) {
+        String me = state.myId();
+        for (Call call : state.calls(now, crew.id())) {
+            if (!call.from.equals(me) && !call.answers.containsKey(me)) return call;
         }
-        return n;
+        return null;
+    }
+
+    @Nullable
+    private static Call own(SocialState state, Crew crew, long now) {
+        for (Call call : state.calls(now, crew.id())) if (call.from.equals(state.myId())) return call;
+        return null;
     }
 
     private Row header(String id, String title) {
@@ -504,7 +545,10 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
                 if (person.profile != null) FriendCard.show(activity, person.profile.id);
                 break;
             case "teaminvite":
-                Tools.swapFragment(activity, CrewFragment.class, CrewFragment.TAG, null);
+                if (person.item instanceof TeamInvite) InviteCard.show(activity, (TeamInvite) person.item);
+                break;
+            case "in":
+                if (person.item instanceof Request) InviteCard.request(activity, (Request) person.item);
                 break;
             default:
                 if (person.profile != null && SocialService.get(activity).state().isFriend(person.profile.id)) {
@@ -697,6 +741,7 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
                     Press.attach(view.findViewById(R.id.projects_banner_close), Press.Style.ICON);
                     break;
                 case T_CREW:
+                case T_MESSAGES:
                     view = inflater.inflate(R.layout.item_projects_social_crew, parent, false);
                     Press.attach(view, Press.Style.CARD);
                     break;
@@ -732,7 +777,10 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
                     bindBanner(view, (Banner) row.data);
                     break;
                 case T_CREW:
-                    bindCrew(view, (Team) row.data);
+                    bindCrew(view, (Crew) row.data);
+                    break;
+                case T_MESSAGES:
+                    bindMessages(view, (ChatBook.Summary) row.data);
                     break;
                 case T_HEADER:
                     ((TextView) view).setText((String) row.data);
@@ -759,6 +807,63 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
         view.setContentDescription(me.profile.name() + ", " + getString(SocialUi.statusLabel(me.status)) + ". "
                 + getString(R.string.projects_social_status_change));
         view.setOnClickListener(v -> StatusSheet.show(requireActivity()));
+        // SPAM1: only the player sees it; a tap says what is limited and until when.
+        TextView limited = view.findViewById(R.id.projects_me_limited);
+        final SocialModel.Limited limits = me.limited;
+        boolean shown = limits != null && limits.active(SocialService.nowSeconds());
+        limited.setVisibility(shown ? View.VISIBLE : View.GONE);
+        if (shown) {
+            Drawable lock = ContextCompat.getDrawable(view.getContext(), R.drawable.projects_ic_lock);
+            if (lock != null) {
+                lock = lock.mutate();
+                lock.setTint(ContextCompat.getColor(view.getContext(), R.color.projects_gold_300));
+                int size = Math.round(13 * getResources().getDisplayMetrics().density);
+                lock.setBounds(0, 0, size, size);
+                limited.setCompoundDrawablesRelative(lock, null, null, null);
+            }
+            Press.attach(limited, Press.Style.BUTTON);
+            limited.setOnClickListener(v -> AccountNotes.limited(requireActivity(), limits));
+        }
+    }
+
+    /** "Mesajlar": the unread count in gold and the newest message; a tap opens the list. */
+    private void bindMessages(View view, @Nullable ChatBook.Summary newest) {
+        Context context = view.getContext();
+        SocialService service = SocialService.get(context);
+        view.findViewById(R.id.projects_crew_row_mark).setVisibility(View.GONE);
+        ImageView icon = view.findViewById(R.id.projects_crew_row_icon);
+        icon.setVisibility(View.VISIBLE);
+        icon.setImageResource(R.drawable.projects_ic_chats);
+        ((TextView) view.findViewById(R.id.projects_crew_row_name)).setText(R.string.projects_chat_title);
+        TextView tag = view.findViewById(R.id.projects_crew_row_tag);
+        TextView line = view.findViewById(R.id.projects_crew_row_line);
+        int unread = service.chat().unreadTotal();
+        if (unread > 0) {
+            tag.setVisibility(View.VISIBLE);
+            tag.setText(unread > 99 ? "99+" : String.valueOf(unread));
+            tag.setBackgroundResource(R.drawable.projects_chat_unread_badge);
+            tag.setTextColor(ContextCompat.getColor(context, R.color.projects_on_gold));
+            tag.setContentDescription(context.getResources().getQuantityString(R.plurals.projects_chat_unread, unread, unread));
+        } else {
+            tag.setVisibility(View.GONE);
+        }
+        String me = service.state().myId();
+        if (newest == null || newest.last == null || me == null) {
+            line.setVisibility(View.GONE);
+        } else {
+            line.setVisibility(View.VISIBLE);
+            String text = newest.last.text().replace('\n', ' ');
+            String who;
+            if (newest.last.mine(me)) {
+                line.setText(getString(R.string.projects_chat_you, text));
+            } else {
+                Profile from = service.state().profile(newest.last.from(me));
+                who = from == null ? "" : from.name() + ": ";
+                line.setText(who + text);
+            }
+            line.setTextColor(ContextCompat.getColor(context, unread > 0 ? R.color.projects_bone_100 : R.color.projects_ash_400));
+        }
+        view.setOnClickListener(v -> Tools.swapFragment(requireActivity(), ChatListFragment.class, ChatListFragment.TAG, null));
     }
 
     private void bindBanner(View view, final Banner banner) {
@@ -773,7 +878,8 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
         close.setOnClickListener(v -> closeBanner(banner));
     }
 
-    private void bindCrew(View view, @Nullable Team team) {
+    private void bindCrew(View view, @Nullable Crew crew) {
+        final Team team = crew == null ? null : crew.team;
         Context context = view.getContext();
         CrewMarkView mark = view.findViewById(R.id.projects_crew_row_mark);
         View icon = view.findViewById(R.id.projects_crew_row_icon);
@@ -798,23 +904,28 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
             tag.setText(team.tag);
             CrewViews.tintTag(tag, team.color);
             long now = SocialService.nowSeconds();
-            Call call = service.state().unansweredCall(now);
-            Call own = service.state().ownCall(now);
+            Call call = unanswered(service.state(), crew, now);
+            Call own = own(service.state(), crew, now);
             if (call != null) {
                 Profile caller = service.state().profile(call.from);
-                line.setText(getString(R.string.projects_crew_call_theirs, caller == null ? getString(R.string.projects_crew_someone) : caller.name()));
+                line.setText(getString(R.string.projects_crew_call_theirs, caller == null ? getString(R.string.projects_crew_someone) : caller.name())
+                        + " · " + gg.projects.mobile.social.SocialNotifications.callPlace(context, call.place(), call.serverHost));
                 line.setTextColor(ContextCompat.getColor(context, R.color.projects_gold_300));
             } else if (own != null) {
                 line.setText(R.string.projects_crew_call_mine);
                 line.setTextColor(ContextCompat.getColor(context, R.color.projects_gold_300));
             } else {
-                int online = onlineInCrew(service.state(), team);
+                int online = service.state().onlineInCrew(team.id);
                 line.setText(context.getResources().getQuantityString(R.plurals.projects_crew_online, online, online));
                 line.setTextColor(ContextCompat.getColor(context, R.color.projects_ash_400));
             }
             line.setVisibility(View.VISIBLE);
         }
-        view.setOnClickListener(v -> Tools.swapFragment(requireActivity(), CrewFragment.class, CrewFragment.TAG, null));
+        view.setOnClickListener(v -> {
+            Bundle args = new Bundle();
+            if (team != null) args.putString(CrewFragment.ARG_CREW, team.id);
+            Tools.swapFragment(requireActivity(), CrewFragment.class, CrewFragment.TAG, args);
+        });
     }
 
     private void bindPerson(final View view, final Person person, Context context) {
@@ -829,6 +940,10 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
         SocialService service = SocialService.get(context);
         SocialState state = service.state();
         badge.setVisibility(View.GONE);
+        if (badge instanceof TextView) {
+            badge.setBackgroundResource(R.drawable.projects_social_badge);
+            ((TextView) badge).setTextColor(ContextCompat.getColor(context, R.color.projects_gold_300));
+        }
         star.setVisibility(View.GONE);
         primary.setVisibility(View.GONE);
         primary.setEnabled(true);
@@ -852,6 +967,17 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
                 avatar.setDot(SocialUi.dot(presence));
                 avatar.setDimmed(!presence.online());
                 star.setVisibility(service.prefs().favourites().contains(friend.profile.id) ? View.VISIBLE : View.GONE);
+                ChatBook book = service.chat().available() ? service.chat().book() : null;
+                String me = state.myId();
+                int unread = book == null || me == null ? 0 : book.unread(ChatConv.direct(me, friend.profile.id));
+                if (unread > 0) {
+                    TextView count = (TextView) badge;
+                    count.setVisibility(View.VISIBLE);
+                    count.setText(unread > 99 ? "99+" : String.valueOf(unread));
+                    count.setBackgroundResource(R.drawable.projects_chat_unread_badge);
+                    count.setTextColor(ContextCompat.getColor(context, R.color.projects_on_gold));
+                    count.setContentDescription(context.getResources().getQuantityString(R.plurals.projects_chat_unread, unread, unread));
+                }
                 if (presence.onProjects()) {
                     primary.setVisibility(View.VISIBLE);
                     primary.setText(R.string.projects_social_join);

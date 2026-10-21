@@ -10,21 +10,29 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import net.kdt.pojavlaunch.R;
+import net.kdt.pojavlaunch.Tools;
 
+import gg.projects.mobile.social.ChatConv;
 import gg.projects.mobile.social.SocialGate;
 import gg.projects.mobile.social.SocialModel;
+import gg.projects.mobile.social.SocialModel.Crew;
 import gg.projects.mobile.social.SocialModel.Friend;
 import gg.projects.mobile.social.SocialModel.Presence;
 import gg.projects.mobile.social.SocialModel.Profile;
 import gg.projects.mobile.social.SocialModel.Team;
 import gg.projects.mobile.social.SocialProblem;
 import gg.projects.mobile.social.SocialService;
+import gg.projects.mobile.ui.ChamferDrawable;
 import gg.projects.mobile.ui.Press;
 
 /**
  * A friend's card (M19; the desktop's friend card): who they are and where, "Katıl" while they are on
- * Projects, "Discord'dan mesaj at" (the app has no chat), favourite, an invite to the player's crew,
- * then removing and blocking, each with one sentence to confirm.
+ * Projects, "Discord'dan mesaj at", favourite, an invite to the player's crew, then removing and
+ * blocking, each with one sentence to confirm.
+ *
+ * <p>M20: "Mesaj" first (CHAT1: direct messages between friends), "Katıl" beside it while the friend
+ * is on Projects; "Ekibe davet et" asks which crew when the player has several (TEAM4); "Rapor et"
+ * (MOD1) beside "Engelle".
  */
 public final class FriendCard {
     private FriendCard() {}
@@ -55,8 +63,18 @@ public final class FriendCard {
         since.setText(day == null ? "" : activity.getString(R.string.projects_social_friends_since, day));
         since.setVisibility(day == null ? View.GONE : View.VISIBLE);
 
+        SocialGate gate = service.gate();
+        View message = view.findViewById(R.id.projects_card_message);
         View join = view.findViewById(R.id.projects_card_join);
+        boolean chat = service.chat().available();
+        message.setVisibility(chat ? View.VISIBLE : View.GONE);
         join.setVisibility(presence.onProjects() ? View.VISIBLE : View.GONE);
+        view.findViewById(R.id.projects_card_buttons).setVisibility(chat || presence.onProjects() ? View.VISIBLE : View.GONE);
+        message.setOnClickListener(v -> {
+            dialog.dismiss();
+            String me = service.state().myId();
+            if (me != null) openChat(activity, ChatConv.direct(me, friendId));
+        });
         join.setOnClickListener(v -> {
             dialog.dismiss();
             SocialUi.joinProjects(activity);
@@ -72,26 +90,41 @@ public final class FriendCard {
                     service.toggleFavourite(friendId);
                     dialog.dismiss();
                 }));
-        SocialGate gate = service.gate();
-        Team team = service.state().team();
         String me = service.state().myId();
-        if (gate.teams && team != null && me != null && team.member(friendId) == null
-                && team.allows(me, team.permissions.invite) && !service.state().teamInvited().contains(friendId)) {
-            actions.addView(CrewViews.actionRow(activity, R.drawable.projects_ic_crew, activity.getString(R.string.projects_crew_invite_to),
-                    R.color.projects_bone_100, v -> {
-                        dialog.dismiss();
-                        service.inviteToTeam(team.id, friendId, new SocialService.Result<Void>() {
-                            @Override
-                            public void ok(Void value) {
-                                SocialUi.toast(activity, activity.getString(R.string.projects_crew_invite_sent));
+        if (gate.teams && me != null) {
+            // The crews whose rules let the player invite, and that this friend is not in or invited to yet.
+            int open = 0;
+            Crew only = null;
+            for (Crew crew : service.state().crews()) {
+                Team team = crew.team;
+                if (!team.allows(me, team.permissions.invite) || team.member(friendId) != null || crew.invited.contains(friendId)) continue;
+                open++;
+                only = crew;
+            }
+            final Crew single = open == 1 ? only : null;
+            boolean several = gate.multi && service.state().crews().size() > 1;
+            if (open > 0) {
+                actions.addView(CrewViews.actionRow(activity, R.drawable.projects_ic_crew, activity.getString(R.string.projects_crew_invite_to),
+                        R.color.projects_bone_100, v -> {
+                            dialog.dismiss();
+                            if (several) {
+                                CrewSheets.inviteToCrews(activity, friendId);
+                                return;
                             }
+                            if (single == null) return;
+                            service.inviteToTeam(single.id(), friendId, new SocialService.Result<Void>() {
+                                @Override
+                                public void ok(Void value) {
+                                    SocialUi.toast(activity, activity.getString(R.string.projects_crew_invite_sent));
+                                }
 
-                            @Override
-                            public void failed(SocialProblem problem) {
-                                SocialUi.toastProblem(activity, problem, null);
-                            }
-                        });
-                    }));
+                                @Override
+                                public void failed(SocialProblem problem) {
+                                    SocialUi.toastProblem(activity, problem, null);
+                                }
+                            });
+                        }));
+            }
         }
         actions.addView(CrewViews.divider(activity));
         actions.addView(CrewViews.actionRow(activity, R.drawable.projects_ic_user_minus, activity.getString(R.string.projects_social_remove),
@@ -101,6 +134,13 @@ public final class FriendCard {
                             activity.getString(R.string.projects_social_remove), () -> service.removeFriend(friendId, done(activity,
                                     activity.getString(R.string.projects_social_removed, profile.name()))));
                 }));
+        if (gate.reports) {
+            actions.addView(CrewViews.actionRow(activity, R.drawable.projects_ic_flag, activity.getString(R.string.projects_report),
+                    R.color.projects_ash_300, v -> {
+                        dialog.dismiss();
+                        ReportDialog.player(activity, profile);
+                    }));
+        }
         actions.addView(CrewViews.actionRow(activity, R.drawable.projects_ic_prohibit, activity.getString(R.string.projects_social_block),
                 R.color.projects_flare_400, v -> {
                     dialog.dismiss();
@@ -108,8 +148,18 @@ public final class FriendCard {
                             activity.getString(R.string.projects_social_block_ask), activity.getString(R.string.projects_social_block),
                             () -> service.block(profile, done(activity, activity.getString(R.string.projects_social_blocked, profile.name()))));
                 }));
+        join.setBackground(ChamferDrawable.outlined(activity));
         dialog.show();
         Press.attach(join, Press.Style.BUTTON);
+        Press.attach(message, Press.Style.BUTTON);
+    }
+
+    /** Opens a conversation from wherever the card was (a screen on top of the friends list). */
+    static void openChat(FragmentActivity activity, String conv) {
+        android.os.Bundle args = new android.os.Bundle();
+        args.putString(ChatFragment.ARG_CONV, conv);
+        if (activity.getSupportFragmentManager().isStateSaved()) return;
+        Tools.swapFragment(activity, ChatFragment.class, ChatFragment.TAG, args);
     }
 
     static SocialService.Result<Void> done(final FragmentActivity activity, final String message) {

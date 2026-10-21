@@ -92,6 +92,25 @@
                     tools:text="Giriş tamamlanamadı. Yeniden dene."
                     tools:visibility="visible" />
 
+                <!-- M20 (MOD1): under a restricted account's sentence, the community rules. -->
+                <TextView
+                    android:id="@+id/projects_consent_rules"
+                    android:layout_width="wrap_content"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="4dp"
+                    android:background="@drawable/projects_link_ripple"
+                    android:clickable="true"
+                    android:drawableEnd="@drawable/projects_ic_arrow_square_out_small"
+                    android:drawablePadding="6dp"
+                    android:focusable="true"
+                    android:fontFamily="@font/figtree_semibold"
+                    android:gravity="center"
+                    android:paddingHorizontal="12dp"
+                    android:text="@string/projects_mod_rules"
+                    android:textColor="@color/projects_gold_300"
+                    android:textSize="14sp"
+                    android:visibility="gone" />
+
                 <Button
                     android:id="@+id/projects_consent_sign_in"
                     style="?android:attr/borderlessButtonStyle"

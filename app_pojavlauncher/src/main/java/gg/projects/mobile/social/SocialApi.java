@@ -219,17 +219,74 @@ public final class SocialApi {
 
     @WorkerThread
     public JsonObject lookupTeam(String code) throws SocialProblem {
-        return require(send("POST", "v1/teams/lookup", codeBody(code), true, false));
+        return lookupTeam(code, false);
+    }
+
+    /** {@code multi}: TEAM4's rule (a player below {@code crewLimit} joins more crews; {@code relation: "limit"} at it). */
+    @WorkerThread
+    public JsonObject lookupTeam(String code, boolean multi) throws SocialProblem {
+        return require(send("POST", "v1/teams/lookup", multi(codeBody(code), multi), true, false));
     }
 
     @WorkerThread
     public JsonObject joinTeam(String code) throws SocialProblem {
-        return require(send("POST", "v1/teams/join", codeBody(code), true, false));
+        return joinTeam(code, false);
+    }
+
+    @WorkerThread
+    public JsonObject joinTeam(String code, boolean multi) throws SocialProblem {
+        return require(send("POST", "v1/teams/join", multi(codeBody(code), multi), true, false));
     }
 
     @WorkerThread
     public JsonObject acceptTeamInvite(String team) throws SocialProblem {
-        return require(send("POST", "v1/teams/invites/" + segment(team) + "/accept", null, true, false));
+        return acceptTeamInvite(team, false);
+    }
+
+    @WorkerThread
+    public JsonObject acceptTeamInvite(String team, boolean multi) throws SocialProblem {
+        return require(send("POST", "v1/teams/invites/" + segment(team) + "/accept", multi ? multi(new JsonObject(), true) : null,
+                true, false));
+    }
+
+    /** TEAM4: {@code PUT /v1/teams/order}: every crew of the player once, the primary first. */
+    @WorkerThread
+    public JsonObject crewOrder(List<String> order) throws SocialProblem {
+        JsonObject body = new JsonObject();
+        JsonArray list = new JsonArray();
+        for (String id : order) list.add(segment(id));
+        body.add("order", list);
+        return require(send("PUT", "v1/teams/order", body, true, false));
+    }
+
+    /** TEAM4: the player's mute of one crew ({@code {muted, muteUntil?}}). */
+    @WorkerThread
+    public JsonObject crewNotifications(String team, JsonObject changes) throws SocialProblem {
+        return require(send("PATCH", "v1/teams/" + segment(team) + "/notifications", changes, true, false));
+    }
+
+    // ---- reports and notices (MOD1) ----
+
+    /** {@code POST /v1/reports}: {@code 201 {id, status}} or {@code 200 {duplicate: true}}. */
+    @WorkerThread
+    public JsonObject report(JsonObject body) throws SocialProblem {
+        JsonObject answer = send("POST", "v1/reports", body, true, false);
+        return answer == null ? new JsonObject() : answer;
+    }
+
+    /** The player saw these moderators' notes. */
+    @WorkerThread
+    public void noticesSeen(List<String> ids) throws SocialProblem {
+        JsonObject body = new JsonObject();
+        JsonArray list = new JsonArray();
+        for (String id : ids) list.add(id);
+        body.add("ids", list);
+        send("POST", "v1/me/notices/seen", body, true, false);
+    }
+
+    private static JsonObject multi(JsonObject body, boolean multi) {
+        if (multi) body.addProperty("multi", true);
+        return body;
     }
 
     @WorkerThread

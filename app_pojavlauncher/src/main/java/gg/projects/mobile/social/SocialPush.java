@@ -5,15 +5,22 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import gg.projects.mobile.language.LanguageManager;
 
 /**
  * A push from the friends service, on whatever thread it arrives (FCM's own, or the debug build's
  * injection path): read with {@link PushMessage}, decided against the session on this phone and the
  * player's switches, then shown or taken back by {@link SocialNotifications}. It needs nothing of the
  * running app: a push that wakes the app reads the session file and the switches itself.
+ *
+ * <p>M20: a direct message ("Ayşe sana mesaj gönderdi", silent for a conversation muted here, and
+ * while the game is on screen), and a call naming its crews and its server.
  */
 public final class SocialPush {
     private SocialPush() {}
@@ -31,10 +38,15 @@ public final class SocialPush {
         SessionStore.Saved saved = new SessionStore(app, debug.override ? "session-debug.json" : "session.json").load();
         String signedIn = saved.token == null ? null : saved.userId;
         SocialPrefs prefs = new SocialPrefs(app);
-        if (!prefs.lastConfig()[0] && !debug.forceFriends) {
+        boolean[] config = prefs.lastConfig();
+        if (!config[0] && !debug.forceFriends) {
             // Friends were turned off in the signed config: nothing of the feature shows (the registration goes
             // when the app next runs; a push sent before that is dropped here).
             Log.i(TAG, "push dropped (" + message.type + "): friends are off");
+            return;
+        }
+        if (PushMessage.MESSAGE.equals(message.type) && !config[2] && !debug.forceChat) {
+            Log.i(TAG, "push dropped (message): chat is off");
             return;
         }
         long now = SocialService.nowSeconds();
@@ -42,7 +54,9 @@ public final class SocialPush {
         if (prefs.wantsRequests()) wanted.add(PushMessage.REQUEST);
         if (prefs.wantsInvites()) wanted.add(PushMessage.INVITE);
         if (prefs.wantsCallsLocally()) wanted.add(PushMessage.CALL);
-        PushMessage.Decision decision = message.decide(signedIn, now, prefs.endedCalls(now), wanted, prefs.crewAudible(now));
+        if (prefs.wantsMessages()) wanted.add(PushMessage.MESSAGE);
+        Set<String> muted = prefs.mutedConversations(now);
+        PushMessage.Decision decision = message.decide(signedIn, now, prefs.endedCalls(now), wanted, prefs.crewAudible(now), muted);
         switch (decision.action) {
             case SHOW:
                 Log.i(TAG, "push shown: " + message.type);
@@ -52,8 +66,11 @@ public final class SocialPush {
                     SocialNotifications.showInvite(app, message.sender, message.name, message.id, message.where, message.host,
                             decision.timeoutMs);
                 } else if (PushMessage.CALL.equals(message.type)) {
-                    SocialNotifications.showCall(app, message.id, message.sender, message.name,
-                            SocialModel.Call.JOIN.equals(message.kind), decision.timeoutMs);
+                    showCall(app, prefs, message, decision.timeoutMs);
+                } else if (PushMessage.MESSAGE.equals(message.type)) {
+                    // Over the game it stays in the shade, without a heads-up.
+                    boolean silent = decision.silent || SocialRoutes.gameRunning(app);
+                    SocialNotifications.showMessage(app, message.conv, message.name, silent);
                 }
                 break;
             case CANCEL:
@@ -72,5 +89,25 @@ public final class SocialPush {
         new Handler(Looper.getMainLooper()).post(() -> {
             if (SocialService.exists()) SocialService.get(app).pushArrived();
         });
+    }
+
+    /** "Ayşe, Gece Kartalları ekibini çağırıyor · mc.example.com sunucusunda", from the crews' names as last known. */
+    private static void showCall(Context app, SocialPrefs prefs, PushMessage message, long timeoutMs) {
+        Context c = LanguageManager.wrap(app);
+        Map<String, String> names = prefs.crewNames();
+        List<String> named = new ArrayList<>();
+        String first = null;
+        for (String crew : message.crews) {
+            String name = names.get(crew);
+            if (name == null) continue;
+            if (first == null) first = crew;
+            named.add(name);
+        }
+        SocialModel.Call.Place place;
+        if ("projects".equals(message.where)) place = SocialModel.Call.Place.PROJECTS;
+        else if ("other".equals(message.where)) place = SocialModel.Call.Place.OTHER;
+        else place = SocialModel.Call.JOIN.equals(message.kind) ? SocialModel.Call.Place.PROJECTS : SocialModel.Call.Place.READY;
+        String title = SocialNotifications.callTitle(c, message.name, named, names.size() > 1);
+        SocialNotifications.showCall(c, message.id, first, title, SocialNotifications.callPlace(c, place, message.host), timeoutMs);
     }
 }

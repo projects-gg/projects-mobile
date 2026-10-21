@@ -85,8 +85,19 @@ public final class SocialHomeRow implements SocialService.Listener {
         FragmentActivity activity = mFragment.getActivity();
         if (activity == null) return;
         HomeLine line = SocialService.get(activity).homeLine();
-        if (line.kind == HomeLine.Kind.CALL) {
-            Tools.swapFragment(activity, CrewFragment.class, CrewFragment.TAG, null);
+        android.os.Bundle args = new android.os.Bundle();
+        if (line.kind == HomeLine.Kind.CALL || line.kind == HomeLine.Kind.CREW_ON_PROJECTS) {
+            // M20: the crew the call names first, or the one with the most players on Projects.
+            if (line.crew != null) args.putString(CrewFragment.ARG_CREW, line.crew.id());
+            Tools.swapFragment(activity, CrewFragment.class, CrewFragment.TAG, args);
+        } else if (line.kind == HomeLine.Kind.MESSAGE && line.unread != null) {
+            // M20: the conversation itself, or the list when several friends wrote.
+            if (line.unread.conversations > 1) {
+                Tools.swapFragment(activity, ChatListFragment.class, ChatListFragment.TAG, null);
+            } else {
+                args.putString(ChatFragment.ARG_CONV, line.unread.conv);
+                Tools.swapFragment(activity, ChatFragment.class, ChatFragment.TAG, args);
+            }
         } else {
             Tools.swapFragment(activity, SocialFragment.class, SocialFragment.TAG, null);
         }
@@ -94,6 +105,9 @@ public final class SocialHomeRow implements SocialService.Listener {
 
     private void render() {
         if (!mFragment.isAdded()) return;
+        // MOD1: a moderator's note shows once, on the first screen that sees it (the home screen too).
+        FragmentActivity host = mFragment.getActivity();
+        if (host != null && mFragment.isResumed() && SocialService.get(host).signedIn()) AccountNotes.showNotices(host);
         Context context = mFragment.requireContext();
         SocialService service = SocialService.get(context);
         boolean visible = service.enabled();
@@ -129,10 +143,24 @@ public final class SocialHomeRow implements SocialService.Listener {
                 break;
             case CALL: {
                 Profile caller = line.faces.isEmpty() ? null : line.faces.get(0);
-                title = context.getString(R.string.projects_crew_call_theirs,
-                        caller == null ? context.getString(R.string.projects_crew_someone) : caller.name());
-                text = context.getString(line.call != null && line.call.joinable()
-                        ? R.string.projects_social_on_projects : R.string.projects_crew_call_ready);
+                // M20: with several crews the call names its crews; it says where it is.
+                java.util.List<String> names = new java.util.ArrayList<>();
+                if (line.call != null) {
+                    for (SocialModel.Crew c : service.state().callCrews(line.call)) names.add(c.team.name);
+                }
+                title = gg.projects.mobile.social.SocialNotifications.callTitle(context, caller == null ? null : caller.name(),
+                        names, line.severalCrews);
+                text = line.call == null ? context.getString(R.string.projects_crew_call_ready)
+                        : gg.projects.mobile.social.SocialNotifications.callPlace(context, line.call.place(), line.call.serverHost);
+                gold = true;
+                break;
+            }
+            case MESSAGE: {
+                Profile from = line.faces.isEmpty() ? null : line.faces.get(0);
+                title = context.getString(R.string.projects_chat_push,
+                        from == null ? context.getString(R.string.projects_social_someone) : from.name());
+                int unread = line.unread == null ? line.count : line.unread.count;
+                text = context.getResources().getQuantityString(R.plurals.projects_chat_unread, unread, unread);
                 gold = true;
                 break;
             }
@@ -148,8 +176,10 @@ public final class SocialHomeRow implements SocialService.Listener {
                 break;
             }
             case CREW_ON_PROJECTS:
-                title = context.getResources().getQuantityString(R.plurals.projects_crew_home_projects, line.count, line.count);
-                text = service.state().team() == null ? "" : service.state().team().name;
+                // M20: "Ekiplerinden N kişi Projects'te" for several crews (each player once), the busiest one named.
+                title = context.getResources().getQuantityString(line.severalCrews ? R.plurals.projects_crews_home_projects
+                        : R.plurals.projects_crew_home_projects, line.count, line.count);
+                text = line.crew != null ? line.crew.team.name : service.state().team() == null ? "" : service.state().team().name;
                 join = true;
                 break;
             case FRIENDS_ON_PROJECTS: {

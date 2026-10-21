@@ -1,0 +1,10 @@
+{"t":"hello","v":1,"status":"online","keepaliveSeconds":45,"friends":[],"team":[],"invites":[],"calls":[],"caps":[],"now":1792590973}
+{"t":"presence","presence":{"id":"100000000000000012","state":"launcher","status":"online","game":null,"avatar":"discord","avatarHash":null}}
+{"t":"presence","presence":{"id":"100000000000000012","state":"playing","status":"online","game":{"where":"projects","host":"play.projects.gg"},"avatar":"discord","avatarHash":null}}
+{"t":"call","call":{"id":"238ff683884d3643","from":"100000000000000012","kind":"join","at":1792590973,"until":1792592173,"answers":{}},"quiet":false,"now":1792590973}
+{"t":"call_answer","call":"238ff683884d3643","by":"100000000000000011","answer":"yes"}
+{"t":"presence","presence":{"id":"100000000000000012","state":"playing","status":"online","game":{"where":"other","host":"mc.example.com"},"avatar":"discord","avatarHash":null}}
+{"t":"call","call":{"id":"238ff683884d3643","from":"100000000000000012","kind":"ready","at":1792590973,"until":1792592173,"answers":{"100000000000000011":"yes"}},"quiet":false,"now":1792590973}
+{"t":"presence","presence":{"id":"100000000000000012","state":"launcher","status":"online","game":null,"avatar":"discord","avatarHash":null}}
+{"t":"call_end","call":"238ff683884d3643","reason":"left"}
+{"_":"close","by":"client","code":1000}

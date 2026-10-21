@@ -1,0 +1,292 @@
+{
+ "friends": [
+  {
+   "id": "100000000000000012",
+   "username": "ece",
+   "displayName": "Ece",
+   "avatar": "discord",
+   "avatarHash": null,
+   "since": "2026-10-21",
+   "lastSeen": "today"
+  },
+  {
+   "id": "100000000000000013",
+   "username": "kaan",
+   "displayName": "Kaan",
+   "avatar": "discord",
+   "avatarHash": null,
+   "since": "2026-10-21",
+   "lastSeen": "today"
+  }
+ ],
+ "incoming": [],
+ "outgoing": [],
+ "blocked": [],
+ "limits": {
+  "friends": 200,
+  "outgoingRequests": 50,
+  "teamMembers": 30,
+  "groups": 20
+ },
+ "groups": {
+  "version": 0,
+  "groups": [],
+  "members": {}
+ },
+ "team": {
+  "id": "ba126fd6c93f8827",
+  "name": "Yayla Kurtları",
+  "tag": "YKR",
+  "emblem": "paw",
+  "color": "crimson",
+  "frame": "banner",
+  "motto": "",
+  "code": "TKM-DHZB-QZAS",
+  "createdOn": "2026-10-21",
+  "members": [
+   {
+    "id": "100000000000000012",
+    "username": "ece",
+    "displayName": "Ece",
+    "avatar": "discord",
+    "avatarHash": null,
+    "role": "founder",
+    "moderator": false,
+    "joinedAt": 1792590971
+   },
+   {
+    "id": "100000000000000011",
+    "username": "ayse",
+    "displayName": "Ayşe",
+    "avatar": "discord",
+    "avatarHash": null,
+    "role": "member",
+    "moderator": true,
+    "joinedAt": 1792590972
+   },
+   {
+    "id": "100000000000000013",
+    "username": "kaan",
+    "displayName": "Kaan",
+    "avatar": "discord",
+    "avatarHash": null,
+    "role": "member",
+    "moderator": false,
+    "joinedAt": 1792590972
+   }
+  ],
+  "permissions": {
+   "invite": "members",
+   "call": "members",
+   "kick": "moderators",
+   "edit": "leader"
+  },
+  "textLockedUntil": null
+ },
+ "teamInvited": [],
+ "crews": [
+  {
+   "team": {
+    "id": "ba126fd6c93f8827",
+    "name": "Yayla Kurtları",
+    "tag": "YKR",
+    "emblem": "paw",
+    "color": "crimson",
+    "frame": "banner",
+    "motto": "",
+    "code": "TKM-DHZB-QZAS",
+    "createdOn": "2026-10-21",
+    "members": [
+     {
+      "id": "100000000000000012",
+      "username": "ece",
+      "displayName": "Ece",
+      "avatar": "discord",
+      "avatarHash": null,
+      "role": "founder",
+      "moderator": false,
+      "joinedAt": 1792590971
+     },
+     {
+      "id": "100000000000000011",
+      "username": "ayse",
+      "displayName": "Ayşe",
+      "avatar": "discord",
+      "avatarHash": null,
+      "role": "member",
+      "moderator": true,
+      "joinedAt": 1792590972
+     },
+     {
+      "id": "100000000000000013",
+      "username": "kaan",
+      "displayName": "Kaan",
+      "avatar": "discord",
+      "avatarHash": null,
+      "role": "member",
+      "moderator": false,
+      "joinedAt": 1792590972
+     }
+    ],
+    "permissions": {
+     "invite": "members",
+     "call": "members",
+     "kick": "moderators",
+     "edit": "leader"
+    },
+    "textLockedUntil": null
+   },
+   "invited": [],
+   "notifications": {
+    "muted": false,
+    "muteUntil": null
+   }
+  },
+  {
+   "team": {
+    "id": "371df93793fb9e86",
+    "name": "Gece Kartalları",
+    "tag": "GKR",
+    "emblem": "flame",
+    "color": "teal",
+    "frame": "shield",
+    "motto": "Gece bizimdir",
+    "code": "TKM-JK3G-GCRX",
+    "createdOn": "2026-10-21",
+    "members": [
+     {
+      "id": "100000000000000011",
+      "username": "ayse",
+      "displayName": "Ayşe",
+      "avatar": "discord",
+      "avatarHash": null,
+      "role": "founder",
+      "moderator": false,
+      "joinedAt": 1792590971
+     },
+     {
+      "id": "100000000000000012",
+      "username": "ece",
+      "displayName": "Ece",
+      "avatar": "discord",
+      "avatarHash": null,
+      "role": "member",
+      "moderator": false,
+      "joinedAt": 1792590971
+     },
+     {
+      "id": "100000000000000013",
+      "username": "kaan",
+      "displayName": "Kaan",
+      "avatar": "discord",
+      "avatarHash": null,
+      "role": "member",
+      "moderator": false,
+      "joinedAt": 1792590972
+     }
+    ],
+    "permissions": {
+     "invite": "members",
+     "call": "members",
+     "kick": "moderators",
+     "edit": "leader"
+    },
+    "textLockedUntil": null
+   },
+   "invited": [],
+   "notifications": {
+    "muted": false,
+    "muteUntil": null
+   }
+  },
+  {
+   "team": {
+    "id": "833148b7764eafc5",
+    "name": "Mavi Ejder",
+    "tag": "MVE",
+    "emblem": "bolt",
+    "color": "blue",
+    "frame": "hex",
+    "motto": "",
+    "code": "TKM-7BMJ-QS3F",
+    "createdOn": "2026-10-21",
+    "members": [
+     {
+      "id": "100000000000000012",
+      "username": "ece",
+      "displayName": "Ece",
+      "avatar": "discord",
+      "avatarHash": null,
+      "role": "founder",
+      "moderator": false,
+      "joinedAt": 1792590971
+     },
+     {
+      "id": "100000000000000011",
+      "username": "ayse",
+      "displayName": "Ayşe",
+      "avatar": "discord",
+      "avatarHash": null,
+      "role": "member",
+      "moderator": false,
+      "joinedAt": 1792590972
+     }
+    ],
+    "permissions": {
+     "invite": "members",
+     "call": "members",
+     "kick": "moderators",
+     "edit": "leader"
+    },
+    "textLockedUntil": null
+   },
+   "invited": [
+    "100000000000000013"
+   ],
+   "notifications": {
+    "muted": true,
+    "muteUntil": 1792619772
+   }
+  }
+ ],
+ "crewLimit": 5,
+ "teamInvites": [
+  {
+   "team": {
+    "id": "371c9703fc3174fd",
+    "name": "Akşam Ekibi",
+    "tag": "AKS",
+    "emblem": "moon",
+    "color": "gold",
+    "frame": "cut",
+    "motto": "",
+    "members": 1
+   },
+   "from": {
+    "id": "100000000000000012",
+    "username": "ece",
+    "displayName": "Ece",
+    "avatar": "discord",
+    "avatarHash": null
+   },
+   "sentAt": 1792590972
+  }
+ ],
+ "teamFeatures": [
+  "look",
+  "calls",
+  "roles",
+  "mute",
+  "multi",
+  "callServer"
+ ],
+ "teamNotifications": {
+  "calls": true,
+  "muted": false,
+  "muteUntil": null
+ },
+ "features": [
+  "push",
+  "chat"
+ ]
+}

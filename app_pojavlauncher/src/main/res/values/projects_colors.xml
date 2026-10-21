@@ -29,4 +29,9 @@
     <color name="projects_flare_400">#F0624D</color>
     <!-- Text on gold. -->
     <color name="projects_on_gold">#1A0F05</color>
+    <!-- M20: chat bubbles. The player's own sit on a dark gold (gold-600 at 30 % over obsidian-900),
+         the others' on obsidian-800; text is bone on both (contrast above 10:1). -->
+    <color name="projects_chat_mine">#4A3118</color>
+    <color name="projects_chat_mine_edge">#664423</color>
+    <color name="projects_chat_theirs">#1E1B24</color>
 </resources>

@@ -1,0 +1,148 @@
+{
+ "crews_changed": {
+  "status": 409,
+  "body": {
+   "error": {
+    "code": "crews_changed",
+    "message": "Your crews changed meanwhile"
+   }
+  }
+ },
+ "team_text_locked": {
+  "status": 403,
+  "body": {
+   "error": {
+    "code": "team_text_locked",
+    "message": "The crew's texts are locked for now",
+    "until": 1793195780
+   }
+  }
+ },
+ "account_restricted_request": {
+  "status": 401,
+  "body": {
+   "error": {
+    "code": "unauthorized",
+    "message": "Session expired or signed out"
+   }
+  }
+ },
+ "account_restricted_request_other_session": {
+  "status": 401,
+  "body": {
+   "error": {
+    "code": "unauthorized",
+    "message": "Session expired or signed out"
+   }
+  }
+ },
+ "account_restricted_signin": {
+  "status": 403,
+  "body": {
+   "error": {
+    "code": "account_restricted",
+    "message": "This account is restricted",
+    "until": 1792677380
+   }
+  }
+ },
+ "lookup_at_limit": {
+  "status": 200,
+  "body": {
+   "team": {
+    "id": "371c9703fc3174fd",
+    "name": "Akşam Ekibi",
+    "tag": "AKS",
+    "emblem": "moon",
+    "color": "gold",
+    "frame": "cut",
+    "motto": "",
+    "members": 1
+   },
+   "relation": "limit"
+  }
+ },
+ "limit_crews": {
+  "status": 422,
+  "body": {
+   "error": {
+    "code": "limit_crews",
+    "message": "You are in as many crews as you may be"
+   }
+  }
+ },
+ "limit_crews_found": {
+  "status": 422,
+  "body": {
+   "error": {
+    "code": "limit_crews",
+    "message": "You are in as many crews as you may be"
+   }
+  }
+ },
+ "already_in_team_without_multi": {
+  "status": 409,
+  "body": {
+   "error": {
+    "code": "already_in_team",
+    "message": "Leave your team first"
+   }
+  }
+ },
+ "account_limited_crew_found": {
+  "status": 403,
+  "body": {
+   "error": {
+    "code": "account_limited",
+    "message": "A new Discord account cannot do this yet",
+    "until": 1793022971,
+    "item": "crew_found"
+   }
+  }
+ },
+ "account_limited_crew_invites": {
+  "status": 403,
+  "body": {
+   "error": {
+    "code": "account_limited",
+    "message": "A new Discord account cannot do this yet",
+    "retryAfter": 25418,
+    "until": 1793022971,
+    "item": "crew_invites"
+   }
+  }
+ },
+ "report_created": {
+  "status": 201,
+  "body": {
+   "id": "5",
+   "status": "open"
+  }
+ },
+ "report_duplicate": {
+  "status": 200,
+  "body": {
+   "id": "5",
+   "status": "open",
+   "duplicate": true
+  }
+ },
+ "report_target_not_found": {
+  "status": 404,
+  "body": {
+   "error": {
+    "code": "target_not_found",
+    "message": "Nothing to report there"
+   }
+  }
+ },
+ "report_self": {
+  "status": 409,
+  "body": {
+   "error": {
+    "code": "self",
+    "message": "You cannot report yourself"
+   }
+  }
+ }
+}
