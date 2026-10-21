@@ -95,6 +95,12 @@ final class InviteCard {
                         dialog.dismiss();
                         ReportDialog.crew(activity, invite.team, null);
                     }));
+            // The desktop asks which of the two an invite's report is about; here each has its row.
+            list.addView(CrewViews.actionRow(activity, R.drawable.projects_ic_flag, activity.getString(R.string.projects_report_inviter),
+                    R.color.projects_ash_300, v -> {
+                        dialog.dismiss();
+                        ReportDialog.player(activity, invite.from);
+                    }));
         }
         dialog.show();
     }

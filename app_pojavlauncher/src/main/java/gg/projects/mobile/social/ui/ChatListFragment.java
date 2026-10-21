@@ -6,6 +6,9 @@ import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.ForegroundColorSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -75,6 +78,12 @@ public class ChatListFragment extends Fragment implements SocialService.Listener
             mList.setItemAnimator(null);
         }
         mEmpty = view.findViewById(R.id.projects_chats_empty);
+        // "Henuz mesaj yok" and where a conversation starts (the desktop's empty list).
+        SpannableStringBuilder empty = new SpannableStringBuilder(getString(R.string.projects_chat_empty));
+        empty.setSpan(new ForegroundColorSpan(ContextCompat.getColor(view.getContext(), R.color.projects_bone_100)), 0, empty.length(),
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        empty.append('\n').append(getString(R.string.projects_chat_empty_body));
+        mEmpty.setText(empty);
     }
 
     @Nullable
@@ -146,6 +155,8 @@ public class ChatListFragment extends Fragment implements SocialService.Listener
             SocialUi.leave(this);
             return;
         }
+        // MOD1: a moderator's note shows on whichever friends screen is open when it comes.
+        if (isResumed()) AccountNotes.showNotices(requireActivity());
         List<Row> rows = new ArrayList<>();
         Set<String> listed = new HashSet<>();
         for (ChatBook.Summary s : service.chat().visibleSummaries()) {

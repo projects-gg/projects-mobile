@@ -227,9 +227,9 @@ public class Soc7StateTest {
         java.util.Set<String> wanted = new HashSet<>(Arrays.asList(PushMessage.MESSAGE));
         PushMessage.Decision show = push.decide(A, NOW + 5, Collections.<String>emptySet(), wanted, true);
         assertEquals(PushMessage.Decision.Action.SHOW, show.action);
-        assertFalse(show.silent);
-        assertTrue(push.decide(A, NOW + 5, Collections.<String>emptySet(), wanted, true,
-                Collections.singleton(ChatConv.direct(A, B))).silent);
+        // A conversation muted on this phone notifies nothing (the desktop's rule).
+        assertEquals(PushMessage.Decision.Action.DROP, push.decide(A, NOW + 5, Collections.<String>emptySet(), wanted, true,
+                Collections.singleton(ChatConv.direct(A, B))).action);
         assertEquals(PushMessage.Decision.Action.DROP, push.decide(A, NOW, Collections.<String>emptySet(),
                 Collections.<String>emptySet(), true).action);
         assertEquals(PushMessage.Decision.Action.DROP, push.decide(B, NOW, Collections.<String>emptySet(), wanted, true).action);

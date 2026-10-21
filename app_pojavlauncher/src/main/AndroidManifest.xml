@@ -146,10 +146,13 @@
         </service>
 
         <!-- Projects fork (M19): projects:// links (the Discord sign-in coming back, a friend's code from
-             the QR landing page) and taps on friends notifications. No screen of their own. -->
+             the QR landing page) and taps on friends notifications. No screen of their own. M20: each in a task
+             of its own (empty affinity): in the app's task a trampoline started after the process died was the
+             task's only activity, the launch intent only brought that task forward and nothing opened. -->
         <activity
             android:name="gg.projects.mobile.social.SocialLinkActivity"
             android:exported="true"
+            android:taskAffinity=""
             android:noHistory="true"
             android:excludeFromRecents="true"
             android:theme="@android:style/Theme.NoDisplay">
@@ -164,6 +167,7 @@
         <activity
             android:name="gg.projects.mobile.social.SocialOpenActivity"
             android:exported="false"
+            android:taskAffinity=""
             android:noHistory="true"
             android:excludeFromRecents="true"
             android:theme="@android:style/Theme.NoDisplay" />

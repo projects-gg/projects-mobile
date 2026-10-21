@@ -38,7 +38,7 @@ public final class AccountNotes {
         content.setOrientation(LinearLayout.VERTICAL);
         content.setPadding(Math.round(22 * dp), Math.round(4 * dp), Math.round(22 * dp), 0);
         TextView lead = new TextView(activity);
-        lead.setText(activity.getString(R.string.projects_limited_body, SocialUi.moment(activity, limited.until)));
+        lead.setText(activity.getString(R.string.projects_limited_body, SocialUi.day(activity, limited.until)));
         lead.setTextSize(15);
         lead.setTextColor(ContextCompat.getColor(activity, R.color.projects_bone_100));
         content.addView(lead);
@@ -110,6 +110,9 @@ public final class AccountNotes {
                 line = activity.getString(R.string.projects_mod_warning);
                 warning = true;
             }
+            // The moderator's reason, as the report dialog names it ("Neden: Spam"); none when unknown.
+            int reason = ReportDialog.noticeReason(notice.reason);
+            if (reason != 0) line += "\n" + activity.getString(R.string.projects_mod_reason, activity.getString(reason));
             // The same note twice says it once.
             if (text.indexOf(line) >= 0) continue;
             if (text.length() > 0) text.append("\n\n");
@@ -117,7 +120,7 @@ public final class AccountNotes {
         }
         sShowing = true;
         AlertDialog dialog = new AlertDialog.Builder(activity)
-                .setTitle(warning ? R.string.projects_mod_warning_title : R.string.projects_social_title)
+                .setTitle(warning ? R.string.projects_mod_warning_title : R.string.projects_mod_profile_reset_title)
                 .setMessage(text.toString())
                 .setPositiveButton(R.string.projects_mod_ok, null)
                 .setNeutralButton(R.string.projects_mod_rules, (d, w) -> SocialUi.openRules(activity))

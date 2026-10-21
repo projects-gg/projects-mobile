@@ -191,30 +191,23 @@ public final class PushMessage {
         public final String why;
         /** SHOW: how long the notification stays (ms; 0: until opened). */
         public final long timeoutMs;
-        /** SHOW: without sound or a heads-up (a conversation muted on this phone). */
-        public final boolean silent;
 
-        private Decision(Action action, String why, long timeoutMs, boolean silent) {
+        private Decision(Action action, String why, long timeoutMs) {
             this.action = action;
             this.why = why;
             this.timeoutMs = timeoutMs;
-            this.silent = silent;
         }
 
         static Decision show(long timeoutMs) {
-            return new Decision(Action.SHOW, "", timeoutMs, false);
-        }
-
-        static Decision showSilently(long timeoutMs) {
-            return new Decision(Action.SHOW, "", timeoutMs, true);
+            return new Decision(Action.SHOW, "", timeoutMs);
         }
 
         static Decision cancel() {
-            return new Decision(Action.CANCEL, "", 0, false);
+            return new Decision(Action.CANCEL, "", 0);
         }
 
         static Decision drop(String why) {
-            return new Decision(Action.DROP, why, 0, false);
+            return new Decision(Action.DROP, why, 0);
         }
     }
 
@@ -230,7 +223,7 @@ public final class PushMessage {
         return decide(signedIn, nowSeconds, endedCalls, wanted, crewAudible, Collections.<String>emptySet());
     }
 
-    /** @param mutedConversations conversations muted on this phone now: their messages show silently */
+    /** @param mutedConversations conversations muted on this phone now: their messages notify nothing (the desktop's rule) */
     public Decision decide(@Nullable String signedIn, long nowSeconds, Set<String> endedCalls, Set<String> wanted,
                            boolean crewAudible, Set<String> mutedConversations) {
         if (signedIn == null || !signedIn.equals(to)) return Decision.drop("not for the signed-in account");
@@ -253,7 +246,8 @@ public final class PushMessage {
                 if (!wanted.contains(MESSAGE)) return Decision.drop("messages off");
                 // A message push lives a day at FCM: one far older than that is not news.
                 if (at > 0 && nowSeconds - at > 86_400) return Decision.drop("expired");
-                return mutedConversations.contains(conv) ? Decision.showSilently(0) : Decision.show(0);
+                // "Sessize al" on a conversation: no notification at all; the unread count shows it in the app.
+                return mutedConversations.contains(conv) ? Decision.drop("conversation muted") : Decision.show(0);
             default:
                 return Decision.drop("unknown");
         }

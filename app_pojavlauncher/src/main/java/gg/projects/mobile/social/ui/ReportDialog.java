@@ -38,8 +38,8 @@ import gg.projects.mobile.ui.Haptics;
 
 /**
  * "Rapor et" (M20, MOD1; the desktop's dialog): who or what is reported, the fixed reasons of that
- * kind, a note only moderators see (200 characters) and, for a player or a message, "Engelle" (not
- * ticked). "Gönder" stays off until a reason is picked; the reported one never learns about it.
+ * kind, a note only moderators see (200 characters) and, for a player or a message, "Ayrıca engelle"
+ * (not ticked). "Gönder" stays off until a reason is picked; the reported one never learns about it.
  */
 public final class ReportDialog {
     private ReportDialog() {}
@@ -67,6 +67,23 @@ public final class ReportDialog {
             case Reports.SCAM: return R.string.projects_report_reason_scam;
             case Reports.OTHER:
             default: return R.string.projects_report_reason_other;
+        }
+    }
+
+    /** A moderator's notice names its reason as a player's report does (0: none or one not known here). */
+    static int noticeReason(@Nullable String reason) {
+        if (reason == null) return 0;
+        switch (reason) {
+            case Reports.NAME:
+            case Reports.PROFILE:
+            case Reports.HARASSMENT:
+            case Reports.INAPPROPRIATE:
+            case Reports.SPAM:
+            case Reports.SCAM:
+            case Reports.OTHER:
+                return reasonLabel(Reports.Target.PLAYER, reason);
+            default:
+                return 0;
         }
     }
 
@@ -167,12 +184,22 @@ public final class ReportDialog {
         note.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE
                 | android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
         content.addView(note, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        // Under the note: who reads it (the desktop's line) and how much is left.
+        LinearLayout under = new LinearLayout(activity);
+        under.setOrientation(LinearLayout.HORIZONTAL);
+        under.setPadding(0, Math.round(4 * dp), 0, 0);
+        TextView help = new TextView(activity);
+        help.setText(R.string.projects_report_note_help);
+        help.setTextSize(12);
+        help.setTextColor(ContextCompat.getColor(activity, R.color.projects_ash_400));
+        under.addView(help, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         final TextView count = new TextView(activity);
         count.setTextSize(12);
         count.setGravity(Gravity.END);
         count.setTextColor(ContextCompat.getColor(activity, R.color.projects_ash_400));
         count.setText(activity.getString(R.string.projects_crew_count, 0, Reports.NOTE_MAX));
-        content.addView(count, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        under.addView(count, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        content.addView(under, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         note.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int c, int after) {}
             @Override public void onTextChanged(CharSequence s, int start, int before, int c) {}
@@ -193,6 +220,13 @@ public final class ReportDialog {
             lp.topMargin = Math.round(4 * dp);
             content.addView(block, lp);
         }
+        // The reported one never learns who it was (the desktop says it the same way).
+        TextView quiet = new TextView(activity);
+        quiet.setText(R.string.projects_report_private);
+        quiet.setTextSize(13);
+        quiet.setTextColor(ContextCompat.getColor(activity, R.color.projects_ash_400));
+        quiet.setPadding(0, Math.round(10 * dp), 0, Math.round(4 * dp));
+        content.addView(quiet);
 
         ScrollView scroll = new ScrollView(activity);
         scroll.addView(content);

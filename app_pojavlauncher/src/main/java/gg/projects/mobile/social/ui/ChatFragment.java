@@ -309,6 +309,8 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
             SocialUi.leave(this);
             return;
         }
+        // MOD1: a moderator's note shows on whichever friends screen is open when it comes.
+        if (isResumed()) AccountNotes.showNotices(requireActivity());
         SocialChat chat = service.chat();
         SocialState state = service.state();
         ChatBook book = chat.book();
@@ -359,6 +361,8 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
         ChatBook book = service.chat().book();
         boolean muted = book != null && book.mutedAt(mConv, SocialService.nowSeconds());
         mBell.setImageResource(muted ? R.drawable.projects_ic_bell_slash : R.drawable.projects_ic_bell);
+        mBell.setContentDescription(muted ? getString(R.string.projects_chat_notifications) + ", " + getString(R.string.projects_crew_muted)
+                : getString(R.string.projects_chat_notifications));
     }
 
     private void renderComposer(Context context, SocialService service, SocialState state) {
@@ -654,9 +658,13 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
             boolean first = prev == null || !together(prev, e, me) || (mUnreadAt > 0 && e.message != null && e.message.id == mUnreadAt);
             boolean last = next == null || !together(e, next, me) || (mUnreadAt > 0 && next.message != null && next.message.id == mUnreadAt);
             String state = e.failed() ? "failed:" + e.outbox.failure : e.pending() ? "pending" : "sent";
+            // "Bağlantı bekleniyor" under a waiting message follows the socket, so the row knows it too.
+            boolean waiting = e.outbox != null && service.connection() != SocialService.Connection.LIVE;
             String content = e.key() + "|" + e.text() + "|" + state + "|" + (e.message != null ? e.message.editedAt : 0) + "|"
-                    + first + last + "|" + e.deleting;
-            if (ChatConv.isCrew(mConv) && !e.mine(me)) {
+                    + first + last + "|" + e.deleting + "|" + waiting;
+            if (!e.mine(me)) {
+                // The sender's name and face (TalkBack reads the name in a direct conversation too): a row
+                // bound before the list came is bound again once they are known.
                 Profile p = service.state().profile(e.from(me));
                 content += "|" + (p == null ? "" : p.name() + p.faceKey());
             }
@@ -942,8 +950,9 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
         }
 
         String who = mine ? getString(R.string.projects_crew_you) : sender == null ? "" : sender.name();
-        String state = e.failed() ? getString(R.string.projects_chat_failed) : mine ? getString(e.pending()
-                ? R.string.projects_chat_pending : R.string.projects_chat_sent) : "";
+        // TalkBack says what the line under the bubble says ("Baglanti bekleniyor" while offline).
+        String state = e.failed() ? getString(R.string.projects_chat_failed) : waiting ? getString(R.string.projects_chat_waiting)
+                : mine ? getString(e.pending() ? R.string.projects_chat_pending : R.string.projects_chat_sent) : "";
         bubble.setContentDescription(who + ": " + e.text() + ", " + clock + (edited ? ", " + getString(R.string.projects_chat_edited) : "")
                 + (state.isEmpty() ? "" : ", " + state));
         bubble.setOnLongClickListener(v -> {

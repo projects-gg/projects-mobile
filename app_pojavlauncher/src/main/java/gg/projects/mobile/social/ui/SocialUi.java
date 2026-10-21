@@ -168,10 +168,11 @@ public final class SocialUi {
             case CHAT_REJECTED:
                 id = "link".equals(problem.reason) ? R.string.projects_chat_link
                         : "phone".equals(problem.reason) ? R.string.projects_chat_phone
-                        : "words".equals(problem.reason) ? R.string.projects_chat_words : R.string.projects_chat_not_sent;
+                        : "words".equals(problem.reason) || "invalid".equals(problem.reason) ? R.string.projects_chat_words
+                        : R.string.projects_chat_not_sent;
                 break;
             case MESSAGE_GONE: id = R.string.projects_chat_gone; break;
-            case CHAT_NOT_PERMITTED: id = R.string.projects_social_error_not_permitted; break;
+            case CHAT_NOT_PERMITTED: id = R.string.projects_chat_not_allowed; break;
             case CHAT_TOO_OLD: id = R.string.projects_chat_too_old; break;
             case FAILED:
             default: id = R.string.projects_social_error_failed; break;
@@ -200,10 +201,15 @@ public final class SocialUi {
         }
     }
 
-    /** MOD1: "Hesabın 24 Ekim 21:30 tarihine kadar kısıtlandı." or "Hesabın kalıcı olarak kısıtlandı." */
+    /** MOD1: "Hesabın 24 Ekim tarihine kadar kısıtlandı." or "Hesabın kalıcı olarak kısıtlandı." (the desktop's dates) */
     public static String restrictedText(Context context, long until) {
         if (until <= 0) return context.getString(R.string.projects_mod_restricted_forever);
-        return context.getString(R.string.projects_mod_restricted_until, moment(context, until));
+        return context.getString(R.string.projects_mod_restricted_until, day(context, until));
+    }
+
+    /** A day as the desktop writes it: "28 Ekim" (the year only when it is another one), for limits counted in days. */
+    public static String day(Context context, long seconds) {
+        return android.text.format.DateUtils.formatDateTime(context, seconds * 1000L, android.text.format.DateUtils.FORMAT_SHOW_DATE);
     }
 
     /** A moment as the phone writes it: "22 Ekim 2026 21:30" (the date in the phone's language, then the time). */
@@ -292,8 +298,13 @@ public final class SocialUi {
 
     /** An invite to another server: the phone joins it from the game's own list. */
     public static void otherServer(final Activity activity, final String host) {
+        otherServer(activity, host, null);
+    }
+
+    /** The same for a crew call (M20): its title says whose call it is. */
+    public static void otherServer(final Activity activity, final String host, @Nullable CharSequence title) {
         new AlertDialog.Builder(activity)
-                .setTitle(R.string.projects_social_invited_you)
+                .setTitle(title != null ? title : activity.getString(R.string.projects_social_invited_you))
                 .setMessage(activity.getString(R.string.projects_social_invite_other_body, host))
                 .setPositiveButton(R.string.projects_social_copy_address, (d, w) -> {
                     copy(activity, "Projects", host);

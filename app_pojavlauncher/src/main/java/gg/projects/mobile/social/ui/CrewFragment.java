@@ -320,6 +320,8 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
             SocialUi.leave(this);
             return;
         }
+        // MOD1: a moderator's note shows on whichever friends screen is open when it comes.
+        if (isResumed()) AccountNotes.showNotices(requireActivity());
         SocialState state = service.state();
         resolveSelection(state, gate.multi);
         renderRail(state, gate);
@@ -632,7 +634,8 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
             mark.setVisibility(View.GONE);
             plus.setVisibility(View.VISIBLE);
             muted.setVisibility(View.GONE);
-            tag.setText("+");
+            // No caption under the plus (it said "+" twice); the line keeps the tiles level.
+            tag.setText("");
             boolean full = state.atCrewLimit();
             // At the limit "+" stays (an invite can still be declined there), dimmer.
             plus.setAlpha(full && state.teamInvites().isEmpty() ? 0.5f : 1f);
@@ -659,7 +662,17 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         boolean main = position == 0;
         StringBuilder description = new StringBuilder(crew.team.name);
         if (main) description.append(", ").append(getString(R.string.projects_crews_main));
-        if (call) description.append(", ").append(getString(R.string.projects_crew_call_start));
+        if (call) {
+            // Whose call it is, as the call card says it (not the "Ekibi çağır" action).
+            Call first = state.calls(now, id).get(0);
+            Profile caller = state.profile(first.from);
+            description.append(", ").append(first.from.equals(state.myId()) ? getString(R.string.projects_crew_call_mine)
+                    : getString(R.string.projects_crew_call_theirs, caller == null ? getString(R.string.projects_crew_someone) : caller.name()));
+        }
+        if (unread) {
+            int count = book.unread(ChatConv.crew(id));
+            description.append(", ").append(getResources().getQuantityString(R.plurals.projects_chat_unread, count, count));
+        }
         if (isMuted) description.append(", ").append(getString(R.string.projects_crew_muted));
         view.setContentDescription(description);
         view.setOnClickListener(v -> {
@@ -732,7 +745,7 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         long hub = state.hubNow(now);
         if (team.textLocked(hub)) {
             String text = getString(R.string.projects_mod_crew_reset) + " " + getString(R.string.projects_mod_crew_locked_until,
-                    SocialUi.moment(requireContext(), team.textLockedUntil));
+                    SocialUi.day(requireContext(), team.textLockedUntil));
             rows.add(new Row(T_NOTICE, "locked", text, text));
         }
         if (service.chat().available()) {
@@ -741,7 +754,7 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
             ChatBook.Summary summary = null;
             if (book != null) for (ChatBook.Summary s : book.summaries()) if (s.conv.equals(conv)) summary = s;
             String last = summary == null || summary.last == null ? "" : summary.last.key() + summary.last.text();
-            rows.add(new Row(T_CHAT, "chat", last + "|" + (summary == null ? 0 : summary.unread), summary));
+            rows.add(new Row(T_CHAT, "chat", team.id + "|" + last + "|" + (summary == null ? 0 : summary.unread), summary));
         }
         if (gate.calls) {
             for (Call call : state.calls(now, team.id)) {
@@ -1026,7 +1039,11 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
             line.setText(summary.last.mine(me) ? getString(R.string.projects_chat_you, text) : (from == null ? "" : from.name() + ": ") + text);
             line.setTextColor(ContextCompat.getColor(context, unread > 0 ? R.color.projects_bone_100 : R.color.projects_ash_400));
         }
-        view.setOnClickListener(v -> ChatFragment.open(CrewFragment.this, ChatConv.crew(crew.id())));
+        // The crew shown when tapped (the row is not bound again when two crews' rows look the same).
+        view.setOnClickListener(v -> {
+            Crew now = shown();
+            if (now != null) ChatFragment.open(CrewFragment.this, ChatConv.crew(now.id()));
+        });
     }
 
     private void bindCall(View view, final Call call) {
@@ -1136,8 +1153,14 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
             @Override
             public void ok(Void value) {
                 if (!"yes".equals(answer) || !isAdded()) return;
-                if (call.onProjects()) SocialUi.joinProjects(activity);
-                else if (call.otherHost() != null) SocialUi.otherServer(activity, call.otherHost());
+                if (call.onProjects()) {
+                    SocialUi.joinProjects(activity);
+                } else if (call.otherHost() != null) {
+                    // M20: the dialog says whose call it is (the card's title), not an invite's line.
+                    Profile caller = service.state().profile(call.from);
+                    SocialUi.otherServer(activity, call.otherHost(), getString(R.string.projects_crew_call_theirs,
+                            caller == null ? getString(R.string.projects_crew_someone) : caller.name()));
+                }
             }
 
             @Override
@@ -1239,8 +1262,9 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         join.setVisibility(presence.onProjects() ? View.VISIBLE : View.GONE);
         join.setText(R.string.projects_social_join);
         join.setOnClickListener(v -> SocialUi.joinProjects(requireActivity()));
-        final Crew crew = shown();
+        // The crew shown when tapped: a row the same in two crews is not bound again on a switch.
         view.setOnClickListener(v -> {
+            Crew crew = shown();
             if (crew != null) CrewSheets.member(requireActivity(), crew.id(), member.profile.id);
         });
     }
@@ -1382,6 +1406,9 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
                 @Override
                 public void failed(SocialProblem problem) {
                     mInviteBusy.remove(teamId);
+                    // The row looks the same after a refusal (it is not bound again): its buttons come back here.
+                    accept.setEnabled(true);
+                    decline.setEnabled(true);
                     SocialUi.toastProblem(activity, problem, accept);
                     render();
                 }
@@ -1401,6 +1428,8 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
                 @Override
                 public void failed(SocialProblem problem) {
                     mInviteBusy.remove(teamId);
+                    accept.setEnabled(true);
+                    decline.setEnabled(true);
                     SocialUi.toastProblem(activity, problem, decline);
                     render();
                 }

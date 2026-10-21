@@ -45,7 +45,7 @@
 
     <!-- Sign-in -->
     <string name="projects_social_consent_title">Play with your friends</string>
-    <string name="projects_social_consent_body">You sign in with your Discord account. Your friends see your name, profile picture and what you\'re playing; your email, password and messages never reach us.</string>
+    <string name="projects_social_consent_body">You sign in with your Discord account. Your friends see your name, profile picture and what you\'re playing; your email and password never reach us.</string>
     <string name="projects_social_privacy">Privacy</string>
     <string name="projects_social_privacy_url">https://projects.gg/gizlilik/#friends</string>
     <string name="projects_social_sign_in">Sign in with Discord</string>
@@ -411,7 +411,7 @@
     <string name="projects_chat_waiting">Waiting for a connection</string>
     <string name="projects_chat_copy">Copy</string>
     <string name="projects_chat_edit">Edit</string>
-    <string name="projects_chat_editing">Edit message</string>
+    <string name="projects_chat_editing">Editing a message</string>
     <string name="projects_chat_delete">Delete for everyone</string>
     <string name="projects_chat_delete_ask">Delete this message for everyone?</string>
     <string name="projects_chat_discard">Delete</string>
@@ -420,6 +420,7 @@
     <string name="projects_chat_today">Today</string>
     <string name="projects_chat_yesterday">Yesterday</string>
     <string name="projects_chat_empty">No messages yet</string>
+    <string name="projects_chat_empty_body">Press “Message” on a friend\'s card.</string>
     <string name="projects_chat_you">You: %1$s</string>
     <plurals name="projects_chat_unread">
         <item quantity="one">%d unread message</item>
@@ -427,27 +428,29 @@
     </plurals>
     <string name="projects_chat_link">Links can\'t be sent.</string>
     <string name="projects_chat_phone">Phone numbers can\'t be sent.</string>
-    <string name="projects_chat_words">This message has a word that isn\'t allowed.</string>
-    <string name="projects_chat_too_long">300 characters at most.</string>
-    <string name="projects_chat_rate">A little slower. Try again in a few seconds.</string>
+    <string name="projects_chat_words">This message can\'t be sent.</string>
+    <string name="projects_chat_too_long">A message has up to 300 characters.</string>
+    <string name="projects_chat_rate">You\'re typing too fast. Wait a moment.</string>
     <string name="projects_chat_daily">You reached today\'s message limit.</string>
     <string name="projects_chat_muted_until">You can\'t send messages until %1$s.</string>
     <string name="projects_chat_off">Chat is off right now.</string>
     <string name="projects_chat_live_only">Messages only reach players who are online right now.</string>
     <string name="projects_chat_not_friends">You\'re no longer friends.</string>
     <string name="projects_chat_not_in_crew">You\'re no longer in this crew.</string>
+    <string name="projects_chat_not_allowed">You can\'t send messages here anymore.</string>
     <string name="projects_chat_not_sent">The message wasn\'t sent.</string>
     <string name="projects_chat_too_old">Messages older than 15 minutes can\'t be edited.</string>
     <string name="projects_chat_gone">This message is gone.</string>
     <string name="projects_chat_deleted">Message deleted</string>
     <string name="projects_chat_clear">Clear history</string>
-    <string name="projects_chat_clear_ask">Messages are deleted from this phone only.</string>
+    <string name="projects_chat_clear_ask">Clear this conversation\'s history from this phone?</string>
     <string name="projects_chat_cleared">History cleared</string>
     <string name="projects_chat_quick_five">5 min</string>
     <string name="projects_chat_quick_where">Where are you?</string>
     <string name="projects_chat_quick_come">Come</string>
     <string name="projects_chat_notifications">Notifications</string>
     <string name="projects_chat_more">More</string>
+    <string name="projects_chat_consent">Chat messages stay on our server only to be delivered, for at most 7 days.</string>
 
     <string name="projects_report">Report</string>
     <string name="projects_report_crew">Report crew</string>
@@ -460,9 +463,12 @@
     <string name="projects_report_reason_spam">Spam</string>
     <string name="projects_report_reason_scam">Scam</string>
     <string name="projects_report_reason_other">Other</string>
-    <string name="projects_report_note">Note (optional)</string>
-    <string name="projects_report_note_hint">Only Projects moderators see it</string>
-    <string name="projects_report_block">Block</string>
+    <string name="projects_report_note">Note</string>
+    <string name="projects_report_note_hint">Tell us briefly, if you like</string>
+    <string name="projects_report_note_help">Only staff see it.</string>
+    <string name="projects_report_private">Nobody is ever told who reported them.</string>
+    <string name="projects_report_inviter">Report who invited you</string>
+    <string name="projects_report_block">Block them too</string>
     <string name="projects_report_send">Send</string>
     <string name="projects_report_sent">Your report was sent.</string>
     <string name="projects_report_rate">You sent many reports today. Try again tomorrow.</string>
@@ -472,7 +478,7 @@
     <string name="projects_limited_body">Because your Discord account is new, until %1$s:</string>
     <string name="projects_limited_crew_found">You can\'t create crews</string>
     <string name="projects_limited_crew_invites">You can send up to %1$d crew invites a day</string>
-    <string name="projects_limited_code_lookups">You can look up to %1$d codes a day</string>
+    <string name="projects_limited_code_lookups">You can try up to %1$d codes a day</string>
     <string name="projects_limited_chat">You can send up to %1$d messages a day</string>
     <string name="projects_limited_lifts">These limits lift by themselves.</string>
     <plurals name="projects_limited_no_crew">
@@ -484,8 +490,10 @@
     <string name="projects_limited_chat_today">Because your Discord account is new, you can send up to %1$d messages a day.</string>
     <string name="projects_limited_generic">Because your Discord account is new, this isn\'t possible yet.</string>
 
-    <string name="projects_mod_warning_title">Warning</string>
+    <string name="projects_mod_warning_title">You got a warning</string>
     <string name="projects_mod_warning">You received a warning for breaking the community rules.</string>
+    <string name="projects_mod_profile_reset_title">Your profile picture was reset</string>
+    <string name="projects_mod_reason">Reason: %1$s</string>
     <string name="projects_mod_profile_reset">Your profile picture was reset because it broke the community rules.</string>
     <string name="projects_mod_rules">Community rules</string>
     <string name="projects_mod_rules_url">https://mc.projects.gg/sozlesme</string>
@@ -493,6 +501,7 @@
     <string name="projects_mod_crew_reset">Your crew\'s name and motto were reset because they broke the community rules.</string>
     <string name="projects_mod_crew_locked_until">They can\'t be changed until %1$s.</string>
     <string name="projects_mod_crew_disbanded">%1$s was closed for breaking the community rules.</string>
+    <string name="projects_mod_crew_disbanded_unnamed">Your crew was closed for breaking the community rules.</string>
     <string name="projects_mod_restricted_until">Your account is restricted until %1$s.</string>
     <string name="projects_mod_restricted_forever">Your account is restricted permanently.</string>
     <string name="projects_social_signups_closed">New accounts can\'t be created right now. Try again tomorrow.</string>

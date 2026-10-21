@@ -9,10 +9,15 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import okhttp3.Call;
 import okhttp3.ConnectionPool;
+import okhttp3.EventListener;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -24,7 +29,9 @@ import okhttp3.ResponseBody;
  * The friends service's HTTP API (services/social README "HTTP API"), called on a worker thread.
  * JSON only; the session token goes in the {@code Authorization} header, never in a URL or a log.
  * Retries follow the README: a GET or DELETE is tried once more when the connection failed or a
- * gateway gave up (502/504); everything else fails at once with a {@link SocialProblem}.
+ * gateway gave up (502/504); any request goes once more when it failed on the idle connection kept
+ * from an earlier one (closed meanwhile, so the service never saw it); everything else fails at once
+ * with a {@link SocialProblem}.
  */
 public final class SocialApi {
     private static final String TAG = "ProjectsSocial";
@@ -52,7 +59,23 @@ public final class SocialApi {
                 // Few, short requests: one idle connection is enough and it goes after a minute.
                 .connectionPool(new ConnectionPool(1, 1, TimeUnit.MINUTES))
                 .retryOnConnectionFailure(false)
+                // M20: notes whether a request opened a connection of its own (see send()).
+                .eventListenerFactory(call -> {
+                    final Attempt attempt = call.request().tag(Attempt.class);
+                    if (attempt == null) return EventListener.NONE;
+                    return new EventListener() {
+                        @Override
+                        public void connectStart(Call c, InetSocketAddress address, Proxy proxy) {
+                            attempt.newConnection = true;
+                        }
+                    };
+                })
                 .build();
+    }
+
+    /** One try of a request: did it open a new connection, or reuse the idle one. */
+    private static final class Attempt {
+        volatile boolean newConnection;
     }
 
     public String base() {
@@ -360,8 +383,10 @@ public final class SocialApi {
         int tries = idempotent ? 2 : 1;
         SocialProblem last = null;
         for (int attempt = 0; attempt < tries; attempt++) {
+            Attempt tried = new Attempt();
             Request.Builder request = new Request.Builder()
                     .url(mBase + path)
+                    .tag(Attempt.class, tried)
                     .header("User-Agent", mUserAgent)
                     .header("Accept", "application/json");
             String bound = mBoundToken.get();
@@ -390,8 +415,16 @@ public final class SocialApi {
                 }
                 throw problem;
             } catch (IOException e) {
-                Log.i(TAG, method + " " + route(path) + " failed: " + e.getClass().getSimpleName());
+                Log.i(TAG, method + " " + route(path) + " failed: " + e.getClass().getSimpleName()
+                        + (tried.newConnection ? "" : " (idle connection)"));
                 last = SocialProblem.unavailable(e.getClass().getSimpleName());
+                // M20: the idle connection the server (or a NAT) had already closed. The request never
+                // reached the service, so even a POST goes once more, on a new connection (the way
+                // browsers and hyper do it). A timeout is not that: the service may have it.
+                if (!idempotent && attempt == 0 && !tried.newConnection && !(e instanceof InterruptedIOException)) {
+                    mClient.connectionPool().evictAll();
+                    tries = 2;
+                }
                 if (attempt + 1 >= tries) throw last;
             }
         }

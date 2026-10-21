@@ -19,7 +19,7 @@ import gg.projects.mobile.language.LanguageManager;
  * player's switches, then shown or taken back by {@link SocialNotifications}. It needs nothing of the
  * running app: a push that wakes the app reads the session file and the switches itself.
  *
- * <p>M20: a direct message ("Ayşe sana mesaj gönderdi", silent for a conversation muted here, and
+ * <p>M20: a direct message ("Ayşe sana mesaj gönderdi"; nothing for a conversation muted here, silent
  * while the game is on screen), and a call naming its crews and its server.
  */
 public final class SocialPush {
@@ -69,7 +69,7 @@ public final class SocialPush {
                     showCall(app, prefs, message, decision.timeoutMs);
                 } else if (PushMessage.MESSAGE.equals(message.type)) {
                     // Over the game it stays in the shade, without a heads-up.
-                    boolean silent = decision.silent || SocialRoutes.gameRunning(app);
+                    boolean silent = SocialRoutes.gameRunning(app);
                     SocialNotifications.showMessage(app, message.conv, message.name, silent);
                 }
                 break;

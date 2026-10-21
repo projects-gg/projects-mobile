@@ -263,7 +263,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     }
 
     /** Studio's {@code features.chat} (or the debug override): the socket asks for chat only then. */
-    private boolean chatEnabled() {
+    public boolean chatEnabled() {
         return (mConfigFriends || mDebug.forceFriends) && (mConfigChat || mDebug.forceChat);
     }
 
@@ -593,6 +593,9 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
                     if (order != null) mState.setCrewOrder(order);
                     mPrefs.setCrewSettings(mState.teamNotifications());
                     rememberCrewNames();
+                    // CHAT1: the list says whether the service has chat; a socket that said hello before it
+                    // syncs now (and then sends what waits).
+                    mChat.connected();
                     mLastFetch = System.currentTimeMillis();
                     if (!mLiveSocket && mConnection == null) mUnavailable = false;
                     else if (mLiveSocket) mUnavailable = false;
@@ -1011,7 +1014,9 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
                     if (foreground && !notice.byMe && gate().teams) {
                         String text;
                         if ("disbanded".equals(notice.reason) && notice.byStaff) {
-                            text = context.getString(R.string.projects_mod_crew_disbanded, notice.teamName);
+                            text = notice.teamName == null || notice.teamName.isEmpty()
+                                    ? context.getString(R.string.projects_mod_crew_disbanded_unnamed)
+                                    : context.getString(R.string.projects_mod_crew_disbanded, notice.teamName);
                         } else if ("kicked".equals(notice.reason)) {
                             text = context.getString(R.string.projects_crew_kicked, notice.teamName);
                         } else if ("disbanded".equals(notice.reason)) {

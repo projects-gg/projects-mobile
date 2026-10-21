@@ -269,6 +269,13 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
     }
 
     private void renderConsent(SocialService service) {
+        // CHAT1: with chat on, the consent says how long the server keeps messages (the desktop's line).
+        View body = getView() == null ? null : getView().findViewById(R.id.projects_consent_body);
+        if (body instanceof TextView) {
+            String text = getString(R.string.projects_social_consent_body);
+            if (service.chatEnabled()) text += " " + getString(R.string.projects_chat_consent);
+            ((TextView) body).setText(text);
+        }
         SocialService.SignInStatus status = service.signInStatus();
         boolean waiting = status == SocialService.SignInStatus.WAITING || status == SocialService.SignInStatus.CLAIMING;
         mWaiting.setVisibility(waiting ? View.VISIBLE : View.GONE);
@@ -399,7 +406,8 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
                         new Person("invite", from, invite)));
             }
         }
-        if (gate.teams && state.team() == null && !state.teamInvites().isEmpty()) {
+        // TEAM4: with several crews the invites stay listed in a crew too (at the limit they can be declined).
+        if (gate.teams && (state.team() == null || gate.multi) && !state.teamInvites().isEmpty()) {
             rows.add(header("h-crew-invites", getString(R.string.projects_crew_invites)));
             for (TeamInvite invite : state.teamInvites()) {
                 rows.add(new Row(T_PERSON, "team-invite-" + invite.team.id, "teaminvite|" + invite.team.name + invite.team.emblem
@@ -600,7 +608,10 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
                     public void ok(com.google.gson.JsonObject value) {
                         Haptics.confirm(button);
                         SocialUi.toast(activity, activity.getString(R.string.projects_crew_joined, invite.team.name));
-                        SocialUi.open(SocialFragment.this, CrewFragment.class, CrewFragment.TAG);
+                        // TEAM4: the crew screen opens on the crew just joined, not the primary one.
+                        Bundle args = new Bundle();
+                        args.putString(CrewFragment.ARG_CREW, invite.team.id);
+                        SocialUi.open(SocialFragment.this, CrewFragment.class, CrewFragment.TAG, args);
                     }
 
                     @Override
@@ -916,7 +927,10 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
                 line.setTextColor(ContextCompat.getColor(context, R.color.projects_gold_300));
             } else {
                 int online = service.state().onlineInCrew(team.id);
-                line.setText(context.getResources().getQuantityString(R.plurals.projects_crew_online, online, online));
+                String text = context.getResources().getQuantityString(R.plurals.projects_crew_online, online, online);
+                // TEAM4: a crew the player silenced says so here too (the rail shows it with a bell).
+                if (crew != null && crew.mute.mutedAt(service.state().hubNow(now))) text += " · " + getString(R.string.projects_crew_muted);
+                line.setText(text);
                 line.setTextColor(ContextCompat.getColor(context, R.color.projects_ash_400));
             }
             line.setVisibility(View.VISIBLE);
