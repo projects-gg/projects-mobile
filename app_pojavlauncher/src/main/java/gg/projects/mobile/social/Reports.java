@@ -18,7 +18,8 @@ import java.util.List;
 public final class Reports {
     private Reports() {}
 
-    public enum Target { PLAYER, CREW, MESSAGE }
+    /** FIX2: {@code PLAN} is a plan's maker reported from its card (a player, with the plan as context). */
+    public enum Target { PLAYER, CREW, MESSAGE, PLAN }
 
     public static final int NOTE_MAX = 200;
     /** Earlier messages a message report carries for context. */
@@ -39,6 +40,9 @@ public final class Reports {
                 return Collections.unmodifiableList(Arrays.asList(NAME, HARASSMENT, SPAM, SCAM, OTHER));
             case MESSAGE:
                 return Collections.unmodifiableList(Arrays.asList(HARASSMENT, INAPPROPRIATE, SPAM, SCAM, OTHER));
+            case PLAN:
+                // A player's reasons and, first, the note's: only a plan's report takes "inappropriate" for a player.
+                return Collections.unmodifiableList(Arrays.asList(INAPPROPRIATE, NAME, PROFILE, HARASSMENT, SPAM, SCAM, OTHER));
             case PLAYER:
             default:
                 return Collections.unmodifiableList(Arrays.asList(NAME, PROFILE, HARASSMENT, SPAM, SCAM, OTHER));
@@ -84,6 +88,22 @@ public final class Reports {
         JsonObject target = new JsonObject();
         target.addProperty("kind", "player");
         target.addProperty("id", userId);
+        return body(target, reason, note, block);
+    }
+
+    /**
+     * FIX2 ({@code planNotes}): a plan's maker, from its card. {@code plan: {crew, id}} names the plan;
+     * the service keeps its time and note as the report's context while it still has the plan.
+     */
+    public static JsonObject planMaker(String userId, String crewId, String planId, String reason, @Nullable String note,
+                                       boolean block) {
+        JsonObject target = new JsonObject();
+        target.addProperty("kind", "player");
+        target.addProperty("id", userId);
+        JsonObject plan = new JsonObject();
+        plan.addProperty("crew", crewId);
+        plan.addProperty("id", planId);
+        target.add("plan", plan);
         return body(target, reason, note, block);
     }
 

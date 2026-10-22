@@ -661,11 +661,20 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         });
     }
 
-    /** The crews' names for a call's push while the app sleeps (id → name). */
+    /**
+     * The crews' names for a call's push while the app sleeps (id → name); FIX2: friends' and crewmates'
+     * names too, for the game's own socket (it reads no list).
+     */
     private void rememberCrewNames() {
         Map<String, String> names = new HashMap<>();
-        for (Crew c : mState.crews()) names.put(c.id(), c.team.name);
+        Map<String, String> people = new HashMap<>();
+        for (Crew c : mState.crews()) {
+            names.put(c.id(), c.team.name);
+            for (SocialModel.Member m : c.team.members) people.put(m.profile.id, m.profile.name());
+        }
+        for (Friend f : mState.friends()) people.put(f.profile.id, f.profile.name());
         mPrefs.setCrewNames(names);
+        mPrefs.setPeopleNames(people);
     }
 
     // ---- sign-in ----
@@ -1167,15 +1176,25 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
 
     /** "İstek gönder": a request, or a friendship at once when they had asked first. */
     public void sendRequest(String code, Result<JsonObject> result) {
-        run(() -> mApi.request(code), result, answer -> {
-            if ("friends".equals(Json.str(answer, "status"))) {
-                Friend friend = Friend.read(Json.obj(answer, "friend"));
-                if (friend != null) mState.addFriend(friend);
-            } else {
-                Profile user = Profile.read(Json.obj(answer, "user"));
-                if (user != null) mState.addOutgoing(new Request(user, Json.num(answer, "sentAt", nowSeconds())));
-            }
-        });
+        run(() -> mApi.request(code), result, this::applyRequestAnswer);
+    }
+
+    /**
+     * FIX2 ("Arkadaş ekle" on a crewmate who is not a friend, with {@code crewFriendRequests}): the same
+     * request without their code; the same answers.
+     */
+    public void sendRequestToCrewmate(final String userId, Result<JsonObject> result) {
+        run(() -> mApi.requestCrewmate(userId), result, this::applyRequestAnswer);
+    }
+
+    private void applyRequestAnswer(JsonObject answer) {
+        if ("friends".equals(Json.str(answer, "status"))) {
+            Friend friend = Friend.read(Json.obj(answer, "friend"));
+            if (friend != null) mState.addFriend(friend);
+        } else {
+            Profile user = Profile.read(Json.obj(answer, "user"));
+            if (user != null) mState.addOutgoing(new Request(user, Json.num(answer, "sentAt", nowSeconds())));
+        }
     }
 
     public void accept(final String from, Result<JsonObject> result) {
@@ -1668,10 +1687,17 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
 
     /** "Plan yap": a time on Projects for the crew ({@code at}: a whole quarter hour, Unix seconds). */
     public void makePlan(final String crewId, long at, final Result<Plan> result) {
+        makePlan(crewId, at, null, result);
+    }
+
+    /** The same with FIX2's note ({@code planNotes} only; null or "": none). */
+    public void makePlan(final String crewId, long at, @Nullable String note, final Result<Plan> result) {
         JsonObject message = new JsonObject();
         message.addProperty("t", "plan");
         message.addProperty("crew", crewId);
         message.addProperty("at", at);
+        String clean = PlanNote.clean(note);
+        if (!clean.isEmpty() && gate().planNotes) message.addProperty("note", clean);
         socketAsk(message, new Result<JsonObject>() {
             @Override
             public void ok(JsonObject answer) {
@@ -1730,6 +1756,39 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
                 result.failed(problem);
             }
         }, null);
+    }
+
+    /**
+     * FIX2 ({@code planNotes}): the maker sets, changes or clears the note ({@code ""}); the crew's leader
+     * and moderators may only clear it. The answer carries the plan as stored: it replaces the one here.
+     */
+    public void setPlanNote(final Plan plan, @Nullable String note, final Result<Plan> result) {
+        JsonObject message = new JsonObject();
+        message.addProperty("t", "plan_note");
+        message.addProperty("crew", plan.crew);
+        message.addProperty("id", plan.id);
+        message.addProperty("note", PlanNote.clean(note));
+        socketAsk(message, new Result<JsonObject>() {
+            @Override
+            public void ok(JsonObject answer) {
+                Plan stored = Plan.read(Json.obj(answer, "plan"));
+                // An older answer without the plan: the note as sent (the socket's plan frame follows anyway).
+                Plan next = stored != null ? stored : plan.withNote(PlanNote.clean(note));
+                mState.putPlan(next);
+                changed();
+                result.ok(next);
+            }
+
+            @Override
+            public void failed(SocialProblem problem) {
+                if (problem.kind == SocialProblem.Kind.PLAN_GONE) {
+                    mState.removePlan(plan.id);
+                    PlanAlarms.forget(mApp, plan.id);
+                    changed();
+                }
+                result.failed(problem);
+            }
+        });
     }
 
     /** "Planı sil": its maker, the leader or a moderator; crewmates get {@code plan_removed}. */

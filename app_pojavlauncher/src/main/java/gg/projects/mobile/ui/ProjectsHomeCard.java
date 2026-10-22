@@ -121,6 +121,10 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
     /** M19: the card on screen now, if any (main thread only). */
     @Nullable
     private static ProjectsHomeCard sResumedCard;
+    /** FIX2: "Bağlan" to another server: the next home screen starts Play's profile into it. */
+    @Nullable
+    private static gg.projects.mobile.launch.ConnectTarget sServerRequested;
+    private static long sServerRequestedAt;
 
     /**
      * M19: a friend's or the crew's "Katıl" (after its question): the home screen comes back and starts
@@ -142,6 +146,50 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         mJoinButton.postDelayed(() -> {
             if (mResumed && mFragment.isAdded() && mFragment.getView() != null) join(mJoinButton);
         }, 350);
+    }
+
+    /**
+     * FIX2: "Bağlan" to another server (a call or an invite that shares its address): the home screen
+     * comes back and starts the profile Play would start, joining that server at once (the desktop's
+     * choice: the selected instance). The Projects profile goes through its join, as Play does.
+     */
+    public static void requestServer(gg.projects.mobile.launch.ConnectTarget target) {
+        ProjectsHomeCard card = sResumedCard;
+        if (card != null && card.mResumed && card.mFragment.isAdded() && card.mFragment.getView() != null) {
+            sServerRequested = null;
+            card.startRequestedServer(target);
+            return;
+        }
+        sServerRequested = target;
+        sServerRequestedAt = android.os.SystemClock.elapsedRealtime();
+    }
+
+    private void startRequestedServer(final gg.projects.mobile.launch.ConnectTarget target) {
+        mPlayButton.postDelayed(() -> {
+            if (!mResumed || !mFragment.isAdded() || mFragment.getView() == null) return;
+            startServer(target);
+        }, 350);
+    }
+
+    /** FIX2: Play's profile, into {@code target} (written down for the game's process, which reads it at its start). */
+    public void startServer(gg.projects.mobile.launch.ConnectTarget target) {
+        if (target.projects) {
+            joinNow();
+            return;
+        }
+        FragmentActivity activity = mFragment.requireActivity();
+        if (ProjectsJoin.isBusy() || ProgressLayout.hasProcesses()) {
+            PlayButtons.reject(mPlayButton);
+            Toast.makeText(activity, ProjectsJoin.isBusy() ? R.string.projects_join_busy : R.string.tasks_ongoing, Toast.LENGTH_LONG).show();
+            return;
+        }
+        gg.projects.mobile.launch.ConnectTarget.setPending(LauncherPreferences.DEFAULT_PREF, target, System.currentTimeMillis());
+        String current = LauncherPreferences.DEFAULT_PREF.getString(LauncherPreferences.PREF_KEY_CURRENT_PROFILE, "");
+        if (ProjectsProfile.KEY.equals(current)) {
+            playThroughJoin(mPlayButton);
+        } else {
+            ExtraCore.setValue(ExtraConstants.LAUNCH_GAME, true);
+        }
     }
 
     /** M19: Android's notification question came already (the home card's or the first start's). */
@@ -450,6 +498,12 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         if (sJoinRequested) {
             sJoinRequested = false;
             if (android.os.SystemClock.elapsedRealtime() - sJoinRequestedAt < 30_000) startRequestedJoin();
+        }
+        // FIX2: "Bağlan" to another server from the friends screens.
+        if (sServerRequested != null) {
+            gg.projects.mobile.launch.ConnectTarget target = sServerRequested;
+            sServerRequested = null;
+            if (android.os.SystemClock.elapsedRealtime() - sServerRequestedAt < 30_000) startRequestedServer(target);
         }
     }
 

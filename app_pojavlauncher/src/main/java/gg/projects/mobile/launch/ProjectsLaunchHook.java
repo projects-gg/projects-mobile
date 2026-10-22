@@ -35,12 +35,32 @@ public final class ProjectsLaunchHook {
 
     private static final String TAG = "ProjectsLaunchHook";
 
+    /** FIX2: the server this game's start joins by itself (its log may name the SRV target instead), or null. */
+    @androidx.annotation.Nullable
+    private static volatile String sJoinTarget;
+
+    /** The server the start joins by itself ({@code host} or {@code host:port}), for the in-game status; null: none. */
+    @androidx.annotation.Nullable
+    public static String joinTarget() {
+        return sJoinTarget;
+    }
+
     public static String[] applyAutoJoin(String[] gameArgs, JMinecraftVersionList.Version versionInfo) {
         try {
+            Object[] game = versionInfo.arguments == null ? null : versionInfo.arguments.game;
+            boolean quickPlay = QuickPlay.supportsQuickPlay(game);
+            // FIX2 ("Bağlan"): the server a crew call or an invite shares, written down by the launcher for this start.
+            String pending = ConnectTarget.takePending(LauncherPreferences.DEFAULT_PREF, System.currentTimeMillis());
+            if (pending != null) {
+                String[] joined = QuickPlay.withServer(gameArgs, pending, quickPlay);
+                if (joined != gameArgs) sJoinTarget = pending;
+                Log.i(TAG, "joining the server a friend shared");
+                return joined;
+            }
             String profileKey = LauncherPreferences.DEFAULT_PREF.getString(LauncherPreferences.PREF_KEY_CURRENT_PROFILE, "");
             if (!ProjectsProfile.KEY.equals(profileKey)) return gameArgs;
-            Object[] game = versionInfo.arguments == null ? null : versionInfo.arguments.game;
-            String[] joined = QuickPlay.withServer(gameArgs, QuickPlay.PROJECTS_SERVER, QuickPlay.supportsQuickPlay(game));
+            String[] joined = QuickPlay.withServer(gameArgs, QuickPlay.PROJECTS_SERVER, quickPlay);
+            if (joined != gameArgs) sJoinTarget = QuickPlay.PROJECTS_SERVER;
             Log.i(TAG, "auto-joining " + QuickPlay.PROJECTS_SERVER);
             return joined;
         } catch (RuntimeException e) {

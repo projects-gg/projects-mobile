@@ -98,6 +98,10 @@ import gg.projects.mobile.ui.ScreenHeader;
  * for whoever manages it) and, for the leader, "Yeni üyeleri onayla". "+" lists the player's own join
  * requests ("Geri çek"); the code field takes an invite link too, and a {@code projects://crew/} link
  * fills it and looks it up once. A crew that approves newcomers offers "Katılma isteği gönder".
+ *
+ * <p>FIX2: a plan carries its note (written when it is made, changed from its menu); who answered a plan
+ * or a call opens in place under its card ({@link AnswerList}); members, join requests, the crew's card,
+ * a second tap on its mark and the "+" invites hold the same menus as anywhere else ({@link SocialMenuSheet}).
  */
 public class CrewFragment extends Fragment implements SocialService.Listener {
     public static final String TAG = "ProjectsCrewFragment";
@@ -162,6 +166,38 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
     private boolean mApprovalBusy;
     /** M21: crews "+" shows the player's waiting request to (its card, their list): one that comes is shown. */
     private final java.util.Set<String> mAwaiting = new java.util.HashSet<>();
+    /** FIX2: plans and calls whose answers are open ("Kimler geliyor"), and groups that show everyone. */
+    private final java.util.Set<String> mOpenAnswers = new java.util.HashSet<>();
+    private final java.util.Set<String> mAllAnswers = new java.util.HashSet<>();
+    private final AnswerList.Host mAnswers = new AnswerList.Host() {
+        @Override
+        public boolean isOpen(String key) {
+            return mOpenAnswers.contains(key);
+        }
+
+        @Override
+        public void setOpen(String key, boolean open) {
+            if (open) mOpenAnswers.add(key);
+            else mOpenAnswers.remove(key);
+        }
+
+        @Override
+        public boolean showsAll(String key, String answer) {
+            return mAllAnswers.contains(key + "|" + answer);
+        }
+
+        @Override
+        public void setShowsAll(String key, String answer, boolean all) {
+            if (all) mAllAnswers.add(key + "|" + answer);
+            else mAllAnswers.remove(key + "|" + answer);
+        }
+
+        @Override
+        public void person(String userId, View anchor) {
+            Crew crew = shown();
+            if (isAdded()) SocialMenuSheet.person(requireActivity(), userId, crew == null ? null : crew.id(), SocialMenuSheet.Place.PLAN, anchor);
+        }
+    };
     private final Runnable mTick = this::render;
 
     public CrewFragment() {
@@ -509,42 +545,6 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         }
     }
 
-    /** "Ana ekip yap", "Sola taşı", "Sağa taşı" for the crew shown (a tap on its mark, or TalkBack's actions). */
-    private void orderMenu(final String crewId) {
-        final FragmentActivity activity = requireActivity();
-        final SocialService service = SocialService.get(activity);
-        final List<String> order = service.state().crewIds();
-        final int at = order.indexOf(crewId);
-        if (at < 0 || order.size() < 2) return;
-        Crew crew = service.state().crew(crewId);
-        View sheet = LayoutInflater.from(activity).inflate(R.layout.dialog_projects_actions, null, false);
-        TextView quote = sheet.findViewById(R.id.projects_actions_quote);
-        quote.setText(crew == null ? "" : crew.team.name);
-        quote.setVisibility(View.VISIBLE);
-        LinearLayout actions = sheet.findViewById(R.id.projects_actions_list);
-        final AlertDialog dialog = new AlertDialog.Builder(activity).setView(sheet).create();
-        if (at > 0) {
-            actions.addView(CrewViews.actionRow(activity, R.drawable.projects_ic_crown_fill, getString(R.string.projects_crews_make_main),
-                    R.color.projects_bone_100, v -> {
-                        dialog.dismiss();
-                        move(crewId, 0);
-                    }));
-            actions.addView(CrewViews.actionRow(activity, R.drawable.projects_ic_caret_left, getString(R.string.projects_crews_move_left),
-                    R.color.projects_bone_100, v -> {
-                        dialog.dismiss();
-                        move(crewId, at - 1);
-                    }));
-        }
-        if (at < order.size() - 1) {
-            actions.addView(CrewViews.actionRow(activity, R.drawable.projects_ic_caret_right, getString(R.string.projects_crews_move_right),
-                    R.color.projects_bone_100, v -> {
-                        dialog.dismiss();
-                        move(crewId, at + 1);
-                    }));
-        }
-        dialog.show();
-    }
-
     /** Moves a crew to {@code position} in the player's order (0 makes it the main crew). */
     private void move(final String crewId, final int position) {
         final FragmentActivity activity = requireActivity();
@@ -768,7 +768,8 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         if (isMuted) description.append(", ").append(getString(R.string.projects_crew_muted));
         view.setContentDescription(description);
         view.setOnClickListener(v -> {
-            if (id.equals(mSelected)) orderMenu(id);
+            // FIX2: a second tap on the crew shown opens its menu (making it the main crew, moving it, and the rest).
+            if (id.equals(mSelected)) SocialMenuSheet.crew(requireActivity(), id, true, false, v);
             else select(id);
         });
         ViewCompat.setAccessibilityDelegate(view, new AccessibilityDelegateCompat() {
@@ -863,7 +864,7 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
             for (Call call : state.calls(now, team.id)) {
                 long left = state.secondsLeft(call, now);
                 rows.add(new Row(T_CALL, "call-" + call.id, call.kind + "|" + call.place() + call.serverHost + "|" + call.answers
-                        + "|" + ((left + 59) / 60) + "|" + call.crews, call));
+                        + "|" + ((left + 59) / 60) + "|" + call.crews + "|" + answersState(call.id), call));
             }
         }
         // M21 (TEAM5): join requests for whoever may answer them, at the top: they wait for an answer.
@@ -890,7 +891,8 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
                 for (Plan p : plans) {
                     String mineAnswer = me == null ? null : p.answers.get(me);
                     rows.add(new Row(T_PLAN, "p-" + p.id, p.at + "|" + p.by + "|" + p.answers + "|" + mineAnswer + "|" + p.underWay(hub)
-                            + "|" + state.mayCancel(p) + "|" + mPlanBusy.contains(p.id) + "|" + PlanViews.when(requireContext(), p.at, now), p));
+                            + "|" + state.mayCancel(p) + "|" + mPlanBusy.contains(p.id) + "|" + PlanViews.when(requireContext(), p.at, now)
+                            + "|" + p.note + "|" + answersState(p.id), p));
                 }
                 if (may) {
                     rows.add(new Row(T_ACTION, "plan-make", "plan-make", new Action("plan", R.drawable.projects_ic_calendar_plus,
@@ -949,6 +951,14 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
                     R.string.projects_crew_leave, R.color.projects_flare_400)));
         }
         return rows;
+    }
+
+    /** FIX2: what a card's answers show (open, and which groups show everyone): a change binds it again. */
+    private String answersState(String key) {
+        if (!mOpenAnswers.contains(key)) return "closed";
+        StringBuilder out = new StringBuilder("open");
+        for (String all : mAllAnswers) if (all.startsWith(key + "|")) out.append(',').append(all);
+        return out.toString();
     }
 
     private final class Adapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -1160,6 +1170,12 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         Context context = view.getContext();
         Team team = crew.team;
         SocialService service = SocialService.get(context);
+        // FIX2: holding the crew's card opens the crew's menu (the one its row has anywhere).
+        final String crewId = crew.id();
+        SocialMenuSheet.attach(view, team.name, v -> {
+            if (isAdded()) SocialMenuSheet.crew(requireActivity(), crewId, true, false, v);
+            return true;
+        });
         CrewMarkView mark = view.findViewById(R.id.projects_crew_card_mark);
         mark.setLook(team.emblem, team.color, team.frame);
         ImageView watermark = view.findViewById(R.id.projects_crew_card_watermark);
@@ -1216,7 +1232,12 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
             line.setVisibility(View.VISIBLE);
             String text = summary.last.text().replace('\n', ' ');
             Profile from = summary.last.mine(me) ? null : service.state().profile(summary.last.from(me));
-            line.setText(summary.last.mine(me) ? getString(R.string.projects_chat_you, text) : (from == null ? "" : from.name() + ": ") + text);
+            if (summary.last.deleted()) {
+                // FIX2: the newest line is a deleted message.
+                line.setText(ChatFragment.deletedText(context, summary.last.tombstone, me, service.state()));
+            } else {
+                line.setText(summary.last.mine(me) ? getString(R.string.projects_chat_you, text) : (from == null ? "" : from.name() + ": ") + text);
+            }
             line.setTextColor(ContextCompat.getColor(context, unread > 0 ? R.color.projects_bone_100 : R.color.projects_ash_400));
         }
         // The crew shown when tapped (the row is not bound again when two crews' rows look the same).
@@ -1275,10 +1296,21 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
             bindAnswer(view.findViewById(R.id.projects_call_no), call, "no", mineAnswer);
         }
         line.setTextColor(ContextCompat.getColor(context, call.onProjects() ? R.color.projects_jade_400 : R.color.projects_gold_300));
-        TextView tally = view.findViewById(R.id.projects_call_tally);
-        String text = tally(context, state, call);
-        tally.setText(text);
-        tally.setVisibility(text.isEmpty() ? View.GONE : View.VISIBLE);
+        // FIX2: who answered opens in place; the caller holds their menu.
+        AnswerList.bind(view, call.id, call.answers, gg.projects.mobile.social.AnswerPeople.CALL_ORDER,
+                new int[]{R.string.projects_crew_call_said_yes, R.string.projects_crew_call_said_soon, R.string.projects_crew_call_said_no},
+                tally(context, state, call), mAnswers);
+        View caller = view.findViewById(R.id.projects_call_avatar);
+        if (!mine) {
+            Profile who = state.profile(call.from);
+            SocialMenuSheet.attach(caller, who == null ? null : who.name(), v -> {
+                Crew crew = shown();
+                if (isAdded()) SocialMenuSheet.person(requireActivity(), call.from, crew == null ? null : crew.id(), SocialMenuSheet.Place.CALL, v);
+                return true;
+            });
+        } else {
+            SocialMenuSheet.detach(caller);
+        }
     }
 
     /** "Geliyor: Ece, Kaan · Birazdan: Deniz · Gelemiyor: Can". */
@@ -1333,13 +1365,11 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
             @Override
             public void ok(Void value) {
                 if (!"yes".equals(answer) || !isAdded()) return;
+                // FIX2: "Bağlan" takes the player into the call's server.
                 if (call.onProjects()) {
-                    SocialUi.joinProjects(activity);
+                    ConnectFlow.projects(activity);
                 } else if (call.otherHost() != null) {
-                    // M20: the dialog says whose call it is (the card's title), not an invite's line.
-                    Profile caller = service.state().profile(call.from);
-                    SocialUi.otherServer(activity, call.otherHost(), getString(R.string.projects_crew_call_theirs,
-                            caller == null ? getString(R.string.projects_crew_someone) : caller.name()));
+                    ConnectFlow.server(activity, call.otherHost());
                 }
             }
 
@@ -1438,7 +1468,11 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         decline.setEnabled(!busy);
         accept.setOnClickListener(v -> answerRequest(row, true, accept));
         decline.setOnClickListener(v -> answerRequest(row, false, decline));
-        view.setOnClickListener(v -> requestMenu(row));
+        view.setOnClickListener(v -> requestMenu(row, v));
+        SocialMenuSheet.attach(view, request.from.name(), v -> {
+            requestMenu(row, v);
+            return true;
+        });
         view.setContentDescription(request.from.name() + ", " + asked);
     }
 
@@ -1503,42 +1537,14 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         }
     }
 
-    /** A request row's own menu: "Engelle" (the request goes with it) and "Rapor et". */
-    private void requestMenu(final RequestRow row) {
-        final FragmentActivity activity = requireActivity();
-        final SocialService service = SocialService.get(activity);
-        final Profile who = row.request.from;
-        View sheet = LayoutInflater.from(activity).inflate(R.layout.dialog_projects_actions, null, false);
-        TextView quote = sheet.findViewById(R.id.projects_actions_quote);
-        quote.setText(who.name());
-        quote.setVisibility(View.VISIBLE);
-        LinearLayout actions = sheet.findViewById(R.id.projects_actions_list);
-        final AlertDialog dialog = new AlertDialog.Builder(activity).setView(sheet).create();
-        actions.addView(CrewViews.actionRow(activity, R.drawable.projects_ic_prohibit, getString(R.string.projects_social_block),
-                R.color.projects_flare_400, v -> {
-                    dialog.dismiss();
-                    SocialUi.confirm(activity, getString(R.string.projects_social_block_title, who.name()),
-                            getString(R.string.projects_social_block_ask), getString(R.string.projects_social_block),
-                            () -> service.blockRequester(row.crew, who, new SocialService.Result<Void>() {
-                                @Override
-                                public void ok(Void value) {
-                                    SocialUi.toast(activity, activity.getString(R.string.projects_social_blocked, who.name()));
-                                }
-
-                                @Override
-                                public void failed(SocialProblem problem) {
-                                    SocialUi.toastProblem(activity, problem, null);
-                                }
-                            }));
-                }));
-        if (service.gate().reports) {
-            actions.addView(CrewViews.actionRow(activity, R.drawable.projects_ic_flag, getString(R.string.projects_report),
-                    R.color.projects_ash_300, v -> {
-                        dialog.dismiss();
-                        ReportDialog.player(activity, who);
-                    }));
-        }
-        dialog.show();
+    /**
+     * A join request's menu (FIX2: the shared one): "Kabul et" and "Reddet" first, then whatever the
+     * player may do about them ("Engelle" takes the request with it, "Rapor et").
+     */
+    private void requestMenu(final RequestRow row, View anchor) {
+        if (!isAdded()) return;
+        SocialMenuSheet.person(requireActivity(), row.request.from, row.crew, SocialMenuSheet.Place.REQUEST,
+                gg.projects.mobile.social.SocialMenus.Pending.JOIN_REQUEST, anchor);
     }
 
     // ---- plans (TEAM5) ----
@@ -1559,19 +1565,35 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         ((ImageView) view.findViewById(R.id.projects_plan_icon)).setImageTintList(
                 ContextCompat.getColorStateList(context, under ? R.color.projects_jade_400 : R.color.projects_gold_300));
         View top = view.findViewById(R.id.projects_plan_top);
-        top.setContentDescription(when.getText() + ", " + line.getText());
+        // FIX2: the plan's note under its time.
+        View noteBox = view.findViewById(R.id.projects_plan_note_box);
+        TextView note = view.findViewById(R.id.projects_plan_note);
+        boolean hasNote = plan.note != null && service.gate().planNotes;
+        noteBox.setVisibility(hasNote ? View.VISIBLE : View.GONE);
+        note.setText(hasNote ? plan.note : null);
+        top.setContentDescription(when.getText() + ", " + line.getText()
+                + (hasNote ? ". " + getString(R.string.projects_plans_note_label, plan.note) : ""));
         View more = view.findViewById(R.id.projects_plan_more);
-        more.setVisibility(state.mayCancel(plan) ? View.VISIBLE : View.GONE);
-        more.setOnClickListener(v -> planMenu(plan));
+        boolean menu = !planMenuRows(plan).isEmpty();
+        more.setVisibility(menu ? View.VISIBLE : View.GONE);
+        more.setOnClickListener(v -> planMenu(plan, v));
+        if (menu) {
+            SocialMenuSheet.attach(top, PlanViews.when(context, plan.at, now), v -> {
+                planMenu(plan, v);
+                return true;
+            });
+        } else {
+            SocialMenuSheet.detach(top);
+        }
         String mine = state.myPlanAnswer(plan.id);
         boolean busy = mPlanBusy.contains(plan.id);
         bindPlanAnswer(view.findViewById(R.id.projects_plan_yes), plan, Plan.YES, mine, under, busy);
         bindPlanAnswer(view.findViewById(R.id.projects_plan_maybe), plan, Plan.MAYBE, mine, under, busy);
         bindPlanAnswer(view.findViewById(R.id.projects_plan_no), plan, Plan.NO, mine, under, busy);
-        TextView tally = view.findViewById(R.id.projects_plan_tally);
-        String text = PlanViews.tally(context, state, plan);
-        tally.setText(text);
-        tally.setVisibility(text.isEmpty() ? View.GONE : View.VISIBLE);
+        // FIX2: who answered opens in place ("Kimler geliyor"), each person with the shared menu.
+        AnswerList.bind(view, plan.id, plan.answers, gg.projects.mobile.social.AnswerPeople.PLAN_ORDER,
+                new int[]{R.string.projects_plans_said_yes, R.string.projects_plans_said_maybe, R.string.projects_plans_said_no},
+                PlanViews.tally(context, state, plan), mAnswers);
     }
 
     private void bindPlanAnswer(final Button button, final Plan plan, final String answer, @Nullable String current, boolean under,
@@ -1605,7 +1627,7 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
             return;
         }
         if (answer.equals(service.state().myPlanAnswer(plan.id))) {
-            if (Plan.YES.equals(answer) && plan.underWay(service.state().hubNow(SocialService.nowSeconds()))) SocialUi.joinProjects(activity);
+            if (Plan.YES.equals(answer) && plan.underWay(service.state().hubNow(SocialService.nowSeconds()))) ConnectFlow.projects(activity);
             return;
         }
         Haptics.confirm(button);
@@ -1613,7 +1635,8 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
             @Override
             public void ok(Void value) {
                 if (!isAdded() || !Plan.YES.equals(answer)) return;
-                if (plan.underWay(service.state().hubNow(SocialService.nowSeconds()))) SocialUi.joinProjects(activity);
+                // FIX2: a plan under way leads to Projects ("Bağlan").
+                if (plan.underWay(service.state().hubNow(SocialService.nowSeconds()))) ConnectFlow.projects(activity);
             }
 
             @Override
@@ -1630,17 +1653,91 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         });
     }
 
-    /** "Planı sil" (its maker, the leader or a moderator), asked once: it goes for everyone. */
-    private void planMenu(final Plan plan) {
+    /** FIX2: what the plan's menu offers the player ({@link gg.projects.mobile.social.SocialMenus#plan}). */
+    private List<gg.projects.mobile.social.SocialMenus.Row<gg.projects.mobile.social.SocialMenus.PlanAction>> planMenuRows(Plan plan) {
+        SocialService service = SocialService.get(requireContext());
+        SocialState state = service.state();
+        String me = state.myId();
+        gg.projects.mobile.social.SocialMenus.PlanInput in = new gg.projects.mobile.social.SocialMenus.PlanInput();
+        in.notes = service.gate().planNotes;
+        in.maker = me != null && plan.by.equals(me);
+        in.upcoming = plan.upcoming(state.hubNow(SocialService.nowSeconds()));
+        in.hasNote = plan.note != null;
+        Crew crew = state.crew(plan.crew);
+        Member mine = crew == null || me == null ? null : crew.team.member(me);
+        in.crewMod = mine != null && (mine.founder || mine.moderator) && state.mayClearNote(plan, SocialService.nowSeconds());
+        in.reports = service.gate().reports;
+        in.mayCancel = state.mayCancel(plan);
+        return gg.projects.mobile.social.SocialMenus.plan(in);
+    }
+
+    /**
+     * The plan's menu ("⋮", or holding its card): "Not ekle" / "Notu düzenle" (its maker, before it
+     * starts), "Notu kaldır" (its maker, the leader, moderators), "Rapor et" (someone else's plan: its
+     * maker, with the plan as context) and "Planı sil", asked once: it goes for everyone.
+     */
+    private void planMenu(final Plan plan, @Nullable View anchor) {
         final FragmentActivity activity = requireActivity();
         final SocialService service = SocialService.get(activity);
+        List<gg.projects.mobile.social.SocialMenus.Row<gg.projects.mobile.social.SocialMenus.PlanAction>> rows = planMenuRows(plan);
+        if (rows.isEmpty()) return;
+        Haptics.perform(anchor, gg.projects.mobile.ui.HapticMap.Kind.LONG_PRESS);
         View sheet = LayoutInflater.from(activity).inflate(R.layout.dialog_projects_actions, null, false);
         TextView quote = sheet.findViewById(R.id.projects_actions_quote);
-        quote.setText(PlanViews.when(activity, plan.at, SocialService.nowSeconds()));
+        String when = getString(R.string.projects_report_plan, PlanViews.when(activity, plan.at, SocialService.nowSeconds()));
+        quote.setText(plan.note == null ? when : when + "\n" + plan.note);
         quote.setVisibility(View.VISIBLE);
         LinearLayout actions = sheet.findViewById(R.id.projects_actions_list);
         final AlertDialog dialog = new AlertDialog.Builder(activity).setView(sheet).create();
-        actions.addView(CrewViews.actionRow(activity, R.drawable.projects_ic_trash, getString(R.string.projects_plans_cancel),
+        for (gg.projects.mobile.social.SocialMenus.Row<gg.projects.mobile.social.SocialMenus.PlanAction> row : rows) {
+            if (row == null) {
+                actions.addView(CrewViews.divider(activity));
+                continue;
+            }
+            switch (row.action) {
+                case ADD_NOTE:
+                case EDIT_NOTE:
+                    actions.addView(CrewViews.actionRow(activity, R.drawable.projects_ic_pencil, getString(row.action
+                                    == gg.projects.mobile.social.SocialMenus.PlanAction.ADD_NOTE ? R.string.projects_plans_note_add
+                                    : R.string.projects_plans_note_edit), R.color.projects_bone_100, v -> {
+                                dialog.dismiss();
+                                PlanSheet.note(activity, plan, stored -> {
+                                    if (isAdded()) render();
+                                });
+                            }));
+                    break;
+                case REMOVE_NOTE:
+                    actions.addView(CrewViews.actionRow(activity, R.drawable.projects_ic_x, getString(R.string.projects_plans_note_remove),
+                            R.color.projects_bone_100, v -> {
+                                dialog.dismiss();
+                                PlanSheet.clearNote(activity, plan, stored -> {
+                                    if (isAdded()) render();
+                                });
+                            }));
+                    break;
+                case REPORT: {
+                    final Profile maker = service.state().profile(plan.by);
+                    if (maker == null) break;
+                    actions.addView(CrewViews.actionRow(activity, R.drawable.projects_ic_flag, getString(R.string.projects_report),
+                            R.color.projects_ash_300, v -> {
+                                dialog.dismiss();
+                                ReportDialog.plan(activity, plan, maker);
+                            }));
+                    break;
+                }
+                case CANCEL:
+                default:
+                    actions.addView(cancelRow(activity, service, dialog, plan));
+                    break;
+            }
+        }
+        if (dialog.getWindow() != null) dialog.getWindow().setWindowAnimations(R.style.ProjectsMenuSheetAnimation);
+        dialog.show();
+    }
+
+    /** "Planı sil", asked once: it goes for everyone. */
+    private View cancelRow(final FragmentActivity activity, final SocialService service, final AlertDialog dialog, final Plan plan) {
+        return CrewViews.actionRow(activity, R.drawable.projects_ic_trash, getString(R.string.projects_plans_cancel),
                 R.color.projects_flare_400, v -> {
                     dialog.dismiss();
                     SocialUi.confirm(activity, getString(R.string.projects_plans_cancel), getString(R.string.projects_plans_cancel_ask),
@@ -1667,8 +1764,7 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
                                     }
                                 });
                             });
-                }));
-        dialog.show();
+                });
     }
 
     /** "Plan yap": the reason in place for a new Discord account and at the crew's 3 plans, else the sheet. */
@@ -1881,6 +1977,8 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
             line.setTextColor(ContextCompat.getColor(context, R.color.projects_ash_400));
             join.setVisibility(View.GONE);
             view.setOnClickListener(v -> StatusSheet.show(requireActivity()));
+            // No menu on the player's own row.
+            SocialMenuSheet.detach(view);
             return;
         }
         SocialModel.Presence presence = state.presence(member.profile.id);
@@ -1890,11 +1988,17 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         line.setTextColor(ContextCompat.getColor(context, presence.onProjects() ? R.color.projects_jade_400 : R.color.projects_ash_400));
         join.setVisibility(presence.onProjects() ? View.VISIBLE : View.GONE);
         join.setText(R.string.projects_social_join);
-        join.setOnClickListener(v -> SocialUi.joinProjects(requireActivity()));
+        join.setOnClickListener(v -> ConnectFlow.projects(requireActivity()));
         // The crew shown when tapped: a row the same in two crews is not bound again on a switch.
         view.setOnClickListener(v -> {
             Crew crew = shown();
             if (crew != null) CrewSheets.member(requireActivity(), crew.id(), member.profile.id);
+        });
+        // FIX2: holding a member opens the shared menu, in this crew's context.
+        SocialMenuSheet.attach(view, member.profile.name(), v -> {
+            Crew crew = shown();
+            if (crew != null && isAdded()) SocialMenuSheet.person(requireActivity(), member.profile.id, crew.id(), SocialMenuSheet.Place.CREW, v);
+            return true;
         });
     }
 
@@ -2082,15 +2186,22 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         boolean busy = mInviteBusy.contains(teamId);
         accept.setEnabled(!busy);
         decline.setEnabled(!busy);
-        // Holding the invite reports the crew (MOD1: an invite that still shows may be reported).
-        if (service.gate().reports) {
-            Press.attach(row, Press.Style.ROW);
-            row.setOnLongClickListener(v -> {
-                ReportDialog.crew(activity, invite.team, null);
-                return true;
-            });
-            row.setOnClickListener(v -> InviteCard.show(activity, invite));
-        }
+        // FIX2: holding the invite opens its menu: answering it, reporting the crew (MOD1), then who invited.
+        Press.attach(row, Press.Style.ROW);
+        row.setOnClickListener(v -> InviteCard.show(activity, invite));
+        SocialMenuSheet.attach(row, invite.team.name, v -> {
+            List<SocialMenuSheet.Own> own = new ArrayList<>();
+            own.add(new SocialMenuSheet.Own(R.drawable.projects_ic_check, getString(R.string.projects_social_accept), R.color.projects_bone_100,
+                    accept::performClick));
+            own.add(new SocialMenuSheet.Own(R.drawable.projects_ic_x, getString(R.string.projects_social_decline), R.color.projects_bone_100,
+                    decline::performClick));
+            if (service.gate().reports) {
+                own.add(new SocialMenuSheet.Own(R.drawable.projects_ic_flag, getString(R.string.projects_report_crew), R.color.projects_ash_300,
+                        () -> ReportDialog.crew(activity, invite.team, null)));
+            }
+            SocialMenuSheet.people(activity, invite.team.name, own, java.util.Collections.singletonList(invite.from.id), null, v);
+            return true;
+        });
         accept.setOnClickListener(v -> {
             if (!mInviteBusy.add(teamId)) return;
             accept.setEnabled(false);

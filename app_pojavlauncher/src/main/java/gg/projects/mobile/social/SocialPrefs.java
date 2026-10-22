@@ -84,6 +84,11 @@ public final class SocialPrefs {
     private static final String KEY_MUTED_CONVERSATIONS = "muted_conversations";
     /** M20: the player's crews' names ("id|name"), so a call's notification can name its crew while the app sleeps. */
     private static final String KEY_CREW_NAMES = "crew_names";
+    /**
+     * FIX2: friends' and crewmates' names ("id|name"), so the game's own socket (which reads no list) names
+     * who invites or calls.
+     */
+    private static final String KEY_PEOPLE_NAMES = "people_names";
 
     /** Conversations muted at {@code nowSeconds}. */
     public Set<String> mutedConversations(long nowSeconds) {
@@ -133,6 +138,23 @@ public final class SocialPrefs {
         for (java.util.Map.Entry<String, String> e : names.entrySet()) next.add(e.getKey() + "|" + e.getValue());
         if (next.equals(mPrefs.getStringSet(KEY_CREW_NAMES, Collections.<String>emptySet()))) return;
         mPrefs.edit().putStringSet(KEY_CREW_NAMES, next).apply();
+    }
+
+    /** FIX2: friends' and crewmates' names as last known (id → name). */
+    public java.util.Map<String, String> peopleNames() {
+        java.util.Map<String, String> out = new java.util.HashMap<>();
+        for (String entry : mPrefs.getStringSet(KEY_PEOPLE_NAMES, Collections.<String>emptySet())) {
+            int bar = entry.indexOf('|');
+            if (bar > 0) out.put(entry.substring(0, bar), entry.substring(bar + 1));
+        }
+        return out;
+    }
+
+    public void setPeopleNames(java.util.Map<String, String> names) {
+        Set<String> next = new HashSet<>();
+        for (java.util.Map.Entry<String, String> e : names.entrySet()) next.add(e.getKey() + "|" + e.getValue());
+        if (next.equals(mPrefs.getStringSet(KEY_PEOPLE_NAMES, Collections.<String>emptySet()))) return;
+        mPrefs.edit().putStringSet(KEY_PEOPLE_NAMES, next).apply();
     }
 
     public boolean offerDone() {
@@ -244,6 +266,6 @@ public final class SocialPrefs {
     public void clearAccount() {
         mPrefs.edit().remove(KEY_FAVOURITES).remove(KEY_ENDED_CALLS).remove(KEY_PUSH_REGISTERED)
                 .remove(KEY_CREW_AUDIBLE).remove(KEY_CALLED_AT).remove(KEY_OWN_CALL_UNTIL)
-                .remove(KEY_MUTED_CONVERSATIONS).remove(KEY_CREW_NAMES).apply();
+                .remove(KEY_MUTED_CONVERSATIONS).remove(KEY_CREW_NAMES).remove(KEY_PEOPLE_NAMES).apply();
     }
 }

@@ -131,15 +131,6 @@
             android:textSize="14sp" />
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/projects_call_tally"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:fontFamily="@font/figtree_regular"
-        android:textColor="@color/projects_ash_300"
-        android:textSize="13sp"
-        android:visibility="gone"
-        tools:text="Geliyor: Ece, Kaan · Birazdan: Deniz"
-        tools:visibility="visible" />
+    <!-- FIX2: who answered opens in place, as on a plan's card. -->
+    <include layout="@layout/view_projects_answers" />
 </LinearLayout>

@@ -45,16 +45,24 @@ public final class ReportDialog {
     private ReportDialog() {}
 
     public static void player(FragmentActivity activity, Profile player) {
-        show(activity, Reports.Target.PLAYER, player, null, player.name(), null, null, null);
+        show(activity, Reports.Target.PLAYER, player, null, player.name(), null, null, null, null);
+    }
+
+    /**
+     * FIX2: a plan's maker, from its card: the plan (its time and note) goes with the report as its
+     * context; the note's own reason ("Uygunsuz içerik") comes first.
+     */
+    public static void plan(FragmentActivity activity, gg.projects.mobile.social.SocialModel.Plan plan, Profile maker) {
+        show(activity, Reports.Target.PLAN, maker, null, maker.name(), null, null, null, plan);
     }
 
     /** {@code code}: only for a crew looked up by its code or (M21) its invite link. */
     public static void crew(FragmentActivity activity, TeamSummary crew, @Nullable String code) {
-        show(activity, Reports.Target.CREW, null, crew, crew.name, code, null, null);
+        show(activity, Reports.Target.CREW, null, crew, crew.name, code, null, null, null);
     }
 
     public static void message(FragmentActivity activity, ChatMessage message, List<ChatMessage> before, @Nullable Profile sender) {
-        show(activity, Reports.Target.MESSAGE, sender, null, sender == null ? "" : sender.name(), null, message, before);
+        show(activity, Reports.Target.MESSAGE, sender, null, sender == null ? "" : sender.name(), null, message, before, null);
     }
 
     private static int reasonLabel(Reports.Target target, String reason) {
@@ -62,7 +70,8 @@ public final class ReportDialog {
             case Reports.NAME: return target == Reports.Target.CREW ? R.string.projects_report_reason_name_crew : R.string.projects_report_reason_name;
             case Reports.PROFILE: return R.string.projects_report_reason_profile;
             case Reports.HARASSMENT: return R.string.projects_report_reason_harassment;
-            case Reports.INAPPROPRIATE: return R.string.projects_report_reason_inappropriate;
+            case Reports.INAPPROPRIATE: return target == Reports.Target.PLAN ? R.string.projects_report_reason_note
+                    : R.string.projects_report_reason_inappropriate;
             case Reports.SPAM: return R.string.projects_report_reason_spam;
             case Reports.SCAM: return R.string.projects_report_reason_scam;
             case Reports.OTHER:
@@ -89,7 +98,8 @@ public final class ReportDialog {
 
     private static void show(final FragmentActivity activity, final Reports.Target target, @Nullable final Profile player,
                              @Nullable final TeamSummary crew, String name, @Nullable final String code,
-                             @Nullable final ChatMessage message, @Nullable final List<ChatMessage> before) {
+                             @Nullable final ChatMessage message, @Nullable final List<ChatMessage> before,
+                             @Nullable final gg.projects.mobile.social.SocialModel.Plan plan) {
         float dp = activity.getResources().getDisplayMetrics().density;
         LinearLayout content = new LinearLayout(activity);
         content.setOrientation(LinearLayout.VERTICAL);
@@ -121,9 +131,12 @@ public final class ReportDialog {
             // The theme's font.
         }
         names.addView(title);
-        if (message != null) {
+        if (message != null || plan != null) {
             TextView quote = new TextView(activity);
-            quote.setText(message.text);
+            // FIX2: a plan shows its time and its note, what the report carries.
+            String subject = plan == null ? "" : activity.getString(R.string.projects_report_plan,
+                    PlanViews.when(activity, plan.at, SocialService.nowSeconds()));
+            quote.setText(message != null ? message.text : plan.note == null ? subject : subject + " · " + plan.note);
             quote.setTextSize(13);
             quote.setMaxLines(3);
             quote.setEllipsize(android.text.TextUtils.TruncateAt.END);
@@ -256,6 +269,9 @@ public final class ReportDialog {
                         break;
                     case MESSAGE:
                         body = Reports.message(message, before, reason, note.getText().toString(), blocking);
+                        break;
+                    case PLAN:
+                        body = Reports.planMaker(player.id, plan.crew, plan.id, reason, note.getText().toString(), blocking);
                         break;
                     case PLAYER:
                     default:

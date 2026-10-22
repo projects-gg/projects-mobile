@@ -93,6 +93,8 @@ public final class SocialProblem extends Exception {
         PLAN_EXISTS,
         /** TEAM5: not a plan the player sees, or it is over. */
         PLAN_GONE,
+        /** FIX2: the plan's note was turned away ({@code invalid_plan_note}; {@link #reason}: link, phone, words, or none). */
+        PLAN_NOTE,
         /** Anything else: "Bir sorun oluştu." */
         FAILED
     }
@@ -172,6 +174,7 @@ public final class SocialProblem extends Exception {
             case "limit_team_plans": return Kind.PLANS_FULL;
             case "plan_exists": return Kind.PLAN_EXISTS;
             case "plan_not_found": return Kind.PLAN_GONE;
+            case "invalid_plan_note": return Kind.PLAN_NOTE;
             case "unavailable":
             case "internal": return Kind.UNAVAILABLE;
             default: return Kind.FAILED;

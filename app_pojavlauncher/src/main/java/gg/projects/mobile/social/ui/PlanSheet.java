@@ -7,11 +7,13 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.NumberPicker;
 import android.widget.TextView;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
@@ -34,8 +36,12 @@ import gg.projects.mobile.ui.Press;
 
 /**
  * M21 (TEAM5) "Plan yap": a day (today, tomorrow and the next five, as chips) and a time (a wheel of
- * the quarter hours the service takes that day), on the phone's own clock. No text, no game mode: a
- * plan is a time to meet on Projects. A refusal says why under the wheel and the sheet stays.
+ * the quarter hours the service takes that day), on the phone's own clock. A refusal says why under the
+ * wheel and the sheet stays.
+ *
+ * <p>FIX2 ({@code planNotes}): an optional short note under the time ("Bedwars, sesli gelin"; one line,
+ * 80 characters, no links or phone numbers, the chat's own check before anything is sent), and its own
+ * small sheet to add, change or clear it later.
  */
 final class PlanSheet {
     private PlanSheet() {}
@@ -89,6 +95,15 @@ final class PlanSheet {
         wheelLp.gravity = Gravity.CENTER_HORIZONTAL;
         content.addView(wheel, wheelLp);
 
+        // FIX2: the note, when the service keeps one (old services take a plan without it).
+        final EditText note = service.gate().planNotes ? noteField(context, null) : null;
+        final TextView counter = note == null ? null : counter(context);
+        if (note != null) {
+            content.addView(heading(context, R.string.projects_plans_note));
+            content.addView(note, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            content.addView(counter);
+        }
+
         final TextView error = new TextView(context);
         error.setTextSize(13);
         error.setTextColor(ContextCompat.getColor(context, R.color.projects_flare_400));
@@ -97,6 +112,7 @@ final class PlanSheet {
         error.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
         error.setVisibility(View.GONE);
         content.addView(error);
+        if (note != null) watch(context, note, counter, error);
 
         final List<Long> slots = new ArrayList<>();
         final int[] day = {0};
@@ -149,6 +165,11 @@ final class PlanSheet {
                 .setPositiveButton(R.string.projects_plans_make, null)
                 .setNegativeButton(R.string.projects_social_cancel, null)
                 .create();
+        // The keyboard comes only when the note is tapped, and then the sheet makes room for it.
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
+                    | android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
+        }
         dialog.show();
         final Button make = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
         if (make == null) return;
@@ -162,8 +183,14 @@ final class PlanSheet {
                 showError(error, context.getString(R.string.projects_social_error_plan_time), make);
                 return;
             }
+            String text = note == null ? null : note.getText().toString();
+            String why = noteCheck(context, text);
+            if (why != null) {
+                showError(error, why, make);
+                return;
+            }
             make.setEnabled(false);
-            service.makePlan(crew.id(), at, new SocialService.Result<Plan>() {
+            service.makePlan(crew.id(), at, text, new SocialService.Result<Plan>() {
                 @Override
                 public void ok(Plan plan) {
                     Haptics.confirm(make);
@@ -180,9 +207,197 @@ final class PlanSheet {
         });
     }
 
+    // ---- the note (FIX2) ----
+
+    interface NoteDone {
+        void saved(Plan plan);
+    }
+
+    /**
+     * "Not ekle" / "Notu düzenle": the plan's maker writes, changes or clears its note (an empty field
+     * clears it). The field has the focus and the keyboard is up as the sheet opens.
+     */
+    static void note(final FragmentActivity activity, final Plan plan, @Nullable final NoteDone done) {
+        final SocialService service = SocialService.get(activity);
+        final Context context = activity;
+        final float dp = context.getResources().getDisplayMetrics().density;
+        LinearLayout content = new LinearLayout(context);
+        content.setOrientation(LinearLayout.VERTICAL);
+        content.setPadding(Math.round(20 * dp), Math.round(4 * dp), Math.round(20 * dp), Math.round(4 * dp));
+        TextView when = new TextView(context);
+        when.setText(PlanViews.when(context, plan.at, SocialService.nowSeconds()));
+        when.setTextSize(14);
+        when.setTextColor(ContextCompat.getColor(context, R.color.projects_ash_300));
+        when.setPadding(0, 0, 0, Math.round(8 * dp));
+        content.addView(when);
+        final EditText field = noteField(context, plan.note);
+        content.addView(field, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        final TextView counter = counter(context);
+        content.addView(counter);
+        final TextView error = new TextView(context);
+        error.setTextSize(13);
+        error.setTextColor(ContextCompat.getColor(context, R.color.projects_flare_400));
+        error.setPadding(0, Math.round(4 * dp), 0, 0);
+        error.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
+        error.setVisibility(View.GONE);
+        content.addView(error);
+        watch(context, field, counter, error);
+        final AlertDialog dialog = new AlertDialog.Builder(activity)
+                .setTitle(plan.note == null ? R.string.projects_plans_note_add : R.string.projects_plans_note_edit)
+                .setView(content)
+                .setPositiveButton(R.string.projects_plans_note_save, null)
+                .setNegativeButton(R.string.projects_social_cancel, null)
+                .create();
+        if (dialog.getWindow() != null) {
+            // The field is what this sheet is for: it has the focus and the keyboard at once.
+            dialog.getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
+                    | android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+        }
+        field.requestFocus();
+        dialog.show();
+        final Button save = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+        if (save == null) return;
+        save.setOnClickListener(v -> {
+            String text = field.getText().toString();
+            String why = noteCheck(context, text);
+            if (why != null) {
+                showError(error, why, save);
+                return;
+            }
+            String clean = gg.projects.mobile.social.PlanNote.clean(text);
+            if (clean.equals(plan.note == null ? "" : plan.note)) {
+                dialog.dismiss();
+                return;
+            }
+            save.setEnabled(false);
+            service.setPlanNote(plan, clean, new SocialService.Result<Plan>() {
+                @Override
+                public void ok(Plan stored) {
+                    Haptics.confirm(save);
+                    dialog.dismiss();
+                    SocialUi.toast(activity, activity.getString(clean.isEmpty() ? R.string.projects_plans_note_removed
+                            : R.string.projects_plans_note_saved));
+                    if (done != null) done.saved(stored);
+                }
+
+                @Override
+                public void failed(SocialProblem problem) {
+                    save.setEnabled(true);
+                    if (problem.kind == SocialProblem.Kind.PLAN_GONE) {
+                        dialog.dismiss();
+                        SocialUi.toast(activity, activity.getString(R.string.projects_social_error_plan_gone));
+                        return;
+                    }
+                    showError(error, noteProblemText(context, problem), save);
+                }
+            });
+        });
+    }
+
+    /** A note's refusal: a change too many today says so (answers and notes share 20 changes a day). */
+    static String noteProblemText(Context context, SocialProblem problem) {
+        if (problem.kind == SocialProblem.Kind.RATE_LIMITED) return context.getString(R.string.projects_plans_changes_limit);
+        return problemText(context, problem);
+    }
+
+    /** "Notu kaldır": the maker's own note goes at once; someone else's (a leader or moderator) after one sentence. */
+    static void clearNote(final FragmentActivity activity, final Plan plan, @Nullable final NoteDone done) {
+        final SocialService service = SocialService.get(activity);
+        Runnable clear = () -> service.setPlanNote(plan, "", new SocialService.Result<Plan>() {
+            @Override
+            public void ok(Plan stored) {
+                SocialUi.toast(activity, activity.getString(R.string.projects_plans_note_removed));
+                if (done != null) done.saved(stored);
+            }
+
+            @Override
+            public void failed(SocialProblem problem) {
+                SocialUi.toast(activity, problem.kind == SocialProblem.Kind.PLAN_GONE
+                        ? activity.getString(R.string.projects_social_error_plan_gone) : noteProblemText(activity, problem));
+            }
+        });
+        if (plan.by.equals(service.state().myId())) {
+            clear.run();
+        } else {
+            SocialUi.confirm(activity, activity.getString(R.string.projects_plans_note_remove),
+                    activity.getString(R.string.projects_plans_note_remove_ask), activity.getString(R.string.projects_plans_note_remove), clear);
+        }
+    }
+
+    /** One line, 80 characters (a little more is let in so the counter can say it is too long). */
+    private static EditText noteField(Context context, @Nullable String text) {
+        float dp = context.getResources().getDisplayMetrics().density;
+        EditText field = new EditText(context);
+        field.setBackgroundResource(R.drawable.projects_input);
+        field.setHint(R.string.projects_plans_note_hint);
+        field.setHintTextColor(ContextCompat.getColor(context, R.color.projects_obsidian_600));
+        field.setTextColor(ContextCompat.getColor(context, R.color.projects_bone_100));
+        field.setTextSize(15);
+        field.setMinHeight(Math.round(48 * dp));
+        field.setSingleLine(true);
+        field.setPadding(Math.round(12 * dp), Math.round(10 * dp), Math.round(12 * dp), Math.round(10 * dp));
+        field.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
+        field.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_DONE);
+        field.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(gg.projects.mobile.social.PlanNote.MAX + 20)});
+        if (text != null) {
+            field.setText(text);
+            field.setSelection(field.getText().length());
+        }
+        field.setContentDescription(context.getString(R.string.projects_plans_note));
+        return field;
+    }
+
+    private static TextView counter(Context context) {
+        float dp = context.getResources().getDisplayMetrics().density;
+        TextView counter = new TextView(context);
+        counter.setTextSize(12);
+        counter.setGravity(Gravity.END);
+        counter.setPadding(0, Math.round(4 * dp), Math.round(2 * dp), 0);
+        counter.setTextColor(ContextCompat.getColor(context, R.color.projects_ash_400));
+        counter.setVisibility(View.INVISIBLE);
+        return counter;
+    }
+
+    /** The counter shows near the limit and turns flare past it; a problem goes as soon as the text changes. */
+    private static void watch(final Context context, EditText field, final TextView counter, final TextView error) {
+        field.addTextChangedListener(new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override public void afterTextChanged(android.text.Editable s) {
+                String clean = gg.projects.mobile.social.PlanNote.clean(s.toString());
+                int length = clean.codePointCount(0, clean.length());
+                counter.setVisibility(length >= gg.projects.mobile.social.PlanNote.COUNTER_FROM ? View.VISIBLE : View.INVISIBLE);
+                counter.setText(context.getString(R.string.projects_crew_count, length, gg.projects.mobile.social.PlanNote.MAX));
+                counter.setTextColor(ContextCompat.getColor(context, length > gg.projects.mobile.social.PlanNote.MAX
+                        ? R.color.projects_flare_400 : R.color.projects_ash_400));
+                if (error.getVisibility() == View.VISIBLE) error.setVisibility(View.GONE);
+            }
+        });
+    }
+
+    /** What is wrong with a note before it is sent (the chat's own checks), or null. */
+    @Nullable
+    private static String noteCheck(Context context, @Nullable String text) {
+        switch (gg.projects.mobile.social.PlanNote.check(text)) {
+            case LINK: return context.getString(R.string.projects_plans_note_link);
+            case PHONE: return context.getString(R.string.projects_plans_note_phone);
+            case TOO_LONG: return context.getString(R.string.projects_plans_note_long);
+            default: return null;
+        }
+    }
+
     /** The words of a refusal of "Plan yap" (the day's limits say so, not the general text). */
     static String problemText(Context context, SocialProblem problem) {
         switch (problem.kind) {
+            case PLAN_NOTE:
+                // FIX2: the chat's reasons; a refusal without one is a form problem (too long, an empty-looking note).
+                if ("link".equals(problem.reason)) return context.getString(R.string.projects_plans_note_link);
+                if ("phone".equals(problem.reason)) return context.getString(R.string.projects_plans_note_phone);
+                if ("words".equals(problem.reason)) return context.getString(R.string.projects_plans_note_words);
+                return context.getString(R.string.projects_plans_note_long);
+            case CHAT_MUTED:
+                return problem.until == null ? context.getString(R.string.projects_plans_note_words)
+                        : context.getString(R.string.projects_plans_note_muted, SocialUi.moment(context, problem.until));
             case PLAN_TIME: return context.getString(R.string.projects_social_error_plan_time);
             case PLANS_FULL: return context.getString(R.string.projects_plans_full);
             case PLAN_EXISTS: return context.getString(R.string.projects_social_error_plan_exists);

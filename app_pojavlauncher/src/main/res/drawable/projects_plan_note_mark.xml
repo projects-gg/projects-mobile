@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- FIX2: the thin gold mark beside a plan's note (the note reads as the plan's own words). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/projects_gold_700" />
+    <corners android:radius="2dp" />
+</shape>

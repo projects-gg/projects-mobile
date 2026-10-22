@@ -118,8 +118,11 @@ public class MainMenuFragment extends Fragment {
         mProjectsCard = new ProjectsHomeCard(this, view, mVersionSpinner, mPlayButton, mNotificationPermission);
         // Projects fork (M19): the "Arkadaşlar" row (friends on Projects, a crew call, an invite).
         mSocialRow = new gg.projects.mobile.social.ui.SocialHomeRow(this, view);
-        // Projects fork: "Tekrar başlat" after Sodium kept the game from starting.
-        if (gg.projects.mobile.launch.ProjectsRelaunch.take(requireActivity())) view.postDelayed(() -> startAgain(40), 500);
+        // Projects fork: "Tekrar başlat" after Sodium kept the game from starting. FIX2: the game closed for
+        // "Bağlan" while it ran: the start goes into that server.
+        final gg.projects.mobile.launch.ConnectTarget connect = gg.projects.mobile.launch.ProjectsRelaunch.takeConnect(requireActivity());
+        if (connect != null) view.postDelayed(() -> startConnect(connect, 40), 500);
+        else if (gg.projects.mobile.launch.ProjectsRelaunch.take(requireActivity())) view.postDelayed(() -> startAgain(40), 500);
 
         mOpenDirectoryButton.setOnClickListener((v)-> {
             if (Tools.isDemoProfile(v.getContext())){ // Say a different message when on demo profile since they might see the hidden demo folder
@@ -148,6 +151,16 @@ public class MainMenuFragment extends Fragment {
         String current = LauncherPreferences.DEFAULT_PREF.getString(LauncherPreferences.PREF_KEY_CURRENT_PROFILE, "");
         if (gg.projects.mobile.join.ProjectsProfile.KEY.equals(current)) mProjectsCard.joinNow();
         else ExtraCore.setValue(ExtraConstants.LAUNCH_GAME, true);
+    }
+
+    /** FIX2: the start the game closed for ("Bağlan" while it ran), once the home screen has settled. */
+    private void startConnect(gg.projects.mobile.launch.ConnectTarget target, int triesLeft) {
+        if (!isAdded() || getView() == null) return;
+        if (com.kdt.mcgui.ProgressLayout.hasProcesses() && triesLeft > 0) {
+            getView().postDelayed(() -> startConnect(target, triesLeft - 1), 300);
+            return;
+        }
+        mProjectsCard.startServer(target);
     }
 
     private File getCurrentProfileDirectory() {

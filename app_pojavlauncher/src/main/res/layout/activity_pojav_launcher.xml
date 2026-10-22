@@ -9,7 +9,8 @@
     <!-- Projects fork (M14): the top bar. The account chip on the left, the settings/home button on
          the right (48dp targets, 24dp glyphs), and a hairline under it that carries the Microsoft
          sign-in progress (upstream: a thick orange line all the time). -->
-    <FrameLayout
+    <!-- FIX2: a ConstraintLayout, so the account chip never runs under the friends pill. -->
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/projects_top_bar"
         android:layout_width="match_parent"
         android:layout_height="@dimen/projects_top_bar"
@@ -20,23 +21,42 @@
             android:id="@+id/account_spinner"
             android:layout_width="wrap_content"
             android:layout_height="48dp"
-            android:layout_gravity="start|center_vertical"
             android:layout_marginStart="10dp"
-            android:layout_marginEnd="64dp" />
+            android:layout_marginEnd="8dp"
+            app:layout_constrainedWidth="true"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/projects_friends_pill"
+            app:layout_constraintHorizontal_bias="0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- FIX2: the friends entry (the desktop's title bar pill): Discord's "Bağlan" before sign-in. -->
+        <gg.projects.mobile.social.ui.FriendsPill
+            android:id="@+id/projects_friends_pill"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:layout_marginEnd="4dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/setting_button"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <gg.projects.mobile.ui.TopBarButton
             android:id="@+id/setting_button"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:layout_gravity="end|center_vertical"
-            android:layout_marginEnd="6dp" />
+            android:layout_marginEnd="6dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <gg.projects.mobile.ui.TopBarLine
             android:id="@+id/projects_top_line"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="2dp"
-            android:layout_gravity="bottom" />
-    </FrameLayout>
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <!-- Holding most of the dynamic content -->
     <androidx.fragment.app.FragmentContainerView

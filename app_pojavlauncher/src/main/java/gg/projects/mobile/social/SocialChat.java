@@ -378,7 +378,8 @@ public final class SocialChat {
         connection.request(frame, answer -> {
             if (mBook == null) return;
             if (answer != null && "ack".equals(Json.str(answer, "t"))) {
-                mBook.deleted(conv, id);
+                // FIX2: the player's own tombstone ("Bu mesajı sildin"), at the hub's time now.
+                mBook.deleted(conv, id, mBook.hubNowMs(System.currentTimeMillis()));
                 mHost.changed();
                 done.ok();
                 return;
@@ -423,12 +424,11 @@ public final class SocialChat {
         if (book == null || store == null || !book.hasOlder(conv) || !mLoadingOlder.add(conv)) return;
         final long before = book.oldestId(conv);
         store.afterWrites(() -> {
-            final boolean[] more = new boolean[1];
-            final List<ChatMessage> older = store.older(conv, before, OLDER_PAGE, more);
+            final ChatStore.Page page = store.older(conv, before, OLDER_PAGE);
             mMain.post(() -> {
                 mLoadingOlder.remove(conv);
                 if (book != mBook) return;
-                book.addOlder(conv, older, more[0]);
+                book.addOlder(conv, page.messages, page.tombstones, page.more);
                 mHost.changed();
             });
         });

@@ -21,10 +21,8 @@ import net.kdt.pojavlaunch.Tools;
 import gg.projects.mobile.social.SocialModel.Presence;
 import gg.projects.mobile.social.SocialModel.Profile;
 import gg.projects.mobile.social.SocialProblem;
-import gg.projects.mobile.social.SocialRoutes;
 import gg.projects.mobile.social.SocialService;
 import gg.projects.mobile.ui.Haptics;
-import gg.projects.mobile.ui.ProjectsHomeCard;
 
 /** Shared pieces of the friends screens: texts for presence and problems, the join question. */
 public final class SocialUi {
@@ -287,47 +285,12 @@ public final class SocialUi {
     }
 
     /**
-     * "Katıl" (a friend on Projects, an invite, a crew call): the game is this app, so it asks first;
-     * "Evet" goes home and starts Projects through "Projects'e katıl" (its checks: an account, a start
-     * already running, the notification question once). While the game runs it is never closed: the
-     * player joins from the game's own server list.
+     * "Katıl" (a friend on Projects, an invite, a crew call): FIX2's "Bağlan" question, then the Projects
+     * profile through its join; with the game open, the game closes and comes back connecting
+     * ({@link ConnectFlow}).
      */
     public static void joinProjects(final FragmentActivity activity) {
-        if (SocialRoutes.gameRunning(activity)) {
-            new AlertDialog.Builder(activity)
-                    .setTitle(R.string.projects_social_game_open_title)
-                    .setMessage(R.string.projects_social_game_open_body)
-                    .setPositiveButton(android.R.string.ok, null)
-                    .show();
-            return;
-        }
-        new AlertDialog.Builder(activity)
-                .setTitle(R.string.projects_social_join_title)
-                .setMessage(R.string.projects_social_join_body)
-                .setPositiveButton(R.string.projects_social_yes, (d, w) -> {
-                    ProjectsHomeCard.requestJoin();
-                    Tools.backToMainMenu(activity);
-                })
-                .setNegativeButton(R.string.projects_social_no, null)
-                .show();
-    }
-
-    /** An invite to another server: the phone joins it from the game's own list. */
-    public static void otherServer(final Activity activity, final String host) {
-        otherServer(activity, host, null);
-    }
-
-    /** The same for a crew call (M20): its title says whose call it is. */
-    public static void otherServer(final Activity activity, final String host, @Nullable CharSequence title) {
-        new AlertDialog.Builder(activity)
-                .setTitle(title != null ? title : activity.getString(R.string.projects_social_invited_you))
-                .setMessage(activity.getString(R.string.projects_social_invite_other_body, host))
-                .setPositiveButton(R.string.projects_social_copy_address, (d, w) -> {
-                    copy(activity, "Projects", host);
-                    toast(activity, activity.getString(R.string.projects_social_address_copied));
-                })
-                .setNegativeButton(R.string.projects_close, null)
-                .show();
+        ConnectFlow.projects(activity);
     }
 
     public static SocialService service(Context context) {

@@ -269,6 +269,12 @@ final class CrewSheets {
                     }
                 });
             });
+            // FIX2: a friend in the picker holds the same menu as their row anywhere (this crew's context).
+            Press.attach(row, Press.Style.ROW);
+            SocialMenuSheet.attach(row, friend.profile.name(), v -> {
+                SocialMenuSheet.person(activity, friend.profile.id, crewId, SocialMenuSheet.Place.PICKER, v);
+                return true;
+            });
             content.addView(row);
         }
         new AlertDialog.Builder(activity)

@@ -159,10 +159,21 @@ public class Soc7FixturesTest {
         assertEquals("Geliyorum", mine.text());
         assertTrue(mine.message.edited());
         assertEquals("n:q8Zr3kT0aWbc", mine.key());
-        // B deleted the first direct message; the player's two stayed.
+        // B deleted the first direct message: it stays as B's tombstone (FIX2); the player's two stayed.
         List<ChatBook.Entry> direct = book.entries(ChatConv.direct(A, B));
-        for (ChatBook.Entry e : direct) assertEquals(A, e.message.from);
-        assertEquals(2, direct.size());
+        int buried = 0;
+        for (ChatBook.Entry e : direct) {
+            if (e.deleted()) {
+                buried++;
+                assertEquals(B, e.tombstone.from);
+                assertTrue(e.tombstone.bySender());
+                assertEquals("", e.text());
+            } else {
+                assertEquals(A, e.message.from);
+            }
+        }
+        assertEquals(1, buried);
+        assertEquals(3, direct.size());
         // Ten conversations came with the sync (crews and friends' friends' direct ones).
         assertTrue(book.summaries().size() >= 8);
     }

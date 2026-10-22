@@ -98,12 +98,8 @@
     <!-- Actions -->
     <string name="projects_social_join">Join</string>
     <string name="projects_social_join_title">Open Minecraft?</string>
-    <string name="projects_social_join_body">The game will open and connect to Projects.</string>
     <string name="projects_social_yes">Yes</string>
     <string name="projects_social_no">No</string>
-    <string name="projects_social_game_open_title">Minecraft is open</string>
-    <string name="projects_social_game_open_body">Join Projects from Multiplayer in the game.</string>
-    <string name="projects_social_invite_other_body">Join %1$s from Multiplayer in the game.</string>
     <string name="projects_social_copy_address">Copy address</string>
     <string name="projects_social_address_copied">Address copied</string>
     <string name="projects_social_message">Message on Discord</string>
@@ -615,4 +611,70 @@
     <string name="projects_social_error_plan_exists">There\'s already a plan at this time.</string>
     <string name="projects_social_error_plan_gone">This plan is gone.</string>
     <string name="projects_plans_made_you">You made a plan: %1$s</string>
+    <!-- FIX2 (M22, 22 October 2026): plan notes, deleted messages, menus, the answers list, Connect -->
+    <string name="projects_plans_note">Plan note</string>
+    <string name="projects_plans_note_hint">Add a short note (optional)</string>
+    <string name="projects_plans_note_add">Add a note</string>
+    <string name="projects_plans_note_edit">Edit note</string>
+    <string name="projects_plans_note_remove">Remove note</string>
+    <string name="projects_plans_note_remove_ask">The note is removed for everyone.</string>
+    <string name="projects_plans_note_removed">Note removed</string>
+    <string name="projects_plans_note_saved">Note saved</string>
+    <string name="projects_plans_note_save">Save</string>
+    <string name="projects_plans_note_link">A note can\'t have a link.</string>
+    <string name="projects_plans_note_phone">A note can\'t have a phone number.</string>
+    <string name="projects_plans_note_words">This note can\'t be written.</string>
+    <string name="projects_plans_note_long">A note has up to 80 characters.</string>
+    <string name="projects_plans_note_muted">You can\'t write notes until %1$s.</string>
+    <string name="projects_plans_changes_limit">You\'ve made too many changes today. Try again tomorrow.</string>
+    <string name="projects_plans_note_label">Note: %1$s</string>
+    <string name="projects_chat_deleted_mine">You deleted this message</string>
+    <string name="projects_chat_deleted_sender">This message was deleted</string>
+    <string name="projects_chat_deleted_leader">Deleted by the crew leader</string>
+    <string name="projects_chat_deleted_moderator">Deleted by a crew moderator</string>
+    <string name="projects_chat_deleted_staff">Removed by Projects moderators</string>
+    <string name="projects_menu_message">Send message</string>
+    <string name="projects_menu_request_sent">Request sent</string>
+    <string name="projects_menu_accept_request">Accept request</string>
+    <string name="projects_menu_open_crew">Open crew</string>
+    <string name="projects_menu_open_chat">Open chat</string>
+    <string name="projects_menu_copy_code">Copy crew code</string>
+    <string name="projects_menu_options">Options</string>
+    <string name="projects_menu_options_for">Options for %1$s</string>
+    <string name="projects_social_error_crewmate_gone">You can\'t send this player a request right now.</string>
+    <string name="projects_answers_expand">Show answers</string>
+    <string name="projects_answers_collapse">Hide answers</string>
+    <string name="projects_answers_expanded">Expanded</string>
+    <string name="projects_answers_collapsed">Collapsed</string>
+    <string name="projects_answers_group">%1$s · %2$d</string>
+    <string name="projects_social_pill_connect">Connect</string>
+    <string name="projects_social_pill_connect_label">Friends: connect with Discord</string>
+    <string name="projects_connect">Connect</string>
+    <string name="projects_connect_body">The game will open and connect to %1$s.</string>
+    <string name="projects_connect_restart_title">Restart the game?</string>
+    <string name="projects_connect_running">The game will close and reopen connected to %1$s.</string>
+    <string name="projects_connect_world">Your world is saved.</string>
+    <string name="projects_connect_closing">The game is closing. Once it closes, it\'ll reopen connected to %1$s.</string>
+    <string name="projects_connect_overdue_title">The game hasn\'t closed</string>
+    <string name="projects_connect_overdue_body">If you force it to close, unsaved singleplayer progress may be lost.</string>
+    <string name="projects_connect_wait">Keep waiting</string>
+    <string name="projects_connect_force">Force close</string>
+    <string name="projects_connect_already">You\'re already on this server.</string>
+    <plurals name="projects_social_pill_online">
+        <item quantity="one">Friends, %d online</item>
+        <item quantity="other">Friends, %d online</item>
+    </plurals>
+    <plurals name="projects_answers_count">
+        <item quantity="one">%d answer</item>
+        <item quantity="other">%d answers</item>
+    </plurals>
+    <string name="projects_menu_request_sent_to">Friend request sent</string>
+    <string name="projects_answers_toggle">Who\'s coming</string>
+    <string name="projects_answers_less">Show less</string>
+    <string name="projects_report_plan">Plan: %1$s</string>
+    <string name="projects_report_reason_note">Inappropriate note</string>
+    <plurals name="projects_answers_more">
+        <item quantity="one">%d more</item>
+        <item quantity="other">%d more</item>
+    </plurals>
 </resources>

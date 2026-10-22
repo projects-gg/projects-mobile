@@ -608,6 +608,21 @@ public final class SocialState {
         return m != null && (m.founder || m.moderator);
     }
 
+    /** FIX2 ({@code planNotes}): the plan's maker writes, changes or clears its note while it shows. */
+    public boolean mayWriteNote(Plan plan, long nowSeconds) {
+        String me = myId();
+        return me != null && plan.by.equals(me) && plan.live(hubNow(nowSeconds)) && crew(plan.crew) != null;
+    }
+
+    /** FIX2: the crew's leader and moderators may only clear someone else's note. */
+    public boolean mayClearNote(Plan plan, long nowSeconds) {
+        String me = myId();
+        if (me == null || plan.note == null || plan.by.equals(me) || !plan.live(hubNow(nowSeconds))) return false;
+        Crew c = crew(plan.crew);
+        Member m = c == null ? null : c.team.member(me);
+        return m != null && (m.founder || m.moderator);
+    }
+
     /** The player's answer to a plan (null: none yet). */
     @Nullable
     public String myPlanAnswer(String planId) {

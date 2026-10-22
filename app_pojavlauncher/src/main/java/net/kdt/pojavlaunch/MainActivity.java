@@ -124,6 +124,8 @@ public class MainActivity extends BaseActivity implements ControlButtonMenuListe
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // Projects fork (FIX2): "Bağlan" that reached this process after its game had closed starts no game here.
+        if (gg.projects.mobile.launch.GameConnect.divert(this)) return;
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
 
         minecraftProfile = LauncherProfiles.getCurrentProfile();
@@ -374,6 +376,16 @@ public class MainActivity extends BaseActivity implements ControlButtonMenuListe
         if(PREF_ENABLE_GYRO) mGyroControl.enable();
         CallbackBridge.nativeSetWindowAttrib(LwjglGlfwKeycode.GLFW_FOCUSED, 1);
         CallbackBridge.nativeSetWindowAttrib(LwjglGlfwKeycode.GLFW_HOVERED, 1);
+        // Projects fork (FIX2): this activity made again over a running game may carry a "Bağlan".
+        gg.projects.mobile.launch.GameConnect.handle(this, getIntent());
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        // Projects fork (FIX2): "Bağlan" while the game runs: the launcher's answered question closes the
+        // game and starts into the server; a notification's asks here first.
+        gg.projects.mobile.launch.GameConnect.handle(this, intent);
     }
 
     @Override
@@ -512,6 +524,8 @@ public class MainActivity extends BaseActivity implements ControlButtonMenuListe
         // Projects fork: what this start is (profile, folder, renderer, Sodium), for the launcher
         // to tell afterwards whether Sodium kept the game from starting.
         gg.projects.mobile.launch.ProjectsLaunchHook.recordLaunch(this, minecraftProfile, versionId);
+        // Projects fork (FIX2): a game runs in this process from now on ("Bağlan" closes it first; friends see it).
+        gg.projects.mobile.launch.GameConnect.gameStarting(this);
         Logger.appendToLog("--------- Starting game with Launcher Debug!");
         Tools.printLauncherInfo(versionId, Tools.isValidString(minecraftProfile.javaArgs) ? minecraftProfile.javaArgs : LauncherPreferences.PREF_CUSTOM_JAVA_ARGS, Tools.getTotalDeviceMemory(this));
         if(Tools.LOCAL_RENDERER.equals("opengles_mobileglues")) {

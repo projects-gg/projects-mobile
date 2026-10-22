@@ -173,6 +173,17 @@ public final class SocialApi {
         return require(send("POST", "v1/friends/requests", codeBody(code), true, false));
     }
 
+    /**
+     * FIX2 ({@code crewFriendRequests}): a friend request to a crewmate by their id, without their code;
+     * the same answers as {@link #request}. Someone who is not a crewmate answers {@code 404 user_not_found}.
+     */
+    @WorkerThread
+    public JsonObject requestCrewmate(String userId) throws SocialProblem {
+        JsonObject body = new JsonObject();
+        body.addProperty("user", id(userId));
+        return require(send("POST", "v1/friends/requests", body, true, false));
+    }
+
     @WorkerThread
     public JsonObject accept(String from) throws SocialProblem {
         return require(send("POST", "v1/friends/requests/" + id(from) + "/accept", null, true, false));

@@ -66,6 +66,10 @@ struct pojav_environ_s {
     bool shouldUpdateMonitorSize, monitorSizeConsumed;
     int savedWidth, savedHeight;
     GLFWgamepadstate gamepadState;
+    // Projects fork (FIX2): the Android side asked the game to close the way its window's close button
+    // would (Minecraft stops normally and saves a singleplayer world); taken by the next event pump.
+    atomic_bool closeRequested;
+    jmethodID method_glfwSetWindowShouldClose;
 #define ADD_CALLBACK_WWIN(NAME) \
     GLFW_invoke_##NAME##_func* GLFW_invoke_##NAME;
     ADD_CALLBACK_WWIN(Char);

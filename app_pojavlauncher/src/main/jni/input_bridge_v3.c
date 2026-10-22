@@ -87,6 +87,12 @@ JNIEXPORT void JNICALL Java_org_lwjgl_glfw_GLFW_nativeInitializeGLFWNativeBridge
     pojav_environ->method_glftSetWindowAttrib = (*vmEnv)->GetStaticMethodID(vmEnv, pojav_environ->vmGlfwClass, "glfwSetWindowAttrib", "(JII)V");
     pojav_environ->method_internalWindowSizeChanged = (*vmEnv)->GetStaticMethodID(vmEnv, pojav_environ->vmGlfwClass, "internalWindowSizeChanged", "(J)V");
     pojav_environ->method_internalChangeMonitorSize = (*vmEnv)->GetStaticMethodID(vmEnv, pojav_environ->vmGlfwClass, "internalChangeMonitorSize", "(II)V");
+    // Projects fork (FIX2): how the Android side's close request reaches the game (every GLFW shim has it).
+    pojav_environ->method_glfwSetWindowShouldClose = (*vmEnv)->GetStaticMethodID(vmEnv, pojav_environ->vmGlfwClass, "glfwSetWindowShouldClose", "(JZ)V");
+    if ((*vmEnv)->ExceptionCheck(vmEnv)) {
+        (*vmEnv)->ExceptionClear(vmEnv);
+        pojav_environ->method_glfwSetWindowShouldClose = NULL;
+    }
     jfieldID field_keyDownBuffer = (*vmEnv)->GetStaticFieldID(vmEnv, pojav_environ->vmGlfwClass, "keyDownBuffer", "Ljava/nio/ByteBuffer;");
     jobject keyDownBufferJ = (*vmEnv)->GetStaticObjectField(vmEnv, pojav_environ->vmGlfwClass, field_keyDownBuffer);
     pojav_environ->keyDownBuffer = (*vmEnv)->GetDirectBufferAddress(vmEnv, keyDownBufferJ);
@@ -120,6 +126,12 @@ void updateWindowSize(void* window) {
 }
 
 void pojavPumpEvents(void* window) {
+    // Projects fork (FIX2): a close the Android side asked for (Connect while the game runs): the window
+    // should close, so Minecraft stops as it does for its own window's close and saves the world.
+    if(atomic_exchange(&pojav_environ->closeRequested, false) && pojav_environ->method_glfwSetWindowShouldClose != NULL) {
+        (*pojav_environ->glfwThreadVmEnv)->CallStaticVoidMethod(pojav_environ->glfwThreadVmEnv, pojav_environ->vmGlfwClass,
+                                                                 pojav_environ->method_glfwSetWindowShouldClose, (jlong) window, JNI_TRUE);
+    }
     if(pojav_environ->shouldUpdateMouse) {
         // Floored because some anticheats (Hypixel) don't like the input being too accurate.
         // Actual GLFW actually uses doubles so this is totally wrong on their end.
@@ -473,6 +485,17 @@ void noncritical_send_scroll(__attribute__((unused)) JNIEnv* env, __attribute__(
 
 JNIEXPORT void JNICALL Java_org_lwjgl_glfw_GLFW_nglfwSetShowingWindow(__attribute__((unused)) JNIEnv* env, __attribute__((unused)) jclass clazz, jlong window) {
     pojav_environ->showingWindow = (jlong) window;
+}
+
+/**
+ * Projects fork (FIX2): asks the running game to close as its window's close button would. Called from
+ * the Android side; the GLFW thread takes it at its next event pump (Minecraft polls events every frame).
+ * Returns whether a game window was there to ask.
+ */
+JNIEXPORT jboolean JNICALL Java_org_lwjgl_glfw_CallbackBridge_nativeRequestClose(__attribute__((unused)) JNIEnv* env, __attribute__((unused)) jclass clazz) {
+    if (!pojav_environ->showingWindow || pojav_environ->method_glfwSetWindowShouldClose == NULL) return JNI_FALSE;
+    atomic_store(&pojav_environ->closeRequested, true);
+    return JNI_TRUE;
 }
 
 JNIEXPORT void JNICALL Java_org_lwjgl_glfw_CallbackBridge_nativeSetWindowAttrib(__attribute__((unused)) JNIEnv* env, __attribute__((unused)) jclass clazz, jint attrib, jint value) {

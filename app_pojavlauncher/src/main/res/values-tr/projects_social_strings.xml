@@ -91,12 +91,8 @@
 
     <string name="projects_social_join">Katıl</string>
     <string name="projects_social_join_title">Minecraft açılsın mı?</string>
-    <string name="projects_social_join_body">Oyun açılacak ve Projects sunucusuna bağlanacak.</string>
     <string name="projects_social_yes">Evet</string>
     <string name="projects_social_no">Hayır</string>
-    <string name="projects_social_game_open_title">Minecraft açık</string>
-    <string name="projects_social_game_open_body">Oyunda Çok Oyunculu\'dan Projects sunucusuna bağlan.</string>
-    <string name="projects_social_invite_other_body">Oyunda Çok Oyunculu\'dan %1$s sunucusuna bağlan.</string>
     <string name="projects_social_copy_address">Adresi kopyala</string>
     <string name="projects_social_address_copied">Adres kopyalandı</string>
     <string name="projects_social_message">Discord\'dan mesaj at</string>
@@ -603,4 +599,70 @@
     <string name="projects_social_error_plan_exists">Bu saatte zaten bir plan var.</string>
     <string name="projects_social_error_plan_gone">Bu plan artık yok.</string>
     <string name="projects_plans_made_you">%1$s için plan yaptın</string>
+    <!-- FIX2 (M22, 22 Ekim 2026): plan notu, silinen mesajlar, menüler, yanıt listesi, Bağlan -->
+    <string name="projects_plans_note">Plan notu</string>
+    <string name="projects_plans_note_hint">Kısa bir not ekle (isteğe bağlı)</string>
+    <string name="projects_plans_note_add">Not ekle</string>
+    <string name="projects_plans_note_edit">Notu düzenle</string>
+    <string name="projects_plans_note_remove">Notu kaldır</string>
+    <string name="projects_plans_note_remove_ask">Not herkesten kaldırılır.</string>
+    <string name="projects_plans_note_removed">Not kaldırıldı</string>
+    <string name="projects_plans_note_saved">Not kaydedildi</string>
+    <string name="projects_plans_note_save">Kaydet</string>
+    <string name="projects_plans_note_link">Notta bağlantı olamaz.</string>
+    <string name="projects_plans_note_phone">Notta telefon numarası olamaz.</string>
+    <string name="projects_plans_note_words">Bu not yazılamaz.</string>
+    <string name="projects_plans_note_long">Not en çok 80 karakter olabilir.</string>
+    <string name="projects_plans_note_muted">%1$s tarihine kadar not yazamazsın.</string>
+    <string name="projects_plans_changes_limit">Bugün çok değişiklik yaptın. Yarın yeniden dene.</string>
+    <string name="projects_plans_note_label">Not: %1$s</string>
+    <string name="projects_chat_deleted_mine">Bu mesajı sildin</string>
+    <string name="projects_chat_deleted_sender">Bu mesaj silindi</string>
+    <string name="projects_chat_deleted_leader">Ekip lideri sildi</string>
+    <string name="projects_chat_deleted_moderator">Ekip moderatörü sildi</string>
+    <string name="projects_chat_deleted_staff">Projects moderatörleri kaldırdı</string>
+    <string name="projects_menu_message">Mesaj gönder</string>
+    <string name="projects_menu_request_sent">İstek gönderildi</string>
+    <string name="projects_menu_accept_request">İsteği kabul et</string>
+    <string name="projects_menu_open_crew">Ekibi aç</string>
+    <string name="projects_menu_open_chat">Sohbeti aç</string>
+    <string name="projects_menu_copy_code">Ekip kodunu kopyala</string>
+    <string name="projects_menu_options">Seçenekler</string>
+    <string name="projects_menu_options_for">%1$s için seçenekler</string>
+    <string name="projects_social_error_crewmate_gone">Bu oyuncuya şu an istek gönderilemiyor.</string>
+    <string name="projects_answers_expand">Yanıtları göster</string>
+    <string name="projects_answers_collapse">Yanıtları gizle</string>
+    <string name="projects_answers_expanded">Açık</string>
+    <string name="projects_answers_collapsed">Kapalı</string>
+    <string name="projects_answers_group">%1$s · %2$d</string>
+    <string name="projects_social_pill_connect">Bağlan</string>
+    <string name="projects_social_pill_connect_label">Arkadaşlar: Discord ile bağlan</string>
+    <string name="projects_connect">Bağlan</string>
+    <string name="projects_connect_body">Oyun açılacak ve %1$s sunucusuna bağlanacak.</string>
+    <string name="projects_connect_restart_title">Oyun yeniden açılsın mı?</string>
+    <string name="projects_connect_running">Oyun kapanacak ve %1$s sunucusuna bağlanarak yeniden açılacak.</string>
+    <string name="projects_connect_world">Dünyan kaydedilir.</string>
+    <string name="projects_connect_closing">Oyun kapanıyor. Oyun kapanınca %1$s sunucusuna bağlanacak.</string>
+    <string name="projects_connect_overdue_title">Oyun kapanmadı</string>
+    <string name="projects_connect_overdue_body">Zorla kapatırsan kaydedilmemiş tek oyunculu ilerleme kaybolabilir.</string>
+    <string name="projects_connect_wait">Beklemeye devam et</string>
+    <string name="projects_connect_force">Zorla kapat</string>
+    <string name="projects_connect_already">Zaten bu sunucudasın.</string>
+    <plurals name="projects_social_pill_online">
+        <item quantity="one">Arkadaşlar, %d çevrimiçi</item>
+        <item quantity="other">Arkadaşlar, %d çevrimiçi</item>
+    </plurals>
+    <plurals name="projects_answers_count">
+        <item quantity="one">%d yanıt</item>
+        <item quantity="other">%d yanıt</item>
+    </plurals>
+    <string name="projects_menu_request_sent_to">Arkadaşlık isteği gönderildi</string>
+    <string name="projects_answers_toggle">Kimler geliyor</string>
+    <string name="projects_answers_less">Daha az göster</string>
+    <string name="projects_report_plan">Plan: %1$s</string>
+    <string name="projects_report_reason_note">Uygunsuz not</string>
+    <plurals name="projects_answers_more">
+        <item quantity="one">%d kişi daha</item>
+        <item quantity="other">%d kişi daha</item>
+    </plurals>
 </resources>

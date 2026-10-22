@@ -22,6 +22,11 @@ import java.util.TreeMap;
  * {@link Store} keeps it (the newest {@link #KEEP_PER_CONVERSATION} of each conversation); the
  * service's mailbox only fills what a device missed, through a sync after each connect.
  *
+ * <p>FIX2: a message deleted for everyone stays in its place as a {@link Tombstone} (who sent it and
+ * when, who deleted it and when). Its text and seal are erased, here and in the store, and never come
+ * back (a late sync may still list the message). Only a message this device held becomes one;
+ * tombstones are lines of the conversation like messages, never unread, and offer no actions.
+ *
  * <p>Pure Java and JVM-tested; one thread calls it (the app's main thread), the store writes
  * elsewhere. Times: message ids and edits are the hub's milliseconds; outbox times the phone's.
  */
@@ -54,6 +59,13 @@ public final class ChatBook {
 
         void removeMessage(String conv, long id);
 
+        /**
+         * FIX2: the message {@code id} of {@code conv} was deleted for everyone: its text and seal are
+         * erased, its sender, time and nonce stay with who deleted it and when. Nothing is written for a
+         * message the store does not hold.
+         */
+        void putTombstone(String conv, long id, String by, long at);
+
         void putOutbox(Outbox entry);
 
         void removeOutbox(String nonce);
@@ -70,6 +82,7 @@ public final class ChatBook {
     public static final Store NO_STORE = new Store() {
         @Override public void putMessage(ChatMessage message) {}
         @Override public void removeMessage(String conv, long id) {}
+        @Override public void putTombstone(String conv, long id, String by, long at) {}
         @Override public void putOutbox(Outbox entry) {}
         @Override public void removeOutbox(String nonce) {}
         @Override public void putMeta(String conv, Meta meta) {}
@@ -151,6 +164,53 @@ public final class ChatBook {
         }
     }
 
+    /**
+     * FIX2: a message deleted for everyone, kept in its place: who sent it and when ({@code id}, the
+     * hub's clock), who deleted it and when. Its text and seal are gone.
+     */
+    public static final class Tombstone {
+        /** {@link #by} of a message Projects' moderators deleted. */
+        public static final String STAFF = "staff";
+
+        public final String conv;
+        public final long id;
+        public final String from;
+        /** The sender's own key (the player's messages): the tombstone keeps the message's place on screen. */
+        @Nullable
+        public final String nonce;
+        /** A user id (the sender, or a crew's leader or moderator), {@link #STAFF}, or "" when not known. */
+        public final String by;
+        /** The hub's clock in ms when it was deleted (0 when not known). */
+        public final long at;
+
+        public Tombstone(String conv, long id, String from, @Nullable String nonce, @Nullable String by, long at) {
+            this.conv = conv;
+            this.id = id;
+            this.from = from;
+            this.nonce = nonce;
+            this.by = by == null ? "" : by;
+            this.at = Math.max(0, at);
+        }
+
+        static Tombstone of(ChatMessage message, @Nullable String by, long at) {
+            return new Tombstone(message.conv, message.id, message.from, message.nonce, by, at);
+        }
+
+        /** The same key the message had ({@link Entry#key()}). */
+        public String key() {
+            return nonce != null ? "n:" + nonce : "m:" + id;
+        }
+
+        /** The sender deleted it themselves. */
+        public boolean bySender() {
+            return by.equals(from);
+        }
+
+        public boolean byStaff() {
+            return STAFF.equals(by);
+        }
+    }
+
     /** One line of a conversation as the screens show it. */
     public static final class Entry {
         @Nullable
@@ -162,39 +222,69 @@ public final class ChatBook {
         public final String editing;
         /** "Herkesten sil" on its way. */
         public final boolean deleting;
+        /** FIX2: the line is a message deleted for everyone (then {@link #message} and {@link #outbox} are null). */
+        @Nullable
+        public final Tombstone tombstone;
 
         Entry(@Nullable ChatMessage message, @Nullable Outbox outbox, @Nullable String editing, boolean deleting) {
+            this(message, outbox, editing, deleting, null);
+        }
+
+        private Entry(@Nullable ChatMessage message, @Nullable Outbox outbox, @Nullable String editing, boolean deleting,
+                      @Nullable Tombstone tombstone) {
             this.message = message;
             this.outbox = outbox;
             this.editing = editing;
             this.deleting = deleting;
+            this.tombstone = tombstone;
         }
 
-        /** Stable while a sent message becomes the one the service took (its nonce), else its id. */
+        static Entry of(Tombstone tombstone) {
+            return new Entry(null, null, null, false, tombstone);
+        }
+
+        /** Stable while a sent message becomes the one the service took (its nonce), else its id; a tombstone keeps it. */
         public String key() {
+            if (tombstone != null) return tombstone.key();
             if (outbox != null) return "n:" + outbox.nonce;
             return message.nonce != null ? "n:" + message.nonce : "m:" + message.id;
         }
 
+        /** The text shown; "" for a tombstone (the screen says who deleted it instead). */
         public String text() {
+            if (tombstone != null) return "";
             if (outbox != null) return outbox.text;
             return editing != null ? editing : message.text;
         }
 
         public String from(String me) {
+            if (tombstone != null) return tombstone.from;
             return outbox != null ? me : message.from;
         }
 
         public boolean mine(String me) {
+            if (tombstone != null) return tombstone.from.equals(me);
             return outbox != null || message.from.equals(me);
         }
 
         public boolean pending() {
+            if (tombstone != null) return false;
             return outbox != null ? outbox.state != Outbox.State.FAILED : editing != null || deleting;
         }
 
         public boolean failed() {
             return outbox != null && outbox.state == Outbox.State.FAILED;
+        }
+
+        /** FIX2: a message deleted for everyone. */
+        public boolean deleted() {
+            return tombstone != null;
+        }
+
+        /** When it was written (ms): the hub's for a sent message or a tombstone, the phone's for one on its way. */
+        public long time() {
+            if (tombstone != null) return tombstone.id;
+            return message != null ? message.id : outbox.createdAt;
         }
     }
 
@@ -238,14 +328,22 @@ public final class ChatBook {
         public final List<Outbox> outbox;
         public final Map<String, Meta> meta;
         public final long syncCursor;
+        /** FIX2: the tombstones among the newest lines, per conversation. */
+        public final Map<String, List<Tombstone>> tombstones;
 
         public Snapshot(Map<String, List<ChatMessage>> messages, Map<String, Boolean> hasOlder, List<Outbox> outbox,
                         Map<String, Meta> meta, long syncCursor) {
+            this(messages, hasOlder, outbox, meta, syncCursor, new HashMap<String, List<Tombstone>>());
+        }
+
+        public Snapshot(Map<String, List<ChatMessage>> messages, Map<String, Boolean> hasOlder, List<Outbox> outbox,
+                        Map<String, Meta> meta, long syncCursor, Map<String, List<Tombstone>> tombstones) {
             this.messages = messages;
             this.hasOlder = hasOlder;
             this.outbox = outbox;
             this.meta = meta;
             this.syncCursor = syncCursor;
+            this.tombstones = tombstones;
         }
 
         public static Snapshot empty() {
@@ -257,6 +355,8 @@ public final class ChatBook {
     private static final class Conversation {
         final String conv;
         final TreeMap<Long, ChatMessage> messages = new TreeMap<>();
+        /** FIX2: messages deleted for everyone, in their places (never in {@link #messages} too). */
+        final TreeMap<Long, Tombstone> tombstones = new TreeMap<>();
         final LinkedHashMap<String, Outbox> outbox = new LinkedHashMap<>();
         final Map<Long, String> editing = new HashMap<>();
         final Set<Long> deleting = new HashSet<>();
@@ -284,6 +384,13 @@ public final class ChatBook {
             for (ChatMessage m : e.getValue()) c.messages.put(m.id, m);
             Boolean older = snapshot.hasOlder.get(e.getKey());
             c.hasOlder = older != null && older;
+        }
+        for (Map.Entry<String, List<Tombstone>> e : snapshot.tombstones.entrySet()) {
+            Conversation c = conversation(e.getKey());
+            for (Tombstone t : e.getValue()) {
+                c.messages.remove(t.id);
+                c.tombstones.put(t.id, t);
+            }
         }
         for (Outbox o : snapshot.outbox) {
             // A message that was on its way when the app stopped waits again (the same nonce: no second copy).
@@ -313,12 +420,18 @@ public final class ChatBook {
 
     // ---- reading ----
 
-    /** The conversation's lines, oldest first: the service's messages by id, then the player's waiting ones. */
+    /**
+     * The conversation's lines, oldest first: the service's messages and the tombstones of deleted ones by
+     * id, then the player's waiting ones.
+     */
     public List<Entry> entries(String conv) {
         Conversation c = mConversations.get(conv);
         List<Entry> out = new ArrayList<>();
         if (c == null) return out;
-        for (ChatMessage m : c.messages.values()) out.add(new Entry(m, null, c.editing.get(m.id), c.deleting.contains(m.id)));
+        TreeMap<Long, Entry> lines = new TreeMap<>();
+        for (ChatMessage m : c.messages.values()) lines.put(m.id, new Entry(m, null, c.editing.get(m.id), c.deleting.contains(m.id)));
+        for (Tombstone t : c.tombstones.values()) lines.put(t.id, Entry.of(t));
+        out.addAll(lines.values());
         List<Outbox> waiting = new ArrayList<>(c.outbox.values());
         Collections.sort(waiting, (a, b) -> Long.compare(a.createdAt, b.createdAt));
         for (Outbox o : waiting) out.add(new Entry(null, o, null, false));
@@ -329,6 +442,13 @@ public final class ChatBook {
     public ChatMessage message(String conv, long id) {
         Conversation c = mConversations.get(conv);
         return c == null ? null : c.messages.get(id);
+    }
+
+    /** FIX2: the tombstone of a deleted message held here, or null. */
+    @Nullable
+    public Tombstone tombstone(String conv, long id) {
+        Conversation c = mConversations.get(conv);
+        return c == null ? null : c.tombstones.get(id);
     }
 
     @Nullable
@@ -345,10 +465,13 @@ public final class ChatBook {
         return c != null && c.hasOlder;
     }
 
-    /** The oldest message id held in memory (the store is read before it for older ones), or 0. */
+    /** The oldest line's id held in memory (the store is read before it for older ones), or 0. */
     public long oldestId(String conv) {
         Conversation c = mConversations.get(conv);
-        return c == null || c.messages.isEmpty() ? 0 : c.messages.firstKey();
+        if (c == null) return 0;
+        long oldest = c.messages.isEmpty() ? 0 : c.messages.firstKey();
+        if (!c.tombstones.isEmpty() && (oldest == 0 || c.tombstones.firstKey() < oldest)) oldest = c.tombstones.firstKey();
+        return oldest;
     }
 
     public long lastRead(String conv) {
@@ -390,6 +513,14 @@ public final class ChatBook {
                 if (last == null || m.id > activity) {
                     last = new Entry(m, null, c.editing.get(m.id), c.deleting.contains(m.id));
                     activity = m.id;
+                }
+            }
+            // FIX2: a deleted newest message shows as its tombstone (the conversation keeps its place).
+            if (!c.tombstones.isEmpty()) {
+                Tombstone t = c.tombstones.lastEntry().getValue();
+                if (last == null || t.id > activity) {
+                    last = Entry.of(t);
+                    activity = t.id;
                 }
             }
             if (last == null) continue;
@@ -468,7 +599,7 @@ public final class ChatBook {
         switch (type) {
             case "chat": {
                 ChatMessage m = ChatMessage.read(Json.obj(frame, "msg"), null);
-                if (m == null) break;
+                if (m == null || buried(m)) break;
                 boolean known = put(m);
                 if (!known && !m.from.equals(mMe)) events.add(new Event(Event.Kind.NEW, m.conv, m));
                 else events.add(new Event(Event.Kind.EDITED, m.conv, m));
@@ -476,7 +607,7 @@ public final class ChatBook {
             }
             case "chat_edited": {
                 ChatMessage m = ChatMessage.read(Json.obj(frame, "msg"), null);
-                if (m == null) break;
+                if (m == null || buried(m)) break;
                 Conversation c = conversation(m.conv);
                 c.editing.remove(m.id);
                 put(m);
@@ -487,7 +618,7 @@ public final class ChatBook {
                 String conv = Json.str(frame, "conv");
                 long id = Json.num(frame, "id", 0);
                 if (!ChatConv.valid(conv) || id <= 0) break;
-                remove(conv, id);
+                bury(conv, id, Json.str(frame, "by", ""), Json.num(frame, "at", 0));
                 events.add(new Event(Event.Kind.DELETED, conv, null));
                 break;
             }
@@ -496,11 +627,11 @@ public final class ChatBook {
                 if (!ChatConv.valid(conv)) break;
                 for (JsonObject wire : Json.objects(frame, "messages")) {
                     ChatMessage m = ChatMessage.read(wire, conv);
-                    if (m != null && m.conv.equals(conv)) put(m);
+                    if (m != null && m.conv.equals(conv) && !buried(m)) put(m);
                 }
                 for (JsonObject deleted : Json.objects(frame, "deleted")) {
                     long id = Json.num(deleted, "id", 0);
-                    if (id > 0) remove(conv, id);
+                    if (id > 0) bury(conv, id, Json.str(deleted, "by", ""), Json.num(deleted, "at", 0));
                 }
                 events.add(new Event(Event.Kind.SYNCED, conv, null));
                 break;
@@ -520,10 +651,17 @@ public final class ChatBook {
         return more == null || more.isEmpty() || more.length() > 512 ? null : more;
     }
 
+    /** FIX2: a message deleted for everyone stays a tombstone (a late frame or sync brings nothing back). */
+    private boolean buried(ChatMessage m) {
+        Conversation c = mConversations.get(m.conv);
+        return c != null && c.tombstones.containsKey(m.id);
+    }
+
     /** Keeps a message (a newer version replaces the one held). True when it was held already. */
     private boolean put(ChatMessage m) {
         Conversation c = conversation(m.conv);
         if (m.id <= c.meta.clearedUpTo) return true;
+        if (c.tombstones.containsKey(m.id)) return true;
         ChatMessage before = c.messages.get(m.id);
         ChatMessage keep = m.keepingNonce(before);
         // The player's own message from this device: it leaves the outbox (a sync after a lost answer, too).
@@ -541,6 +679,8 @@ public final class ChatBook {
         if (c.messages.size() > WINDOW * 2) {
             // Memory keeps the newest; the store keeps the rest for scrolling up.
             while (c.messages.size() > WINDOW) c.messages.pollFirstEntry();
+            long oldest = c.messages.firstKey();
+            while (!c.tombstones.isEmpty() && c.tombstones.firstKey() < oldest) c.tombstones.pollFirstEntry();
             c.hasOlder = true;
         }
         return before != null;
@@ -551,19 +691,35 @@ public final class ChatBook {
                 && (a.nonce == null ? b.nonce == null : a.nonce.equals(b.nonce));
     }
 
-    /** A message deleted for everyone goes (also one only the store still holds). */
-    private void remove(String conv, long id) {
+    /**
+     * FIX2: a message deleted for everyone becomes its tombstone: the text and the seal leave memory and
+     * the store. A message only the store holds (older than what memory keeps) is buried there; one this
+     * device never held leaves no trace. A second word about it changes nothing.
+     */
+    private void bury(String conv, long id, @Nullable String by, long at) {
         Conversation c = conversation(conv);
         c.editing.remove(id);
         c.deleting.remove(id);
-        c.messages.remove(id);
-        mStore.removeMessage(conv, id);
+        if (c.tombstones.containsKey(id)) return;
+        ChatMessage held = c.messages.remove(id);
+        if (held != null) c.tombstones.put(id, Tombstone.of(held, by, at));
+        mStore.putTombstone(conv, id, by == null ? "" : by, Math.max(0, at));
     }
 
     /** Older messages read from the store (scrolling up): kept in memory too. */
     public void addOlder(String conv, List<ChatMessage> older, boolean more) {
+        addOlder(conv, older, new ArrayList<Tombstone>(), more);
+    }
+
+    /** The same with the tombstones among them (FIX2). */
+    public void addOlder(String conv, List<ChatMessage> older, List<Tombstone> tombstones, boolean more) {
         Conversation c = conversation(conv);
-        for (ChatMessage m : older) if (m.conv.equals(conv) && m.id > c.meta.clearedUpTo) c.messages.put(m.id, m);
+        for (Tombstone t : tombstones) {
+            if (t.conv.equals(conv) && t.id > c.meta.clearedUpTo && !c.messages.containsKey(t.id)) c.tombstones.put(t.id, t);
+        }
+        for (ChatMessage m : older) {
+            if (m.conv.equals(conv) && m.id > c.meta.clearedUpTo && !c.tombstones.containsKey(m.id)) c.messages.put(m.id, m);
+        }
         c.hasOlder = more;
     }
 
@@ -749,11 +905,11 @@ public final class ChatBook {
         if (m != null && m.id == id) put(m);
     }
 
-    /** The edit did not go: the text the crew has comes back. */
+    /** The edit did not go: the text the crew has comes back (one the service no longer has is a tombstone). */
     public void editFailed(String conv, long id, String code) {
         Conversation c = conversation(conv);
         c.editing.remove(id);
-        if ("message_not_found".equals(code)) remove(conv, id);
+        if ("message_not_found".equals(code)) bury(conv, id, "", 0);
     }
 
     /** "Herkesten sil": the frame, the message shown as going; null when it cannot be. */
@@ -769,15 +925,21 @@ public final class ChatBook {
         return frame;
     }
 
+    /** The player's own "Herkesten sil" went through (its {@code ack}): the message is the player's tombstone. */
     public void deleted(String conv, long id) {
-        remove(conv, id);
+        deleted(conv, id, 0);
     }
 
-    /** The delete did not go: the message stays (one the service no longer has goes from here too). */
+    /** The same, {@code atMs} the hub's clock now (0 when not known). */
+    public void deleted(String conv, long id, long atMs) {
+        bury(conv, id, mMe, atMs);
+    }
+
+    /** The delete did not go: the message stays (one the service no longer has is a tombstone, by someone not known). */
     public void deleteFailed(String conv, long id, String code) {
         Conversation c = conversation(conv);
         c.deleting.remove(id);
-        if ("message_not_found".equals(code)) remove(conv, id);
+        if ("message_not_found".equals(code)) bury(conv, id, "", 0);
     }
 
     // ---- the player's own settings ----
@@ -813,8 +975,11 @@ public final class ChatBook {
     /** "Geçmişi temizle" (this phone only): what is here goes and does not come back with a sync. */
     public void clearHistory(String conv) {
         Conversation c = conversation(conv);
-        long upTo = Math.max(c.meta.clearedUpTo, c.messages.isEmpty() ? mSyncCursor : Math.max(c.messages.lastKey(), mSyncCursor));
+        long newest = c.messages.isEmpty() ? 0 : c.messages.lastKey();
+        if (!c.tombstones.isEmpty()) newest = Math.max(newest, c.tombstones.lastKey());
+        long upTo = Math.max(c.meta.clearedUpTo, Math.max(newest, mSyncCursor));
         c.messages.clear();
+        c.tombstones.clear();
         c.outbox.clear();
         c.editing.clear();
         c.deleting.clear();

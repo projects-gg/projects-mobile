@@ -19,7 +19,9 @@ import java.util.Map;
 /**
  * M20: the phone's chat (CHAT1, README "Chat"): conversation ids, live messages and unread counts,
  * sending under a nonce (waiting, sent, a lost answer, refusals), syncs, edits and deletes, who may do
- * what, the report's context, clearing the history and what the store keeps.
+ * what, the report's context, clearing the history and what the store keeps. FIX2: a deleted
+ * message stays as its tombstone (text and seal erased, in memory and in the store), never unread and
+ * never brought back.
  */
 public class ChatBookTest {
     private static final String ME = "100000000000000011";
@@ -50,20 +52,28 @@ public class ChatBookTest {
         return f;
     }
 
-    /** A store that keeps what it is told, like the app's file. */
+    /** A store that keeps what it is told, like the app's file (a tombstone replaces only a row it holds). */
     private static final class MemoryStore implements ChatBook.Store {
         final Map<String, ChatMessage> messages = new HashMap<>();
+        final Map<String, ChatBook.Tombstone> tombstones = new HashMap<>();
         final Map<String, ChatBook.Outbox> outbox = new HashMap<>();
         final Map<String, ChatBook.Meta> meta = new HashMap<>();
         long cursor;
 
-        @Override public void putMessage(ChatMessage m) { messages.put(m.conv + "#" + m.id, m); }
+        @Override public void putMessage(ChatMessage m) {
+            if (!tombstones.containsKey(m.conv + "#" + m.id)) messages.put(m.conv + "#" + m.id, m);
+        }
         @Override public void removeMessage(String conv, long id) { messages.remove(conv + "#" + id); }
+        @Override public void putTombstone(String conv, long id, String by, long at) {
+            ChatMessage held = messages.remove(conv + "#" + id);
+            if (held != null) tombstones.put(conv + "#" + id, new ChatBook.Tombstone(conv, id, held.from, held.nonce, by, at));
+        }
         @Override public void putOutbox(ChatBook.Outbox o) { outbox.put(o.nonce, o); }
         @Override public void removeOutbox(String nonce) { outbox.remove(nonce); }
         @Override public void putMeta(String conv, ChatBook.Meta m) { meta.put(conv, m); }
         @Override public void clear(String conv) {
             messages.keySet().removeIf(k -> k.startsWith(conv + "#"));
+            tombstones.keySet().removeIf(k -> k.startsWith(conv + "#"));
             outbox.values().removeIf(o -> o.conv.equals(conv));
         }
         @Override public void putSyncCursor(long newestSeen) { cursor = newestSeen; }
@@ -232,7 +242,11 @@ public class ChatBookTest {
         book.apply(frame("chat", msg(CREW_CHAT, T + 3, C, "silinecek", 0, null)));
         assertEquals(ChatBook.Event.Kind.SYNCED, book.apply(sync).get(0).kind);
         List<ChatBook.Entry> entries = book.entries(CREW_CHAT);
-        assertEquals(3, entries.size());
+        // FIX2: the message the sync says was deleted stays as its tombstone.
+        assertEquals(4, entries.size());
+        assertTrue(entries.get(3).deleted());
+        assertEquals(C, entries.get(3).tombstone.by);
+        assertEquals(T + 4, entries.get(3).tombstone.at);
         // The waiting message was taken before its answer got lost: it is the service's one now.
         assertNull(book.outbox("lost"));
         assertEquals("n:lost", entries.get(1).key());
@@ -272,9 +286,15 @@ public class ChatBookTest {
         book.deleteFailed(DM, T, "rate_limited");
         assertFalse(book.entries(DM).get(0).deleting);
         book.delete(DM, T);
-        book.deleted(DM, T);
-        assertTrue(book.entries(DM).isEmpty());
-        // Deleted by someone else: it goes too.
+        book.deleted(DM, T, T + 70_000);
+        // FIX2: the player's own message stays as the player's tombstone, under the same key.
+        assertEquals(1, book.entries(DM).size());
+        ChatBook.Entry mine = book.entries(DM).get(0);
+        assertTrue(mine.deleted());
+        assertEquals(ME, mine.tombstone.by);
+        assertEquals("", mine.text());
+        assertNull(book.message(DM, T));
+        // Deleted by someone else: a tombstone too.
         book.apply(frame("chat", msg(DM, T + 10, B, "x", 0, null)));
         JsonObject gone = new JsonObject();
         gone.addProperty("t", "chat_deleted");
@@ -282,7 +302,116 @@ public class ChatBookTest {
         gone.addProperty("id", T + 10);
         gone.addProperty("by", B);
         book.apply(gone);
+        assertEquals(2, book.entries(DM).size());
+        assertTrue(book.entries(DM).get(1).tombstone.bySender());
+    }
+
+    @Test
+    public void aDeletedMessageLeavesATombstoneWithoutItsText() {
+        MemoryStore store = new MemoryStore();
+        ChatBook book = new ChatBook(ME, store, ChatBook.Snapshot.empty());
+        book.apply(frame("chat", msg(CREW_CHAT, T, B, "gizli metin", 0, null)));
+        book.apply(frame("chat", msg(CREW_CHAT, T + 1, B, "ikinci", 0, null)));
+        assertEquals(2, book.unread(CREW_CHAT));
+        JsonObject gone = new JsonObject();
+        gone.addProperty("t", "chat_deleted");
+        gone.addProperty("conv", CREW_CHAT);
+        gone.addProperty("id", T);
+        gone.addProperty("by", "staff");
+        gone.addProperty("at", T + 50);
+        assertEquals(ChatBook.Event.Kind.DELETED, book.apply(gone).get(0).kind);
+        // Its text and seal are gone from memory and from the store; who sent it and when stay.
+        assertNull(book.message(CREW_CHAT, T));
+        ChatBook.Tombstone t = book.tombstone(CREW_CHAT, T);
+        assertNotNull(t);
+        assertEquals(B, t.from);
+        assertTrue(t.byStaff());
+        assertFalse(store.messages.containsKey(CREW_CHAT + "#" + T));
+        assertEquals("staff", store.tombstones.get(CREW_CHAT + "#" + T).by);
+        // A tombstone is never unread, offers nothing, and is no report context.
+        assertEquals(1, book.unread(CREW_CHAT));
+        assertEquals(T + 1, book.firstUnread(CREW_CHAT));
+        ChatBook.Entry entry = book.entries(CREW_CHAT).get(0);
+        assertTrue(entry.deleted());
+        assertFalse(book.canEdit(entry, T + 1));
+        assertFalse(book.canDelete(entry, T + 1, true));
+        assertFalse(book.canReport(entry));
+        assertTrue(book.before(book.message(CREW_CHAT, T + 1), Reports.CONTEXT).isEmpty());
+        assertNull(book.edit(CREW_CHAT, T, "x"));
+        assertNull(book.delete(CREW_CHAT, T));
+        // A late copy of the message (a sync, a live frame) brings nothing back.
+        book.apply(frame("chat", msg(CREW_CHAT, T, B, "gizli metin", 0, null)));
+        book.apply(frame("chat_edited", msg(CREW_CHAT, T, B, "gizli metin 2", T + 9, null)));
+        assertNull(book.message(CREW_CHAT, T));
+        assertTrue(book.entries(CREW_CHAT).get(0).deleted());
+        assertFalse(store.messages.containsKey(CREW_CHAT + "#" + T));
+        // A second word about it changes nothing.
+        gone.addProperty("by", B);
+        book.apply(gone);
+        assertTrue(book.tombstone(CREW_CHAT, T).byStaff());
+        // The list's line: the newest line is the tombstone when it is the newest.
+        JsonObject last = new JsonObject();
+        last.addProperty("t", "chat_deleted");
+        last.addProperty("conv", CREW_CHAT);
+        last.addProperty("id", T + 1);
+        last.addProperty("by", "");
+        book.apply(last);
+        ChatBook.Summary summary = book.summaries().get(0);
+        assertTrue(summary.last.deleted());
+        assertEquals(T + 1, summary.activity);
+        assertEquals(0, summary.unread);
+        assertEquals("", summary.last.tombstone.by);
+    }
+
+    @Test
+    public void noTombstoneForAMessageThisDeviceNeverHeld() {
+        MemoryStore store = new MemoryStore();
+        ChatBook book = new ChatBook(ME, store, ChatBook.Snapshot.empty());
+        JsonObject gone = new JsonObject();
+        gone.addProperty("t", "chat_deleted");
+        gone.addProperty("conv", DM);
+        gone.addProperty("id", T);
+        gone.addProperty("by", B);
+        book.apply(gone);
         assertTrue(book.entries(DM).isEmpty());
+        assertTrue(store.tombstones.isEmpty());
+        assertTrue(book.summaries().isEmpty());
+        // The service no longer having a message the player tried to delete: a tombstone by someone not known.
+        book.apply(frame("chat", msg(DM, T + 5, ME, "eski", 0, "nonce1")));
+        book.delete(DM, T + 5);
+        book.deleteFailed(DM, T + 5, "message_not_found");
+        ChatBook.Entry entry = book.entries(DM).get(0);
+        assertTrue(entry.deleted());
+        assertEquals("", entry.tombstone.by);
+        assertEquals("n:nonce1", entry.key());
+    }
+
+    @Test
+    public void tombstonesComeBackFromTheStoreInTheirPlaces() {
+        Map<String, List<ChatMessage>> held = new HashMap<>();
+        List<ChatMessage> dm = new ArrayList<>();
+        dm.add(ChatMessage.read(msg(DM, T, B, "a", 0, null), null));
+        dm.add(ChatMessage.read(msg(DM, T + 2, B, "c", 0, null), null));
+        held.put(DM, dm);
+        Map<String, List<ChatBook.Tombstone>> buried = new HashMap<>();
+        List<ChatBook.Tombstone> list = new ArrayList<>();
+        list.add(new ChatBook.Tombstone(DM, T + 1, ME, "n1", ME, T + 9));
+        buried.put(DM, list);
+        ChatBook book = new ChatBook(ME, ChatBook.NO_STORE, new ChatBook.Snapshot(held, new HashMap<String, Boolean>(),
+                new ArrayList<ChatBook.Outbox>(), new HashMap<String, ChatBook.Meta>(), T + 2, buried));
+        List<ChatBook.Entry> entries = book.entries(DM);
+        assertEquals(3, entries.size());
+        assertTrue(entries.get(1).deleted());
+        assertTrue(entries.get(1).mine(ME));
+        assertEquals(T + 1, entries.get(1).time());
+        assertEquals(T, book.oldestId(DM));
+        // An older page with a tombstone in it.
+        List<ChatBook.Tombstone> older = new ArrayList<>();
+        older.add(new ChatBook.Tombstone(DM, T - 5, B, null, B, 0));
+        book.addOlder(DM, new ArrayList<ChatMessage>(), older, false);
+        assertEquals(T - 5, book.oldestId(DM));
+        assertEquals(4, book.entries(DM).size());
+        assertEquals("m:" + (T - 5), book.entries(DM).get(0).key());
     }
 
     @Test
@@ -338,9 +467,17 @@ public class ChatBookTest {
         MemoryStore store = new MemoryStore();
         ChatBook book = new ChatBook(ME, store, ChatBook.Snapshot.empty());
         book.apply(frame("chat", msg(DM, T, B, "eski", 0, null)));
+        book.apply(frame("chat", msg(DM, T - 1, B, "silinen", 0, null)));
+        JsonObject gone = new JsonObject();
+        gone.addProperty("t", "chat_deleted");
+        gone.addProperty("conv", DM);
+        gone.addProperty("id", T - 1);
+        gone.addProperty("by", B);
+        book.apply(gone);
         book.clearHistory(DM);
         assertTrue(book.entries(DM).isEmpty());
         assertTrue(store.messages.isEmpty());
+        assertTrue(store.tombstones.isEmpty());
         book.apply(frame("chat", msg(DM, T, B, "eski", 0, null)));
         assertTrue(book.entries(DM).isEmpty());
         book.apply(frame("chat", msg(DM, T + 1, B, "yeni", 0, null)));

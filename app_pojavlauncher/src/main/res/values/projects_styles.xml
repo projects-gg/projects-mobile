@@ -209,6 +209,12 @@
         <item name="android:visibility">gone</item>
     </style>
 
+    <!-- FIX2: the long-press menus' sheet scales in and out (SocialMenuSheet). -->
+    <style name="ProjectsMenuSheetAnimation">
+        <item name="android:windowEnterAnimation">@anim/projects_menu_in</item>
+        <item name="android:windowExitAnimation">@anim/projects_menu_out</item>
+    </style>
+
     <!-- The game's exit message (0.1.5): no window of its own behind the branded dialog, which
          appears once the launcher looked at the failed start (a fraction of a second). -->
     <style name="ProjectsExitTheme" parent="AppTheme">

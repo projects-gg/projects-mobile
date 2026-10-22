@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- FIX2: the top bar's friends pill before sign-in: Discord's Blurple (Discord buttons only), darker
+     while pressed, a pill inside the 48dp target. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true">
+        <inset android:insetTop="6dp" android:insetBottom="6dp">
+            <shape android:shape="rectangle">
+                <corners android:radius="18dp" />
+                <solid android:color="#FF4752C4" />
+            </shape>
+        </inset>
+    </item>
+    <item>
+        <inset android:insetTop="6dp" android:insetBottom="6dp">
+            <shape android:shape="rectangle">
+                <corners android:radius="18dp" />
+                <solid android:color="#FF5865F2" />
+            </shape>
+        </inset>
+    </item>
+</selector>

@@ -20,4 +20,8 @@
     <item name="projects_chat_state" type="id" />
     <!-- View tag (M20): which crew a rail mark shows (CrewFragment). -->
     <item name="projects_crew_rail_id" type="id" />
+    <!-- View tag (FIX2): the accessibility action a row's menu was given (SocialMenuSheet.attach). -->
+    <item name="projects_menu_action" type="id" />
+    <!-- View tag (FIX2): the running height animation of a plan or call card's answers (AnswerList). -->
+    <item name="projects_answers_anim" type="id" />
 </resources>

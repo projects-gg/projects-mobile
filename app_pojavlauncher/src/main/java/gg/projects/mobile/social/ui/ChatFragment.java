@@ -13,6 +13,7 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
@@ -24,6 +25,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.DefaultItemAnimator;
@@ -74,6 +77,11 @@ import gg.projects.mobile.ui.ScreenHeader;
  * <p>Motion answers the player: a new message rises 10 dp as it fades in, a state changes by a short
  * cross-fade, every one of them interruptible; nothing moves by itself, and with animations off
  * nothing moves at all.
+ *
+ * <p>FIX2: a message deleted for everyone stays in its place as a quiet bubble that says who deleted
+ * it ("Bu mesajı sildin", "Ekip lideri sildi", ...; the desktop's words), without its text and without
+ * actions. "Düzenle" puts the field in focus with the keyboard up once the menu's window has given the
+ * focus back (asking while the menu still held it was why the keyboard stayed down).
  */
 public class ChatFragment extends Fragment implements SocialService.Listener {
     public static final String TAG = "ProjectsChatFragment";
@@ -360,6 +368,18 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
             mHeader.setCaption(other == null || !state.isFriend(other.id) ? null
                     : SocialUi.presenceText(context, state.presence(other.id)));
         }
+        // FIX2: holding the title opens the friend's or the crew's menu (no "Mesaj gönder" / "Sohbeti aç" here).
+        View title = mHeader.findViewById(R.id.projects_header_title);
+        final String crewOfChat = ChatConv.crewId(mConv);
+        final String other = crewOfChat == null ? ChatConv.other(mConv, state.myId()) : null;
+        if (crewOfChat != null || other != null) {
+            SocialMenuSheet.attach(title, mHeader.getTitleText(), v -> {
+                if (!isAdded()) return true;
+                if (crewOfChat != null) SocialMenuSheet.crew(requireActivity(), crewOfChat, false, true, v);
+                else SocialMenuSheet.person(requireActivity(), other, null, SocialMenuSheet.Place.DIRECT_CHAT, v);
+                return true;
+            });
+        }
         ChatBook book = service.chat().book();
         boolean muted = book != null && book.mutedAt(mConv, SocialService.nowSeconds());
         mBell.setImageResource(muted ? R.drawable.projects_ic_bell_slash : R.drawable.projects_ic_bell);
@@ -529,10 +549,42 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
         mSend.setImageResource(R.drawable.projects_ic_check);
         mInput.setText(message.text);
         mInput.setSelection(mInput.getText().length());
-        mInput.requestFocus();
-        InputMethodManager imm = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-        if (imm != null) imm.showSoftInput(mInput, InputMethodManager.SHOW_IMPLICIT);
+        showKeyboard(mInput);
         updateComposer();
+    }
+
+    /**
+     * FIX2: the field takes the focus and the keyboard comes up. "Düzenle" is a row of the message's
+     * menu, a dialog: when its row is tapped the dialog's window still has the focus, so asking for the
+     * keyboard then was dropped (InputMethodManager serves only the focused window) and the focus the
+     * field took went back to nothing visible. The keyboard is asked for once this window has the focus
+     * again (at once when it has it), through the insets controller, with the old call as a fallback.
+     */
+    private void showKeyboard(final EditText field) {
+        field.requestFocus();
+        if (field.hasWindowFocus()) {
+            field.post(() -> raiseKeyboard(field));
+            return;
+        }
+        final ViewTreeObserver observer = field.getViewTreeObserver();
+        observer.addOnWindowFocusChangeListener(new ViewTreeObserver.OnWindowFocusChangeListener() {
+            @Override
+            public void onWindowFocusChanged(boolean hasFocus) {
+                if (!hasFocus) return;
+                ViewTreeObserver live = field.getViewTreeObserver();
+                if (live.isAlive()) live.removeOnWindowFocusChangeListener(this);
+                field.post(() -> raiseKeyboard(field));
+            }
+        });
+    }
+
+    private void raiseKeyboard(EditText field) {
+        if (!isAdded() || !field.isAttachedToWindow() || mEditing == null) return;
+        field.requestFocus();
+        android.view.Window window = requireActivity().getWindow();
+        WindowCompat.getInsetsController(window, field).show(WindowInsetsCompat.Type.ime());
+        InputMethodManager imm = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (imm != null) imm.showSoftInput(field, 0);
     }
 
     private void stopEditing(boolean clear) {
@@ -631,9 +683,9 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
         return -1;
     }
 
-    /** When an entry was written: the hub's ms for a sent message, the phone's for one on its way. */
+    /** When an entry was written: the hub's ms for a sent message or a tombstone, the phone's for one on its way. */
     private static long timeOf(ChatBook.Entry e) {
-        return e.message != null ? e.message.id : e.outbox.createdAt;
+        return e.time();
     }
 
     private List<Row> rows(Context context, SocialService service, @Nullable ChatBook book) {
@@ -681,7 +733,8 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
                     || lineBefore;
             boolean last = next == null || !together(e, next, me) || (mUnreadAt > 0 && next.message != null && next.message.id == mUnreadAt)
                     || lineAfter;
-            String state = e.failed() ? "failed:" + e.outbox.failure : e.pending() ? "pending" : "sent";
+            String state = e.deleted() ? "deleted:" + e.tombstone.by : e.failed() ? "failed:" + e.outbox.failure
+                    : e.pending() ? "pending" : "sent";
             // "Bağlantı bekleniyor" under a waiting message follows the socket, so the row knows it too.
             boolean waiting = e.outbox != null && service.connection() != SocialService.Connection.LIVE;
             String content = e.key() + "|" + e.text() + "|" + state + "|" + (e.message != null ? e.message.editedAt : 0) + "|"
@@ -692,6 +745,7 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
                 Profile p = service.state().profile(e.from(me));
                 content += "|" + (p == null ? "" : p.name() + p.faceKey());
             }
+            if (e.deleted()) content += "|" + deletedText(context, e.tombstone, me, service.state());
             rows.add(new Row(T_MESSAGE, e.key(), content, e, null, first, last));
         }
         for (; emitted < plans.size(); emitted++) lastDay = addPlanLine(context, service, rows, plans.get(emitted), lastDay, nowSeconds);
@@ -925,9 +979,29 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
         if (faces && row.first) name.setText(sender == null ? getString(R.string.projects_crew_someone) : sender.name());
 
         TextView bubble = view.findViewById(R.id.projects_msg_bubble);
-        bubble.setText(e.text());
         bubble.setMaxWidth(Math.round(Math.max(200 * dp, (mList.getWidth() > 0 ? mList.getWidth() : context.getResources().getDisplayMetrics().widthPixels) * 0.78f)));
-        bubble.setBackground(bubbleShape(context, mine, row.first, row.last, e.failed()));
+        if (e.deleted()) {
+            // FIX2: a quiet bubble in the message's place: who deleted it, no text, no actions.
+            bubble.setText(deletedText(context, e.tombstone, me, service.state()));
+            bubble.setTypeface(bubble.getTypeface(), android.graphics.Typeface.ITALIC);
+            bubble.setTextColor(ContextCompat.getColor(context, R.color.projects_ash_400));
+            bubble.setBackground(deletedShape(context, mine, row.first, row.last));
+            Drawable gone = ContextCompat.getDrawable(context, R.drawable.projects_ic_prohibit);
+            if (gone != null) {
+                gone = gone.mutate();
+                gone.setTint(ContextCompat.getColor(context, R.color.projects_ash_400));
+                int size = Math.round(15 * dp);
+                gone.setBounds(0, 0, size, size);
+            }
+            bubble.setCompoundDrawablesRelative(gone, null, null, null);
+            bubble.setCompoundDrawablePadding(Math.round(6 * dp));
+        } else {
+            bubble.setText(e.text());
+            bubble.setTypeface(regularFace(context), android.graphics.Typeface.NORMAL);
+            bubble.setTextColor(ContextCompat.getColor(context, R.color.projects_bone_100));
+            bubble.setBackground(bubbleShape(context, mine, row.first, row.last, e.failed()));
+            bubble.setCompoundDrawablesRelative(null, null, null, null);
+        }
         float targetAlpha = e.deleting ? 0.4f : e.pending() ? 0.7f : 1f;
 
         TextView time = view.findViewById(R.id.projects_msg_time);
@@ -942,7 +1016,10 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
         time.setText(waiting ? getString(R.string.projects_chat_waiting)
                 : edited ? clock + " · " + getString(R.string.projects_chat_edited) : clock);
         String stateKey;
-        if (mine && !e.failed()) {
+        if (e.deleted()) {
+            status.setVisibility(View.GONE);
+            stateKey = "deleted";
+        } else if (mine && !e.failed()) {
             status.setVisibility(View.VISIBLE);
             boolean pending = e.pending();
             status.setImageResource(pending ? R.drawable.projects_ic_clock : R.drawable.projects_ic_check);
@@ -985,7 +1062,15 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
         boolean motion = Motion.enabled(context);
         bubble.animate().cancel();
         status.animate().cancel();
-        if (changed && motion) {
+        if (changed && motion && e.deleted()) {
+            // FIX2: the message settles into its tombstone (a quick fade and a small give).
+            bubble.setAlpha(0.25f);
+            bubble.setScaleX(0.97f);
+            bubble.setScaleY(0.97f);
+            bubble.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(220).setInterpolator(Motion.EASE_OUT).start();
+        } else if (changed && motion) {
+            bubble.setScaleX(1f);
+            bubble.setScaleY(1f);
             bubble.animate().alpha(targetAlpha).setDuration(180).setInterpolator(Motion.EASE_OUT).start();
             status.setAlpha(0f);
             status.setScaleX(0.6f);
@@ -993,6 +1078,8 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
             status.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(200).setInterpolator(Motion.EASE_OUT).start();
         } else {
             bubble.setAlpha(targetAlpha);
+            bubble.setScaleX(1f);
+            bubble.setScaleY(1f);
             status.setAlpha(1f);
             status.setScaleX(1f);
             status.setScaleY(1f);
@@ -1007,17 +1094,93 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
         }
 
         String who = mine ? getString(R.string.projects_crew_you) : sender == null ? "" : sender.name();
+        if (e.deleted()) {
+            // FIX2: a tombstone offers nothing; TalkBack reads who deleted it and when it was written.
+            bubble.setContentDescription(who + ": " + bubble.getText() + ", " + clock);
+            bubble.setOnLongClickListener(null);
+            bubble.setLongClickable(false);
+            bubble.setOnClickListener(null);
+            bubble.setClickable(false);
+            bindSenderMenu(view, e, me);
+            return;
+        }
         // TalkBack says what the line under the bubble says ("Baglanti bekleniyor" while offline).
         String state = e.failed() ? getString(R.string.projects_chat_failed) : waiting ? getString(R.string.projects_chat_waiting)
                 : mine ? getString(e.pending() ? R.string.projects_chat_pending : R.string.projects_chat_sent) : "";
         bubble.setContentDescription(who + ": " + e.text() + ", " + clock + (edited ? ", " + getString(R.string.projects_chat_edited) : "")
                 + (state.isEmpty() ? "" : ", " + state));
+        bubble.setLongClickable(true);
         bubble.setOnLongClickListener(v -> {
+            gg.projects.mobile.ui.Haptics.perform(v, gg.projects.mobile.ui.HapticMap.Kind.LONG_PRESS);
             MessageMenu.show(requireActivity(), ChatFragment.this, mConv, e);
             return true;
         });
+        bindSenderMenu(view, e, me);
         bubble.setOnClickListener(e.failed() ? (View.OnClickListener) v -> MessageMenu.show(requireActivity(), ChatFragment.this, mConv, e) : null);
         bubble.setClickable(e.failed());
+    }
+
+    /**
+     * FIX2: what a tombstone says, by who deleted the message (the desktop's words): the player, the
+     * sender, the crew's leader or a moderator, or Projects' moderators.
+     */
+    static String deletedText(Context context, ChatBook.Tombstone t, @Nullable String me, SocialState state) {
+        if (me != null && t.by.equals(me)) return context.getString(R.string.projects_chat_deleted_mine);
+        if (t.byStaff()) return context.getString(R.string.projects_chat_deleted_staff);
+        if (t.by.isEmpty() || t.bySender()) return context.getString(R.string.projects_chat_deleted_sender);
+        Crew crew = state.crew(ChatConv.crewId(t.conv));
+        SocialModel.Member member = crew == null ? null : crew.team.member(t.by);
+        if (member != null && member.founder) return context.getString(R.string.projects_chat_deleted_leader);
+        if (member != null && member.moderator) return context.getString(R.string.projects_chat_deleted_moderator);
+        return context.getString(R.string.projects_chat_deleted_sender);
+    }
+
+    @Nullable
+    private static android.graphics.Typeface sRegular;
+
+    /** Figtree as the layout sets it (a bubble that showed a tombstone's italic gets it back). */
+    @Nullable
+    private static android.graphics.Typeface regularFace(Context context) {
+        if (sRegular == null) {
+            try {
+                sRegular = androidx.core.content.res.ResourcesCompat.getFont(context, R.font.figtree_regular);
+            } catch (RuntimeException e) {
+                sRegular = android.graphics.Typeface.DEFAULT;
+            }
+        }
+        return sRegular;
+    }
+
+    /**
+     * FIX2: in crew chat, holding someone's face or name opens the same menu as their row anywhere
+     * (the crew's context: its leader may hand over or remove from here too).
+     */
+    private void bindSenderMenu(View view, ChatBook.Entry e, String me) {
+        View avatar = view.findViewById(R.id.projects_msg_avatar);
+        View name = view.findViewById(R.id.projects_msg_name);
+        final String from = e.from(me);
+        final String crewId = ChatConv.crewId(mConv);
+        boolean menu = crewId != null && !from.equals(me);
+        for (View target : new View[]{avatar, name}) {
+            if (!menu) {
+                target.setOnLongClickListener(null);
+                target.setLongClickable(false);
+                continue;
+            }
+            target.setOnLongClickListener(v -> {
+                SocialMenuSheet.person(requireActivity(), from, crewId, SocialMenuSheet.Place.CHAT, v);
+                return true;
+            });
+        }
+    }
+
+    /** FIX2: a tombstone's bubble: the message's shape as a quiet dashed outline, no fill. */
+    private static Drawable deletedShape(Context context, boolean mine, boolean first, boolean last) {
+        GradientDrawable shape = (GradientDrawable) bubbleShape(context, mine, first, last, false);
+        float dp = context.getResources().getDisplayMetrics().density;
+        shape.setColor(android.graphics.Color.TRANSPARENT);
+        shape.setStroke(Math.max(1, Math.round(dp)), ContextCompat.getColor(context, R.color.projects_obsidian_700), 4 * dp, 3 * dp);
+        return shape;
     }
 
     /** The bubble: rounded, with the corners toward the sender's side tighter where the group goes on. */

@@ -422,6 +422,8 @@ public class JREUtils {
             // start Sodium kept from working there, and never shows codes or log file names).
             net.kdt.pojavlaunch.ExitActivity.showExitMessage(activity, exitCode, false);
         }
+        // Projects fork (FIX2): the game closed for "Bağlan": the launcher opens and starts into the server.
+        gg.projects.mobile.launch.GameConnect.gameEnded(activity, exitCode);
         Tools.fullyExit();
     }
 

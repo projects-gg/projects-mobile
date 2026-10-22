@@ -312,6 +312,9 @@ public class ChatListFragment extends Fragment implements SocialService.Listener
         int unread = s == null ? 0 : s.unread;
         if (s == null || s.last == null) {
             line.setText(R.string.projects_chat_crew);
+        } else if (s.last.deleted()) {
+            // FIX2: the newest line is a deleted message: what its quiet bubble says.
+            line.setText(ChatFragment.deletedText(context, s.last.tombstone, me, state));
         } else if (me != null && s.last.mine(me)) {
             line.setText(getString(R.string.projects_chat_you, oneLine(s.last.text())));
         } else if (crewId != null && me != null) {
@@ -345,6 +348,14 @@ public class ChatListFragment extends Fragment implements SocialService.Listener
             name.setCompoundDrawablesRelative(null, null, null, null);
         }
         view.setOnClickListener(v -> ChatFragment.open(ChatListFragment.this, row.conv));
+        // FIX2: a conversation's row holds the friend's or the crew's menu.
+        final String other = crewId == null ? ChatConv.other(row.conv, me) : null;
+        SocialMenuSheet.attach(view, name.getText(), v -> {
+            if (!isAdded()) return true;
+            if (crewId != null) SocialMenuSheet.crew(requireActivity(), crewId, false, false, v);
+            else if (other != null) SocialMenuSheet.person(requireActivity(), other, null, SocialMenuSheet.Place.CHAT_LIST, v);
+            return true;
+        });
     }
 
     private static String oneLine(String text) {

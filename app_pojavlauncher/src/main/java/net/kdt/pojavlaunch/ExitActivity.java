@@ -89,6 +89,8 @@ public class ExitActivity extends AppCompatActivity {
     }
 
     public static void showExitMessage(Context ctx, int code, boolean isSignal) {
+        // Projects fork (FIX2): a game that failed while closing for "Bağlan" is not followed by a start.
+        gg.projects.mobile.launch.GameConnect.gameFailed();
         Intent i = new Intent(ctx,ExitActivity.class);
         i.putExtra("code",code);
         i.putExtra("isSignal", isSignal);

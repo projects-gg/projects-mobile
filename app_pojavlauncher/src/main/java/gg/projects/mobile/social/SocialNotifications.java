@@ -154,6 +154,47 @@ public final class SocialNotifications {
                 SocialOpenActivity.open(c, SocialRoutes.CREW, crewId != null ? crewId : callId));
     }
 
+    // ---- FIX2: while the game runs (its own socket: the service pushes none of these meanwhile) ----
+
+    /** A friend request while the game runs: the same words; a tap brings the game back. */
+    public static void showRequestInGame(Context context, String sender, @Nullable String name, PendingIntent game) {
+        Context c = LanguageManager.wrap(context);
+        String who = name == null || name.isEmpty() ? c.getString(R.string.projects_social_someone_unknown) : name;
+        post(c, CHANNEL_REQUESTS, requestTag(sender), ID_REQUEST, c.getString(R.string.projects_social_push_request, who), null,
+                NotificationCompat.PRIORITY_DEFAULT, 0, game, null);
+    }
+
+    /** "Birlikte oyna" while the game runs, with "Bağlan" when it says where (asked over the game). */
+    public static void showInviteInGame(Context context, String sender, @Nullable String name, @Nullable String where,
+                                        @Nullable String host, long timeoutMs, PendingIntent open, @Nullable PendingIntent connect) {
+        Context c = LanguageManager.wrap(context);
+        post(c, CHANNEL_INVITES, inviteTag(sender), ID_INVITE, inviteTitle(c, name), invitePlace(c, where, host),
+                NotificationCompat.PRIORITY_HIGH, timeoutMs, open, connect);
+    }
+
+    /** A crew call while the game runs ({@link #callTitle}, {@link #callPlace}), with "Bağlan" when it says where. */
+    public static void showCallInGame(Context context, String callId, String title, String place, long timeoutMs,
+                                      PendingIntent open, @Nullable PendingIntent connect) {
+        post(LanguageManager.wrap(context), CHANNEL_CALLS, callTag(callId), ID_CALL, title, place,
+                NotificationCompat.PRIORITY_HIGH, timeoutMs, open, connect);
+    }
+
+    /** "Ayşe seni birlikte oynamaya çağırıyor" ("Bir arkadaşın" without a name). */
+    public static String inviteTitle(Context c, @Nullable String name) {
+        String who = name == null || name.isEmpty() ? c.getString(R.string.projects_social_someone) : name;
+        return c.getString(R.string.projects_social_push_invite, who);
+    }
+
+    @Nullable
+    private static String invitePlace(Context c, @Nullable String where, @Nullable String host) {
+        return "projects".equals(where) ? c.getString(R.string.projects_social_server_projects)
+                : host != null && !host.isEmpty() ? host : null;
+    }
+
+    public static void cancelRequest(Context context, String sender) {
+        NotificationManagerCompat.from(context).cancel(requestTag(sender), ID_REQUEST);
+    }
+
     /**
      * "Ayşe ekibi çağırıyor" (one crew, or the crew's own page); for a player in several crews "Ayşe, Gece
      * Kartalları ekibini çağırıyor", "…, X ve Y ekiplerini çağırıyor" or "Ayşe 3 ekibi çağırıyor".
@@ -247,6 +288,11 @@ public final class SocialNotifications {
 
     private static void post(Context c, String channel, String tag, int id, String title, @Nullable String text, int priority,
                              long timeoutMs, PendingIntent open) {
+        post(c, channel, tag, id, title, text, priority, timeoutMs, open, null);
+    }
+
+    private static void post(Context c, String channel, String tag, int id, String title, @Nullable String text, int priority,
+                             long timeoutMs, PendingIntent open, @Nullable PendingIntent connect) {
         if (!canNotify(c)) return;
         ensureChannels(c);
         NotificationCompat.Builder builder = new NotificationCompat.Builder(c, channel)
@@ -260,6 +306,8 @@ public final class SocialNotifications {
                 .setOnlyAlertOnce(true)
                 .setContentIntent(open);
         if (text != null) builder.setContentText(text);
+        // FIX2: "Bağlan" on an invite or a call that says where (in the game, the question comes over it).
+        if (connect != null) builder.addAction(0, c.getString(R.string.projects_connect), connect);
         if (timeoutMs > 0) {
             builder.setTimeoutAfter(timeoutMs);
             // Before Android 8.0 the timeout does nothing: an alarm takes it away at its end.

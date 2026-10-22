@@ -127,6 +127,7 @@ public class LauncherActivity extends BaseActivity implements gg.projects.mobile
     private mcAccountSpinner mAccountSpinner;
     private FragmentContainerView mFragmentView;
     private gg.projects.mobile.ui.TopBarButton mSettingsButton;
+    private gg.projects.mobile.social.ui.FriendsPill mFriendsPill;
     private ProgressLayout mProgressLayout;
     private ProgressServiceKeeper mProgressServiceKeeper;
     private ModloaderInstallTracker mInstallTracker;
@@ -138,6 +139,8 @@ public class LauncherActivity extends BaseActivity implements gg.projects.mobile
         public void onFragmentResumed(@NonNull FragmentManager fm, @NonNull Fragment f) {
             // Projects fork (M14): the glyph turns from settings to home instead of being swapped.
             mSettingsButton.setHome(!(f instanceof MainMenuFragment));
+            // Projects fork (FIX2): the friends pill sits in the top bar of the home screen only.
+            if (mFriendsPill != null) mFriendsPill.setShownHere(f instanceof MainMenuFragment);
         }
     };
 
@@ -561,6 +564,7 @@ public class LauncherActivity extends BaseActivity implements gg.projects.mobile
     private void bindViews(){
         mFragmentView = findViewById(R.id.container_fragment);
         mSettingsButton = findViewById(R.id.setting_button);
+        mFriendsPill = findViewById(R.id.projects_friends_pill);
         mAccountSpinner = findViewById(R.id.account_spinner);
         mProgressLayout = findViewById(R.id.progress_layout);
     }

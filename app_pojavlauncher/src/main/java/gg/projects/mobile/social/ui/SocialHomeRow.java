@@ -30,6 +30,10 @@ import gg.projects.mobile.ui.Press;
  * The main menu's "Arkadaşlar" row (M19): shown while Friends are on, it says the most useful thing
  * in one line ({@link HomeLine}) and offers "Katıl" when joining is one tap away. A change of what it
  * says cross-fades in place; the row coming or going glides the menu below.
+ *
+ * <p>FIX2: holding it opens its menu: what the line is about first ("Bağlan", "Ekibi aç", "Sohbeti
+ * aç", "Kabul et"...), then the people it shows, each with the shared menu. While nobody is signed in
+ * the row goes: the top bar's friends pill carries "Bağlan" where it is seen first.
  */
 public final class SocialHomeRow implements SocialService.Listener {
     private final Fragment mFragment;
@@ -59,7 +63,8 @@ public final class SocialHomeRow implements SocialService.Listener {
         Press.attach(mAction, Press.Style.BUTTON);
         Press.attach(mRow, Press.Style.CARD);
         mRow.setOnClickListener(v -> openFriends());
-        mRow.setVisibility(SocialService.get(context).enabled() ? View.VISIBLE : View.GONE);
+        SocialService service = SocialService.get(context);
+        mRow.setVisibility(service.enabled() && service.signedIn() ? View.VISIBLE : View.GONE);
     }
 
     public void onResume() {
@@ -112,13 +117,18 @@ public final class SocialHomeRow implements SocialService.Listener {
         if (host != null && mFragment.isResumed() && SocialService.get(host).signedIn()) AccountNotes.showNotices(host);
         Context context = mFragment.requireContext();
         SocialService service = SocialService.get(context);
-        boolean visible = service.enabled();
+        // FIX2: signed out, the top bar's friends pill asks to connect (Discord): this row steps aside.
+        boolean visible = service.enabled() && service.signedIn();
         if (visible != (mRow.getVisibility() == View.VISIBLE)) {
             CardMotion.beginLayoutChange(mSceneRoot);
             mRow.setVisibility(visible ? View.VISIBLE : View.GONE);
         }
-        if (!visible) return;
+        if (!visible) {
+            mShown = "";
+            return;
+        }
         HomeLine line = service.homeLine();
+        bindMenu(line);
         // A call or an invite ends at its time with no message: the row looks again then (nothing else ticks).
         mRow.removeCallbacks(mTick);
         long now = SocialService.nowSeconds();
@@ -279,6 +289,124 @@ public final class SocialHomeRow implements SocialService.Listener {
         mDot.setVisibility(line.pending ? View.VISIBLE : View.GONE);
         mRow.setContentDescription(line.pending ? title + ". " + text + ". " + context.getString(R.string.projects_social_pending) : null);
         bindFaces(context, line.faces);
+    }
+
+    /** FIX2: the row's own actions, then its people (a request's or a join request's row: that person's menu). */
+    private void bindMenu(final HomeLine line) {
+        final FragmentActivity activity = mFragment.getActivity();
+        if (activity == null) return;
+        switch (line.kind) {
+            case LOADING:
+            case UNAVAILABLE:
+            case NO_FRIENDS:
+            case NOBODY_ONLINE:
+                gg.projects.mobile.social.ui.SocialMenuSheet.detach(mRow);
+                return;
+            default:
+                break;
+        }
+        SocialMenuSheet.attach(mRow, mTitle.getText(), v -> {
+            openMenu(activity, SocialService.get(activity).homeLine(), v);
+            return true;
+        });
+    }
+
+    private void openMenu(final FragmentActivity activity, final HomeLine line, View anchor) {
+        final SocialService service = SocialService.get(activity);
+        java.util.List<SocialMenuSheet.Own> own = new java.util.ArrayList<>();
+        java.util.List<String> people = new java.util.ArrayList<>();
+        for (Profile p : line.faces) people.add(p.id);
+        final String crewId = line.crew == null ? null : line.crew.id();
+        Runnable openCrew = () -> {
+            android.os.Bundle args = new android.os.Bundle();
+            if (crewId != null) args.putString(CrewFragment.ARG_CREW, crewId);
+            Tools.swapFragment(activity, CrewFragment.class, CrewFragment.TAG, args);
+        };
+        switch (line.kind) {
+            case CALL: {
+                final SocialModel.Call call = line.call;
+                if (call != null && (call.onProjects() || call.otherHost() != null)) {
+                    own.add(new SocialMenuSheet.Own(R.drawable.projects_join_glyph, activity.getString(R.string.projects_connect),
+                            R.color.projects_bone_100, () -> {
+                                if (call.onProjects()) ConnectFlow.projects(activity);
+                                else ConnectFlow.server(activity, call.otherHost());
+                            }));
+                }
+                own.add(new SocialMenuSheet.Own(R.drawable.projects_ic_crew, activity.getString(R.string.projects_menu_open_crew),
+                        R.color.projects_bone_100, openCrew));
+                break;
+            }
+            case INVITE: {
+                final Invite invite = line.invite;
+                if (invite != null && invite.onProjects()) {
+                    own.add(new SocialMenuSheet.Own(R.drawable.projects_join_glyph, activity.getString(R.string.projects_social_join),
+                            R.color.projects_bone_100, () -> ConnectFlow.projects(activity)));
+                } else if (invite != null && invite.host != null) {
+                    own.add(new SocialMenuSheet.Own(R.drawable.projects_join_glyph, activity.getString(R.string.projects_connect),
+                            R.color.projects_bone_100, () -> ConnectFlow.server(activity, invite.host)));
+                }
+                if (invite != null) {
+                    own.add(new SocialMenuSheet.Own(R.drawable.projects_ic_x, activity.getString(R.string.projects_social_dismiss),
+                            R.color.projects_bone_100, () -> {
+                                service.dismissInvite(invite.id);
+                                gg.projects.mobile.social.SocialNotifications.cancelInvite(activity, invite.fromId);
+                            }));
+                }
+                break;
+            }
+            case PLAN: {
+                SocialModel.Plan plan = line.plan;
+                if (plan != null && plan.underWay(service.state().hubNow(SocialService.nowSeconds()))) {
+                    own.add(new SocialMenuSheet.Own(R.drawable.projects_join_glyph, activity.getString(R.string.projects_social_join),
+                            R.color.projects_bone_100, () -> ConnectFlow.projects(activity)));
+                }
+                own.add(new SocialMenuSheet.Own(R.drawable.projects_ic_crew, activity.getString(R.string.projects_menu_open_crew),
+                        R.color.projects_bone_100, openCrew));
+                break;
+            }
+            case MESSAGE: {
+                final HomeLine.Unread unread = line.unread;
+                if (unread != null) {
+                    own.add(new SocialMenuSheet.Own(R.drawable.projects_ic_chat, activity.getString(R.string.projects_menu_open_chat),
+                            R.color.projects_bone_100, () -> FriendCard.openChat(activity, unread.conv)));
+                }
+                break;
+            }
+            case CREW_ON_PROJECTS:
+                own.add(new SocialMenuSheet.Own(R.drawable.projects_join_glyph, activity.getString(R.string.projects_social_join),
+                        R.color.projects_bone_100, () -> ConnectFlow.projects(activity)));
+                own.add(new SocialMenuSheet.Own(R.drawable.projects_ic_crew, activity.getString(R.string.projects_menu_open_crew),
+                        R.color.projects_bone_100, openCrew));
+                break;
+            case FRIENDS_ON_PROJECTS:
+                own.add(new SocialMenuSheet.Own(R.drawable.projects_join_glyph, activity.getString(R.string.projects_social_join),
+                        R.color.projects_bone_100, () -> ConnectFlow.projects(activity)));
+                break;
+            case REQUEST: {
+                // The request's own menu: its answers first.
+                if (line.faces.isEmpty()) return;
+                SocialMenuSheet.person(activity, line.faces.get(0), null, SocialMenuSheet.Place.HOME,
+                        gg.projects.mobile.social.SocialMenus.Pending.FRIEND_REQUEST, anchor);
+                return;
+            }
+            case JOIN_REQUEST: {
+                SocialModel.JoinRequest request = line.joinRequest;
+                if (request == null || crewId == null) return;
+                SocialMenuSheet.person(activity, request.from, crewId, SocialMenuSheet.Place.REQUEST,
+                        gg.projects.mobile.social.SocialMenus.Pending.JOIN_REQUEST, anchor);
+                return;
+            }
+            case CREW_INVITE: {
+                final SocialModel.TeamInvite invite = line.teamInvite;
+                if (invite == null) return;
+                own.add(new SocialMenuSheet.Own(R.drawable.projects_ic_crew, activity.getString(R.string.projects_menu_open_crew),
+                        R.color.projects_bone_100, openCrew));
+                break;
+            }
+            default:
+                break;
+        }
+        SocialMenuSheet.people(activity, mTitle.getText(), own, people, crewId, anchor);
     }
 
     private void bindFaces(Context context, List<Profile> faces) {

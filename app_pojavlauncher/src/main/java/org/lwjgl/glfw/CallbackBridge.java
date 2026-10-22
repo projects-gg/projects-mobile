@@ -379,6 +379,11 @@ public class CallbackBridge {
     @Keep @CriticalNative private static native void nativeSendScroll(double xoffset, double yoffset);
     @Keep @CriticalNative private static native void nativeSendScreenSize(int width, int height);
     public static native void nativeSetWindowAttrib(int attrib, int value);
+    /**
+     * Projects fork (FIX2): asks the running game to close as its window's close button would (Minecraft
+     * stops normally, a singleplayer world is saved). False when no game window is there to ask.
+     */
+    public static native boolean nativeRequestClose();
     private static native ByteBuffer nativeCreateGamepadButtonBuffer();
     private static native ByteBuffer nativeCreateGamepadAxisBuffer();
     static {

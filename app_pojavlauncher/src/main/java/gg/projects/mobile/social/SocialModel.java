@@ -769,9 +769,10 @@ public final class SocialModel {
     }
 
     /**
-     * TEAM5 ("Planlar", README "Crew plans"): a time to meet on Projects and who is coming. No text,
-     * ever. {@code at} is a whole quarter of an hour; the plan is over at {@code until} ({@code at} + 2
-     * hours) by the hub's clock, when nothing is sent.
+     * TEAM5 ("Planlar", README "Crew plans"): a time to meet on Projects and who is coming. {@code at}
+     * is a whole quarter of an hour; the plan is over at {@code until} ({@code at} + 2 hours) by the
+     * hub's clock, when nothing is sent. FIX2 ({@code planNotes}): an optional short note, its only
+     * text ({@link PlanNote}).
      */
     public static final class Plan {
         public static final String YES = "yes";
@@ -794,8 +795,16 @@ public final class SocialModel {
         public final long createdAt;
         /** Answers by user id: {@code yes}, {@code maybe} or {@code no} (only those the player may see). */
         public final Map<String, String> answers;
+        /** FIX2: the plan's note, cleaned; null when it has none (and from services before {@code planNotes}). */
+        @Nullable
+        public final String note;
 
         public Plan(String id, String crew, String by, long at, long until, long createdAt, Map<String, String> answers) {
+            this(id, crew, by, at, until, createdAt, answers, null);
+        }
+
+        public Plan(String id, String crew, String by, long at, long until, long createdAt, Map<String, String> answers,
+                    @Nullable String note) {
             this.id = id;
             this.crew = crew;
             this.by = by;
@@ -803,6 +812,7 @@ public final class SocialModel {
             this.until = until;
             this.createdAt = createdAt;
             this.answers = Collections.unmodifiableMap(new LinkedHashMap<>(answers));
+            this.note = PlanNote.of(note);
         }
 
         @Nullable
@@ -822,7 +832,9 @@ public final class SocialModel {
             }
             long until = Json.num(o, "until", 0);
             if (until <= at) until = at + AFTER_SECONDS;
-            return new Plan(id, crew, by, at, until, Json.num(o, "createdAt", 0), answers);
+            JsonElement note = o.get("note");
+            String text = note != null && note.isJsonPrimitive() && note.getAsJsonPrimitive().isString() ? note.getAsString() : null;
+            return new Plan(id, crew, by, at, until, Json.num(o, "createdAt", 0), answers, text);
         }
 
         public static boolean isAnswer(@Nullable String value) {
@@ -833,7 +845,19 @@ public final class SocialModel {
             Map<String, String> next = new LinkedHashMap<>(answers);
             if (answer == null) next.remove(userId);
             else if (isAnswer(answer)) next.put(userId, answer);
-            return new Plan(id, crew, by, at, until, createdAt, next);
+            return new Plan(id, crew, by, at, until, createdAt, next, note);
+        }
+
+        /** The same plan with another note (null or "": none). */
+        public Plan withNote(@Nullable String next) {
+            return new Plan(id, crew, by, at, until, createdAt, answers, next);
+        }
+
+        /** The players who answered {@code answer}, in the order the service listed them. */
+        public List<String> answered(String answer) {
+            List<String> out = new ArrayList<>();
+            for (Map.Entry<String, String> e : answers.entrySet()) if (answer.equals(e.getValue())) out.add(e.getKey());
+            return out;
         }
 
         public int count(String answer) {

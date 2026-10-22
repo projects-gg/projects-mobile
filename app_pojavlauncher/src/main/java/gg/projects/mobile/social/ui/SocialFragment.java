@@ -75,6 +75,10 @@ import gg.projects.mobile.ui.ScreenHeader;
  * status, the crew, "Birlikte oyna" invites, crew invites and friend requests, then friends by where
  * they are (in game, online, offline; favourites first) and the requests the player sent. Live while
  * it is on screen; rows that come, go or move glide like the news list.
+ *
+ * <p>FIX2: every person and crew row holds the same menu as anywhere else ({@link SocialMenuSheet}): a
+ * friend's, a request's (its answers first), a crew's; an invite's row its own answers, then who sent
+ * it. An invite to another server offers "Bağlan" ({@link ConnectFlow}) instead of copying the address.
  */
 public class SocialFragment extends Fragment implements SocialService.Listener {
     public static final String TAG = "ProjectsSocialFragment";
@@ -551,11 +555,7 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
         for (Invite invite : service.state().invites(now)) {
             if (!mPendingInvite.equals(invite.id)) continue;
             mPendingInvite = null;
-            if (invite.onProjects()) {
-                SocialUi.joinProjects(requireActivity());
-            } else if (invite.host != null) {
-                SocialUi.otherServer(requireActivity(), invite.host);
-            }
+            connect(invite);
             return;
         }
         // Not there once the socket told the open invites (expired or taken back): nothing to ask.
@@ -596,8 +596,8 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
             case "friend":
             case "invite": {
                 Invite invite = person.item instanceof Invite ? (Invite) person.item : null;
-                if (invite != null && !invite.onProjects()) {
-                    if (invite.host != null) SocialUi.otherServer(activity, invite.host);
+                if (invite != null) {
+                    connect(invite);
                     return;
                 }
                 SocialUi.joinProjects(activity);
@@ -643,6 +643,74 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
                         SocialUi.toastProblem(activity, problem, button);
                     }
                 });
+                break;
+            }
+            default:
+                break;
+        }
+    }
+
+    /** FIX2: "Bağlan" for an invite: Projects, or the server the inviter shares. */
+    private void connect(Invite invite) {
+        FragmentActivity activity = requireActivity();
+        if (invite.onProjects()) {
+            ConnectFlow.projects(activity);
+        } else if (invite.host != null) {
+            ConnectFlow.server(activity, invite.host);
+        }
+    }
+
+    /** FIX2: the menu a person row holds (what it is about decides its first rows). */
+    private void personMenu(final Person person, View row) {
+        final FragmentActivity activity = requireActivity();
+        final SocialService service = SocialService.get(activity);
+        switch (person.kind) {
+            case "friend":
+                if (person.profile != null) SocialMenuSheet.person(activity, person.profile, null, SocialMenuSheet.Place.FRIENDS,
+                        gg.projects.mobile.social.SocialMenus.Pending.NONE, row);
+                break;
+            case "in":
+                if (person.profile != null) SocialMenuSheet.person(activity, person.profile, null, SocialMenuSheet.Place.FRIENDS,
+                        gg.projects.mobile.social.SocialMenus.Pending.FRIEND_REQUEST, row);
+                break;
+            case "out":
+                if (person.profile != null) SocialMenuSheet.person(activity, person.profile, null, SocialMenuSheet.Place.FRIENDS,
+                        gg.projects.mobile.social.SocialMenus.Pending.OUTGOING, row);
+                break;
+            case "invite": {
+                final Invite invite = (Invite) person.item;
+                if (invite == null) break;
+                List<SocialMenuSheet.Own> own = new ArrayList<>();
+                if (invite.onProjects()) {
+                    own.add(new SocialMenuSheet.Own(R.drawable.projects_join_glyph, getString(R.string.projects_social_join),
+                            R.color.projects_bone_100, () -> connect(invite)));
+                } else if (invite.host != null) {
+                    own.add(new SocialMenuSheet.Own(R.drawable.projects_join_glyph, getString(R.string.projects_connect),
+                            R.color.projects_bone_100, () -> connect(invite)));
+                }
+                own.add(new SocialMenuSheet.Own(R.drawable.projects_ic_x, getString(R.string.projects_social_dismiss),
+                        R.color.projects_bone_100, () -> {
+                            service.dismissInvite(invite.id);
+                            SocialNotifications.cancelInvite(activity, invite.fromId);
+                        }));
+                SocialMenuSheet.people(activity, null, own, java.util.Collections.singletonList(invite.fromId), null, row);
+                break;
+            }
+            case "teaminvite": {
+                final TeamInvite invite = (TeamInvite) person.item;
+                if (invite == null) break;
+                List<SocialMenuSheet.Own> own = new ArrayList<>();
+                final View primary = row.findViewById(R.id.projects_person_action);
+                final View secondary = row.findViewById(R.id.projects_person_secondary);
+                own.add(new SocialMenuSheet.Own(R.drawable.projects_ic_check, getString(R.string.projects_social_accept),
+                        R.color.projects_bone_100, primary::performClick));
+                own.add(new SocialMenuSheet.Own(R.drawable.projects_ic_x, getString(R.string.projects_social_decline),
+                        R.color.projects_bone_100, secondary::performClick));
+                if (service.gate().reports) {
+                    own.add(new SocialMenuSheet.Own(R.drawable.projects_ic_flag, getString(R.string.projects_report_crew),
+                            R.color.projects_ash_300, () -> ReportDialog.crew(activity, invite.team, null)));
+                }
+                SocialMenuSheet.people(activity, invite.team.name, own, java.util.Collections.singletonList(invite.from.id), null, row);
                 break;
             }
             default:
@@ -888,7 +956,10 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
             line.setVisibility(View.VISIBLE);
             String text = newest.last.text().replace('\n', ' ');
             String who;
-            if (newest.last.mine(me)) {
+            if (newest.last.deleted()) {
+                // FIX2: the newest line is a deleted message.
+                line.setText(ChatFragment.deletedText(context, newest.last.tombstone, me, service.state()));
+            } else if (newest.last.mine(me)) {
                 line.setText(getString(R.string.projects_chat_you, text));
             } else {
                 Profile from = service.state().profile(newest.last.from(me));
@@ -975,6 +1046,16 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
             if (team != null) args.putString(CrewFragment.ARG_CREW, team.id);
             Tools.swapFragment(requireActivity(), CrewFragment.class, CrewFragment.TAG, args);
         });
+        // FIX2: a crew's row holds the crew's menu.
+        if (team != null) {
+            final String crewId = team.id;
+            SocialMenuSheet.attach(view, team.name, v -> {
+                SocialMenuSheet.crew(requireActivity(), crewId, false, false, v);
+                return true;
+            });
+        } else {
+            SocialMenuSheet.detach(view);
+        }
     }
 
     private void bindPerson(final View view, final Person person, Context context) {
@@ -1046,8 +1127,9 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
                     primary.setVisibility(View.VISIBLE);
                     primary.setText(R.string.projects_social_join);
                 } else if (invite.host != null) {
+                    // FIX2: straight into the inviter's server ("Bağlan"); the address can still be copied there.
                     primary.setVisibility(View.VISIBLE);
-                    primary.setText(R.string.projects_social_copy_address);
+                    primary.setText(R.string.projects_connect);
                 }
                 secondary.setVisibility(View.VISIBLE);
                 secondary.setImageResource(R.drawable.projects_ic_x);
@@ -1088,5 +1170,11 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
         primary.setOnClickListener(v -> onPrimary(person, primary));
         secondary.setOnClickListener(v -> onSecondary(person, secondary));
         view.setOnClickListener(v -> onPerson(person, view));
+        // FIX2: every person row holds the shared menu.
+        CharSequence label = name.getText();
+        SocialMenuSheet.attach(view, label, v -> {
+            personMenu(person, view);
+            return true;
+        });
     }
 }
