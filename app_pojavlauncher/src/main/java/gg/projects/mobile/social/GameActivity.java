@@ -2,6 +2,9 @@ package gg.projects.mobile.social;
 
 import androidx.annotation.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -293,35 +296,22 @@ public final class GameActivity {
     }
 
     /**
-     * The game's log comes in pieces (the logger reads its pipe in chunks): whole lines out, the last
-     * unfinished one kept (at most a few kilobytes, so a line without an end never grows it).
+     * What Pojav's logger hands over (stdio_is.c): one read of the game's output, its last line break taken
+     * off. The game writes whole lines, so a piece ends where a line ends and may hold several. Returns its
+     * lines that may change the status; most pieces are dropped by one {@link #mayMatter} test.
      */
-    public static final class Lines {
-        private static final int MAX_PENDING = 4096;
-        private final StringBuilder mPending = new StringBuilder();
-
-        public interface Sink {
-            void line(String line);
+    public static List<String> linesThatMatter(@Nullable String piece) {
+        if (piece == null || !mayMatter(piece)) return Collections.emptyList();
+        List<String> out = new ArrayList<>(1);
+        int start = 0;
+        while (start < piece.length()) {
+            int end = piece.indexOf('\n', start);
+            if (end < 0) end = piece.length();
+            String line = piece.substring(start, end);
+            if (line.endsWith("\r")) line = line.substring(0, line.length() - 1);
+            if (mayMatter(line)) out.add(line);
+            start = end + 1;
         }
-
-        public void feed(@Nullable String chunk, Sink sink) {
-            if (chunk == null || chunk.isEmpty()) return;
-            int start = 0;
-            int end;
-            while ((end = chunk.indexOf('\n', start)) >= 0) {
-                String piece = chunk.substring(start, end);
-                if (mPending.length() > 0) {
-                    mPending.append(piece);
-                    piece = mPending.toString();
-                    mPending.setLength(0);
-                }
-                sink.line(piece);
-                start = end + 1;
-            }
-            if (start < chunk.length()) {
-                mPending.append(chunk, start, chunk.length());
-                if (mPending.length() > MAX_PENDING) mPending.delete(0, mPending.length() - MAX_PENDING);
-            }
-        }
+        return out;
     }
 }

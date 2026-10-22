@@ -120,9 +120,13 @@ public class MainMenuFragment extends Fragment {
         mSocialRow = new gg.projects.mobile.social.ui.SocialHomeRow(this, view);
         // Projects fork: "Tekrar başlat" after Sodium kept the game from starting. FIX2: the game closed for
         // "Bağlan" while it ran: the start goes into that server.
+        // The request goes to the home card, whose next resumed instance takes it: the launcher turns to portrait
+        // after the game's landscape and is made again meanwhile (seen on the emulator).
         final gg.projects.mobile.launch.ConnectTarget connect = gg.projects.mobile.launch.ProjectsRelaunch.takeConnect(requireActivity());
-        if (connect != null) view.postDelayed(() -> startConnect(connect, 40), 500);
-        else if (gg.projects.mobile.launch.ProjectsRelaunch.take(requireActivity())) view.postDelayed(() -> startAgain(40), 500);
+        if (connect != null) {
+            if (connect.projects) gg.projects.mobile.ui.ProjectsHomeCard.requestJoin();
+            else gg.projects.mobile.ui.ProjectsHomeCard.requestServer(connect);
+        } else if (gg.projects.mobile.launch.ProjectsRelaunch.take(requireActivity())) view.postDelayed(() -> startAgain(40), 500);
 
         mOpenDirectoryButton.setOnClickListener((v)-> {
             if (Tools.isDemoProfile(v.getContext())){ // Say a different message when on demo profile since they might see the hidden demo folder
@@ -153,15 +157,6 @@ public class MainMenuFragment extends Fragment {
         else ExtraCore.setValue(ExtraConstants.LAUNCH_GAME, true);
     }
 
-    /** FIX2: the start the game closed for ("Bağlan" while it ran), once the home screen has settled. */
-    private void startConnect(gg.projects.mobile.launch.ConnectTarget target, int triesLeft) {
-        if (!isAdded() || getView() == null) return;
-        if (com.kdt.mcgui.ProgressLayout.hasProcesses() && triesLeft > 0) {
-            getView().postDelayed(() -> startConnect(target, triesLeft - 1), 300);
-            return;
-        }
-        mProjectsCard.startServer(target);
-    }
 
     private File getCurrentProfileDirectory() {
         String currentProfile = LauncherPreferences.DEFAULT_PREF.getString(LauncherPreferences.PREF_KEY_CURRENT_PROFILE, null);

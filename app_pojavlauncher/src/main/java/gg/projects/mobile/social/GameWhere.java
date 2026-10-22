@@ -25,7 +25,6 @@ public final class GameWhere {
     }
 
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
-    private static final GameActivity.Lines LINES = new GameActivity.Lines();
     private static final Logger.eventLogListener LOG = GameWhere::onLog;
     /** The logger thread's own. */
     @Nullable
@@ -56,19 +55,18 @@ public final class GameWhere {
         sListener = listener;
     }
 
-    private static void onLog(String chunk) {
-        LINES.feed(chunk, line -> {
-            if (!GameActivity.mayMatter(line)) return;
+    private static void onLog(String piece) {
+        for (String line : GameActivity.linesThatMatter(piece)) {
             GameActivity game = sGame;
             // Made at the first line that matters: by then the start's own join is known.
             if (game == null) sGame = game = GameActivity.started(ProjectsLaunchHook.joinTarget());
             final GameActivity.Status next = game.observe(line);
-            if (next == null) return;
+            if (next == null) continue;
             sStatus = next;
             MAIN.post(() -> {
                 Listener listener = sListener;
                 if (listener != null) listener.onWhere(next);
             });
-        });
+        }
     }
 }

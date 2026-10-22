@@ -16,7 +16,7 @@ public final class PlanNote {
     /** At most this many characters (Unicode code points, as the service counts them). */
     public static final int MAX = 80;
     /** The counter shows from here on. */
-    public static final int COUNTER_FROM = 60;
+    public static final int COUNTER_FROM = 64;
 
     public enum Problem { NONE, TOO_LONG, LINK, PHONE }
 

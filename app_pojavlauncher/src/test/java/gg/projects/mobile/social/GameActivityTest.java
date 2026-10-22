@@ -7,7 +7,7 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -96,23 +96,18 @@ public class GameActivityTest {
     }
 
     @Test
-    public void theLogComesInPiecesAndLinesComeOutWhole() {
-        final List<String> lines = new ArrayList<>();
-        GameActivity.Lines splitter = new GameActivity.Lines();
-        splitter.feed("[21:30:01] [Render thread/INFO]: Connec", lines::add);
-        assertTrue(lines.isEmpty());
-        splitter.feed("ting to play.projects.gg, 25565\n[21:30:02] [Render thread/INFO]: Loaded\n[21:3", lines::add);
-        assertEquals(2, lines.size());
-        assertEquals("[21:30:01] [Render thread/INFO]: Connecting to play.projects.gg, 25565", lines.get(0));
-        splitter.feed("0:03] x\n", lines::add);
-        assertEquals("[21:30:03] x", lines.get(2));
-        // A line without an end never grows beyond a few kilobytes.
-        StringBuilder huge = new StringBuilder();
-        for (int i = 0; i < 10_000; i++) huge.append('x');
-        splitter.feed(huge.toString(), lines::add);
-        splitter.feed("\n", lines::add);
-        assertTrue(lines.get(3).length() <= 4096);
-        splitter.feed(null, lines::add);
-        assertEquals(4, lines.size());
+    public void readsThePiecesTheLoggerHandsOver() {
+        // One line, its line break taken off by the native logger (the emulator showed every piece is like this).
+        List<String> one = GameActivity.linesThatMatter("[04:27:48] [Server thread/INFO]: Starting integrated minecraft server version 26.1.2");
+        assertEquals(1, one.size());
+        GameActivity game = GameActivity.started(null);
+        assertEquals(GameActivity.Status.SINGLEPLAYER, game.observe(one.get(0)));
+        // Several lines in one read: only those that matter, whole.
+        List<String> several = GameActivity.linesThatMatter("[21:30:01] [Render thread/INFO]: Loaded 7 advancements\r\n"
+                + "[21:30:02] [Render thread/INFO]: Connecting to play.projects.gg, 25565\n[21:30:03] [Render thread/INFO]: x");
+        assertEquals(Arrays.asList("[21:30:02] [Render thread/INFO]: Connecting to play.projects.gg, 25565"), several);
+        assertTrue(GameActivity.linesThatMatter("[21:30:01] [Render thread/INFO]: Loaded 7 advancements").isEmpty());
+        assertTrue(GameActivity.linesThatMatter("").isEmpty());
+        assertTrue(GameActivity.linesThatMatter(null).isEmpty());
     }
 }

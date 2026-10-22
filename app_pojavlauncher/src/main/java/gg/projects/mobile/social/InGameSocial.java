@@ -114,6 +114,7 @@ public final class InGameSocial implements PresenceConnection.Listener, GameWher
     @MainThread
     private void connect() {
         if (mStopped || mConnection != null) return;
+        Log.i(TAG, "game socket opening");
         mConnection = PresenceConnection.open(mApi, mToken, CAPS, this);
     }
 
@@ -143,7 +144,10 @@ public final class InGameSocial implements PresenceConnection.Listener, GameWher
         message.addProperty("state", "playing");
         if (status.where == GameActivity.Status.Where.SERVER && status.host != null) message.addProperty("host", status.host);
         else if (status.where == GameActivity.Status.Where.SINGLEPLAYER) message.addProperty("singleplayer", true);
-        if (connection.send(message)) mSent = status;
+        if (connection.send(message)) {
+            mSent = status;
+            Log.i(TAG, "game status sent: " + status);
+        }
     }
 
     // ---- the socket ----
@@ -241,6 +245,7 @@ public final class InGameSocial implements PresenceConnection.Listener, GameWher
         if (from == null) return;
         mNames.put(from.id, from.name());
         if (!InGameRules.announceRequest(mDnd, mPrefs.wantsRequests())) return;
+        Log.i(TAG, "in game: friend request shown");
         SocialNotifications.showRequestInGame(mApp, from.id, from.name(), gameIntent());
     }
 
@@ -254,6 +259,7 @@ public final class InGameSocial implements PresenceConnection.Listener, GameWher
         long timeoutMs = invite.expires > hubNow ? (invite.expires - hubNow) * 1000L : 0;
         String tag = "invite:" + invite.fromId;
         PendingIntent connect = target == null ? null : connectIntent(target, tag, SocialNotifications.ID_INVITE);
+        Log.i(TAG, "in game: invite shown" + (connect != null ? " with Connect" : ""));
         SocialNotifications.showInviteInGame(mApp, invite.fromId, name, invite.where, invite.host, timeoutMs,
                 connect != null ? connect : gameIntent(), connect);
     }
@@ -281,6 +287,7 @@ public final class InGameSocial implements PresenceConnection.Listener, GameWher
         ConnectTarget target = call.place() == SocialModel.Call.Place.PROJECTS ? ConnectTarget.PROJECTS
                 : call.place() == SocialModel.Call.Place.OTHER ? ConnectTarget.server(call.serverHost) : null;
         PendingIntent connect = target == null ? null : connectIntent(target, "call:" + call.id, SocialNotifications.ID_CALL);
+        Log.i(TAG, "in game: crew call shown" + (connect != null ? " with Connect" : ""));
         SocialNotifications.showCallInGame(mApp, call.id, title, place, (call.until - hubNow) * 1000L,
                 connect != null ? connect : gameIntent(), connect);
     }

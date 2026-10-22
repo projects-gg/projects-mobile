@@ -132,20 +132,35 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
      * screen itself (its friends row), the start begins at once.
      */
     public static void requestJoin() {
-        ProjectsHomeCard card = sResumedCard;
-        if (card != null && card.mResumed && card.mFragment.isAdded() && card.mFragment.getView() != null) {
-            sJoinRequested = false;
-            card.startRequestedJoin();
-            return;
-        }
         sJoinRequested = true;
         sJoinRequestedAt = android.os.SystemClock.elapsedRealtime();
+        ProjectsHomeCard card = sResumedCard;
+        if (card != null && card.mResumed && card.mFragment.isAdded() && card.mFragment.getView() != null) {
+            card.startRequestedJoin();
+        }
     }
 
+    /**
+     * The request stays until a home screen that is still on screen takes it (FIX2: the launcher opened by a
+     * game that closed for "Bağlan" turns from landscape to portrait and is made again meanwhile), and it waits
+     * for the home screen's own tasks (as "Tekrar başlat" does).
+     */
     private void startRequestedJoin() {
         mJoinButton.postDelayed(() -> {
-            if (mResumed && mFragment.isAdded() && mFragment.getView() != null) join(mJoinButton);
+            if (!sJoinRequested || !mResumed || !mFragment.isAdded() || mFragment.getView() == null) return;
+            if (requestWaits(sJoinRequestedAt)) {
+                startRequestedJoin();
+                return;
+            }
+            sJoinRequested = false;
+            join(mJoinButton);
         }, 350);
+    }
+
+    /** A requested start waits while the home screen's tasks run, at most 15 s after it was asked for. */
+    private static boolean requestWaits(long askedAt) {
+        return (ProjectsJoin.isBusy() || ProgressLayout.hasProcesses())
+                && android.os.SystemClock.elapsedRealtime() - askedAt < 15_000;
     }
 
     /**
@@ -154,19 +169,24 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
      * choice: the selected instance). The Projects profile goes through its join, as Play does.
      */
     public static void requestServer(gg.projects.mobile.launch.ConnectTarget target) {
-        ProjectsHomeCard card = sResumedCard;
-        if (card != null && card.mResumed && card.mFragment.isAdded() && card.mFragment.getView() != null) {
-            sServerRequested = null;
-            card.startRequestedServer(target);
-            return;
-        }
         sServerRequested = target;
         sServerRequestedAt = android.os.SystemClock.elapsedRealtime();
+        ProjectsHomeCard card = sResumedCard;
+        if (card != null && card.mResumed && card.mFragment.isAdded() && card.mFragment.getView() != null) {
+            card.startRequestedServer();
+        }
     }
 
-    private void startRequestedServer(final gg.projects.mobile.launch.ConnectTarget target) {
+    /** As {@link #startRequestedJoin}: taken by a home screen still on screen, after its own tasks. */
+    private void startRequestedServer() {
         mPlayButton.postDelayed(() -> {
-            if (!mResumed || !mFragment.isAdded() || mFragment.getView() == null) return;
+            gg.projects.mobile.launch.ConnectTarget target = sServerRequested;
+            if (target == null || !mResumed || !mFragment.isAdded() || mFragment.getView() == null) return;
+            if (requestWaits(sServerRequestedAt)) {
+                startRequestedServer();
+                return;
+            }
+            sServerRequested = null;
             startServer(target);
         }, 350);
     }
@@ -496,14 +516,13 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         // M19: "Katıl" from the friends screens, once the home screen has settled (only when just asked for).
         sResumedCard = this;
         if (sJoinRequested) {
-            sJoinRequested = false;
             if (android.os.SystemClock.elapsedRealtime() - sJoinRequestedAt < 30_000) startRequestedJoin();
+            else sJoinRequested = false;
         }
-        // FIX2: "Bağlan" to another server from the friends screens.
+        // FIX2: "Bağlan" to another server (the friends screens, or the launcher a closed game opened).
         if (sServerRequested != null) {
-            gg.projects.mobile.launch.ConnectTarget target = sServerRequested;
-            sServerRequested = null;
-            if (android.os.SystemClock.elapsedRealtime() - sServerRequestedAt < 30_000) startRequestedServer(target);
+            if (android.os.SystemClock.elapsedRealtime() - sServerRequestedAt < 30_000) startRequestedServer();
+            else sServerRequested = null;
         }
     }
 
