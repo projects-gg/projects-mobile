@@ -61,7 +61,9 @@ import gg.projects.mobile.social.SocialModel.Profile;
 import gg.projects.mobile.social.SocialProblem;
 import gg.projects.mobile.social.SocialService;
 import gg.projects.mobile.social.SocialState;
+import gg.projects.mobile.ui.ContentTiles;
 import gg.projects.mobile.ui.Haptics;
+import gg.projects.mobile.ui.PixelSprites;
 import gg.projects.mobile.ui.Press;
 import gg.projects.mobile.ui.ScreenHeader;
 
@@ -208,14 +210,8 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
         }
         Press.attach(mJump, Press.Style.BUTTON);
         mJump.setOnClickListener(v -> scrollToBottom(true));
-        Drawable chat = ContextCompat.getDrawable(context, R.drawable.projects_ic_chat);
-        if (chat != null) {
-            chat = chat.mutate();
-            chat.setTint(ContextCompat.getColor(context, R.color.projects_obsidian_600));
-            int size = Math.round(40 * getResources().getDisplayMetrics().density);
-            chat.setBounds(0, 0, size, size);
-            mEmpty.setCompoundDrawablesRelative(null, chat, null, null);
-        }
+        // ICON2: the desktop's speech bubble sprite, a gold step quieter (its crew chat's empty line).
+        ContentTiles.above(mEmpty, PixelSprites.Sprite.CHAT, true, 32);
         mInput.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}

@@ -43,6 +43,8 @@ import gg.projects.mobile.social.SocialModel.Friend;
 import gg.projects.mobile.social.SocialModel.Profile;
 import gg.projects.mobile.social.SocialService;
 import gg.projects.mobile.social.SocialState;
+import gg.projects.mobile.ui.ContentTiles;
+import gg.projects.mobile.ui.PixelSprites;
 import gg.projects.mobile.ui.Press;
 import gg.projects.mobile.ui.ScreenHeader;
 
@@ -84,6 +86,8 @@ public class ChatListFragment extends Fragment implements SocialService.Listener
                 Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         empty.append('\n').append(getString(R.string.projects_chat_empty_body));
         mEmpty.setText(empty);
+        // ICON2: the desktop's speech bubble sprite on the friends' icon tile, as its empty list.
+        ContentTiles.onTileAbove(mEmpty, PixelSprites.Sprite.CHAT, 56, 14);
     }
 
     @Nullable
