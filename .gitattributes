@@ -1,2 +1,7 @@
 # Projects fork: signed test fixtures must keep their exact bytes (no EOL conversion)
 app_pojavlauncher/src/test/resources/content/** -text
+# MOB1: copies of the launcher's chat data (emoji names, sticker manifest, link rules and their cases) keep their exact bytes
+app_pojavlauncher/src/main/assets/emoji/** -text
+app_pojavlauncher/src/main/assets/stickers/** -text
+app_pojavlauncher/src/main/assets/social/** -text
+app_pojavlauncher/src/test/resources/social/text-vectors.json -text
