@@ -51,6 +51,7 @@ public final class FriendCard {
         Presence presence = service.state().presence(friendId);
         avatar.setDot(SocialUi.dot(presence));
         ((TextView) view.findViewById(R.id.projects_card_name)).setText(profile.name());
+        BadgeCard.bindTitleChip(activity, view.findViewById(R.id.projects_card_tag), friendId);
         TextView username = view.findViewById(R.id.projects_card_username);
         boolean showUser = !profile.username.isEmpty() && !profile.username.equals(profile.name());
         username.setText("@" + profile.username);

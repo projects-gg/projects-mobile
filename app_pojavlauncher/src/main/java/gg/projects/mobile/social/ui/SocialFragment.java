@@ -373,7 +373,10 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
         Set<String> favourites = service.prefs().favourites();
         List<Row> rows = new ArrayList<>();
         Me me = state.me();
-        if (me != null) rows.add(new Row(T_ME, "me", me.profile.name() + "|" + me.status + "|" + me.profile.faceKey(), me));
+        if (me != null) {
+            rows.add(new Row(T_ME, "me", me.profile.name() + "|" + me.status + "|" + me.profile.faceKey() + "|"
+                    + (gate.badges && me.profile.badge != null ? me.profile.badge.key() : ""), me));
+        }
 
         SocialService.Connection connection = service.connection();
         if (connection == SocialService.Connection.REPLACED) {
@@ -390,7 +393,7 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
             List<ChatBook.Summary> summaries = service.chat().visibleSummaries();
             ChatBook.Summary newest = summaries.isEmpty() ? null : summaries.get(0);
             rows.add(new Row(T_MESSAGES, "messages", unread + "|" + (newest == null || newest.last == null ? ""
-                    : newest.conv + newest.last.key() + newest.last.text()), newest));
+                    : newest.conv + newest.last.key() + newest.last.text() + newest.last.sticker()), newest));
         }
 
         if (gate.teams) {
@@ -490,10 +493,12 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
     private void addFriends(List<Row> rows, String id, int title, List<Friend> friends, SocialState state, Set<String> favourites) {
         if (friends.isEmpty()) return;
         rows.add(header("h-" + id, getString(title) + " · " + friends.size()));
+        boolean tags = SocialService.get(requireContext()).gate().badges;
         for (Friend f : friends) {
             Presence p = state.presence(f.profile.id);
             rows.add(new Row(T_PERSON, "f-" + f.profile.id, "f|" + f.profile.name() + f.profile.faceKey() + "|" + p.state + p.dnd + p.where
-                    + p.host + "|" + f.lastSeen + "|" + favourites.contains(f.profile.id), new Person("friend", f.profile, f)));
+                    + p.host + "|" + f.lastSeen + "|" + favourites.contains(f.profile.id) + "|"
+                    + (tags && f.profile.badge != null ? f.profile.badge.key() : ""), new Person("friend", f.profile, f)));
         }
     }
 
@@ -630,7 +635,7 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
                     @Override
                     public void ok(com.google.gson.JsonObject value) {
                         Haptics.confirm(button);
-                        SocialUi.toast(activity, activity.getString(R.string.projects_crew_joined, invite.team.name));
+                        BadgeActions.joined(activity, activity.getString(R.string.projects_crew_joined, invite.team.name), invite.team.id);
                         // TEAM4: the crew screen opens on the crew just joined, not the primary one.
                         Bundle args = new Bundle();
                         args.putString(CrewFragment.ARG_CREW, invite.team.id);
@@ -905,6 +910,11 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
         avatar.setSurfaceColor(ContextCompat.getColor(view.getContext(), R.color.projects_obsidian_900));
         avatar.setDot(SocialUi.statusDot(me.status));
         ((TextView) view.findViewById(R.id.projects_me_name)).setText(me.profile.name());
+        // TEAM6: the player's own tag, a button to its card (where it comes off).
+        CrewTagChip ownTag = view.findViewById(R.id.projects_me_tag);
+        SocialModel.Badge own = gg.projects.mobile.social.BadgeRules.shown(SocialService.get(view.getContext()).gate(), me.profile.badge);
+        ownTag.setBadgeOf(me.profile.id, own, CrewTagChip.Size.MD);
+        if (own != null) ownTag.makeButton(own, v -> BadgeCard.show(requireActivity(), me.profile.id));
         ((TextView) view.findViewById(R.id.projects_me_status)).setText(SocialUi.statusLabel(me.status));
         view.setContentDescription(me.profile.name() + ", " + getString(SocialUi.statusLabel(me.status)) + ". "
                 + getString(R.string.projects_social_status_change));
@@ -954,18 +964,8 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
             line.setVisibility(View.GONE);
         } else {
             line.setVisibility(View.VISIBLE);
-            String text = newest.last.text().replace('\n', ' ');
-            String who;
-            if (newest.last.deleted()) {
-                // FIX2: the newest line is a deleted message.
-                line.setText(ChatFragment.deletedText(context, newest.last.tombstone, me, service.state()));
-            } else if (newest.last.mine(me)) {
-                line.setText(getString(R.string.projects_chat_you, text));
-            } else {
-                Profile from = service.state().profile(newest.last.from(me));
-                who = from == null ? "" : from.name() + ": ";
-                line.setText(who + text);
-            }
+            // FIX2: a deleted newest message says so; CHAT2: a sticker says which.
+            line.setText(ChatPreview.line(context, service.state(), newest.last, me, true));
             line.setTextColor(ContextCompat.getColor(context, unread > 0 ? R.color.projects_bone_100 : R.color.projects_ash_400));
         }
         view.setOnClickListener(v -> Tools.swapFragment(requireActivity(), ChatListFragment.class, ChatListFragment.TAG, null));
@@ -1087,11 +1087,20 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
         if (!teamInvite) avatar.setProfile(person.profile);
         avatar.setDot(AvatarView.Dot.NONE);
         avatar.setDimmed(false);
+        // TEAM6: a friend's tag before their name (the other rows show none).
+        CrewTagChip tagChip = view.findViewById(R.id.projects_person_tag);
+        if (!"friend".equals(person.kind)) {
+            tagChip.setBadgeOf(null, null, CrewTagChip.Size.MD);
+            name.setContentDescription(null);
+        }
         switch (person.kind) {
             case "friend": {
                 Friend friend = (Friend) person.item;
                 Presence presence = state.presence(friend.profile.id);
                 name.setText(friend.profile.name());
+                SocialModel.Badge worn = gg.projects.mobile.social.BadgeRules.shown(service.gate(), friend.profile.badge);
+                tagChip.setBadgeOf(friend.profile.id, worn, CrewTagChip.Size.MD);
+                CrewTagChip.labelName(name, worn);
                 line.setText(SocialUi.presenceText(context, presence));
                 if (presence.onProjects()) line.setTextColor(ContextCompat.getColor(context, R.color.projects_jade_400));
                 avatar.setDot(SocialUi.dot(presence));

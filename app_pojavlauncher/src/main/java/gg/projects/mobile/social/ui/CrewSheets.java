@@ -308,6 +308,7 @@ final class CrewSheets {
         SocialModel.Presence presence = service.state().presence(userId);
         avatar.setDot(SocialUi.dot(presence));
         ((TextView) view.findViewById(R.id.projects_card_name)).setText(member.profile.name());
+        BadgeCard.bindTitleChip(activity, view.findViewById(R.id.projects_card_tag), userId);
         TextView role = view.findViewById(R.id.projects_card_username);
         role.setText(member.founder ? R.string.projects_crew_leader : member.moderator && service.gate().roles
                 ? R.string.projects_crew_moderator : R.string.projects_crew_title);

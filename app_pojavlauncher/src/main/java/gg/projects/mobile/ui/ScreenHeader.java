@@ -51,6 +51,23 @@ public final class ScreenHeader extends LinearLayout {
         return mTitle.getText().toString();
     }
 
+    /**
+     * MOB1 (TEAM6): a view just before the title (a direct conversation's crew tag), once; null takes it away.
+     */
+    public void setTitleLead(@Nullable View lead) {
+        LinearLayout row = findViewById(R.id.projects_header_row);
+        Object before = row.getTag(R.id.projects_header_title);
+        if (before instanceof View) row.removeView((View) before);
+        row.setTag(R.id.projects_header_title, lead);
+        if (lead == null) return;
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        lp.setMarginStart(Math.round(4 * getResources().getDisplayMetrics().density));
+        lp.setMarginEnd(Math.round(6 * getResources().getDisplayMetrics().density));
+        lp.gravity = android.view.Gravity.CENTER_VERTICAL;
+        row.addView(lead, row.indexOfChild(mTitle), lp);
+    }
+
     /** A line under the title; null hides it. */
     public void setCaption(@Nullable CharSequence caption) {
         mCaption.setText(caption);

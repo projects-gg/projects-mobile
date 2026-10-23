@@ -50,6 +50,7 @@ import java.util.List;
 import java.util.Map;
 
 import gg.projects.mobile.mods.Motion;
+import gg.projects.mobile.social.BadgeRules;
 import gg.projects.mobile.social.ChatBook;
 import gg.projects.mobile.social.ChatConv;
 import gg.projects.mobile.social.Json;
@@ -123,6 +124,8 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
     private static final int T_PLAN = 11;
     private static final int T_LINK = 12;
     private static final int T_SWITCH = 13;
+    /** TEAM6: the leader's "Görünürlük" and "Etiketten istek". */
+    private static final int T_TAGS = 14;
     /** M21: a crew invite link ({@code XXXX-XXXX-XXXX}) to look up on "+" (a {@code projects://crew/} link). */
     public static final String ARG_LINK = "link";
 
@@ -164,6 +167,8 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
     private final java.util.Set<String> mWithdrawBusy = new java.util.HashSet<>();
     /** M21: "Yeni üyeleri onayla" waits for the service. */
     private boolean mApprovalBusy;
+    /** TEAM6: a tag setting's answer is on its way. */
+    private boolean mTagsBusy;
     /** M21: crews "+" shows the player's waiting request to (its card, their list): one that comes is shown. */
     private final java.util.Set<String> mAwaiting = new java.util.HashSet<>();
     /** FIX2: plans and calls whose answers are open ("Kimler geliyor"), and groups that show everyone. */
@@ -844,9 +849,9 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         String me = state.myId();
         List<Row> rows = new ArrayList<>();
         boolean main = gate.multi && state.crews().size() > 1 && state.crewIds().get(0).equals(team.id);
-        rows.add(new Row(T_CARD, "card", team.name + team.tag + team.motto + team.emblem + team.color + team.frame + team.members.size()
-                + "|" + state.limits().teamMembers + "|" + main, crew));
         long hub = state.hubNow(now);
+        rows.add(new Row(T_CARD, "card", team.name + team.tag + team.motto + team.emblem + team.color + team.frame + team.members.size()
+                + "|" + state.limits().teamMembers + "|" + main + "|" + wearKey(service, team, hub), crew));
         if (team.textLocked(hub)) {
             String text = getString(R.string.projects_mod_crew_reset) + " " + getString(R.string.projects_mod_crew_locked_until,
                     SocialUi.day(requireContext(), team.textLockedUntil));
@@ -874,7 +879,7 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
                 String text = getString(R.string.projects_requests_title) + " · " + requests.size();
                 rows.add(new Row(T_HEADER, "h-requests", text, text));
                 for (JoinRequest r : requests) {
-                    rows.add(new Row(T_REQUEST, "r-" + team.id + "-" + r.from.id, r.from.name() + r.from.faceKey() + "|"
+                    rows.add(new Row(T_REQUEST, "r-" + team.id + "-" + r.from.id, r.from.name() + r.from.faceKey() + "|" + viaName(team, r) + "|"
                             + PlanViews.ago(requireContext(), r.sentAt, now) + "|" + mRequestBusy.contains(team.id + "|" + r.from.id),
                             new RequestRow(team.id, r)));
                 }
@@ -914,7 +919,7 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
                 // The player's own row shows their status (their presence is not sent to themselves).
                 String mine = m.profile.id.equals(state.myId()) && state.me() != null ? state.me().status : "";
                 rows.add(new Row(T_MEMBER, "m-" + m.profile.id, m.profile.name() + m.profile.faceKey() + m.founder + m.moderator
-                        + p.state + p.dnd + p.where + p.host + state.isFriend(m.profile.id) + mine, m));
+                        + p.state + p.dnd + p.where + p.host + state.isFriend(m.profile.id) + mine + "|" + badgeKey(gate, m.profile.badge), m));
             }
         }
         if (!team.code.isEmpty()) rows.add(new Row(T_CODE, "code", team.code, team.code));
@@ -932,11 +937,16 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         if (gate.requests && leader != null && leader.founder) {
             rows.add(new Row(T_SWITCH, "approve", "approve|" + team.approval() + "|" + mApprovalBusy, team));
         }
+        // TEAM6: the leader's "Görünürlük" and "Etiketten istek" (a crew without a tag has nothing to show).
+        if (gate.badges && leader != null && leader.founder && !team.tag.isEmpty()) {
+            rows.add(new Row(T_TAGS, "tags", "tags|" + team.hidden + "|" + team.badgeRequests + "|" + gate.badgeRequests + "|" + mTagsBusy, team));
+        }
         if (me != null && team.allows(me, team.permissions.invite)) {
             rows.add(new Row(T_ACTION, "invite", "invite", new Action("invite", R.drawable.projects_ic_user_plus,
                     R.string.projects_crew_invite_title, R.color.projects_bone_100)));
         }
-        if (gate.reports) {
+        // MOB1 (the lead's rule, as the desktop's 03f1689): a leader does not report their own crew.
+        if (gate.reports && (leader == null || !leader.founder)) {
             rows.add(new Row(T_ACTION, "report", "report", new Action("report", R.drawable.projects_ic_flag,
                     R.string.projects_report_crew, R.color.projects_ash_300)));
         }
@@ -951,6 +961,28 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
                     R.string.projects_crew_leave, R.color.projects_flare_400)));
         }
         return rows;
+    }
+
+    // ---- crew tags (TEAM6) ----
+
+    /** What the card's tag control shows: a change binds the card again. */
+    private static String wearKey(SocialService service, Team team, long hub) {
+        if (!service.gate().badges || team.tag.isEmpty()) return "";
+        String me = service.state().myId();
+        SocialModel.Badge worn = me == null ? null : service.state().badgeOf(me);
+        return BadgeRules.wearState(team, worn == null ? null : worn.crew, hub) + "|" + team.textLockedUntil;
+    }
+
+    private static String badgeKey(SocialGate gate, @Nullable SocialModel.Badge badge) {
+        return gate.badges && badge != null ? badge.key() : "";
+    }
+
+    /** The member whose tag a join request came through ("Ayşe aracılığıyla"), or null (none, or gone from the crew). */
+    @Nullable
+    private static String viaName(Team team, JoinRequest request) {
+        if (request.via == null) return null;
+        Member via = team.member(request.via);
+        return via == null ? null : via.profile.name();
     }
 
     /** FIX2: what a card's answers show (open, and which groups show everyone): a change binds it again. */
@@ -1060,7 +1092,8 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
                     }
                     Press.attach(view.findViewById(R.id.projects_plan_more), Press.Style.ICON);
                     break;
-                case T_SWITCH: {
+                case T_SWITCH:
+                case T_TAGS: {
                     FrameLayout frame = new FrameLayout(context);
                     int side = Math.round(12 * context.getResources().getDisplayMetrics().density);
                     frame.setPadding(side, Math.round(6 * context.getResources().getDisplayMetrics().density), side, 0);
@@ -1145,6 +1178,9 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
                 case T_SWITCH:
                     bindApproval((FrameLayout) view, (Team) row.data);
                     break;
+                case T_TAGS:
+                    bindTags((FrameLayout) view, (Team) row.data);
+                    break;
                 case T_ACTION:
                     bindAction((FrameLayout) view, (Action) row.data);
                     break;
@@ -1199,6 +1235,84 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
             meta = meta + " · " + getString(R.string.projects_crews_main);
         }
         ((TextView) view.findViewById(R.id.projects_crew_card_meta)).setText(meta);
+        bindWear(view.findViewById(R.id.projects_crew_card_wear), team);
+    }
+
+    /**
+     * TEAM6: under the card, "Etiketi tak", or "Etiket takılı" (a tap takes it off; the line says so with
+     * "Geri al"). While the leader hides the crew it reads "Gizli ekip", while moderators lock its texts
+     * "… tarihine kadar kilitli": quiet, and a tap says why.
+     */
+    private void bindWear(TextView control, final Team team) {
+        Context context = control.getContext();
+        SocialService service = SocialService.get(context);
+        if (!service.gate().badges || team.tag.isEmpty()) {
+            control.setVisibility(View.GONE);
+            return;
+        }
+        String me = service.state().myId();
+        SocialModel.Badge worn = me == null ? null : service.state().badgeOf(me);
+        long hub = service.state().hubNow(SocialService.nowSeconds());
+        final BadgeRules.Wear wear = BadgeRules.wearState(team, worn == null ? null : worn.crew, hub);
+        int icon = R.drawable.projects_ic_team6_tag;
+        int color;
+        String text;
+        final String why;
+        switch (wear) {
+            case WORN:
+                color = R.color.projects_gold_300;
+                text = getString(R.string.projects_badge_worn);
+                why = null;
+                break;
+            case HIDDEN:
+                icon = R.drawable.projects_ic_team6_eye_slash;
+                color = R.color.projects_ash_400;
+                text = getString(R.string.projects_badge_hidden_chip);
+                why = getString(R.string.projects_badge_hidden_why);
+                break;
+            case LOCKED: {
+                String day = team.textLockedUntil == null ? "" : SocialUi.day(context, team.textLockedUntil);
+                color = R.color.projects_ash_400;
+                text = getString(R.string.projects_badge_locked_until, day);
+                why = getString(R.string.projects_badge_locked_why, day);
+                break;
+            }
+            case WEAR:
+            default:
+                color = R.color.projects_bone_100;
+                text = getString(R.string.projects_badge_wear);
+                why = null;
+                break;
+        }
+        int tint = ContextCompat.getColor(context, color);
+        control.setVisibility(View.VISIBLE);
+        control.setText(text);
+        control.setTextColor(tint);
+        Drawable glyph = ContextCompat.getDrawable(context, icon);
+        if (glyph != null) {
+            glyph = glyph.mutate();
+            glyph.setTint(tint);
+            int size = Math.round(16 * context.getResources().getDisplayMetrics().density);
+            glyph.setBounds(0, 0, size, size);
+        }
+        control.setCompoundDrawablesRelative(glyph, null, null, null);
+        control.setActivated(wear == BadgeRules.Wear.WORN);
+        control.setSelected(why != null);
+        if (wear == BadgeRules.Wear.WORN) {
+            ViewCompat.replaceAccessibilityAction(control, AccessibilityNodeInfoCompat.AccessibilityActionCompat.ACTION_CLICK,
+                    getString(R.string.projects_badge_take_off), null);
+        } else {
+            ViewCompat.removeAccessibilityAction(control, AccessibilityNodeInfoCompat.AccessibilityActionCompat.ACTION_CLICK.getId());
+        }
+        control.setOnClickListener(v -> {
+            if (!isAdded()) return;
+            if (why != null) {
+                Haptics.reject(v);
+                SocialUi.toast(requireContext(), why);
+                return;
+            }
+            BadgeActions.wear(requireActivity(), wear == BadgeRules.Wear.WORN ? null : team.id, v);
+        });
     }
 
     /** "Ekip sohbeti": what was said last and the unread count; a tap opens the crew's chat. */
@@ -1451,10 +1565,15 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         avatar.setDot(AvatarView.Dot.NONE);
         avatar.setDimmed(false);
         ((TextView) view.findViewById(R.id.projects_person_name)).setText(request.from.name());
+        ((CrewTagChip) view.findViewById(R.id.projects_person_tag)).setBadgeOf(null, null, CrewTagChip.Size.MD);
         view.findViewById(R.id.projects_person_badge).setVisibility(View.GONE);
         view.findViewById(R.id.projects_person_star).setVisibility(View.GONE);
         TextView line = view.findViewById(R.id.projects_person_line);
         String asked = getString(R.string.projects_requests_asked, PlanViews.ago(context, request.sentAt, SocialService.nowSeconds()));
+        // TEAM6: a request from a tag's card says whose tag it came through ("Ayşe aracılığıyla · 12 dk önce istedi").
+        Crew asking = SocialService.get(context).state().crew(row.crew);
+        String via = asking == null ? null : viaName(asking.team, request);
+        if (via != null) asked = getString(R.string.projects_badge_via, via) + " · " + asked;
         line.setText(asked);
         line.setTextColor(ContextCompat.getColor(context, R.color.projects_ash_400));
         final Button accept = view.findViewById(R.id.projects_person_action);
@@ -1935,6 +2054,106 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         frame.addView(toggle, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
     }
 
+    /**
+     * TEAM6 (the leader's): "Görünürlük" (hiding takes every worn tag off: asked first while someone wears
+     * it) and, while the tag shows, "Etiketten istek". The line under each says what it means now.
+     */
+    private void bindTags(FrameLayout frame, final Team team) {
+        frame.removeAllViews();
+        Context context = frame.getContext();
+        LinearLayout column = new LinearLayout(context);
+        column.setOrientation(LinearLayout.VERTICAL);
+        column.addView(tagSwitch(context, R.string.projects_badge_visibility,
+                team.hidden ? R.string.projects_badge_visibility_hidden_line : R.string.projects_badge_visibility_visible_line,
+                !team.hidden, (button, on) -> setCrewVisible(team, on, button)));
+        if (SocialService.get(context).gate().badgeRequests && !team.hidden) {
+            column.addView(tagSwitch(context, R.string.projects_badge_requests_label,
+                    team.badgeRequests ? R.string.projects_badge_requests_on_line : R.string.projects_badge_requests_off_line,
+                    team.badgeRequests, (button, on) -> saveTags(team, false, on, button)));
+        }
+        frame.addView(column, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+    }
+
+    private View tagSwitch(Context context, int label, int line, boolean on,
+                           android.widget.CompoundButton.OnCheckedChangeListener flip) {
+        float dp = context.getResources().getDisplayMetrics().density;
+        LinearLayout cell = new LinearLayout(context);
+        cell.setOrientation(LinearLayout.VERTICAL);
+        SwitchCompat toggle = new SwitchCompat(context);
+        toggle.setText(label);
+        toggle.setTextSize(15);
+        toggle.setTextColor(ContextCompat.getColor(context, R.color.projects_bone_100));
+        try {
+            toggle.setTypeface(androidx.core.content.res.ResourcesCompat.getFont(context, R.font.figtree_semibold));
+        } catch (RuntimeException ignored) {
+            // The theme's font.
+        }
+        toggle.setMinHeight(Math.round(48 * dp));
+        toggle.setPaddingRelative(Math.round(10 * dp), 0, Math.round(10 * dp), 0);
+        toggle.setChecked(on);
+        toggle.setEnabled(!mTagsBusy);
+        toggle.setOnCheckedChangeListener((button, now) -> {
+            Haptics.toggle(button, now);
+            flip.onCheckedChanged(button, now);
+        });
+        TextView sub = new TextView(context);
+        sub.setText(line);
+        sub.setTextSize(13);
+        sub.setTextColor(ContextCompat.getColor(context, R.color.projects_ash_400));
+        sub.setPaddingRelative(Math.round(10 * dp), 0, Math.round(72 * dp), Math.round(8 * dp));
+        cell.addView(toggle, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        cell.addView(sub, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        return cell;
+    }
+
+    /** Hiding while members wear the tag asks first ("Etiketi takan 3 üyenin etiketi çıkarılacak."). */
+    private void setCrewVisible(final Team team, boolean visible, final View button) {
+        int wearers = 0;
+        for (Member m : team.members) if (m.profile.badge != null && team.id.equals(m.profile.badge.crew)) wearers++;
+        if (visible || wearers == 0) {
+            saveTags(team, true, visible, button);
+            return;
+        }
+        // The switch shows the crew's setting until "Gizle".
+        int row = indexOfRow("tags");
+        if (row >= 0) mAdapter.notifyItemChanged(row);
+        SocialUi.confirm(requireActivity(), null, getResources().getQuantityString(R.plurals.projects_badge_visibility_ask, wearers, wearers),
+                getString(R.string.projects_badge_visibility_hide), () -> saveTags(team, true, false, null));
+    }
+
+    private void saveTags(Team team, boolean visibility, boolean on, @Nullable View button) {
+        if (mTagsBusy || !isAdded()) return;
+        mTagsBusy = true;
+        if (button != null) button.setEnabled(false);
+        final FragmentActivity activity = requireActivity();
+        SocialService.Result<JsonObject> done = new SocialService.Result<JsonObject>() {
+            @Override
+            public void ok(JsonObject value) {
+                mTagsBusy = false;
+                if (isAdded()) render();
+            }
+
+            @Override
+            public void failed(SocialProblem problem) {
+                mTagsBusy = false;
+                if (problem.kind == SocialProblem.Kind.RATE_LIMITED) {
+                    SocialUi.toast(activity, activity.getString(R.string.projects_badge_settings_today));
+                } else {
+                    SocialUi.toastProblem(activity, problem, null);
+                }
+                if (isAdded()) {
+                    // The switches show the crew's settings again.
+                    int row = indexOfRow("tags");
+                    if (row >= 0) mAdapter.notifyItemChanged(row);
+                    render();
+                }
+            }
+        };
+        SocialService service = SocialService.get(activity);
+        if (visibility) service.setCrewHidden(team.id, !on, done);
+        else service.setCrewBadgeRequests(team.id, on, done);
+    }
+
     private int indexOfRow(String id) {
         for (int i = 0; i < mAdapter.mRows.size(); i++) if (mAdapter.mRows.get(i).id.equals(id)) return i;
         return -1;
@@ -1952,6 +2171,10 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         avatar.setSurfaceColor(ContextCompat.getColor(context, R.color.projects_obsidian_950));
         TextView name = view.findViewById(R.id.projects_person_name);
         name.setText(me ? member.profile.name() + " (" + getString(R.string.projects_crew_you) + ")" : member.profile.name());
+        // TEAM6: the tag the member wears (any of their crews') before their name.
+        SocialModel.Badge worn = BadgeRules.shown(service.gate(), member.profile.badge);
+        ((CrewTagChip) view.findViewById(R.id.projects_person_tag)).setBadgeOf(member.profile.id, worn, CrewTagChip.Size.MD);
+        CrewTagChip.labelName(name, worn);
         TextView badge = view.findViewById(R.id.projects_person_badge);
         badge.setBackgroundResource(R.drawable.projects_social_badge);
         badge.setTextColor(ContextCompat.getColor(context, R.color.projects_gold_300));
@@ -2211,7 +2434,7 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
                 public void ok(JsonObject value) {
                     mInviteBusy.remove(teamId);
                     Haptics.confirm(accept);
-                    SocialUi.toast(activity, activity.getString(R.string.projects_crew_joined, invite.team.name));
+                    BadgeActions.joined(activity, activity.getString(R.string.projects_crew_joined, invite.team.name), teamId);
                     Team joined = Team.read(Json.obj(value, "team"));
                     if (joined != null) mSelected = joined.id;
                     render();
@@ -2413,7 +2636,7 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
                     }
                     return;
                 }
-                SocialUi.toast(activity, activity.getString(R.string.projects_crew_joined, team.name));
+                BadgeActions.joined(activity, activity.getString(R.string.projects_crew_joined, team.name), team.id);
                 Team joined = Team.read(Json.obj(value, "team"));
                 if (joined != null && isAdded()) {
                     mJoinCode.setText("");

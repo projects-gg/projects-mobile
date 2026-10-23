@@ -92,6 +92,25 @@
                 android:textColor="@color/projects_ash_400"
                 android:textSize="13sp"
                 tools:text="7/30 üye · Kuruluş 20 Eylül 2026" />
+
+            <!-- TEAM6: "Etiketi tak" / "Etiket takılı" (quiet with its reason while hidden or locked); a 48 dp
+                 target around a 36 dp chip. -->
+            <TextView
+                android:id="@+id/projects_crew_card_wear"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="-6dp"
+                android:background="@drawable/projects_crew_wear_bg"
+                android:drawablePadding="6dp"
+                android:fontFamily="@font/figtree_semibold"
+                android:gravity="center_vertical"
+                android:paddingStart="12dp"
+                android:paddingEnd="14dp"
+                android:textSize="13sp"
+                android:visibility="gone"
+                tools:text="Etiketi tak"
+                tools:visibility="visible" />
         </LinearLayout>
     </LinearLayout>
 </FrameLayout>

@@ -188,10 +188,11 @@ public class CrewCreateFragment extends Fragment {
             public void ok(JsonObject value) {
                 mBusy = false;
                 Haptics.confirm(button);
-                SocialUi.toast(activity, activity.getString(R.string.projects_crew_created, name));
                 // M20: the crew page shows the new crew (with several, it is not the main one).
                 gg.projects.mobile.social.SocialModel.Team made = gg.projects.mobile.social.SocialModel.Team.read(
                         gg.projects.mobile.social.Json.obj(value, "team"));
+                // TEAM6: "Etiketi tak" on the line while no tag is worn.
+                BadgeActions.joined(activity, activity.getString(R.string.projects_crew_created, name), made == null ? null : made.id);
                 CrewFragment.selectNext(made == null ? null : made.id);
                 SocialUi.leave(CrewCreateFragment.this);
             }

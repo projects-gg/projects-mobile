@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- TEAM6: the crew card's tag control, a 36 dp chip inside its 48 dp target: an outline ("Etiketi tak"),
+     faint gold when worn ("Etiket takılı"), no outline while the crew is hidden or its texts are locked. -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:insetTop="6dp"
+    android:insetBottom="6dp">
+    <ripple android:color="@color/projects_ripple_strong">
+        <item>
+            <selector>
+                <item android:state_activated="true">
+                    <shape android:shape="rectangle">
+                        <corners android:radius="8dp" />
+                        <solid android:color="#1FF6D58E" />
+                        <stroke android:width="1dp" android:color="#5CF6D58E" />
+                    </shape>
+                </item>
+                <item android:state_selected="true">
+                    <shape android:shape="rectangle">
+                        <corners android:radius="8dp" />
+                        <solid android:color="#0AF3EBDD" />
+                    </shape>
+                </item>
+                <item>
+                    <shape android:shape="rectangle">
+                        <corners android:radius="8dp" />
+                        <stroke android:width="1dp" android:color="#33F3EBDD" />
+                    </shape>
+                </item>
+            </selector>
+        </item>
+        <item android:id="@android:id/mask">
+            <shape android:shape="rectangle">
+                <corners android:radius="8dp" />
+                <solid android:color="#FFFFFFFF" />
+            </shape>
+        </item>
+    </ripple>
+</inset>

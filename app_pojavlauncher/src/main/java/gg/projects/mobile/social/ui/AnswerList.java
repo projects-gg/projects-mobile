@@ -309,14 +309,26 @@ final class AnswerList {
         avatar.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         if (!me) avatar.setDot(SocialUi.dot(SocialService.get(context).state().presence(id)));
         row.addView(avatar, new LinearLayout.LayoutParams(Math.round(28 * dp), Math.round(28 * dp)));
+        // TEAM6: the tag before the name.
+        gg.projects.mobile.social.SocialModel.Badge worn = profile == null ? null
+                : gg.projects.mobile.social.BadgeRules.shown(SocialService.get(context).gate(), profile.badge);
+        if (worn != null) {
+            CrewTagChip chip = CrewTagChip.make(context, CrewTagChip.Size.SM);
+            chip.setBadge(worn, CrewTagChip.Size.SM, false);
+            LinearLayout.LayoutParams chipLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT);
+            chipLp.setMarginStart(Math.round(10 * dp));
+            row.addView(chip, chipLp);
+        }
         TextView text = new TextView(context);
         text.setText(name);
+        CrewTagChip.labelName(text, worn);
         text.setTextSize(14);
         text.setMaxLines(1);
         text.setEllipsize(android.text.TextUtils.TruncateAt.END);
         text.setTextColor(ContextCompat.getColor(context, R.color.projects_bone_100));
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
-        lp.setMarginStart(Math.round(10 * dp));
+        lp.setMarginStart(Math.round((worn != null ? 6 : 10) * dp));
         row.addView(text, lp);
         if (!me) {
             // The same menu as their row anywhere: a tap or a hold (a row here does nothing else).

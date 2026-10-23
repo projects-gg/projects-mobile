@@ -45,7 +45,18 @@ public final class ReportDialog {
     private ReportDialog() {}
 
     public static void player(FragmentActivity activity, Profile player) {
-        show(activity, Reports.Target.PLAYER, player, null, player.name(), null, null, null, null);
+        show(activity, Reports.Target.PLAYER, player, null, player.name(), null, null, null, null, null, null);
+    }
+
+    /** CHAT2: the player who gave a reaction, from the reactions' list ("Tepkisi: 🤮"; "Uygunsuz tepki" first). */
+    public static void reaction(FragmentActivity activity, Profile player, String conv, long messageId, String emoji) {
+        show(activity, Reports.Target.REACTION, player, null, player.name(), null, null, null, null, null,
+                new Object[]{conv, messageId, emoji});
+    }
+
+    /** TEAM6: a crew from its tag's card ({@code via}: whose tag it is). */
+    public static void crewFromTag(FragmentActivity activity, TeamSummary crew, String via) {
+        show(activity, Reports.Target.CREW, null, crew, crew.name, null, null, null, null, via, null);
     }
 
     /**
@@ -53,16 +64,17 @@ public final class ReportDialog {
      * context; the note's own reason ("Uygunsuz içerik") comes first.
      */
     public static void plan(FragmentActivity activity, gg.projects.mobile.social.SocialModel.Plan plan, Profile maker) {
-        show(activity, Reports.Target.PLAN, maker, null, maker.name(), null, null, null, plan);
+        show(activity, Reports.Target.PLAN, maker, null, maker.name(), null, null, null, plan, null, null);
     }
 
     /** {@code code}: only for a crew looked up by its code or (M21) its invite link. */
     public static void crew(FragmentActivity activity, TeamSummary crew, @Nullable String code) {
-        show(activity, Reports.Target.CREW, null, crew, crew.name, code, null, null, null);
+        show(activity, Reports.Target.CREW, null, crew, crew.name, code, null, null, null, null, null);
     }
 
     public static void message(FragmentActivity activity, ChatMessage message, List<ChatMessage> before, @Nullable Profile sender) {
-        show(activity, Reports.Target.MESSAGE, sender, null, sender == null ? "" : sender.name(), null, message, before, null);
+        show(activity, Reports.Target.MESSAGE, sender, null, sender == null ? "" : sender.name(), null, message, before, null, null,
+                null);
     }
 
     private static int reasonLabel(Reports.Target target, String reason) {
@@ -71,6 +83,7 @@ public final class ReportDialog {
             case Reports.PROFILE: return R.string.projects_report_reason_profile;
             case Reports.HARASSMENT: return R.string.projects_report_reason_harassment;
             case Reports.INAPPROPRIATE: return target == Reports.Target.PLAN ? R.string.projects_report_reason_note
+                    : target == Reports.Target.REACTION ? R.string.projects_report_reason_reaction
                     : R.string.projects_report_reason_inappropriate;
             case Reports.SPAM: return R.string.projects_report_reason_spam;
             case Reports.SCAM: return R.string.projects_report_reason_scam;
@@ -99,7 +112,8 @@ public final class ReportDialog {
     private static void show(final FragmentActivity activity, final Reports.Target target, @Nullable final Profile player,
                              @Nullable final TeamSummary crew, String name, @Nullable final String code,
                              @Nullable final ChatMessage message, @Nullable final List<ChatMessage> before,
-                             @Nullable final gg.projects.mobile.social.SocialModel.Plan plan) {
+                             @Nullable final gg.projects.mobile.social.SocialModel.Plan plan, @Nullable final String via,
+                             @Nullable final Object[] reaction) {
         float dp = activity.getResources().getDisplayMetrics().density;
         LinearLayout content = new LinearLayout(activity);
         content.setOrientation(LinearLayout.VERTICAL);
@@ -131,12 +145,14 @@ public final class ReportDialog {
             // The theme's font.
         }
         names.addView(title);
-        if (message != null || plan != null) {
+        if (message != null || plan != null || reaction != null) {
             TextView quote = new TextView(activity);
-            // FIX2: a plan shows its time and its note, what the report carries.
+            // FIX2: a plan shows its time and its note, what the report carries; CHAT2: a reaction its emoji, a sticker its name.
             String subject = plan == null ? "" : activity.getString(R.string.projects_report_plan,
                     PlanViews.when(activity, plan.at, SocialService.nowSeconds()));
-            quote.setText(message != null ? message.text : plan.note == null ? subject : subject + " · " + plan.note);
+            String said = message == null ? "" : message.isSticker() ? activity.getString(R.string.projects_stickers_unknown) : message.text;
+            quote.setText(reaction != null ? activity.getString(R.string.projects_report_reaction, (String) reaction[2])
+                    : message != null ? said : plan.note == null ? subject : subject + " · " + plan.note);
             quote.setTextSize(13);
             quote.setMaxLines(3);
             quote.setEllipsize(android.text.TextUtils.TruncateAt.END);
@@ -265,7 +281,12 @@ public final class ReportDialog {
                 JsonObject body;
                 switch (target) {
                     case CREW:
-                        body = Reports.crew(crew.id, code, reason, note.getText().toString());
+                        body = via != null ? Reports.crewFromTag(crew.id, via, reason, note.getText().toString())
+                                : Reports.crew(crew.id, code, reason, note.getText().toString());
+                        break;
+                    case REACTION:
+                        body = Reports.reaction(player.id, (String) reaction[0], (Long) reaction[1], (String) reaction[2], reason,
+                                note.getText().toString(), blocking);
                         break;
                     case MESSAGE:
                         body = Reports.message(message, before, reason, note.getText().toString(), blocking);

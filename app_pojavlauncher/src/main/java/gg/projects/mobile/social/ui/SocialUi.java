@@ -180,6 +180,14 @@ public final class SocialUi {
             case PLANS_FULL: id = R.string.projects_plans_full; break;
             case PLAN_EXISTS: id = R.string.projects_social_error_plan_exists; break;
             case PLAN_GONE: id = R.string.projects_social_error_plan_gone; break;
+            case TEAM_HIDDEN: id = R.string.projects_badge_hidden_why; break;
+            case BADGES_OFF: id = R.string.projects_badge_error_off; break;
+            case BADGE_REQUEST_CLOSED: id = R.string.projects_badge_refused_closed; break;
+            case BADGE_REQUESTS_TODAY: id = R.string.projects_badge_refused_today; break;
+            case CHAT_REACTIONS_FULL:
+                id = "kinds".equals(problem.reason) ? R.string.projects_reactions_kinds : R.string.projects_reactions_full;
+                break;
+            case CHAT_FEATURE_OFF: id = R.string.projects_chat2_feature_off; break;
             case FAILED:
             default: id = R.string.projects_social_error_failed; break;
         }

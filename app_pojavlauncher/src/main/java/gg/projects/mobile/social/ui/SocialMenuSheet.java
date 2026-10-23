@@ -102,11 +102,20 @@ public final class SocialMenuSheet {
 
     /** A player's menu by id (a friend, a crewmate, someone who asked); nothing for the player themself. */
     public static void person(FragmentActivity activity, String userId, @Nullable String crewId, Place place, @Nullable View anchor) {
+        person(activity, userId, crewId, place, anchor, null);
+    }
+
+    /**
+     * The same where "Rapor et" reports something of theirs ({@code report}; CHAT2: a reaction from the
+     * reactions' list) in place of the player alone.
+     */
+    public static void person(FragmentActivity activity, String userId, @Nullable String crewId, Place place, @Nullable View anchor,
+                              @Nullable Runnable report) {
         SocialState state = SocialService.get(activity).state();
         Profile profile = state.profile(userId);
         if (profile == null) profile = requester(state, userId);
         if (profile == null) return;
-        person(activity, profile, crewId, place, SocialMenus.Pending.NONE, anchor);
+        person(activity, profile, crewId, place, SocialMenus.Pending.NONE, anchor, report);
     }
 
     @Nullable
@@ -120,6 +129,11 @@ public final class SocialMenuSheet {
     /** The same for a row about a request ({@code pending}): its answers come first. */
     public static void person(final FragmentActivity activity, final Profile profile, @Nullable final String crewId, Place place,
                               final SocialMenus.Pending pending, @Nullable View anchor) {
+        person(activity, profile, crewId, place, pending, anchor, null);
+    }
+
+    private static void person(final FragmentActivity activity, final Profile profile, @Nullable final String crewId, Place place,
+                               final SocialMenus.Pending pending, @Nullable View anchor, @Nullable final Runnable report) {
         final SocialService service = SocialService.get(activity);
         final SocialState state = service.state();
         final String me = state.myId();
@@ -163,7 +177,8 @@ public final class SocialMenuSheet {
             View view = CrewViews.actionRow(activity, personIcon(action), personLabel(activity, action, in), personTint(action),
                     v -> {
                         dialog.dismiss();
-                        runPerson(activity, action, profile, crewId, pending, v);
+                        if (action == SocialMenus.PersonAction.REPORT && report != null) report.run();
+                        else runPerson(activity, action, profile, crewId, pending, v);
                     });
             if (row.disabled) dim(view);
             list.addView(view);

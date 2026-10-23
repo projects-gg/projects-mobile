@@ -71,7 +71,7 @@ final class InviteCard {
                         @Override
                         public void ok(JsonObject value) {
                             Haptics.confirm(v);
-                            SocialUi.toast(activity, activity.getString(R.string.projects_crew_joined, invite.team.name));
+                            BadgeActions.joined(activity, activity.getString(R.string.projects_crew_joined, invite.team.name), invite.team.id);
                             gg.projects.mobile.social.SocialModel.Team joined = gg.projects.mobile.social.SocialModel.Team.read(
                                     gg.projects.mobile.social.Json.obj(value, "team"));
                             CrewFragment.selectNext(joined == null ? null : joined.id);
