@@ -1393,6 +1393,9 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
             if (viewType == T_MESSAGE) {
                 view = inflater.inflate(R.layout.item_projects_chat_message, parent, false);
                 Press.attach(view.findViewById(R.id.projects_msg_box), Press.Style.CARD);
+                // A sticker and a reply's quote answer a press too (its motion, the jump to the message).
+                Press.attach(view.findViewById(R.id.projects_msg_sticker_box), Press.Style.CARD);
+                Press.attach(view.findViewById(R.id.projects_msg_quote), Press.Style.CARD);
                 Press.attach(view.findViewById(R.id.projects_msg_failed), Press.Style.BUTTON);
                 ChatLinkViews.attachTouch(view.findViewById(R.id.projects_msg_bubble));
             } else if (viewType == T_JOIN) {
@@ -1556,7 +1559,9 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
         if (faces && row.first) {
             name.setText(sender == null ? getString(R.string.projects_crew_someone) : sender.name());
             // TEAM6: the sender's tag before their name.
-            tag.setBadge(sender == null ? null : BadgeRules.shown(service.gate(), sender.badge), CrewTagChip.Size.SM, !fresh);
+            // It fades only when this sender's tag changes, never on a first or a reused row.
+            tag.setBadgeOf(sender == null ? null : sender.id, sender == null ? null : BadgeRules.shown(service.gate(), sender.badge),
+                    CrewTagChip.Size.SM);
         }
 
         bindQuote(view, e, me);
@@ -1590,8 +1595,9 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
             // sent) lets its arrival finish.
             boolean sameRow = row.id.equals(sticker.getTag(R.id.projects_chat_sticker_row));
             sticker.setTag(R.id.projects_chat_sticker_row, row.id);
+            // Another message's motion on a reused view stops first, so this one's arrival can play.
+            if (!sameRow) EmojiStore.stopSticker(sticker);
             if (fresh && res != 0) EmojiStore.playSticker(sticker, stickerRef, true);
-            else if (!sameRow) EmojiStore.stopSticker(sticker);
         } else if (e.deleted()) {
             // FIX2: a quiet bubble in the message's place: who deleted it, no text, no actions.
             bubble.setText(deletedText(context, e.tombstone, me, service.state()));
@@ -1739,6 +1745,8 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
         }
         // A new message rises into place as it fades in (the item animator fades the row).
         column.animate().cancel();
+        // A quote jump's glow cut short here leaves no dimmed row behind.
+        column.setAlpha(1f);
         column.setTranslationX(0f);
         if (fresh && motion) {
             column.setTranslationY(10 * dp);

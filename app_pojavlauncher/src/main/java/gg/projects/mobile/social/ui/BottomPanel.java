@@ -33,8 +33,10 @@ import gg.projects.mobile.mods.Motion;
 public final class BottomPanel {
     private final Dialog mDialog;
     private final LinearLayout mSheet;
-    private final FrameLayout mContent;
+    private final ContentFrame mContent;
     private boolean mClosing;
+    /** The close callback ran (once, whichever way the sheet went). */
+    private boolean mClosed;
     @Nullable
     private Runnable mOnClosed;
 
@@ -64,7 +66,7 @@ public final class BottomPanel {
         grip.addView(handle, barLp);
         grip.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         mSheet.addView(grip, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Math.round(20 * dp)));
-        mContent = new FrameLayout(context);
+        mContent = new ContentFrame(context);
         mSheet.addView(mContent, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         int maxHeight = Math.round(context.getResources().getDisplayMetrics().heightPixels * maxHeightFraction);
         FrameLayout.LayoutParams sheetLp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
@@ -88,14 +90,39 @@ public final class BottomPanel {
             }
             return false;
         });
+        // However the sheet goes (its own slide, the dialog dismissed, the activity's windows removed on a
+        // recreation), its owner hears it once and lets go of the service.
+        mDialog.setOnDismissListener(d -> closed());
+        mSheet.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+            @Override
+            public void onViewAttachedToWindow(View v) {
+            }
+
+            @Override
+            public void onViewDetachedFromWindow(View v) {
+                closed();
+            }
+        });
     }
 
-    /** A sheet of at most {@code maxHeightFraction} of the screen holding {@code content}. */
+    /**
+     * A sheet of at most {@code maxHeightFraction} of the screen holding {@code content}; a height the content
+     * set for itself (the picker's half screen) is kept, so the sheet does not change size with what it shows.
+     */
     public static BottomPanel of(Context context, View content, float maxHeightFraction) {
         BottomPanel panel = new BottomPanel(context, maxHeightFraction);
+        ViewGroup.LayoutParams own = content.getLayoutParams();
+        boolean fixed = own != null && own.height > 0;
+        panel.mContent.mPreferred = fixed ? own.height : 0;
         panel.mContent.addView(content, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT));
+                fixed ? ViewGroup.LayoutParams.MATCH_PARENT : ViewGroup.LayoutParams.WRAP_CONTENT));
         return panel;
+    }
+
+    private void closed() {
+        if (mClosed) return;
+        mClosed = true;
+        if (mOnClosed != null) mOnClosed.run();
     }
 
     public BottomPanel onClosed(@Nullable Runnable onClosed) {
@@ -132,7 +159,7 @@ public final class BottomPanel {
             } catch (RuntimeException ignored) {
                 // The activity went first.
             }
-            if (mOnClosed != null) mOnClosed.run();
+            closed();
         };
         if (!Motion.enabled(mSheet.getContext()) || mSheet.getHeight() == 0) {
             gone.run();
@@ -154,6 +181,8 @@ public final class BottomPanel {
 
             @Override
             public boolean onTouch(View v, MotionEvent event) {
+                // Leaving: a touch would cancel the slide and with it the close (the sheet would stay, deaf).
+                if (mClosing) return true;
                 switch (event.getActionMasked()) {
                     case MotionEvent.ACTION_DOWN:
                         startY = event.getRawY();
@@ -193,6 +222,29 @@ public final class BottomPanel {
                 }
             }
         });
+    }
+
+    /**
+     * Holds the content: as tall as it is, or with {@code mPreferred} exactly that tall while the window has
+     * room (fewer results never shrink the sheet; an open keyboard still does).
+     */
+    private static final class ContentFrame extends FrameLayout {
+        int mPreferred;
+
+        ContentFrame(Context context) {
+            super(context);
+        }
+
+        @Override
+        protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+            if (mPreferred <= 0) {
+                super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+                return;
+            }
+            int size = MeasureSpec.getSize(heightMeasureSpec);
+            int height = MeasureSpec.getMode(heightMeasureSpec) == MeasureSpec.UNSPECIFIED ? mPreferred : Math.min(mPreferred, size);
+            super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY));
+        }
     }
 
     /** Holds the sheet at most {@code max} tall (a long list scrolls inside). */

@@ -1275,8 +1275,11 @@ public final class SocialState {
             Crew before = crew(id);
             if (before == null) return;
             removeCrew(before.id());
-            // TEAM6: its tag goes with the membership (quietly: the crew's own notice says enough).
-            if (mMe != null && mMe.profile.badge != null && mMe.profile.badge.crew.equals(before.id())) mMe = mMe.withBadge(null);
+            // TEAM6: its tag goes with the membership (quietly: the crew's own notice says enough), from the
+            // player's entries in their other crews' lists too (profile() reads those before mMe).
+            if (mMe != null && mMe.profile.badge != null && mMe.profile.badge.crew.equals(before.id())) {
+                applyBadge(mMe.profile.id, null, new ArrayList<Notice>());
+            }
             notices.add(Notice.teamGone(Json.str(message, "reason"), before.team.name, byMe, byStaff));
             return;
         }
@@ -1301,7 +1304,8 @@ public final class SocialState {
         Member leader = team.founder();
         boolean leaderIsMe = leader != null && me != null && leader.profile.id.equals(me);
         if (team.hidden && !wasHidden && mMe != null && mMe.profile.badge != null && mMe.profile.badge.crew.equals(team.id)) {
-            mMe = mMe.withBadge(null);
+            // Everywhere the player shows (their other crews' lists too); the notice is this one.
+            applyBadge(mMe.profile.id, null, new ArrayList<Notice>());
             if (!byMe && !leaderIsMe) notices.add(Notice.tagOff(team.id, team.name));
         }
         // The player's own entry carries their tag as it is now (another device of theirs may have changed it).

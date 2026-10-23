@@ -97,25 +97,31 @@ final class ReactionSheet {
         content.addView(note);
         final BottomPanel panel = BottomPanel.of(context, content, 0.7f);
         final String[] tab = {selected};
+        final String[] drawn = {null};
         final SocialService.Listener listener = new SocialService.Listener() {
             @Override
             public void onSocialChanged() {
-                if (!render(activity, panel, conv, id, tab, tabs, people, action, note)) panel.dismiss();
+                if (!render(activity, panel, conv, id, tab, drawn, false, tabs, people, action, note)) panel.dismiss();
             }
         };
         panel.onClosed(() -> service.removeListener(listener));
         service.addListener(listener);
-        if (!render(activity, panel, conv, id, tab, tabs, people, action, note)) {
+        if (!render(activity, panel, conv, id, tab, drawn, false, tabs, people, action, note)) {
             service.removeListener(listener);
             return;
         }
         panel.show();
     }
 
-    /** Draws the sheet for the message as it is now; false when it has no reactions any more (the sheet goes). */
+    /**
+     * Draws the sheet for the message as it is now; false when it has no reactions any more (the sheet goes).
+     * Only a change it shows redraws it ({@code drawn}: what it shows now): the service changes often (typing,
+     * presence), and a rebuilt list would flicker and take a button from under the finger. {@code fade}: a tab
+     * switch, whose list fades in.
+     */
     private static boolean render(final FragmentActivity activity, final BottomPanel panel, final String conv, final long id,
-                                  final String[] tab, final LinearLayout tabs, final LinearLayout people, final Button action,
-                                  final TextView note) {
+                                  final String[] tab, final String[] drawn, final boolean fade, final LinearLayout tabs,
+                                  final LinearLayout people, final Button action, final TextView note) {
         final SocialService service = SocialService.get(activity);
         final ChatBook book = service.chat().book();
         final String me = service.state().myId();
@@ -130,6 +136,9 @@ final class ReactionSheet {
             for (ChatMessage.Reaction r : reactions) still |= ChatBook.sameEmoji(r.e, tab[0]);
             if (!still) tab[0] = null;
         }
+        String key = renderKey(service, book, shown, tab[0]);
+        if (key.equals(drawn[0])) return true;
+        drawn[0] = key;
         Context context = activity;
         float dp = context.getResources().getDisplayMetrics().density;
         tabs.removeAllViews();
@@ -138,13 +147,13 @@ final class ReactionSheet {
         tabs.addView(tabButton(context, context.getString(R.string.projects_reactions_all, total), tab[0] == null, v -> {
             tab[0] = null;
             Haptics.press(v);
-            render(activity, panel, conv, id, tab, tabs, people, action, note);
+            render(activity, panel, conv, id, tab, drawn, true, tabs, people, action, note);
         }));
         for (final ChatMessage.Reaction r : reactions) {
             tabs.addView(tabButton(context, r.e + "  " + r.count(), tab[0] != null && ChatBook.sameEmoji(r.e, tab[0]), v -> {
                 tab[0] = r.e;
                 Haptics.press(v);
-                render(activity, panel, conv, id, tab, tabs, people, action, note);
+                render(activity, panel, conv, id, tab, drawn, true, tabs, people, action, note);
             }));
         }
         people.removeAllViews();
@@ -190,11 +199,33 @@ final class ReactionSheet {
                 });
             }
         }
-        if (Motion.enabled(context) && people.getChildCount() > 0) {
+        if (fade && Motion.enabled(context) && people.getChildCount() > 0) {
             people.setAlpha(0.6f);
             people.animate().alpha(1f).setDuration(140).setInterpolator(Motion.EASE_OUT).start();
         }
         return true;
+    }
+
+    /** What the sheet shows, as one string: the tab, who gave what (as they look), the button's state. */
+    private static String renderKey(SocialService service, ChatBook book, ChatBook.Entry entry, @Nullable String tab) {
+        StringBuilder key = new StringBuilder(String.valueOf(tab));
+        SocialState state = service.state();
+        boolean badges = service.gate().badges;
+        for (ChatMessage.Reaction r : entry.reactions) {
+            key.append('|').append(r.e);
+            for (String who : r.by) {
+                key.append(',').append(who);
+                Profile p = state.profile(who);
+                if (p == null) continue;
+                key.append('/').append(p.name()).append('/').append(p.avatar);
+                if (badges && p.badge != null) key.append('/').append(p.badge.tag).append(p.badge.color);
+            }
+        }
+        boolean reactable = service.chat().offers(gg.projects.mobile.social.SocialModel.ChatState.REACTIONS)
+                && book.reactable(entry, book.hubNowMs(System.currentTimeMillis()));
+        key.append("|r").append(reactable);
+        if (tab != null && reactable) key.append("|v").append(book.reactVerdict(entry.reactions, tab));
+        return key.toString();
     }
 
     private static TextView tabButton(Context context, String text, boolean on, View.OnClickListener click) {

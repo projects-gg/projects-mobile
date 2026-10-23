@@ -2545,6 +2545,14 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
     @Nullable
     private String mLookupTeam;
 
+    /** The player leads {@code crewId} (one of their crews). */
+    private static boolean leads(SocialService service, String crewId) {
+        Crew crew = service.state().crew(crewId);
+        Member founder = crew == null ? null : crew.team.founder();
+        String me = service.state().myId();
+        return founder != null && me != null && founder.profile.id.equals(me);
+    }
+
     private void showLookup(@Nullable final String code, @Nullable final String link, JsonObject answer) {
         final TeamSummary team = TeamSummary.read(Json.obj(answer, "team"));
         if (team == null) {
@@ -2559,12 +2567,18 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         // TEAM5: the player's join request to it that waits (its time), else -1.
         JsonObject request = Json.obj(answer, "request");
         bindLookup(team, code, link, relation, request == null ? -1 : Json.num(request, "sentAt", 0));
-        // A crew found by its code or its invite link can be reported from here (the code or the link goes with it).
-        if (SocialService.get(requireContext()).gate().reports) {
+        // A crew found by its code or its invite link can be reported from here (the code or the link goes with it),
+        // not by its own leader (the lead's rule, as the desktop's 03f1689). The card shows one crew at a time: a
+        // hold left from another lookup goes.
+        SocialService service = SocialService.get(requireContext());
+        if (service.gate().reports && !leads(service, team.id)) {
             mJoinResult.setOnLongClickListener(v -> {
                 ReportDialog.crew(requireActivity(), team, link != null ? link : SocialCodes.CREW_PREFIX + "-" + code);
                 return true;
             });
+        } else {
+            mJoinResult.setOnLongClickListener(null);
+            mJoinResult.setLongClickable(false);
         }
         mLookupTeam = team.id;
         mJoinResult.setVisibility(View.VISIBLE);

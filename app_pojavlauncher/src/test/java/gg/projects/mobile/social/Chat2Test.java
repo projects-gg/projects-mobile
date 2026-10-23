@@ -141,6 +141,61 @@ public class Chat2Test {
         assertEquals(Arrays.asList(ME, C), held.reactions.get(0).by);
     }
 
+    @Test
+    public void anEditWithoutReactionsHasNoneOnASocketThatTookThem() {
+        // The README: chat_edited and ack.msg carry the reactions to a socket with `reactions`, absent when there are none.
+        ChatBook book = new ChatBook(ME);
+        book.setReactionsTaken(true);
+        JsonObject first = text(CREW_CHAT, T + 5, B, "evet");
+        first.add("reactions", reactions(THUMBS, new String[]{ME, C}));
+        book.apply(frame("chat", first));
+        assertEquals(1, book.message(CREW_CHAT, T + 5).reactions.size());
+        JsonObject edit = text(CREW_CHAT, T + 5, B, "evet evet");
+        edit.addProperty("editedAt", T + 9);
+        edit.addProperty("mac", "EdItEdItEdItEdItEdItEd");
+        book.apply(frame("chat_edited", edit));
+        assertTrue(book.message(CREW_CHAT, T + 5).reactions.isEmpty());
+        // Listed, they are the message's.
+        JsonObject again = text(CREW_CHAT, T + 5, B, "evet evet evet");
+        again.addProperty("editedAt", T + 12);
+        again.addProperty("mac", "AgAiNaGaInAgAiNaGaInAg");
+        again.add("reactions", reactions(HEART, new String[]{C}));
+        book.apply(frame("chat_edited", again));
+        assertEquals(HEART, book.message(CREW_CHAT, T + 5).reactions.get(0).e);
+        // The player's own edit: its ack without them says the same.
+        JsonObject mine = text(DM, T + 20, ME, "selam");
+        mine.add("reactions", reactions(THUMBS, new String[]{B}));
+        book.apply(frame("chat", mine));
+        JsonObject ack = text(DM, T + 20, ME, "selam!");
+        ack.addProperty("editedAt", T + 25);
+        ack.addProperty("mac", "AcKaCkAcKaCkAcKaCkAcKa");
+        book.edited(DM, T + 20, ack);
+        assertTrue(book.message(DM, T + 20).reactions.isEmpty());
+    }
+
+    @Test
+    public void aReportedReplyTakesTheAnsweredMessageWhenItIsNotAmongTheEarlierOnes() {
+        ChatMessage answered = ChatMessage.read(text(DM, T, B, "Geliyor musun?"), null);
+        ChatMessage between = ChatMessage.read(text(DM, T + 10, ME, "evet"), null);
+        ChatMessage reply = ChatMessage.read(replyTo(text(DM, T + 50, B, "kötü söz"), T, B), null);
+        JsonObject target = Reports.message(reply, Collections.singletonList(between), answered, Reports.HARASSMENT, null, false)
+                .getAsJsonObject("target");
+        assertEquals(T, Json.num(target.getAsJsonObject("quoted"), "id", 0));
+        assertEquals(MAC, Json.str(target.getAsJsonObject("quoted"), "mac"));
+        // Among the earlier ones it goes once, there.
+        target = Reports.message(reply, Arrays.asList(answered, between), answered, Reports.HARASSMENT, null, false)
+                .getAsJsonObject("target");
+        assertFalse(target.has("quoted"));
+        assertEquals(2, target.getAsJsonArray("before").size());
+        // A message that answers nothing, or another message than the link names: none.
+        ChatMessage plain = ChatMessage.read(text(DM, T + 60, B, "selam"), null);
+        assertFalse(Reports.message(plain, Collections.<ChatMessage>emptyList(), answered, Reports.HARASSMENT, null, false)
+                .getAsJsonObject("target").has("quoted"));
+        ChatMessage other = ChatMessage.read(text(DM, T + 1, B, "başka"), null);
+        assertFalse(Reports.message(reply, Collections.<ChatMessage>emptyList(), other, Reports.HARASSMENT, null, false)
+                .getAsJsonObject("target").has("quoted"));
+    }
+
     // ---- replies ----
 
     @Test

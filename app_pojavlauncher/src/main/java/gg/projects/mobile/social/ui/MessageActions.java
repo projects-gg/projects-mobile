@@ -70,11 +70,11 @@ final class MessageActions {
             window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
             window.setNavigationBarColor(Color.TRANSPARENT);
         }
-        final Runnable close = () -> leave(dialog, root);
-        root.setOnClickListener(v -> close.run());
+        final Closer close = new Closer(dialog, root);
+        root.setOnClickListener(v -> close.close());
         dialog.setOnKeyListener((d, keyCode, event) -> {
             if (keyCode == android.view.KeyEvent.KEYCODE_BACK && event.getAction() == android.view.KeyEvent.ACTION_UP) {
-                close.run();
+                close.close();
                 return true;
             }
             return false;
@@ -88,6 +88,8 @@ final class MessageActions {
             strip = reactionStrip(activity, conv, entry, close);
         }
         LinearLayout menu = menu(activity, screen, conv, entry, close, writable, hubNow);
+        // Nothing to offer (a sticker still on its way): no overlay at all, rather than an empty card.
+        if (strip == null && menu.getChildCount() == 0) return;
 
         // The lit message: a picture of it where it is on screen.
         final ImageView lit = new ImageView(context);
@@ -180,6 +182,29 @@ final class MessageActions {
         }
     }
 
+    /**
+     * Closes the overlay once. Every action asks it first: a second tap during the 130 ms fade does nothing,
+     * so no confirm opens twice and no reaction or retry goes twice (CR1-F).
+     */
+    private static final class Closer {
+        private final Dialog dialog;
+        private final View root;
+        private boolean closed;
+
+        Closer(Dialog dialog, View root) {
+            this.dialog = dialog;
+            this.root = root;
+        }
+
+        /** True the first time (the caller may act), false once it is already closing. */
+        boolean close() {
+            if (closed) return false;
+            closed = true;
+            leave(dialog, root);
+            return true;
+        }
+    }
+
     private static void leave(final Dialog dialog, View root) {
         if (!dialog.isShowing()) return;
         if (!Motion.enabled(root.getContext())) {
@@ -212,7 +237,7 @@ final class MessageActions {
 
     /** Six quick reactions and "+" (the whole picker in its reaction mode). */
     private static LinearLayout reactionStrip(final FragmentActivity activity, final String conv, final ChatBook.Entry entry,
-                                              final Runnable close) {
+                                              final Closer close) {
         Context context = activity;
         float dp = context.getResources().getDisplayMetrics().density;
         LinearLayout strip = new LinearLayout(context);
@@ -247,8 +272,8 @@ final class MessageActions {
             }
             cell.setContentDescription(context.getString(R.string.projects_reactions_give, emoji));
             cell.setOnClickListener(v -> {
+                if (!close.close()) return;
                 react(activity, conv, entry, emoji, v);
-                close.run();
             });
             Press.attach(cell, Press.Style.ICON);
             strip.addView(cell, new LinearLayout.LayoutParams(Math.round(44 * dp), Math.round(44 * dp)));
@@ -264,7 +289,7 @@ final class MessageActions {
         more.setBackground(circle);
         more.setContentDescription(context.getString(R.string.projects_reactions_more));
         more.setOnClickListener(v -> {
-            close.run();
+            if (!close.close()) return;
             EmojiSheet.pickReaction(activity, emoji -> react(activity, conv, entry, emoji, v));
         });
         Press.attach(more, Press.Style.ICON);
@@ -315,7 +340,7 @@ final class MessageActions {
 
     /** The message's menu (the desktop's order). */
     private static LinearLayout menu(final FragmentActivity activity, final ChatFragment screen, final String conv,
-                                     final ChatBook.Entry entry, final Runnable close, boolean writable, long hubNow) {
+                                     final ChatBook.Entry entry, final Closer close, boolean writable, long hubNow) {
         final SocialService service = SocialService.get(activity);
         final SocialChat chat = service.chat();
         final ChatBook book = chat.book();
@@ -345,9 +370,11 @@ final class MessageActions {
             menu.addView(row(activity, R.drawable.projects_ic_chat2_reply, R.string.projects_reply_action, R.color.projects_bone_100, close,
                     () -> screen.startReply(entry.message)));
         }
-        if (entry.sticker() == null && entry.message != null) {
+        // A message still on its way can be copied too (its text is the player's own).
+        String text = entry.text();
+        if (entry.sticker() == null && text != null && !text.isEmpty()) {
             menu.addView(copyRow(activity, entry, close));
-            final String link = firstLink(chat, entry.text());
+            final String link = firstLink(chat, text);
             if (link != null) {
                 menu.addView(row(activity, R.drawable.projects_ic_link, R.string.projects_links_copy, R.color.projects_bone_100, close, () -> {
                     SocialUi.copy(activity, "Projects", link);
@@ -390,17 +417,17 @@ final class MessageActions {
         return null;
     }
 
-    private static View copyRow(final FragmentActivity activity, final ChatBook.Entry entry, Runnable close) {
+    private static View copyRow(final FragmentActivity activity, final ChatBook.Entry entry, Closer close) {
         return row(activity, R.drawable.projects_ic_copy, R.string.projects_chat_copy, R.color.projects_bone_100, close, () -> {
             SocialUi.copy(activity, "Projects", entry.text());
             SocialUi.toast(activity, activity.getString(R.string.projects_social_copied));
         });
     }
 
-    private static View row(FragmentActivity activity, int icon, int label, int tint, final Runnable close, final Runnable action) {
+    private static View row(FragmentActivity activity, int icon, int label, int tint, final Closer close, final Runnable action) {
         TextView row = CrewViews.actionRow(activity, icon, activity.getString(label), tint, v -> {
+            if (!close.close()) return;
             Haptics.press(v);
-            close.run();
             action.run();
         });
         float dp = activity.getResources().getDisplayMetrics().density;

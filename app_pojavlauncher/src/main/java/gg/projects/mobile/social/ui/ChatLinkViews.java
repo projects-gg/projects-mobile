@@ -125,7 +125,9 @@ public final class ChatLinkViews {
                     ClickableSpan span = down;
                     down = null;
                     if (tap) {
+                        // The up is taken here, so the view's own touch handling never unpresses it.
                         view.cancelLongPress();
+                        view.setPressed(false);
                         Haptics.press(view);
                         span.onClick(view);
                         return true;
@@ -215,10 +217,11 @@ public final class ChatLinkViews {
         Context context = holder.getContext();
         float dp = context.getResources().getDisplayMetrics().density;
         String key = (card == null ? (waiting ? "wait" : "plain") : card.state + "|" + card.title) + "|" + link.link.url;
+        // Shown first: the row's bind hides the holder, and an unchanged card keeps its views (MOB1 review).
+        holder.setVisibility(View.VISIBLE);
         if (key.equals(holder.getTag(R.id.projects_chat_state)) && holder.getChildCount() > 0) return;
         holder.setTag(R.id.projects_chat_state, key);
         holder.removeAllViews();
-        holder.setVisibility(View.VISIBLE);
         int width = Math.round(244 * dp);
         LinearLayout box = new LinearLayout(context);
         box.setOrientation(LinearLayout.VERTICAL);

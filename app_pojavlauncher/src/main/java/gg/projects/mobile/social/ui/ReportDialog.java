@@ -28,6 +28,7 @@ import net.kdt.pojavlaunch.R;
 
 import java.util.List;
 
+import gg.projects.mobile.social.ChatBook;
 import gg.projects.mobile.social.ChatMessage;
 import gg.projects.mobile.social.Reports;
 import gg.projects.mobile.social.SocialModel.Profile;
@@ -70,6 +71,14 @@ public final class ReportDialog {
     /** {@code code}: only for a crew looked up by its code or (M21) its invite link. */
     public static void crew(FragmentActivity activity, TeamSummary crew, @Nullable String code) {
         show(activity, Reports.Target.CREW, null, crew, crew.name, code, null, null, null, null, null);
+    }
+
+    /** CHAT2: the message a reported reply answers, when this phone holds it (it goes with the report). */
+    @Nullable
+    private static ChatMessage quotedOf(FragmentActivity activity, ChatMessage message) {
+        if (message.replyId <= 0) return null;
+        ChatBook.Quote quote = SocialService.get(activity).chat().quote(message.conv, message.replyId, message.replyFrom);
+        return quote.kind == ChatBook.Quote.Kind.MESSAGE ? quote.message : null;
     }
 
     public static void message(FragmentActivity activity, ChatMessage message, List<ChatMessage> before, @Nullable Profile sender) {
@@ -289,7 +298,7 @@ public final class ReportDialog {
                                 note.getText().toString(), blocking);
                         break;
                     case MESSAGE:
-                        body = Reports.message(message, before, reason, note.getText().toString(), blocking);
+                        body = Reports.message(message, before, quotedOf(activity, message), reason, note.getText().toString(), blocking);
                         break;
                     case PLAN:
                         body = Reports.planMaker(player.id, plan.crew, plan.id, reason, note.getText().toString(), blocking);

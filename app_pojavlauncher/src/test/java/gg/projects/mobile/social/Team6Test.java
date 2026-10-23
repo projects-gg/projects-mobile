@@ -190,6 +190,44 @@ public class Team6Test {
         assertTrue(state.apply(gone, NOW).isEmpty());
     }
 
+    /** The player wears GK's tag and is in OTHER too (both lists carry their entry with the tag). */
+    private static SocialState wearingInTwoCrews() {
+        JsonObject gk = badge(GK, "GK", "Gece Kartallari", true);
+        JsonObject friends = friendsWith(null, team(GK, "Gece Kartallari", false,
+                member(C, "Can", true, null), member(ME, "Mert", false, gk)), TAG_FEATURES);
+        JsonObject second = new JsonObject();
+        second.add("team", team(OTHER, "Zirve", false, member(B, "Ayse", true, null), member(ME, "Mert", false, gk)));
+        friends.getAsJsonArray("crews").add(second);
+        return signedIn(gk, friends);
+    }
+
+    @Test
+    public void theTagGoesFromThePlayersEntriesInTheirOtherCrewsToo() {
+        // Leaving the crew: profile() reads the crews' lists before me, so every entry lets go of it.
+        SocialState state = wearingInTwoCrews();
+        assertEquals("GK", state.badgeOf(ME).tag);
+        JsonObject left = new JsonObject();
+        left.addProperty("t", "team");
+        left.addProperty("crew", GK);
+        state.apply(left, NOW);
+        assertNull(state.crew(GK));
+        assertNull(state.me().profile.badge);
+        assertNull(state.badgeOf(ME));
+        assertNull(state.crew(OTHER).team.member(ME).profile.badge);
+        // Its leader hiding it: the same, with the one notice.
+        state = wearingInTwoCrews();
+        JsonObject hidden = new JsonObject();
+        hidden.addProperty("t", "team");
+        hidden.addProperty("crew", GK);
+        hidden.addProperty("by", C);
+        hidden.add("team", team(GK, "Gece Kartallari", true, member(C, "Can", true, null), member(ME, "Mert", false, null)));
+        List<SocialState.Notice> notices = state.apply(hidden, NOW);
+        assertEquals(1, notices.size());
+        assertEquals(SocialState.Notice.Kind.TAG_OFF, notices.get(0).kind);
+        assertNull(state.badgeOf(ME));
+        assertNull(state.crew(OTHER).team.member(ME).profile.badge);
+    }
+
     @Test
     public void theLeaderHidingTheirOwnCrewIsToldNothing() {
         SocialState state = signedIn(badge(GK, "GK", "Gece Kartallari", true),

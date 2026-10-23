@@ -155,16 +155,32 @@ public final class Reports {
     /** A message as the device holds it, with up to 20 earlier ones of the conversation, oldest first. */
     public static JsonObject message(ChatMessage message, List<ChatMessage> before, String reason, @Nullable String note,
                                      boolean block) {
+        return message(message, before, null, reason, note, block);
+    }
+
+    /**
+     * The same, and CHAT2's {@code quoted}: the message a reported reply answers, as the device holds it, sent
+     * when it is not among the earlier ones (the moderators see what it answered).
+     */
+    public static JsonObject message(ChatMessage message, List<ChatMessage> before, @Nullable ChatMessage quoted, String reason,
+                                     @Nullable String note, boolean block) {
         JsonObject target = new JsonObject();
         target.addProperty("kind", "message");
         target.add("message", message.wire());
         JsonArray context = new JsonArray();
+        boolean quotedAmong = false;
         int from = Math.max(0, before.size() - CONTEXT);
         for (int i = from; i < before.size(); i++) {
             ChatMessage m = before.get(i);
-            if (m.conv.equals(message.conv) && m.id < message.id) context.add(m.wire());
+            if (m.conv.equals(message.conv) && m.id < message.id) {
+                context.add(m.wire());
+                if (quoted != null && m.id == quoted.id) quotedAmong = true;
+            }
         }
         if (context.size() > 0) target.add("before", context);
+        if (quoted != null && !quotedAmong && message.replyId > 0 && quoted.id == message.replyId && quoted.conv.equals(message.conv)) {
+            target.add("quoted", quoted.wire());
+        }
         return body(target, reason, note, block);
     }
 }

@@ -103,6 +103,15 @@ final class BadgeCard {
         if (badge == null || me == null || !service.gate().badges) return false;
         Context context = activity;
         float dp = context.getResources().getDisplayMetrics().density;
+        final BadgeRules.CardInput in = input(context, service, badge, wearerId);
+        final BadgeRules.Row row = BadgeRules.cardRow(in);
+        // Only a change it shows redraws it: the service changes often (typing, presence), and a rebuilt card
+        // would take its button from under the finger.
+        String key = badge.crew + "|" + badge.tag + "|" + badge.color + "|" + badge.frame + "|" + badge.emblem + "|" + badge.name
+                + "|" + badge.motto + "|" + badge.createdOn + "|" + badge.members + "|" + badge.requests + "|" + row + "|" + line[0]
+                + "|" + sent[0] + "|" + metaLine(context, service, badge, row);
+        if (key.equals(content.getTag(R.id.projects_chat_state)) && content.getChildCount() > 0) return true;
+        content.setTag(R.id.projects_chat_state, key);
         content.removeAllViews();
         content.setPadding(Math.round(18 * dp), Math.round(2 * dp), Math.round(12 * dp), Math.round(16 * dp));
 
@@ -138,8 +147,6 @@ final class BadgeCard {
         LinearLayout.LayoutParams namesLp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
         namesLp.setMarginStart(Math.round(12 * dp));
         head.addView(names, namesLp);
-        final BadgeRules.CardInput in = input(context, service, badge, wearerId);
-        final BadgeRules.Row row = BadgeRules.cardRow(in);
         ImageButton more = new ImageButton(context);
         more.setImageResource(R.drawable.projects_ic_dots);
         more.setImageTintList(ContextCompat.getColorStateList(context, R.color.projects_ash_300));

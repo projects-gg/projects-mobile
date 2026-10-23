@@ -525,6 +525,8 @@ public final class ChatBook {
 
     private final String mMe;
     private final Store mStore;
+    /** CHAT2: the socket took {@code reactions} (see {@link #setReactionsTaken}). */
+    private boolean mReactionsTaken;
     private final Map<String, Conversation> mConversations = new LinkedHashMap<>();
     /** The newest message id this device ever held (the next sync starts a minute before it). */
     private long mSyncCursor;
@@ -805,7 +807,7 @@ public final class ChatBook {
                 if (m == null || buried(m)) break;
                 Conversation c = conversation(m.conv);
                 c.editing.remove(m.id);
-                put(m, wire != null && wire.has("reactions"));
+                put(m, reactionsKnown(wire));
                 events.add(new Event(Event.Kind.EDITED, m.conv, m));
                 break;
             }
@@ -885,6 +887,19 @@ public final class ChatBook {
     private boolean buried(ChatMessage m) {
         Conversation c = mConversations.get(m.conv);
         return c != null && c.tombstones.containsKey(m.id);
+    }
+
+    /**
+     * CHAT2: whether the socket took {@code reactions} (the chat keeps it current). Then a {@code chat_edited}
+     * or an {@code ack.msg} without {@code reactions} says the message has none (the service's README).
+     */
+    public void setReactionsTaken(boolean taken) {
+        mReactionsTaken = taken;
+    }
+
+    /** The message's reactions are said by {@code wire}: listed there, or none while the socket took them. */
+    private boolean reactionsKnown(@Nullable JsonObject wire) {
+        return wire != null && (wire.has("reactions") || mReactionsTaken);
     }
 
     /**
@@ -1283,7 +1298,7 @@ public final class ChatBook {
             return;
         }
         if (m.nonce == null) m = m.keepingNonce(new ChatMessage(m.conv, m.id, m.from, m.text, m.mac, m.editedAt, nonce));
-        put(m, msg != null && msg.has("reactions"));
+        put(m, reactionsKnown(msg));
         if (c.outbox.remove(nonce) != null) mStore.removeOutbox(nonce);
     }
 
@@ -1429,7 +1444,7 @@ public final class ChatBook {
         Conversation c = conversation(conv);
         c.editing.remove(id);
         ChatMessage m = ChatMessage.read(msg, conv);
-        if (m != null && m.id == id) put(m, msg != null && msg.has("reactions"));
+        if (m != null && m.id == id) put(m, reactionsKnown(msg));
     }
 
     /** The edit did not go: the text the crew has comes back (one the service no longer has is a tombstone). */

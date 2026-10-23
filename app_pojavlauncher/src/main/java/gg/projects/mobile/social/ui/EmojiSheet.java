@@ -398,6 +398,8 @@ final class EmojiSheet {
         }
 
         private void picked(String emoji, View cell) {
+            // A second tap while the sheet leaves would give a second reaction (CR1-F).
+            if (reaction != null && !panel.showing()) return;
             Haptics.press(cell);
             if (reaction != null) {
                 panel.dismiss();
@@ -416,6 +418,8 @@ final class EmojiSheet {
         }
 
         private void pickedSticker(StickerSet.Sticker sticker, View cell) {
+            // One sticker per open sheet: a double tap during its exit sends nothing more (CR1-F).
+            if (!panel.showing()) return;
             panel.dismiss();
             if (pick != null) pick.sticker(sticker.ref, cell);
         }

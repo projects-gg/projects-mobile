@@ -302,6 +302,7 @@ public final class SocialChat {
             return false;
         }
         if (mBook == null) return true;
+        mBook.setReactionsTaken(offers(SocialModel.ChatState.REACTIONS));
         List<ChatBook.Event> events = mBook.apply(frame);
         String open = mHost.openConversation();
         for (ChatBook.Event e : events) {
@@ -464,6 +465,7 @@ public final class SocialChat {
                 return;
             }
             if ("ack".equals(Json.str(answer, "t"))) {
+                mBook.setReactionsTaken(offers(SocialModel.ChatState.REACTIONS));
                 mBook.sent(o.nonce, Json.obj(answer, "msg"));
             } else {
                 String code = Json.str(answer, "code", "bad_request");
@@ -503,6 +505,7 @@ public final class SocialChat {
         connection.request(frame, answer -> {
             if (mBook == null) return;
             if (answer != null && "ack".equals(Json.str(answer, "t"))) {
+                mBook.setReactionsTaken(offers(SocialModel.ChatState.REACTIONS));
                 mBook.edited(conv, id, Json.obj(answer, "msg"));
                 mHost.changed();
                 done.ok();
@@ -688,7 +691,12 @@ public final class SocialChat {
         for (ChatLinks.MessageLink link : ChatLinks.messageLinks(message.text, lists)) {
             if (!link.ok) continue;
             long age = mBook.hubNowMs(System.currentTimeMillis()) - message.id;
-            if (mCards.want(conv, message.id, link.link.url, ChatLinkUi.domainOf(link.host), age)) pumpCards();
+            // Posted: this runs while a chat row is bound, and a socket that is closing answers at once (its
+            // change would reach the list in the middle of its layout).
+            if (mCards.want(conv, message.id, link.link.url, ChatLinkUi.domainOf(link.host), age)) {
+                mMain.removeCallbacks(mCardPump);
+                mMain.post(mCardPump);
+            }
             return;
         }
     }
