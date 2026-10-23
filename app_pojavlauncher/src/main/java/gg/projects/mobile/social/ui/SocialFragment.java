@@ -63,7 +63,9 @@ import gg.projects.mobile.social.SocialProblem;
 import gg.projects.mobile.social.SocialService;
 import gg.projects.mobile.social.SocialState;
 import gg.projects.mobile.ui.ChamferDrawable;
+import gg.projects.mobile.ui.ContentTiles;
 import gg.projects.mobile.ui.Haptics;
+import gg.projects.mobile.ui.PixelSprites;
 import gg.projects.mobile.ui.Press;
 import gg.projects.mobile.ui.ProjectsHomeCard;
 import gg.projects.mobile.ui.ProjectsUi;
@@ -145,6 +147,7 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
             mList.setItemAnimator(null);
         }
         mConsent = view.findViewById(R.id.projects_social_consent);
+        ContentTiles.show(view.findViewById(R.id.projects_consent_icon), PixelSprites.Sprite.FRIENDS, false);
         mConsentMessage = view.findViewById(R.id.projects_consent_message);
         mSignIn = view.findViewById(R.id.projects_consent_sign_in);
         mWaiting = view.findViewById(R.id.projects_consent_waiting);
@@ -857,6 +860,7 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
                     break;
                 case T_EMPTY:
                     view = inflater.inflate(R.layout.item_projects_social_empty, parent, false);
+                    ContentTiles.show(view.findViewById(R.id.projects_social_empty_icon), PixelSprites.Sprite.FRIENDS, false);
                     break;
                 case T_PERSON:
                 default:

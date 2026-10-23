@@ -45,14 +45,14 @@
                 android:paddingTop="24dp"
                 android:paddingBottom="24dp">
 
+                <!-- ICON2: the desktop's "friends" pixel sprite (SocialFragment sets it). -->
                 <ImageView
+                    android:id="@+id/projects_consent_icon"
                     android:layout_width="64dp"
                     android:layout_height="64dp"
                     android:background="@drawable/projects_social_icon_tile"
                     android:importantForAccessibility="no"
-                    android:padding="16dp"
-                    android:src="@drawable/projects_ic_users"
-                    android:tint="@color/projects_gold_300" />
+                    android:padding="16dp" />
 
                 <TextView
                     android:id="@+id/projects_consent_title"

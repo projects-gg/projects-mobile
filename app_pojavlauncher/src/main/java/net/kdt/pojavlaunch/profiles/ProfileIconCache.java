@@ -77,7 +77,13 @@ public class ProfileIconCache {
     private static Drawable getStaticIcon(Resources resources, @NonNull String icon) {
         int staticIconResource = getStaticIconResource(icon);
         if(staticIconResource == -1) return null;
-        return ResourcesCompat.getDrawable(resources, staticIconResource, null);
+        Drawable drawable = ResourcesCompat.getDrawable(resources, staticIconResource, null);
+        // Projects fork (ICON2): the default profile's tile carries the desktop's pixel grass block.
+        if("default".equals(icon) && drawable != null) {
+            return gg.projects.mobile.ui.ContentTiles.withSprite(resources, drawable,
+                    gg.projects.mobile.ui.PixelSprites.Sprite.WORLD, false, 7);
+        }
+        return drawable;
     }
 
     private static int getStaticIconResource(String icon) {
