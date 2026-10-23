@@ -8,6 +8,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
 
+import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
 import java.io.File;
@@ -18,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 
 /**
  * The chat history on this phone (CHAT1: "the history belongs to the devices"): one SQLite file per
@@ -30,13 +32,22 @@ import java.util.concurrent.Executors;
  * text and seal erased ({@code deleted_at} &gt; 0, {@code deleted_by}). SQLite's secure delete
  * overwrites what the update frees, and the write-ahead log is emptied after it, so the text does not
  * linger in the file either.
+ *
+ * <p>CHAT2 (version 3): a message's sticker, its reply link with the link's seal and its reactions
+ * (the same JSON the service sends); a waiting message's sticker and the answered message it carries;
+ * the friend's read mark of a direct conversation; whether the week-back sync was done. A tombstone
+ * erases the sticker, the link and the reactions with the text.
  */
 public final class ChatStore implements ChatBook.Store {
     private static final String TAG = "ProjectsSocial";
-    private static final int VERSION = 2;
+    private static final int VERSION = 3;
     /** In memory after a start, per conversation. */
     private static final int LOAD = 200;
-    private static final String COLUMNS = "conv, id, sender, text, mac, edited_at, nonce, deleted_by, deleted_at";
+    private static final String COLUMNS = "conv, id, sender, text, mac, edited_at, nonce, deleted_by, deleted_at, "
+            + "sticker, reply_id, reply_from, rmac, reactions";
+
+    /** CHAT2: cards kept at most (the newest by message id; a card is at most ~90 KB with its picture). */
+    static final int CARDS = 300;
 
     private final Helper mHelper;
     private final ExecutorService mWriter = Executors.newSingleThreadExecutor();
@@ -59,13 +70,21 @@ public final class ChatStore implements ChatBook.Store {
             db.execSQL("CREATE TABLE messages (conv TEXT NOT NULL, id INTEGER NOT NULL, sender TEXT NOT NULL, "
                     + "text TEXT NOT NULL, mac TEXT NOT NULL, edited_at INTEGER NOT NULL DEFAULT 0, nonce TEXT, "
                     + "deleted_by TEXT, deleted_at INTEGER NOT NULL DEFAULT 0, "
+                    + "sticker TEXT, reply_id INTEGER NOT NULL DEFAULT 0, reply_from TEXT, rmac TEXT, reactions TEXT, "
                     + "PRIMARY KEY (conv, id)) WITHOUT ROWID");
             db.execSQL("CREATE TABLE outbox (nonce TEXT PRIMARY KEY, conv TEXT NOT NULL, text TEXT NOT NULL, "
                     + "created_at INTEGER NOT NULL, first_sent_at INTEGER NOT NULL, attempts INTEGER NOT NULL, "
-                    + "state INTEGER NOT NULL, failure TEXT)");
+                    + "state INTEGER NOT NULL, failure TEXT, sticker TEXT, reply TEXT, rule TEXT)");
             db.execSQL("CREATE TABLE convs (conv TEXT PRIMARY KEY, last_read INTEGER NOT NULL, "
-                    + "cleared_up_to INTEGER NOT NULL, muted_until INTEGER NOT NULL)");
+                    + "cleared_up_to INTEGER NOT NULL, muted_until INTEGER NOT NULL, peer_read INTEGER NOT NULL DEFAULT 0)");
             db.execSQL("CREATE TABLE state (key TEXT PRIMARY KEY, value INTEGER NOT NULL)");
+            createCards(db);
+        }
+
+        /** CHAT2: the link cards kept with their messages (the hub's answer as JSON; at most {@link #CARDS} rows). */
+        static void createCards(SQLiteDatabase db) {
+            db.execSQL("CREATE TABLE cards (conv TEXT NOT NULL, id INTEGER NOT NULL, card TEXT NOT NULL, "
+                    + "PRIMARY KEY (conv, id)) WITHOUT ROWID");
         }
 
         @Override
@@ -74,6 +93,19 @@ public final class ChatStore implements ChatBook.Store {
                 // FIX2: tombstones. Messages deleted before this version are already gone from the file.
                 db.execSQL("ALTER TABLE messages ADD COLUMN deleted_by TEXT");
                 db.execSQL("ALTER TABLE messages ADD COLUMN deleted_at INTEGER NOT NULL DEFAULT 0");
+            }
+            if (oldVersion < 3) {
+                // CHAT2: stickers, reply links, reactions, the friend's read mark. Older rows have none of them.
+                db.execSQL("ALTER TABLE messages ADD COLUMN sticker TEXT");
+                db.execSQL("ALTER TABLE messages ADD COLUMN reply_id INTEGER NOT NULL DEFAULT 0");
+                db.execSQL("ALTER TABLE messages ADD COLUMN reply_from TEXT");
+                db.execSQL("ALTER TABLE messages ADD COLUMN rmac TEXT");
+                db.execSQL("ALTER TABLE messages ADD COLUMN reactions TEXT");
+                db.execSQL("ALTER TABLE outbox ADD COLUMN sticker TEXT");
+                db.execSQL("ALTER TABLE outbox ADD COLUMN reply TEXT");
+                db.execSQL("ALTER TABLE outbox ADD COLUMN rule TEXT");
+                db.execSQL("ALTER TABLE convs ADD COLUMN peer_read INTEGER NOT NULL DEFAULT 0");
+                createCards(db);
             }
         }
     }
@@ -137,6 +169,7 @@ public final class ChatStore implements ChatBook.Store {
         List<ChatBook.Outbox> outbox = new ArrayList<>();
         Map<String, ChatBook.Meta> meta = new HashMap<>();
         long cursor = 0;
+        boolean caughtUp = false;
         try {
             SQLiteDatabase db = mHelper.getWritableDatabase();
             List<String> convs = new ArrayList<>();
@@ -157,7 +190,8 @@ public final class ChatStore implements ChatBook.Store {
                 if (!buried.isEmpty()) tombstones.put(conv, buried);
                 hasOlder.put(conv, more);
             }
-            try (Cursor c = db.rawQuery("SELECT nonce, conv, text, created_at, first_sent_at, attempts, state, failure FROM outbox", null)) {
+            try (Cursor c = db.rawQuery("SELECT nonce, conv, text, created_at, first_sent_at, attempts, state, failure, "
+                    + "sticker, reply, rule FROM outbox", null)) {
                 while (c.moveToNext()) {
                     ChatBook.Outbox.State state = c.getInt(6) == 2 ? ChatBook.Outbox.State.FAILED : ChatBook.Outbox.State.WAITING;
                     ChatBook.Failure failure = null;
@@ -168,21 +202,59 @@ public final class ChatStore implements ChatBook.Store {
                             failure = ChatBook.Failure.FAILED;
                         }
                     }
+                    String sticker = c.isNull(8) ? null : c.getString(8);
                     outbox.add(new ChatBook.Outbox(c.getString(0), c.getString(1), c.getString(2), c.getLong(3), c.getLong(4),
-                            c.getInt(5), state, failure, 0));
+                            c.getInt(5), state, failure, 0, ChatMessage.isSticker(sticker) ? sticker : null,
+                            ChatBook.replyFrom(c.isNull(9) ? null : c.getString(9)), c.isNull(10) ? null : c.getString(10)));
                 }
             }
-            try (Cursor c = db.rawQuery("SELECT conv, last_read, cleared_up_to, muted_until FROM convs", null)) {
-                while (c.moveToNext()) meta.put(c.getString(0), new ChatBook.Meta(c.getLong(1), c.getLong(2), c.getLong(3)));
+            try (Cursor c = db.rawQuery("SELECT conv, last_read, cleared_up_to, muted_until, peer_read FROM convs", null)) {
+                while (c.moveToNext()) {
+                    meta.put(c.getString(0), new ChatBook.Meta(c.getLong(1), c.getLong(2), c.getLong(3), c.getLong(4)));
+                }
             }
             try (Cursor c = db.rawQuery("SELECT value FROM state WHERE key = 'sync_cursor'", null)) {
                 if (c.moveToNext()) cursor = c.getLong(0);
+            }
+            try (Cursor c = db.rawQuery("SELECT value FROM state WHERE key = 'caught_up'", null)) {
+                if (c.moveToNext()) caughtUp = c.getLong(0) != 0;
             }
         } catch (RuntimeException e) {
             Log.w(TAG, "chat history not read", e);
             return ChatBook.Snapshot.empty();
         }
-        return new ChatBook.Snapshot(messages, hasOlder, outbox, meta, cursor, tombstones);
+        return new ChatBook.Snapshot(messages, hasOlder, outbox, meta, cursor, tombstones, caughtUp);
+    }
+
+    /** CHAT2: one line of the file: a message, its tombstone, or neither (not there). */
+    public static final class Line {
+        @androidx.annotation.Nullable
+        public final ChatMessage message;
+        @androidx.annotation.Nullable
+        public final ChatBook.Tombstone tombstone;
+
+        Line(@androidx.annotation.Nullable ChatMessage message, @androidx.annotation.Nullable ChatBook.Tombstone tombstone) {
+            this.message = message;
+            this.tombstone = tombstone;
+        }
+    }
+
+    /** CHAT2: one line by id (a reply's answered message, older than what memory keeps). */
+    @WorkerThread
+    public Line line(String conv, long id) {
+        try {
+            SQLiteDatabase db = mHelper.getReadableDatabase();
+            try (Cursor c = db.rawQuery("SELECT " + COLUMNS + " FROM messages WHERE conv = ? AND id = ?",
+                    new String[]{conv, String.valueOf(id)})) {
+                if (c.moveToNext()) {
+                    Row row = read(c);
+                    return new Line(row.message, row.tombstone);
+                }
+            }
+        } catch (RuntimeException e) {
+            Log.w(TAG, "answered message not read", e);
+        }
+        return new Line(null, null);
     }
 
     /** Lines before {@code beforeId}, oldest first (scrolling up), with whether more are there. */
@@ -228,18 +300,25 @@ public final class ChatStore implements ChatBook.Store {
             return new Row(null, new ChatBook.Tombstone(c.getString(0), c.getLong(1), c.getString(2), nonce,
                     c.isNull(7) ? "" : c.getString(7), deletedAt == 1 ? 0 : deletedAt));
         }
-        return new Row(new ChatMessage(c.getString(0), c.getLong(1), c.getString(2), c.getString(3), c.getString(4), c.getLong(5),
-                nonce), null);
+        String sticker = c.isNull(9) ? null : c.getString(9);
+        return new Row(new ChatMessage(c.getString(0), c.getLong(1), c.getString(2), c.getString(3),
+                ChatMessage.isSticker(sticker) ? sticker : null, c.getString(4), c.getLong(5), nonce, c.getLong(10),
+                c.isNull(11) ? null : c.getString(11), c.isNull(12) ? null : c.getString(12),
+                ChatMessage.reactionsFrom(c.isNull(13) ? null : c.getString(13))), null);
     }
 
     private void write(final String what, final Runnable step) {
-        mWriter.execute(() -> {
-            try {
-                step.run();
-            } catch (RuntimeException e) {
-                Log.w(TAG, "chat history not written: " + what, e);
-            }
-        });
+        try {
+            mWriter.execute(() -> {
+                try {
+                    step.run();
+                } catch (RuntimeException e) {
+                    Log.w(TAG, "chat history not written: " + what, e);
+                }
+            });
+        } catch (RejectedExecutionException e) {
+            // Closed (signed out): nothing more is written.
+        }
     }
 
     @Override
@@ -253,6 +332,18 @@ public final class ChatStore implements ChatBook.Store {
             v.put("edited_at", m.editedAt);
             if (m.nonce != null) v.put("nonce", m.nonce);
             else v.putNull("nonce");
+            if (m.sticker != null) v.put("sticker", m.sticker);
+            else v.putNull("sticker");
+            v.put("reply_id", m.replyId);
+            if (m.replyId > 0) {
+                v.put("reply_from", m.replyFrom);
+                v.put("rmac", m.rmac);
+            } else {
+                v.putNull("reply_from");
+                v.putNull("rmac");
+            }
+            if (m.reactions.isEmpty()) v.putNull("reactions");
+            else v.put("reactions", ChatMessage.reactionsJson(m.reactions).toString());
             // A newer version replaces the row; a tombstone stays one (a late sync never brings a deleted text back).
             int updated = db.update("messages", v, "conv = ? AND id = ? AND deleted_at = 0",
                     new String[]{m.conv, String.valueOf(m.id)});
@@ -295,10 +386,16 @@ public final class ChatStore implements ChatBook.Store {
             v.put("text", "");
             v.put("mac", "");
             v.put("edited_at", 0);
+            v.putNull("sticker");
+            v.put("reply_id", 0);
+            v.putNull("reply_from");
+            v.putNull("rmac");
+            v.putNull("reactions");
             v.put("deleted_by", by);
             // 1 marks a tombstone whose time is not known (0 is "not deleted").
             v.put("deleted_at", at > 0 ? at : 1);
             int buried = db.update("messages", v, "conv = ? AND id = ? AND deleted_at = 0", new String[]{conv, String.valueOf(id)});
+            db.delete("cards", "conv = ? AND id = ?", new String[]{conv, String.valueOf(id)});
             // The old text leaves the write-ahead log too (secure delete covers the file itself).
             if (buried > 0) pragma(db, "PRAGMA wal_checkpoint(TRUNCATE)");
         });
@@ -317,6 +414,13 @@ public final class ChatStore implements ChatBook.Store {
             v.put("state", o.state == ChatBook.Outbox.State.FAILED ? 2 : o.state == ChatBook.Outbox.State.SENDING ? 1 : 0);
             if (o.failure != null) v.put("failure", o.failure.name());
             else v.putNull("failure");
+            if (o.sticker != null) v.put("sticker", o.sticker);
+            else v.putNull("sticker");
+            String reply = ChatBook.replyJson(o);
+            if (reply != null) v.put("reply", reply);
+            else v.putNull("reply");
+            if (o.rule != null) v.put("rule", o.rule);
+            else v.putNull("rule");
             mHelper.getWritableDatabase().insertWithOnConflict("outbox", null, v, SQLiteDatabase.CONFLICT_REPLACE);
         });
     }
@@ -334,7 +438,18 @@ public final class ChatStore implements ChatBook.Store {
             v.put("last_read", meta.lastRead);
             v.put("cleared_up_to", meta.clearedUpTo);
             v.put("muted_until", meta.mutedUntil);
+            v.put("peer_read", meta.peerRead);
             mHelper.getWritableDatabase().insertWithOnConflict("convs", null, v, SQLiteDatabase.CONFLICT_REPLACE);
+        });
+    }
+
+    @Override
+    public void putCaughtUp() {
+        write("caught up", () -> {
+            ContentValues v = new ContentValues();
+            v.put("key", "caught_up");
+            v.put("value", 1);
+            mHelper.getWritableDatabase().insertWithOnConflict("state", null, v, SQLiteDatabase.CONFLICT_REPLACE);
         });
     }
 
@@ -344,6 +459,7 @@ public final class ChatStore implements ChatBook.Store {
             SQLiteDatabase db = mHelper.getWritableDatabase();
             db.delete("messages", "conv = ?", new String[]{conv});
             db.delete("outbox", "conv = ?", new String[]{conv});
+            db.delete("cards", "conv = ?", new String[]{conv});
         });
     }
 
@@ -357,14 +473,53 @@ public final class ChatStore implements ChatBook.Store {
         });
     }
 
+    /** CHAT2: a message's link card (the hub's answer, or the plain or refused one), kept with it. */
+    public void putCard(final String conv, final long id, final String json) {
+        write("card", () -> {
+            SQLiteDatabase db = mHelper.getWritableDatabase();
+            ContentValues v = new ContentValues();
+            v.put("conv", conv);
+            v.put("id", id);
+            v.put("card", json);
+            db.insertWithOnConflict("cards", null, v, SQLiteDatabase.CONFLICT_REPLACE);
+            db.execSQL("DELETE FROM cards WHERE id < (SELECT id FROM cards ORDER BY id DESC LIMIT 1 OFFSET ?)",
+                    new Object[]{CARDS - 1});
+        });
+    }
+
+    /** CHAT2: the cards kept for a conversation's messages, by message id (read when it opens). */
+    @WorkerThread
+    public Map<Long, String> cards(String conv) {
+        Map<Long, String> out = new HashMap<>();
+        try {
+            SQLiteDatabase db = mHelper.getReadableDatabase();
+            try (Cursor c = db.rawQuery("SELECT id, card FROM cards WHERE conv = ?", new String[]{conv})) {
+                while (c.moveToNext()) out.put(c.getLong(0), c.getString(1));
+            }
+        } catch (RuntimeException e) {
+            Log.w(TAG, "link cards not read", e);
+        }
+        return out;
+    }
+
     /** Signed out: the file is closed after the writes already asked for. */
     public void close() {
+        close(null);
+    }
+
+    /** Closes the file after the writes already asked for, then runs {@code then} on the writer ("Verilerimi sil"). */
+    public void close(@Nullable Runnable then) {
         write("close", mHelper::close);
+        if (then != null) write("after close", then);
         mWriter.shutdown();
     }
 
     /** For a reader that must run after the writes already asked for (the start's load, scrolling up). */
     public void afterWrites(Runnable task) {
-        mWriter.execute(task);
+        try {
+            mWriter.execute(task);
+        } catch (RejectedExecutionException e) {
+            // Closed (signed out): the reader's answer would go to an account that is gone.
+        }
     }
 }

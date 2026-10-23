@@ -72,6 +72,11 @@ import gg.projects.mobile.social.ui.PlanViews;
  * {@code request}), the crew's leader or moderators answer them; invite links ({@code projects://crew/})
  * and the join setting; crew plans on the socket (the {@code plans} capability) with local reminders
  * ({@link PlanAlarms}, 10 minutes before a plan the player is coming to).
+ *
+ * <p>MOB1: CHAT2's socket capabilities beside {@code chat} (replies, stickers, reactions, typing, read
+ * marks; links need none) and TEAM6's crew tags ({@code badges}): wearing a tag, a crew hidden or not
+ * and taking requests from its tag or not (its leader's two settings), and a join request from a tag's
+ * card. Older services ignore the names they do not know.
  */
 public final class SocialService implements ProjectsContent.Listener, PresenceConnection.Listener {
     private static final String TAG = "ProjectsSocial";
@@ -182,6 +187,10 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         mConfigTeams = config[1];
         mConfigChat = config[2];
         mChat = new SocialChat(new ChatHost());
+        // CHAT2: the link rule table (a copy of the service's), read once off the main thread.
+        final Context assets = app;
+        ChatLinks.setSource(() -> assets.getAssets().open("social/chat-links.json"));
+        mIo.execute(ChatLinks::rulesVersion);
         SessionStore.Saved saved = mStore.load();
         mToken = saved.token;
         mApi.setToken(mToken);
@@ -456,10 +465,16 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         List<String> caps = new ArrayList<>();
         caps.add("callServer");
         caps.add("crews");
-        if (chatEnabled()) caps.add("chat");
+        if (chatEnabled()) {
+            caps.add("chat");
+            // CHAT2: each extra is a capability of its own (the launcher and the phone update apart).
+            for (String extra : SocialChat.EXTRA_CAPS) caps.add(extra);
+        }
         // M21 (TEAM5): crew plans. Asked for always: the list that says whether the service has them may
         // come after the socket opens, and a service without plans ignores the name.
         caps.add("plans");
+        // TEAM6: crew tag changes, live (the same reasoning).
+        caps.add("badges");
         return caps;
     }
 
@@ -1124,6 +1139,12 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
                 case MOD_NOTICE:
                     // The screens show the note once (they read me.notices).
                     break;
+                case TAG_OFF:
+                    // TEAM6: "Lider ekibi gizledi; etiketin çıkarıldı." (the desktop's toast).
+                    if (foreground && gate().badges) {
+                        Toast.makeText(context, context.getString(R.string.projects_badge_hidden_toast), Toast.LENGTH_LONG).show();
+                    }
+                    break;
                 default:
                     break;
             }
@@ -1263,11 +1284,21 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
             Me me = Me.read(answer);
             if (me != null) {
                 mState.setMe(me);
+                // TEAM6: the player's own tag shows the same in their crews' lists.
+                mState.setMyBadge(me.profile.badge);
                 mStore.save(mToken, me.profile.id, answer, null);
                 // M21: "Rahatsız etmeyin" keeps plan reminders quiet.
                 syncPlanReminders();
             }
         });
+    }
+
+    /** TEAM6: wears the tag of one of the player's crews ({@code crewId}), or takes it off (null). */
+    public void setBadge(@Nullable String crewId, Result<JsonObject> result) {
+        JsonObject body = new JsonObject();
+        if (crewId == null) body.add("badge", com.google.gson.JsonNull.INSTANCE);
+        else body.addProperty("badge", crewId);
+        patchMe(body, result);
     }
 
     public void rotateCode(Result<String> result) {
@@ -1389,6 +1420,8 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
                 if (mine != null) mState.addMyRequest(mine);
             } else {
                 applyTeamAnswer(answer);
+                Team team = Team.read(Json.obj(answer, "team"));
+                if (team != null) noteOwnJoin(team.id);
             }
         });
     }
@@ -1457,6 +1490,31 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         }, result, value -> mState.setCrewLink(teamId, null));
     }
 
+    /** TEAM6 "Görünürlük" (the leader's): a hidden crew's tag shows nowhere and cannot be worn. */
+    public void setCrewHidden(final String teamId, boolean hidden, Result<JsonObject> result) {
+        final JsonObject body = new JsonObject();
+        body.addProperty("hidden", hidden);
+        run(() -> mApi.patchTeam(teamId, body), result, this::applyTeamAnswer);
+    }
+
+    /** TEAM6 "Etiketten istek" (the leader's): whether friends of its wearers may ask from the tag's card. */
+    public void setCrewBadgeRequests(final String teamId, boolean on, Result<JsonObject> result) {
+        final JsonObject body = new JsonObject();
+        body.addProperty("badgeRequests", on);
+        run(() -> mApi.patchTeam(teamId, body), result, this::applyTeamAnswer);
+    }
+
+    /**
+     * TEAM6 "Katılma isteği gönder" on a tag's card: the request always waits for the crew's answer
+     * ({@code 202 {request}}), whatever the crew's join setting.
+     */
+    public void requestFromBadge(final String teamId, final String via, Result<JsonObject> result) {
+        run(() -> mApi.requestFromBadge(teamId, via), result, answer -> {
+            MyRequest mine = MyRequest.read(Json.obj(answer, "request"));
+            if (mine != null) mState.addMyRequest(mine);
+        });
+    }
+
     /** TEAM5 "Yeni üyeleri onayla" (the leader's): {@code join} {@code approval} or {@code open}. */
     public void setJoinApproval(final String teamId, boolean approval, Result<JsonObject> result) {
         final JsonObject body = new JsonObject();
@@ -1469,7 +1527,14 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         run(() -> mApi.acceptTeamInvite(teamId, multi), result, answer -> {
             mState.removeTeamInvite(teamId);
             applyTeamAnswer(answer);
+            noteOwnJoin(teamId);
         });
+    }
+
+    /** TEAM6: the player came into a crew from this phone: its chat starts with "Ekibe katıldın". */
+    private void noteOwnJoin(String teamId) {
+        String me = mState.myId();
+        if (me != null && mState.crew(teamId) != null) mState.noteJoin(teamId, me, nowSeconds());
     }
 
     public void declineTeamInvite(final String teamId, Result<Void> result) {

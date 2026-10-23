@@ -231,7 +231,8 @@ public final class SocialMenus {
         out.add(null);
         if (in.mute != Mute.HIDDEN) out.add(row(in.mute == Mute.MUTED ? CrewAction.UNMUTE : CrewAction.MUTE));
         out.add(null);
-        if (in.reports) out.add(row(CrewAction.REPORT));
+        // The lead's rule (as the desktop's 03f1689): a leader does not report their own crew; members and moderators do.
+        if (in.reports && !in.leader) out.add(row(CrewAction.REPORT));
         out.add(row(!in.leader ? CrewAction.LEAVE : in.alone ? CrewAction.CLOSE : CrewAction.DISBAND));
         return tidy(out);
     }

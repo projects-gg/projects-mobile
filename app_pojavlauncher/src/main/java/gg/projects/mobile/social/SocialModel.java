@@ -43,13 +43,25 @@ public final class SocialModel {
         /** The Discord avatar hash, only while {@code avatar} is {@code discord} (null: Discord's default). */
         @Nullable
         public final String avatarHash;
+        /**
+         * TEAM6: the crew tag this player wears, as friends and crewmates see it (null: none, or a
+         * profile that does not reach the player as a friend or crewmate, or a service before tags).
+         */
+        @Nullable
+        public final Badge badge;
 
         public Profile(String id, String username, @Nullable String displayName, String avatar, @Nullable String avatarHash) {
+            this(id, username, displayName, avatar, avatarHash, null);
+        }
+
+        public Profile(String id, String username, @Nullable String displayName, String avatar, @Nullable String avatarHash,
+                       @Nullable Badge badge) {
             this.id = id;
             this.username = username;
             this.displayName = displayName;
             this.avatar = avatar;
             this.avatarHash = avatarHash;
+            this.badge = badge;
         }
 
         @Nullable
@@ -59,7 +71,18 @@ public final class SocialModel {
             String username = Json.str(o, "username", "");
             String display = Json.str(o, "displayName");
             if (display != null && display.trim().isEmpty()) display = null;
-            return new Profile(id, username, display, Json.str(o, "avatar", "discord"), Json.str(o, "avatarHash"));
+            return new Profile(id, username, display, Json.str(o, "avatar", "discord"), Json.str(o, "avatarHash"),
+                    Badge.read(Json.obj(o, "badge")));
+        }
+
+        /** The same player with another tag (TEAM6's {@code badge} message; null takes it off). */
+        public Profile withBadge(@Nullable Badge next) {
+            return new Profile(id, username, displayName, avatar, avatarHash, next);
+        }
+
+        /** The same player with another picture (a presence that carries one). */
+        public Profile withAvatar(String nextAvatar, @Nullable String nextHash) {
+            return new Profile(id, username, displayName, nextAvatar, nextHash, badge);
         }
 
         /** The display name, else the username. */
@@ -112,6 +135,60 @@ public final class SocialModel {
         }
     }
 
+    /**
+     * TEAM6 ({@code badge} of a profile): the card of the crew tag a player wears, made from the
+     * crew's own row at every read (README "Crew tags"): never its members, leader, code or link.
+     */
+    public static final class Badge {
+        public final String crew;
+        public final String tag;
+        public final String color;
+        public final String frame;
+        public final String emblem;
+        public final String name;
+        /** "" when it has none. */
+        public final String motto;
+        /** {@code YYYY-MM-DD}, or null. */
+        @Nullable
+        public final String createdOn;
+        public final int members;
+        /** The crew takes join requests from its tag now (README "Join requests from a tag"). */
+        public final boolean requests;
+
+        public Badge(String crew, String tag, String color, String frame, String emblem, String name, String motto,
+                     @Nullable String createdOn, int members, boolean requests) {
+            this.crew = crew;
+            this.tag = tag;
+            this.color = color;
+            this.frame = frame;
+            this.emblem = emblem;
+            this.name = name;
+            this.motto = motto;
+            this.createdOn = createdOn;
+            this.members = members;
+            this.requests = requests;
+        }
+
+        /** The card, or null (none worn, or one the app cannot show: no crew id, tag or name). */
+        @Nullable
+        public static Badge read(@Nullable JsonObject o) {
+            if (o == null) return null;
+            String crew = Json.str(o, "crew");
+            String tag = Json.str(o, "tag");
+            String name = Json.str(o, "name");
+            if (!isCrewId(crew) || tag == null || tag.trim().isEmpty() || name == null || name.trim().isEmpty()) return null;
+            String motto = Json.str(o, "motto", "").trim();
+            return new Badge(crew, tag.trim(), CrewLook.color(Json.str(o, "color")), CrewLook.frame(Json.str(o, "frame")),
+                    Json.str(o, "emblem", "shield"), name, motto, Json.str(o, "createdOn"),
+                    (int) Math.max(0, Json.num(o, "members", 0)), Json.bool(o, "requests", false));
+        }
+
+        /** What a change of the card means on screen (its look or words). */
+        public String key() {
+            return crew + "|" + tag + "|" + color + "|" + frame + "|" + emblem + "|" + name + "|" + motto + "|" + members + "|" + requests;
+        }
+    }
+
     /** The player's own account ({@code me}). */
     public static final class Me {
         public final Profile profile;
@@ -129,6 +206,12 @@ public final class SocialModel {
         public final List<ModNotice> notices;
         /** The service has reports and moderation (MOD1): its {@code me} carries {@code notices}. */
         public final boolean moderation;
+        /** CHAT2: "Görüldü bilgisi" (on unless the player turned it off; works both ways). */
+        public final boolean shareRead;
+        /** CHAT2: "Yazıyor bilgisi". */
+        public final boolean shareTyping;
+        /** CHAT2: the service has the two switches ({@code privacy} carries them). */
+        public final boolean chatPrivacy;
 
         public Me(Profile profile, String friendCode, String status, boolean shareServer, boolean shareLastSeen,
                   @Nullable String createdOn) {
@@ -138,6 +221,12 @@ public final class SocialModel {
 
         public Me(Profile profile, String friendCode, String status, boolean shareServer, boolean shareLastSeen,
                   @Nullable String createdOn, @Nullable Limited limited, List<ModNotice> notices, boolean moderation) {
+            this(profile, friendCode, status, shareServer, shareLastSeen, createdOn, limited, notices, moderation, true, true, false);
+        }
+
+        public Me(Profile profile, String friendCode, String status, boolean shareServer, boolean shareLastSeen,
+                  @Nullable String createdOn, @Nullable Limited limited, List<ModNotice> notices, boolean moderation,
+                  boolean shareRead, boolean shareTyping, boolean chatPrivacy) {
             this.profile = profile;
             this.friendCode = friendCode;
             this.status = status;
@@ -147,6 +236,9 @@ public final class SocialModel {
             this.limited = limited;
             this.notices = Collections.unmodifiableList(new ArrayList<>(notices));
             this.moderation = moderation;
+            this.shareRead = shareRead;
+            this.shareTyping = shareTyping;
+            this.chatPrivacy = chatPrivacy;
         }
 
         @Nullable
@@ -162,20 +254,24 @@ public final class SocialModel {
                 if (notice != null) notices.add(notice);
             }
             boolean moderation = o != null && (o.has("notices") || o.has("limited"));
+            boolean chatPrivacy = privacy != null && (privacy.has("shareRead") || privacy.has("shareTyping"));
             return new Me(profile, Json.str(o, "friendCode", ""), status,
                     Json.bool(privacy, "shareServer", false), Json.bool(privacy, "shareLastSeen", true),
-                    Json.str(o, "createdOn"), Limited.read(Json.obj(o, "limited")), notices, moderation);
+                    Json.str(o, "createdOn"), Limited.read(Json.obj(o, "limited")), notices, moderation,
+                    Json.bool(privacy, "shareRead", true), Json.bool(privacy, "shareTyping", true), chatPrivacy);
         }
 
         public Me withStatus(String newStatus) {
-            return new Me(profile, friendCode, newStatus, shareServer, shareLastSeen, createdOn, limited, notices, moderation);
+            return new Me(profile, friendCode, newStatus, shareServer, shareLastSeen, createdOn, limited, notices, moderation,
+                    shareRead, shareTyping, chatPrivacy);
         }
 
         /** The same account without the notices the player has seen (they go from the service too). */
         public Me withoutNotices(Set<String> seen) {
             List<ModNotice> left = new ArrayList<>();
             for (ModNotice n : notices) if (!seen.contains(n.id)) left.add(n);
-            return new Me(profile, friendCode, status, shareServer, shareLastSeen, createdOn, limited, left, moderation);
+            return new Me(profile, friendCode, status, shareServer, shareLastSeen, createdOn, limited, left, moderation,
+                    shareRead, shareTyping, chatPrivacy);
         }
 
         /** With a notice that came live ({@code {"t":"notice"}}), unless it is there already. */
@@ -183,7 +279,14 @@ public final class SocialModel {
             for (ModNotice n : notices) if (n.id.equals(notice.id)) return this;
             List<ModNotice> next = new ArrayList<>(notices);
             next.add(notice);
-            return new Me(profile, friendCode, status, shareServer, shareLastSeen, createdOn, limited, next, true);
+            return new Me(profile, friendCode, status, shareServer, shareLastSeen, createdOn, limited, next, true,
+                    shareRead, shareTyping, chatPrivacy);
+        }
+
+        /** TEAM6: the same account wearing another tag (null: none). */
+        public Me withBadge(@Nullable Badge badge) {
+            return new Me(profile.withBadge(badge), friendCode, status, shareServer, shareLastSeen, createdOn, limited, notices,
+                    moderation, shareRead, shareTyping, chatPrivacy);
         }
     }
 
@@ -201,6 +304,12 @@ public final class SocialModel {
         public static final String CREW_LINK = "crew_link";
         /** TEAM5: making crew plans; answering them is fine (listed with {@code plans}). */
         public static final String CREW_PLANS = "crew_plans";
+        /** CHAT2: links in chat messages (listed while chat and Studio allow links). */
+        public static final String CHAT_LINKS = "chat_links";
+        /** CHAT2: fewer stickers a day ({@code perDay}). */
+        public static final String CHAT_STICKERS = "chat_stickers";
+        /** CHAT2: fewer reaction changes a day ({@code perDay}). */
+        public static final String CHAT_REACTIONS = "chat_reactions";
 
         public final long until;
         /** key → the daily cap ({@code perDay}; 0 when the item has none). */
@@ -546,8 +655,15 @@ public final class SocialModel {
             JsonObject inner = Json.obj(o, "profile");
             Profile profile = Profile.read(inner != null ? inner : o);
             if (profile == null) return null;
+            // TEAM6: the member's tag rides beside the profile.
+            if (profile.badge == null && inner != null) profile = profile.withBadge(Badge.read(Json.obj(o, "badge")));
             boolean founder = "founder".equals(Json.str(o, "role"));
             return new Member(profile, founder, !founder && Json.bool(o, "moderator", false), Json.num(o, "joinedAt", 0));
+        }
+
+        /** The same member wearing another tag. */
+        public Member withBadge(@Nullable Badge badge) {
+            return new Member(profile.withBadge(badge), founder, moderator, joinedAt);
         }
     }
 
@@ -629,6 +745,10 @@ public final class SocialModel {
         /** TEAM5: the crew's invite link as {@code XXXX-XXXX-XXXX}, or null (none, or a service from before links). */
         @Nullable
         public final String link;
+        /** TEAM6: its leader hid it: its tag shows nowhere and cannot be worn ({@code false} from older services). */
+        public final boolean hidden;
+        /** TEAM6 "Etiketten istek": friends of its wearers may ask to join from the tag's card (on by default). */
+        public final boolean badgeRequests;
 
         public Team(TeamSummary summary, String code, @Nullable String createdOn, List<Member> members, Permissions permissions) {
             this(summary, code, createdOn, members, permissions, null);
@@ -641,6 +761,11 @@ public final class SocialModel {
 
         public Team(TeamSummary summary, String code, @Nullable String createdOn, List<Member> members, Permissions permissions,
                     @Nullable Long textLockedUntil, @Nullable String link) {
+            this(summary, code, createdOn, members, permissions, textLockedUntil, link, false, true);
+        }
+
+        public Team(TeamSummary summary, String code, @Nullable String createdOn, List<Member> members, Permissions permissions,
+                    @Nullable Long textLockedUntil, @Nullable String link, boolean hidden, boolean badgeRequests) {
             super(summary.id, summary.name, summary.tag, summary.emblem, summary.color, summary.frame, summary.motto,
                     members.size(), summary.join);
             this.code = code;
@@ -649,6 +774,8 @@ public final class SocialModel {
             this.permissions = permissions;
             this.textLockedUntil = textLockedUntil;
             this.link = link;
+            this.hidden = hidden;
+            this.badgeRequests = badgeRequests;
         }
 
         @Nullable
@@ -663,12 +790,36 @@ public final class SocialModel {
             }
             return new Team(summary, Json.str(o, "code", ""), Json.str(o, "createdOn"), members,
                     Permissions.read(Json.obj(o, "permissions")), Json.numOrNull(o, "textLockedUntil"),
-                    SocialCodes.normalizeInviteLink(Json.str(o, "link")));
+                    SocialCodes.normalizeInviteLink(Json.str(o, "link")), Json.bool(o, "hidden", false),
+                    Json.bool(o, "badgeRequests", true));
         }
 
         /** The same crew with another invite link (null: switched off), as an answer of its own route says. */
         public Team withLink(@Nullable String newLink) {
-            return new Team(this, code, createdOn, new ArrayList<>(members), permissions, textLockedUntil, newLink);
+            return new Team(this, code, createdOn, new ArrayList<>(members), permissions, textLockedUntil, newLink, hidden,
+                    badgeRequests);
+        }
+
+        /** TEAM6: the same crew with one member's tag changed (a {@code badge} message). */
+        public Team withMemberBadge(String userId, @Nullable Badge badge) {
+            List<Member> next = new ArrayList<>();
+            boolean changed = false;
+            for (Member m : members) {
+                if (m.profile.id.equals(userId)) {
+                    next.add(m.withBadge(badge));
+                    changed = true;
+                } else {
+                    next.add(m);
+                }
+            }
+            return changed ? new Team(this, code, createdOn, next, permissions, textLockedUntil, link, hidden, badgeRequests) : this;
+        }
+
+        /** TEAM6: members wearing this crew's own tag now. */
+        public int wearers() {
+            int n = 0;
+            for (Member m : members) if (m.profile.badge != null && m.profile.badge.crew.equals(id)) n++;
+            return n;
         }
 
         /** The moderators' lock on the crew's texts is on at {@code nowSeconds}. */
@@ -726,10 +877,18 @@ public final class SocialModel {
     public static final class JoinRequest {
         public final Profile from;
         public final long sentAt;
+        /** TEAM6: the member whose tag's card it came from ("Ayşe aracılığıyla"), while still in the crew; else null. */
+        @Nullable
+        public final String via;
 
         public JoinRequest(Profile from, long sentAt) {
+            this(from, sentAt, null);
+        }
+
+        public JoinRequest(Profile from, long sentAt, @Nullable String via) {
             this.from = from;
             this.sentAt = sentAt;
+            this.via = isUserId(via) ? via : null;
         }
 
         @Nullable
@@ -737,7 +896,8 @@ public final class SocialModel {
             JsonObject inner = Json.obj(o, "from");
             Profile from = Profile.read(inner != null ? inner : o);
             if (from == null) return null;
-            return new JoinRequest(from, Json.num(o, "sentAt", 0));
+            // A requester's tag never shows (strangers see none): the service sends none, and none is kept.
+            return new JoinRequest(from.withBadge(null), Json.num(o, "sentAt", 0), Json.str(o, "via"));
         }
 
         /** Still waiting at {@code nowSeconds} (launchers drop it 7 days after it was sent). */
@@ -1008,6 +1168,14 @@ public final class SocialModel {
      * them for devices that were away, the player's daily limit and a moderator's mute.
      */
     public static final class ChatState {
+        /** CHAT2's extras by name ({@code hello.chat.extras}; links need no capability). */
+        public static final String REPLIES = "replies";
+        public static final String STICKERS = "stickers";
+        public static final String REACTIONS = "reactions";
+        public static final String TYPING = "typing";
+        public static final String READS = "reads";
+        public static final String LINKS = "links";
+
         public final boolean on;
         public final boolean mailbox;
         /** Unix seconds when the mailbox opens again; null while not known. */
@@ -1017,13 +1185,29 @@ public final class SocialModel {
         /** Unix seconds until which the player may not send; null when they may. */
         @Nullable
         public final Long mutedUntil;
+        /** CHAT2: the extras Studio has on now; null from a service without them (chat is CHAT1 then). */
+        @Nullable
+        public final Set<String> extras;
+        /** CHAT2: the sticker sets the service takes ({@code ["pl1"]}). */
+        public final List<String> stickerSets;
+        /** CHAT2: the link rules and Studio's lists while links are on ({@code {rules, trusted, blocked, invites}}), else null. */
+        @Nullable
+        public final JsonObject links;
 
         public ChatState(boolean on, boolean mailbox, @Nullable Long mailboxBack, int perDay, @Nullable Long mutedUntil) {
+            this(on, mailbox, mailboxBack, perDay, mutedUntil, null, Collections.<String>emptyList(), null);
+        }
+
+        public ChatState(boolean on, boolean mailbox, @Nullable Long mailboxBack, int perDay, @Nullable Long mutedUntil,
+                         @Nullable Set<String> extras, List<String> stickerSets, @Nullable JsonObject links) {
             this.on = on;
             this.mailbox = mailbox;
             this.mailboxBack = mailboxBack;
             this.perDay = perDay;
             this.mutedUntil = mutedUntil;
+            this.extras = extras == null ? null : Collections.unmodifiableSet(new HashSet<>(extras));
+            this.stickerSets = Collections.unmodifiableList(new ArrayList<>(stickerSets));
+            this.links = links;
         }
 
         /** Before the first {@code hello}: assumed on (the composer shows; the service answers anyway). */
@@ -1031,8 +1215,20 @@ public final class SocialModel {
 
         public static ChatState read(@Nullable JsonObject o) {
             if (o == null) return UNKNOWN;
+            Set<String> extras = null;
+            JsonObject e = Json.obj(o, "extras");
+            if (e != null) {
+                extras = new HashSet<>();
+                for (Map.Entry<String, JsonElement> entry : e.entrySet()) {
+                    JsonElement value = entry.getValue();
+                    if (value.isJsonPrimitive() && value.getAsJsonPrimitive().isBoolean() && value.getAsBoolean()) {
+                        extras.add(entry.getKey());
+                    }
+                }
+            }
             return new ChatState(Json.bool(o, "on", true), Json.bool(o, "mailbox", true), Json.numOrNull(o, "mailboxBack"),
-                    (int) Json.num(o, "perDay", 0), Json.numOrNull(o, "mutedUntil"));
+                    (int) Json.num(o, "perDay", 0), Json.numOrNull(o, "mutedUntil"), extras, Json.strings(o, "stickers"),
+                    Json.obj(o, "links"));
         }
 
         public boolean mutedAt(long hubNowSeconds) {
@@ -1045,7 +1241,21 @@ public final class SocialModel {
         }
 
         public ChatState withMutedUntil(@Nullable Long until) {
-            return new ChatState(on, mailbox, mailboxBack, perDay, until);
+            return new ChatState(on, mailbox, mailboxBack, perDay, until, extras, stickerSets, links);
+        }
+
+        /**
+         * CHAT2: whether an extra may be offered now: Studio has it on and (but for links, which are
+         * text) the socket's {@code caps} took it. An older service has none.
+         */
+        public boolean offers(String extra, Set<String> caps) {
+            if (!on || extras == null || !extras.contains(extra)) return false;
+            return LINKS.equals(extra) || caps.contains(extra);
+        }
+
+        /** CHAT2: the service speaks the extras at all (it sends {@code extras}, maybe all off). */
+        public boolean hasExtras() {
+            return extras != null;
         }
     }
 

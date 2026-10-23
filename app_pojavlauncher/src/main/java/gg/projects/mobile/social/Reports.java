@@ -18,8 +18,11 @@ import java.util.List;
 public final class Reports {
     private Reports() {}
 
-    /** FIX2: {@code PLAN} is a plan's maker reported from its card (a player, with the plan as context). */
-    public enum Target { PLAYER, CREW, MESSAGE, PLAN }
+    /**
+     * FIX2: {@code PLAN} is a plan's maker reported from its card (a player, with the plan as context).
+     * CHAT2: {@code REACTION} is the player who gave a reaction, with the reaction as context.
+     */
+    public enum Target { PLAYER, CREW, MESSAGE, PLAN, REACTION }
 
     public static final int NOTE_MAX = 200;
     /** Earlier messages a message report carries for context. */
@@ -41,7 +44,9 @@ public final class Reports {
             case MESSAGE:
                 return Collections.unmodifiableList(Arrays.asList(HARASSMENT, INAPPROPRIATE, SPAM, SCAM, OTHER));
             case PLAN:
-                // A player's reasons and, first, the note's: only a plan's report takes "inappropriate" for a player.
+            case REACTION:
+                // A player's reasons and, first, the note's or the emoji's: only a plan's or a reaction's report takes
+                // "inappropriate" for a player.
                 return Collections.unmodifiableList(Arrays.asList(INAPPROPRIATE, NAME, PROFILE, HARASSMENT, SPAM, SCAM, OTHER));
             case PLAYER:
             default:
@@ -119,6 +124,32 @@ public final class Reports {
         if (link != null) target.addProperty("link", link);
         else if (code != null) target.addProperty("code", code);
         return body(target, reason, note, false);
+    }
+
+    /**
+     * TEAM6: a crew reported from its tag's card ({@code via}: the wearer, a friend or crewmate of the
+     * reporter; the case never names them).
+     */
+    public static JsonObject crewFromTag(String teamId, String via, String reason, @Nullable String note) {
+        JsonObject target = new JsonObject();
+        target.addProperty("kind", "crew");
+        target.addProperty("id", teamId);
+        target.addProperty("via", via);
+        return body(target, reason, note, false);
+    }
+
+    /** CHAT2: the player who gave a reaction, with it ({@code conv}, the message's {@code id}, the emoji). */
+    public static JsonObject reaction(String userId, String conv, long messageId, String emoji, String reason, @Nullable String note,
+                                      boolean block) {
+        JsonObject target = new JsonObject();
+        target.addProperty("kind", "player");
+        target.addProperty("id", userId);
+        JsonObject reaction = new JsonObject();
+        reaction.addProperty("conv", conv);
+        reaction.addProperty("id", messageId);
+        reaction.addProperty("e", emoji);
+        target.add("reaction", reaction);
+        return body(target, reason, note, block);
     }
 
     /** A message as the device holds it, with up to 20 earlier ones of the conversation, oldest first. */

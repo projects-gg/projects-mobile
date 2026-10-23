@@ -296,6 +296,17 @@ public final class SocialApi {
         send("DELETE", "v1/teams/requests/" + segment(team), null, true, false);
     }
 
+    /**
+     * TEAM6: asks to join the crew whose tag {@code via} wears, from the tag's card ({@code 202 {request}};
+     * only while the service lists {@code badgeRequests}).
+     */
+    @WorkerThread
+    public JsonObject requestFromBadge(String team, String via) throws SocialProblem {
+        JsonObject body = new JsonObject();
+        body.addProperty("via", id(via));
+        return require(send("POST", "v1/teams/" + segment(team) + "/requests", body, true, false));
+    }
+
     /** TEAM5: takes {@code user} into {@code team} ({@code permissions.admit}): {@code {team, invited}}. */
     @WorkerThread
     public JsonObject acceptJoinRequest(String team, String user) throws SocialProblem {

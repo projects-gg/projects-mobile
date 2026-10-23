@@ -12,7 +12,12 @@ import com.google.gson.JsonObject;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import gg.projects.mobile.language.LanguageManager;
 
@@ -22,6 +27,14 @@ import gg.projects.mobile.language.LanguageManager;
  * messages going out one at a time under their nonce, edits and deletes, and what a direct message
  * becomes while the app is not on screen (the same notification as its push). Everything runs on the
  * main thread; the file is written on its own thread.
+ *
+ * <p>MOB1 (CHAT2, README "Chat extras"): stickers and replies go like messages; reactions are shown at
+ * once and sent one by one; "yazıyor…" goes out at most every 4 seconds while the player writes and
+ * shows others' for 6 seconds ({@link ChatTyping}); a read mark goes when someone else's newest
+ * message has been on screen for a second, at most every 2 seconds per conversation, only forward;
+ * link cards are asked once per message as it comes on screen, one at a time ({@link ChatCards}); a
+ * reply whose message memory does not hold is looked up in the file. Each extra only while the
+ * service offers it ({@link SocialModel.ChatState#offers}); an older service gets exactly CHAT1.
  */
 public final class SocialChat {
     private static final String TAG = "ProjectsSocial";
@@ -29,6 +42,10 @@ public final class SocialChat {
     /** A lost answer is tried again this long after (the same nonce: never a second copy). */
     private static final long RETRY_LOST_MS = 1_500;
     private static final int OLDER_PAGE = 200;
+    /** A read mark goes at most this often per conversation (README). */
+    private static final long READ_EVERY_MS = 2_000;
+    /** CHAT2's socket capabilities beside {@code chat}. */
+    static final String[] EXTRA_CAPS = {"replies", "stickers", "reactions", "typing", "reads"};
 
     /** What the chat needs of the friends service. */
     interface Host {
@@ -60,12 +77,19 @@ public final class SocialChat {
     }
 
     /** Why a message was not even written down (the composer says it in place). */
-    public enum Refusal { NONE, EMPTY, TOO_LONG, LINK, PHONE, MUTED, OFF, NOT_FRIENDS, NOT_IN_CREW, UNAVAILABLE }
+    public enum Refusal { NONE, EMPTY, TOO_LONG, LINK, PHONE, WORDS, MUTED, OFF, NOT_FRIENDS, NOT_IN_CREW, UNAVAILABLE, LIMITED_LINKS }
+
+    /** CHAT2: what a press on an emoji did ("Ben de", "Tepkimi kaldır") or why it did not. */
+    public enum React { ADDED, REMOVED, FULL_MINE, FULL_KINDS, REFUSED, GONE, UNAVAILABLE }
 
     private final Host mHost;
     private final Handler mMain = new Handler(Looper.getMainLooper());
     private final SecureRandom mRandom = new SecureRandom();
     private final Runnable mFlush = this::flush;
+    private final Runnable mTypingTick = this::typingTick;
+    private final Runnable mCardPump = this::pumpCards;
+    private final ChatTyping mTyping = new ChatTyping();
+    private final ChatCards mCards = new ChatCards();
 
     @Nullable
     private ChatBook mBook;
@@ -79,7 +103,15 @@ public final class SocialChat {
     private boolean mSynced;
     private boolean mSending;
     /** Older pages being read for these conversations. */
-    private final java.util.Set<String> mLoadingOlder = new java.util.HashSet<>();
+    private final Set<String> mLoadingOlder = new HashSet<>();
+    /** CHAT2: conversations whose cards were read from the file. */
+    private final Set<String> mCardsLoaded = new HashSet<>();
+    /** CHAT2: the read mark sent last per conversation, and when (ms). */
+    private final Map<String, Long> mReadSent = new HashMap<>();
+    private final Map<String, Long> mReadSentAt = new HashMap<>();
+    private final Map<String, Runnable> mReadLater = new HashMap<>();
+    /** CHAT2: answered messages being looked up in the file. */
+    private final Set<String> mLookingUp = new HashSet<>();
 
     SocialChat(Host host) {
         mHost = host;
@@ -124,16 +156,28 @@ public final class SocialChat {
         mSynced = false;
         mSending = false;
         mMain.removeCallbacks(mFlush);
+        mMain.removeCallbacks(mTypingTick);
+        mMain.removeCallbacks(mCardPump);
+        for (Runnable later : mReadLater.values()) mMain.removeCallbacks(later);
+        mReadLater.clear();
+        mReadSent.clear();
+        mReadSentAt.clear();
+        mTyping.clear();
+        mCards.clear();
+        mCardsLoaded.clear();
+        mLookingUp.clear();
     }
 
     /** "Verilerimi sil": the account's history leaves this phone too. */
     @MainThread
     void deleteLocal(final String userId) {
         final ChatStore store = mStore;
+        // The store is closed here, with the deletion after its last writes (close() must not close it first).
+        mStore = null;
         close();
         final Context context = mHost.context();
         Runnable delete = () -> ChatStore.delete(context, userId);
-        if (store != null) store.afterWrites(delete);
+        if (store != null) store.close(delete);
         else new Thread(delete, "chat-delete").start();
     }
 
@@ -147,6 +191,35 @@ public final class SocialChat {
         return mBook != null && mHost.gate().chat;
     }
 
+    // ---- CHAT2: what the service offers now ----
+
+    /** An extra may be offered now (Studio has it on and the socket took it; links need no capability). */
+    public boolean offers(String extra) {
+        SocialState state = mHost.state();
+        return available() && state.chat().offers(extra, state.caps());
+    }
+
+    /** Studio's link lists while links are on (null: links off, or an older service: every link is refused). */
+    @Nullable
+    public ChatLinks.Lists linkLists() {
+        if (!offers(SocialModel.ChatState.LINKS)) return null;
+        ChatLinks.Lists lists = ChatLinks.Lists.read(mHost.state().chat().links);
+        return lists != null ? lists : ChatLinks.Lists.defaults();
+    }
+
+    /** The sticker sets the service takes now (empty without the extra). */
+    public List<String> stickerSets() {
+        if (!offers(SocialModel.ChatState.STICKERS)) return Collections.emptyList();
+        return mHost.state().chat().stickerSets;
+    }
+
+    /** The socket took at least one of CHAT2's capabilities. */
+    private boolean extrasCapable() {
+        Set<String> caps = mHost.state().caps();
+        for (String cap : EXTRA_CAPS) if (caps.contains(cap)) return true;
+        return false;
+    }
+
     // ---- the socket ----
 
     /** A socket said hello: with {@code chat} taken, the device asks for what it missed, then sends what waits. */
@@ -156,10 +229,11 @@ public final class SocialChat {
         if (mBook == null || connection == null || connection == mSyncedOn) return;
         mSyncedOn = connection;
         mSynced = false;
-        sync(connection, mBook.syncSince(), null);
+        boolean extras = extrasCapable();
+        sync(connection, mBook.syncSince(extras), null, extras);
     }
 
-    private void sync(final PresenceConnection connection, final long since, @Nullable String after) {
+    private void sync(final PresenceConnection connection, final long since, @Nullable String after, final boolean extras) {
         JsonObject frame = new JsonObject();
         frame.addProperty("t", "chat_sync");
         frame.addProperty("since", since);
@@ -167,19 +241,24 @@ public final class SocialChat {
         connection.request(frame, answer -> {
             if (connection != mSyncedOn || mBook == null) return;
             String more = null;
+            boolean done = false;
             if (answer != null && "chat_synced".equals(Json.str(answer, "t"))) {
                 more = mBook.synced(answer, System.currentTimeMillis());
+                done = more == null;
             } else if (answer != null) {
                 Log.i(TAG, "chat sync refused: " + Json.str(answer, "code"));
             }
             if (more != null) {
-                sync(connection, since, more);
+                sync(connection, since, more, extras);
                 return;
             }
+            // CHAT2: the week-back sync is done once it ran through with the extras.
+            if (done && extras) mBook.caughtUp();
             mSynced = true;
             mBook.expire(System.currentTimeMillis());
             mHost.changed();
             flush();
+            pumpCards();
         });
     }
 
@@ -190,20 +269,46 @@ public final class SocialChat {
         mSynced = false;
         mSending = false;
         mMain.removeCallbacks(mFlush);
+        mMain.removeCallbacks(mTypingTick);
+        mMain.removeCallbacks(mCardPump);
+        mTyping.clear();
+        mCards.connectionLost();
         if (mBook != null) mBook.connectionLost();
     }
 
-    /** A chat frame from the socket; true when it was one. */
+    /** A chat frame from the socket; true when it was one (CHAT2's {@code presence} peek is not). */
     @MainThread
     boolean onFrame(JsonObject frame) {
         String type = Json.str(frame, "t", "");
-        if (!type.equals("chat") && !type.equals("chat_edited") && !type.equals("chat_deleted") && !type.equals("chat_sync")) {
+        if (type.equals("presence")) {
+            // A writer who went offline stops "yazıyor" at once (the state reads the frame too).
+            SocialModel.Presence p = SocialModel.Presence.read(Json.obj(frame, "presence"));
+            if (p != null && !p.online() && mTyping.offline(p.id)) mHost.changed();
+            return false;
+        }
+        if (type.equals("chat_typing")) {
+            String conv = Json.str(frame, "conv");
+            String by = Json.str(frame, "by");
+            String me = mHost.state().myId();
+            if (ChatConv.valid(conv) && SocialModel.isUserId(by) && !by.equals(me)) {
+                mTyping.saw(conv, by, System.currentTimeMillis());
+                scheduleTypingTick();
+                mHost.changed();
+            }
+            return true;
+        }
+        if (!type.equals("chat") && !type.equals("chat_edited") && !type.equals("chat_deleted") && !type.equals("chat_sync")
+                && !type.equals("chat_reacted") && !type.equals("chat_read")) {
             return false;
         }
         if (mBook == null) return true;
         List<ChatBook.Event> events = mBook.apply(frame);
         String open = mHost.openConversation();
         for (ChatBook.Event e : events) {
+            if (e.kind == ChatBook.Event.Kind.REACTED || e.kind == ChatBook.Event.Kind.READ) continue;
+            // Their message came: they are done writing.
+            if (e.message != null) mTyping.stop(e.conv, e.message.from);
+            if (e.kind == ChatBook.Event.Kind.DELETED || e.kind == ChatBook.Event.Kind.SYNCED) continue;
             if (open != null && open.equals(e.conv) && mHost.foreground()) {
                 mBook.markRead(e.conv);
                 continue;
@@ -249,20 +354,65 @@ public final class SocialChat {
         return Refusal.NONE;
     }
 
+    /** What the text checks say of {@code typed} now (links by the service's rules while they are on). */
+    public ChatText.Verdict verdict(@Nullable String typed) {
+        return ChatText.verdict(typed, linkLists());
+    }
+
+    /**
+     * A new account sends no links yet (SPAM1's {@code chat_links}): the composer says so in place of
+     * the rule; null when the player may.
+     */
+    @Nullable
+    public SocialModel.Limited linksLimited() {
+        SocialModel.Me me = mHost.state().me();
+        if (me == null || me.limited == null || !me.limited.active(SocialService.nowSeconds())) return null;
+        return me.limited.has("chat_links") ? me.limited : null;
+    }
+
     /** "Gönder": checked, shown at once as waiting, sent when the socket is there. */
     @MainThread
     public Refusal send(String conv, String typed) {
+        return send(conv, typed, null);
+    }
+
+    /** The same as a reply to {@code replyTo} (CHAT2; without the extra it goes as a plain message). */
+    @MainThread
+    public Refusal send(String conv, String typed, @Nullable ChatMessage replyTo) {
         Refusal can = canWrite(conv);
         if (can != Refusal.NONE) return can;
-        switch (ChatText.check(typed)) {
+        ChatText.Verdict verdict = verdict(typed);
+        switch (verdict.problem) {
             case EMPTY: return Refusal.EMPTY;
             case TOO_LONG: return Refusal.TOO_LONG;
             case LINK: return Refusal.LINK;
             case PHONE: return Refusal.PHONE;
+            case WORDS: return Refusal.WORDS;
             default: break;
         }
-        mBook.write(conv, ChatText.clean(typed), nonce(), System.currentTimeMillis());
+        String clean = ChatText.clean(typed);
+        if (linksLimited() != null && !ChatLinks.find(clean).isEmpty()) return Refusal.LIMITED_LINKS;
+        ChatMessage reply = replyTo != null && offers(SocialModel.ChatState.REPLIES) ? replyTo : null;
+        mBook.write(conv, clean, null, reply, nonce(), System.currentTimeMillis());
         mBook.markRead(conv);
+        mTyping.sent(conv);
+        mHost.changed();
+        flush();
+        return Refusal.NONE;
+    }
+
+    /** CHAT2: a sticker of a set the service takes, maybe as a reply. */
+    @MainThread
+    public Refusal sendSticker(String conv, String sticker, @Nullable ChatMessage replyTo) {
+        Refusal can = canWrite(conv);
+        if (can != Refusal.NONE) return can;
+        if (!ChatMessage.isSticker(sticker) || !stickerSets().contains(sticker.substring(0, sticker.indexOf('/')))) {
+            return Refusal.UNAVAILABLE;
+        }
+        ChatMessage reply = replyTo != null && offers(SocialModel.ChatState.REPLIES) ? replyTo : null;
+        mBook.write(conv, "", sticker, reply, nonce(), System.currentTimeMillis());
+        mBook.markRead(conv);
+        mTyping.sent(conv);
         mHost.changed();
         flush();
         return Refusal.NONE;
@@ -300,9 +450,10 @@ public final class SocialChat {
         }
         final ChatBook.Outbox o = due.get(0);
         mSending = true;
+        JsonObject frame = mBook.frameOf(o);
         mBook.sending(o.nonce, now);
         mHost.changed();
-        connection.request(o.frame(), answer -> {
+        connection.request(frame, answer -> {
             mSending = false;
             if (mBook == null) return;
             long at = System.currentTimeMillis();
@@ -316,7 +467,8 @@ public final class SocialChat {
                 mBook.sent(o.nonce, Json.obj(answer, "msg"));
             } else {
                 String code = Json.str(answer, "code", "bad_request");
-                mBook.notSent(o.nonce, code, Json.str(answer, "reason"), Json.num(answer, "retryAfter", 0), at);
+                mBook.notSent(o.nonce, code, Json.str(answer, "reason"), Json.num(answer, "retryAfter", 0), at,
+                        Json.str(answer, "item"), Json.str(answer, "rule"));
                 Log.i(TAG, "chat message refused: " + code);
             }
             mHost.changed();
@@ -334,10 +486,12 @@ public final class SocialChat {
             done.failed(SocialProblem.unavailable("no socket"));
             return;
         }
-        ChatText.Problem problem = ChatText.check(typed);
-        if (problem != ChatText.Problem.NONE) {
+        ChatText.Verdict verdict = verdict(typed);
+        if (verdict.problem != ChatText.Problem.NONE) {
+            ChatText.Problem problem = verdict.problem;
             done.failed(new SocialProblem(SocialProblem.Kind.CHAT_REJECTED, 0, "local", 0, null, null,
-                    problem == ChatText.Problem.LINK ? "link" : problem == ChatText.Problem.PHONE ? "phone" : "invalid"));
+                    problem == ChatText.Problem.LINK ? "link" : problem == ChatText.Problem.PHONE ? "phone"
+                            : problem == ChatText.Problem.WORDS ? "words" : "invalid"));
             return;
         }
         JsonObject frame = mBook.edit(conv, id, ChatText.clean(typed));
@@ -380,6 +534,7 @@ public final class SocialChat {
             if (answer != null && "ack".equals(Json.str(answer, "t"))) {
                 // FIX2: the player's own tombstone ("Bu mesajı sildin"), at the hub's time now.
                 mBook.deleted(conv, id, mBook.hubNowMs(System.currentTimeMillis()));
+                mCards.forget(conv, id);
                 mHost.changed();
                 done.ok();
                 return;
@@ -389,6 +544,241 @@ public final class SocialChat {
             mHost.changed();
             done.failed(p);
         });
+    }
+
+    // ---- reactions (CHAT2) ----
+
+    /**
+     * A press on {@code emoji} for a message: takes the player's back when they gave it, else gives it
+     * when there is room. Shown at once; the service's answer settles it ({@code done} hears a refusal).
+     */
+    @MainThread
+    public React react(final String conv, ChatBook.Entry entry, final String emoji, final Done done) {
+        PresenceConnection connection = mHost.chatConnection();
+        if (mBook == null || connection == null || !offers(SocialModel.ChatState.REACTIONS) || entry.message == null) {
+            return React.UNAVAILABLE;
+        }
+        long hubNow = mBook.hubNowMs(System.currentTimeMillis());
+        if (!mBook.reactable(entry, hubNow)) return React.GONE;
+        ChatBook.ReactVerdict verdict = mBook.reactVerdict(entry.reactions, emoji);
+        switch (verdict) {
+            case REFUSED: return React.REFUSED;
+            case MINE: return React.FULL_MINE;
+            case KINDS: return React.FULL_KINDS;
+            default: break;
+        }
+        final boolean on = verdict == ChatBook.ReactVerdict.ADD;
+        final long id = entry.message.id;
+        JsonObject frame = mBook.react(conv, id, emoji, on, hubNow);
+        if (frame == null) return React.GONE;
+        mHost.changed();
+        connection.request(frame, answer -> {
+            if (mBook == null) return;
+            boolean ok = answer != null && "ack".equals(Json.str(answer, "t"));
+            mBook.reactAnswered(conv, id, emoji, on, ok ? answer : null);
+            mHost.changed();
+            if (ok) done.ok();
+            else done.failed(answer == null ? SocialProblem.unavailable("no answer") : SocialProblem.ofSocket(answer));
+        });
+        return on ? React.ADDED : React.REMOVED;
+    }
+
+    // ---- "yazıyor…" (CHAT2) ----
+
+    /**
+     * The player typed in {@code conv} (the box has text and the focus, no edit): a frame goes on the
+     * first key and then at most every 4 seconds, while the extra is on, the player shares it, is not
+     * invisible, and someone else in the conversation is online.
+     */
+    @MainThread
+    public void typed(String conv) {
+        PresenceConnection connection = mHost.chatConnection();
+        if (connection == null || !mHost.foreground() || !offers(SocialModel.ChatState.TYPING)) return;
+        SocialState state = mHost.state();
+        SocialModel.Me me = state.me();
+        if (me == null || !me.shareTyping || SocialModel.Status.INVISIBLE.equals(me.status)) return;
+        if (!someoneOnline(conv)) return;
+        if (!mTyping.wrote(conv, System.currentTimeMillis())) return;
+        JsonObject frame = new JsonObject();
+        frame.addProperty("t", "chat_typing");
+        frame.addProperty("conv", conv);
+        connection.send(frame);
+    }
+
+    /** Someone else in the conversation is online (the friend, or a crewmate). */
+    private boolean someoneOnline(String conv) {
+        SocialState state = mHost.state();
+        String me = state.myId();
+        String crew = ChatConv.crewId(conv);
+        if (crew != null) {
+            SocialModel.Crew c = state.crew(crew);
+            if (c == null) return false;
+            for (SocialModel.Member m : c.team.members) {
+                if (!m.profile.id.equals(me) && state.presence(m.profile.id).online()) return true;
+            }
+            return false;
+        }
+        String other = ChatConv.other(conv, me);
+        return other != null && state.presence(other).online();
+    }
+
+    /** Who writes in {@code conv} now (those the player shares "Yazıyor bilgisi" with; the player has it on). */
+    public List<String> writers(String conv) {
+        SocialModel.Me me = mHost.state().me();
+        if (me != null && !me.shareTyping) return Collections.emptyList();
+        return mTyping.writers(conv, System.currentTimeMillis());
+    }
+
+    private void scheduleTypingTick() {
+        mMain.removeCallbacks(mTypingTick);
+        long next = mTyping.nextEnd();
+        if (next > 0) mMain.postDelayed(mTypingTick, Math.max(50, next - System.currentTimeMillis() + 20));
+    }
+
+    private void typingTick() {
+        if (mTyping.prune(System.currentTimeMillis())) mHost.changed();
+        scheduleTypingTick();
+    }
+
+    // ---- read marks (CHAT2) ----
+
+    /**
+     * Someone else's newest message ({@code id}) has been on screen for a second, the app in front: the
+     * mark goes (only forward, at most every 2 seconds per conversation; a later one waits for its turn).
+     */
+    @MainThread
+    public void seenOnScreen(final String conv, final long id) {
+        if (id <= 0 || !offers(SocialModel.ChatState.READS) || !mHost.foreground()) return;
+        Long sent = mReadSent.get(conv);
+        if (sent != null && id <= sent) return;
+        long now = System.currentTimeMillis();
+        Long at = mReadSentAt.get(conv);
+        if (at != null && now - at < READ_EVERY_MS) {
+            Runnable before = mReadLater.remove(conv);
+            if (before != null) mMain.removeCallbacks(before);
+            Runnable later = () -> {
+                mReadLater.remove(conv);
+                seenOnScreen(conv, id);
+            };
+            mReadLater.put(conv, later);
+            mMain.postDelayed(later, READ_EVERY_MS - (now - at) + 20);
+            return;
+        }
+        PresenceConnection connection = mHost.chatConnection();
+        if (connection == null) return;
+        JsonObject frame = new JsonObject();
+        frame.addProperty("t", "chat_read");
+        frame.addProperty("conv", conv);
+        frame.addProperty("id", id);
+        if (connection.send(frame)) {
+            mReadSent.put(conv, id);
+            mReadSentAt.put(conv, now);
+        }
+    }
+
+    // ---- link cards (CHAT2) ----
+
+    /** A message with a link came on screen: its card is asked for once (the first link the rules let through). */
+    @MainThread
+    public void wantCard(String conv, ChatMessage message) {
+        if (mBook == null || message.isSticker()) return;
+        ChatLinks.Lists lists = linkLists();
+        if (lists == null) return;
+        loadCards(conv);
+        for (ChatLinks.MessageLink link : ChatLinks.messageLinks(message.text, lists)) {
+            if (!link.ok) continue;
+            long age = mBook.hubNowMs(System.currentTimeMillis()) - message.id;
+            if (mCards.want(conv, message.id, link.link.url, ChatLinkUi.domainOf(link.host), age)) pumpCards();
+            return;
+        }
+    }
+
+    /** The composer shows a link the rules let through: its card (memory only). */
+    @MainThread
+    public void wantComposerCard(String url, String host) {
+        if (linkLists() == null) return;
+        if (mCards.wantComposer(url, ChatLinkUi.domainOf(host))) pumpCards();
+    }
+
+    @Nullable
+    public ChatCards.Card card(String conv, long id) {
+        return mCards.card(conv, id);
+    }
+
+    @Nullable
+    public ChatCards.Card composerCard(String url) {
+        return mCards.composerCard(url);
+    }
+
+    /** The conversation's kept cards are read from the file once (when it first needs one). */
+    private void loadCards(final String conv) {
+        final ChatStore store = mStore;
+        if (store == null || !mCardsLoaded.add(conv)) return;
+        store.afterWrites(() -> {
+            final Map<Long, String> rows = store.cards(conv);
+            mMain.post(() -> {
+                if (store != mStore) return;
+                Map<Long, ChatCards.Card> cards = new HashMap<>();
+                for (Map.Entry<Long, String> e : rows.entrySet()) {
+                    ChatCards.Card card = ChatCards.Card.fromJson(Json.parseObject(e.getValue()));
+                    if (card != null) cards.put(e.getKey(), card);
+                }
+                if (cards.isEmpty()) return;
+                mCards.loaded(conv, cards);
+                mHost.changed();
+            });
+        });
+    }
+
+    /** Sends the next card request (one at a time per socket). */
+    private void pumpCards() {
+        mMain.removeCallbacks(mCardPump);
+        final PresenceConnection connection = mHost.chatConnection();
+        if (connection == null || !mSynced) return;
+        long now = System.currentTimeMillis();
+        final ChatCards.Ask ask = mCards.next(now);
+        if (ask == null) {
+            long wait = mCards.waitUntil();
+            if (wait > now) mMain.postDelayed(mCardPump, wait - now + 20);
+            return;
+        }
+        JsonObject frame = new JsonObject();
+        frame.addProperty("t", "chat_unfurl");
+        frame.addProperty("url", ask.url);
+        connection.request(frame, answer -> {
+            ChatCards.Outcome outcome = mCards.answered(ask, answer, System.currentTimeMillis());
+            ChatCards.Card card = ask.id > 0 ? mCards.card(ask.conv, ask.id) : null;
+            ChatStore store = mStore;
+            if (store != null && card != null && ChatCards.worthKeeping(outcome)) {
+                store.putCard(ask.conv, ask.id, card.toJson().toString());
+            }
+            mHost.changed();
+            pumpCards();
+        });
+    }
+
+    // ---- replies (CHAT2) ----
+
+    /** What a reply quotes; a message memory does not hold is looked up in the file (once). */
+    @MainThread
+    public ChatBook.Quote quote(final String conv, final long replyId, @Nullable String replyFrom) {
+        final ChatBook book = mBook;
+        if (book == null) return new ChatBook.Quote(ChatBook.Quote.Kind.EARLIER, replyId, replyFrom, null);
+        ChatBook.Quote quote = book.quote(conv, replyId, replyFrom);
+        final ChatStore store = mStore;
+        if (quote.kind == ChatBook.Quote.Kind.EARLIER && store != null && book.quoteNeedsLookup(conv, replyId)
+                && mLookingUp.add(conv + "|" + replyId)) {
+            store.afterWrites(() -> {
+                final ChatStore.Line line = store.line(conv, replyId);
+                mMain.post(() -> {
+                    mLookingUp.remove(conv + "|" + replyId);
+                    if (book != mBook) return;
+                    book.quoteFound(conv, replyId, line.message, line.tombstone);
+                    if (line.message != null || line.tombstone != null) mHost.changed();
+                });
+            });
+        }
+        return quote;
     }
 
     // ---- the player's own settings ----
@@ -413,6 +803,7 @@ public final class SocialChat {
     public void clearHistory(String conv) {
         if (mBook == null) return;
         mBook.clearHistory(conv);
+        mCards.forgetConversation(conv);
         mHost.changed();
     }
 

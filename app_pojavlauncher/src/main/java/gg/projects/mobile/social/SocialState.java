@@ -15,6 +15,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
+import gg.projects.mobile.social.SocialModel.Badge;
 import gg.projects.mobile.social.SocialModel.Call;
 import gg.projects.mobile.social.SocialModel.ChatState;
 import gg.projects.mobile.social.SocialModel.Crew;
@@ -51,6 +52,10 @@ import gg.projects.mobile.social.SocialModel.TeamNotifications;
  * each crew's waiting ones ({@code crews[].requests}, live through {@code team_requests}); the crew's
  * invite link and join setting ride on the crew card; plans come only from the socket ({@code
  * hello.plans}, {@code plan}, {@code plans}, {@code plan_removed}) and are over by the hub's clock.
+ *
+ * <p>MOB1 (TEAM6): the crew tag each friend, crewmate and the player wears ({@code badge} of their
+ * profiles, live through {@code badge} and {@code team} messages), hidden crews, and who just joined a
+ * crew of the player's (the crew chat's "Hoş geldin" line, kept in memory like the desktop's).
  */
 public final class SocialState {
     @Nullable
@@ -90,6 +95,31 @@ public final class SocialState {
     private final Map<String, Plan> mPlans = new LinkedHashMap<>();
     /** TEAM5: a {@code hello} with plans came (the socket took {@code plans}): {@link #mPlans} is the hub's view. */
     private boolean mPlansKnown;
+    /** TEAM6: who joined the player's crews while the app ran (the crew chat's local "Hoş geldin" lines), oldest first. */
+    private final List<CrewJoin> mJoins = new ArrayList<>();
+
+    /** TEAM6: someone (or the player) came into one of the player's crews, at {@code at} (Unix seconds, the phone's clock). */
+    public static final class CrewJoin {
+        /** The "Selam ver" button goes this long after the join (the desktop's 10 minutes). */
+        public static final long GREET_SECONDS = 600;
+        /** A join line stays this long in memory. */
+        public static final long KEEP_SECONDS = 86_400;
+
+        public final String crewId;
+        public final String userId;
+        public final long at;
+
+        public CrewJoin(String crewId, String userId, long at) {
+            this.crewId = crewId;
+            this.userId = userId;
+            this.at = at;
+        }
+
+        /** "Selam ver" still offered at {@code nowSeconds}. */
+        public boolean greetable(long nowSeconds) {
+            return nowSeconds < at + GREET_SECONDS;
+        }
+    }
 
     /** Something the app may tell the player about. */
     public static final class Notice {
@@ -106,7 +136,9 @@ public final class SocialState {
             /** TEAM5: {@link #who} made {@link #plan} in one of the player's crews (not quiet). */
             PLAN,
             /** TEAM5: a plan was cancelled ({@link #planId}). */
-            PLAN_REMOVED
+            PLAN_REMOVED,
+            /** TEAM6: the leader hid {@link #teamName}, so the player's tag of it came off. */
+            TAG_OFF
         }
 
         public final Kind kind;
@@ -218,6 +250,11 @@ public final class SocialState {
 
         static Notice modNotice(ModNotice notice) {
             return new Notice(Kind.MOD_NOTICE, null, null, null, null, notice.kind, null, false, null, true, false, notice, 0);
+        }
+
+        static Notice tagOff(String crewId, String teamName) {
+            return new Notice(Kind.TAG_OFF, null, null, null, null, null, teamName, false, null, false, false, null, 0,
+                    crewId, null, null);
         }
 
         static Notice restricted(long until) {
@@ -483,6 +520,27 @@ public final class SocialState {
         List<Crew> out = new ArrayList<>();
         for (Crew c : mCrews) if (c.team.member(userId) != null) out.add(c);
         return out;
+    }
+
+    /** TEAM6: who joined {@code crewId} while the app ran (the last day), oldest first. */
+    public List<CrewJoin> joins(String crewId, long nowSeconds) {
+        List<CrewJoin> out = new ArrayList<>();
+        for (CrewJoin j : mJoins) if (j.crewId.equals(crewId) && nowSeconds - j.at < CrewJoin.KEEP_SECONDS) out.add(j);
+        return out;
+    }
+
+    /** TEAM6: someone came into a crew (also the player, from an answer of their own): the chat's join line. */
+    public void noteJoin(String crewId, String userId, long nowSeconds) {
+        for (CrewJoin j : mJoins) if (j.crewId.equals(crewId) && j.userId.equals(userId) && nowSeconds - j.at < 60) return;
+        mJoins.add(new CrewJoin(crewId, userId, nowSeconds));
+        while (mJoins.size() > 60) mJoins.remove(0);
+    }
+
+    /** TEAM6: the tag a player wears as the player's own lists know it (a friend's, a crewmate's, their own); null: none. */
+    @Nullable
+    public Badge badgeOf(String userId) {
+        Profile p = profile(userId);
+        return p == null ? null : p.badge;
     }
 
     // ---- joining a crew (TEAM5) ----
@@ -957,6 +1015,7 @@ public final class SocialState {
         mMyRequests.clear();
         mPlans.clear();
         mPlansKnown = false;
+        mJoins.clear();
     }
 
     // ---- changes from the presence socket ----
@@ -1035,7 +1094,7 @@ public final class SocialState {
                 break;
             }
             case "team":
-                onTeam(message, notices);
+                onTeam(message, notices, nowSeconds);
                 break;
             case "team_invite": {
                 TeamInvite invite = TeamInvite.read(Json.obj(message, "invite"));
@@ -1102,6 +1161,11 @@ public final class SocialState {
             case "team_requests":
                 onTeamRequests(message, nowSeconds, notices);
                 break;
+            case "badge": {
+                String id = Json.str(message, "id");
+                if (SocialModel.isUserId(id)) applyBadge(id, Badge.read(Json.obj(message, "badge")), notices);
+                break;
+            }
             case "plan": {
                 // Kept even before the list names its crew (the socket may speak first); read through plans().
                 Plan plan = Plan.read(Json.obj(message, "plan"));
@@ -1199,7 +1263,7 @@ public final class SocialState {
         }
     }
 
-    private void onTeam(JsonObject message, List<Notice> notices) {
+    private void onTeam(JsonObject message, List<Notice> notices, long nowSeconds) {
         JsonObject wire = Json.obj(message, "team");
         String by = Json.str(message, "by");
         boolean byMe = by != null && by.equals(myId());
@@ -1211,6 +1275,8 @@ public final class SocialState {
             Crew before = crew(id);
             if (before == null) return;
             removeCrew(before.id());
+            // TEAM6: its tag goes with the membership (quietly: the crew's own notice says enough).
+            if (mMe != null && mMe.profile.badge != null && mMe.profile.badge.crew.equals(before.id())) mMe = mMe.withBadge(null);
             notices.add(Notice.teamGone(Json.str(message, "reason"), before.team.name, byMe, byStaff));
             return;
         }
@@ -1223,9 +1289,64 @@ public final class SocialState {
         }
         // TEAM5: a crew the player asked to join that comes now was taken in (`by`: who accepted).
         boolean accepted = crew(team.id) == null && !byMe && myRequestEver(team.id);
+        Crew before = crew(team.id);
+        boolean wasHidden = before != null && before.team.hidden;
         upsertCrew(team, null);
         if (accepted) notices.add(Notice.requestAccepted(team.id, team.name));
+        // TEAM6: someone came in (the crew chat's "Hoş geldin" line; the player's own too).
+        String joined = Json.str(message, "joined");
+        if (SocialModel.isUserId(joined) && team.member(joined) != null) noteJoin(team.id, joined, nowSeconds);
+        // TEAM6: the leader hid the crew whose tag the player wore: it came off (the desktop's toast).
+        String me = myId();
+        Member leader = team.founder();
+        boolean leaderIsMe = leader != null && me != null && leader.profile.id.equals(me);
+        if (team.hidden && !wasHidden && mMe != null && mMe.profile.badge != null && mMe.profile.badge.crew.equals(team.id)) {
+            mMe = mMe.withBadge(null);
+            if (!byMe && !leaderIsMe) notices.add(Notice.tagOff(team.id, team.name));
+        }
+        // The player's own entry carries their tag as it is now (another device of theirs may have changed it).
+        Member mine = me == null ? null : team.member(me);
+        if (mine != null && mMe != null && mine.profile.badge != null && !sameBadge(mMe.profile.badge, mine.profile.badge)) {
+            mMe = mMe.withBadge(mine.profile.badge);
+        }
         // Invites whose sender lost the right are withdrawn by the service; the next list says so.
+    }
+
+    private static boolean sameBadge(@Nullable Badge a, @Nullable Badge b) {
+        return a == null ? b == null : b != null && a.key().equals(b.key());
+    }
+
+    /**
+     * TEAM6 ({@code badge}): the tag a friend, a crewmate or the player (from another device) wears
+     * changed: it takes the old one's place wherever they show. The player's own tag coming off
+     * because the leader hid its crew is told once.
+     */
+    private void applyBadge(String userId, @Nullable Badge badge, List<Notice> notices) {
+        Friend f = mFriends.get(userId);
+        if (f != null) mFriends.put(userId, new Friend(f.profile.withBadge(badge), f.since, f.lastSeen));
+        for (int i = 0; i < mCrews.size(); i++) {
+            Crew c = mCrews.get(i);
+            Team next = c.team.withMemberBadge(userId, badge);
+            if (next != c.team) mCrews.set(i, c.withTeam(next));
+        }
+        if (mMe != null && mMe.profile.id.equals(userId)) {
+            Badge before = mMe.profile.badge;
+            mMe = mMe.withBadge(badge);
+            if (badge == null && before != null) {
+                Crew c = crew(before.crew);
+                Member leader = c == null ? null : c.team.founder();
+                if (c != null && c.team.hidden && (leader == null || !leader.profile.id.equals(userId))) {
+                    notices.add(Notice.tagOff(c.id(), c.team.name));
+                }
+            }
+        }
+    }
+
+    /** TEAM6: the player's own tag as an answer of theirs says it (wearing, taking off). */
+    public void setMyBadge(@Nullable Badge badge) {
+        if (mMe == null) return;
+        String me = mMe.profile.id;
+        applyBadge(me, badge, new ArrayList<Notice>());
     }
 
     private boolean myRequestEver(String teamId) {
@@ -1266,8 +1387,7 @@ public final class SocialState {
     private void updateAvatar(String id, String avatar, @Nullable String hash) {
         Friend f = mFriends.get(id);
         if (f != null && (!avatar.equals(f.profile.avatar) || !eq(hash, f.profile.avatarHash))) {
-            Profile p = f.profile;
-            mFriends.put(id, new Friend(new Profile(p.id, p.username, p.displayName, avatar, hash), f.since, f.lastSeen));
+            mFriends.put(id, new Friend(f.profile.withAvatar(avatar, hash), f.since, f.lastSeen));
         }
     }
 

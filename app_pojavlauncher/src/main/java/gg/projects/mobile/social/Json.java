@@ -31,6 +31,17 @@ public final class Json {
         }
     }
 
+    /** Any JSON value, or null when the text is not JSON. */
+    @Nullable
+    public static JsonElement parse(@Nullable String text) {
+        if (text == null || text.isEmpty()) return null;
+        try {
+            return JsonParser.parseString(text);
+        } catch (RuntimeException e) {
+            return null;
+        }
+    }
+
     @Nullable
     public static JsonObject obj(@Nullable JsonObject o, String key) {
         JsonElement e = o == null ? null : o.get(key);

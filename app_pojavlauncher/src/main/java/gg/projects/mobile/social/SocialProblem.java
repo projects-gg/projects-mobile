@@ -95,6 +95,18 @@ public final class SocialProblem extends Exception {
         PLAN_GONE,
         /** FIX2: the plan's note was turned away ({@code invalid_plan_note}; {@link #reason}: link, phone, words, or none). */
         PLAN_NOTE,
+        /** TEAM6: the crew's leader hid it: its tag cannot be worn ({@code team_hidden}). */
+        TEAM_HIDDEN,
+        /** TEAM6: Studio switched crew tags off ({@code badges_off}). */
+        BADGES_OFF,
+        /** TEAM6: the tag's card was stale: no requests from it now ({@code badge_request_closed}). */
+        BADGE_REQUEST_CLOSED,
+        /** TEAM6: the crew took its 10 requests from its tag today ({@code limit_badge_requests}). */
+        BADGE_REQUESTS_TODAY,
+        /** CHAT2: five of the player's on the message ({@link #reason} {@code mine}) or ten kinds ({@code kinds}). */
+        CHAT_REACTIONS_FULL,
+        /** CHAT2: Studio switched the extra off ({@code chat_feature_off}, {@link #item}). */
+        CHAT_FEATURE_OFF,
         /** Anything else: "Bir sorun oluştu." */
         FAILED
     }
@@ -175,6 +187,8 @@ public final class SocialProblem extends Exception {
             case "plan_exists": return Kind.PLAN_EXISTS;
             case "plan_not_found": return Kind.PLAN_GONE;
             case "invalid_plan_note": return Kind.PLAN_NOTE;
+            case "chat_reactions_full": return Kind.CHAT_REACTIONS_FULL;
+            case "chat_feature_off": return Kind.CHAT_FEATURE_OFF;
             case "unavailable":
             case "internal": return Kind.UNAVAILABLE;
             default: return Kind.FAILED;
@@ -257,6 +271,10 @@ public final class SocialProblem extends Exception {
             case "team_request_not_found": return Kind.JOIN_REQUEST_GONE;
             case "limit_team_requests": return Kind.CREW_REQUESTS_FULL;
             case "limit_outgoing_team_requests": return Kind.TOO_MANY_JOIN_REQUESTS;
+            case "team_hidden": return Kind.TEAM_HIDDEN;
+            case "badges_off": return Kind.BADGES_OFF;
+            case "badge_request_closed": return Kind.BADGE_REQUEST_CLOSED;
+            case "limit_badge_requests": return Kind.BADGE_REQUESTS_TODAY;
             default: return status >= 500 ? Kind.UNAVAILABLE : Kind.FAILED;
         }
     }

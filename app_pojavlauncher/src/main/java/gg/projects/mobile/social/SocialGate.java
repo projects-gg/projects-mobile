@@ -15,7 +15,7 @@ import java.util.Set;
  * without the team routes has none), each crew addition its {@code teamFeatures} entry
  * ({@code look}, {@code calls}, {@code roles}, {@code mute}, {@code multi}, {@code callServer} and
  * TEAM5's {@code requests}, {@code link}, {@code plans}; FIX2's {@code planNotes} and
- * {@code crewFriendRequests}),
+ * {@code crewFriendRequests}; TEAM6's {@code badges} and {@code badgeRequests}),
  * chat and phone notifications their {@code features} entries ({@code chat}, {@code push}; a
  * service from before pushes has no such field), reports and moderators' notes a {@code me} that
  * carries {@code notices} (MOD1);</li>
@@ -51,10 +51,14 @@ public final class SocialGate {
     public final boolean planNotes;
     /** FIX2: a friend request to a crewmate without their code ({@code POST /v1/friends/requests {user}}). */
     public final boolean crewFriendRequests;
+    /** TEAM6: crew tags before names, their cards, hidden crews (Studio's "Ekip etiketleri" on). */
+    public final boolean badges;
+    /** TEAM6: join requests from a tag's card (with {@link #badges}). */
+    public final boolean badgeRequests;
 
     private SocialGate(boolean friends, boolean teams, boolean look, boolean calls, boolean roles, boolean mute, boolean push,
                        boolean multi, boolean callServer, boolean chat, boolean reports, boolean requests, boolean link,
-                       boolean plans, boolean planNotes, boolean crewFriendRequests) {
+                       boolean plans, boolean planNotes, boolean crewFriendRequests, boolean badges, boolean badgeRequests) {
         this.friends = friends;
         this.teams = teams;
         this.look = look;
@@ -71,10 +75,12 @@ public final class SocialGate {
         this.plans = plans;
         this.planNotes = planNotes;
         this.crewFriendRequests = crewFriendRequests;
+        this.badges = badges;
+        this.badgeRequests = badgeRequests;
     }
 
     public static final SocialGate OFF = new SocialGate(false, false, false, false, false, false, false, false, false, false, false,
-            false, false, false, false, false);
+            false, false, false, false, false, false, false);
 
     /**
      * @param configFriends {@code features.friends} of the signed config (or a debug override)
@@ -114,6 +120,8 @@ public final class SocialGate {
                 teams && teamFeatures.contains("link"),
                 teams && teamFeatures.contains("plans"),
                 teams && teamFeatures.contains("plans") && teamFeatures.contains("planNotes"),
-                teams && teamFeatures.contains("crewFriendRequests"));
+                teams && teamFeatures.contains("crewFriendRequests"),
+                teams && teamFeatures.contains("badges"),
+                teams && teamFeatures.contains("badges") && teamFeatures.contains("badgeRequests"));
     }
 }
