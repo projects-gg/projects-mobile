@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- MOB1 (CHAT2): the soft bone line at a quote's start. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <corners android:radius="1dp" />
+    <solid android:color="#59F3EBDD" />
+</shape>

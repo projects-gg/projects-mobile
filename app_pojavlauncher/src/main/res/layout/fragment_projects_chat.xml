@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- M20: a conversation (crew chat or a friend's direct messages). The header names it; a direct
      conversation has the small "Discord'dan mesajlaş" under it; the messages fill the screen, newest at
-     the bottom; crew chat has quick replies above the rounded field and its round send button. -->
+     the bottom; crew chat has quick replies above the rounded field and its round send button.
+     MOB1 (CHAT2): who writes floats over the list's bottom ("Ayşe yazıyor"); a reply's strip and a typed
+     link's card sit over the field; the emoji and sticker button starts the field. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -84,6 +86,47 @@
             android:visibility="gone"
             tools:visibility="visible" />
 
+        <LinearLayout
+            android:id="@+id/projects_chat_typing"
+            android:layout_width="wrap_content"
+            android:layout_height="28dp"
+            android:layout_gravity="bottom|start"
+            android:layout_marginStart="12dp"
+            android:layout_marginBottom="6dp"
+            android:background="@drawable/projects_chat_typing_bg"
+            android:gravity="center_vertical"
+            android:importantForAccessibility="no"
+            android:orientation="horizontal"
+            android:paddingStart="5dp"
+            android:paddingEnd="12dp"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <gg.projects.mobile.social.ui.AvatarView
+                android:id="@+id/projects_chat_typing_face"
+                android:layout_width="18dp"
+                android:layout_height="18dp" />
+
+            <TextView
+                android:id="@+id/projects_chat_typing_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:ellipsize="end"
+                android:fontFamily="@font/figtree_regular"
+                android:maxLines="1"
+                android:maxWidth="240dp"
+                android:textColor="@color/projects_ash_300"
+                android:textSize="12sp"
+                tools:text="Ayşe yazıyor" />
+
+            <gg.projects.mobile.social.ui.TypingDots
+                android:id="@+id/projects_chat_typing_dots"
+                android:layout_width="18dp"
+                android:layout_height="12dp"
+                android:layout_marginStart="4dp" />
+        </LinearLayout>
+
         <TextView
             android:id="@+id/projects_chat_jump"
             android:layout_width="wrap_content"
@@ -120,6 +163,85 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal" />
     </HorizontalScrollView>
+
+    <LinearLayout
+        android:id="@+id/projects_chat_reply_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="12dp"
+        android:layout_marginTop="6dp"
+        android:background="@drawable/projects_chat_quote_bg"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="6dp"
+        android:visibility="gone"
+        tools:visibility="visible">
+
+        <View
+            android:layout_width="2dp"
+            android:layout_height="34dp"
+            android:background="@drawable/projects_chat_quote_line"
+            android:importantForAccessibility="no" />
+
+        <ImageView
+            android:id="@+id/projects_chat_reply_sticker"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_marginStart="8dp"
+            android:importantForAccessibility="no"
+            android:scaleType="fitCenter"
+            android:visibility="gone" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:paddingVertical="6dp">
+
+            <TextView
+                android:id="@+id/projects_chat_reply_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:fontFamily="@font/figtree_semibold"
+                android:maxLines="1"
+                android:textColor="@color/projects_gold_300"
+                android:textSize="12sp"
+                tools:text="Yanıtlanıyor: Ayşe" />
+
+            <TextView
+                android:id="@+id/projects_chat_reply_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:fontFamily="@font/figtree_regular"
+                android:maxLines="1"
+                android:textColor="@color/projects_ash_400"
+                android:textSize="13sp"
+                tools:text="Akşam geliyor musun?" />
+        </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/projects_chat_reply_cancel"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="@drawable/projects_icon_button_ripple"
+            android:contentDescription="@string/projects_reply_cancel"
+            android:padding="12dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/projects_ic_x"
+            android:tint="@color/projects_ash_300" />
+    </LinearLayout>
+
+    <FrameLayout
+        android:id="@+id/projects_chat_composer_card"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="12dp"
+        android:layout_marginTop="6dp"
+        android:visibility="gone" />
 
     <LinearLayout
         android:id="@+id/projects_chat_edit_bar"
@@ -216,10 +338,24 @@
         android:layout_height="wrap_content"
         android:gravity="bottom"
         android:orientation="horizontal"
-        android:paddingStart="12dp"
+        android:paddingStart="6dp"
         android:paddingTop="6dp"
         android:paddingEnd="8dp"
         android:paddingBottom="10dp">
+
+        <ImageButton
+            android:id="@+id/projects_chat_emoji"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_marginEnd="2dp"
+            android:background="@drawable/projects_icon_button_ripple"
+            android:contentDescription="@string/projects_picker_open"
+            android:padding="10dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/projects_ic_chat2_smiley"
+            android:tint="@color/projects_ash_300"
+            android:visibility="gone"
+            tools:visibility="visible" />
 
         <EditText
             android:id="@+id/projects_chat_input"

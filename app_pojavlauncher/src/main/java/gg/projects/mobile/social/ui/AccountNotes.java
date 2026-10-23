@@ -53,6 +53,16 @@ public final class AccountNotes {
         if (limited.has(Limited.CHAT_MESSAGES)) {
             item(activity, content, activity.getString(R.string.projects_limited_chat, limited.perDay(Limited.CHAT_MESSAGES)));
         }
+        // CHAT2: links, stickers and reactions in chat.
+        if (limited.has(Limited.CHAT_LINKS)) item(activity, content, activity.getString(R.string.projects_limited_chat_links));
+        if (limited.has(Limited.CHAT_STICKERS)) {
+            int stickers = limited.perDay(Limited.CHAT_STICKERS);
+            item(activity, content, activity.getResources().getQuantityString(R.plurals.projects_limited_chat_stickers, stickers, stickers));
+        }
+        if (limited.has(Limited.CHAT_REACTIONS)) {
+            int reactions = limited.perDay(Limited.CHAT_REACTIONS);
+            item(activity, content, activity.getResources().getQuantityString(R.plurals.projects_limited_chat_reactions, reactions, reactions));
+        }
         // M21 (TEAM5): invite links and plans (joining, asking to join and answering plans stay free).
         if (limited.has(Limited.CREW_LINK)) item(activity, content, activity.getString(R.string.projects_limited_crew_link));
         if (limited.has(Limited.CREW_PLANS)) item(activity, content, activity.getString(R.string.projects_limited_crew_plans));

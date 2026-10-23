@@ -215,6 +215,21 @@
         <item name="android:windowExitAnimation">@anim/projects_menu_out</item>
     </style>
 
+    <!-- MOB1: a sheet that rises from the bottom (BottomPanel): a full-screen window that dims what is
+         behind it; the sheet animates itself (no window animation). -->
+    <style name="ProjectsBottomPanel" parent="Theme.AppCompat.Dialog">
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="windowNoTitle">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:windowAnimationStyle">@null</item>
+        <item name="android:navigationBarColor">@color/projects_obsidian_900</item>
+        <item name="android:windowSoftInputMode">adjustResize</item>
+        <item name="android:textColor">@color/projects_bone_100</item>
+        <item name="colorAccent">@color/projects_gold_300</item>
+    </style>
+
     <!-- The game's exit message (0.1.5): no window of its own behind the branded dialog, which
          appears once the launcher looked at the failed start (a fraction of a second). -->
     <style name="ProjectsExitTheme" parent="AppTheme">

@@ -95,7 +95,8 @@ public class SocialSettingsFragment extends Fragment implements SocialService.Li
         Me me = service.state().me();
         SocialGate gate = service.gate();
         StringBuilder key = new StringBuilder();
-        key.append(me == null ? "" : me.shareLastSeen + "|" + me.shareServer).append('|')
+        key.append(me == null ? "" : me.shareLastSeen + "|" + me.shareServer + "|" + me.shareRead + "|" + me.shareTyping + "|"
+                + me.chatPrivacy).append('|')
                 .append(SocialNotifications.canNotify(context)).append('|').append(gate.teams).append(gate.calls).append(gate.mute)
                 .append('|').append(service.state().teamNotifications().calls).append(service.prefs().wantsInvites())
                 .append(service.prefs().wantsRequests()).append(service.prefs().wantsCallsLocally())
@@ -110,6 +111,12 @@ public class SocialSettingsFragment extends Fragment implements SocialService.Li
         if (me != null) {
             toggle(R.string.projects_social_share_last_seen, me.shareLastSeen, on -> service.setPrivacy("shareLastSeen", on, privacyResult()));
             toggle(R.string.projects_social_share_server, me.shareServer, on -> service.setPrivacy("shareServer", on, privacyResult()));
+            // CHAT2: "Görüldü" and "yazıyor…" while the service offers them; both work both ways.
+            if (me.chatPrivacy && gate.chat) {
+                toggle(R.string.projects_privacy_seen, me.shareRead, on -> service.setPrivacy("shareRead", on, privacyResult()));
+                toggle(R.string.projects_privacy_typing, me.shareTyping, on -> service.setPrivacy("shareTyping", on, privacyResult()));
+                mList.addView(text(getString(R.string.projects_privacy_both), R.color.projects_ash_400));
+            }
         }
 
         section(R.string.projects_social_notifications);

@@ -24,4 +24,10 @@
     <item name="projects_menu_action" type="id" />
     <!-- View tag (FIX2): the running height animation of a plan or call card's answers (AnswerList). -->
     <item name="projects_answers_anim" type="id" />
+    <!-- View tag (MOB1): the link a chat composer's card shows (ChatFragment). -->
+    <item name="projects_chat_composer_link" type="id" />
+    <!-- View tag (MOB1): the line with one action on the screen's content root (ActionToast). -->
+    <item name="projects_action_toast" type="id" />
+    <!-- View tag (MOB1): which message a chat row's sticker belongs to, so a rebind of the same one keeps its motion. -->
+    <item name="projects_chat_sticker_row" type="id" />
 </resources>

@@ -1,0 +1,215 @@
+package gg.projects.mobile.social.ui;
+
+import android.app.Dialog;
+import android.content.Context;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.GradientDrawable;
+import android.view.Gravity;
+import android.view.MotionEvent;
+import android.view.VelocityTracker;
+import android.view.View;
+import android.view.ViewConfiguration;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.FrameLayout;
+import android.widget.LinearLayout;
+
+import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
+
+import net.kdt.pojavlaunch.R;
+
+import gg.projects.mobile.mods.Motion;
+
+/**
+ * MOB1: a sheet that rises from the bottom (the emoji and sticker picker, who reacted, a crew tag's
+ * card): the screen dims, the sheet slides up on the entrance curve (280 ms) and leaves faster (190 ms),
+ * interruptible; a drag on its top (the handle) pulls it down and a fling or a long pull closes it. Its
+ * top corners are round (16 dp), the surface opaque obsidian with a hairline; it is as wide as the
+ * screen and at most {@code maxHeightFraction} of it. With animations off it just appears and goes.
+ */
+public final class BottomPanel {
+    private final Dialog mDialog;
+    private final LinearLayout mSheet;
+    private final FrameLayout mContent;
+    private boolean mClosing;
+    @Nullable
+    private Runnable mOnClosed;
+
+    private BottomPanel(Context context, float maxHeightFraction) {
+        mDialog = new Dialog(context, R.style.ProjectsBottomPanel);
+        float dp = context.getResources().getDisplayMetrics().density;
+        FrameLayout root = new FrameLayout(context);
+        root.setOnClickListener(v -> dismiss());
+        mSheet = new LinearLayout(context);
+        mSheet.setOrientation(LinearLayout.VERTICAL);
+        mSheet.setClickable(true);
+        GradientDrawable surface = new GradientDrawable();
+        float r = 16 * dp;
+        surface.setCornerRadii(new float[]{r, r, r, r, 0, 0, 0, 0});
+        surface.setColor(ContextCompat.getColor(context, R.color.projects_obsidian_900));
+        surface.setStroke(Math.max(1, Math.round(dp)), ContextCompat.getColor(context, R.color.projects_hairline));
+        mSheet.setBackground(surface);
+        mSheet.setElevation(12 * dp);
+        // The handle: a drag here pulls the sheet down.
+        View handle = new View(context);
+        GradientDrawable bar = new GradientDrawable();
+        bar.setCornerRadius(2 * dp);
+        bar.setColor(ContextCompat.getColor(context, R.color.projects_obsidian_600));
+        handle.setBackground(bar);
+        FrameLayout grip = new FrameLayout(context);
+        FrameLayout.LayoutParams barLp = new FrameLayout.LayoutParams(Math.round(36 * dp), Math.round(4 * dp), Gravity.CENTER);
+        grip.addView(handle, barLp);
+        grip.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        mSheet.addView(grip, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Math.round(20 * dp)));
+        mContent = new FrameLayout(context);
+        mSheet.addView(mContent, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        int maxHeight = Math.round(context.getResources().getDisplayMetrics().heightPixels * maxHeightFraction);
+        FrameLayout.LayoutParams sheetLp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM);
+        root.addView(new MaxHeightFrame(context, maxHeight, mSheet), sheetLp);
+        attachDrag(grip, dp);
+        mDialog.setContentView(root);
+        mDialog.setCanceledOnTouchOutside(true);
+        Window window = mDialog.getWindow();
+        if (window != null) {
+            window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+            window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            window.setDimAmount(0.55f);
+            window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+            window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        }
+        mDialog.setOnKeyListener((d, keyCode, event) -> {
+            if (keyCode == android.view.KeyEvent.KEYCODE_BACK && event.getAction() == android.view.KeyEvent.ACTION_UP) {
+                dismiss();
+                return true;
+            }
+            return false;
+        });
+    }
+
+    /** A sheet of at most {@code maxHeightFraction} of the screen holding {@code content}. */
+    public static BottomPanel of(Context context, View content, float maxHeightFraction) {
+        BottomPanel panel = new BottomPanel(context, maxHeightFraction);
+        panel.mContent.addView(content, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
+        return panel;
+    }
+
+    public BottomPanel onClosed(@Nullable Runnable onClosed) {
+        mOnClosed = onClosed;
+        return this;
+    }
+
+    public Dialog dialog() {
+        return mDialog;
+    }
+
+    public boolean showing() {
+        return mDialog.isShowing() && !mClosing;
+    }
+
+    public void show() {
+        mDialog.show();
+        mSheet.setVisibility(View.INVISIBLE);
+        mSheet.post(() -> {
+            mSheet.setVisibility(View.VISIBLE);
+            if (!Motion.enabled(mSheet.getContext())) return;
+            mSheet.setTranslationY(mSheet.getHeight());
+            mSheet.animate().translationY(0f).setDuration(Motion.ENTER_MS).setInterpolator(Motion.EASE_DRAWER).start();
+        });
+    }
+
+    /** Slides down, then goes. */
+    public void dismiss() {
+        if (mClosing || !mDialog.isShowing()) return;
+        mClosing = true;
+        Runnable gone = () -> {
+            try {
+                mDialog.dismiss();
+            } catch (RuntimeException ignored) {
+                // The activity went first.
+            }
+            if (mOnClosed != null) mOnClosed.run();
+        };
+        if (!Motion.enabled(mSheet.getContext()) || mSheet.getHeight() == 0) {
+            gone.run();
+            return;
+        }
+        mSheet.animate().cancel();
+        mSheet.animate().translationY(mSheet.getHeight()).setDuration(Motion.EXIT_MS).setInterpolator(Motion.EASE_IN)
+                .withEndAction(gone).start();
+    }
+
+    /** A drag on the handle moves the sheet down; a fling or half its height closes it, else it settles back. */
+    private void attachDrag(View grip, float dp) {
+        final int slop = ViewConfiguration.get(grip.getContext()).getScaledTouchSlop();
+        final float fling = 900 * dp;
+        grip.setOnTouchListener(new View.OnTouchListener() {
+            float startY;
+            boolean dragging;
+            VelocityTracker tracker;
+
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getActionMasked()) {
+                    case MotionEvent.ACTION_DOWN:
+                        startY = event.getRawY();
+                        dragging = false;
+                        tracker = VelocityTracker.obtain();
+                        tracker.addMovement(event);
+                        mSheet.animate().cancel();
+                        return true;
+                    case MotionEvent.ACTION_MOVE: {
+                        if (tracker != null) tracker.addMovement(event);
+                        float dy = event.getRawY() - startY;
+                        if (!dragging && Math.abs(dy) > slop) dragging = true;
+                        if (dragging) mSheet.setTranslationY(Math.max(0f, dy));
+                        return true;
+                    }
+                    case MotionEvent.ACTION_UP:
+                    case MotionEvent.ACTION_CANCEL: {
+                        float speed = 0;
+                        if (tracker != null) {
+                            tracker.addMovement(event);
+                            tracker.computeCurrentVelocity(1000);
+                            speed = tracker.getYVelocity();
+                            tracker.recycle();
+                            tracker = null;
+                        }
+                        float moved = mSheet.getTranslationY();
+                        if (dragging && (speed > fling || moved > mSheet.getHeight() * 0.4f)) {
+                            dismiss();
+                        } else {
+                            mSheet.animate().translationY(0f).setDuration(220).setInterpolator(Motion.EASE_OUT).start();
+                        }
+                        dragging = false;
+                        return true;
+                    }
+                    default:
+                        return false;
+                }
+            }
+        });
+    }
+
+    /** Holds the sheet at most {@code max} tall (a long list scrolls inside). */
+    private static final class MaxHeightFrame extends FrameLayout {
+        private final int mMax;
+
+        MaxHeightFrame(Context context, int max, View child) {
+            super(context);
+            mMax = max;
+            addView(child, new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        }
+
+        @Override
+        protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+            int size = MeasureSpec.getSize(heightMeasureSpec);
+            int limit = MeasureSpec.getMode(heightMeasureSpec) == MeasureSpec.UNSPECIFIED ? mMax : Math.min(mMax, size);
+            super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(limit, MeasureSpec.AT_MOST));
+        }
+    }
+}

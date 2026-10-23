@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- MOB1 (CHAT2): a reply's quote above its bubble (and the composer's reply strip): a quiet obsidian
+     block with round corners like the bubbles; its soft bone line is a view of its own. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <corners android:radius="12dp" />
+    <solid android:color="@color/projects_obsidian_850" />
+    <stroke
+        android:width="1dp"
+        android:color="@color/projects_hairline" />
+</shape>

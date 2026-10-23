@@ -161,16 +161,27 @@ public class ChatListFragment extends Fragment implements SocialService.Listener
         Set<String> listed = new HashSet<>();
         for (ChatBook.Summary s : service.chat().visibleSummaries()) {
             listed.add(s.conv);
-            rows.add(new Row(s.conv, s.conv + "|" + (s.last == null ? "" : s.last.key() + s.last.text()) + "|" + s.unread
-                    + "|" + faceKey(service.state(), s.conv), s));
+            rows.add(new Row(s.conv, s.conv + "|" + (s.last == null ? "" : s.last.key() + s.last.text() + s.last.sticker()) + "|" + s.unread
+                    + "|" + faceKey(service.state(), s.conv) + "|" + extrasKey(service, s.conv), s));
         }
         // A crew's chat is there before its first message.
         for (Crew crew : service.state().crews()) {
             String conv = ChatConv.crew(crew.id());
-            if (listed.add(conv)) rows.add(new Row(conv, conv + "||0|" + faceKey(service.state(), conv), null));
+            if (listed.add(conv)) rows.add(new Row(conv, conv + "||0|" + faceKey(service.state(), conv) + "|" + extrasKey(service, conv), null));
         }
         mAdapter.submit(rows);
         mEmpty.setVisibility(rows.isEmpty() ? View.VISIBLE : View.GONE);
+    }
+
+    /** CHAT2 "yazıyor…" and TEAM6's tag of the friend: a change binds the row again. */
+    private static String extrasKey(SocialService service, String conv) {
+        StringBuilder key = new StringBuilder();
+        key.append(service.chat().writers(conv).isEmpty() ? "" : "typing");
+        if (service.gate().badges && ChatConv.crewId(conv) == null) {
+            Profile other = service.state().profile(ChatConv.other(conv, service.state().myId()));
+            if (other != null && other.badge != null) key.append('|').append(other.badge.key());
+        }
+        return key.toString();
     }
 
     private static String faceKey(SocialState state, String conv) {
@@ -298,6 +309,8 @@ public class ChatListFragment extends Fragment implements SocialService.Listener
             mark.setVisibility(View.VISIBLE);
             if (crew != null) mark.setLook(crew.team.emblem, crew.team.color, crew.team.frame);
             name.setText(crew == null ? getString(R.string.projects_chat_crew) : crew.team.name);
+            ((CrewTagChip) view.findViewById(R.id.projects_person_tag)).setBadgeOf(null, null, CrewTagChip.Size.MD);
+            CrewTagChip.labelName(name, null);
         } else {
             Profile other = state.profile(ChatConv.other(row.conv, me));
             mark.setVisibility(View.GONE);
@@ -307,23 +320,27 @@ public class ChatListFragment extends Fragment implements SocialService.Listener
             avatar.setDot(other == null ? AvatarView.Dot.NONE : SocialUi.dot(state.presence(other.id)));
             avatar.setDimmed(false);
             name.setText(other == null ? "" : other.name());
+            // TEAM6: the friend's tag before their name.
+            gg.projects.mobile.social.SocialModel.Badge worn = other == null ? null
+                    : gg.projects.mobile.social.BadgeRules.shown(service.gate(), other.badge);
+            ((CrewTagChip) view.findViewById(R.id.projects_person_tag)).setBadgeOf(other == null ? null : other.id, worn,
+                    CrewTagChip.Size.MD);
+            CrewTagChip.labelName(name, worn);
         }
         ChatBook.Summary s = row.summary;
         int unread = s == null ? 0 : s.unread;
-        if (s == null || s.last == null) {
+        // CHAT2: "yazıyor…" while someone writes there (gold), else the newest message.
+        boolean typing = !service.chat().writers(row.conv).isEmpty();
+        if (typing) {
+            line.setText(R.string.projects_typing_list);
+        } else if (s == null || s.last == null) {
             line.setText(R.string.projects_chat_crew);
-        } else if (s.last.deleted()) {
-            // FIX2: the newest line is a deleted message: what its quiet bubble says.
-            line.setText(ChatFragment.deletedText(context, s.last.tombstone, me, state));
-        } else if (me != null && s.last.mine(me)) {
-            line.setText(getString(R.string.projects_chat_you, oneLine(s.last.text())));
-        } else if (crewId != null && me != null) {
-            Profile from = state.profile(s.last.from(me));
-            line.setText((from == null ? "" : from.name() + ": ") + oneLine(s.last.text()));
         } else {
-            line.setText(oneLine(s.last.text()));
+            // FIX2: a deleted newest message says so; CHAT2: a sticker says which.
+            line.setText(ChatPreview.line(context, state, s.last, me, crewId != null));
         }
-        line.setTextColor(ContextCompat.getColor(context, unread > 0 ? R.color.projects_bone_100 : R.color.projects_ash_400));
+        line.setTextColor(ContextCompat.getColor(context, typing ? R.color.projects_gold_300
+                : unread > 0 ? R.color.projects_bone_100 : R.color.projects_ash_400));
         if (unread > 0) {
             badge.setVisibility(View.VISIBLE);
             badge.setText(unread > 99 ? "99+" : String.valueOf(unread));
