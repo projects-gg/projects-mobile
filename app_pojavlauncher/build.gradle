@@ -213,7 +213,7 @@ android {
         }
     }
 
-    ndkVersion = "27.3.13750724"
+    ndkVersion = rootProject.ext.projectsNdkVersion
 
     externalNativeBuild {
         ndkBuild {

@@ -29,6 +29,19 @@ static void writeVersionFile(File[] jarFileArray, File versionFile){
     versionFile.write(sha1.digest().collect { String.format("%02x", it) }.join())
 }
 
+// One NDK for every Android module. A module without its own ndkVersion (the androidnsbypass submodule) builds with
+// the newest NDK installed (28.2 on the build machine since October 2026); the app's NDK 27 then refuses the prefab
+// library it publishes and libpojavexec fails to link the namespace functions.
+ext.projectsNdkVersion = "27.3.13750724"
+subprojects {subproject ->
+    subproject.plugins.withId("com.android.library") {
+        subproject.android.ndkVersion = rootProject.ext.projectsNdkVersion
+    }
+    subproject.plugins.withId("com.android.application") {
+        subproject.android.ndkVersion = rootProject.ext.projectsNdkVersion
+    }
+}
+
 subprojects {subproject ->
     if (subproject.name.contains("lwjgl")) return
     tasks.withType(Jar).configureEach {jar ->
