@@ -15,6 +15,9 @@ import androidx.appcompat.widget.AppCompatTextView;
  * presses the box, and a link's card keeps its own press.
  */
 public class ChatBubbleText extends AppCompatTextView {
+    /** True while this text is pressing or releasing its box (the box hands the state back down, see below). */
+    private boolean mForwarding;
+
     public ChatBubbleText(Context context) {
         super(context);
     }
@@ -30,7 +33,19 @@ public class ChatBubbleText extends AppCompatTextView {
     @Override
     public void setPressed(boolean pressed) {
         super.setPressed(pressed);
+        // MOB1b: the box hands a release back down to every child (ViewGroup.dispatchSetPressed), which called
+        // this again without end: a release of a held or tapped message's text overflowed the stack (the
+        // emulator's crash, 24 Oct). Only a change goes on, and only once.
+        if (mForwarding) return;
         ViewParent parent = getParent();
-        if (parent instanceof View && ((View) parent).isEnabled()) ((View) parent).setPressed(pressed);
+        if (!(parent instanceof View)) return;
+        View box = (View) parent;
+        if (!box.isEnabled() || box.isPressed() == pressed) return;
+        mForwarding = true;
+        try {
+            box.setPressed(pressed);
+        } finally {
+            mForwarding = false;
+        }
     }
 }

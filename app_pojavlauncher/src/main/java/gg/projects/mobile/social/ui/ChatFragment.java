@@ -1671,9 +1671,12 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
         String clock = android.text.format.DateFormat.getTimeFormat(context).format(new Date(timeOf(e)));
         boolean edited = e.message != null && e.message.edited();
         boolean waiting = e.outbox != null && service.connection() != SocialService.Connection.LIVE;
+        // MOB1b: "Görüldü" stands where the check stood; the time and "düzenlendi" stay, as on the desktop (it used to
+        // replace them, so a seen message lost its time and its edit mark).
         time.setText(waiting ? getString(R.string.projects_chat_waiting)
-                : seen ? getString(R.string.projects_seen)
                 : edited ? clock + " · " + getString(R.string.projects_chat_edited) : clock);
+        TextView seenMark = view.findViewById(R.id.projects_msg_seen);
+        seenMark.setVisibility(seen && !e.deleted() && !e.failed() ? View.VISIBLE : View.GONE);
         String stateKey;
         if (e.deleted()) {
             status.setVisibility(View.GONE);
@@ -1721,6 +1724,13 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
         boolean motion = Motion.enabled(context);
         content.animate().cancel();
         status.animate().cancel();
+        seenMark.animate().cancel();
+        seenMark.setAlpha(1f);
+        if (changed && motion && seen && !e.deleted()) {
+            // The check gives way to "Görüldü" (a short fade, as the desktop swaps them).
+            seenMark.setAlpha(0f);
+            seenMark.animate().alpha(1f).setDuration(180).setInterpolator(Motion.EASE_OUT).start();
+        }
         if (changed && motion && e.deleted()) {
             // FIX2: the message settles into its tombstone (a quick fade and a small give).
             content.setAlpha(0.25f);
@@ -1770,6 +1780,8 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
             content.setClickable(false);
             bubble.setOnLongClickListener(null);
             bubble.setLongClickable(false);
+            view.findViewById(R.id.projects_msg_card).setOnLongClickListener(null);
+            view.findViewById(R.id.projects_msg_quote).setOnLongClickListener(null);
             bindSenderMenu(view, e, me);
             return;
         }
@@ -1789,6 +1801,10 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
         content.setLongClickable(true);
         content.setOnLongClickListener(hold);
         bubble.setOnLongClickListener(hold);
+        // MOB1b: a hold on the link's card or on the quote is a hold on the message. They have their own taps, and
+        // with no hold of their own the release after a hold was a tap: it opened the link (the emulator, 24 Oct).
+        view.findViewById(R.id.projects_msg_card).setOnLongClickListener(hold);
+        view.findViewById(R.id.projects_msg_quote).setOnLongClickListener(hold);
         bindSenderMenu(view, e, me);
         if (isSticker) {
             // A press plays the sticker's motion once (a running one finishes first).

@@ -225,6 +225,12 @@ final class MessageActions {
     @Nullable
     private static Bitmap snapshot(View view) {
         if (view.getWidth() == 0 || view.getHeight() == 0) return null;
+        // MOB1b: the bubble inside is still sunk under the finger (Press.CARD scales it down), and drawing the column
+        // draws its children with their scale: the picture showed a smaller bubble ~11 px right of the message, the
+        // dimmed one peeking out at its left (the emulator, 24 Oct). The picture is of the message at rest.
+        java.util.ArrayList<View> sunk = new java.util.ArrayList<>();
+        java.util.ArrayList<float[]> scales = new java.util.ArrayList<>();
+        unsink(view, sunk, scales);
         try {
             Bitmap bitmap = Bitmap.createBitmap(view.getWidth(), view.getHeight(), Bitmap.Config.ARGB_8888);
             Canvas canvas = new Canvas(bitmap);
@@ -232,6 +238,27 @@ final class MessageActions {
             return bitmap;
         } catch (RuntimeException | OutOfMemoryError e) {
             return null;
+        } finally {
+            for (int i = 0; i < sunk.size(); i++) {
+                sunk.get(i).setScaleX(scales.get(i)[0]);
+                sunk.get(i).setScaleY(scales.get(i)[1]);
+            }
+        }
+    }
+
+    /** Sets every scaled view under {@code parent} to full size for one drawing, keeping its scale to put back. */
+    private static void unsink(View parent, java.util.ArrayList<View> sunk, java.util.ArrayList<float[]> scales) {
+        if (!(parent instanceof ViewGroup)) return;
+        ViewGroup group = (ViewGroup) parent;
+        for (int i = 0; i < group.getChildCount(); i++) {
+            View child = group.getChildAt(i);
+            if (child.getScaleX() != 1f || child.getScaleY() != 1f) {
+                sunk.add(child);
+                scales.add(new float[]{child.getScaleX(), child.getScaleY()});
+                child.setScaleX(1f);
+                child.setScaleY(1f);
+            }
+            unsink(child, sunk, scales);
         }
     }
 

@@ -230,6 +230,19 @@
                 android:visibility="gone"
                 tools:src="@drawable/projects_ic_check"
                 tools:visibility="visible" />
+
+            <!-- MOB1b: "Görüldü" takes the check's place; the time and "düzenlendi" stay (the desktop's line). -->
+            <TextView
+                android:id="@+id/projects_msg_seen"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:fontFamily="@font/figtree_semibold"
+                android:importantForAccessibility="no"
+                android:text="@string/projects_seen"
+                android:textColor="@color/projects_ash_400"
+                android:textSize="11sp"
+                android:visibility="gone" />
         </LinearLayout>
 
         <TextView

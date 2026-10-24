@@ -247,7 +247,10 @@ public class Team6Test {
         JsonObject frame = new JsonObject();
         frame.addProperty("t", "team");
         frame.addProperty("crew", GK);
-        frame.addProperty("joined", B);
+        // The service's form: a list of ids (admission.ts `joined: [user]`); a bare id was never sent.
+        JsonArray joined = new JsonArray();
+        joined.add(B);
+        frame.add("joined", joined);
         frame.add("team", team(GK, "Gece Kartallari", false, member(C, "Can", true, null), member(ME, "Mert", false, null),
                 member(B, "Ayse", false, null)));
         state.apply(frame, NOW);

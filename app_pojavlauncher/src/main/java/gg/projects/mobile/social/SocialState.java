@@ -1296,9 +1296,11 @@ public final class SocialState {
         boolean wasHidden = before != null && before.team.hidden;
         upsertCrew(team, null);
         if (accepted) notices.add(Notice.requestAccepted(team.id, team.name));
-        // TEAM6: someone came in (the crew chat's "Hoş geldin" line; the player's own too).
-        String joined = Json.str(message, "joined");
-        if (SocialModel.isUserId(joined) && team.member(joined) != null) noteJoin(team.id, joined, nowSeconds);
+        // TEAM6: someone came in (the crew chat's "Hoş geldin" line; the player's own too). The service names them
+        // in a list (`joined: [id]`, when a join request is accepted), as the desktop's pl-social reads it.
+        for (String joined : Json.strings(message, "joined")) {
+            if (SocialModel.isUserId(joined) && team.member(joined) != null) noteJoin(team.id, joined, nowSeconds);
+        }
         // TEAM6: the leader hid the crew whose tag the player wore: it came off (the desktop's toast).
         String me = myId();
         Member leader = team.founder();
