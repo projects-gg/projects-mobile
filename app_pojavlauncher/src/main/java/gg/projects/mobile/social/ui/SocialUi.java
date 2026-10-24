@@ -246,14 +246,34 @@ public final class SocialUi {
         gg.projects.mobile.ui.ProjectsUi.openUrl(activity, activity.getString(R.string.projects_mod_rules_url));
     }
 
+    /**
+     * A short notice. MOB1b: in the app's own line at the bottom (ActionToast, the look of the lines with "Geri al")
+     * while the launcher is in front, so the app shows one kind of notice, not Android's white toast beside its own
+     * dark line; Android's toast only over a sheet or a dialog (the line would sit under it) or with no screen up.
+     */
     public static void toast(@Nullable Context context, String text) {
-        if (context != null) Toast.makeText(context, text, Toast.LENGTH_SHORT).show();
+        show(context, text, false);
+    }
+
+    /** A notice that stays longer where Android's toast is used. */
+    public static void toastLong(@Nullable Context context, String text) {
+        show(context, text, true);
+    }
+
+    private static void show(@Nullable Context context, String text, boolean longer) {
+        if (context == null) return;
+        Activity activity = context instanceof Activity ? (Activity) context : SocialService.get(context).uiActivity();
+        if (activity != null && !activity.isFinishing() && activity.hasWindowFocus()) {
+            ActionToast.show(activity, text, null, null);
+            return;
+        }
+        Toast.makeText(context, text, longer ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT).show();
     }
 
     public static void toastProblem(@Nullable Context context, SocialProblem problem, @Nullable View feedback) {
         if (context == null) return;
         if (feedback != null) Haptics.reject(feedback);
-        Toast.makeText(context, problemText(context, problem), Toast.LENGTH_LONG).show();
+        show(context, problemText(context, problem), true);
     }
 
     /** A question with one consequential choice ({@code confirm}) and "Vazgeç". */

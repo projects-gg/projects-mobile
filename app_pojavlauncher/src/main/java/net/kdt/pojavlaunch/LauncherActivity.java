@@ -435,7 +435,7 @@ public class LauncherActivity extends BaseActivity implements gg.projects.mobile
         getSupportFragmentManager().registerFragmentLifecycleCallbacks(mFragmentCallbackListener, true);
         registerReceiver(mTimeZoneReceiver, new android.content.IntentFilter(android.content.Intent.ACTION_TIMEZONE_CHANGED));
         // Projects fork (M19): the friends' presence socket is open while the launcher is on screen.
-        gg.projects.mobile.social.SocialService.get(this).uiStarted();
+        gg.projects.mobile.social.SocialService.get(this).uiStarted(this);
     }
 
     @Override

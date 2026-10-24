@@ -2,7 +2,6 @@ package gg.projects.mobile.social.ui;
 
 import android.content.Context;
 import android.view.View;
-import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.fragment.app.FragmentActivity;
@@ -111,7 +110,7 @@ final class BadgeActions {
             offer = crew == null || !crew.team.hidden;
         }
         if (!offer || activity.isFinishing()) {
-            Toast.makeText(activity, text, Toast.LENGTH_SHORT).show();
+            SocialUi.toast(activity, text);
             return;
         }
         ActionToast.show(activity, text, activity.getString(R.string.projects_badge_wear), () -> wear(activity, crewId, null));

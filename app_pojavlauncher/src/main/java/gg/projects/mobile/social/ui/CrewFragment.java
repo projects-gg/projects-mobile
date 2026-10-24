@@ -1061,9 +1061,16 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
             Context context = parent.getContext();
             View view;
             switch (viewType) {
-                case T_CARD:
+                case T_CARD: {
                     view = inflater.inflate(R.layout.item_projects_crew_card, parent, false);
+                    // MOB1b: the tag toggle is an action, so it is chamfered and presses like every button (with its tick).
+                    View wear = view.findViewById(R.id.projects_crew_card_wear);
+                    float d = context.getResources().getDisplayMetrics().density;
+                    wear.setBackground(ChamferDrawable.toggle(context));
+                    wear.setPaddingRelative(Math.round(12 * d), Math.round(6 * d), Math.round(14 * d), Math.round(6 * d));
+                    Press.attach(wear, Press.Style.BUTTON);
                     break;
+                }
                 case T_CALL:
                     view = inflater.inflate(R.layout.item_projects_crew_call, parent, false);
                     for (int id : new int[]{R.id.projects_call_yes, R.id.projects_call_soon, R.id.projects_call_no, R.id.projects_call_end}) {

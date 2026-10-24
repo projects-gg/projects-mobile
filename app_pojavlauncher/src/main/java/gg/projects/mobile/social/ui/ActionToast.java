@@ -39,7 +39,8 @@ final class ActionToast {
     static void show(Activity activity, CharSequence text, @Nullable String action, @Nullable final Runnable onAction) {
         View content = activity.findViewById(android.R.id.content);
         if (!(content instanceof FrameLayout)) {
-            SocialUi.toast(activity, text.toString());
+            // Android's own toast (SocialUi.toast would come back here).
+            android.widget.Toast.makeText(activity, text, android.widget.Toast.LENGTH_SHORT).show();
             return;
         }
         final FrameLayout root = (FrameLayout) content;

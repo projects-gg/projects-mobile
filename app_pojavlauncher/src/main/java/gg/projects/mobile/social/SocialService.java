@@ -9,7 +9,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
-import android.widget.Toast;
 
 import androidx.annotation.MainThread;
 import androidx.annotation.Nullable;
@@ -50,6 +49,7 @@ import gg.projects.mobile.social.SocialModel.Request;
 import gg.projects.mobile.social.SocialModel.Team;
 import gg.projects.mobile.social.SocialModel.TeamNotifications;
 import gg.projects.mobile.social.ui.PlanViews;
+import gg.projects.mobile.social.ui.SocialUi;
 
 /**
  * The friends feature on the phone (M19): the session, the friend list and crews from the service,
@@ -146,6 +146,9 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     private PresenceConnection mConnection;
     private boolean mLiveSocket;
     private int mUiStarted;
+    /** MOB1b: the launcher's activity while it is on screen, for the app's own notice line (SocialUi.toast). */
+    @Nullable
+    private java.lang.ref.WeakReference<Activity> mUiActivity;
     private boolean mReplaced;
     private boolean mUnavailable;
     private long mLastFetch;
@@ -393,13 +396,28 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         SocialNotifications.cancelSeen(mApp, mState, surfaceShown(Surface.FRIENDS), surfaceShown(Surface.CREW));
     }
 
+    /** The launcher's activity came to the front (its notices go to its own line at the bottom). */
+    @MainThread
+    public void uiStarted(Activity activity) {
+        mUiActivity = new java.lang.ref.WeakReference<>(activity);
+        uiStarted();
+    }
+
     @MainThread
     public void uiStopped() {
         mUiStarted = Math.max(0, mUiStarted - 1);
         if (mUiStarted == 0) {
+            mUiActivity = null;
             mMain.removeCallbacks(mBackgroundClose);
             mMain.postDelayed(mBackgroundClose, BACKGROUND_GRACE_MS);
         }
+    }
+
+    /** The launcher's activity while it is on screen, else null. */
+    @Nullable
+    public Activity uiActivity() {
+        Activity activity = mUiActivity == null ? null : mUiActivity.get();
+        return activity == null || activity.isFinishing() ? null : activity;
     }
 
     public boolean foreground() {
@@ -757,7 +775,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
             try {
                 activity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)).addCategory(Intent.CATEGORY_BROWSABLE));
             } catch (RuntimeException again) {
-                Toast.makeText(activity, R.string.projects_link_no_app, Toast.LENGTH_SHORT).show();
+                SocialUi.toast(activity, activity.getString(R.string.projects_link_no_app));
             }
         }
     }
@@ -1078,13 +1096,13 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
                     break;
                 case FRIEND_ADDED:
                     if (foreground && notice.who != null) {
-                        Toast.makeText(context, context.getString(R.string.projects_social_friend_added, notice.who.name()), Toast.LENGTH_SHORT).show();
+                        SocialUi.toast(context, context.getString(R.string.projects_social_friend_added, notice.who.name()));
                     }
                     break;
                 case TEAM_INVITE:
                     if (foreground && notice.teamInvite != null && gate().teams && !surfaceShown(Surface.FRIENDS) && !surfaceShown(Surface.CREW)) {
-                        Toast.makeText(context, context.getString(R.string.projects_crew_invited_you,
-                                notice.teamInvite.from.name(), notice.teamInvite.team.name), Toast.LENGTH_LONG).show();
+                        SocialUi.toastLong(context, context.getString(R.string.projects_crew_invited_you,
+                                notice.teamInvite.from.name(), notice.teamInvite.team.name));
                     }
                     break;
                 case TEAM_GONE:
@@ -1101,7 +1119,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
                         } else {
                             text = null;
                         }
-                        if (text != null) Toast.makeText(context, text, Toast.LENGTH_LONG).show();
+                        if (text != null) SocialUi.toastLong(context, text);
                     }
                     break;
                 case JOIN_REQUEST: {
@@ -1112,12 +1130,12 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
                     String text = mState.crews().size() > 1 && notice.teamName != null
                             ? context.getString(R.string.projects_requests_notice_crew, notice.who.name(), notice.teamName)
                             : context.getString(R.string.projects_requests_notice, notice.who.name());
-                    Toast.makeText(context, text, Toast.LENGTH_LONG).show();
+                    SocialUi.toastLong(context, text);
                     break;
                 }
                 case REQUEST_ACCEPTED:
                     if (foreground && notice.teamName != null && gate().teams) {
-                        Toast.makeText(context, context.getString(R.string.projects_crew_joined, notice.teamName), Toast.LENGTH_LONG).show();
+                        SocialUi.toastLong(context, context.getString(R.string.projects_crew_joined, notice.teamName));
                     }
                     break;
                 case PLAN: {
@@ -1127,7 +1145,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
                     String who = notice.who == null ? context.getString(R.string.projects_crew_someone) : notice.who.name();
                     String text = context.getString(R.string.projects_plans_made, who, PlanViews.when(context, notice.plan.at, now, true));
                     if (mState.crews().size() > 1 && notice.teamName != null) text = text + " · " + notice.teamName;
-                    Toast.makeText(context, text, Toast.LENGTH_LONG).show();
+                    SocialUi.toastLong(context, text);
                     break;
                 }
                 case PLAN_REMOVED:
@@ -1142,7 +1160,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
                 case TAG_OFF:
                     // TEAM6: "Lider ekibi gizledi; etiketin çıkarıldı." (the desktop's toast).
                     if (foreground && gate().badges) {
-                        Toast.makeText(context, context.getString(R.string.projects_badge_hidden_toast), Toast.LENGTH_LONG).show();
+                        SocialUi.toastLong(context, context.getString(R.string.projects_badge_hidden_toast));
                     }
                     break;
                 default:

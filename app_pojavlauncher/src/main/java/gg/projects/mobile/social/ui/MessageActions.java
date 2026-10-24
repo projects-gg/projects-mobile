@@ -109,8 +109,31 @@ final class MessageActions {
         final int anchorY = at[1];
         final int shotW = shot == null ? 0 : shot.getWidth();
         final int shotH = shot == null ? 0 : shot.getHeight();
+        // MOB1b: while its lit copy stands in for it, the message under the dim is hidden: a copy lifted to make room for
+        // the menu showed the message twice, its lines over the dimmed neighbours (the unanchored review, 24 Oct). It
+        // fades back in as the overlay fades out, and comes back however the overlay goes.
+        final View original = shot != null ? anchor : null;
+        if (original != null) {
+            close.onLeave(() -> {
+                original.animate().cancel();
+                if (Motion.enabled(original.getContext())) {
+                    original.animate().alpha(1f).setDuration(130).setInterpolator(Motion.EASE_OUT).start();
+                } else {
+                    original.setAlpha(1f);
+                }
+            });
+            dialog.setOnDismissListener(d -> {
+                if (original.getAlpha() < 1f && !close.closing()) {
+                    original.animate().cancel();
+                    original.setAlpha(1f);
+                }
+            });
+        }
         dialog.show();
-        root.post(() -> place(root, lit, stripView, menu, anchorX, anchorY, shotW, shotH, mine, dp));
+        root.post(() -> {
+            place(root, lit, stripView, menu, anchorX, anchorY, shotW, shotH, mine, dp);
+            if (original != null && lit.getVisibility() == View.VISIBLE && !close.closing()) original.setAlpha(0f);
+        });
     }
 
     /** Puts the lit message, the strip above it and the menu under it, moving the message up only as much as needed. */
@@ -190,16 +213,28 @@ final class MessageActions {
         private final Dialog dialog;
         private final View root;
         private boolean closed;
+        @Nullable
+        private Runnable onLeave;
 
         Closer(Dialog dialog, View root) {
             this.dialog = dialog;
             this.root = root;
         }
 
+        /** What runs as the overlay starts to leave (the hidden message fades back in). */
+        void onLeave(Runnable run) {
+            onLeave = run;
+        }
+
+        boolean closing() {
+            return closed;
+        }
+
         /** True the first time (the caller may act), false once it is already closing. */
         boolean close() {
             if (closed) return false;
             closed = true;
+            if (onLeave != null) onLeave.run();
             leave(dialog, root);
             return true;
         }

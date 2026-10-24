@@ -75,9 +75,14 @@ final class EmojiSheet {
     private static final int COLUMNS = 8;
     private static final int STICKER_COLUMNS = 4;
 
-    /** The rail's group marks (an emoji of each group, drawn quiet). */
-    private static final int[][] GROUP_MARKS = {
-            {0x1F600}, {0x1F9D1}, {0x1F43B}, {0x1F354}, {0x2708, 0xFE0F}, {0x26BD}, {0x1F4A1}, {0x1F523}, {0x1F3C1}};
+    /**
+     * The rail's group marks: the desktop's Phosphor icons (picker-panel.tsx GROUP_ICONS). MOB1b: they were an emoji of
+     * each group, emoji standing in for icons (the taste rule) and with no mark of the group in view.
+     */
+    private static final int[] GROUP_ICONS = {R.drawable.projects_ic_picker_smileys, R.drawable.projects_ic_picker_people,
+            R.drawable.projects_ic_picker_nature, R.drawable.projects_ic_picker_food, R.drawable.projects_ic_picker_travel,
+            R.drawable.projects_ic_picker_activities, R.drawable.projects_ic_picker_objects, R.drawable.projects_ic_picker_symbols,
+            R.drawable.projects_ic_picker_flags};
     private static final int[] GROUP_NAMES = {R.string.projects_picker_group_smileys, R.string.projects_picker_group_people,
             R.string.projects_picker_group_nature, R.string.projects_picker_group_food, R.string.projects_picker_group_travel,
             R.string.projects_picker_group_activities, R.string.projects_picker_group_objects, R.string.projects_picker_group_symbols,
@@ -122,6 +127,14 @@ final class EmojiSheet {
         final GridAdapter adapter = new GridAdapter();
         final EditText search;
         final LinearLayout rail;
+        /** The rail and the gold line under the group in view. */
+        final FrameLayout railFrame;
+        final View marker;
+        final ImageView[] marks;
+        /** "Son kullanılanlar" leads the rail (it leads the grid). */
+        final boolean hasRecent;
+        /** The rail's mark of the group in view (-1: none, while searching). */
+        int active = -1;
         final LinearLayout tones;
         final TextView toneButton;
         final View emojiTools;
@@ -251,31 +264,55 @@ final class EmojiSheet {
             grid.setClipToPadding(false);
             grid.setPadding(Math.round(6 * dp), 0, Math.round(6 * dp), Math.round(8 * dp));
             content.addView(grid, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
-            // The groups' rail.
+            // The groups' rail (the desktop's): Phosphor marks in ash, the group in view in gold with a gold line gliding
+            // under it; "Son kullanılanlar" first when the grid starts with it. A press jumps to the group.
+            hasRecent = !EmojiRecents.recentEntries(data, recentSnapshot).isEmpty();
+            railFrame = new FrameLayout(context);
             rail = new LinearLayout(context);
             rail.setOrientation(LinearLayout.HORIZONTAL);
             rail.setGravity(Gravity.CENTER);
             rail.setPadding(0, Math.round(2 * dp), 0, Math.round(6 * dp));
-            for (int g = 0; g < 9; g++) {
-                final int group = g;
-                TextView mark = new AppCompatTextView(context);
-                StringBuilder glyph = new StringBuilder();
-                for (int cp : GROUP_MARKS[g]) glyph.appendCodePoint(cp);
-                mark.setText(glyph);
-                mark.setTextSize(18);
-                mark.setAlpha(0.7f);
-                mark.setGravity(Gravity.CENTER);
-                mark.setContentDescription(context.getString(GROUP_NAMES[g]));
+            int count = (hasRecent ? 1 : 0) + GROUP_ICONS.length;
+            marks = new ImageView[count];
+            for (int i = 0; i < count; i++) {
+                final int index = i;
+                final int group = hasRecent ? i - 1 : i;
+                ImageView mark = new ImageView(context);
+                mark.setImageResource(group < 0 ? R.drawable.projects_ic_picker_recent : GROUP_ICONS[group]);
+                mark.setScaleType(ImageView.ScaleType.CENTER);
+                mark.setImageTintList(ContextCompat.getColorStateList(context, R.color.projects_ash_400));
+                mark.setContentDescription(context.getString(group < 0 ? R.string.projects_picker_recent : GROUP_NAMES[group]));
                 mark.setBackgroundResource(R.drawable.projects_icon_button_ripple);
                 Press.attach(mark, Press.Style.ICON);
                 mark.setOnClickListener(v -> {
                     Haptics.press(v);
                     if (!query.isEmpty()) search.setText("");
-                    layout.scrollToPositionWithOffset(groupAt[group], 0);
+                    layout.scrollToPositionWithOffset(group < 0 ? 0 : groupAt[group], 0);
+                    setActive(index);
                 });
                 rail.addView(mark, new LinearLayout.LayoutParams(0, Math.round(40 * dp), 1f));
+                marks[i] = mark;
             }
-            content.addView(rail);
+            railFrame.addView(rail, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            marker = new View(context);
+            GradientDrawable line = new GradientDrawable();
+            line.setColor(ContextCompat.getColor(context, R.color.projects_gold_400));
+            line.setCornerRadius(dp);
+            marker.setBackground(line);
+            marker.setAlpha(0f);
+            FrameLayout.LayoutParams markerLp = new FrameLayout.LayoutParams(0, Math.round(2 * dp), Gravity.BOTTOM | Gravity.START);
+            markerLp.bottomMargin = Math.round(3 * dp);
+            railFrame.addView(marker, markerLp);
+            railFrame.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> {
+                if (r - l != or - ol) placeMarker(false);
+            });
+            grid.addOnScrollListener(new RecyclerView.OnScrollListener() {
+                @Override
+                public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                    setActive(groupInView());
+                }
+            });
+            content.addView(railFrame);
             search.addTextChangedListener(new TextWatcher() {
                 @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
                 @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
@@ -290,6 +327,53 @@ final class EmojiSheet {
 
         void show() {
             panel.show();
+        }
+
+        /** The rail's mark of the group the grid shows now (-1 while searching or on the stickers). */
+        private int groupInView() {
+            if (stickerTab || !query.isEmpty()) return -1;
+            int first = layout.findFirstVisibleItemPosition();
+            if (first < 0) return active;
+            // At the very end the last group cannot reach the top: it is the one in view.
+            if (!grid.canScrollVertically(1) && grid.canScrollVertically(-1)) return marks.length - 1;
+            int group = -1;
+            for (int g = 0; g < groupAt.length; g++) if (groupAt[g] <= first) group = g;
+            if (group < 0) return 0;
+            return hasRecent ? group + 1 : group;
+        }
+
+        /** Lights the mark in view (gold) and glides the line under it; -1 puts both out. */
+        private void setActive(int index) {
+            if (index == active) return;
+            active = index;
+            Context context = rail.getContext();
+            for (int i = 0; i < marks.length; i++) {
+                marks[i].setImageTintList(ContextCompat.getColorStateList(context,
+                        i == index ? R.color.projects_gold_300 : R.color.projects_ash_400));
+                marks[i].setSelected(i == index);
+            }
+            placeMarker(true);
+        }
+
+        private void placeMarker(boolean animate) {
+            int width = rail.getWidth();
+            if (width == 0 || marks.length == 0) return;
+            float cell = width / (float) marks.length;
+            ViewGroup.LayoutParams lp = marker.getLayoutParams();
+            int lineWidth = Math.max(0, Math.round(cell - 18 * dp));
+            if (lp.width != lineWidth) {
+                lp.width = lineWidth;
+                marker.setLayoutParams(lp);
+            }
+            float x = Math.max(0, active) * cell + 9 * dp;
+            float alpha = active >= 0 ? 1f : 0f;
+            marker.animate().cancel();
+            if (animate && Motion.enabled(marker.getContext()) && marker.getAlpha() > 0f && alpha > 0f) {
+                marker.animate().translationX(x).alpha(alpha).setDuration(200).setInterpolator(Motion.EASE_OUT).start();
+            } else {
+                marker.setTranslationX(x);
+                marker.setAlpha(alpha);
+            }
         }
 
         private TextView tab(Context context, int label) {
@@ -323,7 +407,7 @@ final class EmojiSheet {
             styleTab(emojiTab, !stickersOn);
             styleTab(stickerTabView, stickersOn);
             emojiTools.setVisibility(stickersOn ? View.GONE : View.VISIBLE);
-            rail.setVisibility(stickersOn ? View.GONE : View.VISIBLE);
+            railFrame.setVisibility(stickersOn ? View.GONE : View.VISIBLE);
             refill();
             if (Motion.enabled(grid.getContext())) {
                 grid.setAlpha(0f);

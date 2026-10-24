@@ -139,6 +139,26 @@ public final class ChamferDrawable extends Drawable {
         return states;
     }
 
+    /**
+     * MOB1b: the crew card's tag toggle (TEAM6), a 36 dp chip inside its 48 dp target (6 dp in at the top and the
+     * bottom): a bone hairline ("Etiketi tak"), faint gold when worn (activated: "Etiket takılı"), a faint fill and
+     * no line while the crew is hidden or its texts are locked (selected). Chamfered like the desktop's WearToggle
+     * (it was the one rounded action on the crew card).
+     */
+    public static Drawable toggle(Context context) {
+        float d = context.getResources().getDisplayMetrics().density;
+        float cut = 7 * d;
+        StateListDrawable states = new StateListDrawable();
+        states.addState(new int[]{android.R.attr.state_activated}, new ChamferDrawable(0x1FF6D58E, 0x5CF6D58E, d, cut, null));
+        states.addState(new int[]{android.R.attr.state_selected}, new ChamferDrawable(0x0AF3EBDD, 0, 0f, cut, null));
+        states.addState(new int[]{android.R.attr.state_pressed}, new ChamferDrawable(0x1AF3EBDD, 0x66F3EBDD, d, cut, null));
+        states.addState(new int[]{android.R.attr.state_focused},
+                new ChamferDrawable(0, ContextCompat.getColor(context, R.color.projects_gold_300), 2 * d, cut, null));
+        states.addState(new int[]{}, new ChamferDrawable(0, 0x33F3EBDD, d, cut, null));
+        int inset = Math.round(6 * d);
+        return new android.graphics.drawable.InsetDrawable(states, 0, inset, 0, inset);
+    }
+
     /** Quiet secondary action: transparent with an obsidian-700 outline. */
     public static Drawable secondary(Context context) {
         Rect padding = padding(context, 14, 8);
