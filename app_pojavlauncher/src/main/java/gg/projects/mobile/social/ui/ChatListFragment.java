@@ -84,6 +84,14 @@ public class ChatListFragment extends Fragment implements SocialService.Listener
         SpannableStringBuilder empty = new SpannableStringBuilder(getString(R.string.projects_chat_empty));
         empty.setSpan(new ForegroundColorSpan(ContextCompat.getColor(view.getContext(), R.color.projects_bone_100)), 0, empty.length(),
                 Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        // MOB1b: the title as "Henüz arkadaşın yok" has it (Figtree semibold, 16 sp), the two empty states side by side.
+        try {
+            android.graphics.Typeface semibold = androidx.core.content.res.ResourcesCompat.getFont(view.getContext(), R.font.figtree_semibold);
+            if (semibold != null) empty.setSpan(new gg.projects.mobile.ui.FontSpan(semibold), 0, empty.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        } catch (RuntimeException ignored) {
+            // The text's own font.
+        }
+        empty.setSpan(new android.text.style.AbsoluteSizeSpan(16, true), 0, empty.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         empty.append('\n').append(getString(R.string.projects_chat_empty_body));
         mEmpty.setText(empty);
         // ICON2: the desktop's speech bubble sprite on the friends' icon tile, as its empty list.

@@ -401,7 +401,8 @@ final class BadgeCard {
         button.setTextColor(ContextCompat.getColor(context, primary ? R.color.projects_on_gold : R.color.projects_bone_100));
         button.setBackground(primary ? ChamferDrawable.primary(context) : ChamferDrawable.outlined(context));
         try {
-            button.setTypeface(ResourcesCompat.getFont(context, R.font.figtree_semibold));
+            // The gold action speaks like every gold button of the app (MineButton: Tektur), the outlined one like a row.
+            button.setTypeface(ResourcesCompat.getFont(context, primary ? R.font.tektur_semibold : R.font.figtree_semibold));
         } catch (RuntimeException ignored) {
             // The theme's font.
         }

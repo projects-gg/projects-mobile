@@ -144,6 +144,15 @@ final class ReactionSheet {
         tabs.removeAllViews();
         int total = 0;
         for (ChatMessage.Reaction r : reactions) total += r.count();
+        // MOB1b: the list is as tall as "Tümü" needs (one row per reaction, so every tab fits and a switch never
+        // jumps), at most 260 dp; a fixed 260 dp left one or two rows above a large empty space.
+        View list = (View) people.getParent();
+        ViewGroup.LayoutParams listLp = list.getLayoutParams();
+        int listHeight = Math.round(Math.min(260f, Math.max(1, total) * 52f) * dp);
+        if (listLp != null && listLp.height != listHeight) {
+            listLp.height = listHeight;
+            list.setLayoutParams(listLp);
+        }
         tabs.addView(tabButton(context, context.getString(R.string.projects_reactions_all, total), tab[0] == null, v -> {
             tab[0] = null;
             Haptics.press(v);
