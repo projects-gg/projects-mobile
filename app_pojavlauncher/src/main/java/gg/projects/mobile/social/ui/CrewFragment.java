@@ -1351,14 +1351,9 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
             line.setVisibility(View.GONE);
         } else {
             line.setVisibility(View.VISIBLE);
-            String text = summary.last.text().replace('\n', ' ');
-            Profile from = summary.last.mine(me) ? null : service.state().profile(summary.last.from(me));
-            if (summary.last.deleted()) {
-                // FIX2: the newest line is a deleted message.
-                line.setText(ChatFragment.deletedText(context, summary.last.tombstone, me, service.state()));
-            } else {
-                line.setText(summary.last.mine(me) ? getString(R.string.projects_chat_you, text) : (from == null ? "" : from.name() + ": ") + text);
-            }
+            // MOB1b: the "Mesajlar" list's own line (a deleted message's words, a sticker's "Çıkartma, Selam"): a
+            // sticker read "Sen:" with nothing after it here (the emulator, 24 Oct).
+            line.setText(ChatPreview.line(context, service.state(), summary.last, me, true));
             line.setTextColor(ContextCompat.getColor(context, unread > 0 ? R.color.projects_bone_100 : R.color.projects_ash_400));
         }
         // The crew shown when tapped (the row is not bound again when two crews' rows look the same).

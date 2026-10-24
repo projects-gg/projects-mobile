@@ -262,12 +262,24 @@ public final class SocialUi {
 
     private static void show(@Nullable Context context, String text, boolean longer) {
         if (context == null) return;
-        Activity activity = context instanceof Activity ? (Activity) context : SocialService.get(context).uiActivity();
-        if (activity != null && !activity.isFinishing() && activity.hasWindowFocus()) {
+        final Activity activity = context instanceof Activity ? (Activity) context : SocialService.get(context).uiActivity();
+        final int length = longer ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT;
+        if (activity == null || activity.isFinishing()) {
+            Toast.makeText(context, text, length).show();
+            return;
+        }
+        if (activity.hasWindowFocus()) {
             ActionToast.show(activity, text, null, null);
             return;
         }
-        Toast.makeText(context, text, longer ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT).show();
+        // A dialog or a sheet is up, or still closing (a notice after its button, "Mesaj silindi" after "Herkesten
+        // sil"): the screen gets the focus back within a frame or two of a dismissal, then the line shows there; a
+        // sheet that stays open keeps Android's toast over it.
+        final Context app = context.getApplicationContext();
+        activity.getWindow().getDecorView().postDelayed(() -> {
+            if (!activity.isFinishing() && activity.hasWindowFocus()) ActionToast.show(activity, text, null, null);
+            else Toast.makeText(app, text, length).show();
+        }, 250);
     }
 
     public static void toastProblem(@Nullable Context context, SocialProblem problem, @Nullable View feedback) {
