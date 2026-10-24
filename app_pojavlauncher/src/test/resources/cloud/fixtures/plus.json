@@ -1,0 +1,31 @@
+{
+  "config": {
+    "v": 1,
+    "enabled": true,
+    "mode": "projects-smp",
+    "lang": "auto",
+    "persona": { "preset": "friendly", "intro": "Ahmet'in AFK+ asistanı", "status": "", "statusPreset": "back_evening", "smallTalk": true },
+    "replies": { "scope": "trade", "away": true, "saveAt": 80 },
+    "buy": [
+      { "id": "b1", "item": "minecraft:elytra",
+        "req": { "ench": {}, "minDurabilityPct": 90, "allowCustomName": false, "allowCurses": false },
+        "qty": 1, "unit": "total", "target": 32000, "max": 40000, "style": "balanced",
+        "approval": "above", "dailyQty": 1, "notify": true, "enabled": true }
+    ],
+    "sell": [
+      { "id": "s1", "item": "minecraft:diamond", "qty": 64, "unit": "each", "target": 120, "min": 100,
+        "style": "patient", "approval": "auto", "dailyQty": 128, "enabled": true }
+    ],
+    "limits": { "perDealMax": 50000, "dailySpendMax": 100000, "totalBudget": 300000, "balanceFloor": 20000,
+                "approvalAbove": 35000, "newCounterpartApprovalAbove": 10000, "approvalTimeoutMin": 10 },
+    "discovery": { "scanChat": true, "proactivePm": true, "ads": false, "adTemplate": "buy-basic" },
+    "trade": { "returnRow": "c2" },
+    "summaryAt": "21:00",
+    "blocked": ["SomePlayer"],
+    "schedule": { "on": true, "windows": [ { "days": [1, 2, 3, 4, 5], "from": "16:00", "to": "23:30" }, { "days": [6, 7], "from": "10:00", "to": "02:00" } ] },
+    "pauseUntil": null
+  },
+  "aiRev": 14,
+  "judge": { "intro": { "state": "ok", "at": 1792800000 }, "status": { "state": "ok", "at": 1792800000 } },
+  "profile": { "id": "projects-smp", "name": "Survival", "trade": true }
+}

@@ -1,0 +1,34 @@
+{
+  "approvals": [
+    {
+      "id": "01JBXK3D2E5F6G7H8J9K0M1N2P",
+      "acct": "a_7KQ2MZ3P9TW4XB1C",
+      "deal": { "side": "buy", "item": "minecraft:elytra", "qty": 1, "price": 37500, "currency": "smp" },
+      "counterpart": "Kaan_07",
+      "why": ["above"],
+      "createdAt": 1792846500,
+      "expiresAt": 1792847100,
+      "state": "pending"
+    },
+    {
+      "id": "01JBXK9Q8R7S6T5V4W3X2Y1Z0A",
+      "acct": "a_7KQ2MZ3P9TW4XB1C",
+      "deal": { "side": "sell", "item": "minecraft:diamond", "qty": 64, "price": 7680, "currency": "smp" },
+      "counterpart": "Zeynep_MC",
+      "why": ["new_counterpart"],
+      "createdAt": 1792846620,
+      "expiresAt": 1792847220,
+      "state": "pending"
+    },
+    {
+      "id": "01JBXJ1A2B3C4D5E6F7G8H9J0K",
+      "acct": "a_7KQ2MZ3P9TW4XB1C",
+      "deal": { "side": "buy", "item": "minecraft:netherite_ingot", "qty": 2, "price": 52000, "currency": "smp" },
+      "counterpart": "Efe_X",
+      "why": ["above", "budget"],
+      "createdAt": 1792830000,
+      "expiresAt": 1792830600,
+      "state": "rejected"
+    }
+  ]
+}

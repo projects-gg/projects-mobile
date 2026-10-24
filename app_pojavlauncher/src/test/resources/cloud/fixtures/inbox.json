@@ -1,0 +1,8 @@
+{
+  "threads": [
+    { "name": "Kaan_07", "lastAt": 1792846700, "last": { "from": "them", "text": "tamam, anlaştık" }, "unread": 2, "state": "active", "handoffUntil": null },
+    { "name": "Zeynep_MC", "lastAt": 1792845000, "last": { "from": "you", "text": "Akşam spawn'da olurum" }, "unread": 0, "state": "handoff", "handoffUntil": 1792846800 },
+    { "name": "Mert_44", "lastAt": 1792800000, "last": { "from": "bot", "text": "[AFK+] Bu fiyata olmuyor, kusura bakma." }, "unread": 0, "state": "active", "handoffUntil": null }
+  ],
+  "next": null
+}

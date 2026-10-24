@@ -1,0 +1,104 @@
+{
+  "now": 1792846800,
+  "accounts": [
+    {
+      "id": "a_7KQ2MZ3P9TW4XB1C",
+      "name": "Ahmet_AFK",
+      "server": { "host": "play.projects.gg", "port": 0 },
+      "version": "26.3",
+      "lang": "tr",
+      "host": "kz1",
+      "createdAt": 1790254800,
+      "expiresAt": 1794834000,
+      "expired": false,
+      "graceUntil": 1796043600,
+      "renewal": { "open": false, "opensAt": 1794229200 },
+      "desired": "run",
+      "hold": null,
+      "live": { "state": "running", "since": 1792831680 },
+      "everJoined": true,
+      "config": {
+        "v": 1,
+        "owner": "Ahmet",
+        "antiAfk": { "enabled": true, "delayMin": 60, "delayMax": 90 },
+        "commands": [
+          { "id": "c1", "enabled": true, "on": "join", "delay": 2, "secret": true, "preview": "/login ******", "fp": "u3Rk2sY0oQf9ZtWc" },
+          { "id": "c2", "enabled": true, "on": "join", "delay": 5, "secret": false, "text": "/is home" },
+          { "id": "c3", "enabled": true, "on": "daily", "at": ["08:00", "20:30"], "secret": false, "text": "/kit günlük" },
+          { "id": "c4", "enabled": false, "on": "interval", "every": { "min": 600, "max": 900 }, "secret": false, "text": "/bal" }
+        ],
+        "rules": [
+          { "id": "r1", "enabled": true, "match": "selam", "regex": false, "from": "private", "ownerOnly": false, "cooldown": 60,
+            "reply": { "secret": false, "text": "Şu an AFK'yım, sonra dönerim." } }
+        ]
+      },
+      "rev": 7,
+      "serverChanges": { "used": 0, "limit": 6, "resetAt": null },
+      "refund": { "eligible": false, "until": null, "orderId": null },
+      "tier": "plus",
+      "plusUntil": 1794834000,
+      "ai": {
+        "state": "on",
+        "trade": { "on": true, "buy": "on" },
+        "pendingApprovals": 2,
+        "quota": { "pct5": 34, "pctWeek": 61, "w5hResetAt": 1792857600, "weekResetAt": 1793062800, "exhaustedUntil": null, "giftsLeft": 0 }
+      },
+      "moderation": null,
+      "laterField": 1
+    },
+    {
+      "id": "a_8RT4WQ2N6P1KJH3D",
+      "name": "Ahmet_Alt",
+      "server": { "host": "play.projects.gg", "port": 0 },
+      "version": "auto",
+      "lang": "tr",
+      "host": "kz1",
+      "createdAt": 1791117200,
+      "expiresAt": 1793278800,
+      "expired": false,
+      "graceUntil": 1794488400,
+      "renewal": { "open": true, "opensAt": 1792674000 },
+      "desired": "run",
+      "hold": { "kind": "cause", "cause": "wrongPassword", "at": 1792843200, "row": "c1" },
+      "live": { "state": "stopped", "since": 1792843200 },
+      "everJoined": true,
+      "config": {
+        "v": 1, "owner": "", "antiAfk": { "enabled": true, "delayMin": 60, "delayMax": 90 },
+        "commands": [ { "id": "c1", "enabled": true, "on": "join", "delay": 2, "secret": true, "preview": "/login ******", "fp": "Zx81QmPq0rT5ab2c" } ],
+        "rules": []
+      },
+      "rev": 3,
+      "serverChanges": { "used": 1, "limit": 6, "resetAt": 1792849000 },
+      "refund": { "eligible": false, "until": null, "orderId": null },
+      "tier": "plain",
+      "plusUntil": null,
+      "ai": null,
+      "moderation": null
+    },
+    {
+      "id": "a_9ZX5MN7B2V4C6Q8W",
+      "name": "Demir_Market",
+      "server": { "host": "mc.example.net", "port": 25570 },
+      "version": "1.21.11",
+      "lang": "en",
+      "host": "kz1",
+      "createdAt": 1791117200,
+      "expiresAt": 1792933200,
+      "expired": false,
+      "graceUntil": 1794142800,
+      "renewal": { "open": true, "opensAt": 1792328400 },
+      "desired": "run",
+      "hold": null,
+      "live": { "state": "waiting", "since": 1792846700, "attempt": 3, "retryAt": 1792846820 },
+      "everJoined": true,
+      "config": { "v": 1, "owner": "", "antiAfk": { "enabled": false, "delayMin": 60, "delayMax": 90 }, "commands": [], "rules": [] },
+      "rev": 12,
+      "serverChanges": { "used": 0, "limit": 6, "resetAt": null },
+      "refund": { "eligible": false, "until": null, "orderId": null },
+      "tier": "plain",
+      "plusUntil": null,
+      "ai": null,
+      "moderation": null
+    }
+  ]
+}

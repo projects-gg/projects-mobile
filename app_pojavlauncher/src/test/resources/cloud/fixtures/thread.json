@@ -1,0 +1,13 @@
+{
+  "lines": [
+    { "at": 1792846000, "from": "them", "text": "elytra var, 45k" },
+    { "at": 1792846040, "from": "bot", "text": "[AFK+] Merhaba! 34.000 olur mu?" },
+    { "at": 1792846300, "from": "them", "text": "40 olmaz mı" },
+    { "at": 1792846340, "from": "bot", "text": "[AFK+] 37.500, son teklifim." },
+    { "at": 1792846500, "from": "them", "text": "uygunsuz bir şey", "hidden": "unsafe" },
+    { "at": 1792846700, "from": "them", "text": "tamam, anlaştık" }
+  ],
+  "handoffUntil": null,
+  "canReply": true,
+  "next": null
+}

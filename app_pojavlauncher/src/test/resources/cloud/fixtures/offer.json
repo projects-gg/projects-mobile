@@ -1,0 +1,38 @@
+{
+  "api": 1,
+  "mode": "on",
+  "maintenanceMessage": null,
+  "sales": { "newAccounts": true, "renewals": true },
+  "prices": [
+    { "plan": "month", "priceTl": "60.00", "days": 30 },
+    { "plan": "year", "priceTl": "600.00", "days": 365 }
+  ],
+  "currency": "TRY",
+  "stock": { "soldOut": false, "remaining": null },
+  "topUpUrl": "https://mc.projects.gg/kredi-yukle",
+  "refund": { "mode": "auto", "windowHours": 24 },
+  "renewalWindowDays": 7,
+  "graceDays": 14,
+  "recommendedVersion": "26.3",
+  "limits": {
+    "perPlayerCap": 10, "serverChangesPerHour": 6, "maxCommandRows": 20, "maxRules": 10, "minIntervalSec": 60,
+    "minRuleCooldownSec": 10, "chatCooldownSec": 2, "consoleLinesPerMinute": 20, "minDiscordAgeDays": 7
+  },
+  "plus": {
+    "mode": "on",
+    "sales": true,
+    "prices": [
+      { "plan": "month", "priceTl": "200.00", "days": 30 },
+      { "plan": "year", "priceTl": "2000.00", "days": 365 }
+    ],
+    "stock": { "soldOut": false, "remaining": 12 },
+    "refundWindowHours": 24,
+    "termsVersion": 1,
+    "allowance": { "month": { "w5h": 5000, "week": 20000 }, "year": { "w5h": 5000, "week": 20000 } },
+    "features": {
+      "inbox": true, "parse": true, "schedule": true, "report": true, "history": true, "saver": true,
+      "notifyDigest": false, "handoff": false, "watch": false, "futureThing": "not-a-boolean"
+    }
+  },
+  "newField": { "clients": "ignore it" }
+}

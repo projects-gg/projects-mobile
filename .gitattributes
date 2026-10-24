@@ -5,3 +5,5 @@ app_pojavlauncher/src/main/assets/emoji/** -text
 app_pojavlauncher/src/main/assets/stickers/** -text
 app_pojavlauncher/src/main/assets/social/** -text
 app_pojavlauncher/src/test/resources/social/text-vectors.json -text
+# AFKPLUS-M: copies of the cloud AFK contract's shared vectors (seal, reveal, text rule) keep their exact bytes
+app_pojavlauncher/src/test/resources/cloud/** -text
