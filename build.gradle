@@ -36,6 +36,15 @@ ext.projectsNdkVersion = "27.3.13750724"
 subprojects {subproject ->
     subproject.plugins.withId("com.android.library") {
         subproject.android.ndkVersion = rootProject.ext.projectsNdkVersion
+        // AGP 9.3's prefab<Variant>ConfigurePackage writes the library's full prefab publication
+        // (intermediates/prefab_package_configuration/prefab_publication.json/<variant>) outside its declared output
+        // file, which therefore never exists. Gradle's history records that missing file, so once build/ is deleted
+        // the task stays UP-TO-DATE, the publication is not written again, the app imports the header-only one and
+        // libpojavexec fails to link the namespace functions. The task only rewrites a small JSON file when it
+        // differs: run it every time.
+        subproject.tasks.matching { it.name ==~ /prefab\w*ConfigurePackage/ }.configureEach {
+            it.outputs.upToDateWhen { false }
+        }
     }
     subproject.plugins.withId("com.android.application") {
         subproject.android.ndkVersion = rootProject.ext.projectsNdkVersion
