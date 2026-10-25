@@ -120,7 +120,9 @@ final class PlusRowSheet {
                 c.getString(R.string.projects_plus_style_balanced), c.getString(R.string.projects_plus_style_quick)},
                 index(PlusConfig.STYLES, row.style(), 1), i -> row.setStyle(PlusConfig.STYLES[i])));
         sheet.body.addView(CloudRowSheet.label(c, c.getString(R.string.projects_plus_row_approval)));
-        sheet.body.addView(CloudUi.choices(c, new CharSequence[]{c.getString(R.string.projects_plus_approval_auto),
+        // The site's sentences: "Sormadan alır" (or "satar") / "Onay sınırının üstünde sorar" / "Her seferinde sorar".
+        sheet.body.addView(CloudUi.choices(c, new CharSequence[]{
+                c.getString(buy ? R.string.projects_plus_approval_auto : R.string.projects_plus_approval_auto_sell),
                 c.getString(R.string.projects_plus_approval_above), c.getString(R.string.projects_plus_approval_always)},
                 index(PlusConfig.APPROVALS, row.approval(), 1), i -> row.setApproval(PlusConfig.APPROVALS[i])));
         final CloudUi.Field daily = CloudUi.field(c, c.getString(R.string.projects_plus_row_daily), String.valueOf(row.dailyQty()), null, InputType.TYPE_CLASS_NUMBER);

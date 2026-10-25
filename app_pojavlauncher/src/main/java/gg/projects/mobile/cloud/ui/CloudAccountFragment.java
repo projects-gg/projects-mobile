@@ -265,10 +265,14 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
         final SwitchCompat toggle = CloudUi.toggle(c, getString(R.string.projects_plus_assistant_switch), on, now -> setAssistant(now));
         toggle.setEnabled(!lockedOff && !mBusy);
         assistant.addView(toggle);
-        TextView aiLine = CloudUi.text(c, CloudWords.ai(c, a.ai, mService.nowSeconds()), 13.5f, R.color.projects_ash_300, false);
-        aiLine.setPadding(CloudUi.dp(c, 16), 0, CloudUi.dp(c, 16), CloudUi.dp(c, 12));
-        aiLine.setLineSpacing(0, 1.15f);
-        assistant.addView(aiLine);
+        // The state in words only when the switch does not say it already ("Asistan çalışıyor" under a switch that is on
+        // read twice): a break, the credits, maintenance, notify-only, staff decisions.
+        if (ai != PlusFormat.Ai.ON && ai != PlusFormat.Ai.OFF_PLAYER) {
+            TextView aiLine = CloudUi.text(c, CloudWords.ai(c, a.ai, mService.nowSeconds()), 13.5f, R.color.projects_ash_300, false);
+            aiLine.setPadding(CloudUi.dp(c, 16), 0, CloudUi.dp(c, 16), CloudUi.dp(c, 12));
+            aiLine.setLineSpacing(0, 1.15f);
+            assistant.addView(aiLine);
+        }
         content.addView(assistant);
 
         // What asks something of the player (an approval, a message) comes right under the switch; the allowance after.
@@ -326,10 +330,12 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
         }
 
         if (!a.expired) {
-            content.addView(CloudUi.gap(c, 6));
-            Button downgrade = CloudUi.textButton(c, getString(R.string.projects_plus_downgrade), this::askDowngrade);
-            downgrade.setTextColor(CloudUi.color(c, R.color.projects_ash_300));
-            content.addView(downgrade, wrap());
+            content.addView(CloudUi.gap(c, 16));
+            // An outlined secondary action (a quiet text line read as a heading); it asks before anything changes.
+            LinearLayout.LayoutParams downLp = CloudUi.matchWrap();
+            downLp.setMarginStart(CloudUi.dp(c, 4));
+            downLp.setMarginEnd(CloudUi.dp(c, 4));
+            content.addView(CloudUi.button(c, getString(R.string.projects_plus_downgrade), false, this::askDowngrade), downLp);
             // What it does, in the site's sentence: the name alone read as if the account were not 7/24 Bulut already.
             content.addView(CloudUi.note(c, getString(R.string.projects_plus_downgrade_note)));
         }

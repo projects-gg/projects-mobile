@@ -229,7 +229,7 @@ public final class PlusActivityFragment extends CloudScreen implements CloudServ
     private String item(@Nullable String id, @Nullable Long qty) {
         if (id == null) return "";
         String name = mService.itemName(id, lang());
-        return qty != null && qty > 1 ? qty + " " + name : name;
+        return CloudWords.qtyName(ctx(), qty == null ? 1 : qty, name);
     }
 
     private String money(@Nullable Long value) {

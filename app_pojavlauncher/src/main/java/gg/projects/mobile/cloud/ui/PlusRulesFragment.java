@@ -188,7 +188,7 @@ public final class PlusRulesFragment extends PlusScreen implements PlusRowSheet.
         LinearLayout texts = new LinearLayout(c);
         texts.setOrientation(LinearLayout.VERTICAL);
         String name = draft.item == null ? "" : itemName(draft.item);
-        texts.addView(CloudUi.text(c, draft.qty > 1 ? draft.qty + " " + name : name, 16, R.color.projects_bone_100, true));
+        texts.addView(CloudUi.text(c, CloudWords.qtyName(c, draft.qty, name), 16, R.color.projects_bone_100, true));
         texts.addView(CloudUi.text(c, getString(buy ? R.string.projects_plus_buy_list : R.string.projects_plus_sell_list), 13, R.color.projects_ash_300, false));
         LinearLayout.LayoutParams textsLp = CloudUi.weight(1f);
         textsLp.setMarginStart(CloudUi.dp(c, 12));
@@ -309,7 +309,7 @@ public final class PlusRulesFragment extends PlusScreen implements PlusRowSheet.
         LinearLayout texts = new LinearLayout(c);
         texts.setOrientation(LinearLayout.VERTICAL);
         String name = itemName(r.item());
-        TextView title = CloudUi.text(c, r.qty() > 1 ? r.qty() + " " + name : name, 15, R.color.projects_bone_100, true);
+        TextView title = CloudUi.text(c, CloudWords.qtyName(c, r.qty(), name), 15, R.color.projects_bone_100, true);
         texts.addView(title);
         String line = getString(r.buy ? R.string.projects_plus_buy_line : R.string.projects_plus_sell_line,
                 CloudWords.money(c, r.target()), CloudWords.money(c, r.bound()));

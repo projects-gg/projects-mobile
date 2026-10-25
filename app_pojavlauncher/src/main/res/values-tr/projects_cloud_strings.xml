@@ -128,7 +128,7 @@
     <!-- Hesap ekranı -->
     <string name="projects_cloud_time">Süre</string>
     <string name="projects_cloud_ends_on">%1$s tarihinde bitiyor</string>
-    <string name="projects_cloud_renew_opens">Uzatma %1$s tarihinde açılır.</string>
+    <string name="projects_cloud_renew_opens">%1$s tarihinden itibaren uzatabilirsin.</string>
     <string name="projects_cloud_site_more">Siparişler, iade ve silme afk.projects.gg\'de.</string>
     <string name="projects_cloud_inventory">Envanter</string>
 
@@ -469,19 +469,22 @@
     <string name="projects_plus_buying_from">%1$s ile alım</string>
     <string name="projects_plus_selling_to">%1$s ile satış</string>
     <string name="projects_plus_left">%1$s kaldı</string>
+    <string name="projects_plus_minutes_short">%1$d dk</string>
+    <string name="projects_plus_left_under">1 dakikadan az kaldı</string>
     <string name="projects_plus_approve">Onayla</string>
     <string name="projects_plus_lower">Fiyatı düşür</string>
     <string name="projects_plus_lower_title">En fazla ne kadar ödesin?</string>
     <string name="projects_plus_lower_help">Asistan bu tutara kadar yeniden pazarlık eder.</string>
+    <string name="projects_plus_lower_label">En fazla</string>
     <string name="projects_plus_lower_go">Pazarlığa devam et</string>
     <string name="projects_plus_lower_range">Şimdiki fiyattan düşük bir tutar gir.</string>
     <string name="projects_plus_approved">Onaylandı; takas başlıyor.</string>
-    <string name="projects_plus_why_above">Belirlediğin tutarın üstünde</string>
+    <string name="projects_plus_why_above">Onay sınırının üstünde</string>
     <string name="projects_plus_why_new">Bu oyuncuyla ilk anlaşma</string>
-    <string name="projects_plus_why_always">Bu kural her zaman soruyor</string>
-    <string name="projects_plus_why_price">Fiyat alışılmadık görünüyor</string>
-    <string name="projects_plus_why_budget">Bütçene yakın</string>
-    <string name="projects_plus_why_daily">Günlük sınırına yakın</string>
+    <string name="projects_plus_why_always">Bu eşyada her seferinde sorar</string>
+    <string name="projects_plus_why_price">Fiyat alışılmadık</string>
+    <string name="projects_plus_why_budget">Toplam harcama sınırı doldu</string>
+    <string name="projects_plus_why_daily">Günlük harcama sınırı doldu</string>
     <string name="projects_plus_state_approved">Onaylandı</string>
     <string name="projects_plus_state_rejected">Reddedildi</string>
     <string name="projects_plus_state_expired">Süresi doldu</string>
@@ -545,10 +548,11 @@
     <string name="projects_plus_style_patient">Sabırlı</string>
     <string name="projects_plus_style_balanced">Dengeli</string>
     <string name="projects_plus_style_quick">Hızlı</string>
-    <string name="projects_plus_row_approval">Bana sor</string>
-    <string name="projects_plus_approval_auto">Hiç</string>
-    <string name="projects_plus_approval_above">Sınırın üstünde</string>
-    <string name="projects_plus_approval_always">Her seferinde</string>
+    <string name="projects_plus_row_approval">Onay</string>
+    <string name="projects_plus_approval_auto">Sormadan alır</string>
+    <string name="projects_plus_approval_auto_sell">Sormadan satar</string>
+    <string name="projects_plus_approval_above">Onay sınırının üstünde sorar</string>
+    <string name="projects_plus_approval_always">Her seferinde sorar</string>
     <string name="projects_plus_row_daily">Günde en çok</string>
     <string name="projects_plus_row_notify">Bulunca haber ver</string>
     <string name="projects_plus_row_durability">En az dayanıklılık</string>
@@ -631,23 +635,23 @@
     <string name="projects_plus_break_end">Molayı bitir</string>
 
     <!-- Harcama sınırları -->
-    <string name="projects_plus_limit_perDealMax">Tek anlaşmada en çok</string>
-    <string name="projects_plus_limit_dailySpendMax">Günde en çok</string>
-    <string name="projects_plus_limit_totalBudget">Toplam harcama yetkisi</string>
+    <string name="projects_plus_limit_perDealMax">Tek anlaşmada en fazla</string>
+    <string name="projects_plus_limit_dailySpendMax">Günlük harcama sınırı</string>
+    <string name="projects_plus_limit_totalBudget">Toplam harcama sınırı</string>
     <string name="projects_plus_limit_balanceFloor">En az kalacak bakiye</string>
-    <string name="projects_plus_limit_approvalAbove">Bu tutarın üstünde sor</string>
-    <string name="projects_plus_limit_newCounterpartApprovalAbove">Yeni bir oyuncuyla bunun üstünde sor</string>
+    <string name="projects_plus_limit_approvalAbove">Onay sınırı</string>
+    <string name="projects_plus_limit_newCounterpartApprovalAbove">Yeni oyuncuda onay sınırı</string>
     <string name="projects_plus_limit_approvalTimeoutMin">Onaya cevap vermezsen</string>
     <string name="projects_plus_limit_minutes">dk</string>
     <string name="projects_plus_limit_timeout_help">Bu kadar dakika sonra hayır sayılır.</string>
     <string name="projects_plus_limits_money">Tutarlar oyundaki parayla.</string>
     <string name="projects_plus_limit_none">Sınır yok</string>
-    <string name="projects_plus_limit_order">Sorma tutarı, tek anlaşmada en çoktan büyük olamaz.</string>
+    <string name="projects_plus_limit_order">Onay sınırı, tek anlaşmadaki en fazla tutardan büyük olamaz.</string>
     <string name="projects_plus_reset_spent">Harcananı sıfırla</string>
-    <string name="projects_plus_reset_spent_body">Toplam yetkiden kullanılan sıfırlanır; bugün harcanan aynı kalır.</string>
+    <string name="projects_plus_reset_spent_body">Toplam sınırdan kullanılan sıfırlanır; bugün harcanan aynı kalır.</string>
     <string name="projects_plus_reset_spent_done">Harcanan sıfırlandı.</string>
     <string name="projects_plus_spent_today">Bugün harcanan</string>
-    <string name="projects_plus_spent_total">Toplam yetkiden kullanılan</string>
+    <string name="projects_plus_spent_total">Toplam sınırdan kullanılan</string>
 
     <!-- Etkinlik (akış, takas geçmişi, haftalık rapor; QoL Q4) -->
     <string name="projects_plus_feed">Canlı</string>

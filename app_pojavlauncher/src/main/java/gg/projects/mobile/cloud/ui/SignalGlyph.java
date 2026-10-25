@@ -17,16 +17,17 @@ import gg.projects.mobile.cloud.CloudStatus;
  * a stop needs the player. A 15 × 8 pixel grid drawn at a whole-pixel scale, so every edge is crisp. Static: no
  * blinking (the words beside it say the state; TalkBack reads those).
  *
- * <p>In the game: all five lit. On the way (connecting): the first two in the hotter gold. Idle: none lit.
- * Stopped by a problem: none lit, dimmer, with the cross.
+ * <p>In the game: all five lit, green (the desktop's tone for five bars, SMALL10b 25 Oct: gold bars read as a high
+ * ping and the game draws its own bars green). On the way (connecting): the first two in the hotter gold, the
+ * launcher's "working". Idle: none lit. Stopped by a problem: none lit, dimmer, with the cross.
  */
 public final class SignalGlyph extends Drawable {
     private static final int W = 15;
     private static final int H = 8;
     private static final int[][] CROSS = {{0, 0}, {4, 0}, {1, 1}, {3, 1}, {2, 2}, {1, 3}, {3, 3}, {0, 4}, {4, 4}};
 
-    private static final int LIT_FACE = 0xFFF0B849;    // gold-400
-    private static final int LIT_SHADE = 0xFF8E4A12;   // gold-700
+    private static final int LIT_FACE = 0xFF5FCB8E;    // jade-400
+    private static final int LIT_SHADE = 0xFF1B6843;   // jade-700
     private static final int HOT_FACE = 0xFFFAE5B3;    // gold-200
     private static final int HOT_SHADE = 0xFFC9741A;   // gold-600
     private static final int DIM_FACE = 0x33FFFFFF;

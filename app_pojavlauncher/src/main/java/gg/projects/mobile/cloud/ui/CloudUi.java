@@ -353,6 +353,32 @@ public final class CloudUi {
         row.view.setAlpha(enabled ? 1f : 0.5f);
     }
 
+    /**
+     * "Discord ile giriş yap": Discord's Blurple and official mark, the one place outside the palette (design.md §6),
+     * the same as the friends screen's sign-in button (projects_discord_button, Figtree, the glyph before the words).
+     */
+    public static Button discordButton(Context c, CharSequence label, View.OnClickListener click) {
+        Button button = new Button(c, null, android.R.attr.borderlessButtonStyle);
+        button.setText(label);
+        button.setAllCaps(false);
+        button.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+        button.setTextColor(0xFFFFFFFF);
+        button.setTypeface(font(c, R.font.figtree_semibold));
+        button.setBackgroundResource(R.drawable.projects_discord_button);
+        button.setMinHeight(dp(c, 48));
+        button.setMinimumHeight(dp(c, 48));
+        button.setPadding(dp(c, 20), 0, dp(c, 20), 0);
+        Drawable glyph = ContextCompat.getDrawable(c, R.drawable.projects_ic_discord_glyph);
+        if (glyph != null) {
+            glyph.setBounds(0, 0, dp(c, 22), Math.round(16.7f * c.getResources().getDisplayMetrics().density));
+            button.setCompoundDrawablesRelative(glyph, null, null, null);
+        }
+        button.setCompoundDrawablePadding(dp(c, 10));
+        Press.attach(button, Press.Style.BUTTON);
+        button.setOnClickListener(click);
+        return button;
+    }
+
     /** A text action that leaves the app for the site: the words and a small "opens outside" mark after them. */
     public static Button siteLink(Context c, CharSequence label, View.OnClickListener click) {
         Button button = textButton(c, label, click);

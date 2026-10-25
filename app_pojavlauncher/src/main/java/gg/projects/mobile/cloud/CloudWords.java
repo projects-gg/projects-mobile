@@ -157,6 +157,12 @@ public final class CloudWords {
         return soon ? clock(seconds) : new SimpleDateFormat("d MMMM", Locale.UK).format(new Date(seconds * 1000L));
     }
 
+    /** An item with its count, as the site writes it: "64 Elmas" / "Diamond ×64"; one alone is just its name. */
+    public static String qtyName(Context c, long qty, String name) {
+        if (qty <= 1) return name;
+        return turkish(c) ? qty + " " + name : name + " ×" + qty;
+    }
+
     /** "bugün", "yarın", "26 Ekim'de" / "today", "tomorrow", "on 26 October". */
     public static String relativeDay(Context c, long seconds, long nowSeconds) {
         long days = dayIndex(seconds) - dayIndex(nowSeconds);

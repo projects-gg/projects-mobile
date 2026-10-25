@@ -127,7 +127,7 @@
     <!-- The account screen -->
     <string name="projects_cloud_time">Time</string>
     <string name="projects_cloud_ends_on">Ends on %1$s</string>
-    <string name="projects_cloud_renew_opens">Extending opens on %1$s.</string>
+    <string name="projects_cloud_renew_opens">You can renew from %1$s.</string>
     <string name="projects_cloud_site_more">Orders, refunds and deleting are on the site.</string>
     <string name="projects_cloud_inventory">Inventory</string>
 
@@ -311,7 +311,7 @@
     <string name="projects_cloud_notify_stopped">An account stopped</string>
     <string name="projects_cloud_notify_renewal">Time is running out</string>
     <string name="projects_cloud_notify_expired">Time is up</string>
-    <string name="projects_cloud_notify_approval">Your OK is needed</string>
+    <string name="projects_cloud_notify_approval">Your approval is needed</string>
     <string name="projects_cloud_notify_found">Something you want was found</string>
     <string name="projects_cloud_notify_deal_done">Trade complete</string>
     <string name="projects_cloud_notify_deal_failed">Trade not completed</string>
@@ -468,19 +468,22 @@
     <string name="projects_plus_buying_from">Buying from %1$s</string>
     <string name="projects_plus_selling_to">Selling to %1$s</string>
     <string name="projects_plus_left">%1$s left</string>
+    <string name="projects_plus_minutes_short">%1$d min</string>
+    <string name="projects_plus_left_under">Less than a minute left</string>
     <string name="projects_plus_approve">Approve</string>
     <string name="projects_plus_lower">Lower the price</string>
     <string name="projects_plus_lower_title">Pay at most</string>
     <string name="projects_plus_lower_help">The assistant bargains again up to this amount.</string>
+    <string name="projects_plus_lower_label">At most</string>
     <string name="projects_plus_lower_go">Keep bargaining</string>
     <string name="projects_plus_lower_range">Enter less than %1$s.</string>
     <string name="projects_plus_approved">Approved; the trade starts.</string>
-    <string name="projects_plus_why_above">Above the amount you set</string>
+    <string name="projects_plus_why_above">Above your approval limit</string>
     <string name="projects_plus_why_new">First deal with this player</string>
-    <string name="projects_plus_why_always">This rule always asks</string>
-    <string name="projects_plus_why_price">The price looks unusual</string>
-    <string name="projects_plus_why_budget">Near your budget</string>
-    <string name="projects_plus_why_daily">Near today\'s limit</string>
+    <string name="projects_plus_why_always">Asks every time for this item</string>
+    <string name="projects_plus_why_price">Unusual price</string>
+    <string name="projects_plus_why_budget">Total spending limit reached</string>
+    <string name="projects_plus_why_daily">Daily spending limit reached</string>
     <string name="projects_plus_state_approved">Approved</string>
     <string name="projects_plus_state_rejected">Rejected</string>
     <string name="projects_plus_state_expired">Expired</string>
@@ -544,10 +547,11 @@
     <string name="projects_plus_style_patient">Patient</string>
     <string name="projects_plus_style_balanced">Balanced</string>
     <string name="projects_plus_style_quick">Quick</string>
-    <string name="projects_plus_row_approval">Ask me</string>
-    <string name="projects_plus_approval_auto">Never</string>
-    <string name="projects_plus_approval_above">Above my limit</string>
-    <string name="projects_plus_approval_always">Every time</string>
+    <string name="projects_plus_row_approval">Approval</string>
+    <string name="projects_plus_approval_auto">Buys without asking</string>
+    <string name="projects_plus_approval_auto_sell">Sells without asking</string>
+    <string name="projects_plus_approval_above">Asks above your approval limit</string>
+    <string name="projects_plus_approval_always">Asks every time</string>
     <string name="projects_plus_row_daily">At most a day</string>
     <string name="projects_plus_row_notify">Tell me when one is found</string>
     <string name="projects_plus_row_durability">Lowest durability</string>
@@ -631,22 +635,22 @@
 
     <!-- Spending limits -->
     <string name="projects_plus_limit_perDealMax">At most per deal</string>
-    <string name="projects_plus_limit_dailySpendMax">At most a day</string>
-    <string name="projects_plus_limit_totalBudget">Total spending authority</string>
+    <string name="projects_plus_limit_dailySpendMax">Daily spending limit</string>
+    <string name="projects_plus_limit_totalBudget">Total spending limit</string>
     <string name="projects_plus_limit_balanceFloor">Lowest balance to keep</string>
-    <string name="projects_plus_limit_approvalAbove">Ask me above</string>
-    <string name="projects_plus_limit_newCounterpartApprovalAbove">Ask above this with a new player</string>
+    <string name="projects_plus_limit_approvalAbove">Approval limit</string>
+    <string name="projects_plus_limit_newCounterpartApprovalAbove">Approval limit with a new player</string>
     <string name="projects_plus_limit_approvalTimeoutMin">If you don\'t answer an approval</string>
     <string name="projects_plus_limit_minutes">min</string>
     <string name="projects_plus_limit_timeout_help">After this many minutes it counts as a no.</string>
     <string name="projects_plus_limits_money">Amounts are in in-game money.</string>
     <string name="projects_plus_limit_none">No limit</string>
-    <string name="projects_plus_limit_order">The ask amount can\'t be above the per-deal limit.</string>
+    <string name="projects_plus_limit_order">The approval limit can\'t be above the per-deal maximum.</string>
     <string name="projects_plus_reset_spent">Reset spending</string>
-    <string name="projects_plus_reset_spent_body">What was spent from the total authority goes back to zero; today\'s spending stays.</string>
+    <string name="projects_plus_reset_spent_body">What was used of the total limit goes back to zero; today\'s spending stays.</string>
     <string name="projects_plus_reset_spent_done">Spending reset.</string>
     <string name="projects_plus_spent_today">Spent today</string>
-    <string name="projects_plus_spent_total">Spent from the total authority</string>
+    <string name="projects_plus_spent_total">Used of the total limit</string>
 
     <!-- Activity (feed, trade history, weekly report; QoL Q4) -->
     <string name="projects_plus_feed">Live</string>

@@ -2,6 +2,7 @@ package gg.projects.mobile.cloud.ui;
 
 import android.content.Context;
 import android.graphics.drawable.GradientDrawable;
+import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,7 +17,6 @@ import net.kdt.pojavlaunch.R;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 
 import gg.projects.mobile.cloud.CloudModel;
 import gg.projects.mobile.cloud.CloudProblem;
@@ -155,7 +155,7 @@ public final class PlusApprovalsFragment extends CloudScreen implements CloudSer
 
     private String title(CloudModel.Approval ap) {
         String name = mService.itemName(ap.item, lang());
-        return ap.qty > 1 ? ap.qty + " " + name : name;
+        return CloudWords.qtyName(ctx(), ap.qty, name);
     }
 
     /** An open approval. */
@@ -185,7 +185,8 @@ public final class PlusApprovalsFragment extends CloudScreen implements CloudSer
         LinearLayout.LayoutParams textsLp = CloudUi.weight(1f);
         textsLp.setMarginStart(CloudUi.dp(c, 12));
         head.addView(texts, textsLp);
-        TextView left = CloudUi.figure(c, "", 13, R.color.projects_gold_300);
+        // Minutes, as the site ("5 dk kaldı"): "5:24" read as hours. Figtree like the words around it; gold since it runs out.
+        TextView left = CloudUi.text(c, "", 13, R.color.projects_gold_300, true);
         left.setGravity(Gravity.END);
         head.addView(left);
         mCountdowns.add(left);
@@ -264,8 +265,13 @@ public final class PlusApprovalsFragment extends CloudScreen implements CloudSer
             CloudModel.Approval ap = mCounting.get(i);
             long left = Math.max(0, ap.expiresAt - now);
             if (left == 0) expired = true;
-            String clock = String.format(Locale.ROOT, "%d:%02d", left / 60, left % 60);
-            mCountdowns.get(i).setText(getString(R.string.projects_plus_left, clock));
+            long minutes = (left + 59) / 60;
+            String text = minutes > 1
+                    ? getString(R.string.projects_plus_left, getString(R.string.projects_plus_minutes_short, (int) minutes))
+                    : getString(R.string.projects_plus_left_under);
+            // Only when the words change (once a minute): a text set every second is an accessibility event every second.
+            TextView countdown = mCountdowns.get(i);
+            if (!TextUtils.equals(text, countdown.getText())) countdown.setText(text);
         }
         if (expired) {
             mShape = "";
@@ -322,11 +328,15 @@ public final class PlusApprovalsFragment extends CloudScreen implements CloudSer
         LinearLayout root = new LinearLayout(c);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(CloudUi.dp(c, 16), 0, CloudUi.dp(c, 16), CloudUi.dp(c, 16));
-        TextView title = CloudUi.text(c, getString(R.string.projects_plus_lower_title), 18, R.color.projects_bone_100, true);
+        // A dialog's title as the other sheets: Tektur 17. The field is the site's "En fazla" (the item's name read as
+        // the field's own label).
+        TextView title = CloudUi.text(c, getString(R.string.projects_plus_lower_title), 17, R.color.projects_bone_100, true);
+        title.setTypeface(CloudUi.font(c, R.font.tektur_semibold));
         title.setPadding(CloudUi.dp(c, 8), 0, CloudUi.dp(c, 8), 0);
         root.addView(title);
         root.addView(CloudUi.note(c, getString(R.string.projects_plus_lower_help)));
-        final PlusRowSheet.Amount amount = new PlusRowSheet.Amount(c, title(ap), gg.projects.mobile.cloud.PlusConfig.suggestedTarget(ap.price));
+        final PlusRowSheet.Amount amount = new PlusRowSheet.Amount(c, getString(R.string.projects_plus_lower_label),
+                gg.projects.mobile.cloud.PlusConfig.suggestedTarget(ap.price));
         root.addView(amount.field.view);
         final BottomPanel panel = BottomPanel.of(c, root, 0.7f);
         Button go = CloudUi.button(c, getString(R.string.projects_plus_lower_go), true, v -> {

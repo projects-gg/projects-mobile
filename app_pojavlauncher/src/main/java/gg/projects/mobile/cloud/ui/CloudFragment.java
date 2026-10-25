@@ -122,7 +122,7 @@ public final class CloudFragment extends CloudScreen {
         List<CloudModel.Account> accounts = mService.accounts();
         if (load == CloudService.Load.SIGNED_OUT) {
             LinearLayout empty = CloudUi.empty(c, gg.projects.mobile.ui.PixelSprites.Sprite.CLOUD, getString(R.string.projects_cloud_signed_out));
-            Button signIn = CloudUi.button(c, getString(R.string.projects_social_sign_in), true, v -> mService.signIn(requireActivity()));
+            Button signIn = CloudUi.discordButton(c, getString(R.string.projects_social_sign_in), v -> mService.signIn(requireActivity()));
             empty.addView(centered(c, signIn));
             content.addView(empty);
             return;
