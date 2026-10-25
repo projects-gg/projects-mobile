@@ -37,6 +37,11 @@ public final class SocialRoutes {
     public static final String CHAT = "chat";
     /** M21: a crew invite link ({@code XXXX-XXXX-XXXX}): the crew page's "+" looks it up. */
     public static final String CREW_LINK = "crew_link";
+    /** AFKPLUS-M: 7/24 Bulut's list; the others take an account id and open on top of it. */
+    public static final String CLOUD = "cloud";
+    public static final String CLOUD_ACCOUNT = "cloud_account";
+    public static final String CLOUD_APPROVALS = "cloud_approvals";
+    public static final String CLOUD_INBOX = "cloud_inbox";
 
     @Nullable
     private static String sTarget;
@@ -101,12 +106,38 @@ public final class SocialRoutes {
     }
 
     /** The launcher is on screen: opens the waiting place, if any. */
+    /** The cloud list, then the account, then the screen the notice is about (back walks the same way). */
+    private static void openCloud(FragmentActivity activity, String target, @Nullable String account) {
+        Tools.swapFragment(activity, gg.projects.mobile.cloud.ui.CloudFragment.class, gg.projects.mobile.cloud.ui.CloudFragment.TAG, null);
+        if (account == null || CLOUD.equals(target)) return;
+        Bundle args = gg.projects.mobile.cloud.ui.CloudScreen.args(account);
+        Tools.swapFragment(activity, gg.projects.mobile.cloud.ui.CloudAccountFragment.class, gg.projects.mobile.cloud.ui.CloudAccountFragment.TAG, args);
+        if (CLOUD_APPROVALS.equals(target)) {
+            Tools.swapFragment(activity, gg.projects.mobile.cloud.ui.PlusApprovalsFragment.class, gg.projects.mobile.cloud.ui.PlusApprovalsFragment.TAG,
+                    gg.projects.mobile.cloud.ui.CloudScreen.args(account));
+        } else if (CLOUD_INBOX.equals(target)) {
+            Tools.swapFragment(activity, gg.projects.mobile.cloud.ui.PlusInboxFragment.class, gg.projects.mobile.cloud.ui.PlusInboxFragment.TAG,
+                    gg.projects.mobile.cloud.ui.CloudScreen.args(account));
+        }
+    }
+
     public static void consume(FragmentActivity activity) {
         String target = sTarget;
         String arg = sArg;
         sTarget = null;
         sArg = null;
-        if (target == null || !SocialService.get(activity).enabled()) return;
+        if (target == null) return;
+        if (target.startsWith(CLOUD)) {
+            // AFKPLUS-M: 7/24 Bulut does not depend on the friends screens being on.
+            if (activity.getSupportFragmentManager().isStateSaved()) {
+                set(target, arg);
+                return;
+            }
+            Tools.backToMainMenu(activity);
+            openCloud(activity, target, arg);
+            return;
+        }
+        if (!SocialService.get(activity).enabled()) return;
         if (activity.getSupportFragmentManager().isStateSaved()) {
             set(target, arg);
             return;

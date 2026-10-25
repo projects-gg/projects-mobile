@@ -195,6 +195,11 @@
             android:name="gg.projects.mobile.social.SocialNotificationExpiry"
             android:exported="false" />
 
+        <!-- AFKPLUS-M: "Reddet" on an AFK+ approval's notification (the app's own notifications only). -->
+        <receiver
+            android:name="gg.projects.mobile.cloud.CloudActionReceiver"
+            android:exported="false" />
+
         <!-- Projects fork: event reminders ("Hatırlat"). -->
         <receiver
             android:name="gg.projects.mobile.reminders.ReminderReceiver"

@@ -43,6 +43,8 @@ public class MainMenuFragment extends Fragment {
     private mcVersionSpinner mVersionSpinner;
     private ProjectsHomeCard mProjectsCard;
     private gg.projects.mobile.social.ui.SocialHomeRow mSocialRow;
+    // AFKPLUS-M: 7/24 Bulut's row (players with cloud accounts) or its menu entry.
+    private gg.projects.mobile.cloud.ui.CloudHomeRow mCloudRow;
     // Projects fork: the event reminder's bell asks for the notification permission when it is tapped.
     private final ActivityResultLauncher<String> mNotificationPermission = registerForActivityResult(
             new ActivityResultContracts.RequestPermission(), granted -> {
@@ -118,6 +120,7 @@ public class MainMenuFragment extends Fragment {
         mProjectsCard = new ProjectsHomeCard(this, view, mVersionSpinner, mPlayButton, mNotificationPermission);
         // Projects fork (M19): the "Arkadaşlar" row (friends on Projects, a crew call, an invite).
         mSocialRow = new gg.projects.mobile.social.ui.SocialHomeRow(this, view);
+        mCloudRow = new gg.projects.mobile.cloud.ui.CloudHomeRow(this, view);
         // Projects fork: "Tekrar başlat" after Sodium kept the game from starting. FIX2: the game closed for
         // "Bağlan" while it ran: the start goes into that server.
         // The request goes to the home card, whose next resumed instance takes it: the launcher turns to portrait
@@ -173,6 +176,7 @@ public class MainMenuFragment extends Fragment {
         mVersionSpinner.reloadProfiles();
         mProjectsCard.onResume();
         mSocialRow.onResume();
+        mCloudRow.onResume();
     }
 
     @Override
@@ -180,6 +184,7 @@ public class MainMenuFragment extends Fragment {
         super.onPause();
         mProjectsCard.onPause();
         mSocialRow.onPause();
+        mCloudRow.onPause();
     }
 
     private void runInstallerWithConfirmation(boolean isCustomArgs) {

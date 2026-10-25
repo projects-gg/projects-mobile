@@ -25,7 +25,7 @@ public final class SocialNotificationExpiry extends BroadcastReceiver {
         if (tag != null && id != 0) NotificationManagerCompat.from(context).cancel(tag, id);
     }
 
-    static void schedule(Context context, String tag, int id, long timeoutMs) {
+    public static void schedule(Context context, String tag, int id, long timeoutMs) {
         AlarmManager alarms = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         if (alarms == null) return;
         Intent intent = new Intent(context, SocialNotificationExpiry.class)

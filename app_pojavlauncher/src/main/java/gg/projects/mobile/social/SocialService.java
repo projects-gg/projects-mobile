@@ -493,6 +493,8 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         caps.add("plans");
         // TEAM6: crew tag changes, live (the same reasoning).
         caps.add("badges");
+        // AFKPLUS-M: 7/24 Bulut's notices on the socket ("afk_notice"; a service without them ignores the name).
+        caps.add("afk");
         return caps;
     }
 
@@ -535,6 +537,11 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         if (connection != mConnection) return;
         long now = nowSeconds();
         String type = Json.str(message, "t", "");
+        if (type.equals("afk_notice")) {
+            // AFKPLUS-M: a 7/24 Bulut notice; the cloud side shows it (in the app's line when it is on screen).
+            gg.projects.mobile.cloud.CloudService.get(mApp).onSocketNotice(message, uiActivity());
+            return;
+        }
         if (mChat.onFrame(message)) {
             changed();
             return;
@@ -762,7 +769,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
      * Opens a page in a Custom Tab when the browser has them (the extras the support library sets),
      * else in the browser: either way the browser's own cookies carry the sign-in.
      */
-    static void openBrowser(Activity activity, String url) {
+    public static void openBrowser(Activity activity, String url) {
         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
         Bundle extras = new Bundle();
         extras.putBinder("android.support.customtabs.extra.SESSION", null);
@@ -981,6 +988,9 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         SocialNotifications.cancelAll(mApp);
         // M21: the plan reminders were this account's.
         PlanAlarms.clear(mApp);
+        // AFKPLUS-M: 7/24 Bulut's notices and what the phone kept about the player's accounts go too.
+        gg.projects.mobile.cloud.CloudNotifications.cancelAll(mApp);
+        if (gg.projects.mobile.cloud.CloudService.exists()) gg.projects.mobile.cloud.CloudService.get(mApp).forget();
     }
 
     // ---- phone notifications ----
@@ -1025,6 +1035,8 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         if (gate.chat && mPrefs.wantsMessages() && SocialNotifications.channelOn(mApp, SocialNotifications.CHANNEL_MESSAGES)) {
             kinds.add(PushMessage.MESSAGE);
         }
+        // AFKPLUS-M: 7/24 Bulut's notices, once the service announces them (an older one does not know the kinds).
+        if (mState.features().contains("afk")) kinds.addAll(gg.projects.mobile.cloud.CloudNotifications.wantedKinds(mApp));
         return kinds;
     }
 
@@ -1035,6 +1047,23 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     @Nullable
     String token() {
         return mToken;
+    }
+
+    /** AFKPLUS-M: 7/24 Bulut signs in with the friends session (one Discord sign-in for both). */
+    @Nullable
+    public String sessionToken() {
+        return mToken;
+    }
+
+    /** AFKPLUS-M: a cloud notice was seen on screen; the service then sends no push for it. */
+    @MainThread
+    public boolean sendAfkSeen(String id) {
+        PresenceConnection connection = mConnection;
+        if (connection == null || !mLiveSocket) return false;
+        JsonObject frame = new JsonObject();
+        frame.addProperty("t", "afk_seen");
+        frame.addProperty("id", id);
+        return connection.send(frame);
     }
 
     ExecutorService io() {

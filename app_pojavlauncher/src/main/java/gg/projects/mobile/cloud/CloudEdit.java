@@ -598,6 +598,68 @@ public final class CloudEdit {
         into.addProperty("preview", CloudText.preview(words.text));
     }
 
+    /**
+     * A refusal of a {@code PATCH} about the change's contents, as issues the settings screen shows where they are;
+     * null for any other problem. A content refusal (moderation) is {@code content/<category>}.
+     */
+    @Nullable
+    public static List<Issue> fromRefusal(CloudProblem problem) {
+        String code = problem.code;
+        if (code == null) return null;
+        String field = problem.field();
+        String reason = problem.reason();
+        List<Issue> out = new ArrayList<>();
+        switch (code) {
+            case "invalid_name":
+                out.add(Issue.general("name", "format"));
+                break;
+            case "duplicate_account":
+                out.add(Issue.general("name", "duplicate"));
+                break;
+            case "name_protected":
+                out.add(Issue.general("server".equals(field) ? "server" : "name", "protected"));
+                break;
+            case "invalid_server":
+                if ("port".equals(reason)) out.add(Issue.general("port", "port"));
+                else out.add(Issue.general("server", "private".equals(reason) || "self".equals(reason) ? "private" : "format"));
+                break;
+            case "server_blocked":
+                out.add(Issue.general("server", "blocked"));
+                break;
+            case "server_full":
+                out.add(Issue.general("server", "full"));
+                break;
+            case "server_change_limit":
+                out.add(Issue.general("server", "changeLimit"));
+                break;
+            case "invalid_version":
+                out.add(Issue.general("version", "version"));
+                break;
+            case "invalid_config":
+                out.add(Issue.fromPath(field, reason == null ? "range" : reason));
+                break;
+            case "invalid_command":
+                if ("content".equals(reason)) {
+                    String category = problem.string("category");
+                    out.add(Issue.fromPath(field, "content/" + (category == null ? "other" : category)));
+                } else {
+                    out.add(Issue.fromPath(field, reason == null ? "range" : reason));
+                }
+                break;
+            case "invalid_pattern": {
+                String p = problem.problem();
+                out.add(Issue.fromPath(field, p == null ? "invalid" : p));
+                break;
+            }
+            case "limit_rows":
+                out.add(Issue.fromPath(field, "limit"));
+                break;
+            default:
+                return null;
+        }
+        return out;
+    }
+
     /** The change of name, server, version and language for {@code PATCH} (only what differs from {@code account}). */
     public static JsonObject patch(CloudModel.Account account, @Nullable String name, @Nullable CloudServer server, @Nullable String version,
                                    @Nullable String lang, @Nullable JsonObject config) {

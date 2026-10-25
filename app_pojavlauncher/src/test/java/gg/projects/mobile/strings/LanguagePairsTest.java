@@ -78,6 +78,9 @@ public class LanguagePairsTest {
         // M19: the friends and crews texts live in their own file pair.
         english.putAll(texts(new File(RES, "values/projects_social_strings.xml")));
         turkish.putAll(texts(new File(RES, "values-tr/projects_social_strings.xml")));
+        // AFKPLUS-M: 7/24 Bulut and AFK+.
+        english.putAll(texts(new File(RES, "values/projects_cloud_strings.xml")));
+        turkish.putAll(texts(new File(RES, "values-tr/projects_cloud_strings.xml")));
         TreeSet<String> missingTurkish = new TreeSet<>(english.keySet());
         missingTurkish.removeAll(turkish.keySet());
         TreeSet<String> missingEnglish = new TreeSet<>(turkish.keySet());
@@ -108,7 +111,8 @@ public class LanguagePairsTest {
 
     @Test
     public void theEnglishInterfaceHasNoTurkishLeft() throws Exception {
-        for (String file : new String[]{"values/projects_strings.xml", "values/projects_social_strings.xml", "values/strings.xml"}) {
+        for (String file : new String[]{"values/projects_strings.xml", "values/projects_social_strings.xml", "values/projects_cloud_strings.xml",
+                "values/strings.xml"}) {
             for (Map.Entry<String, String> text : texts(new File(RES, file)).entrySet()) {
                 if (TURKISH_ON_PURPOSE.contains(text.getKey())) continue;
                 assertTrue(file + ": " + text.getKey() + " = " + text.getValue(), !TURKISH_LETTER.matcher(text.getValue()).find());
@@ -144,6 +148,9 @@ public class LanguagePairsTest {
             if (!file.getName().endsWith(".java")) continue;
             // The table of the Turkish default control labels and their English ones.
             if (file.getName().equals("ControlLabels.java")) continue;
+            // AFKPLUS-M: the cloud contract's password command names ("/giriş", shared with the launcher and the
+            // site) and the Turkish number and suffix tables; neither is interface text.
+            if (file.getName().equals("CloudText.java") || file.getName().equals("TrGrammar.java")) continue;
             String code = withoutComments(new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8));
             Matcher literal = STRING_LITERAL.matcher(code);
             while (literal.find()) {

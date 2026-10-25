@@ -46,6 +46,16 @@
 				android:layout_marginEnd="12dp"
 				android:layout_marginBottom="6dp" />
 
+			<!-- AFKPLUS-M: 7/24 Bulut, for a player with cloud accounts (others find it in the menu below) -->
+			<include
+				layout="@layout/view_projects_cloud_row"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:layout_marginStart="12dp"
+				android:layout_marginTop="6dp"
+				android:layout_marginEnd="12dp"
+				android:layout_marginBottom="6dp" />
+
 			<LinearLayout
 				android:id="@+id/projects_menu_group"
 				android:layout_width="match_parent"
@@ -86,6 +96,19 @@
 						android:drawableStart="@drawable/ic_discord"
 						android:text="@string/mcl_button_discord" />
 				</LinearLayout>
+
+				<View
+					android:id="@+id/cloud_divider"
+					style="@style/ProjectsMenuDivider"
+					android:visibility="gone" />
+
+				<com.kdt.mcgui.LauncherMenuButton
+					android:id="@+id/cloud_button"
+					style="@style/LauncherMenuButton.Universal"
+					android:layout_width="match_parent"
+					android:drawableStart="@drawable/projects_menu_cloud"
+					android:text="@string/projects_cloud_title"
+					android:visibility="gone" />
 
 				<View style="@style/ProjectsMenuDivider" />
 

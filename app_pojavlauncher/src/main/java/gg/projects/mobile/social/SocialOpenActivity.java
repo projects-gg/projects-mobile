@@ -18,7 +18,7 @@ public final class SocialOpenActivity extends Activity {
     private static final String EXTRA_TARGET = "gg.projects.mobile.social.TARGET";
     private static final String EXTRA_ARG = "gg.projects.mobile.social.ARG";
 
-    static PendingIntent open(Context context, String target, @Nullable String arg) {
+    public static PendingIntent open(Context context, String target, @Nullable String arg) {
         Intent intent = new Intent(context, SocialOpenActivity.class)
                 .putExtra(EXTRA_TARGET, target)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

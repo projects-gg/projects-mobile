@@ -1,0 +1,728 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- AFKPLUS-M: Telefonda 7/24 Bulut ve AFK+. Aynı şeyin adı masaüstü launcher'ın sözleri (tr-cloud-afk.ts), AFK+'nınkiler
+     docs/tasks/afkplus.md §8.6 ve §14 tablolarından. Bir adın sonuna ek gelmez ("%1$s:" ya da "için", "ile"); sayı ve saatlerin
+     ekini TrGrammar kurar ("37.500'e", "14:35'te"). -->
+<resources>
+    <string name="projects_cloud_title">7/24 Bulut</string>
+    <string name="projects_cloud_notifications">Bildirimler</string>
+    <string name="projects_cloud_refresh">Yenile</string>
+
+    <!-- Ana menünün satırı -->
+    <plurals name="projects_cloud_home_in_game">
+        <item quantity="one">%1$d/%2$d hesap oyunda</item>
+        <item quantity="other">%1$d/%2$d hesap oyunda</item>
+    </plurals>
+    <string name="projects_cloud_home_all_in_game">Hepsi oyunda</string>
+    <string name="projects_cloud_home_one_in_game">Oyunda</string>
+    <string name="projects_cloud_home_none_in_game">Oyunda hesap yok</string>
+    <string name="projects_cloud_home_stopped">%1$s durdu</string>
+    <plurals name="projects_cloud_home_approvals">
+        <item quantity="one">%d onay bekliyor</item>
+        <item quantity="other">%d onay bekliyor</item>
+    </plurals>
+    <plurals name="projects_cloud_home_messages">
+        <item quantity="one">%d yeni mesaj</item>
+        <item quantity="other">%d yeni mesaj</item>
+    </plurals>
+    <string name="projects_cloud_home_loading">Yükleniyor</string>
+    <string name="projects_cloud_home_unavailable">Şu an yüklenemiyor</string>
+    <string name="projects_cloud_home_maintenance">Bakımda</string>
+    <string name="projects_cloud_home_sign_in">Hesaplarını görmek için giriş yap</string>
+    <string name="projects_cloud_home_none">Bilgisayarın kapalıyken de AFK\'da kal</string>
+
+    <!-- Hesap listesi -->
+    <string name="projects_cloud_signed_out">7/24 Bulut hesapların Discord hesabınla açılır.</string>
+    <string name="projects_cloud_load_failed">Bulut hesapların şu an yüklenemedi.</string>
+    <string name="projects_cloud_maintenance">Bakımdayız. Hesaplar bakım bitince kendiliğinden döner.</string>
+    <string name="projects_cloud_empty_title">Henüz bulut hesabın yok</string>
+    <string name="projects_cloud_empty_body">Bilgisayarın ve telefonun kapalıyken de hesabın sunucuda kalır.</string>
+    <string name="projects_cloud_start_site">afk.projects.gg\'de başla</string>
+    <string name="projects_cloud_buy">Yeni hesap al</string>
+    <string name="projects_cloud_restricted">7/24 Bulut\'tan uzaklaştırıldın.</string>
+    <string name="projects_cloud_restricted_until">%1$s tarihine kadar 7/24 Bulut\'tan uzaklaştırıldın.</string>
+    <string name="projects_cloud_plus_mark">AFK+</string>
+
+    <!-- Durumlar (masaüstünün) -->
+    <string name="projects_cloud_state_running">Oyunda, %1$s</string>
+    <string name="projects_cloud_state_running_now">Oyunda</string>
+    <string name="projects_cloud_state_connecting">Bağlanıyor</string>
+    <string name="projects_cloud_state_waiting">Yeniden bağlanacak</string>
+    <string name="projects_cloud_state_waiting_in">Yeniden bağlanacak, %1$d sn</string>
+    <string name="projects_cloud_state_queued">Sırada</string>
+    <string name="projects_cloud_state_queued_full">Sırada: sunucunun bulut sınırı dolu</string>
+    <string name="projects_cloud_state_stopped">Durduruldu</string>
+    <string name="projects_cloud_state_unknown">Durumu şu an alınamıyor</string>
+    <string name="projects_cloud_state_expired">Süresi doldu</string>
+    <string name="projects_cloud_state_suspended">Yetkililer durdurdu</string>
+    <string name="projects_cloud_state_restricted">7/24 Bulut\'tan uzaklaştırıldın</string>
+    <string name="projects_cloud_state_no_host">Yer bekliyor</string>
+    <string name="projects_cloud_state_paused">Bakım nedeniyle durdu</string>
+    <string name="projects_cloud_state_off">Hizmet kapalı olduğu için durdu</string>
+    <string name="projects_cloud_state_server_blocked">Sunucu engellendi</string>
+    <string name="projects_cloud_state_server_blocked_because">Sunucu engellendi: %1$s</string>
+    <string name="projects_cloud_state_stopped_because">Durdu: %1$s</string>
+    <string name="projects_cloud_state_invalid_command">Bir satır çalıştırılamıyor: ters bölüyle başlıyor</string>
+
+    <string name="projects_cloud_cause_banned">Sunucudan yasaklandı</string>
+    <string name="projects_cloud_cause_notWhitelisted">Beyaz listede değil</string>
+    <string name="projects_cloud_cause_wrongPassword">Giriş şifresi yanlış</string>
+    <string name="projects_cloud_cause_premiumOnly">Bu sunucu Microsoft hesabı istiyor</string>
+    <string name="projects_cloud_cause_loggedInElsewhere">Bu adla başka yerden girildi</string>
+    <string name="projects_cloud_cause_alreadyConnected">Bu ad sunucuda zaten bağlı</string>
+    <string name="projects_cloud_cause_loginTimeout">Giriş süresi doldu</string>
+    <string name="projects_cloud_cause_unsupportedVersion">Sürüm desteklenmiyor</string>
+    <string name="projects_cloud_cause_secretUnreadable">Gizli komutlar okunamadı</string>
+    <string name="projects_cloud_cause_invalidCommand">Bir satır çalıştırılamıyor</string>
+    <string name="projects_cloud_cause_crashLoop">Hesap üst üste kapandı</string>
+    <string name="projects_cloud_cause_forbiddenTarget">Bu sunucu adresine bağlanılamıyor</string>
+    <string name="projects_cloud_cause_other">Bağlantı kesildi</string>
+
+    <string name="projects_cloud_hint_wrong_password">Ayarlar\'da giriş komutunu düzelt, sonra başlat.</string>
+    <string name="projects_cloud_hint_secret_unreadable">Ayarlar\'da gizli komutlarını yeniden yaz, sonra başlat.</string>
+    <string name="projects_cloud_hint_unreadable_command_row">Ayarlar\'da %1$d. komutu yeniden yaz, sonra başlat.</string>
+    <string name="projects_cloud_hint_unreadable_reply_row">Ayarlar\'da %1$d. otomatik yanıtı yeniden yaz, sonra başlat.</string>
+    <string name="projects_cloud_hint_invalid_command">Ayarlar\'da ters bölüyle başlayan satırı düzelt, sonra başlat.</string>
+    <string name="projects_cloud_hint_invalid_command_row">Ayarlar\'da %1$d. komutu düzelt, sonra başlat.</string>
+    <string name="projects_cloud_hint_invalid_reply_row">Ayarlar\'da %1$d. otomatik yanıtı düzelt, sonra başlat.</string>
+    <string name="projects_cloud_hint_premium_only">Ayarlar\'dan başka bir sunucu seç.</string>
+    <string name="projects_cloud_hint_not_whitelisted">Sunucunun beyaz listesine eklenmen gerek.</string>
+    <string name="projects_cloud_hint_logged_in_elsewhere">Aynı adla oyundaysan çık, sonra başlat.</string>
+    <string name="projects_cloud_hint_login_timeout">Sunucu giriş istiyorsa Ayarlar\'da giriş komutunu ekle.</string>
+    <string name="projects_cloud_hint_unsupported_version">Ayarlar\'dan başka bir sürüm seç.</string>
+    <string name="projects_cloud_hint_crash_loop">Ayarlarını kontrol et, sonra başlat.</string>
+    <string name="projects_cloud_hint_forbidden_target">Ayarlar\'dan başka bir sunucu seç.</string>
+    <string name="projects_cloud_hint_no_host">Boş yer açılınca kendiliğinden başlar.</string>
+
+    <plurals name="projects_cloud_days_left">
+        <item quantity="one">%d gün kaldı</item>
+        <item quantity="other">%d gün kaldı</item>
+    </plurals>
+    <plurals name="projects_cloud_hours_left">
+        <item quantity="one">%d saat kaldı</item>
+        <item quantity="other">%d saat kaldı</item>
+    </plurals>
+    <plurals name="projects_cloud_minutes_left">
+        <item quantity="one">%d dakika kaldı</item>
+        <item quantity="other">%d dakika kaldı</item>
+    </plurals>
+    <plurals name="projects_cloud_grace_left">
+        <item quantity="one">Ayarları %d gün daha saklanır</item>
+        <item quantity="other">Ayarları %d gün daha saklanır</item>
+    </plurals>
+
+    <!-- İşlemler -->
+    <string name="projects_cloud_start">Başlat</string>
+    <string name="projects_cloud_stop">Durdur</string>
+    <string name="projects_cloud_reconnect">Yeniden bağlan</string>
+    <string name="projects_cloud_console">Konsol</string>
+    <string name="projects_cloud_settings">Ayarlar</string>
+    <string name="projects_cloud_renew">Süreyi uzat</string>
+    <string name="projects_cloud_reactivate">Yeniden etkinleştir</string>
+    <string name="projects_cloud_open_site">afk.projects.gg\'de aç</string>
+    <string name="projects_cloud_started">%1$s başlatıldı</string>
+    <string name="projects_cloud_stopped_toast">%1$s durduruldu</string>
+    <string name="projects_cloud_reconnecting">%1$s yeniden bağlanıyor</string>
+    <string name="projects_cloud_failed">İşlem yapılamadı. Tekrar dene.</string>
+
+    <!-- Hesap ekranı -->
+    <string name="projects_cloud_time">Süre</string>
+    <string name="projects_cloud_ends_on">%1$s tarihinde bitiyor</string>
+    <string name="projects_cloud_renew_opens">Uzatma %1$s tarihinde açılır.</string>
+    <string name="projects_cloud_site_more">Siparişler, iade ve silme afk.projects.gg\'de.</string>
+    <string name="projects_cloud_inventory">Envanter</string>
+
+    <!-- Moderasyon (services/cloud-afk README "Moderation player API") -->
+    <string name="projects_cloud_mod_warn">%1$s için uyarı: %2$s. Tekrarlanırsa hesap durdurulur.</string>
+    <string name="projects_cloud_mod_rows">%1$s: bir satırın durduruldu (%2$s). Düzelt ya da sil.</string>
+    <string name="projects_cloud_mod_ai">%1$s: AFK+ yapay zekâsı durduruldu (%2$s). Hesabın AFK\'de kalıyor.</string>
+    <string name="projects_cloud_mod_suspend">%1$s durduruldu: %2$s. Yanlışlık olduğunu düşünüyorsan itiraz et.</string>
+    <string name="projects_cloud_mod_appeal_received">İtirazın alındı. En geç 3 gün içinde bakacağız.</string>
+    <string name="projects_cloud_mod_overturned">İtirazın kabul edildi. %1$s yeniden açıldı, durduğu süre eklendi.</string>
+    <string name="projects_cloud_mod_upheld">İtirazını inceledik; karar değişmedi.</string>
+    <string name="projects_cloud_mod_appeal">İtiraz et</string>
+    <string name="projects_cloud_mod_paused_row">Durduruldu</string>
+    <string name="projects_cloud_category_advertising">reklam</string>
+    <string name="projects_cloud_category_spam">spam</string>
+    <string name="projects_cloud_category_scam">dolandırıcılık</string>
+    <string name="projects_cloud_category_rmt">gerçek parayla ticaret</string>
+    <string name="projects_cloud_category_impersonation">yetkili taklidi</string>
+    <string name="projects_cloud_category_harassment">hakaret</string>
+    <string name="projects_cloud_category_hate">nefret söylemi</string>
+    <string name="projects_cloud_category_sexual">uygunsuz içerik</string>
+    <string name="projects_cloud_category_minor_safety">gençler için tehlikeli içerik</string>
+    <string name="projects_cloud_category_personal_info">kişisel bilgi</string>
+    <string name="projects_cloud_category_off_platform">başka uygulamaya çekme</string>
+    <string name="projects_cloud_category_evasion">kuraldan kaçış</string>
+    <string name="projects_cloud_category_other">kural ihlali</string>
+
+    <!-- Konsol -->
+    <string name="projects_cloud_console_input">Komut ya da sohbet mesajı</string>
+    <string name="projects_cloud_console_send">Gönder</string>
+    <string name="projects_cloud_console_offline">Hesap oyunda değil; başlatınca yazabilirsin.</string>
+    <string name="projects_cloud_console_empty">Henüz mesaj yok.</string>
+    <string name="projects_cloud_console_earlier">Önceki satırlar</string>
+    <string name="projects_cloud_console_sealed">Bu satır şifrelenip gönderilir.</string>
+    <string name="projects_cloud_console_connecting">Konsola bağlanılıyor</string>
+    <string name="projects_cloud_console_link_lost">Canlı bağlantı koptu. Yeniden bağlanılıyor.</string>
+    <string name="projects_cloud_console_replaced">Konsol başka bir yerde açıldı.</string>
+    <string name="projects_cloud_console_reopen">Burada aç</string>
+    <string name="projects_cloud_console_ended">Oturumun kapandı. Discord ile yeniden giriş yap.</string>
+    <string name="projects_cloud_console_refused">Bu hesabın konsolu şu an açılamıyor.</string>
+    <string name="projects_cloud_console_host_offline">AFK sunucusu şu an bağlı değil. Hesap çalışmaya devam ediyor olabilir.</string>
+    <string name="projects_cloud_console_no_host">Hesap bir AFK sunucusuna yerleşince konsol açılır.</string>
+    <plurals name="projects_cloud_console_skipped">
+        <item quantity="one">%d satır atlandı</item>
+        <item quantity="other">%d satır atlandı</item>
+    </plurals>
+    <string name="projects_cloud_console_send_failed">Mesaj gönderilemedi.</string>
+    <string name="projects_cloud_console_new">Yeni mesajlar</string>
+
+    <!-- Ayarlar -->
+    <string name="projects_cloud_settings_general">Genel</string>
+    <string name="projects_cloud_settings_commands">Komutlar</string>
+    <string name="projects_cloud_settings_replies">Otomatik yanıt</string>
+    <string name="projects_cloud_settings_load_failed">Ayarlar yüklenemedi.</string>
+    <string name="projects_cloud_settings_name">Oyuncu adı</string>
+    <string name="projects_cloud_settings_host">Sunucu adresi</string>
+    <string name="projects_cloud_settings_port">Port</string>
+    <string name="projects_cloud_settings_port_hint">Otomatik</string>
+    <string name="projects_cloud_settings_version">Oyun sürümü</string>
+    <string name="projects_cloud_settings_version_auto">Otomatik</string>
+    <string name="projects_cloud_settings_recommended">Önerilen</string>
+    <string name="projects_cloud_settings_version_search">Sürüm ara</string>
+    <string name="projects_cloud_settings_version_none">Bu aramayla eşleşen sürüm yok.</string>
+    <string name="projects_cloud_settings_lang">Konsol dili</string>
+    <string name="projects_cloud_settings_server_changes">Bu saat içinde %1$d/%2$d sunucu değişikliği</string>
+    <string name="projects_cloud_settings_anti_afk">AFK engelleme</string>
+    <string name="projects_cloud_settings_anti_afk_help">Sunucu seni AFK saymasın diye arada bir çömelir.</string>
+    <string name="projects_cloud_settings_at_least">En az</string>
+    <string name="projects_cloud_settings_at_most">En çok</string>
+    <string name="projects_cloud_settings_owner">Oyundaki kendi adın</string>
+    <string name="projects_cloud_settings_owner_help">“Yalnız ana hesabımdan” kuralları bu adı tanır.</string>
+    <string name="projects_cloud_settings_seconds">sn</string>
+    <string name="projects_cloud_command_add">Komut ekle</string>
+    <string name="projects_cloud_command_empty">Henüz komut yok.</string>
+    <string name="projects_cloud_command_count">%1$d/%2$d komut</string>
+    <string name="projects_cloud_command_title">Komut</string>
+    <string name="projects_cloud_command_trigger">Ne zaman</string>
+    <string name="projects_cloud_trigger_join">Her girişte</string>
+    <string name="projects_cloud_trigger_start">Yalnız başlatınca</string>
+    <string name="projects_cloud_trigger_reconnect">Yalnız yeniden bağlanınca</string>
+    <string name="projects_cloud_trigger_interval">Belli aralıklarla</string>
+    <string name="projects_cloud_trigger_daily">Her gün belli saatlerde</string>
+    <string name="projects_cloud_trigger_join_short">Her girişte, %1$d sn sonra</string>
+    <string name="projects_cloud_trigger_start_short">Başlatınca, %1$d sn sonra</string>
+    <string name="projects_cloud_trigger_reconnect_short">Yeniden bağlanınca, %1$d sn sonra</string>
+    <string name="projects_cloud_trigger_interval_short">%1$s ile %2$s arasında bir</string>
+    <string name="projects_cloud_trigger_daily_short">Her gün %1$s</string>
+    <string name="projects_cloud_command_delay">Bekleme</string>
+    <string name="projects_cloud_command_times">Saatler</string>
+    <string name="projects_cloud_command_times_help">Türkiye saatiyle.</string>
+    <string name="projects_cloud_command_add_time">Saat ekle</string>
+    <string name="projects_cloud_command_remove_time">%1$s saatini kaldır</string>
+    <string name="projects_cloud_command_text">Komut</string>
+    <string name="projects_cloud_command_text_hint">/kit ya da merhaba</string>
+    <string name="projects_cloud_command_use">Komutu kullan</string>
+    <string name="projects_cloud_command_remove">Komutu sil</string>
+    <string name="projects_cloud_command_move_up">Yukarı taşı</string>
+    <string name="projects_cloud_command_move_down">Aşağı taşı</string>
+    <string name="projects_cloud_rule_add">Kural ekle</string>
+    <string name="projects_cloud_rule_empty">Henüz kural yok.</string>
+    <string name="projects_cloud_rule_count">%1$d/%2$d kural</string>
+    <string name="projects_cloud_rule_title">Otomatik yanıt</string>
+    <string name="projects_cloud_rule_match">Aranan söz</string>
+    <string name="projects_cloud_rule_match_hint">selam</string>
+    <string name="projects_cloud_rule_regex">Düzenli ifade</string>
+    <string name="projects_cloud_rule_from">Kimden</string>
+    <string name="projects_cloud_rule_from_any">Her yerden</string>
+    <string name="projects_cloud_rule_from_player">Oyuncu sohbeti</string>
+    <string name="projects_cloud_rule_from_private">Fısıltı</string>
+    <string name="projects_cloud_rule_from_server">Sunucu mesajı</string>
+    <string name="projects_cloud_rule_owner_only">Yalnız ana hesabımdan</string>
+    <string name="projects_cloud_rule_cooldown">Bekleme</string>
+    <string name="projects_cloud_rule_reply">Yanıt</string>
+    <string name="projects_cloud_rule_reply_hint">Şu an klavye başında değilim.</string>
+    <string name="projects_cloud_rule_use">Kuralı kullan</string>
+    <string name="projects_cloud_rule_remove">Kuralı sil</string>
+    <string name="projects_cloud_rule_line">%1$s, %2$s bekleme</string>
+    <string name="projects_cloud_secret_mark">Gizli</string>
+    <string name="projects_cloud_secret_help">Gizli satırlar bu telefonda şifrelenip gönderilir.</string>
+    <string name="projects_cloud_secret_auto">Şifre içerdiği için gizli.</string>
+    <string name="projects_cloud_secret_sealed">Bulutta saklı</string>
+    <string name="projects_cloud_secret_show">Göster</string>
+    <string name="projects_cloud_secret_hide">Gizle</string>
+    <string name="projects_cloud_secret_change">Değiştir</string>
+    <string name="projects_cloud_secret_offline">AFK sunucusu bağlı değil; şu an gösterilemiyor.</string>
+    <string name="projects_cloud_secret_limited">Çok sık gösterildi. Biraz sonra tekrar dene.</string>
+    <string name="projects_cloud_secret_unreadable">Bu satır gösterilemiyor; yeniden yaz.</string>
+    <string name="projects_cloud_secret_reseal">Yeni sunucu için yeniden yaz.</string>
+    <string name="projects_cloud_settings_restart_note">Kaydedince hesap yeni ayarlarla yeniden bağlanır.</string>
+    <string name="projects_cloud_settings_dirty">Kaydedilmemiş değişikliklerin var.</string>
+    <string name="projects_cloud_settings_fix_first">Kaydetmeden önce işaretli alanları düzelt.</string>
+    <string name="projects_cloud_settings_save">Kaydet</string>
+    <string name="projects_cloud_settings_saving">Kaydediliyor</string>
+    <string name="projects_cloud_settings_cancel">Vazgeç</string>
+    <string name="projects_cloud_settings_done">Tamam</string>
+    <string name="projects_cloud_settings_saved">%1$s ayarları kaydedildi</string>
+    <string name="projects_cloud_settings_conflict">Hesap başka bir yerde değişti.</string>
+    <string name="projects_cloud_settings_load_latest">Son halini yükle</string>
+    <string name="projects_cloud_discard_title">Değişiklikler kaydedilmedi</string>
+    <string name="projects_cloud_discard_body">Kaydetmeden çıkarsan yaptığın değişiklikler silinir.</string>
+    <string name="projects_cloud_discard_keep">Düzenlemeye dön</string>
+    <string name="projects_cloud_discard_confirm">Kaydetmeden çık</string>
+    <string name="projects_cloud_issue_empty">Bunu yaz ya da satırı sil.</string>
+    <string name="projects_cloud_issue_length">En çok 256 karakter olabilir.</string>
+    <string name="projects_cloud_issue_space">Başında ya da sonunda boşluk olamaz.</string>
+    <string name="projects_cloud_issue_control">Satır sonu ve görünmeyen karakter kullanma.</string>
+    <string name="projects_cloud_issue_backslash">Ters bölü (\\) ile başlayamaz.</string>
+    <string name="projects_cloud_issue_unicode">Bozuk bir karakter var. Satırı yeniden yaz.</string>
+    <string name="projects_cloud_issue_variable" formatted="false">Yalnız %username%, %serverip%, %serverport% ve %datetime% kullanılabilir.</string>
+    <string name="projects_cloud_issue_secret">Şifre içeren komut gizli olmalı.</string>
+    <string name="projects_cloud_issue_range">Bu değer kabul edilmiyor.</string>
+    <string name="projects_cloud_issue_order">En çok, en azdan küçük olamaz.</string>
+    <string name="projects_cloud_issue_delay">0 ile 60 saniye arasında gir.</string>
+    <string name="projects_cloud_issue_every">En az %1$d saniye, en çok bir gün.</string>
+    <string name="projects_cloud_issue_anti_afk">10 ile 3600 saniye arasında gir; en çok, en azdan küçük olamaz.</string>
+    <string name="projects_cloud_issue_times_format">Saati SS:DD biçiminde yaz.</string>
+    <string name="projects_cloud_issue_times_duplicate">Bu saat zaten var.</string>
+    <string name="projects_cloud_issue_times_empty">En az bir saat ekle.</string>
+    <string name="projects_cloud_issue_times_many">En çok 6 saat eklenebilir.</string>
+    <string name="projects_cloud_issue_invalid">Geçersiz düzenli ifade.</string>
+    <string name="projects_cloud_issue_too_complex">Bu ifade fazla karmaşık; daha sade yaz.</string>
+    <string name="projects_cloud_issue_owner">Önce Genel\'de oyundaki kendi adını yaz.</string>
+    <string name="projects_cloud_issue_owner_server">Sunucu mesajları bir oyuncudan gelmez; bu kuralda kullanılamaz.</string>
+    <string name="projects_cloud_issue_name">Oyuncu adı 3-16 karakter olmalı: harf, rakam ya da alt çizgi.</string>
+    <string name="projects_cloud_issue_name_duplicate">Aynı ad ve sunucuyla başka bir bulut hesabın var.</string>
+    <string name="projects_cloud_issue_name_protected">Bu ad yetkililere ayrılmış.</string>
+    <string name="projects_cloud_issue_host">Adres yalnız harf, rakam, nokta, tire ve alt çizgi içerebilir.</string>
+    <string name="projects_cloud_issue_host_dot">Tam adresi yaz. Örnek: play.projects.gg</string>
+    <string name="projects_cloud_issue_host_private">Bu adrese bağlanılamaz.</string>
+    <string name="projects_cloud_issue_port">Bu porta bağlanılamaz.</string>
+    <string name="projects_cloud_issue_blocked">Bu sunucuya giriş engelli.</string>
+    <string name="projects_cloud_issue_full">Bu sunucuda bulut hesapları için yer kalmadı.</string>
+    <string name="projects_cloud_issue_change_limit">Bu saat içinde sunucu değiştirme hakkın doldu.</string>
+    <string name="projects_cloud_issue_version">Bu sürüm şu an desteklenmiyor.</string>
+    <string name="projects_cloud_issue_limit">Satır sınırına ulaştın.</string>
+    <string name="projects_cloud_issue_content">Bu satır %1$s içeriyor gibi görünüyor; düzelt ya da sil.</string>
+    <string name="projects_cloud_issue_other">Bu alanı düzelt.</string>
+
+    <!-- Bildirim ayarları -->
+    <string name="projects_cloud_notify_accounts">Bulut hesapları</string>
+    <string name="projects_cloud_notify_stopped">Hesap durdu</string>
+    <string name="projects_cloud_notify_renewal">Süre bitiyor</string>
+    <string name="projects_cloud_notify_expired">Süre bitti</string>
+    <string name="projects_cloud_notify_approval">Onay bekliyor</string>
+    <string name="projects_cloud_notify_found">Eşya bulundu</string>
+    <string name="projects_cloud_notify_deal_done">Takas tamamlandı</string>
+    <string name="projects_cloud_notify_deal_failed">Takas olmadı</string>
+    <string name="projects_cloud_notify_message">Yeni mesaj</string>
+    <string name="projects_cloud_notify_quota_full">Hak doldu</string>
+    <string name="projects_cloud_notify_quota_80" formatted="false">Hakkın %80\'i kullanıldı</string>
+    <string name="projects_cloud_notify_gift_ending">Hediye hak bitiyor</string>
+    <string name="projects_cloud_notify_summary">Günlük özet</string>
+    <string name="projects_cloud_notify_weekly">Haftalık rapor</string>
+    <string name="projects_cloud_notify_paused">Asistan duraklatıldı</string>
+    <string name="projects_cloud_notify_incident">Uygunsuz mesaj geldi</string>
+    <string name="projects_cloud_notify_quiet">Sessiz saatler</string>
+    <string name="projects_cloud_notify_quiet_help">Sessiz saatlerde telefona bildirim gelmez; olanlar sonunda tek bildirimde gelir.</string>
+    <string name="projects_cloud_notify_from">Başlangıç</string>
+    <string name="projects_cloud_notify_to">Bitiş</string>
+    <string name="projects_cloud_notify_load_failed">Bildirim ayarların yüklenemedi.</string>
+    <string name="projects_cloud_channel_group">7/24 Bulut</string>
+    <string name="projects_cloud_channel_alerts">Bulut AFK uyarıları</string>
+    <string name="projects_cloud_channel_deals">AFK+ onay ve anlaşmalar</string>
+    <string name="projects_cloud_channel_info">AFK+ bilgi</string>
+
+    <!-- Bildirimler (telefon kendisi yazar; karşı tarafın adı ve mesaj metni hiç gelmez) -->
+    <string name="projects_cloud_notice_stopped">%1$s durdu: %2$s.</string>
+    <plurals name="projects_cloud_notice_renewal">
+        <item quantity="one">%1$s için süre yarın bitiyor.</item>
+        <item quantity="other">%1$s için süre %2$d gün sonra bitiyor.</item>
+    </plurals>
+    <string name="projects_cloud_notice_expired">%1$s için süre bitti.</string>
+    <string name="projects_cloud_notice_found">%1$s: %2$s bulundu (%3$s).</string>
+    <string name="projects_cloud_notice_approval">%1$s onay bekliyor</string>
+    <string name="projects_cloud_notice_deal_line">%1$s %2$s = %3$s</string>
+    <string name="projects_cloud_notice_bought">%1$s: %2$s %3$s %4$s alındı.</string>
+    <string name="projects_cloud_notice_sold">%1$s: %2$s %3$s %4$s satıldı.</string>
+    <string name="projects_cloud_notice_deal_failed">%1$s: %2$s takası olmadı.</string>
+    <string name="projects_cloud_notice_quota_full">AFK+ hakkın doldu; %1$s yenilenir.</string>
+    <string name="projects_cloud_notice_quota_full_plain">AFK+ hakkın doldu.</string>
+    <string name="projects_cloud_notice_quota_80">%1$s: AFK+ hakkının %%80\'i kullanıldı.</string>
+    <string name="projects_cloud_notice_gift_ending">Hediye AI hakkın %1$s bitiyor.</string>
+    <string name="projects_cloud_notice_summary">%1$s: bugün %2$d PM, %3$d anlaşma.</string>
+    <string name="projects_cloud_notice_paused_staff">%1$s: AFK+ yetkililerce duraklatıldı.</string>
+    <string name="projects_cloud_notice_paused_service">AFK+ bakımda; hesapların AFK\'de kalıyor.</string>
+    <string name="projects_cloud_notice_paused_outage">%1$s: AFK+ şu an yanıt veremiyor; hesap AFK\'de kalıyor.</string>
+    <string name="projects_cloud_notice_incident">%1$s: uygunsuz mesajlar geldi; o oyuncuya artık cevap verilmiyor.</string>
+    <string name="projects_cloud_notice_message">%1$s: yeni mesaj.</string>
+    <plurals name="projects_cloud_notice_messages">
+        <item quantity="one">%1$s: %2$d yeni mesaj.</item>
+        <item quantity="other">%1$s: %2$d yeni mesaj.</item>
+    </plurals>
+    <plurals name="projects_cloud_notice_weekly">
+        <item quantity="one">%1$s geçen hafta %2$d takas yaptı.</item>
+        <item quantity="other">%1$s geçen hafta %2$d takas yaptı.</item>
+    </plurals>
+    <string name="projects_cloud_notice_night">Gece olanlar</string>
+    <plurals name="projects_cloud_night_deals">
+        <item quantity="one">%d takas tamamlandı</item>
+        <item quantity="other">%d takas tamamlandı</item>
+    </plurals>
+    <plurals name="projects_cloud_night_found">
+        <item quantity="one">%d eşya bulundu</item>
+        <item quantity="other">%d eşya bulundu</item>
+    </plurals>
+    <plurals name="projects_cloud_night_stopped">
+        <item quantity="one">%d hesap durdu</item>
+        <item quantity="other">%d hesap durdu</item>
+    </plurals>
+    <plurals name="projects_cloud_night_messages">
+        <item quantity="one">%d yeni mesaj</item>
+        <item quantity="other">%d yeni mesaj</item>
+    </plurals>
+    <plurals name="projects_cloud_night_other">
+        <item quantity="one">%d bildirim daha</item>
+        <item quantity="other">%d bildirim daha</item>
+    </plurals>
+    <string name="projects_cloud_today">bugün</string>
+    <string name="projects_cloud_tomorrow">yarın</string>
+    <string name="projects_cloud_on_day">%1$s</string>
+    <string name="projects_cloud_reject">Reddet</string>
+    <string name="projects_cloud_rejected">Reddedildi.</string>
+
+    <!-- Sorunlar (kodlar hiç gösterilmez) -->
+    <string name="projects_cloud_error_unavailable">7/24 Bulut şu an kullanılamıyor. Biraz sonra tekrar dene.</string>
+    <string name="projects_cloud_error_signed_out">Oturumun kapandı. Discord ile yeniden giriş yap.</string>
+    <string name="projects_cloud_error_rate_limited">Çok sık denendi. Biraz sonra tekrar dene.</string>
+    <string name="projects_cloud_error_host_offline">AFK sunucusu şu an bağlı değil. Biraz sonra tekrar dene.</string>
+    <string name="projects_cloud_error_paused">7/24 Bulut bakımda. Bakım bitince tekrar dene.</string>
+    <string name="projects_cloud_error_plus_off">AFK+ şu an kapalı.</string>
+    <string name="projects_cloud_error_not_running">Hesap oyunda değil.</string>
+    <string name="projects_cloud_error_suspended">Bu hesap yetkililerce durduruldu.</string>
+    <string name="projects_cloud_error_expired">Bu hesabın süresi doldu.</string>
+    <string name="projects_cloud_error_gone">Bu hesap artık yok.</string>
+    <string name="projects_cloud_error_plus_not_active">Bu hesap AFK+ değil.</string>
+    <string name="projects_cloud_error_feature_off">Bu şu an kapalı.</string>
+    <string name="projects_cloud_error_approval_closed">Bu onay artık geçerli değil.</string>
+    <string name="projects_cloud_error_invalid">Bazı ayarlar kabul edilmedi. İşaretli alanları düzelt.</string>
+    <string name="projects_cloud_error_downgrade_limit">Düz plana şu an yeniden geçemezsin.</string>
+    <string name="projects_cloud_error_seal">Satır şifrelenemedi. Tekrar dene.</string>
+
+    <!-- Hesap ekranında AFK+ -->
+    <string name="projects_plus_title">AFK+</string>
+    <string name="projects_plus_assistant_switch">Asistan</string>
+    <string name="projects_plus_ai_on">Asistan çalışıyor</string>
+    <string name="projects_plus_ai_notify_only">Asistan çalışıyor; bütçe girilene kadar alım yapmaz, yalnız haber verir</string>
+    <string name="projects_plus_ai_break">Asistan %1$s kadar molada</string>
+    <string name="projects_plus_ai_break_plain">Asistan molada</string>
+    <string name="projects_plus_ai_schedule">Çalışma saatleri dışında; %1$s döner</string>
+    <string name="projects_plus_ai_schedule_plain">Çalışma saatleri dışında</string>
+    <string name="projects_plus_ai_quota">Hakkın doldu; %1$s yenilenir</string>
+    <string name="projects_plus_ai_quota_plain">Hakkın doldu</string>
+    <string name="projects_plus_ai_budget">Bugün için duraklatıldı; yarın kendiliğinden döner</string>
+    <string name="projects_plus_ai_outage">Asistan şu an yanıt veremiyor; hesap AFK\'de kalıyor</string>
+    <string name="projects_plus_ai_host">Kısa süreliğine duraklatıldı</string>
+    <string name="projects_plus_ai_service">AFK+ bakımda</string>
+    <string name="projects_plus_ai_paused">Şimdilik duraklatıldı</string>
+    <string name="projects_plus_ai_player">Asistanı durdurdun</string>
+    <string name="projects_plus_ai_staff">Yetkililer durdurdu</string>
+    <string name="projects_plus_ai_restricted">AFK+\'dan uzaklaştırıldın</string>
+    <string name="projects_plus_ai_service_off">AFK+ şu an kapalı</string>
+    <string name="projects_plus_ai_server">Asistan yalnız Projects\'te çalışır; bu hesap düz AFK olarak çalışıyor</string>
+    <string name="projects_plus_ai_gate">Asistan güvenlik için durdu; yeniden başlatabilirsin</string>
+    <string name="projects_plus_ai_muted">Sunucu bota susturma verdi; asistan durdu</string>
+    <string name="projects_plus_ai_moderation">Asistan kural ihlali nedeniyle durduruldu</string>
+    <string name="projects_plus_ai_off">Asistan kapalı</string>
+    <string name="projects_plus_ai_unknown">Asistanın durumu şu an alınamıyor</string>
+    <string name="projects_plus_set_limits">Sınırları gir</string>
+    <string name="projects_plus_quota_5h">5 saatlik hak</string>
+    <string name="projects_plus_quota_week">Haftalık hak</string>
+    <string name="projects_plus_quota_resets">%1$s yenilenir</string>
+    <string name="projects_plus_quota_resets_day">%1$s yenilenir</string>
+    <string name="projects_plus_quota_unused">Kullanılmadı</string>
+    <string name="projects_plus_quota_left">≈ %1$d yanıt kaldı</string>
+    <string name="projects_plus_quota_gift">%1$s kadar hediye hak</string>
+    <string name="projects_plus_quota_gift_open">Hediye hak</string>
+    <string name="projects_plus_quota_frozen">Hakkın yetkililerce donduruldu.</string>
+    <string name="projects_plus_approvals">Onaylar</string>
+    <string name="projects_plus_messages">Mesajlar</string>
+    <string name="projects_plus_rules">Alım ve satım</string>
+    <string name="projects_plus_assistant">Asistan</string>
+    <string name="projects_plus_schedule">Çalışma saatleri</string>
+    <string name="projects_plus_safety">Harcama sınırları</string>
+    <string name="projects_plus_activity">Etkinlik</string>
+    <string name="projects_plus_history">Ayar geçmişi</string>
+    <string name="projects_plus_upgrade">AFK+\'ya yükselt</string>
+    <string name="projects_plus_downgrade">Düz plana geç</string>
+    <string name="projects_plus_downgrade_body">AFK+\'nın kalan süresi düz AFK süresine çevrilir: %1$s eklenir. Yapay zekâ hemen durur.</string>
+    <string name="projects_plus_downgrade_done">%1$s düz planda.</string>
+    <string name="projects_plus_load_failed">AFK+ ayarları yüklenemedi.</string>
+
+    <!-- Onaylar -->
+    <string name="projects_plus_approvals_empty">Bekleyen onay yok.</string>
+    <string name="projects_plus_approvals_recent">Son 24 saat</string>
+    <string name="projects_plus_buying_from">%1$s ile alım</string>
+    <string name="projects_plus_selling_to">%1$s ile satış</string>
+    <string name="projects_plus_left">%1$s kaldı</string>
+    <string name="projects_plus_approve">Onayla</string>
+    <string name="projects_plus_lower">Fiyatı düşür</string>
+    <string name="projects_plus_lower_title">En fazla ne kadar ödesin?</string>
+    <string name="projects_plus_lower_help">Asistan bu tutara kadar yeniden pazarlık eder.</string>
+    <string name="projects_plus_lower_go">Pazarlığa devam et</string>
+    <string name="projects_plus_lower_range">Şimdiki fiyattan düşük bir tutar gir.</string>
+    <string name="projects_plus_approved">Onaylandı; takas başlıyor.</string>
+    <string name="projects_plus_why_above">Belirlediğin tutarın üstünde</string>
+    <string name="projects_plus_why_new">Bu oyuncuyla ilk anlaşma</string>
+    <string name="projects_plus_why_always">Bu kural her zaman soruyor</string>
+    <string name="projects_plus_why_price">Fiyat alışılmadık görünüyor</string>
+    <string name="projects_plus_why_budget">Bütçene yakın</string>
+    <string name="projects_plus_why_daily">Günlük sınırına yakın</string>
+    <string name="projects_plus_state_approved">Onaylandı</string>
+    <string name="projects_plus_state_rejected">Reddedildi</string>
+    <string name="projects_plus_state_expired">Süresi doldu</string>
+    <string name="projects_plus_state_closed">Kapandı</string>
+
+    <!-- Mesajlar (QoL Q1) -->
+    <string name="projects_plus_inbox_empty">Henüz mesaj yok.</string>
+    <string name="projects_plus_inbox_reply">Cevap yaz</string>
+    <string name="projects_plus_inbox_send">Gönder</string>
+    <string name="projects_plus_inbox_first">Sen yazınca asistan bu konuşmada 30 dakika susar.</string>
+    <string name="projects_plus_inbox_quiet">Asistan %1$s kadar bu konuşmada sessiz.</string>
+    <string name="projects_plus_inbox_hand_back">Şimdi devret</string>
+    <string name="projects_plus_inbox_cannot">Yalnız son 24 saatte sana yazanlara cevap verebilirsin.</string>
+    <string name="projects_plus_inbox_rejected">Telefon, e-posta, banka bilgisi ve bağlantı paylaşılamaz.</string>
+    <string name="projects_plus_inbox_too_long">En çok 200 karakter.</string>
+    <string name="projects_plus_inbox_marker">[AFK+] yazılamaz.</string>
+    <string name="projects_plus_inbox_hidden">Uygunsuz mesaj gizlendi.</string>
+    <string name="projects_plus_inbox_show">Göster</string>
+    <string name="projects_plus_inbox_you">Sen</string>
+    <string name="projects_plus_inbox_assistant">Asistan</string>
+    <string name="projects_plus_inbox_blocked">Engellendi</string>
+
+    <!-- Alım ve satım (QoL Q2) -->
+    <string name="projects_plus_parse_field">Ne almak ya da satmak istiyorsun?</string>
+    <string name="projects_plus_parse_hint">Örnek: Elytra alırım, en fazla 40 bin</string>
+    <string name="projects_plus_parse_go">Kural oluştur</string>
+    <string name="projects_plus_parse_add">Listeye ekle</string>
+    <string name="projects_plus_parse_edit">Düzenle</string>
+    <string name="projects_plus_parse_discard">Vazgeç</string>
+    <string name="projects_plus_parse_which">Hangisi?</string>
+    <string name="projects_plus_parse_no_item">Eşya bulunamadı. Listeden seç.</string>
+    <string name="projects_plus_parse_no_amount">Fiyatı karta yaz.</string>
+    <string name="projects_plus_parse_many">Her eşyayı ayrı yaz.</string>
+    <string name="projects_plus_parse_unsafe">Bundan kural oluşturulamaz.</string>
+    <string name="projects_plus_parse_daily">Bugün daha fazla yazarak eklenemez. Listeden ekle.</string>
+    <string name="projects_plus_buy_list">Alınacaklar</string>
+    <string name="projects_plus_sell_list">Satılacaklar</string>
+    <string name="projects_plus_buy_empty">Henüz alınacak yok.</string>
+    <string name="projects_plus_sell_empty">Henüz satılacak yok.</string>
+    <string name="projects_plus_buy_add">Alınacak ekle</string>
+    <string name="projects_plus_sell_add">Satılacak ekle</string>
+    <string name="projects_plus_buy_line">Hedef %1$s, en fazla %2$s</string>
+    <string name="projects_plus_sell_line">Hedef %1$s, en az %2$s</string>
+    <string name="projects_plus_each_line">Tanesi: %1$s</string>
+    <string name="projects_plus_qty_line">%1$d adet: %2$s</string>
+    <string name="projects_plus_notify_only_note">Bütçe ve anlaşma sınırı girilmeden alım yapmaz, yalnız bulunca haber verir.</string>
+    <string name="projects_plus_row_buy_title">Alım</string>
+    <string name="projects_plus_row_sell_title">Satım</string>
+    <string name="projects_plus_row_item">Eşya</string>
+    <string name="projects_plus_row_pick">Eşya seç</string>
+    <string name="projects_plus_row_search">Eşya ara</string>
+    <string name="projects_plus_row_qty">Adet</string>
+    <string name="projects_plus_row_unit">Fiyat</string>
+    <string name="projects_plus_row_unit_total">Hepsine</string>
+    <string name="projects_plus_row_unit_each">Tanesine</string>
+    <string name="projects_plus_row_target">Hedef</string>
+    <string name="projects_plus_row_max">En fazla</string>
+    <string name="projects_plus_row_min">En az</string>
+    <string name="projects_plus_row_style">Pazarlık</string>
+    <string name="projects_plus_style_patient">Sabırlı</string>
+    <string name="projects_plus_style_balanced">Dengeli</string>
+    <string name="projects_plus_style_quick">Hızlı</string>
+    <string name="projects_plus_row_approval">Bana sor</string>
+    <string name="projects_plus_approval_auto">Hiç</string>
+    <string name="projects_plus_approval_above">Sınırın üstünde</string>
+    <string name="projects_plus_approval_always">Her seferinde</string>
+    <string name="projects_plus_row_daily">Günde en çok</string>
+    <string name="projects_plus_row_notify">Bulunca haber ver</string>
+    <string name="projects_plus_row_durability">En az dayanıklılık</string>
+    <string name="projects_plus_row_custom_name">Adı değiştirilmiş olabilir</string>
+    <string name="projects_plus_row_curses">Lanetli olabilir</string>
+    <string name="projects_plus_row_use">Kuralı kullan</string>
+    <string name="projects_plus_row_remove">Sil</string>
+    <string name="projects_plus_row_ten_times">En fazla, hedefin on katından fazla. Doğru mu?</string>
+    <string name="projects_plus_row_ten_times_yes">Evet, böyle kalsın</string>
+    <string name="projects_plus_problem_order_buy">En fazla, hedeften az olamaz.</string>
+    <string name="projects_plus_problem_order_sell">En az, hedeften fazla olamaz.</string>
+    <string name="projects_plus_problem_range">Bu değer kabul edilmiyor.</string>
+    <string name="projects_plus_problem_item">Listeden bir eşya seç.</string>
+    <string name="projects_plus_problem_limit">Bir listede en çok %1$d satır olabilir.</string>
+
+    <!-- Asistan -->
+    <string name="projects_plus_persona">Üslup</string>
+    <string name="projects_plus_preset_friendly">Samimi</string>
+    <string name="projects_plus_preset_brief">Kısa</string>
+    <string name="projects_plus_preset_polite">Kibar</string>
+    <string name="projects_plus_preset_playful">Eğlenceli</string>
+    <string name="projects_plus_intro">Kendini nasıl tanıtsın</string>
+    <string name="projects_plus_intro_hint">Ahmet\'in AFK+ asistanı</string>
+    <string name="projects_plus_status">Durum</string>
+    <string name="projects_plus_status_back_soon">Biraz sonra dönerim</string>
+    <string name="projects_plus_status_back_evening">Akşam dönerim</string>
+    <string name="projects_plus_status_back_tomorrow">Yarın dönerim</string>
+    <string name="projects_plus_status_weekend">Hafta sonu buradayım</string>
+    <string name="projects_plus_status_busy">Şu an meşgulüm</string>
+    <string name="projects_plus_status_own">Kendim yazacağım</string>
+    <string name="projects_plus_status_hint">Akşam 8\'de dönerim</string>
+    <string name="projects_plus_small_talk">Selamlaşma ve sohbet</string>
+    <string name="projects_plus_scope">Kime cevap versin</string>
+    <string name="projects_plus_scope_all">Herkese</string>
+    <string name="projects_plus_scope_trade">Yalnız ticarete</string>
+    <string name="projects_plus_scope_off">Kimseye</string>
+    <string name="projects_plus_away">Diğerlerine uzakta olduğumu söylesin</string>
+    <string name="projects_plus_lang">Dil</string>
+    <string name="projects_plus_lang_auto">Otomatik</string>
+    <string name="projects_plus_saver">Hakkın azalınca sohbeti kıs</string>
+    <string name="projects_plus_saver_80" formatted="false">%80\'de</string>
+    <string name="projects_plus_saver_50" formatted="false">%50\'de</string>
+    <string name="projects_plus_saver_off">Kapalı</string>
+    <string name="projects_plus_scan">Sohbette eşyalarımı arasın</string>
+    <string name="projects_plus_proactive">Bulduğu satıcılara yazsın</string>
+    <string name="projects_plus_summary_at">Günlük özet saati</string>
+    <string name="projects_plus_blocked">Engellenen oyuncular</string>
+    <string name="projects_plus_blocked_empty">Engellenen yok.</string>
+    <string name="projects_plus_blocked_add">Oyuncu engelle</string>
+    <string name="projects_plus_blocked_hint">Oyuncu adı</string>
+    <string name="projects_plus_unblock">Engeli kaldır</string>
+    <string name="projects_plus_judge_pending">İnceleniyor</string>
+    <string name="projects_plus_judge_inappropriate">Bu metin uygunsuz bulundu.</string>
+    <string name="projects_plus_judge_impersonation">Bu metin başkasını taklit ediyor gibi.</string>
+    <string name="projects_plus_judge_contact">Bu metin iletişim bilgisi içeremez.</string>
+    <string name="projects_plus_judge_redirect">Bu metin oyuncuları başka yere yönlendiremez.</string>
+    <string name="projects_plus_text_rejected">Telefon, e-posta, banka bilgisi, bağlantı ve bazı sözcükler yazılamaz.</string>
+    <string name="projects_plus_text_length">En çok %1$d karakter.</string>
+
+    <!-- Çalışma saatleri (QoL Q3) -->
+    <string name="projects_plus_schedule_switch">Yalnız bu saatlerde cevap versin</string>
+    <string name="projects_plus_schedule_help">Bu saatler dışında yalnız uzakta olduğunu söyler, takas başlatmaz.</string>
+    <string name="projects_plus_schedule_add">Saat ekle</string>
+    <string name="projects_plus_schedule_remove">Bu saatleri kaldır</string>
+    <string name="projects_plus_schedule_from">Başlangıç</string>
+    <string name="projects_plus_schedule_to">Bitiş</string>
+    <string name="projects_plus_day_1">Pzt</string>
+    <string name="projects_plus_day_2">Sal</string>
+    <string name="projects_plus_day_3">Çar</string>
+    <string name="projects_plus_day_4">Per</string>
+    <string name="projects_plus_day_5">Cum</string>
+    <string name="projects_plus_day_6">Cmt</string>
+    <string name="projects_plus_day_7">Paz</string>
+    <string name="projects_plus_break">Mola ver</string>
+    <string name="projects_plus_break_until">Şu tarihe kadar</string>
+    <string name="projects_plus_break_on">Asistan %1$s kadar molada.</string>
+    <string name="projects_plus_break_end">Molayı bitir</string>
+
+    <!-- Harcama sınırları -->
+    <string name="projects_plus_limit_perDealMax">Anlaşma başına en fazla</string>
+    <string name="projects_plus_limit_dailySpendMax">Günde en fazla</string>
+    <string name="projects_plus_limit_totalBudget">Toplam bütçe</string>
+    <string name="projects_plus_limit_balanceFloor">Bakiye bunun altına inmesin</string>
+    <string name="projects_plus_limit_approvalAbove">Bunun üstünde bana sor</string>
+    <string name="projects_plus_limit_newCounterpartApprovalAbove">Yeni oyuncuda bunun üstünde sor</string>
+    <string name="projects_plus_limit_approvalTimeoutMin">Cevabımı beklesin</string>
+    <string name="projects_plus_limit_minutes">dk</string>
+    <string name="projects_plus_limit_timeout_help">Cevap vermezsen hayır sayılır.</string>
+    <string name="projects_plus_limit_none">Sınır yok</string>
+    <string name="projects_plus_limit_order">Sorma eşiği, anlaşma başına en fazladan büyük olamaz.</string>
+    <string name="projects_plus_reset_spent">Harcananı sıfırla</string>
+    <string name="projects_plus_reset_spent_body">Toplam bütçeden harcanan sıfırlanır.</string>
+    <string name="projects_plus_reset_spent_done">Harcanan sıfırlandı.</string>
+
+    <!-- Etkinlik (akış, takas geçmişi, haftalık rapor; QoL Q4) -->
+    <string name="projects_plus_feed">Canlı</string>
+    <string name="projects_plus_trades">Takaslar</string>
+    <string name="projects_plus_week">Geçen hafta</string>
+    <string name="projects_plus_feed_empty">Henüz bir şey yok.</string>
+    <string name="projects_plus_trades_empty">Henüz takas yok.</string>
+    <string name="projects_plus_feed_pm_in">%1$s yazdı</string>
+    <string name="projects_plus_feed_pm_out">Asistan, %1$s oyuncusuna</string>
+    <string name="projects_plus_feed_offer">%1$s, %2$s için %3$s teklif etti</string>
+    <string name="projects_plus_feed_counter">%1$s oyuncusuna karşı teklif: %2$s</string>
+    <string name="projects_plus_feed_deal">%1$s ile anlaşıldı: %2$s = %3$s</string>
+    <string name="projects_plus_feed_approval">Sana soruldu: %1$s</string>
+    <string name="projects_plus_feed_approval_answer">Cevabın asistana ulaştı</string>
+    <string name="projects_plus_feed_trade_started">%1$s ile takas başladı</string>
+    <string name="projects_plus_feed_trade_done">%1$s ile takas tamamlandı</string>
+    <string name="projects_plus_feed_trade_failed">%1$s ile takas olmadı</string>
+    <string name="projects_plus_feed_trade_cancelled">%1$s ile takas iptal edildi</string>
+    <string name="projects_plus_feed_found">Bulundu: %1$s (%2$s)</string>
+    <string name="projects_plus_feed_suspicious">Şüpheli bir mesaj engellendi</string>
+    <string name="projects_plus_feed_ai_stopped">Asistan durdu</string>
+    <string name="projects_plus_feed_ai_resumed">Asistan döndü</string>
+    <string name="projects_plus_feed_summary">Günlük özet</string>
+    <string name="projects_plus_feed_review">İncelemede</string>
+    <string name="projects_plus_feed_other">Asistan</string>
+    <string name="projects_plus_trade_bought">%1$s oyuncusundan alındı</string>
+    <string name="projects_plus_trade_sold">%1$s oyuncusuna satıldı</string>
+    <string name="projects_plus_trade_failed">Olmadı</string>
+    <string name="projects_plus_trade_cancelled">İptal edildi</string>
+    <string name="projects_plus_trade_review">İncelemede</string>
+    <string name="projects_plus_trade_auto">Kendiliğinden</string>
+    <string name="projects_plus_trade_approved">Sen onayladın</string>
+    <string name="projects_plus_summary_avg">Ortalama</string>
+    <string name="projects_plus_summary_min">En düşük</string>
+    <string name="projects_plus_summary_max">En yüksek</string>
+    <string name="projects_plus_week_pms">Cevaplanan mesaj</string>
+    <string name="projects_plus_week_bought">Alınan</string>
+    <string name="projects_plus_week_sold">Satılan</string>
+    <string name="projects_plus_week_spent">Harcanan</string>
+    <string name="projects_plus_week_earned">Kazanılan</string>
+    <string name="projects_plus_week_below">Sınırının altında kalan</string>
+    <string name="projects_plus_week_blocked">Engellenen şüpheli mesaj</string>
+    <string name="projects_plus_week_allowance">Kullanılan AI hakkı</string>
+    <string name="projects_plus_week_empty">Geçen hafta için rapor yok.</string>
+
+    <!-- Ayar geçmişi (QoL Q7) -->
+    <string name="projects_plus_history_empty">Henüz kayıtlı ayar yok.</string>
+    <string name="projects_plus_history_restore">Bu hale dön</string>
+    <string name="projects_plus_history_restore_body">Ayarların bu hale döner, sonraki değişiklikler geçmişte kalır.</string>
+    <string name="projects_plus_history_restored">Ayarların geri döndü.</string>
+    <string name="projects_plus_history_by_restore">Geri dönüldü</string>
+    <string name="projects_plus_change_bound_buy">%1$s en fazla %2$s yerine %3$s</string>
+    <string name="projects_plus_change_bound_sell">%1$s en az %2$s yerine %3$s</string>
+    <string name="projects_plus_change_target">%1$s hedef %2$s yerine %3$s</string>
+    <string name="projects_plus_change_qty">%1$s adet %2$s yerine %3$s</string>
+    <string name="projects_plus_change_added_buy">Alınacaklara %1$s eklendi</string>
+    <string name="projects_plus_change_added_sell">Satılacaklara %1$s eklendi</string>
+    <string name="projects_plus_change_removed">%1$s listeden çıkarıldı</string>
+    <string name="projects_plus_change_on">%1$s açıldı</string>
+    <string name="projects_plus_change_off">%1$s kapatıldı</string>
+    <string name="projects_plus_change_row">%1$s değişti</string>
+    <string name="projects_plus_change_limit">%1$s %2$s yerine %3$s</string>
+    <string name="projects_plus_change_limit_set">%1$s: %2$s</string>
+    <string name="projects_plus_change_limit_removed">%1$s kaldırıldı</string>
+    <string name="projects_plus_change_ai_on">Asistan açıldı</string>
+    <string name="projects_plus_change_ai_off">Asistan durduruldu</string>
+    <string name="projects_plus_change_schedule_on">Çalışma saatleri açıldı</string>
+    <string name="projects_plus_change_schedule_off">Çalışma saatleri kapatıldı</string>
+    <string name="projects_plus_change_schedule_hours">Çalışma saatleri değişti</string>
+    <string name="projects_plus_change_break_on">Mola verildi</string>
+    <string name="projects_plus_change_break_off">Mola bitti</string>
+    <string name="projects_plus_change_persona">Üslup ya da durum değişti</string>
+    <string name="projects_plus_change_replies">Cevap ayarları değişti</string>
+    <string name="projects_plus_change_blocked">Engellenenler değişti</string>
+    <string name="projects_plus_change_other">Ayarlar değişti</string>
+    <string name="projects_plus_saved">AFK+ ayarları kaydedildi</string>
+    <!-- Ekranların ek sözleri -->
+    <string name="projects_cloud_open">Aç</string>
+    <string name="projects_cloud_retry">Tekrar dene</string>
+    <string name="projects_cloud_selected">Seçili</string>
+    <string name="projects_cloud_notify_os_open">Bildirimleri aç</string>
+    <string name="projects_plus_break_1h">1 saat</string>
+    <string name="projects_plus_break_4h">4 saat</string>
+    <string name="projects_plus_break_morning">Yarın sabaha kadar</string>
+    <string name="projects_plus_break_pick">Saat seç</string>
+    <string name="projects_plus_row_none">Bu aramaya uyan eşya yok.</string>
+    <string name="projects_cloud_today_at">Bugün %1$s</string>
+    <string name="projects_cloud_yesterday_at">Dün %1$s</string>
+</resources>

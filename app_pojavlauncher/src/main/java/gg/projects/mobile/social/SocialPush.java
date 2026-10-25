@@ -29,6 +29,11 @@ public final class SocialPush {
 
     public static void handle(Context context, Map<String, String> data) {
         Context app = context.getApplicationContext();
+        if ("afk".equals(data.get("type"))) {
+            // AFKPLUS-M: a 7/24 Bulut notice (the friends service carries them); the cloud side decides.
+            gg.projects.mobile.cloud.CloudPush.handle(app, data);
+            return;
+        }
         PushMessage message = PushMessage.parse(data);
         if (message == null) {
             Log.i(TAG, "push ignored: not a message of this app's format");

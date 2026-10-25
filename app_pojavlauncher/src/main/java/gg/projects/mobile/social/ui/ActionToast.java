@@ -31,12 +31,12 @@ import gg.projects.mobile.ui.Press;
  * than the screen, a bone hairline, the action in gold); it rises 10 dp as it fades in, stays 5 s (a
  * finger on it holds it) and leaves faster than it came. One at a time; a new one takes its place.
  */
-final class ActionToast {
+public final class ActionToast {
     private ActionToast() {}
 
     private static final long STAY_MS = 5000;
 
-    static void show(Activity activity, CharSequence text, @Nullable String action, @Nullable final Runnable onAction) {
+    public static void show(Activity activity, CharSequence text, @Nullable String action, @Nullable final Runnable onAction) {
         View content = activity.findViewById(android.R.id.content);
         if (!(content instanceof FrameLayout)) {
             // Android's own toast (SocialUi.toast would come back here).

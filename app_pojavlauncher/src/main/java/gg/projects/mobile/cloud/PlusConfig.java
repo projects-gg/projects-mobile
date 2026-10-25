@@ -318,6 +318,11 @@ public final class PlusConfig {
             this.o = o;
         }
 
+        /** A view on {@code o} (a row the screen edits apart from the document, put back with {@link #replaceRow}). */
+        public static Row of(boolean buy, JsonObject o) {
+            return new Row(buy, o);
+        }
+
         public String id() {
             return Json.str(o, "id", "");
         }

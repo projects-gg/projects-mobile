@@ -165,5 +165,23 @@ public class PlusTest {
         assertEquals("3 Ocak'ta", TrGrammar.locativeDate(3, 1));
         assertEquals("30 Ekim'e", TrGrammar.dativeDate(30, 10));
         assertEquals("1 Haziran'a", TrGrammar.dativeDate(1, 6));
+        assertEquals("14:35'e", TrGrammar.dativeTime("14:35"));
+        assertEquals("14:30'a", TrGrammar.dativeTime("14:30"));
+    }
+
+    @Test
+    public void amountsInWords() {
+        assertEquals("kırk bin", TrGrammar.words(40000, "tr"));
+        assertEquals("otuz yedi bin beş yüz", TrGrammar.words(37500, "tr"));
+        assertEquals("bin iki yüz elli", TrGrammar.words(1250, "tr"));
+        assertEquals("yüz bir bin", TrGrammar.words(101000, "tr"));
+        assertEquals("bir milyon", TrGrammar.words(1_000_000, "tr"));
+        assertEquals("iki milyon üç yüz bin", TrGrammar.words(2_300_000, "tr"));
+        assertEquals("sıfır", TrGrammar.words(0, "tr"));
+        assertEquals("forty thousand", TrGrammar.words(40000, "en"));
+        assertEquals("thirty-seven thousand five hundred", TrGrammar.words(37500, "en"));
+        assertEquals("one thousand two hundred and fifty", TrGrammar.words(1250, "en"));
+        assertEquals("one thousand and five", TrGrammar.words(1005, "en"));
+        assertEquals("one million", TrGrammar.words(1_000_000, "en"));
     }
 }
