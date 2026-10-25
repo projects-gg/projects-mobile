@@ -291,7 +291,8 @@ public final class CloudFragment extends CloudScreen {
                 more = c.getResources().getQuantityString(R.plurals.projects_cloud_home_approvals, approvals, approvals);
             } else if (unread > 0) {
                 more = c.getResources().getQuantityString(R.plurals.projects_cloud_home_messages, unread, unread);
-            } else if (a.expired || a.renewalOpen) {
+            } else if (CloudStatus.timeShort(a, service.nowMs())) {
+                // Only the last 7 days (or past the end) ask something of the player; renewing is open any time now.
                 more = CloudWords.timeLeft(c, CloudStatus.timeLeft(a, service.nowMs()));
             }
             extra.setText(more);

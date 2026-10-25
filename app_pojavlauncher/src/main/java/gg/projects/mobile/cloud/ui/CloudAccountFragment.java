@@ -386,6 +386,9 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
         }
         if (mTimeRow != null) {
             mTimeRow.title.setText(CloudWords.timeLeft(c, CloudStatus.timeLeft(a, mService.nowMs())));
+            // Gold only in the last 7 days (the site's rule); before that it is plain information.
+            mTimeRow.title.setTextColor(CloudUi.color(c, CloudStatus.timeShort(a, mService.nowMs())
+                    ? R.color.projects_gold_300 : R.color.projects_bone_100));
             mTimeRow.setLine(a.expired ? null : getString(R.string.projects_cloud_ends_on, CloudWords.day(c, a.expiresAt)), R.color.projects_ash_400);
         }
         if (line.nextChangeMs > 0) view.postDelayed(mTick, Math.max(1000, line.nextChangeMs));

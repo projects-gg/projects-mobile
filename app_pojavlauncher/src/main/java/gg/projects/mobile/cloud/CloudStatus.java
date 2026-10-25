@@ -247,6 +247,18 @@ public final class CloudStatus {
         return new TimeLeft(TimeLeft.Unit.MINUTES, Math.max(1, (long) Math.ceil(left / 60)));
     }
 
+    /** The last stretch in which the time left is a warning (gold, and the list says it): 7 days, as the site. */
+    public static final long SHORT_SECONDS = 7 * 86_400L;
+
+    /**
+     * Whether the time left is short enough to warn about: expired, or 7 days or less (AFKWEB-OWN, 26 October: renewing
+     * is possible any time now, so an open renewal no longer means the end is near).
+     */
+    public static boolean timeShort(Account account, long nowMs) {
+        if (account.expired) return true;
+        return account.expiresAt - nowMs / 1000.0 <= SHORT_SECONDS;
+    }
+
     /** Renewing is open now (the site's checkout takes it); while expired, reactivation. */
     public static boolean renewable(Account account) {
         return account.renewalOpen || account.expired;

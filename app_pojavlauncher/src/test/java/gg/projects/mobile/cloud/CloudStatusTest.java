@@ -119,6 +119,15 @@ public class CloudStatusTest {
     }
 
     @Test
+    public void theTimeLeftWarnsOnlyInTheLastSevenDays() {
+        CloudModel.Account a = account("");                       // ends 10 days after NOW
+        assertFalse(CloudStatus.timeShort(a, NOW * 1000));
+        assertFalse(CloudStatus.timeShort(a, (NOW + 2 * 86_400 + 60) * 1000));
+        assertTrue(CloudStatus.timeShort(a, (NOW + 3 * 86_400) * 1000));   // exactly 7 days left
+        assertTrue(CloudStatus.timeShort(a, (NOW + 9 * 86_400) * 1000));
+    }
+
+    @Test
     public void aStopFixedInTheSettingsOffersThemFirst() {
         CloudStatus.Line wrong = CloudStatus.of(account("\"hold\":{\"kind\":\"cause\",\"cause\":\"wrongPassword\"}"), NOW * 1000, "tr");
         assertEquals(CloudStatus.Hint.WRONG_PASSWORD, wrong.hint);

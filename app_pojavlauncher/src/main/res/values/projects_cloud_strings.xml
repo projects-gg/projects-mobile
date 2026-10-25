@@ -57,8 +57,8 @@
     <string name="projects_cloud_state_no_host">Waiting for a slot</string>
     <string name="projects_cloud_state_paused">Stopped for maintenance</string>
     <string name="projects_cloud_state_off">Stopped while the service is off</string>
-    <string name="projects_cloud_state_server_blocked">Server blocked</string>
-    <string name="projects_cloud_state_server_blocked_because">Server blocked: %1$s</string>
+    <string name="projects_cloud_state_server_blocked">We can\'t join this server</string>
+    <string name="projects_cloud_state_server_blocked_because">We can\'t join this server: %1$s</string>
     <string name="projects_cloud_state_stopped_because">Stopped: %1$s</string>
     <string name="projects_cloud_state_invalid_command">A line can\'t run: it starts with a backslash</string>
 
@@ -298,7 +298,7 @@
     <string name="projects_cloud_issue_host_dot">Write the full address, like play.projects.gg</string>
     <string name="projects_cloud_issue_host_private">This address can\'t be reached.</string>
     <string name="projects_cloud_issue_port">This port can\'t be used.</string>
-    <string name="projects_cloud_issue_blocked">This server is blocked.</string>
+    <string name="projects_cloud_issue_blocked">We can\'t join this server.</string>
     <string name="projects_cloud_issue_full">This server has no room for cloud accounts.</string>
     <string name="projects_cloud_issue_change_limit">You\'ve changed the server too often this hour.</string>
     <string name="projects_cloud_issue_version">This version isn\'t supported right now.</string>

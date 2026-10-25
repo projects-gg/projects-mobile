@@ -108,7 +108,7 @@ public final class CloudApi {
     }
 
     /** The site's public pages: their English copies live under {@code /en} (the site's router, PUBLIC_PAGES). */
-    private static final String[] PUBLIC_PAGES = {"/satin-al", "/afk-plus", "/kosullar", "/engelli-sunucular", "/sikayet"};
+    private static final String[] PUBLIC_PAGES = {"/satin-al", "/afk-plus", "/kosullar", "/girilemeyen-sunucular", "/sikayet"};
 
     /**
      * A page's path in the app's language: in English a public page (the home page, buying, the terms) is under

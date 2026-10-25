@@ -58,8 +58,8 @@
     <string name="projects_cloud_state_no_host">Yer bekliyor</string>
     <string name="projects_cloud_state_paused">Bakım nedeniyle durdu</string>
     <string name="projects_cloud_state_off">Hizmet kapalı olduğu için durdu</string>
-    <string name="projects_cloud_state_server_blocked">Sunucu engellendi</string>
-    <string name="projects_cloud_state_server_blocked_because">Sunucu engellendi: %1$s</string>
+    <string name="projects_cloud_state_server_blocked">Bu sunucuya girilemiyor</string>
+    <string name="projects_cloud_state_server_blocked_because">Bu sunucuya girilemiyor: %1$s</string>
     <string name="projects_cloud_state_stopped_because">Durdu: %1$s</string>
     <string name="projects_cloud_state_invalid_command">Bir satır çalıştırılamıyor: ters bölüyle başlıyor</string>
 
@@ -299,7 +299,7 @@
     <string name="projects_cloud_issue_host_dot">Tam adresi yaz. Örnek: play.projects.gg</string>
     <string name="projects_cloud_issue_host_private">Bu adrese bağlanılamaz.</string>
     <string name="projects_cloud_issue_port">Bu porta bağlanılamaz.</string>
-    <string name="projects_cloud_issue_blocked">Bu sunucuya giriş engelli.</string>
+    <string name="projects_cloud_issue_blocked">Bu sunucuya girilemiyor.</string>
     <string name="projects_cloud_issue_full">Bu sunucuda bulut hesapları için yer kalmadı.</string>
     <string name="projects_cloud_issue_change_limit">Bu saat içinde sunucu değiştirme hakkın doldu.</string>
     <string name="projects_cloud_issue_version">Bu sürüm şu an desteklenmiyor.</string>
