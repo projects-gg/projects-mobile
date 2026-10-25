@@ -55,8 +55,8 @@ def getVersionName = {
 }
 
 // Projects fork: own version line. versionCode must grow with every published build.
-def projectsVersionCode = 15
-def projectsVersionName = "0.3.3"
+def projectsVersionCode = 16
+def projectsVersionName = "0.4.0"
 def getProjectsVersionName = {
     String commit = ""
     try {
