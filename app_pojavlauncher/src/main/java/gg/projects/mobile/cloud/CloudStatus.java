@@ -33,6 +33,32 @@ public final class CloudStatus {
         UNSUPPORTED_VERSION, CRASH_LOOP, FORBIDDEN_TARGET, SERVER_BLOCKED, NO_HOST
     }
 
+    /**
+     * Whether the remedy is in the account's settings (a login command, a secret, a server or a version to pick): the
+     * account screen then offers the settings as its main action, since starting again would stop the same way.
+     */
+    public static boolean fixInSettings(@Nullable Hint hint) {
+        if (hint == null) return false;
+        switch (hint) {
+            case WRONG_PASSWORD:
+            case SECRET_UNREADABLE:
+            case UNREADABLE_COMMAND_ROW:
+            case UNREADABLE_REPLY_ROW:
+            case INVALID_COMMAND:
+            case INVALID_COMMAND_ROW:
+            case INVALID_REPLY_ROW:
+            case PREMIUM_ONLY:
+            case LOGIN_TIMEOUT:
+            case UNSUPPORTED_VERSION:
+            case CRASH_LOOP:
+            case FORBIDDEN_TARGET:
+            case SERVER_BLOCKED:
+                return true;
+            default:
+                return false;
+        }
+    }
+
     /** The stop causes the screens word; anything else reads like a plain disconnect ({@code other}). */
     public static final List<String> CAUSES = Arrays.asList("banned", "notWhitelisted", "wrongPassword", "premiumOnly",
             "loggedInElsewhere", "alreadyConnected", "loginTimeout", "unsupportedVersion", "secretUnreadable", "invalidCommand",

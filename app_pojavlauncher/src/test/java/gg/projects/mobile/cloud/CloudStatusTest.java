@@ -117,4 +117,18 @@ public class CloudStatusTest {
         assertEquals("59.90 TL", CloudStatus.price("59.90", "en"));
         assertEquals("2000 TL", CloudStatus.price("2000.00", "tr"));
     }
+
+    @Test
+    public void aStopFixedInTheSettingsOffersThemFirst() {
+        CloudStatus.Line wrong = CloudStatus.of(account("\"hold\":{\"kind\":\"cause\",\"cause\":\"wrongPassword\"}"), NOW * 1000, "tr");
+        assertEquals(CloudStatus.Hint.WRONG_PASSWORD, wrong.hint);
+        assertTrue(CloudStatus.fixInSettings(wrong.hint));
+        assertTrue(CloudStatus.fixInSettings(CloudStatus.Hint.UNSUPPORTED_VERSION));
+        assertTrue(CloudStatus.fixInSettings(CloudStatus.Hint.INVALID_COMMAND_ROW));
+        // Fixed elsewhere (the server's whitelist, leaving the game) or by waiting: starting stays the main action.
+        assertFalse(CloudStatus.fixInSettings(CloudStatus.Hint.NOT_WHITELISTED));
+        assertFalse(CloudStatus.fixInSettings(CloudStatus.Hint.LOGGED_IN_ELSEWHERE));
+        assertFalse(CloudStatus.fixInSettings(CloudStatus.Hint.NO_HOST));
+        assertFalse(CloudStatus.fixInSettings(null));
+    }
 }
