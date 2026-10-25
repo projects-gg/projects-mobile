@@ -167,7 +167,7 @@ public final class CloudFragment extends CloudScreen {
             CloudUi.fill(group, rows);
             content.addView(group);
             if (me != null && me.canBuy && offer != null && offer.salesNew && !me.restricted) {
-                Button buy = CloudUi.textButton(c, getString(R.string.projects_cloud_buy), v -> mService.openSite(requireActivity(), "/"));
+                Button buy = CloudUi.siteLink(c, getString(R.string.projects_cloud_buy), v -> mService.openSite(requireActivity(), "/"));
                 LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
                 lp.topMargin = CloudUi.dp(c, 6);
                 content.addView(buy, lp);

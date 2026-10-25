@@ -282,21 +282,18 @@ public final class PlusRulesFragment extends PlusScreen implements PlusRowSheet.
             CloudRowSheet.show(error, listProblem);
             content.addView(error);
         }
-        if (rows.isEmpty()) {
-            content.addView(CloudUi.note(c, getString(buy ? R.string.projects_plus_buy_empty : R.string.projects_plus_sell_empty)));
-        } else {
-            LinearLayout group = CloudUi.group(c);
-            List<View> views = new ArrayList<>();
-            for (int i = 0; i < rows.size(); i++) views.add(rowView(c, rows.get(i), key + "[" + i + "]"));
-            CloudUi.fill(group, views);
-            content.addView(group);
-        }
+        // Adding is the list's last row, inside its group (a floating link under it sat at uneven gaps).
         int max = mCatalog == null ? PlusConfig.LIST_MAX : Math.min(PlusConfig.LIST_MAX, mCatalog.listMax);
-        Button add = CloudUi.textButton(c, getString(buy ? R.string.projects_plus_buy_add : R.string.projects_plus_sell_add),
+        CloudUi.Row add = CloudUi.addRow(c, getString(buy ? R.string.projects_plus_buy_add : R.string.projects_plus_sell_add),
                 v -> PlusRowSheet.open(this, buy, null, null));
-        add.setEnabled(rows.size() < max && mCatalog != null);
-        add.setAlpha(add.isEnabled() ? 1f : 0.5f);
-        content.addView(add, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        CloudUi.enable(add, rows.size() < max && mCatalog != null);
+        if (rows.isEmpty()) content.addView(CloudUi.note(c, getString(buy ? R.string.projects_plus_buy_empty : R.string.projects_plus_sell_empty)));
+        LinearLayout group = CloudUi.group(c);
+        List<View> views = new ArrayList<>();
+        for (int i = 0; i < rows.size(); i++) views.add(rowView(c, rows.get(i), key + "[" + i + "]"));
+        views.add(add.view);
+        CloudUi.fill(group, views);
+        content.addView(group);
     }
 
     private View rowView(Context c, final PlusConfig.Row r, String path) {

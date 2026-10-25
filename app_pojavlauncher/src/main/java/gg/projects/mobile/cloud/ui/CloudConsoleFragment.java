@@ -487,7 +487,7 @@ public final class CloudConsoleFragment extends CloudScreen implements CloudServ
                 LinearLayout row = new LinearLayout(c);
                 row.setOrientation(LinearLayout.HORIZONTAL);
                 row.setPadding(CloudUi.dp(c, 4), CloudUi.dp(c, 3), CloudUi.dp(c, 4), CloudUi.dp(c, 3));
-                TextView time = CloudUi.figure(c, "", 11.5f, R.color.projects_ash_400);
+                TextView time = CloudUi.time(c, 12, R.color.projects_ash_400);
                 time.setPadding(0, CloudUi.dp(c, 3), 0, 0);
                 row.addView(time, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
                 TextView text = CloudUi.text(c, "", 14, R.color.projects_bone_100, false);

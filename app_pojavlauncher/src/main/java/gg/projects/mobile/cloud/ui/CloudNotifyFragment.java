@@ -122,24 +122,20 @@ public final class CloudNotifyFragment extends CloudScreen {
             content.addView(switches(c, prefs, events.toArray(new String[0])));
         }
 
-        content.addView(CloudUi.section(c, getString(R.string.projects_cloud_notify_quiet)));
+        // No section title here: the switch names itself ("Sessiz saatler" twice in a row read as a mistake).
+        content.addView(CloudUi.gap(c, 24));
         LinearLayout quiet = CloudUi.group(c);
         SwitchCompat toggle = CloudUi.toggle(c, getString(R.string.projects_cloud_notify_quiet), prefs.quiet,
                 on -> put(prefs.withQuiet(on, prefs.from, prefs.to)));
         quiet.addView(toggle);
         if (prefs.quiet) {
-            quiet.addView(CloudUi.rowDivider(c));
-            CloudUi.Row from = CloudUi.row(c, R.drawable.projects_ic_moon, getString(R.string.projects_cloud_notify_from),
-                    v -> pick(prefs.from, time -> put(prefs.withQuiet(true, time, prefs.to))));
-            from.count.setText(prefs.from);
-            from.count.setVisibility(View.VISIBLE);
-            quiet.addView(from.view);
-            quiet.addView(CloudUi.rowDivider(c));
-            CloudUi.Row to = CloudUi.row(c, R.drawable.projects_ic_clock, getString(R.string.projects_cloud_notify_to),
-                    v -> pick(prefs.to, time -> put(prefs.withQuiet(true, prefs.from, time))));
-            to.count.setText(prefs.to);
-            to.count.setVisibility(View.VISIBLE);
-            quiet.addView(to.view);
+            // Picked in place, so no icons and no carets: the times line up with the switch above them.
+            quiet.addView(CloudUi.textDivider(c));
+            quiet.addView(CloudUi.valueRow(c, getString(R.string.projects_cloud_notify_from), prefs.from,
+                    v -> pick(prefs.from, time -> put(prefs.withQuiet(true, time, prefs.to)))).view);
+            quiet.addView(CloudUi.textDivider(c));
+            quiet.addView(CloudUi.valueRow(c, getString(R.string.projects_cloud_notify_to), prefs.to,
+                    v -> pick(prefs.to, time -> put(prefs.withQuiet(true, prefs.from, time)))).view);
         }
         content.addView(quiet);
         content.addView(CloudUi.note(c, getString(R.string.projects_cloud_notify_quiet_help)));

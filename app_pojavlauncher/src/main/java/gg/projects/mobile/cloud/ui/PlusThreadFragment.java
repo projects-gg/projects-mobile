@@ -188,7 +188,7 @@ public final class PlusThreadFragment extends CloudScreen {
         }
         if (!quiet) return;
         LinearLayout notice = CloudUi.notice(c, R.drawable.projects_ic_moon, R.color.projects_gold_300,
-                getString(R.string.projects_plus_inbox_quiet, CloudWords.clock(until)));
+                getString(R.string.projects_plus_inbox_quiet, CloudWords.until(c, until, now)));
         mStrip.addView(notice);
         mStrip.addView(CloudUi.textButton(c, getString(R.string.projects_plus_inbox_hand_back), v -> handBack(v)),
                 new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -313,7 +313,7 @@ public final class PlusThreadFragment extends CloudScreen {
             bubble.setPadding(CloudUi.dp(c, 12), CloudUi.dp(c, 8), CloudUi.dp(c, 12), CloudUi.dp(c, 8));
             bubble.setMaxWidth(Math.round(c.getResources().getDisplayMetrics().widthPixels * 0.74f));
             box.addView(bubble, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-            TextView time = CloudUi.figure(c, "", 11, R.color.projects_ash_400);
+            TextView time = CloudUi.time(c, 11.5f, R.color.projects_ash_400);
             time.setPadding(CloudUi.dp(c, 6), CloudUi.dp(c, 2), CloudUi.dp(c, 6), 0);
             box.addView(time, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
             box.setLayoutParams(new RecyclerView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));

@@ -77,8 +77,9 @@ public final class PlusAssistantFragment extends PlusScreen {
         final CloudModel.PlusDoc doc = mDoc;
         if (e == null || doc == null) return;
 
-        // The tone and the words it uses about itself.
-        content.addView(CloudUi.section(c, getString(R.string.projects_plus_persona)));
+        // The tone and the words it uses about itself. Every control of this form takes a field's label (as "Kendini
+        // nasıl tanıtsın" and "Durum" do); the grey section title is only for "Engellenen oyuncular", a list.
+        content.addView(CloudRowSheet.label(c, getString(R.string.projects_plus_persona)));
         content.addView(CloudUi.segmented(c, new CharSequence[]{getString(R.string.projects_plus_preset_friendly),
                 getString(R.string.projects_plus_preset_brief), getString(R.string.projects_plus_preset_polite),
                 getString(R.string.projects_plus_preset_playful)}, Math.max(0, index(PlusConfig.PRESETS, e.preset())), i -> {
@@ -88,6 +89,8 @@ public final class PlusAssistantFragment extends PlusScreen {
         CloudUi.Field intro = CloudUi.field(c, getString(R.string.projects_plus_intro), e.intro(), getString(R.string.projects_plus_intro_hint),
                 InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
         intro.input.setFilters(new InputFilter[]{new InputFilter.LengthFilter(PlusConfig.INTRO_MAX)});
+        // The site's label and help ("Tanıtım", "İlk mesajında kendini böyle tanıtır."); a check's state replaces the help.
+        intro.setHelp(getString(R.string.projects_plus_intro_help));
         judge(intro, doc.intro, "persona.intro");
         watch(intro.input, s -> {
             e.setIntro(s.trim());
@@ -115,7 +118,9 @@ public final class PlusAssistantFragment extends PlusScreen {
         });
         own.addView(status.view);
         own.setVisibility(selected == presets.length ? View.VISIBLE : View.GONE);
-        content.addView(CloudUi.choices(c, statusLabels, selected, i -> {
+        // On the page the choices sit in a group like every other list here (in a sheet they need none).
+        LinearLayout statusGroup = CloudUi.group(c);
+        statusGroup.addView(CloudUi.choices(c, statusLabels, selected, true, i -> {
             if (i < presets.length) {
                 e.setStatusPreset(presets[i]);
                 own.setVisibility(View.GONE);
@@ -127,6 +132,7 @@ public final class PlusAssistantFragment extends PlusScreen {
             }
             changed();
         }));
+        content.addView(statusGroup);
         content.addView(own, CloudUi.matchWrap());
 
         LinearLayout talk = CloudUi.group(c);
@@ -139,13 +145,16 @@ public final class PlusAssistantFragment extends PlusScreen {
         content.addView(talk, talkLp);
 
         // Who it answers, and how.
-        content.addView(CloudUi.section(c, getString(R.string.projects_plus_scope)));
+        content.addView(CloudRowSheet.label(c, getString(R.string.projects_plus_scope)));
         final String[] scopes = {"all", "trade", "off"};
-        content.addView(CloudUi.segmented(c, new CharSequence[]{getString(R.string.projects_plus_scope_all), getString(R.string.projects_plus_scope_trade),
-                getString(R.string.projects_plus_scope_off)}, Math.max(0, index(scopes, e.scope())), i -> {
+        // The site's options are sentences ("Yalnız ticaret mesajlarına"): rows, not chips that would cut them.
+        LinearLayout scopeGroup = CloudUi.group(c);
+        scopeGroup.addView(CloudUi.choices(c, new CharSequence[]{getString(R.string.projects_plus_scope_all), getString(R.string.projects_plus_scope_trade),
+                getString(R.string.projects_plus_scope_off)}, Math.max(0, index(scopes, e.scope())), true, i -> {
             e.setScope(scopes[i]);
             changed();
         }));
+        content.addView(scopeGroup);
         LinearLayout away = CloudUi.group(c);
         away.addView(CloudUi.toggle(c, getString(R.string.projects_plus_away), e.away(), on -> {
             e.setAway(on);
@@ -155,16 +164,19 @@ public final class PlusAssistantFragment extends PlusScreen {
         awayLp.topMargin = CloudUi.dp(c, 12);
         content.addView(away, awayLp);
 
-        content.addView(CloudUi.section(c, getString(R.string.projects_plus_lang)));
+        content.addView(CloudRowSheet.label(c, getString(R.string.projects_plus_lang)));
         final String[] langs = {"auto", "tr", "en"};
-        content.addView(CloudUi.segmented(c, new CharSequence[]{getString(R.string.projects_plus_lang_auto), getString(R.string.projects_language_turkish), getString(R.string.projects_language_english)},
-                Math.max(0, index(langs, e.lang())), i -> {
-                    e.setLang(langs[i]);
-                    changed();
-                }));
+        // The language the assistant writes in (the site's "Yazana göre" / "Türkçe" / "İngilizce"), not the app's own.
+        LinearLayout langGroup = CloudUi.group(c);
+        langGroup.addView(CloudUi.choices(c, new CharSequence[]{getString(R.string.projects_plus_lang_auto), getString(R.string.projects_plus_lang_tr),
+                getString(R.string.projects_plus_lang_en)}, Math.max(0, index(langs, e.lang())), true, i -> {
+            e.setLang(langs[i]);
+            changed();
+        }));
+        content.addView(langGroup);
 
         if (mService.plusFeature("saver")) {
-            content.addView(CloudUi.section(c, getString(R.string.projects_plus_saver)));
+            content.addView(CloudRowSheet.label(c, getString(R.string.projects_plus_saver)));
             Integer saveAt = e.saveAt();
             int at = saveAt == null ? 2 : saveAt == 80 ? 0 : 1;
             content.addView(CloudUi.segmented(c, new CharSequence[]{getString(R.string.projects_plus_saver_80), getString(R.string.projects_plus_saver_50),
@@ -181,25 +193,22 @@ public final class PlusAssistantFragment extends PlusScreen {
             e.setScanChat(on);
             changed();
         }));
-        look.addView(CloudUi.rowDivider(c));
+        look.addView(CloudUi.textDivider(c));
         look.addView(CloudUi.toggle(c, getString(R.string.projects_plus_proactive), e.proactivePm(), on -> {
             e.setProactivePm(on);
             changed();
         }));
         if (mService.plusFeature("report")) {
-            look.addView(CloudUi.rowDivider(c));
-            final CloudUi.Row summary = CloudUi.row(c, R.drawable.projects_ic_clock, getString(R.string.projects_plus_summary_at), null);
-            summary.count.setText(e.summaryAt());
-            summary.count.setVisibility(View.VISIBLE);
-            summary.view.setBackgroundResource(R.drawable.projects_row_ripple);
-            summary.view.setClickable(true);
-            summary.view.setOnClickListener(v -> pickTime(e.summaryAt(), time -> {
-                e.setSummaryAt(time);
-                summary.count.setText(time);
-                changed();
-            }));
-            gg.projects.mobile.ui.Press.attach(summary.view, gg.projects.mobile.ui.Press.Style.ROW);
-            look.addView(summary.view);
+            look.addView(CloudUi.textDivider(c));
+            // A time picked in place, like the quiet hours and the working hours (no icon, no caret).
+            final CloudUi.Row[] summary = new CloudUi.Row[1];
+            summary[0] = CloudUi.valueRow(c, getString(R.string.projects_plus_summary_at), e.summaryAt(),
+                    v -> pickTime(e.summaryAt(), time -> {
+                        e.setSummaryAt(time);
+                        summary[0].count.setText(time);
+                        changed();
+                    }));
+            look.addView(summary[0].view);
         }
         content.addView(look);
 

@@ -92,6 +92,7 @@
     <string name="projects_cloud_hint_crash_loop">Ayarlarını kontrol et, sonra başlat.</string>
     <string name="projects_cloud_hint_forbidden_target">Ayarlar\'dan başka bir sunucu seç.</string>
     <string name="projects_cloud_hint_no_host">Boş yer açılınca kendiliğinden başlar.</string>
+    <string name="projects_cloud_open_settings">Ayarları aç</string>
 
     <plurals name="projects_cloud_days_left">
         <item quantity="one">%d gün kaldı</item>
@@ -316,15 +317,15 @@
     <string name="projects_cloud_notify_deal_done">Takas tamamlandı</string>
     <string name="projects_cloud_notify_deal_failed">Takas tamamlanamadı</string>
     <string name="projects_cloud_notify_message">Yeni mesaj</string>
-    <string name="projects_cloud_notify_quota_full">Yapay zekâ hakkı bitti</string>
-    <string name="projects_cloud_notify_quota_80" formatted="false">Yapay zekâ hakkının %80\'i kullanıldı</string>
-    <string name="projects_cloud_notify_gift_ending">Hediye yapay zekâ hakkı bitiyor</string>
+    <string name="projects_cloud_notify_quota_full">Kontör bitti</string>
+    <string name="projects_cloud_notify_quota_80">Kontörün çoğu kullanıldı</string>
+    <string name="projects_cloud_notify_gift_ending">Hediye kontör bitiyor</string>
     <string name="projects_cloud_notify_summary">Günlük özet</string>
     <string name="projects_cloud_notify_weekly">Haftalık rapor</string>
     <string name="projects_cloud_notify_paused">Asistan duraklatıldı</string>
     <string name="projects_cloud_notify_incident">Şüpheli mesaj engellendi</string>
     <string name="projects_cloud_notify_quiet">Sessiz saatler</string>
-    <string name="projects_cloud_notify_quiet_help">Sessiz saatlerde telefona bildirim gelmez; olanlar sonunda tek bildirimde gelir.</string>
+    <string name="projects_cloud_notify_quiet_help">Sessiz saatlerde telefona bildirim gelmez; kaçırdıkların sessiz saat bitince tek bildirimde gelir.</string>
     <string name="projects_cloud_notify_from">Başlangıç</string>
     <string name="projects_cloud_notify_to">Bitiş</string>
     <string name="projects_cloud_notify_load_failed">Bildirim ayarların yüklenemedi.</string>
@@ -346,10 +347,10 @@
     <string name="projects_cloud_notice_bought">%1$s: %2$s %3$s %4$s alındı.</string>
     <string name="projects_cloud_notice_sold">%1$s: %2$s %3$s %4$s satıldı.</string>
     <string name="projects_cloud_notice_deal_failed">%1$s: %2$s takası olmadı.</string>
-    <string name="projects_cloud_notice_quota_full">AFK+ hakkın doldu; %1$s yenilenir.</string>
-    <string name="projects_cloud_notice_quota_full_plain">AFK+ hakkın doldu.</string>
-    <string name="projects_cloud_notice_quota_80">%1$s: AFK+ hakkının %%80\'i kullanıldı.</string>
-    <string name="projects_cloud_notice_gift_ending">Hediye yapay zekâ hakkın %1$s bitiyor.</string>
+    <string name="projects_cloud_notice_quota_full">Kontörün bitti; %1$s yenilenir.</string>
+    <string name="projects_cloud_notice_quota_full_plain">Kontörün bitti.</string>
+    <string name="projects_cloud_notice_quota_80">%1$s: Kontörün çoğu kullanıldı.</string>
+    <string name="projects_cloud_notice_gift_ending">Hediye kontörün %1$s bitiyor.</string>
     <string name="projects_cloud_notice_summary">%1$s: bugün %2$d PM, %3$d anlaşma.</string>
     <string name="projects_cloud_notice_paused_staff">%1$s: AFK+ yetkililerce duraklatıldı.</string>
     <string name="projects_cloud_notice_paused_service">AFK+ bakımda; hesapların AFK\'de kalıyor.</string>
@@ -418,8 +419,8 @@
     <string name="projects_plus_ai_break_plain">Asistan molada</string>
     <string name="projects_plus_ai_schedule">Çalışma saatleri dışında; %1$s döner</string>
     <string name="projects_plus_ai_schedule_plain">Çalışma saatleri dışında</string>
-    <string name="projects_plus_ai_quota">Hakkın doldu; %1$s yenilenir</string>
-    <string name="projects_plus_ai_quota_plain">Hakkın doldu</string>
+    <string name="projects_plus_ai_quota">Kontörün bitti; %1$s yenilenir</string>
+    <string name="projects_plus_ai_quota_plain">Kontörün bitti</string>
     <string name="projects_plus_ai_budget">Bugün için duraklatıldı; yarın kendiliğinden döner</string>
     <string name="projects_plus_ai_outage">Asistan şu an yanıt veremiyor; hesap AFK\'de kalıyor</string>
     <string name="projects_plus_ai_host">Kısa süreliğine duraklatıldı</string>
@@ -436,26 +437,27 @@
     <string name="projects_plus_ai_off">Asistan kapalı</string>
     <string name="projects_plus_ai_unknown">Asistanın durumu şu an alınamıyor</string>
     <string name="projects_plus_set_limits">Sınırları gir</string>
-    <string name="projects_plus_quota_5h">5 saatlik hak</string>
-    <string name="projects_plus_quota_week">Haftalık hak</string>
+    <string name="projects_plus_quota_5h">5 saatlik</string>
+    <string name="projects_plus_quota_week">Haftalık</string>
+    <string name="projects_plus_quota_title">Kontör</string>
     <string name="projects_plus_quota_used">%1$s kullanıldı</string>
     <string name="projects_plus_quota_resets">%1$s yenilenir</string>
     <string name="projects_plus_quota_resets_day">%1$s yenilenir</string>
     <string name="projects_plus_quota_unused">Kullanılmadı</string>
-    <string name="projects_plus_quota_left">Yaklaşık %1$d yanıt kaldı</string>
-    <string name="projects_plus_quota_gift">%1$s kadar hediye yapay zekâ hakkı</string>
-    <string name="projects_plus_quota_gift_open">Hediye yapay zekâ hakkın var</string>
-    <string name="projects_plus_quota_frozen">Hakkın yetkililerce donduruldu.</string>
+    <string name="projects_plus_quota_gift">%1$s tarihine kadar hediye kontör</string>
+    <string name="projects_plus_quota_gift_open">Hediye kontörün var</string>
+    <string name="projects_plus_quota_frozen">Kontörün yetkililerce donduruldu.</string>
     <string name="projects_plus_approvals">Onaylar</string>
     <string name="projects_plus_messages">Mesajlar</string>
     <string name="projects_plus_rules">Alım ve satım</string>
     <string name="projects_plus_assistant">Asistan</string>
     <string name="projects_plus_schedule">Çalışma saatleri</string>
     <string name="projects_plus_safety">Harcama sınırları</string>
-    <string name="projects_plus_activity">Etkinlik</string>
+    <string name="projects_plus_activity">Akış</string>
     <string name="projects_plus_history">Ayar geçmişi</string>
     <string name="projects_plus_upgrade">AFK+\'ya yükselt</string>
     <string name="projects_plus_downgrade">7/24 Bulut\'a geç</string>
+    <string name="projects_plus_downgrade_note">7/24 Bulut\'a geçersen AFK+ biter; kalan süre 7/24 Bulut süresine çevrilir.</string>
     <string name="projects_plus_downgrade_title">7/24 Bulut\'a geçilsin mi?</string>
     <string name="projects_plus_downgrade_body">Kalan AFK+ süren 7/24 Bulut\'ta %1$s olur; asistan hemen durur.</string>
     <string name="projects_plus_downgrade_done">Hesap 7/24 Bulut\'a geçti.</string>
@@ -484,6 +486,7 @@
     <string name="projects_plus_state_rejected">Reddedildi</string>
     <string name="projects_plus_state_expired">Süresi doldu</string>
     <string name="projects_plus_state_closed">Kapandı</string>
+    <string name="projects_plus_approval_with">%1$s ile %2$s</string>
 
     <!-- Mesajlar (QoL Q1) -->
     <string name="projects_plus_inbox_empty">Henüz mesaj yok.</string>
@@ -505,15 +508,15 @@
     <!-- Alım ve satım (QoL Q2) -->
     <string name="projects_plus_parse_field">Ne almak ya da satmak istiyorsun?</string>
     <string name="projects_plus_parse_hint">Örnek: Elytra alırım, en fazla 40 bin</string>
-    <string name="projects_plus_parse_go">Kural oluştur</string>
-    <string name="projects_plus_parse_add">Listeye ekle</string>
+    <string name="projects_plus_parse_go">Listeye ekle</string>
+    <string name="projects_plus_parse_add">Kaydet</string>
     <string name="projects_plus_parse_edit">Düzenle</string>
     <string name="projects_plus_parse_discard">Vazgeç</string>
     <string name="projects_plus_parse_which">Hangisi?</string>
     <string name="projects_plus_parse_no_item">Eşya bulunamadı. Listeden seç.</string>
     <string name="projects_plus_parse_no_amount">Fiyatı karta yaz.</string>
     <string name="projects_plus_parse_many">Her eşyayı ayrı yaz.</string>
-    <string name="projects_plus_parse_unsafe">Bundan kural oluşturulamaz.</string>
+    <string name="projects_plus_parse_unsafe">Bu metin listeye eklenemez.</string>
     <string name="projects_plus_parse_daily">Bugün daha fazla yazarak eklenemez. Listeden ekle.</string>
     <string name="projects_plus_buy_list">Alınacaklar</string>
     <string name="projects_plus_sell_list">Satılacaklar</string>
@@ -551,8 +554,8 @@
     <string name="projects_plus_row_durability">En az dayanıklılık</string>
     <string name="projects_plus_row_custom_name">Adı değiştirilmiş olabilir</string>
     <string name="projects_plus_row_curses">Lanetli olabilir</string>
-    <string name="projects_plus_row_use">Kuralı kullan</string>
-    <string name="projects_plus_row_remove">Sil</string>
+    <string name="projects_plus_row_use">Kullan</string>
+    <string name="projects_plus_row_remove">Listeden çıkar</string>
     <string name="projects_plus_row_ten_times">En fazla, hedefin on katından fazla. Doğru mu?</string>
     <string name="projects_plus_row_ten_times_yes">Evet, böyle kalsın</string>
     <string name="projects_plus_problem_order_buy">En fazla, hedeften az olamaz.</string>
@@ -566,10 +569,11 @@
     <string name="projects_plus_preset_friendly">Samimi</string>
     <string name="projects_plus_preset_brief">Kısa</string>
     <string name="projects_plus_preset_polite">Kibar</string>
-    <string name="projects_plus_preset_playful">Eğlenceli</string>
-    <string name="projects_plus_intro">Kendini nasıl tanıtsın</string>
+    <string name="projects_plus_preset_playful">Esprili</string>
+    <string name="projects_plus_intro">Tanıtım</string>
     <string name="projects_plus_intro_hint">Ahmet\'in AFK+ asistanı</string>
-    <string name="projects_plus_status">Durum</string>
+    <string name="projects_plus_intro_help">İlk mesajında kendini böyle tanıtır.</string>
+    <string name="projects_plus_status">Durumun</string>
     <string name="projects_plus_status_back_soon">Biraz sonra dönerim</string>
     <string name="projects_plus_status_back_evening">Akşam dönerim</string>
     <string name="projects_plus_status_back_tomorrow">Yarın dönerim</string>
@@ -577,24 +581,26 @@
     <string name="projects_plus_status_busy">Şu an meşgulüm</string>
     <string name="projects_plus_status_own">Kendim yazacağım</string>
     <string name="projects_plus_status_hint">Akşam 8\'de dönerim</string>
-    <string name="projects_plus_small_talk">Selamlaşma ve sohbet</string>
+    <string name="projects_plus_small_talk">Cevap verdiği konuşmalarda sohbet de etsin</string>
     <string name="projects_plus_scope">Kime cevap versin</string>
-    <string name="projects_plus_scope_all">Herkese</string>
-    <string name="projects_plus_scope_trade">Yalnız ticarete</string>
-    <string name="projects_plus_scope_off">Kimseye</string>
-    <string name="projects_plus_away">Diğerlerine uzakta olduğumu söylesin</string>
+    <string name="projects_plus_scope_all">Her özel mesaja</string>
+    <string name="projects_plus_scope_trade">Yalnız ticaret mesajlarına</string>
+    <string name="projects_plus_scope_off">Yalnız hazır cevaplar</string>
+    <string name="projects_plus_away">Diğer mesajlara uzakta olduğunu söylesin</string>
     <string name="projects_plus_lang">Dil</string>
-    <string name="projects_plus_lang_auto">Otomatik</string>
-    <string name="projects_plus_saver">Hakkın azalınca sohbeti kıs</string>
-    <string name="projects_plus_saver_80" formatted="false">%80\'de</string>
-    <string name="projects_plus_saver_50" formatted="false">%50\'de</string>
+    <string name="projects_plus_lang_auto">Yazana göre</string>
+    <string name="projects_plus_lang_tr">Türkçe</string>
+    <string name="projects_plus_lang_en">İngilizce</string>
+    <string name="projects_plus_saver">Kontörün bu kadarı kullanılınca sohbeti kıs</string>
+    <string name="projects_plus_saver_80" formatted="false">%80</string>
+    <string name="projects_plus_saver_50" formatted="false">%50</string>
     <string name="projects_plus_saver_off">Kapalı</string>
-    <string name="projects_plus_scan">Sohbette eşyalarımı arasın</string>
-    <string name="projects_plus_proactive">Bulduğu satıcılara yazsın</string>
+    <string name="projects_plus_scan">Sohbetteki satış ilanlarını tara</string>
+    <string name="projects_plus_proactive">Bulunca satıcıya bir kez yazsın</string>
     <string name="projects_plus_summary_at">Günlük özet saati</string>
     <string name="projects_plus_blocked">Engellenen oyuncular</string>
-    <string name="projects_plus_blocked_empty">Engellenen yok.</string>
-    <string name="projects_plus_blocked_add">Oyuncu engelle</string>
+    <string name="projects_plus_blocked_empty">Engellediğin oyuncu yok.</string>
+    <string name="projects_plus_blocked_add">Engelle</string>
     <string name="projects_plus_blocked_hint">Oyuncu adı</string>
     <string name="projects_plus_unblock">Engeli kaldır</string>
     <string name="projects_plus_judge_pending">İnceleniyor</string>
@@ -608,8 +614,8 @@
     <!-- Çalışma saatleri (QoL Q3) -->
     <string name="projects_plus_schedule_switch">Yalnız bu saatlerde cevap versin</string>
     <string name="projects_plus_schedule_help">Bu saatler dışında yalnız uzakta olduğunu söyler, takas başlatmaz.</string>
-    <string name="projects_plus_schedule_add">Saat ekle</string>
-    <string name="projects_plus_schedule_remove">Bu saatleri kaldır</string>
+    <string name="projects_plus_schedule_add">Saat aralığı ekle</string>
+    <string name="projects_plus_schedule_remove">Aralığı sil</string>
     <string name="projects_plus_schedule_from">Başlangıç</string>
     <string name="projects_plus_schedule_to">Bitiş</string>
     <string name="projects_plus_day_1">Pzt</string>
@@ -631,16 +637,17 @@
     <string name="projects_plus_limit_balanceFloor">En az kalacak bakiye</string>
     <string name="projects_plus_limit_approvalAbove">Bu tutarın üstünde sor</string>
     <string name="projects_plus_limit_newCounterpartApprovalAbove">Yeni bir oyuncuyla bunun üstünde sor</string>
-    <string name="projects_plus_limit_approvalTimeoutMin">Cevabımı beklesin</string>
+    <string name="projects_plus_limit_approvalTimeoutMin">Onaya cevap vermezsen</string>
     <string name="projects_plus_limit_minutes">dk</string>
-    <string name="projects_plus_limit_timeout_help">Cevap vermezsen hayır sayılır.</string>
+    <string name="projects_plus_limit_timeout_help">Bu kadar dakika sonra hayır sayılır.</string>
+    <string name="projects_plus_limits_money">Tutarlar oyundaki parayla.</string>
     <string name="projects_plus_limit_none">Sınır yok</string>
     <string name="projects_plus_limit_order">Sorma tutarı, tek anlaşmada en çoktan büyük olamaz.</string>
     <string name="projects_plus_reset_spent">Harcananı sıfırla</string>
-    <string name="projects_plus_reset_spent_body">Şimdiye kadar harcanan sıfırlanır; toplam harcama yetkisi yeniden kullanılabilir.</string>
+    <string name="projects_plus_reset_spent_body">Toplam yetkiden kullanılan sıfırlanır; bugün harcanan aynı kalır.</string>
     <string name="projects_plus_reset_spent_done">Harcanan sıfırlandı.</string>
     <string name="projects_plus_spent_today">Bugün harcanan</string>
-    <string name="projects_plus_spent_total">Şimdiye kadar harcanan</string>
+    <string name="projects_plus_spent_total">Toplam yetkiden kullanılan</string>
 
     <!-- Etkinlik (akış, takas geçmişi, haftalık rapor; QoL Q4) -->
     <string name="projects_plus_feed">Canlı</string>
@@ -684,7 +691,7 @@
     <string name="projects_plus_week_below">Alımlarda tasarruf</string>
     <string name="projects_plus_week_above">Satışta fazladan</string>
     <string name="projects_plus_week_blocked">Engellenen şüpheli mesaj</string>
-    <string name="projects_plus_week_allowance">Kullanılan yapay zekâ hakkı</string>
+    <string name="projects_plus_week_allowance">Kullanılan kontör</string>
     <string name="projects_plus_week_empty">Geçen hafta bu hesapta takas ya da cevap olmadı.</string>
 
     <!-- Ayar geçmişi (QoL Q7) -->

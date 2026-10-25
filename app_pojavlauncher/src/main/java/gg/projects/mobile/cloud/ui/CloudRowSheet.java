@@ -331,20 +331,25 @@ final class CloudRowSheet {
         private final LinearLayout mRoot;
 
         Sheet(Context c, String title) {
-            ScrollView scroll = new ScrollView(c);
-            scroll.setClipToPadding(false);
             mRoot = new LinearLayout(c);
             mRoot.setOrientation(LinearLayout.VERTICAL);
-            TextView heading = CloudUi.text(c, title, 18, R.color.projects_bone_100, true);
+            // A dialog's title, as the app's other sheets (ReactionSheet): Tektur 17 (design.md §3).
+            TextView heading = CloudUi.text(c, title, 17, R.color.projects_bone_100, true);
+            heading.setTypeface(CloudUi.font(c, R.font.tektur_semibold));
             heading.setPadding(CloudUi.dp(c, 24), CloudUi.dp(c, 2), CloudUi.dp(c, 24), CloudUi.dp(c, 6));
             if (android.os.Build.VERSION.SDK_INT >= 28) heading.setAccessibilityHeading(true);
             mRoot.addView(heading);
             body = new LinearLayout(c);
             body.setOrientation(LinearLayout.VERTICAL);
             body.setPadding(CloudUi.dp(c, 16), 0, CloudUi.dp(c, 16), CloudUi.dp(c, 8));
-            mRoot.addView(body, CloudUi.matchWrap());
-            scroll.addView(mRoot, new ScrollView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-            panel = BottomPanel.of(c, scroll, 0.92f);
+            // Only the body scrolls; the title and the actions stay in view (a long row's "Kaydet" showed as a sliver
+            // at the bottom edge). The panel measures the sheet at most 92 % of the screen: the scroll is as tall as its
+            // content and gives up the excess (weight) so the action bar below it always fits.
+            ScrollView scroll = new ScrollView(c);
+            scroll.setClipToPadding(false);
+            scroll.addView(body, new ScrollView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            mRoot.addView(scroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+            panel = BottomPanel.of(c, mRoot, 0.92f);
         }
 
         void actions(@Nullable String delete, @Nullable Runnable onDelete, @Nullable Mover mover, final Apply apply) {

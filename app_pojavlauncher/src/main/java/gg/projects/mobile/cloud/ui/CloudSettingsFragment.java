@@ -459,8 +459,14 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
         final Context c = ctx();
         CloudModel.Limits limits = mService.limits();
         content.addView(CloudUi.note(c, getString(R.string.projects_cloud_command_count, mConfig.commands.size(), limits.maxCommandRows)));
+        // Adding is the list's last row (a floating link under it sat at uneven gaps).
+        CloudUi.Row add = CloudUi.addRow(c, getString(R.string.projects_cloud_command_add), v -> CloudRowSheet.command(this, -1));
+        CloudUi.enable(add, mConfig.commands.size() < limits.maxCommandRows);
         if (mConfig.commands.isEmpty()) {
             content.addView(CloudUi.empty(c, gg.projects.mobile.ui.PixelSprites.Sprite.LOGS, getString(R.string.projects_cloud_command_empty)));
+            LinearLayout only = CloudUi.group(c);
+            only.addView(add.view);
+            content.addView(only);
         } else {
             LinearLayout group = CloudUi.group(c);
             List<View> rows = new ArrayList<>();
@@ -481,23 +487,23 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
                 if (!cmd.enabled) row.view.setAlpha(0.55f);
                 rows.add(row.view);
             }
+            rows.add(add.view);
             CloudUi.fill(group, rows);
             content.addView(group);
         }
-        Button add = CloudUi.textButton(c, getString(R.string.projects_cloud_command_add), v -> CloudRowSheet.command(this, -1));
-        add.setEnabled(mConfig.commands.size() < limits.maxCommandRows);
-        add.setAlpha(add.isEnabled() ? 1f : 0.5f);
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        lp.topMargin = CloudUi.dp(c, 6);
-        content.addView(add, lp);
     }
 
     private void replies(LinearLayout content) {
         final Context c = ctx();
         CloudModel.Limits limits = mService.limits();
         content.addView(CloudUi.note(c, getString(R.string.projects_cloud_rule_count, mConfig.rules.size(), limits.maxRules)));
+        CloudUi.Row add = CloudUi.addRow(c, getString(R.string.projects_cloud_rule_add), v -> CloudRowSheet.rule(this, -1));
+        CloudUi.enable(add, mConfig.rules.size() < limits.maxRules);
         if (mConfig.rules.isEmpty()) {
             content.addView(CloudUi.empty(c, gg.projects.mobile.ui.PixelSprites.Sprite.CHAT, getString(R.string.projects_cloud_rule_empty)));
+            LinearLayout only = CloudUi.group(c);
+            only.addView(add.view);
+            content.addView(only);
         } else {
             LinearLayout group = CloudUi.group(c);
             List<View> rows = new ArrayList<>();
@@ -518,15 +524,10 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
                 if (!rule.enabled) row.view.setAlpha(0.55f);
                 rows.add(row.view);
             }
+            rows.add(add.view);
             CloudUi.fill(group, rows);
             content.addView(group);
         }
-        Button add = CloudUi.textButton(c, getString(R.string.projects_cloud_rule_add), v -> CloudRowSheet.rule(this, -1));
-        add.setEnabled(mConfig.rules.size() < limits.maxRules);
-        add.setAlpha(add.isEnabled() ? 1f : 0.5f);
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        lp.topMargin = CloudUi.dp(c, 6);
-        content.addView(add, lp);
     }
 
     private static String preview(CloudEdit.Words w) {

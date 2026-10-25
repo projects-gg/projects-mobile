@@ -138,7 +138,19 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
         actions.setOrientation(LinearLayout.HORIZONTAL);
         actions.setPadding(CloudUi.dp(c, 4), CloudUi.dp(c, 10), CloudUi.dp(c, 4), CloudUi.dp(c, 4));
         CloudStatus.Primary primary = CloudStatus.primary(a);
-        switch (primary) {
+        // A stop whose remedy is in the settings (a wrong password, a command to fix, a server or version to pick):
+        // the settings are the gold action, since starting again would stop the same way; "Başlat" stays beside them.
+        boolean fix = (primary == CloudStatus.Primary.START || primary == CloudStatus.Primary.NONE)
+                && CloudStatus.fixInSettings(CloudStatus.of(a, mService.nowMs(), lang()).hint);
+        if (fix) {
+            actions.addView(CloudUi.button(c, getString(R.string.projects_cloud_open_settings), true,
+                    v -> openFor(CloudSettingsFragment.class, a.id)), CloudUi.weight(1f));
+            if (primary == CloudStatus.Primary.START) {
+                LinearLayout.LayoutParams lp = CloudUi.weight(1f);
+                lp.setMarginStart(CloudUi.dp(c, 10));
+                actions.addView(CloudUi.button(c, getString(R.string.projects_cloud_start), false, v -> act(v, "start")), lp);
+            }
+        } else switch (primary) {
             case START: {
                 Button start = CloudUi.button(c, getString(R.string.projects_cloud_start), true, v -> act(v, "start"));
                 actions.addView(start, CloudUi.weight(1f));
@@ -178,7 +190,7 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
                     moderation);
             content.addView(notice);
             if (a.moderation != null && a.moderation.appealCan) {
-                Button appeal = CloudUi.textButton(c, getString(R.string.projects_cloud_mod_appeal),
+                Button appeal = CloudUi.siteLink(c, getString(R.string.projects_cloud_mod_appeal),
                         v -> mService.openSite(requireActivity(), "/hesap/" + a.id + "/itiraz"));
                 content.addView(appeal, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT));
             }
@@ -222,14 +234,14 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
         else if (mService.plusOn() && !a.expired && plusSales()) {
             content.addView(CloudUi.gap(c, 6));
             // The site's own upgrade card goes there too: buying, with this account and AFK+ chosen.
-            content.addView(CloudUi.textButton(c, getString(R.string.projects_plus_upgrade),
+            content.addView(CloudUi.siteLink(c, getString(R.string.projects_plus_upgrade),
                     v -> mService.openSite(requireActivity(), "/satin-al?hesap=" + a.id + "&tier=plus")), wrap());
         }
 
         // The rest is on the site.
         content.addView(CloudUi.gap(c, 18));
         content.addView(CloudUi.note(c, getString(R.string.projects_cloud_site_more)));
-        content.addView(CloudUi.textButton(c, getString(R.string.projects_cloud_open_site),
+        content.addView(CloudUi.siteLink(c, getString(R.string.projects_cloud_open_site),
                 v -> mService.openSite(requireActivity(), "/hesap/" + a.id)), wrap());
     }
 
@@ -257,23 +269,9 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
         aiLine.setPadding(CloudUi.dp(c, 16), 0, CloudUi.dp(c, 16), CloudUi.dp(c, 12));
         aiLine.setLineSpacing(0, 1.15f);
         assistant.addView(aiLine);
-        if (a.ai != null && a.ai.quota != null) {
-            assistant.addView(divider(c));
-            CloudModel.QuotaBrief q = a.ai.quota;
-            assistant.addView(quota(c, getString(R.string.projects_plus_quota_5h), q.pct5,
-                    q.w5hResetAt == null || q.pct5 == 0 ? getString(R.string.projects_plus_quota_unused)
-                            : getString(R.string.projects_plus_quota_resets, CloudWords.clock(q.w5hResetAt))));
-            assistant.addView(quota(c, getString(R.string.projects_plus_quota_week), q.pctWeek,
-                    q.pctWeek == 0 ? getString(R.string.projects_plus_quota_unused)
-                            : getString(R.string.projects_plus_quota_resets_day, CloudWords.relativeDay(c, q.weekResetAt, mService.nowSeconds()))));
-            if (q.giftsLeft > 0) {
-                TextView gift = CloudUi.text(c, getString(R.string.projects_plus_quota_gift_open), 13, R.color.projects_gold_300, false);
-                gift.setPadding(CloudUi.dp(c, 16), 0, CloudUi.dp(c, 16), CloudUi.dp(c, 12));
-                assistant.addView(gift);
-            }
-        }
         content.addView(assistant);
 
+        // What asks something of the player (an approval, a message) comes right under the switch; the allowance after.
         content.addView(CloudUi.gap(c, 12));
         LinearLayout screens = CloudUi.group(c);
         List<View> rows = new ArrayList<>();
@@ -306,21 +304,35 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
         CloudUi.fill(screens, rows);
         content.addView(screens);
 
+        if (a.ai != null && a.ai.quota != null) {
+            // The unit's one name on every surface ("Kontör" / "AI credits", the owner's decision of 25 October) as the
+            // section's title; the two windows under it only say how long they are.
+            content.addView(CloudUi.section(c, getString(R.string.projects_plus_quota_title)));
+            LinearLayout credits = CloudUi.group(c);
+            CloudModel.QuotaBrief q = a.ai.quota;
+            long now = mService.nowSeconds();
+            credits.addView(quota(c, getString(R.string.projects_plus_quota_5h), q.pct5,
+                    q.w5hResetAt == null || q.pct5 == 0 ? getString(R.string.projects_plus_quota_unused)
+                            : getString(R.string.projects_plus_quota_resets, CloudWords.at(c, q.w5hResetAt, now))));
+            credits.addView(quota(c, getString(R.string.projects_plus_quota_week), q.pctWeek,
+                    q.pctWeek == 0 ? getString(R.string.projects_plus_quota_unused)
+                            : getString(R.string.projects_plus_quota_resets_day, CloudWords.relativeDay(c, q.weekResetAt, now))));
+            if (q.giftsLeft > 0) {
+                TextView gift = CloudUi.text(c, getString(R.string.projects_plus_quota_gift_open), 13, R.color.projects_gold_300, false);
+                gift.setPadding(CloudUi.dp(c, 16), 0, CloudUi.dp(c, 16), CloudUi.dp(c, 12));
+                credits.addView(gift);
+            }
+            content.addView(credits);
+        }
+
         if (!a.expired) {
             content.addView(CloudUi.gap(c, 6));
             Button downgrade = CloudUi.textButton(c, getString(R.string.projects_plus_downgrade), this::askDowngrade);
             downgrade.setTextColor(CloudUi.color(c, R.color.projects_ash_300));
             content.addView(downgrade, wrap());
+            // What it does, in the site's sentence: the name alone read as if the account were not 7/24 Bulut already.
+            content.addView(CloudUi.note(c, getString(R.string.projects_plus_downgrade_note)));
         }
-    }
-
-    private static View divider(Context c) {
-        View line = new View(c);
-        line.setBackgroundColor(CloudUi.color(c, R.color.projects_obsidian_700));
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, Math.max(1, CloudUi.dp(c, 1)));
-        lp.setMarginStart(CloudUi.dp(c, 16));
-        line.setLayoutParams(lp);
-        return line;
     }
 
     /** One allowance: its name and when it resets on one line, the bar under it. */

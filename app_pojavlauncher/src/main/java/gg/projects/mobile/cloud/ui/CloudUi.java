@@ -73,6 +73,18 @@ public final class CloudUi {
         return t;
     }
 
+    /**
+     * A time beside a line (the console, a chat): meta text in Figtree (design.md §3; Tektur is for live numbers), at
+     * least as wide as "00:00" so a column of times keeps its text aligned.
+     */
+    public static TextView time(Context c, float sp, @ColorRes int color) {
+        TextView t = text(c, "", sp, color, false);
+        if (Build.VERSION.SDK_INT >= 21) t.setFontFeatureSettings("tnum");
+        t.setIncludeFontPadding(false);
+        t.setMinWidth((int) Math.ceil(t.getPaint().measureText("00:00")));
+        return t;
+    }
+
     /** A Tektur figure (an amount, a countdown, a big state): tabular digits. */
     public static TextView figure(Context c, CharSequence value, float sp, @ColorRes int color) {
         TextView t = new TextView(c);
@@ -138,15 +150,18 @@ public final class CloudUi {
         }
     }
 
+    /** A hairline between rows without an icon (switches, figures, values): from where their text starts (16 dp in). */
+    public static View textDivider(Context c) {
+        View line = rowDivider(c);
+        ((LinearLayout.LayoutParams) line.getLayoutParams()).setMarginStart(dp(c, 16));
+        return line;
+    }
+
     /** Rows without an icon (figures): the hairlines start where their text does. */
     public static void fillFigures(LinearLayout group, List<View> rows) {
         Context c = group.getContext();
         for (int i = 0; i < rows.size(); i++) {
-            if (i > 0) {
-                View line = rowDivider(c);
-                ((LinearLayout.LayoutParams) line.getLayoutParams()).setMarginStart(dp(c, 16));
-                group.addView(line);
-            }
+            if (i > 0) group.addView(textDivider(c));
             group.addView(rows.get(i));
         }
     }
@@ -176,7 +191,9 @@ public final class CloudUi {
         row.setMinimumHeight(dp(c, 52));
         row.setPadding(dp(c, 16), 0, dp(c, 16), 0);
         row.addView(text(c, label, 15, R.color.projects_bone_100, false), weight(1f));
-        TextView v = text(c, value, 16, R.color.projects_gold_300, true);
+        // A plain figure is data, bone like its label; gold stays for what asks something of the player (a count to
+        // answer, a time running out) so it keeps its meaning.
+        TextView v = text(c, value, 16, R.color.projects_bone_100, true);
         v.setPaddingRelative(dp(c, 12), 0, 0, 0);
         row.addView(v);
         row.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_YES);
@@ -266,6 +283,38 @@ public final class CloudUi {
         return new Row(row, name, line, count);
     }
 
+    /**
+     * A setting whose value is picked in place (a time): the title as a switch's label, the value on the right (bone:
+     * data, as {@link #figureRow}), no icon (it lines up with the switches of its group) and no caret (a caret promises
+     * a screen; a picker opens here). Separate it from its neighbours with {@link #textDivider}.
+     */
+    public static Row valueRow(Context c, CharSequence title, CharSequence value, View.OnClickListener click) {
+        LinearLayout row = new LinearLayout(c);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setMinimumHeight(dp(c, 56));
+        row.setPaddingRelative(dp(c, 16), dp(c, 8), dp(c, 16), dp(c, 8));
+        LinearLayout texts = new LinearLayout(c);
+        texts.setOrientation(LinearLayout.VERTICAL);
+        TextView name = text(c, title, 16, R.color.projects_bone_100, false);
+        TextView line = text(c, "", 13, R.color.projects_ash_400, false);
+        line.setVisibility(View.GONE);
+        texts.addView(name);
+        texts.addView(line);
+        row.addView(texts, weight(1f));
+        TextView count = text(c, value, 15, R.color.projects_bone_100, true);
+        LinearLayout.LayoutParams countLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        countLp.setMarginStart(dp(c, 12));
+        row.addView(count, countLp);
+        row.setBackgroundResource(R.drawable.projects_row_ripple);
+        row.setClickable(true);
+        row.setFocusable(true);
+        row.setOnClickListener(click);
+        Press.attach(row, Press.Style.ROW);
+        row.setLayoutParams(matchWrap());
+        return new Row(row, name, line, count);
+    }
+
     /** The gold action (Tektur, text on gold) or the outlined one (Figtree, bone), 48 dp tall. */
     public static Button button(Context c, CharSequence label, boolean primary, View.OnClickListener click) {
         Button button = new Button(c, null, android.R.attr.borderlessButtonStyle);
@@ -285,6 +334,34 @@ public final class CloudUi {
     }
 
     /** A quiet text action (gold-300), 48 dp tall. */
+    /**
+     * The last row of a list's group that adds to the list (a command, a reply, a row to buy or sell): a gold plus and
+     * gold words, no caret (a sheet opens here). Inside the group, so the action sits where the list ends.
+     */
+    public static Row addRow(Context c, CharSequence title, View.OnClickListener click) {
+        Row row = actionRow(c, R.drawable.projects_ic_plus, title, click);
+        row.title.setTextColor(color(c, R.color.projects_gold_300));
+        View glyph = row.view.getChildAt(0);
+        if (glyph instanceof ImageView) ((ImageView) glyph).setImageTintList(ColorStateList.valueOf(color(c, R.color.projects_gold_300)));
+        return row;
+    }
+
+    /** {@link #addRow} as the list allows: a full list keeps the row, dimmed and not pressable. */
+    public static void enable(Row row, boolean enabled) {
+        row.view.setEnabled(enabled);
+        row.view.setClickable(enabled);
+        row.view.setAlpha(enabled ? 1f : 0.5f);
+    }
+
+    /** A text action that leaves the app for the site: the words and a small "opens outside" mark after them. */
+    public static Button siteLink(Context c, CharSequence label, View.OnClickListener click) {
+        Button button = textButton(c, label, click);
+        button.setCompoundDrawablesRelativeWithIntrinsicBounds(0, 0, R.drawable.projects_ic_arrow_square_out_small, 0);
+        button.setCompoundDrawablePadding(dp(c, 6));
+        androidx.core.widget.TextViewCompat.setCompoundDrawableTintList(button, ColorStateList.valueOf(color(c, R.color.projects_gold_300)));
+        return button;
+    }
+
     public static Button textButton(Context c, CharSequence label, View.OnClickListener click) {
         Button button = new Button(c, null, android.R.attr.borderlessButtonStyle);
         button.setText(label);
@@ -456,6 +533,11 @@ public final class CloudUi {
 
     /** One choice of several as rows (for longer words): the chosen row carries a gold check. */
     public static LinearLayout choices(Context c, CharSequence[] options, int selected, final Choice choice) {
+        return choices(c, options, selected, false, choice);
+    }
+
+    /** {@code grouped}: the rows of a group on a page (16 dp in, hairlines between them); otherwise a sheet's list. */
+    public static LinearLayout choices(Context c, CharSequence[] options, int selected, boolean grouped, final Choice choice) {
         final LinearLayout list = new LinearLayout(c);
         list.setOrientation(LinearLayout.VERTICAL);
         final List<ImageView> checks = new ArrayList<>();
@@ -465,8 +547,8 @@ public final class CloudUi {
             LinearLayout row = new LinearLayout(c);
             row.setOrientation(LinearLayout.HORIZONTAL);
             row.setGravity(Gravity.CENTER_VERTICAL);
-            row.setMinimumHeight(dp(c, 48));
-            row.setPadding(dp(c, 8), 0, dp(c, 8), 0);
+            row.setMinimumHeight(dp(c, grouped ? 52 : 48));
+            row.setPadding(dp(c, grouped ? 16 : 8), 0, dp(c, grouped ? 16 : 8), 0);
             row.setBackgroundResource(R.drawable.projects_row_ripple);
             row.setClickable(true);
             row.setFocusable(true);
@@ -485,6 +567,7 @@ public final class CloudUi {
                 Haptics.tick(v);
                 choice.picked(index);
             });
+            if (grouped && i > 0) list.addView(textDivider(c));
             list.addView(row, matchWrap());
         }
         mark(rows, checks, selected);

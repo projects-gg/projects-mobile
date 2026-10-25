@@ -240,10 +240,16 @@ public final class PlusApprovalsFragment extends CloudScreen implements CloudSer
             case "expired": state = R.string.projects_plus_state_expired; break;
             default: state = R.string.projects_plus_state_closed; break;
         }
-        texts.addView(CloudUi.text(c, getString(state) + ", " + CloudWords.money(c, ap.price) + ", " + ap.counterpart, 13, R.color.projects_ash_400, false));
+        // Who and how much as one phrase ("Zeynep_MC ile 7.680": "ile" needs no ending on a name), the outcome on the
+        // right; a chain of three commas read as data, not a sentence.
+        texts.addView(CloudUi.text(c, getString(R.string.projects_plus_approval_with, ap.counterpart, CloudWords.money(c, ap.price)),
+                13, R.color.projects_ash_400, false));
         LinearLayout.LayoutParams lp = CloudUi.weight(1f);
         lp.setMarginStart(CloudUi.dp(c, 12));
         row.addView(texts, lp);
+        LinearLayout.LayoutParams stateLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        stateLp.setMarginStart(CloudUi.dp(c, 12));
+        row.addView(CloudUi.text(c, getString(state), 13, R.color.projects_ash_300, false), stateLp);
         return row;
     }
 

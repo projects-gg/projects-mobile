@@ -70,14 +70,19 @@ public final class PlusScheduleFragment extends PlusScreen {
         }
         for (int i = 0; i < windows.size(); i++) content.addView(window(c, e, windows, i));
         if (windows.size() < PlusConfig.WINDOWS_MAX) {
-            Button add = CloudUi.textButton(c, getString(R.string.projects_plus_schedule_add), v -> {
+            // The same add row as the app's other lists, in a group of its own under the windows' cards.
+            CloudUi.Row add = CloudUi.addRow(c, getString(R.string.projects_plus_schedule_add), v -> {
                 List<PlusConfig.Window> next = new ArrayList<>(e.windows());
                 next.add(new PlusConfig.Window(new ArrayList<>(Arrays.asList(6, 7)), "12:00", "23:00"));
                 e.setWindows(next);
                 changed();
                 redraw();
             });
-            content.addView(add, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            LinearLayout addGroup = CloudUi.group(c);
+            addGroup.addView(add.view);
+            LinearLayout.LayoutParams addLp = CloudUi.matchWrap();
+            addLp.topMargin = CloudUi.dp(c, 12);
+            content.addView(addGroup, addLp);
         }
 
         // A break.
@@ -197,29 +202,26 @@ public final class PlusScheduleFragment extends PlusScreen {
             CloudRowSheet.show(error, problem);
             box.addView(error);
         }
-        CloudUi.Row from = CloudUi.row(c, R.drawable.projects_ic_clock, getString(R.string.projects_plus_schedule_from), v -> time(w.from, t -> {
+        // Times are picked in place: rows without icons or carets, as in the quiet hours (one look for a time everywhere).
+        CloudUi.Row from = CloudUi.valueRow(c, getString(R.string.projects_plus_schedule_from), w.from, v -> time(w.from, t -> {
             List<PlusConfig.Window> all = new ArrayList<>(e.windows());
             all.set(index, new PlusConfig.Window(w.days, t, w.to));
             e.setWindows(all);
             changed();
             redraw();
         }));
-        from.count.setText(w.from);
-        from.count.setVisibility(View.VISIBLE);
         box.addView(from.view);
-        box.addView(CloudUi.rowDivider(c));
-        CloudUi.Row to = CloudUi.row(c, R.drawable.projects_ic_moon, getString(R.string.projects_plus_schedule_to), v -> time(w.to, t -> {
+        box.addView(CloudUi.textDivider(c));
+        CloudUi.Row to = CloudUi.valueRow(c, getString(R.string.projects_plus_schedule_to), w.to, v -> time(w.to, t -> {
             List<PlusConfig.Window> all = new ArrayList<>(e.windows());
             all.set(index, new PlusConfig.Window(w.days, w.from, t));
             e.setWindows(all);
             changed();
             redraw();
         }));
-        to.count.setText(w.to);
-        to.count.setVisibility(View.VISIBLE);
         box.addView(to.view);
         if (windows.size() > 1 || !e.scheduleOn()) {
-            box.addView(CloudUi.rowDivider(c));
+            box.addView(CloudUi.textDivider(c));
             Button remove = CloudUi.textButton(c, getString(R.string.projects_plus_schedule_remove), v -> {
                 List<PlusConfig.Window> all = new ArrayList<>(e.windows());
                 all.remove(index);
@@ -227,7 +229,8 @@ public final class PlusScheduleFragment extends PlusScreen {
                 changed();
                 redraw();
             });
-            remove.setTextColor(CloudUi.color(c, R.color.projects_flare_400));
+            // Quiet, not flare: it is one edit among others, undone with the save bar's "Vazgeç" (two red links shouted).
+            remove.setTextColor(CloudUi.color(c, R.color.projects_ash_300));
             LinearLayout.LayoutParams removeLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             removeLp.setMarginStart(CloudUi.dp(c, 4));
             box.addView(remove, removeLp);

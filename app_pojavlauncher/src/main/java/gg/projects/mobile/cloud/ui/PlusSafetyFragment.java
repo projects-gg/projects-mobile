@@ -65,6 +65,8 @@ public final class PlusSafetyFragment extends PlusScreen {
             content.addView(CloudUi.notice(c, R.drawable.projects_ic_wallet, R.color.projects_ash_300,
                     getString(R.string.projects_plus_notify_only_note)));
         }
+        // Bare figures on a page about spending could read as real money: the site's first line says whose money it is.
+        content.addView(CloudUi.note(c, getString(R.string.projects_plus_limits_money)));
         spent(content, e);
         for (final String key : AMOUNTS) {
             Long value = e.limit(key);
