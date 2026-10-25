@@ -41,7 +41,7 @@ public final class CloudPush {
         switch (decision.action) {
             case SHOW:
                 Log.i(TAG, "cloud push shown: " + notice.event);
-                CloudNotifications.show(app, notice);
+                CloudNotifications.show(app, notice, gameRunning(app));
                 break;
             case CANCEL: {
                 String approval = notice.approvalId();

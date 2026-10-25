@@ -79,6 +79,22 @@ public class CloudNoticeTest {
     }
 
     @Test
+    public void quietHoursOnlyOnTheSocket() {
+        // AFKPLUS-SOC2: in the player's quiet hours a socket still gets the notice, marked quiet (the app's own line only).
+        CloudNotice loud = CloudNotice.fromSocket(Vectors.json(SOCKET));
+        assertFalse(loud.quiet);
+        CloudNotice quiet = CloudNotice.fromSocket(Vectors.json(SOCKET.replace("\"priority\":\"high\",", "\"priority\":\"high\",\"quiet\":true,")));
+        assertTrue(quiet.quiet);
+        assertEquals(CloudNotice.Action.SHOW, quiet.decide(null, 1792521100).action);
+        CloudNotice pushed = CloudNotice.fromPush(push("v", "1", "type", "afk", "event", "found", "kind", "afk_deal", "id", "03J",
+                "to", "111", "acct", "a_1", "quiet", "true"));
+        assertFalse(pushed.quiet);
+        // The friends service's events of SOC2: a message and the weekly report are shown, an approval's end is not.
+        assertTrue(CloudNotice.showable("night"));
+        assertFalse(CloudNotice.showable("approval_closed"));
+    }
+
+    @Test
     public void anEventFromANewerServiceIsDropped() {
         CloudNotice later = CloudNotice.fromPush(push("v", "1", "type", "afk", "event", "teleported", "kind", "afk_info", "id", "x", "to", "1"));
         assertEquals(CloudNotice.Action.DROP, later.decide("1", 0).action);

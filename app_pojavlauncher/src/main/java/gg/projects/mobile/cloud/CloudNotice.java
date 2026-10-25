@@ -33,10 +33,15 @@ public final class CloudNotice {
     /** The recipient's Discord id (pushes only). */
     @Nullable
     public final String to;
+    /**
+     * The player's quiet hours (sockets only): shown in the app's own line if it is on screen, never as a system
+     * notification; one not seen comes back in the morning's digest ({@code night}).
+     */
+    public final boolean quiet;
     public final Map<String, String> data;
 
     private CloudNotice(String id, String event, String kind, boolean high, long at, @Nullable String tag, @Nullable String to,
-                        Map<String, String> data) {
+                        boolean quiet, Map<String, String> data) {
         this.id = id;
         this.event = event;
         this.kind = kind;
@@ -44,6 +49,7 @@ public final class CloudNotice {
         this.at = at;
         this.tag = tag;
         this.to = to;
+        this.quiet = quiet;
         this.data = Collections.unmodifiableMap(data);
     }
 
@@ -67,7 +73,8 @@ public final class CloudNotice {
                 if (e.getValue().isJsonPrimitive()) data.put(e.getKey(), e.getValue().getAsString());
             }
         }
-        return new CloudNotice(id, event, kind, "high".equals(Json.str(n, "priority")), Json.num(n, "at", 0), Json.str(n, "tag"), null, data);
+        return new CloudNotice(id, event, kind, "high".equals(Json.str(n, "priority")), Json.num(n, "at", 0), Json.str(n, "tag"), null,
+                Json.bool(n, "quiet", false), data);
     }
 
     /** A push's data ({@code v: "1"}, {@code type: "afk"}), or null when it is not one this app reads. */
@@ -91,7 +98,8 @@ public final class CloudNotice {
         }
         String priority = push.get("priority");
         boolean high = "high".equals(priority) || "approval".equals(event) || "stopped".equals(event);
-        return new CloudNotice(id, event, kind, high, at, push.get("tag"), push.get("to"), data);
+        // A push never comes in quiet hours (the friends service keeps those for the morning's digest).
+        return new CloudNotice(id, event, kind, high, at, push.get("tag"), push.get("to"), false, data);
     }
 
     @Nullable

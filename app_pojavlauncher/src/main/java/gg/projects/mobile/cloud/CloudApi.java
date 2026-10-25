@@ -107,6 +107,22 @@ public final class CloudApi {
         return origin + path;
     }
 
+    /** The site's public pages: their English copies live under {@code /en} (the site's router, PUBLIC_PAGES). */
+    private static final String[] PUBLIC_PAGES = {"/satin-al", "/afk-plus", "/kosullar", "/engelli-sunucular", "/sikayet"};
+
+    /**
+     * A page's path in the app's language: in English a public page (the home page, buying, the terms) is under
+     * {@code /en}; the rest of the site (accounts) has one address and follows the player's own choice there.
+     */
+    public static String sitePath(String path, String lang) {
+        if (!"en".equals(lang)) return path;
+        if (path.equals("/") || path.startsWith("/?") || path.startsWith("/#")) return "/en" + path;
+        for (String page : PUBLIC_PAGES) {
+            if (path.equals(page) || path.startsWith(page + "?") || path.startsWith(page + "#")) return "/en" + path;
+        }
+        return path;
+    }
+
     // ---- public reads ----
 
     @WorkerThread

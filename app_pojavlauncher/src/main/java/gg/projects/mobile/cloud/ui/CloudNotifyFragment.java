@@ -31,8 +31,9 @@ import gg.projects.mobile.cloud.CloudService;
 public final class CloudNotifyFragment extends CloudScreen {
     public static final String TAG = "ProjectsCloudNotifyFragment";
     private static final String[] ACCOUNT_EVENTS = {"stopped", "renewal", "expired"};
+    /** The site's order (afk.projects.gg/bildirimler). */
     private static final String[] PLUS_EVENTS = {"approval", "found", "deal_done", "deal_failed", "message", "quota_full", "quota_80",
-            "gift_ending", "summary", "weekly", "paused", "incident"};
+            "gift_ending", "paused", "incident", "summary", "weekly"};
 
     @Nullable
     private CloudModel.NotifyPrefs mPrefs;
@@ -81,7 +82,9 @@ public final class CloudNotifyFragment extends CloudScreen {
     protected void render() {
         Context c = ctx();
         boolean osOn = NotificationManagerCompat.from(c).areNotificationsEnabled();
-        String key = osOn + "|" + mFailed + "|" + (mPrefs == null ? "-" : mPrefs.toJson().toString()) + "|" + mService.plusOn();
+        // AFK+'s switches only for a player with an AFK+ account (as on the site); the others never get those notices.
+        boolean plus = mService.plusOn() && hasPlusAccount();
+        String key = osOn + "|" + mFailed + "|" + (mPrefs == null ? "-" : mPrefs.toJson().toString()) + "|" + plus;
         if (key.equals(mShown)) return;
         mShown = key;
         LinearLayout content = clear();
@@ -106,15 +109,17 @@ public final class CloudNotifyFragment extends CloudScreen {
         final CloudModel.NotifyPrefs prefs = mPrefs;
         content.addView(CloudUi.section(c, getString(R.string.projects_cloud_notify_accounts)));
         content.addView(switches(c, prefs, ACCOUNT_EVENTS));
-        if (mService.plusOn()) {
-            List<String> plus = new ArrayList<>();
+        if (plus) {
+            List<String> events = new ArrayList<>();
             for (String e : PLUS_EVENTS) {
                 if ("message".equals(e) && !mService.plusFeature("inbox")) continue;
-                if (("summary".equals(e) || "weekly".equals(e)) && !mService.plusFeature("report")) continue;
-                plus.add(e);
+                // The daily summary is the assistant's own; the weekly report goes only while the report feature is on
+                // (services/cloud-afk README, "AFK+ notifications"): two events, two switches.
+                if ("weekly".equals(e) && !mService.plusFeature("report")) continue;
+                events.add(e);
             }
             content.addView(CloudUi.section(c, getString(R.string.projects_plus_title)));
-            content.addView(switches(c, prefs, plus.toArray(new String[0])));
+            content.addView(switches(c, prefs, events.toArray(new String[0])));
         }
 
         content.addView(CloudUi.section(c, getString(R.string.projects_cloud_notify_quiet)));
@@ -138,6 +143,11 @@ public final class CloudNotifyFragment extends CloudScreen {
         }
         content.addView(quiet);
         content.addView(CloudUi.note(c, getString(R.string.projects_cloud_notify_quiet_help)));
+    }
+
+    private boolean hasPlusAccount() {
+        for (CloudModel.Account a : mService.accounts()) if (a.plus()) return true;
+        return false;
     }
 
     private View switches(Context c, final CloudModel.NotifyPrefs prefs, String[] events) {

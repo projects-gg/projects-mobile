@@ -317,6 +317,13 @@ public class CloudApiTest {
         CloudApi prod = new CloudApi(CloudApi.PRODUCTION, "x", line -> { });
         assertEquals("wss://afk.projects.gg/api/v1/live?host=kz1", prod.liveUrl("kz1"));
         assertEquals("https://afk.projects.gg/satin-al?hesap=a_7KQ2MZ3P9TW4XB1C", prod.siteUrl("/satin-al?hesap=a_7KQ2MZ3P9TW4XB1C"));
+        // English: the public pages under /en, an account's pages at their one address.
+        assertEquals("/en/satin-al?hesap=a_7KQ2MZ3P9TW4XB1C&tier=plus", CloudApi.sitePath("/satin-al?hesap=a_7KQ2MZ3P9TW4XB1C&tier=plus", "en"));
+        assertEquals("/satin-al?hesap=a_7KQ2MZ3P9TW4XB1C&tier=plus", CloudApi.sitePath("/satin-al?hesap=a_7KQ2MZ3P9TW4XB1C&tier=plus", "tr"));
+        assertEquals("/en/", CloudApi.sitePath("/", "en"));
+        assertEquals("/", CloudApi.sitePath("/", "tr"));
+        assertEquals("/hesap/a_7KQ2MZ3P9TW4XB1C/itiraz", CloudApi.sitePath("/hesap/a_7KQ2MZ3P9TW4XB1C/itiraz", "en"));
+        assertEquals("/satin-alma", CloudApi.sitePath("/satin-alma", "en"));
         assertEquals("ws://127.0.0.1:" + mServer.port() + "/api/v1/live?host=kz1", mApi.liveUrl("kz1"));
         assertEquals("accounts/:id/plus/inbox/:name", CloudApi.route("accounts/a_7KQ2MZ3P9TW4XB1C/plus/inbox/Kaan_07?limit=100"));
         assertEquals("accounts/:id/plus/approvals/:aid", CloudApi.route("accounts/a_7KQ2MZ3P9TW4XB1C/plus/approvals/01JBXK3D2E5F6G7H8J9K0M1N2P"));

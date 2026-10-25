@@ -335,6 +335,32 @@ public final class CloudModel {
         }
     }
 
+    /**
+     * What the assistant has spent ({@code spent}, CAFK-W5), in the game mode's money like the limits: {@code total} since
+     * the last {@code reset_spent} (against {@code totalBudget}), {@code today} from 04:00 Turkey time (against
+     * {@code dailySpendMax}). Only live answers carry it: null when the machine did not answer in time or the account is
+     * not AFK+ now, and then the screens show nothing about it.
+     */
+    public static final class Spent {
+        public final long total;
+        public final long today;
+
+        public Spent(long total, long today) {
+            this.total = Math.max(0, total);
+            this.today = Math.max(0, today);
+        }
+
+        @Nullable
+        public static Spent read(@Nullable JsonElement e) {
+            if (e == null || !e.isJsonObject()) return null;
+            JsonObject o = e.getAsJsonObject();
+            Long total = Json.numOrNull(o, "total");
+            Long today = Json.numOrNull(o, "today");
+            if (total == null && today == null) return null;
+            return new Spent(total == null ? 0 : total, today == null ? 0 : today);
+        }
+    }
+
     /** An AFK+ account's AI ({@code ai}). */
     public static final class AiView {
         /** {@code on}, {@code paused}, {@code off} or {@code unknown}. */
@@ -355,6 +381,9 @@ public final class CloudModel {
         public final QuotaBrief quota;
         @Nullable
         public final Long asOf;
+        /** Live answers only (CAFK-W5). */
+        @Nullable
+        public final Spent spent;
 
         private AiView(JsonObject o) {
             state = Json.str(o, "state", "unknown");
@@ -368,6 +397,7 @@ public final class CloudModel {
             pendingApprovals = (int) Json.num(o, "pendingApprovals", 0);
             quota = QuotaBrief.read(Json.obj(o, "quota"));
             asOf = Json.numOrNull(o, "asOf");
+            spent = Spent.read(o.get("spent"));
         }
 
         @Nullable
@@ -920,11 +950,15 @@ public final class CloudModel {
         @Nullable
         public final String profileName;
         public final boolean profileTrade;
+        /** What the assistant has spent, when the machine answered (CAFK-W5); null otherwise. */
+        @Nullable
+        public final Spent spent;
 
         private PlusDoc(JsonObject o) {
             JsonObject c = Json.obj(o, "config");
             config = c == null ? new JsonObject() : c;
             aiRev = Json.num(o, "aiRev", 0);
+            spent = Spent.read(o.get("spent"));
             JsonObject judge = Json.obj(o, "judge");
             intro = Judge.read(Json.obj(judge, "intro"));
             status = Judge.read(Json.obj(judge, "status"));

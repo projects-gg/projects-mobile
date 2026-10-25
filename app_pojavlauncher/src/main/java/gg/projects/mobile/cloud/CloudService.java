@@ -825,7 +825,7 @@ public final class CloudService implements SocialService.Listener {
     /** A page of afk.projects.gg in a Custom Tab ({@code /satin-al?hesap=…}, {@code /hesap/…}). */
     @MainThread
     public void openSite(Activity activity, String path) {
-        String url = mApi.siteUrl(path);
+        String url = mApi.siteUrl(CloudApi.sitePath(path, CloudWords.lang(activity)));
         if (mDebug.logBrowser) {
             // Debug builds on the emulator: no browser runs there.
             Log.i(TAG, "site page: " + url);
@@ -1085,10 +1085,11 @@ public final class CloudService implements SocialService.Listener {
         mFetchedAt = 0;
         fetchAccounts(true);
         if (onScreen != null && !onScreen.isFinishing() && onScreen.hasWindowFocus()) {
-            CloudNotifications.showInApp(onScreen, notice);
-            SocialService.get(mApp).sendAfkSeen(notice.id);
-        } else {
-            CloudNotifications.show(mApp, notice);
+            // Seen only when the line really showed: then the service sends no push for it.
+            if (CloudNotifications.showInApp(onScreen, notice)) SocialService.get(mApp).sendAfkSeen(notice.id);
+        } else if (!notice.quiet) {
+            CloudNotifications.show(mApp, notice, CloudPush.gameRunning(mApp));
         }
+        // A quiet-hours notice with the app off screen shows nothing now: unseen, it comes in the morning's digest.
     }
 }

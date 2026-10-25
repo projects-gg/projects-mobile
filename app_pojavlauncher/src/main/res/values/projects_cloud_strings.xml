@@ -310,18 +310,18 @@
     <string name="projects_cloud_notify_stopped">An account stopped</string>
     <string name="projects_cloud_notify_renewal">Time is running out</string>
     <string name="projects_cloud_notify_expired">Time is up</string>
-    <string name="projects_cloud_notify_approval">An approval is waiting</string>
-    <string name="projects_cloud_notify_found">An item was found</string>
-    <string name="projects_cloud_notify_deal_done">A trade went through</string>
-    <string name="projects_cloud_notify_deal_failed">A trade fell through</string>
-    <string name="projects_cloud_notify_message">A new message</string>
-    <string name="projects_cloud_notify_quota_full">The allowance is used up</string>
-    <string name="projects_cloud_notify_quota_80" formatted="false">80% of the allowance is used</string>
+    <string name="projects_cloud_notify_approval">Your OK is needed</string>
+    <string name="projects_cloud_notify_found">Something you want was found</string>
+    <string name="projects_cloud_notify_deal_done">Trade complete</string>
+    <string name="projects_cloud_notify_deal_failed">Trade not completed</string>
+    <string name="projects_cloud_notify_message">New message</string>
+    <string name="projects_cloud_notify_quota_full">AI allowance used up</string>
+    <string name="projects_cloud_notify_quota_80" formatted="false">80% of the AI allowance used</string>
     <string name="projects_cloud_notify_gift_ending">A gift allowance is ending</string>
     <string name="projects_cloud_notify_summary">Daily summary</string>
     <string name="projects_cloud_notify_weekly">Weekly report</string>
-    <string name="projects_cloud_notify_paused">The assistant was paused</string>
-    <string name="projects_cloud_notify_incident">Inappropriate messages came</string>
+    <string name="projects_cloud_notify_paused">The assistant paused</string>
+    <string name="projects_cloud_notify_incident">Suspicious message blocked</string>
     <string name="projects_cloud_notify_quiet">Quiet hours</string>
     <string name="projects_cloud_notify_quiet_help">No phone notifications in quiet hours; what happened comes in one notification at the end.</string>
     <string name="projects_cloud_notify_from">From</string>
@@ -405,14 +405,14 @@
     <string name="projects_cloud_error_feature_off">This is switched off right now.</string>
     <string name="projects_cloud_error_approval_closed">This approval isn\'t open any more.</string>
     <string name="projects_cloud_error_invalid">Some settings weren\'t accepted. Fix the marked fields.</string>
-    <string name="projects_cloud_error_downgrade_limit">You can\'t switch to the plain plan again yet.</string>
+    <string name="projects_cloud_error_downgrade_limit">You can switch to 24/7 Cloud once every 30 days.</string>
     <string name="projects_cloud_error_seal">Couldn\'t encrypt the line. Try again.</string>
 
     <!-- AFK+ on the account screen -->
     <string name="projects_plus_title">AFK+</string>
     <string name="projects_plus_assistant_switch">Assistant</string>
     <string name="projects_plus_ai_on">The assistant is on</string>
-    <string name="projects_plus_ai_notify_only">The assistant is on; it only reports finds until you set a budget</string>
+    <string name="projects_plus_ai_notify_only">The assistant is on; it only reports finds until you set a spending authority</string>
     <string name="projects_plus_ai_break">The assistant is on a break until %1$s</string>
     <string name="projects_plus_ai_break_plain">The assistant is on a break</string>
     <string name="projects_plus_ai_schedule">Outside working hours; back at %1$s</string>
@@ -428,7 +428,7 @@
     <string name="projects_plus_ai_staff">Stopped by staff</string>
     <string name="projects_plus_ai_restricted">You\'re removed from AFK+</string>
     <string name="projects_plus_ai_service_off">AFK+ is off right now</string>
-    <string name="projects_plus_ai_server">The assistant works only on Projects; this account runs as plain AFK</string>
+    <string name="projects_plus_ai_server">The assistant works only on Projects; for now this account just stays AFK</string>
     <string name="projects_plus_ai_gate">The assistant stopped for safety; you can start it again</string>
     <string name="projects_plus_ai_muted">The server muted the bot; the assistant stopped</string>
     <string name="projects_plus_ai_moderation">The assistant was stopped for a rule violation</string>
@@ -437,10 +437,11 @@
     <string name="projects_plus_set_limits">Set limits</string>
     <string name="projects_plus_quota_5h">5-hour allowance</string>
     <string name="projects_plus_quota_week">Weekly allowance</string>
+    <string name="projects_plus_quota_used">%1$s used</string>
     <string name="projects_plus_quota_resets">Resets at %1$s</string>
     <string name="projects_plus_quota_resets_day">Resets %1$s</string>
     <string name="projects_plus_quota_unused">Unused</string>
-    <string name="projects_plus_quota_left">≈ %1$d replies left</string>
+    <string name="projects_plus_quota_left">About %1$d replies left</string>
     <string name="projects_plus_quota_gift">Gift allowance until %1$s</string>
     <string name="projects_plus_quota_gift_open">Gift allowance</string>
     <string name="projects_plus_quota_frozen">Your allowance was frozen by staff.</string>
@@ -453,9 +454,10 @@
     <string name="projects_plus_activity">Activity</string>
     <string name="projects_plus_history">Settings history</string>
     <string name="projects_plus_upgrade">Upgrade to AFK+</string>
-    <string name="projects_plus_downgrade">Switch to the plain plan</string>
-    <string name="projects_plus_downgrade_body">The AFK+ time left becomes plain AFK time: %1$s more. The AI stops at once.</string>
-    <string name="projects_plus_downgrade_done">%1$s is on the plain plan.</string>
+    <string name="projects_plus_downgrade">Switch to 24/7 Cloud</string>
+    <string name="projects_plus_downgrade_title">Switch to 24/7 Cloud?</string>
+    <string name="projects_plus_downgrade_body">Your AFK+ time left becomes %1$s of 24/7 Cloud; the assistant stops at once.</string>
+    <string name="projects_plus_downgrade_done">The account is on 24/7 Cloud now.</string>
     <string name="projects_plus_load_failed">Couldn\'t load the AFK+ settings.</string>
 
     <!-- Approvals -->
@@ -522,7 +524,7 @@
     <string name="projects_plus_sell_line">Target %1$s, at least %2$s</string>
     <string name="projects_plus_each_line">Each: %1$s</string>
     <string name="projects_plus_qty_line">%1$d pcs: %2$s</string>
-    <string name="projects_plus_notify_only_note">Without a budget and a per-deal limit it buys nothing, it only reports finds.</string>
+    <string name="projects_plus_notify_only_note">Without a spending authority and a per-deal limit it buys nothing, it only reports finds.</string>
     <string name="projects_plus_row_buy_title">Buying</string>
     <string name="projects_plus_row_sell_title">Selling</string>
     <string name="projects_plus_row_item">Item</string>
@@ -624,18 +626,20 @@
     <!-- Spending limits -->
     <string name="projects_plus_limit_perDealMax">At most per deal</string>
     <string name="projects_plus_limit_dailySpendMax">At most a day</string>
-    <string name="projects_plus_limit_totalBudget">Total budget</string>
-    <string name="projects_plus_limit_balanceFloor">Keep at least this balance</string>
+    <string name="projects_plus_limit_totalBudget">Total spending authority</string>
+    <string name="projects_plus_limit_balanceFloor">Lowest balance to keep</string>
     <string name="projects_plus_limit_approvalAbove">Ask me above</string>
-    <string name="projects_plus_limit_newCounterpartApprovalAbove">With a new player, ask me above</string>
+    <string name="projects_plus_limit_newCounterpartApprovalAbove">Ask above this with a new player</string>
     <string name="projects_plus_limit_approvalTimeoutMin">Wait for my answer</string>
     <string name="projects_plus_limit_minutes">min</string>
     <string name="projects_plus_limit_timeout_help">No answer counts as no.</string>
     <string name="projects_plus_limit_none">No limit</string>
-    <string name="projects_plus_limit_order">Ask me above can\'t be more than at most per deal.</string>
-    <string name="projects_plus_reset_spent">Reset what was spent</string>
-    <string name="projects_plus_reset_spent_body">What was spent from the total budget goes back to zero.</string>
+    <string name="projects_plus_limit_order">The ask amount can\'t be above the per-deal limit.</string>
+    <string name="projects_plus_reset_spent">Reset spending</string>
+    <string name="projects_plus_reset_spent_body">What was spent so far goes back to zero, so the total spending authority is free again.</string>
     <string name="projects_plus_reset_spent_done">Spending reset.</string>
+    <string name="projects_plus_spent_today">Spent today</string>
+    <string name="projects_plus_spent_total">Spent so far</string>
 
     <!-- Activity (feed, trade history, weekly report; QoL Q4) -->
     <string name="projects_plus_feed">Live</string>
@@ -676,10 +680,11 @@
     <string name="projects_plus_week_sold">Sold</string>
     <string name="projects_plus_week_spent">Spent</string>
     <string name="projects_plus_week_earned">Earned</string>
-    <string name="projects_plus_week_below">Below your limit</string>
+    <string name="projects_plus_week_below">Saved on buys</string>
+    <string name="projects_plus_week_above">Extra on sales</string>
     <string name="projects_plus_week_blocked">Suspicious messages blocked</string>
     <string name="projects_plus_week_allowance">AI allowance used</string>
-    <string name="projects_plus_week_empty">No report for last week yet.</string>
+    <string name="projects_plus_week_empty">No trades or replies on this account last week.</string>
 
     <!-- Settings history (QoL Q7) -->
     <string name="projects_plus_history_empty">No saved settings yet.</string>

@@ -117,6 +117,8 @@ public class CloudModelTest {
         assertEquals("Survival", doc.profileName);
         assertTrue(doc.profileTrade);
         assertEquals("ok", doc.intro.state);
+        assertEquals(132000, doc.spent.total);
+        assertEquals(37500, doc.spent.today);
         List<CloudModel.Approval> approvals = CloudModel.Approval.list(Vectors.json(Vectors.resource("cloud/fixtures/approvals.json")), "approvals");
         assertEquals(3, approvals.size());
         assertTrue(approvals.get(0).pending(1792846800));
@@ -140,6 +142,25 @@ public class CloudModelTest {
         assertTrue(page.canReply);
         assertTrue(page.lines.get(4).hidden);
         assertFalse(page.lines.get(0).hidden);
+    }
+
+    @Test
+    public void spentOnlyFromLiveAnswers() {
+        // CAFK-W5: null when the machine did not answer in time or the account is not AFK+ now; left out by older Workers.
+        String config = "\"config\":{\"v\":1},\"aiRev\":3";
+        assertNull(CloudModel.PlusDoc.read(Vectors.json("{" + config + "}")).spent);
+        assertNull(CloudModel.PlusDoc.read(Vectors.json("{" + config + ",\"spent\":null}")).spent);
+        CloudModel.Spent spent = CloudModel.PlusDoc.read(Vectors.json("{" + config + ",\"spent\":{\"total\":0,\"today\":0}}")).spent;
+        assertEquals(0, spent.total);
+        assertEquals(0, spent.today);
+        CloudModel.Spent partial = CloudModel.Spent.read(Vectors.json("{\"today\":1200}"));
+        assertEquals(0, partial.total);
+        assertEquals(1200, partial.today);
+        assertNull(CloudModel.Spent.read(Vectors.json("{}")));
+        CloudModel.AiView live = CloudModel.AiView.read(Vectors.json("{\"state\":\"on\",\"spent\":{\"total\":90000,\"today\":15000}}"));
+        assertEquals(90000, live.spent.total);
+        CloudModel.AiView cached = CloudModel.AiView.read(Vectors.json("{\"state\":\"on\"}"));
+        assertNull(cached.spent);
     }
 
     @Test

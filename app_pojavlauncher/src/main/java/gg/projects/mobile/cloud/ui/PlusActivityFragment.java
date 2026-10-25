@@ -377,24 +377,16 @@ public final class PlusActivityFragment extends CloudScreen implements CloudServ
         rows.add(figure(c, getString(R.string.projects_plus_week_spent), CloudWords.money(c, mine.spent)));
         rows.add(figure(c, getString(R.string.projects_plus_week_earned), CloudWords.money(c, mine.earned)));
         rows.add(figure(c, getString(R.string.projects_plus_week_below), CloudWords.money(c, mine.belowLimit)));
+        rows.add(figure(c, getString(R.string.projects_plus_week_above), CloudWords.money(c, mine.aboveFloor)));
         rows.add(figure(c, getString(R.string.projects_plus_week_blocked), String.valueOf(mine.blocked)));
         String pct = CloudWords.turkish(c) ? String.format(Locale.ROOT, "%%%d", mine.allowancePct) : String.format(Locale.ROOT, "%d%%", mine.allowancePct);
         rows.add(figure(c, getString(R.string.projects_plus_week_allowance), pct));
-        CloudUi.fill(group, rows);
+        CloudUi.fillFigures(group, rows);
         content.addView(group);
     }
 
-    private View figure(Context c, String label, String value) {
-        LinearLayout row = new LinearLayout(c);
-        row.setOrientation(LinearLayout.HORIZONTAL);
-        row.setGravity(Gravity.CENTER_VERTICAL);
-        row.setMinimumHeight(CloudUi.dp(c, 52));
-        row.setPadding(CloudUi.dp(c, 16), 0, CloudUi.dp(c, 16), 0);
-        row.addView(CloudUi.text(c, label, 15, R.color.projects_bone_100, false), CloudUi.weight(1f));
-        row.addView(CloudUi.text(c, value, 16, R.color.projects_gold_300, true));
-        row.setContentDescription(label + ", " + value);
-        row.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_YES);
-        return row;
+    private static View figure(Context c, String label, String value) {
+        return CloudUi.figureRow(c, label, value).view;
     }
 
     // ---- the live socket ----

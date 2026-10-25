@@ -99,10 +99,25 @@ public final class CloudNotifications {
         return "approval:" + approval;
     }
 
+    /** The notice's own tag (a newer one with it replaces or removes it), else one per event and account. */
     private static String tagOf(CloudNotice n) {
         String approval = n.approvalId();
         if (approval != null) return approvalTag(approval);
+        if (n.tag != null && !n.tag.isEmpty()) return n.tag;
         return n.event + ":" + (n.account() == null ? "all" : n.account());
+    }
+
+    /** Notices already shown by this process (the socket's and the push's copies share an id). */
+    private static final java.util.Map<String, Boolean> SHOWN = new java.util.LinkedHashMap<String, Boolean>() {
+        @Override
+        protected boolean removeEldestEntry(java.util.Map.Entry<String, Boolean> eldest) {
+            return size() > 64;
+        }
+    };
+
+    /** True the first time a notice id is shown here; a copy that comes again (a push after the socket) is not. */
+    static synchronized boolean firstShow(String id) {
+        return SHOWN.put(id, Boolean.TRUE) == null;
     }
 
     /** Where a tap on it goes: the approvals, the messages, the account or the list. */
@@ -116,11 +131,16 @@ public final class CloudNotifications {
         }
     }
 
-    public static void show(Context context, CloudNotice n) {
+    /**
+     * A system notification on the kind's channel. {@code silent}: the game is on screen, so it waits in the shade
+     * without a heads-up or a sound (as the friends' messages do).
+     */
+    public static void show(Context context, CloudNotice n, boolean silent) {
         Context c = LanguageManager.wrap(context);
         if (!SocialNotifications.canNotify(c)) return;
         String[] words = CloudWords.notice(c, n, new CloudPrefs(c), System.currentTimeMillis() / 1000L);
         if (words == null) return;
+        if (!firstShow(n.id)) return;
         ensureChannels(c);
         String channel = channelOf(n.kind);
         NotificationCompat.Builder builder = new NotificationCompat.Builder(c, channel)
@@ -130,7 +150,8 @@ public final class CloudNotifications {
                 .setContentText(words[1])
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(words[1]))
                 .setCategory("approval".equals(n.event) ? NotificationCompat.CATEGORY_REMINDER : NotificationCompat.CATEGORY_STATUS)
-                .setPriority(n.high ? NotificationCompat.PRIORITY_HIGH : NotificationCompat.PRIORITY_DEFAULT)
+                .setPriority(silent ? NotificationCompat.PRIORITY_LOW : n.high ? NotificationCompat.PRIORITY_HIGH : NotificationCompat.PRIORITY_DEFAULT)
+                .setSilent(silent)
                 .setAutoCancel(true)
                 .setOnlyAlertOnce(true)
                 .setContentIntent(openFor(c, n));
@@ -152,10 +173,13 @@ public final class CloudNotifications {
         }
     }
 
-    /** The app is on screen: the notice goes to its own line at the bottom, with "Aç" to the screen it is about. */
-    public static void showInApp(final Activity activity, final CloudNotice n) {
+    /**
+     * The app is on screen: the notice goes to its own line at the bottom, with "Aç" to the screen it is about. False when
+     * nothing showed (no words for it, or this notice already showed here).
+     */
+    public static boolean showInApp(final Activity activity, final CloudNotice n) {
         String[] words = CloudWords.notice(activity, n, new CloudPrefs(activity), System.currentTimeMillis() / 1000L);
-        if (words == null) return;
+        if (words == null || !firstShow(n.id)) return false;
         String text = "approval".equals(n.event) || "message".equals(n.event) ? words[0] + ": " + words[1] : words[1];
         final String acct = n.account();
         Runnable open = () -> {
@@ -165,6 +189,7 @@ public final class CloudNotifications {
             if (activity instanceof androidx.fragment.app.FragmentActivity) SocialRoutes.consume((androidx.fragment.app.FragmentActivity) activity);
         };
         ActionToast.show(activity, text, activity.getString(R.string.projects_cloud_open), open);
+        return true;
     }
 
     public static void cancelApproval(Context context, String approval) {

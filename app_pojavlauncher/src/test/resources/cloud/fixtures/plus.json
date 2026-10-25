@@ -26,6 +26,7 @@
     "pauseUntil": null
   },
   "aiRev": 14,
+  "spent": { "total": 132000, "today": 37500 },
   "judge": { "intro": { "state": "ok", "at": 1792800000 }, "status": { "state": "ok", "at": 1792800000 } },
   "profile": { "id": "projects-smp", "name": "Survival", "trade": true }
 }

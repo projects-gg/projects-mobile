@@ -309,20 +309,20 @@
     <!-- Bildirim ayarları -->
     <string name="projects_cloud_notify_accounts">Bulut hesapları</string>
     <string name="projects_cloud_notify_stopped">Hesap durdu</string>
-    <string name="projects_cloud_notify_renewal">Süre bitiyor</string>
+    <string name="projects_cloud_notify_renewal">Süre bitmek üzere</string>
     <string name="projects_cloud_notify_expired">Süre bitti</string>
-    <string name="projects_cloud_notify_approval">Onay bekliyor</string>
-    <string name="projects_cloud_notify_found">Eşya bulundu</string>
+    <string name="projects_cloud_notify_approval">Onay bekleniyor</string>
+    <string name="projects_cloud_notify_found">Aradığın eşya bulundu</string>
     <string name="projects_cloud_notify_deal_done">Takas tamamlandı</string>
-    <string name="projects_cloud_notify_deal_failed">Takas olmadı</string>
+    <string name="projects_cloud_notify_deal_failed">Takas tamamlanamadı</string>
     <string name="projects_cloud_notify_message">Yeni mesaj</string>
-    <string name="projects_cloud_notify_quota_full">Hak doldu</string>
-    <string name="projects_cloud_notify_quota_80" formatted="false">Hakkın %80\'i kullanıldı</string>
-    <string name="projects_cloud_notify_gift_ending">Hediye hak bitiyor</string>
+    <string name="projects_cloud_notify_quota_full">Yapay zekâ hakkı bitti</string>
+    <string name="projects_cloud_notify_quota_80" formatted="false">Yapay zekâ hakkının %80\'i kullanıldı</string>
+    <string name="projects_cloud_notify_gift_ending">Hediye yapay zekâ hakkı bitiyor</string>
     <string name="projects_cloud_notify_summary">Günlük özet</string>
     <string name="projects_cloud_notify_weekly">Haftalık rapor</string>
     <string name="projects_cloud_notify_paused">Asistan duraklatıldı</string>
-    <string name="projects_cloud_notify_incident">Uygunsuz mesaj geldi</string>
+    <string name="projects_cloud_notify_incident">Şüpheli mesaj engellendi</string>
     <string name="projects_cloud_notify_quiet">Sessiz saatler</string>
     <string name="projects_cloud_notify_quiet_help">Sessiz saatlerde telefona bildirim gelmez; olanlar sonunda tek bildirimde gelir.</string>
     <string name="projects_cloud_notify_from">Başlangıç</string>
@@ -349,7 +349,7 @@
     <string name="projects_cloud_notice_quota_full">AFK+ hakkın doldu; %1$s yenilenir.</string>
     <string name="projects_cloud_notice_quota_full_plain">AFK+ hakkın doldu.</string>
     <string name="projects_cloud_notice_quota_80">%1$s: AFK+ hakkının %%80\'i kullanıldı.</string>
-    <string name="projects_cloud_notice_gift_ending">Hediye AI hakkın %1$s bitiyor.</string>
+    <string name="projects_cloud_notice_gift_ending">Hediye yapay zekâ hakkın %1$s bitiyor.</string>
     <string name="projects_cloud_notice_summary">%1$s: bugün %2$d PM, %3$d anlaşma.</string>
     <string name="projects_cloud_notice_paused_staff">%1$s: AFK+ yetkililerce duraklatıldı.</string>
     <string name="projects_cloud_notice_paused_service">AFK+ bakımda; hesapların AFK\'de kalıyor.</string>
@@ -406,14 +406,14 @@
     <string name="projects_cloud_error_feature_off">Bu şu an kapalı.</string>
     <string name="projects_cloud_error_approval_closed">Bu onay artık geçerli değil.</string>
     <string name="projects_cloud_error_invalid">Bazı ayarlar kabul edilmedi. İşaretli alanları düzelt.</string>
-    <string name="projects_cloud_error_downgrade_limit">Düz plana şu an yeniden geçemezsin.</string>
+    <string name="projects_cloud_error_downgrade_limit">7/24 Bulut\'a 30 günde bir geçebilirsin.</string>
     <string name="projects_cloud_error_seal">Satır şifrelenemedi. Tekrar dene.</string>
 
     <!-- Hesap ekranında AFK+ -->
     <string name="projects_plus_title">AFK+</string>
     <string name="projects_plus_assistant_switch">Asistan</string>
     <string name="projects_plus_ai_on">Asistan çalışıyor</string>
-    <string name="projects_plus_ai_notify_only">Asistan çalışıyor; bütçe girilene kadar alım yapmaz, yalnız haber verir</string>
+    <string name="projects_plus_ai_notify_only">Asistan çalışıyor; harcama yetkisi girilene kadar alım yapmaz, yalnız haber verir</string>
     <string name="projects_plus_ai_break">Asistan %1$s kadar molada</string>
     <string name="projects_plus_ai_break_plain">Asistan molada</string>
     <string name="projects_plus_ai_schedule">Çalışma saatleri dışında; %1$s döner</string>
@@ -429,7 +429,7 @@
     <string name="projects_plus_ai_staff">Yetkililer durdurdu</string>
     <string name="projects_plus_ai_restricted">AFK+\'dan uzaklaştırıldın</string>
     <string name="projects_plus_ai_service_off">AFK+ şu an kapalı</string>
-    <string name="projects_plus_ai_server">Asistan yalnız Projects\'te çalışır; bu hesap düz AFK olarak çalışıyor</string>
+    <string name="projects_plus_ai_server">Asistan yalnız Projects\'te çalışır; bu hesap şimdilik yalnız AFK\'de kalıyor</string>
     <string name="projects_plus_ai_gate">Asistan güvenlik için durdu; yeniden başlatabilirsin</string>
     <string name="projects_plus_ai_muted">Sunucu bota susturma verdi; asistan durdu</string>
     <string name="projects_plus_ai_moderation">Asistan kural ihlali nedeniyle durduruldu</string>
@@ -438,12 +438,13 @@
     <string name="projects_plus_set_limits">Sınırları gir</string>
     <string name="projects_plus_quota_5h">5 saatlik hak</string>
     <string name="projects_plus_quota_week">Haftalık hak</string>
+    <string name="projects_plus_quota_used">%1$s kullanıldı</string>
     <string name="projects_plus_quota_resets">%1$s yenilenir</string>
     <string name="projects_plus_quota_resets_day">%1$s yenilenir</string>
     <string name="projects_plus_quota_unused">Kullanılmadı</string>
-    <string name="projects_plus_quota_left">≈ %1$d yanıt kaldı</string>
-    <string name="projects_plus_quota_gift">%1$s kadar hediye hak</string>
-    <string name="projects_plus_quota_gift_open">Hediye hak</string>
+    <string name="projects_plus_quota_left">Yaklaşık %1$d yanıt kaldı</string>
+    <string name="projects_plus_quota_gift">%1$s kadar hediye yapay zekâ hakkı</string>
+    <string name="projects_plus_quota_gift_open">Hediye yapay zekâ hakkın var</string>
     <string name="projects_plus_quota_frozen">Hakkın yetkililerce donduruldu.</string>
     <string name="projects_plus_approvals">Onaylar</string>
     <string name="projects_plus_messages">Mesajlar</string>
@@ -454,9 +455,10 @@
     <string name="projects_plus_activity">Etkinlik</string>
     <string name="projects_plus_history">Ayar geçmişi</string>
     <string name="projects_plus_upgrade">AFK+\'ya yükselt</string>
-    <string name="projects_plus_downgrade">Düz plana geç</string>
-    <string name="projects_plus_downgrade_body">AFK+\'nın kalan süresi düz AFK süresine çevrilir: %1$s eklenir. Yapay zekâ hemen durur.</string>
-    <string name="projects_plus_downgrade_done">%1$s düz planda.</string>
+    <string name="projects_plus_downgrade">7/24 Bulut\'a geç</string>
+    <string name="projects_plus_downgrade_title">7/24 Bulut\'a geçilsin mi?</string>
+    <string name="projects_plus_downgrade_body">Kalan AFK+ süren 7/24 Bulut\'ta %1$s olur; asistan hemen durur.</string>
+    <string name="projects_plus_downgrade_done">Hesap 7/24 Bulut\'a geçti.</string>
     <string name="projects_plus_load_failed">AFK+ ayarları yüklenemedi.</string>
 
     <!-- Onaylar -->
@@ -523,7 +525,7 @@
     <string name="projects_plus_sell_line">Hedef %1$s, en az %2$s</string>
     <string name="projects_plus_each_line">Tanesi: %1$s</string>
     <string name="projects_plus_qty_line">%1$d adet: %2$s</string>
-    <string name="projects_plus_notify_only_note">Bütçe ve anlaşma sınırı girilmeden alım yapmaz, yalnız bulunca haber verir.</string>
+    <string name="projects_plus_notify_only_note">Harcama yetkisi ve tek anlaşma sınırı girilmeden alım yapmaz, yalnız bulunca haber verir.</string>
     <string name="projects_plus_row_buy_title">Alım</string>
     <string name="projects_plus_row_sell_title">Satım</string>
     <string name="projects_plus_row_item">Eşya</string>
@@ -623,20 +625,22 @@
     <string name="projects_plus_break_end">Molayı bitir</string>
 
     <!-- Harcama sınırları -->
-    <string name="projects_plus_limit_perDealMax">Anlaşma başına en fazla</string>
-    <string name="projects_plus_limit_dailySpendMax">Günde en fazla</string>
-    <string name="projects_plus_limit_totalBudget">Toplam bütçe</string>
-    <string name="projects_plus_limit_balanceFloor">Bakiye bunun altına inmesin</string>
-    <string name="projects_plus_limit_approvalAbove">Bunun üstünde bana sor</string>
-    <string name="projects_plus_limit_newCounterpartApprovalAbove">Yeni oyuncuda bunun üstünde sor</string>
+    <string name="projects_plus_limit_perDealMax">Tek anlaşmada en çok</string>
+    <string name="projects_plus_limit_dailySpendMax">Günde en çok</string>
+    <string name="projects_plus_limit_totalBudget">Toplam harcama yetkisi</string>
+    <string name="projects_plus_limit_balanceFloor">En az kalacak bakiye</string>
+    <string name="projects_plus_limit_approvalAbove">Bu tutarın üstünde sor</string>
+    <string name="projects_plus_limit_newCounterpartApprovalAbove">Yeni bir oyuncuyla bunun üstünde sor</string>
     <string name="projects_plus_limit_approvalTimeoutMin">Cevabımı beklesin</string>
     <string name="projects_plus_limit_minutes">dk</string>
     <string name="projects_plus_limit_timeout_help">Cevap vermezsen hayır sayılır.</string>
     <string name="projects_plus_limit_none">Sınır yok</string>
-    <string name="projects_plus_limit_order">Sorma eşiği, anlaşma başına en fazladan büyük olamaz.</string>
+    <string name="projects_plus_limit_order">Sorma tutarı, tek anlaşmada en çoktan büyük olamaz.</string>
     <string name="projects_plus_reset_spent">Harcananı sıfırla</string>
-    <string name="projects_plus_reset_spent_body">Toplam bütçeden harcanan sıfırlanır.</string>
+    <string name="projects_plus_reset_spent_body">Şimdiye kadar harcanan sıfırlanır; toplam harcama yetkisi yeniden kullanılabilir.</string>
     <string name="projects_plus_reset_spent_done">Harcanan sıfırlandı.</string>
+    <string name="projects_plus_spent_today">Bugün harcanan</string>
+    <string name="projects_plus_spent_total">Şimdiye kadar harcanan</string>
 
     <!-- Etkinlik (akış, takas geçmişi, haftalık rapor; QoL Q4) -->
     <string name="projects_plus_feed">Canlı</string>
@@ -677,10 +681,11 @@
     <string name="projects_plus_week_sold">Satılan</string>
     <string name="projects_plus_week_spent">Harcanan</string>
     <string name="projects_plus_week_earned">Kazanılan</string>
-    <string name="projects_plus_week_below">Sınırının altında kalan</string>
+    <string name="projects_plus_week_below">Alımlarda tasarruf</string>
+    <string name="projects_plus_week_above">Satışta fazladan</string>
     <string name="projects_plus_week_blocked">Engellenen şüpheli mesaj</string>
-    <string name="projects_plus_week_allowance">Kullanılan AI hakkı</string>
-    <string name="projects_plus_week_empty">Geçen hafta için rapor yok.</string>
+    <string name="projects_plus_week_allowance">Kullanılan yapay zekâ hakkı</string>
+    <string name="projects_plus_week_empty">Geçen hafta bu hesapta takas ya da cevap olmadı.</string>
 
     <!-- Ayar geçmişi (QoL Q7) -->
     <string name="projects_plus_history_empty">Henüz kayıtlı ayar yok.</string>

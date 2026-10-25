@@ -138,6 +138,53 @@ public final class CloudUi {
         }
     }
 
+    /** Rows without an icon (figures): the hairlines start where their text does. */
+    public static void fillFigures(LinearLayout group, List<View> rows) {
+        Context c = group.getContext();
+        for (int i = 0; i < rows.size(); i++) {
+            if (i > 0) {
+                View line = rowDivider(c);
+                ((LinearLayout.LayoutParams) line.getLayoutParams()).setMarginStart(dp(c, 16));
+                group.addView(line);
+            }
+            group.addView(rows.get(i));
+        }
+    }
+
+    /** A row of figures: a label and its value at the end in gold, read by TalkBack as one. */
+    public static final class Figure {
+        public final LinearLayout view;
+        private final CharSequence mLabel;
+        private final TextView mValue;
+
+        Figure(LinearLayout view, CharSequence label, TextView value) {
+            this.view = view;
+            mLabel = label;
+            mValue = value;
+        }
+
+        public void set(CharSequence value) {
+            mValue.setText(value);
+            view.setContentDescription(mLabel + ", " + value);
+        }
+    }
+
+    public static Figure figureRow(Context c, CharSequence label, CharSequence value) {
+        LinearLayout row = new LinearLayout(c);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setMinimumHeight(dp(c, 52));
+        row.setPadding(dp(c, 16), 0, dp(c, 16), 0);
+        row.addView(text(c, label, 15, R.color.projects_bone_100, false), weight(1f));
+        TextView v = text(c, value, 16, R.color.projects_gold_300, true);
+        v.setPaddingRelative(dp(c, 12), 0, 0, 0);
+        row.addView(v);
+        row.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_YES);
+        Figure figure = new Figure(row, label, v);
+        figure.set(value);
+        return figure;
+    }
+
     /** A row of a group: a 24 dp icon, a title, an optional line under it, an optional gold count, a caret. */
     public static final class Row {
         public final LinearLayout view;

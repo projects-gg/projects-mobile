@@ -221,8 +221,9 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
         if (a.plus() && mService.plusOn()) buildPlus(content, a);
         else if (mService.plusOn() && !a.expired && plusSales()) {
             content.addView(CloudUi.gap(c, 6));
+            // The site's own upgrade card goes there too: buying, with this account and AFK+ chosen.
             content.addView(CloudUi.textButton(c, getString(R.string.projects_plus_upgrade),
-                    v -> mService.openSite(requireActivity(), "/hesap/" + a.id)), wrap());
+                    v -> mService.openSite(requireActivity(), "/satin-al?hesap=" + a.id + "&tier=plus")), wrap());
         }
 
         // The rest is on the site.
@@ -331,8 +332,9 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
         line.setOrientation(LinearLayout.HORIZONTAL);
         TextView name = CloudUi.text(c, label, 14, R.color.projects_bone_100, false);
         line.addView(name, CloudUi.weight(1f));
-        TextView percent = CloudUi.text(c, String.format(Locale.ROOT, "%%%d", pct), 13.5f, R.color.projects_ash_300, true);
-        if (!CloudWords.turkish(c)) percent.setText(String.format(Locale.ROOT, "%d%%", pct));
+        // "%34 kullanıldı" / "34% used": a bare percentage read as what was left as often as what was used (the site's words).
+        String figure = CloudWords.turkish(c) ? String.format(Locale.ROOT, "%%%d", pct) : String.format(Locale.ROOT, "%d%%", pct);
+        TextView percent = CloudUi.text(c, c.getString(R.string.projects_plus_quota_used, figure), 13.5f, R.color.projects_ash_300, true);
         line.addView(percent);
         box.addView(line);
         CloudUi.Bar bar = new CloudUi.Bar(c);
@@ -436,7 +438,7 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
                     SocialUi.toastLong(c, getString(R.string.projects_cloud_error_downgrade_limit));
                     return;
                 }
-                SocialUi.confirm(requireActivity(), getString(R.string.projects_plus_downgrade),
+                SocialUi.confirm(requireActivity(), getString(R.string.projects_plus_downgrade_title),
                         getString(R.string.projects_plus_downgrade_body, CloudWords.span(c, preview.plainGainSeconds)),
                         getString(R.string.projects_plus_downgrade), () -> downgrade(from));
             }
@@ -455,7 +457,7 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
             @Override
             public void ok(CloudModel.Account value) {
                 if (!alive()) return;
-                toast(getString(R.string.projects_plus_downgrade_done, value.name));
+                toast(getString(R.string.projects_plus_downgrade_done));
                 render();
             }
 
