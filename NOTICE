@@ -53,6 +53,12 @@ Third-party components added by this fork:
     Idrees Hassan (Minecraft Font) and (c) 2026 Projects, SIL Open Font License 1.1
     (app_pojavlauncher/src/main/assets/licenses/PROJECTS_PIXEL_OFL.txt). Not affiliated with Mojang or
     Minecraft; it holds no game assets.
+  - pl-items, the Projects launcher's drawing of item pictures from the player's own game files
+    (crates/pl-items in https://github.com/projects-gg/MinecraftLauncher, published there under the GNU
+    GPL 3.0), built for Android as libplitems.so (app_pojavlauncher/src/main/rust/plitems). Projects, its
+    copyright holder, offers this build under this app's license (LGPL 3.0). The Rust crates built into
+    it are listed with their licenses and notices in
+    app_pojavlauncher/src/main/assets/licenses/RUST_CRATES.txt.
   The Apache License 2.0 text: https://www.apache.org/licenses/LICENSE-2.0
 
 All notices of upstream and of the components it bundles are kept unchanged (see README.md

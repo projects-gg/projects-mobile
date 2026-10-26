@@ -7,3 +7,5 @@ app_pojavlauncher/src/main/assets/social/** -text
 app_pojavlauncher/src/test/resources/social/text-vectors.json -text
 # AFKPLUS-M: copies of the cloud AFK contract's shared vectors (seal, reveal, text rule) keep their exact bytes
 app_pojavlauncher/src/test/resources/cloud/** -text
+# FEAT-M: the item-picture library's build script runs in bash (Git Bash on Windows too): LF on every checkout
+app_pojavlauncher/src/main/rust/plitems/build.sh text eol=lf

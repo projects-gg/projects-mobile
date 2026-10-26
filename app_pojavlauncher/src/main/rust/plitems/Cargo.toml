@@ -1,0 +1,28 @@
+# FEAT-M: pl-items (the Projects launcher's item-icon drawing, crates/pl-items in projects-gg/MinecraftLauncher) for
+# Android, as libplitems.so with one JNI call (gg.projects.mobile.cloud.items.PlItems). The phone draws the item atlas
+# from the player's own client jar exactly as the desktop launcher does. Built by build.sh into ../../jniLibs/<abi>/.
+[package]
+name = "plitems-android"
+version = "0.1.0"
+edition = "2021"
+publish = false
+# pl-items is Projects' own code; Projects offers this build of it, as the rest of this app, under the LGPL (NOTICE).
+license = "LGPL-3.0-only"
+
+[lib]
+name = "plitems"
+crate-type = ["cdylib"]
+path = "src/lib.rs"
+
+[dependencies]
+# The launcher's drawing at a fixed commit of the public repository (the same code the launcher and the site's atlas use).
+pl-items = { git = "https://github.com/projects-gg/MinecraftLauncher", rev = "b028039443b407423c061711dd1a5ffa90628a25" }
+serde_json = "1"
+jni = { version = "0.21", default-features = false }
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+strip = true
+debug = false
