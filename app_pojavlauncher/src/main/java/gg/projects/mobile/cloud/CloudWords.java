@@ -316,6 +316,20 @@ public final class CloudWords {
             case "placeholder_length": return c.getString(R.string.projects_feat_ph_issue_length);
             default: break;
         }
+        // Movement turned on: switched off meanwhile ("off"), or no slot for the player ("player/<max>") or on the machine.
+        if ("movement".equals(issue.field)) {
+            if ("off".equals(p)) return c.getString(R.string.projects_feat_move_service_off);
+            if (p.startsWith("player/")) {
+                long max;
+                try {
+                    max = Long.parseLong(p.substring("player/".length()));
+                } catch (NumberFormatException e) {
+                    max = 1;
+                }
+                return gg.projects.mobile.cloud.movement.Movement.slot(c, "player", max);
+            }
+            return gg.projects.mobile.cloud.movement.Movement.slot(c, "host", 0);
+        }
         switch (issue.field) {
             case "delay":
                 return c.getString(R.string.projects_cloud_issue_delay);

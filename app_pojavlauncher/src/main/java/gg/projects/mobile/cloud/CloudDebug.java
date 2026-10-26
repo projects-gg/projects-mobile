@@ -27,18 +27,11 @@ public final class CloudDebug {
     public final String url;
     public final boolean override;
     public final boolean logBrowser;
-    /** FEAT-M: the movement panel against its stand-in machine ({@code cloud.movementMock}), until the service has movement. */
-    public final boolean movementMock;
 
     private CloudDebug(String url, boolean override, boolean logBrowser) {
-        this(url, override, logBrowser, false);
-    }
-
-    private CloudDebug(String url, boolean override, boolean logBrowser, boolean movementMock) {
         this.url = url;
         this.override = override;
         this.logBrowser = logBrowser;
-        this.movementMock = movementMock;
     }
 
     public static CloudDebug read(Context context) {
@@ -52,14 +45,13 @@ public final class CloudDebug {
             JsonObject cloud = Json.obj(all, "cloud");
             boolean log = "log".equals(Json.str(cloud, "browser")) || "log".equals(Json.str(Json.obj(all, "social"), "browser"));
             String url = cloud == null ? null : Json.str(cloud, "url");
-            boolean movement = Json.bool(cloud, "movementMock", false);
-            if (url == null) return new CloudDebug(CloudApi.PRODUCTION, false, log, movement);
+            if (url == null) return new CloudDebug(CloudApi.PRODUCTION, false, log);
             url = url.trim();
             if (!url.startsWith("https://") && !url.startsWith("http://")) return production;
             if (!url.endsWith("/")) url = url + "/";
             if (!url.endsWith("api/v1/")) url = url + "api/v1/";
             Log.w(TAG, "debug cloud override in use: " + url + (log ? " browser=log" : ""));
-            return new CloudDebug(url, true, log, movement);
+            return new CloudDebug(url, true, log);
         } catch (Exception e) {
             Log.w(TAG, "ignoring a broken projects-debug.json", e);
             return production;

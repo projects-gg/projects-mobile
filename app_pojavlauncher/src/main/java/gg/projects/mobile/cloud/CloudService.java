@@ -46,6 +46,8 @@ public final class CloudService implements SocialService.Listener {
     private static final long CATALOG_FRESH_MS = 60 * 60_000;
     /** A live socket stays this long after its last screen leaves (a quick look elsewhere keeps it). */
     private static final long LIVE_GRACE_MS = 10_000;
+    /** A movement operation the machine has not answered by now is out of reach (the contract's 3 s, and the way back). */
+    private static final long MOVE_ANSWER_MS = 5_000;
 
     public interface Listener {
         @MainThread
@@ -149,11 +151,6 @@ public final class CloudService implements SocialService.Listener {
 
     public CloudModel.Limits limits() {
         return mOffer != null ? mOffer.limits : CloudModel.Limits.defaults();
-    }
-
-    /** FEAT-M: debug builds that ask for it run the movement panel against its stand-in machine (never a release). */
-    public boolean movementMock() {
-        return mDebug.movementMock;
     }
 
     /** CAFK-FEAT: the service's switches (all off before the first answer and on an older service). */
@@ -1029,6 +1026,18 @@ public final class CloudService implements SocialService.Listener {
         void window(gg.projects.mobile.cloud.inventory.InvFrames.Win frame);
     }
 
+    /** Movement: what the "Hareket" panel gets (only while it watches with movement). Main thread. */
+    public interface MovementListener {
+        void moveState(gg.projects.mobile.cloud.movement.MoveFrames.State state);
+
+        void position(gg.projects.mobile.cloud.movement.MoveFrames.Pos pos);
+    }
+
+    /** The answer to one movement operation: {@code error} null when the account started it. Main thread, once. */
+    public interface MoveAnswer {
+        void answered(@Nullable gg.projects.mobile.cloud.movement.MoveFrames.Error error);
+    }
+
     public enum Live { CONNECTING, LIVE, LOST, REPLACED, SIGNED_OUT, HOST_OFFLINE, REFUSED }
 
     /** A screen's watch of one account; {@link #close()} when the screen goes. */
@@ -1038,13 +1047,26 @@ public final class CloudService implements SocialService.Listener {
         final LiveListener listener;
         @Nullable
         final InventoryListener inventory;
+        @Nullable
+        final MovementListener movement;
         private boolean mClosed;
 
-        LiveHandle(String acct, boolean ai, LiveListener listener, @Nullable InventoryListener inventory) {
+        LiveHandle(String acct, boolean ai, LiveListener listener, @Nullable InventoryListener inventory, @Nullable MovementListener movement) {
             this.acct = acct;
             this.ai = ai;
             this.listener = listener;
             this.inventory = inventory;
+            this.movement = movement;
+        }
+
+        /**
+         * Sends one movement operation of this account; {@code answer} comes once, on the main thread (also when the
+         * socket cannot carry it: {@code host_offline}).
+         */
+        @MainThread
+        public void moveOp(gg.projects.mobile.cloud.movement.MoveOp op, MoveAnswer answer) {
+            if (mClosed) return;
+            sendMoveOp(this, op, answer);
         }
 
         /**
@@ -1092,12 +1114,36 @@ public final class CloudService implements SocialService.Listener {
             live = CloudLive.open(mApi, token, host, this);
             for (LiveHandle h : handles) live.watch(h.acct, h.ai);
             for (LiveHandle h : handles) if (h.inventory != null) live.inventory(h.acct, true);
+            for (LiveHandle h : handles) if (h.movement != null) live.movement(h.acct, true);
         }
 
         /** Whether any screen still wants {@code acct}'s inventory. */
         boolean wantsInventory(String acct) {
             for (LiveHandle h : handles) if (h.acct.equals(acct) && h.inventory != null) return true;
             return false;
+        }
+
+        /** Whether any screen still wants {@code acct}'s movement. */
+        boolean wantsMovement(String acct) {
+            for (LiveHandle h : handles) if (h.acct.equals(acct) && h.movement != null) return true;
+            return false;
+        }
+
+        @Override
+        public void moveState(String acct, gg.projects.mobile.cloud.movement.MoveFrames.State state) {
+            for (LiveHandle h : of(acct)) if (h.movement != null) h.movement.moveState(state);
+        }
+
+        @Override
+        public void position(String acct, gg.projects.mobile.cloud.movement.MoveFrames.Pos pos) {
+            for (LiveHandle h : of(acct)) if (h.movement != null) h.movement.position(pos);
+        }
+
+        @Override
+        public void moveResult(String id, @Nullable gg.projects.mobile.cloud.movement.MoveFrames.Error error) {
+            mMoveOpHosts.remove(id);
+            MoveAnswer answer = mMoveOps.remove(id);
+            if (answer != null) answer.answered(error);
         }
 
         @Override
@@ -1238,6 +1284,9 @@ public final class CloudService implements SocialService.Listener {
     private final Map<String, gg.projects.mobile.cloud.inventory.InvQueue.Answer> mMoves = new HashMap<>();
     private final Map<String, String> mMoveHosts = new HashMap<>();
     private long mMoveCounter;
+    /** Movement operations waiting for their {@code movres}, by id, and the machine they went to. */
+    private final Map<String, MoveAnswer> mMoveOps = new HashMap<>();
+    private final Map<String, String> mMoveOpHosts = new HashMap<>();
 
     /**
      * Streams one account while a screen shows it ({@code ai}: its AI feed and approvals too). Null when the account
@@ -1256,6 +1305,14 @@ public final class CloudService implements SocialService.Listener {
     @MainThread
     @Nullable
     public LiveHandle watch(String acct, boolean ai, LiveListener listener, @Nullable InventoryListener inventory) {
+        return watch(acct, ai, listener, inventory, null);
+    }
+
+    /** {@link #watch(String, boolean, LiveListener, InventoryListener)} with movement: only while its panel is visible. */
+    @MainThread
+    @Nullable
+    public LiveHandle watch(String acct, boolean ai, LiveListener listener, @Nullable InventoryListener inventory,
+                            @Nullable MovementListener movement) {
         Account account = account(acct);
         if (account == null || account.host == null) return null;
         HostSocket socket = mSockets.get(account.host);
@@ -1264,15 +1321,37 @@ public final class CloudService implements SocialService.Listener {
             mSockets.put(account.host, socket);
         }
         mMain.removeCallbacks(socket.closeIdle);
-        LiveHandle handle = new LiveHandle(acct, ai, listener, inventory);
+        LiveHandle handle = new LiveHandle(acct, ai, listener, inventory, movement);
         socket.handles.add(handle);
         if (socket.live == null) socket.connect();
         else {
             socket.live.watch(acct, ai);
             if (inventory != null) socket.live.inventory(acct, true);
+            if (movement != null) socket.live.movement(acct, true);
             listener.liveState(socket.state);
         }
         return handle;
+    }
+
+    private void sendMoveOp(LiveHandle handle, gg.projects.mobile.cloud.movement.MoveOp op, final MoveAnswer answer) {
+        Account account = account(handle.acct);
+        HostSocket socket = account == null || account.host == null ? null : mSockets.get(account.host);
+        mMoveCounter = (mMoveCounter + 1) % 1_000_000_000L;
+        // Its own prefix: ids are unique among a socket's pending operations of every kind.
+        String id = "v" + Long.toString(mMoveCounter, 36);
+        if (socket == null || socket.live == null || !socket.live.send(op.frame(handle.acct, id))) {
+            mMain.post(() -> answer.answered(gg.projects.mobile.cloud.movement.MoveFrames.Error.of("host_offline")));
+            return;
+        }
+        mMoveOps.put(id, answer);
+        mMoveOpHosts.put(id, socket.host);
+        // No answer within the contract's 3 seconds and a little: the machine is out of reach.
+        mMain.postDelayed(() -> {
+            if (!mMoveOpHosts.containsKey(id)) return;
+            mMoveOpHosts.remove(id);
+            MoveAnswer late = mMoveOps.remove(id);
+            if (late != null) late.answered(gg.projects.mobile.cloud.movement.MoveFrames.Error.of("host_offline"));
+        }, MOVE_ANSWER_MS);
     }
 
     private void sendMove(LiveHandle handle, gg.projects.mobile.cloud.inventory.InvOp op,
@@ -1297,6 +1376,12 @@ public final class CloudService implements SocialService.Listener {
             gg.projects.mobile.cloud.inventory.InvQueue.Answer answer = mMoves.remove(id);
             if (answer != null) answer.answered(gg.projects.mobile.cloud.inventory.InvFrames.Error.of("host_offline"));
         }
+        for (String id : new ArrayList<>(mMoveOpHosts.keySet())) {
+            if (!host.equals(mMoveOpHosts.get(id))) continue;
+            mMoveOpHosts.remove(id);
+            MoveAnswer answer = mMoveOps.remove(id);
+            if (answer != null) answer.answered(gg.projects.mobile.cloud.movement.MoveFrames.Error.of("host_offline"));
+        }
     }
 
     /** "Burada aç" after the console was opened elsewhere: this phone takes it back. */
@@ -1314,9 +1399,10 @@ public final class CloudService implements SocialService.Listener {
             if (!socket.handles.remove(handle)) continue;
             boolean stillWatched = !socket.of(handle.acct).isEmpty();
             if (!stillWatched && socket.live != null) socket.live.unwatch(handle.acct);
-            else if (handle.inventory != null && socket.live != null && !socket.wantsInventory(handle.acct)) {
-                // The console stays; the inventory stream stops with the last view that wanted it.
-                socket.live.inventory(handle.acct, false);
+            else if (socket.live != null) {
+                // The console stays; the inventory and movement streams stop with the last view that wanted them.
+                if (handle.inventory != null && !socket.wantsInventory(handle.acct)) socket.live.inventory(handle.acct, false);
+                if (handle.movement != null && !socket.wantsMovement(handle.acct)) socket.live.movement(handle.acct, false);
             }
             if (socket.handles.isEmpty()) mMain.postDelayed(socket.closeIdle, LIVE_GRACE_MS);
         }

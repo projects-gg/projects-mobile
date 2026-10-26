@@ -11,7 +11,7 @@ import java.util.Map;
  * the list's order, waiting for each answer; one result line with the first failure's reason. Copying settings sends one
  * {@code PATCH} per target with its own revision; secret rows are sealed again for every target (a seal names its
  * account, row and server), from words the player types once for all or per account. Never the name, the language or
- * the inventory choice; the server and version only when asked. No bulk delete.
+ * the inventory or movement choice; the server and version only when asked. No bulk delete.
  */
 public final class CloudBulk {
     private CloudBulk() {}
@@ -63,11 +63,13 @@ public final class CloudBulk {
     /**
      * The copied part of {@code source}'s settings for one target, in the editor's form: anti-AFK, commands, replies and
      * the owner's name. Every secret row takes the words typed for it ({@code secrets} by row id; null or empty: the row
-     * cannot be copied, the caller asks first). The inventory choice is left out, so the target keeps its own.
+     * cannot be copied, the caller asks first). The inventory and movement choices are left out: the target keeps its
+     * own (movement is never copied, README "Movement setting").
      */
     public static CloudEdit.Config copied(CloudModel.ConfigView source, Map<String, String> secrets) {
         CloudEdit.Config config = CloudEdit.from(source);
         config.inventory = null;
+        config.movement = null;
         for (CloudEdit.Command c : config.commands) {
             if (c.words.kind == CloudEdit.Words.Kind.SEALED) c.words = CloudEdit.Words.secret(nonNull(secrets.get(c.id)));
             c.paused = false;

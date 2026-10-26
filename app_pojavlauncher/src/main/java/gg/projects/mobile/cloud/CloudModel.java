@@ -183,18 +183,22 @@ public final class CloudModel {
         public final boolean consoleKinds;
         public final boolean placeholders;
         public final List<String> placeholderCommands;
+        /** Movement (README "Movement switches"): pages that tell about it, only while on. */
+        public final boolean movement;
         /**
          * The service names its features at all (a phase-1 Worker): bulk management, which has no switch of its own
          * ("nothing new on the Worker"), shows from then on (the launcher's rule, FEAT-L).
          */
         public final boolean present;
 
-        OfferFeatures(String inventory, boolean consoleKinds, boolean placeholders, List<String> placeholderCommands, boolean present) {
+        OfferFeatures(String inventory, boolean consoleKinds, boolean placeholders, List<String> placeholderCommands, boolean movement,
+                      boolean present) {
             this.present = present;
             this.inventory = inventory;
             this.consoleKinds = consoleKinds;
             this.placeholders = placeholders;
             this.placeholderCommands = Collections.unmodifiableList(placeholderCommands);
+            this.movement = movement;
         }
 
         static OfferFeatures read(@Nullable JsonObject o) {
@@ -205,7 +209,7 @@ public final class CloudModel {
             }
             if (commands.isEmpty()) commands.addAll(DEFAULT_PLACEHOLDER_COMMANDS);
             return new OfferFeatures(inventoryMode(Json.str(o, "inventory", "off")), Json.bool(o, "consoleKinds", false),
-                    Json.bool(o, "placeholders", false), commands, o != null);
+                    Json.bool(o, "placeholders", false), commands, Json.bool(o, "movement", false), o != null);
         }
 
         public static OfferFeatures none() {
@@ -232,19 +236,35 @@ public final class CloudModel {
         public final boolean placeholders;
         /** Console kinds on, but this account's rules still match the old way until its settings are saved once. */
         public final boolean legacyRules;
+        /** Movement (README "Movement switches"); null from a service without it (then {@code config.movement} is never sent). */
+        @Nullable
+        public final MovementFeatures movement;
 
-        AccountFeatures(String inventoryMode, boolean inventoryOn, boolean consoleKinds, boolean placeholders, boolean legacyRules) {
+        AccountFeatures(String inventoryMode, boolean inventoryOn, boolean consoleKinds, boolean placeholders, boolean legacyRules,
+                        @Nullable MovementFeatures movement) {
             this.inventoryMode = inventoryMode;
             this.inventoryOn = inventoryOn;
             this.consoleKinds = consoleKinds;
             this.placeholders = placeholders;
             this.legacyRules = legacyRules;
+            this.movement = movement;
         }
 
         static AccountFeatures read(@Nullable JsonObject o) {
             JsonObject inv = Json.obj(o, "inventory");
             return new AccountFeatures(inventoryMode(Json.str(inv, "mode", "off")), Json.bool(inv, "on", false),
-                    Json.bool(o, "consoleKinds", false), Json.bool(o, "placeholders", false), Json.bool(o, "legacyRules", false));
+                    Json.bool(o, "consoleKinds", false), Json.bool(o, "placeholders", false), Json.bool(o, "legacyRules", false),
+                    MovementFeatures.read(Json.obj(o, "movement")));
+        }
+
+        /** The account's settings offer the "Hareket" switch (the service and its machine have movement). */
+        public boolean movementSwitch() {
+            return movement != null && movement.mode;
+        }
+
+        /** The "Hareket" panel shows: movement there and switched on for this account. */
+        public boolean movementPanel() {
+            return movement != null && movement.mode && movement.on;
         }
 
         public static AccountFeatures none() {
@@ -259,6 +279,46 @@ public final class CloudModel {
         /** Moves are allowed (not "looking only"). */
         public boolean inventoryMoves() {
             return "full".equals(inventoryMode);
+        }
+    }
+
+    /**
+     * {@code Account.features.movement}: {@code mode} (the service's switch while the machine can), {@code on} (the
+     * account's own setting), {@code slot} (why it cannot be turned on now: {@code player} or {@code host}) and whom it
+     * may walk to or follow ({@code follow.main}, the player's verified main name; {@code follow.own}, the player's other
+     * accounts on the same machine and server). Names come only from here: the apps never offer a text field for one.
+     */
+    public static final class MovementFeatures {
+        /** {@code mode} {@code "on"}. */
+        public final boolean mode;
+        public final boolean on;
+        @Nullable
+        public final String slot;
+        @Nullable
+        public final String main;
+        public final List<String> own;
+
+        MovementFeatures(boolean mode, boolean on, @Nullable String slot, @Nullable String main, List<String> own) {
+            this.mode = mode;
+            this.on = on;
+            this.slot = slot;
+            this.main = main;
+            this.own = Collections.unmodifiableList(own);
+        }
+
+        @Nullable
+        static MovementFeatures read(@Nullable JsonObject o) {
+            if (o == null) return null;
+            String slot = Json.str(o, "slot");
+            JsonObject follow = Json.obj(o, "follow");
+            String main = Json.str(follow, "main");
+            List<String> own = new ArrayList<>();
+            for (String name : Json.strings(follow, "own")) {
+                if (gg.projects.mobile.cloud.movement.MoveOp.nameOk(name) && !own.contains(name)) own.add(name);
+            }
+            return new MovementFeatures("on".equals(Json.str(o, "mode", "off")), Json.bool(o, "on", false),
+                    "player".equals(slot) || "host".equals(slot) ? slot : null,
+                    gg.projects.mobile.cloud.movement.MoveOp.nameOk(main) ? main : null, own);
         }
     }
 
@@ -628,11 +688,13 @@ public final class CloudModel {
          */
         @Nullable
         public final Boolean inventory;
+        /** Movement: the player's own choice ({@code movement.enabled}); null when not stored (absent means off). */
+        @Nullable
+        public final Boolean movement;
 
         private ConfigView(@Nullable JsonObject o) {
-            JsonObject inv = Json.obj(o, "inventory");
-            inventory = inv != null && inv.has("enabled") && inv.get("enabled").isJsonPrimitive()
-                    && inv.getAsJsonPrimitive("enabled").isBoolean() ? inv.get("enabled").getAsBoolean() : null;
+            inventory = enabled(Json.obj(o, "inventory"));
+            movement = enabled(Json.obj(o, "movement"));
             owner = Json.str(o, "owner", "");
             JsonObject anti = Json.obj(o, "antiAfk");
             antiAfk = Json.bool(anti, "enabled", true);
@@ -648,6 +710,12 @@ public final class CloudModel {
 
         static ConfigView read(@Nullable JsonObject o) {
             return new ConfigView(o);
+        }
+
+        @Nullable
+        private static Boolean enabled(@Nullable JsonObject o) {
+            return o != null && o.has("enabled") && o.get("enabled").isJsonPrimitive() && o.getAsJsonPrimitive("enabled").isBoolean()
+                    ? o.get("enabled").getAsBoolean() : null;
         }
 
         /** The stored seals' fingerprints by row id (secret rows only). */

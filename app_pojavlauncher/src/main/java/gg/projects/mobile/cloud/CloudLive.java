@@ -45,6 +45,8 @@ public final class CloudLive {
     private final Map<String, Boolean> mWatching = new LinkedHashMap<>();
     /** Account → whether its inventory streams (absent: never asked; the field then stays out of its watch). */
     private final Map<String, Boolean> mInventory = new LinkedHashMap<>();
+    /** Account → whether its movement streams (absent: never asked), as the inventory. */
+    private final Map<String, Boolean> mMovement = new LinkedHashMap<>();
     private boolean mHello;
     private boolean mEnded;
     private volatile long mRetryAfter;
@@ -150,9 +152,8 @@ public final class CloudLive {
         if ("hello".equals(Json.str(message, "t"))) {
             mHello = true;
             for (Map.Entry<String, Boolean> w : mWatching.entrySet()) {
-                Boolean inv = mInventory.get(w.getKey());
-                // After a reconnect the inventory stream is asked for again only while a screen wants it.
-                mSocket.send(CloudLiveFrames.watch(w.getKey(), w.getValue(), inv != null && inv ? Boolean.TRUE : null).toString());
+                // After a reconnect the inventory and movement streams are asked for again only while a screen wants them.
+                mSocket.send(watchFrame(w.getKey(), w.getValue(), true).toString());
             }
         }
         if ("bye".equals(Json.str(message, "t"))) {
@@ -168,10 +169,23 @@ public final class CloudLive {
         Boolean before = mWatching.get(acct);
         boolean wantAi = ai || (before != null && before);
         mWatching.put(acct, wantAi);
-        Boolean inv = mInventory.get(acct);
         if (mHello && !mEnded && (before == null || before != wantAi)) {
-            mSocket.send(CloudLiveFrames.watch(acct, wantAi, inv != null && inv ? Boolean.TRUE : null).toString());
+            mSocket.send(watchFrame(acct, wantAi, true).toString());
         }
+    }
+
+    /**
+     * The account's watch with the streams a screen wants. {@code fresh}: a first watch (after a hello too), where a
+     * stream nobody wants is left out; otherwise both are named as they stand, so one switch never touches the other.
+     */
+    private JsonObject watchFrame(String acct, boolean ai, boolean fresh) {
+        Boolean inv = mInventory.get(acct);
+        Boolean move = mMovement.get(acct);
+        if (fresh) {
+            inv = inv != null && inv ? Boolean.TRUE : null;
+            move = move != null && move ? Boolean.TRUE : null;
+        }
+        return CloudLiveFrames.watch(acct, ai, inv, move);
     }
 
     /**
@@ -186,7 +200,19 @@ public final class CloudLive {
         if (before != null && before == on) return;
         if (before == null && !on) return;
         mInventory.put(acct, on);
-        if (mHello && !mEnded) mSocket.send(CloudLiveFrames.watch(acct, ai, on).toString());
+        if (mHello && !mEnded) mSocket.send(watchFrame(acct, ai, false).toString());
+    }
+
+    /** Switches {@code acct}'s movement stream on or off (only while its panel is visible), as {@link #inventory}. */
+    @MainThread
+    public void movement(String acct, boolean on) {
+        Boolean ai = mWatching.get(acct);
+        if (ai == null) return;
+        Boolean before = mMovement.get(acct);
+        if (before != null && before == on) return;
+        if (before == null && !on) return;
+        mMovement.put(acct, on);
+        if (mHello && !mEnded) mSocket.send(watchFrame(acct, ai, false).toString());
     }
 
     /** Sends one client frame (a move); false when the socket cannot carry it now. */
@@ -199,6 +225,7 @@ public final class CloudLive {
     @MainThread
     public void unwatch(String acct) {
         mInventory.remove(acct);
+        mMovement.remove(acct);
         if (mWatching.remove(acct) == null) return;
         if (mHello && !mEnded) mSocket.send(CloudLiveFrames.unwatch(acct).toString());
     }

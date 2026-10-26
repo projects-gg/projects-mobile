@@ -109,7 +109,7 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
                     .append(a.ai.quota.weekResetAt).append(a.ai.quota.giftsLeft);
         }
         key.append('|').append(mService.unread(a.id));
-        key.append('|').append(a.features.inventoryMode).append(a.features.inventoryOn).append(gg.projects.mobile.cloud.movement.Movement.shows(mService, a));
+        key.append('|').append(a.features.inventoryMode).append(a.features.inventoryOn).append(gg.projects.mobile.cloud.movement.Movement.shows(a));
         CloudModel.Offer offer = mService.offer();
         if (offer != null && offer.plus != null) key.append(offer.plus.features).append(offer.plus.sales);
         return key.toString();
@@ -210,7 +210,7 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
             }
             rows.add(inventory.view);
         }
-        if (gg.projects.mobile.cloud.movement.Movement.shows(mService, a)) {
+        if (gg.projects.mobile.cloud.movement.Movement.shows(a)) {
             rows.add(CloudUi.row(c, R.drawable.projects_ic_footprints, getString(R.string.projects_feat_movement),
                     v -> openFor(gg.projects.mobile.cloud.movement.CloudMovementFragment.class, a.id)).view);
         }

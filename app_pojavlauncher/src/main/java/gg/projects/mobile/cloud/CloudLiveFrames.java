@@ -8,6 +8,7 @@ import java.util.List;
 
 import gg.projects.mobile.cloud.console.Bars;
 import gg.projects.mobile.cloud.inventory.InvFrames;
+import gg.projects.mobile.cloud.movement.MoveFrames;
 import gg.projects.mobile.social.Json;
 
 /**
@@ -51,6 +52,15 @@ public final class CloudLiveFrames {
 
         /** The status strip ({@code bars}). */
         default void bars(String acct, Bars bars) {}
+
+        /** Movement: whether the account can move now and what it is doing ({@code movst}). */
+        default void moveState(String acct, MoveFrames.State state) {}
+
+        /** Where it stands ({@code pos}). */
+        default void position(String acct, MoveFrames.Pos pos) {}
+
+        /** The answer to a movement operation ({@code movres}); {@code error} null: the account started it. */
+        default void moveResult(String id, @Nullable MoveFrames.Error error) {}
     }
 
     /** Hands one message to {@code listener}; false for one it does not know (ignored, the contract's rule). */
@@ -127,6 +137,22 @@ public final class CloudLiveFrames {
                 if (acct == null) return false;
                 listener.bars(acct, Bars.read(message));
                 return true;
+            case "movst":
+                if (acct == null) return false;
+                listener.moveState(acct, MoveFrames.State.read(message));
+                return true;
+            case "pos":
+                if (acct == null) return false;
+                listener.position(acct, MoveFrames.Pos.read(message));
+                return true;
+            case "movres": {
+                String id = Json.str(message, "id");
+                if (id == null) return false;
+                JsonObject error = Json.obj(message, "error");
+                listener.moveResult(id, error == null && Json.bool(message, "ok", false) ? null
+                        : MoveFrames.Error.read(error == null ? new JsonObject() : error));
+                return true;
+            }
             default:
                 return false;
         }
@@ -165,11 +191,17 @@ public final class CloudLiveFrames {
      * watches (no new console snapshot), null leaves it out (an older service never sees the field).
      */
     public static JsonObject watch(String acct, boolean ai, @Nullable Boolean inv) {
+        return watch(acct, ai, inv, null);
+    }
+
+    /** {@code watch} with the movement stream too ({@code move}: true on, false off, null left out), as {@code inv}. */
+    public static JsonObject watch(String acct, boolean ai, @Nullable Boolean inv, @Nullable Boolean move) {
         JsonObject o = new JsonObject();
         o.addProperty("t", "watch");
         o.addProperty("acct", acct);
         if (ai) o.addProperty("ai", true);
         if (inv != null) o.addProperty("inv", inv);
+        if (move != null) o.addProperty("move", move);
         return o;
     }
 

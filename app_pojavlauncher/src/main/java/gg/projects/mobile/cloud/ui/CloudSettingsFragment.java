@@ -342,6 +342,32 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
             content.addView(invGroup);
             content.addView(CloudUi.note(c, getString(R.string.projects_feat_inv_private)));
         }
+
+        // Movement: the account's own choice while the service and its machine have it (README "Movement switches").
+        // With no slot free it cannot be turned on: the switch waits, with the reason. Saving restarts the account, as
+        // every saved change does (nothing extra to say).
+        final CloudModel.MovementFeatures move = a.features.movement;
+        if (a.features.movementSwitch() && move != null) {
+            content.addView(CloudUi.gap(c, 16));
+            LinearLayout moveGroup = CloudUi.group(c);
+            boolean shown = mConfig.movement != null ? mConfig.movement : move.on;
+            boolean blocked = !move.on && move.slot != null && !shown;
+            SwitchCompat sw = CloudUi.toggle(c, getString(R.string.projects_feat_movement), shown, on -> {
+                mConfig.movement = on;
+                bar();
+            });
+            sw.setEnabled(!blocked);
+            moveGroup.addView(sw);
+            content.addView(moveGroup);
+            String moveIssue = issue("general", -1, "movement");
+            if (moveIssue != null) {
+                TextView error = CloudRowSheet.error(c);
+                CloudRowSheet.show(error, moveIssue);
+                content.addView(error);
+            }
+            content.addView(CloudUi.note(c, blocked ? gg.projects.mobile.cloud.movement.Movement.slot(c, move.slot, 1)
+                    : getString(R.string.projects_feat_move_setting_line)));
+        }
     }
 
     /** A field-like row that opens a choice (the version list). */

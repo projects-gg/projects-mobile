@@ -180,6 +180,12 @@ public final class CloudEdit {
          */
         @Nullable
         public Boolean inventory;
+        /**
+         * Movement: the player's choice; null when not stored and not touched (a save then leaves it out: the service
+         * keeps what it has, and an older one never sees the field).
+         */
+        @Nullable
+        public Boolean movement;
 
         public Config(String owner, boolean antiAfk, int delayMin, int delayMax) {
             this.owner = owner;
@@ -193,6 +199,7 @@ public final class CloudEdit {
             for (Command command : commands) c.commands.add(command.copy());
             for (Rule rule : rules) c.rules.add(rule.copy());
             c.inventory = inventory;
+            c.movement = movement;
             return c;
         }
 
@@ -206,6 +213,7 @@ public final class CloudEdit {
         /** The same settings as {@code other} (the save bar shows while they differ). */
         public boolean same(Config other) {
             if (inventory == null ? other.inventory != null : !inventory.equals(other.inventory)) return false;
+            if (movement == null ? other.movement != null : !movement.equals(other.movement)) return false;
             if (!owner.equals(other.owner) || antiAfk != other.antiAfk || delayMin != other.delayMin || delayMax != other.delayMax) return false;
             if (commands.size() != other.commands.size() || rules.size() != other.rules.size()) return false;
             for (int i = 0; i < commands.size(); i++) if (!commands.get(i).same(other.commands.get(i))) return false;
@@ -225,6 +233,7 @@ public final class CloudEdit {
     public static Config from(ConfigView view) {
         Config config = new Config(view.owner, view.antiAfk, view.delayMin, view.delayMax);
         config.inventory = view.inventory;
+        config.movement = view.movement;
         for (CommandView row : view.commands) {
             Command c = new Command(row.id, row.enabled, row.on, row.delay, row.everyMin, row.everyMax, row.at, words(row.payload));
             c.paused = row.paused;
@@ -644,6 +653,12 @@ public final class CloudEdit {
             inventory.addProperty("enabled", config.inventory);
             out.add("inventory", inventory);
         }
+        // Movement likewise: known only from a service that has it (stored, or the switch its features offer).
+        if (config.movement != null) {
+            JsonObject movement = new JsonObject();
+            movement.addProperty("enabled", config.movement);
+            out.add("movement", movement);
+        }
         return new Built(out, issues);
     }
 
@@ -722,6 +737,12 @@ public final class CloudEdit {
             case "limit_rows":
                 out.add(Issue.fromPath(field, "limit"));
                 break;
+            case "limit_movement": {
+                // No movement slot: for the player ("player/<max>") or on the machine ("host").
+                String scope = problem.string("scope");
+                out.add(Issue.general("movement", "player".equals(scope) ? "player/" + problem.number("max", 1) : "host"));
+                break;
+            }
             default:
                 return null;
         }
