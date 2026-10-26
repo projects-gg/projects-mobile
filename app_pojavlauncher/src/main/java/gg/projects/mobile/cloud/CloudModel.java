@@ -120,6 +120,8 @@ public final class CloudModel {
         /** Null while AFK+ is off ({@code plusMode: off}): then nothing of AFK+ shows. */
         @Nullable
         public final OfferPlus plus;
+        /** CAFK-FEAT's switches (never null: an older service sends none, and everything is off). */
+        public final OfferFeatures features;
 
         private Offer(JsonObject o) {
             mode = Json.str(o, "mode", "off");
@@ -137,6 +139,7 @@ public final class CloudModel {
             recommendedVersion = Json.str(o, "recommendedVersion");
             limits = new Limits(Json.obj(o, "limits"));
             plus = OfferPlus.read(Json.obj(o, "plus"));
+            features = OfferFeatures.read(Json.obj(o, "features"));
         }
 
         @Nullable
@@ -162,6 +165,94 @@ public final class CloudModel {
         /** An AFK+ QoL feature Studio has on ({@code inbox}, {@code parse}, {@code schedule}, {@code report}, {@code history}, {@code saver}). */
         public boolean plusFeature(String name) {
             return plus != null && plus.features.contains(name);
+        }
+    }
+
+    /** The default commands a reply with placeholders may start with (services/cloud-afk README "Rule placeholders"). */
+    public static final List<String> DEFAULT_PLACEHOLDER_COMMANDS =
+            Collections.unmodifiableList(java.util.Arrays.asList("msg", "m", "tell", "w", "whisper", "r", "reply", "pm"));
+
+    /**
+     * {@code Offer.features} (services/cloud-afk README "Features" → Feature switches): what Studio has switched on for
+     * the service. Every switch is off by default; a client shows a feature only by the account's own
+     * {@link AccountFeatures}, and these only where no account is at hand.
+     */
+    public static final class OfferFeatures {
+        /** {@code off}, {@code view} or {@code full}. */
+        public final String inventory;
+        public final boolean consoleKinds;
+        public final boolean placeholders;
+        public final List<String> placeholderCommands;
+
+        OfferFeatures(String inventory, boolean consoleKinds, boolean placeholders, List<String> placeholderCommands) {
+            this.inventory = inventory;
+            this.consoleKinds = consoleKinds;
+            this.placeholders = placeholders;
+            this.placeholderCommands = Collections.unmodifiableList(placeholderCommands);
+        }
+
+        static OfferFeatures read(@Nullable JsonObject o) {
+            List<String> commands = new ArrayList<>();
+            for (String c : Json.strings(o, "placeholderCommands")) {
+                String name = c.trim().toLowerCase(java.util.Locale.ROOT);
+                if (!name.isEmpty() && !commands.contains(name)) commands.add(name);
+            }
+            if (commands.isEmpty()) commands.addAll(DEFAULT_PLACEHOLDER_COMMANDS);
+            return new OfferFeatures(inventoryMode(Json.str(o, "inventory", "off")), Json.bool(o, "consoleKinds", false),
+                    Json.bool(o, "placeholders", false), commands);
+        }
+
+        public static OfferFeatures none() {
+            return read(null);
+        }
+    }
+
+    /** {@code off}, {@code view} or {@code full}; anything else (a newer mode) reads as {@code off}. */
+    static String inventoryMode(@Nullable String mode) {
+        return "view".equals(mode) || "full".equals(mode) ? mode : "off";
+    }
+
+    /**
+     * {@code Account.features}: what this account may use now (the service's switch, its machine's capability, its own
+     * setting). A client shows a feature's controls only by this object: with the inventory's mode {@code off} there is
+     * no inventory at all; with {@code on} false it says it is off and offers to turn it on.
+     */
+    public static final class AccountFeatures {
+        /** {@code off}, {@code view} (looking only) or {@code full} (moves too). */
+        public final String inventoryMode;
+        /** The account's own setting ({@code config.inventory.enabled}, else Studio's default). */
+        public final boolean inventoryOn;
+        public final boolean consoleKinds;
+        public final boolean placeholders;
+        /** Console kinds on, but this account's rules still match the old way until its settings are saved once. */
+        public final boolean legacyRules;
+
+        AccountFeatures(String inventoryMode, boolean inventoryOn, boolean consoleKinds, boolean placeholders, boolean legacyRules) {
+            this.inventoryMode = inventoryMode;
+            this.inventoryOn = inventoryOn;
+            this.consoleKinds = consoleKinds;
+            this.placeholders = placeholders;
+            this.legacyRules = legacyRules;
+        }
+
+        static AccountFeatures read(@Nullable JsonObject o) {
+            JsonObject inv = Json.obj(o, "inventory");
+            return new AccountFeatures(inventoryMode(Json.str(inv, "mode", "off")), Json.bool(inv, "on", false),
+                    Json.bool(o, "consoleKinds", false), Json.bool(o, "placeholders", false), Json.bool(o, "legacyRules", false));
+        }
+
+        public static AccountFeatures none() {
+            return read(null);
+        }
+
+        /** The inventory may show at all (its row, its screen). */
+        public boolean inventory() {
+            return !"off".equals(inventoryMode);
+        }
+
+        /** Moves are allowed (not "looking only"). */
+        public boolean inventoryMoves() {
+            return "full".equals(inventoryMode);
         }
     }
 
@@ -525,8 +616,17 @@ public final class CloudModel {
         public final int delayMax;
         public final List<CommandView> commands;
         public final List<RuleView> rules;
+        /**
+         * CAFK-FEAT: the player's own inventory choice ({@code inventory.enabled}); null when never chosen (then the
+         * service's default applies, and a save leaves it out so it stays unchosen).
+         */
+        @Nullable
+        public final Boolean inventory;
 
         private ConfigView(@Nullable JsonObject o) {
+            JsonObject inv = Json.obj(o, "inventory");
+            inventory = inv != null && inv.has("enabled") && inv.get("enabled").isJsonPrimitive()
+                    && inv.getAsJsonPrimitive("enabled").isBoolean() ? inv.get("enabled").getAsBoolean() : null;
             owner = Json.str(o, "owner", "");
             JsonObject anti = Json.obj(o, "antiAfk");
             antiAfk = Json.bool(anti, "enabled", true);
@@ -591,6 +691,8 @@ public final class CloudModel {
         public final AiView ai;
         @Nullable
         public final Moderation moderation;
+        /** CAFK-FEAT: what this account may use now (never null: an older service sends none, and all is off). */
+        public final AccountFeatures features;
         /** The JSON it was read from (for the copies a socket message makes). */
         private final JsonObject mSource;
 
@@ -627,6 +729,8 @@ public final class CloudModel {
             plusUntil = Json.numOrNull(o, "plusUntil");
             ai = AiView.read(Json.obj(o, "ai"));
             moderation = Moderation.read(Json.obj(o, "moderation"));
+            // An account without a machine has everything off (the contract), whatever an object might say.
+            features = host == null ? AccountFeatures.none() : AccountFeatures.read(Json.obj(o, "features"));
         }
 
         @Nullable
@@ -694,21 +798,45 @@ public final class CloudModel {
         }
     }
 
-    /** A console line, masked by the machine: {@code n} normal, {@code e} the client's error, {@code s} a command row. */
+    /**
+     * A console line, masked by the machine: {@code k} {@code n} normal, {@code e} the client's error, {@code s} a command
+     * row; with console kinds (CAFK-FEAT) also {@code c} (chat, pm, sys, title, cli, err; null on older lines), the other
+     * player {@code who} of a chat or private line, and {@code go} ("inventory": a machine line apps may link to a view).
+     */
     public static final class ConsoleLine {
         public final long at;
         public final String text;
         public final String k;
+        @Nullable
+        public final String c;
+        @Nullable
+        public final String who;
+        @Nullable
+        public final String go;
 
         public ConsoleLine(long at, String text, String k) {
+            this(at, text, k, null, null, null);
+        }
+
+        public ConsoleLine(long at, String text, String k, @Nullable String c, @Nullable String who, @Nullable String go) {
             this.at = at;
             this.text = text;
             this.k = k;
+            this.c = c;
+            this.who = who;
+            this.go = go;
         }
 
         public static List<ConsoleLine> list(@Nullable JsonObject o, String key) {
             List<ConsoleLine> out = new ArrayList<>();
-            for (JsonObject l : Json.objects(o, key)) out.add(new ConsoleLine(Json.num(l, "at", 0), Json.str(l, "text", ""), Json.str(l, "k", "n")));
+            for (JsonObject l : Json.objects(o, key)) {
+                String c = Json.str(l, "c");
+                String who = Json.str(l, "who");
+                if (who != null && !who.matches("^[A-Za-z0-9_]{1,16}$")) who = null;
+                String go = Json.str(l, "goto");
+                out.add(new ConsoleLine(Json.num(l, "at", 0), Json.str(l, "text", ""), Json.str(l, "k", "n"), c == null || c.isEmpty() ? null : c,
+                        who, "inventory".equals(go) ? go : null));
+            }
             return out;
         }
     }

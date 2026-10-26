@@ -6,6 +6,8 @@ import com.google.gson.JsonObject;
 
 import java.util.List;
 
+import gg.projects.mobile.cloud.console.Bars;
+import gg.projects.mobile.cloud.inventory.InvFrames;
 import gg.projects.mobile.social.Json;
 
 /**
@@ -34,6 +36,21 @@ public final class CloudLiveFrames {
         void approval(String acct, CloudModel.Approval approval);
 
         void bye(@Nullable String reason);
+
+        /** CAFK-FEAT: whether the inventory shows now ({@code invst}). */
+        default void invState(String acct, InvFrames.Status status) {}
+
+        /** The player inventory ({@code inv}), whole. */
+        default void inventory(String acct, InvFrames.Inv frame) {}
+
+        /** The window the server opened or closed ({@code win}). */
+        default void window(String acct, InvFrames.Win frame) {}
+
+        /** The answer to a move ({@code invres}); {@code error} null: the client sent it to the server. */
+        default void invResult(String id, @Nullable InvFrames.Error error) {}
+
+        /** The status strip ({@code bars}). */
+        default void bars(String acct, Bars bars) {}
     }
 
     /** Hands one message to {@code listener}; false for one it does not know (ignored, the contract's rule). */
@@ -86,6 +103,30 @@ public final class CloudLiveFrames {
                 return true;
             case "pong":
                 return true;
+            case "invst":
+                if (acct == null) return false;
+                listener.invState(acct, InvFrames.Status.read(message));
+                return true;
+            case "inv":
+                if (acct == null) return false;
+                listener.inventory(acct, InvFrames.Inv.read(message));
+                return true;
+            case "win":
+                if (acct == null) return false;
+                listener.window(acct, InvFrames.Win.read(message));
+                return true;
+            case "invres": {
+                String id = Json.str(message, "id");
+                if (id == null) return false;
+                JsonObject error = Json.obj(message, "error");
+                listener.invResult(id, error == null && Json.bool(message, "ok", false) ? null
+                        : InvFrames.Error.read(error == null ? new JsonObject() : error));
+                return true;
+            }
+            case "bars":
+                if (acct == null) return false;
+                listener.bars(acct, Bars.read(message));
+                return true;
             default:
                 return false;
         }
@@ -116,10 +157,19 @@ public final class CloudLiveFrames {
     }
 
     public static JsonObject watch(String acct, boolean ai) {
+        return watch(acct, ai, null);
+    }
+
+    /**
+     * {@code watch}; {@code inv} true streams the inventory too, false switches it off on an account the socket already
+     * watches (no new console snapshot), null leaves it out (an older service never sees the field).
+     */
+    public static JsonObject watch(String acct, boolean ai, @Nullable Boolean inv) {
         JsonObject o = new JsonObject();
         o.addProperty("t", "watch");
         o.addProperty("acct", acct);
         if (ai) o.addProperty("ai", true);
+        if (inv != null) o.addProperty("inv", inv);
         return o;
     }
 

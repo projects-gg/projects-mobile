@@ -43,6 +43,8 @@ public final class CloudLive {
     private final Random mRandom = new Random();
     /** Account → whether its AI streams too. */
     private final Map<String, Boolean> mWatching = new LinkedHashMap<>();
+    /** Account → whether its inventory streams (absent: never asked; the field then stays out of its watch). */
+    private final Map<String, Boolean> mInventory = new LinkedHashMap<>();
     private boolean mHello;
     private boolean mEnded;
     private volatile long mRetryAfter;
@@ -147,7 +149,11 @@ public final class CloudLive {
         MAIN.removeCallbacks(mSilent);
         if ("hello".equals(Json.str(message, "t"))) {
             mHello = true;
-            for (Map.Entry<String, Boolean> w : mWatching.entrySet()) mSocket.send(CloudLiveFrames.watch(w.getKey(), w.getValue()).toString());
+            for (Map.Entry<String, Boolean> w : mWatching.entrySet()) {
+                Boolean inv = mInventory.get(w.getKey());
+                // After a reconnect the inventory stream is asked for again only while a screen wants it.
+                mSocket.send(CloudLiveFrames.watch(w.getKey(), w.getValue(), inv != null && inv ? Boolean.TRUE : null).toString());
+            }
         }
         if ("bye".equals(Json.str(message, "t"))) {
             CloudLiveFrames.dispatch(message, mListener);
@@ -162,11 +168,37 @@ public final class CloudLive {
         Boolean before = mWatching.get(acct);
         boolean wantAi = ai || (before != null && before);
         mWatching.put(acct, wantAi);
-        if (mHello && !mEnded && (before == null || before != wantAi)) mSocket.send(CloudLiveFrames.watch(acct, wantAi).toString());
+        Boolean inv = mInventory.get(acct);
+        if (mHello && !mEnded && (before == null || before != wantAi)) {
+            mSocket.send(CloudLiveFrames.watch(acct, wantAi, inv != null && inv ? Boolean.TRUE : null).toString());
+        }
+    }
+
+    /**
+     * Switches {@code acct}'s inventory stream on or off (CAFK-FEAT). The account must be watched; a watch with
+     * {@code inv} renews its lease without a new console snapshot.
+     */
+    @MainThread
+    public void inventory(String acct, boolean on) {
+        Boolean ai = mWatching.get(acct);
+        if (ai == null) return;
+        Boolean before = mInventory.get(acct);
+        if (before != null && before == on) return;
+        if (before == null && !on) return;
+        mInventory.put(acct, on);
+        if (mHello && !mEnded) mSocket.send(CloudLiveFrames.watch(acct, ai, on).toString());
+    }
+
+    /** Sends one client frame (a move); false when the socket cannot carry it now. */
+    @MainThread
+    public boolean send(JsonObject frame) {
+        if (!mHello || mEnded) return false;
+        return mSocket.send(frame.toString());
     }
 
     @MainThread
     public void unwatch(String acct) {
+        mInventory.remove(acct);
         if (mWatching.remove(acct) == null) return;
         if (mHello && !mEnded) mSocket.send(CloudLiveFrames.unwatch(acct).toString());
     }

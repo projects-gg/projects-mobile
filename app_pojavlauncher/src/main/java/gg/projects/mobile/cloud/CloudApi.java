@@ -95,10 +95,13 @@ public final class CloudApi {
         return mUserAgent;
     }
 
-    /** The live console socket of one machine: {@code wss://…/api/v1/live?host=<host>}. */
+    /**
+     * The live console socket of one machine: {@code wss://…/api/v1/live?host=<host>&client=phone} (the client's word
+     * names this phone in the machine's log line of an inventory drop or use: "telefon").
+     */
     public String liveUrl(String host) {
         String base = mBase.startsWith("https://") ? "wss://" + mBase.substring(8) : mBase.startsWith("http://") ? "ws://" + mBase.substring(7) : mBase;
-        return base + "live?host=" + encode(host);
+        return base + "live?host=" + encode(host) + "&client=phone";
     }
 
     /** A page of the site for the browser ({@code /satin-al?hesap=…}, {@code /hesap/…}). */

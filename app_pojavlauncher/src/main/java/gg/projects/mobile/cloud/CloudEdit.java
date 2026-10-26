@@ -174,6 +174,12 @@ public final class CloudEdit {
         public int delayMax;
         public final List<Command> commands = new ArrayList<>();
         public final List<Rule> rules = new ArrayList<>();
+        /**
+         * CAFK-FEAT: the player's inventory choice; null when never chosen (a save then leaves it out, and the service
+         * keeps whatever it has: a field this app sends only when it knows it).
+         */
+        @Nullable
+        public Boolean inventory;
 
         public Config(String owner, boolean antiAfk, int delayMin, int delayMax) {
             this.owner = owner;
@@ -186,11 +192,20 @@ public final class CloudEdit {
             Config c = new Config(owner, antiAfk, delayMin, delayMax);
             for (Command command : commands) c.commands.add(command.copy());
             for (Rule rule : rules) c.rules.add(rule.copy());
+            c.inventory = inventory;
             return c;
+        }
+
+        /** Whether only the inventory choice differs from {@code other} (a change that applies at the next start, no restart). */
+        public boolean onlyInventoryDiffers(Config other) {
+            Config same = copy();
+            same.inventory = other.inventory;
+            return same.same(other) && !same(other);
         }
 
         /** The same settings as {@code other} (the save bar shows while they differ). */
         public boolean same(Config other) {
+            if (inventory == null ? other.inventory != null : !inventory.equals(other.inventory)) return false;
             if (!owner.equals(other.owner) || antiAfk != other.antiAfk || delayMin != other.delayMin || delayMax != other.delayMax) return false;
             if (commands.size() != other.commands.size() || rules.size() != other.rules.size()) return false;
             for (int i = 0; i < commands.size(); i++) if (!commands.get(i).same(other.commands.get(i))) return false;
@@ -209,6 +224,7 @@ public final class CloudEdit {
     /** The editor's form of the account view: a secret row shows only its preview until "Göster". */
     public static Config from(ConfigView view) {
         Config config = new Config(view.owner, view.antiAfk, view.delayMin, view.delayMax);
+        config.inventory = view.inventory;
         for (CommandView row : view.commands) {
             Command c = new Command(row.id, row.enabled, row.on, row.delay, row.everyMin, row.everyMax, row.at, words(row.payload));
             c.paused = row.paused;
@@ -299,14 +315,36 @@ public final class CloudEdit {
         return name != null && name.matches("^[A-Za-z0-9_]{3,16}$");
     }
 
-    private static void checkWords(Words words, String place, int index, String field, List<Issue> issues) {
-        if (words.kind == Words.Kind.SEALED) return;
+    /** Returns whether the words passed the text rule (the placeholder checks come only after it). */
+    private static boolean checkWords(Words words, String place, int index, String field, List<Issue> issues) {
+        if (words.kind == Words.Kind.SEALED) return false;
         CloudText.Problem problem = CloudText.check(words.text);
         if (problem != null) issues.add(Issue.row(place, index, field, problem.code));
+        return problem == null;
+    }
+
+    /** CAFK-FEAT: what the save checks of the account's switches need ({@link #NONE}: placeholders off). */
+    public static final class Checks {
+        public static final Checks NONE = new Checks(false, CloudModel.DEFAULT_PLACEHOLDER_COMMANDS);
+        public final boolean placeholders;
+        public final List<String> commands;
+
+        public Checks(boolean placeholders, List<String> commands) {
+            this.placeholders = placeholders;
+            this.commands = commands;
+        }
     }
 
     /** Everything the service would refuse, found before anything is sent (Studio's numbers from {@code /offer}). */
     public static List<Issue> validate(Config config, Limits limits) {
+        return validate(config, limits, Checks.NONE);
+    }
+
+    /**
+     * {@link #validate(Config, Limits)} with the placeholder checks while the account's {@code placeholders} switch is on
+     * (with it off, braces are plain text as before): every row, a stored one included, the first failure per row.
+     */
+    public static List<Issue> validate(Config config, Limits limits, Checks checks) {
         List<Issue> issues = new ArrayList<>();
         if (!config.owner.isEmpty() && !isGameName(config.owner)) issues.add(Issue.general("owner", "format"));
         if (config.delayMin < ANTI_AFK_MIN || config.delayMin > ANTI_AFK_MAX || config.delayMax < ANTI_AFK_MIN
@@ -345,7 +383,10 @@ public final class CloudEdit {
                     issues.add(Issue.row("commands", i, "on", "format"));
                     break;
             }
-            checkWords(row.words, "commands", i, "text", issues);
+            if (checkWords(row.words, "commands", i, "text", issues) && checks.placeholders && row.words.kind == Words.Kind.PLAIN) {
+                CloudPlaceholders.Problem p = CloudPlaceholders.checkCommand(row.words.text);
+                if (p != null) issues.add(Issue.row("commands", i, "text", p.reason));
+            }
         }
         for (int i = 0; i < config.rules.size(); i++) {
             Rule rule = config.rules.get(i);
@@ -360,9 +401,22 @@ public final class CloudEdit {
                 else if (rule.from.equals("server")) issues.add(Issue.row("rules", i, "ownerOnly", "server"));
             }
             if (rule.cooldown < limits.minRuleCooldownSec || rule.cooldown > MAX_SECS) issues.add(Issue.row("rules", i, "cooldown", "range"));
-            checkWords(rule.reply, "rules", i, "reply", issues);
+            if (checkWords(rule.reply, "rules", i, "reply", issues) && checks.placeholders && rule.reply.kind == Words.Kind.PLAIN) {
+                Issue p = placeholderIssue(rule, i, checks);
+                if (p != null) issues.add(p);
+            }
         }
         return issues;
+    }
+
+    /** A rule's plain reply against the placeholder rules: its issue ({@code placeholder_part/3} names the part), or null. */
+    @Nullable
+    public static Issue placeholderIssue(Rule rule, int index, Checks checks) {
+        if (!checks.placeholders || rule.reply.kind != Words.Kind.PLAIN) return null;
+        CloudPlaceholders.Problem p = CloudPlaceholders.checkReply(rule.reply.text,
+                CloudPlaceholders.captureCount(rule.pattern.trim(), rule.regex), rule.from, checks.commands);
+        if (p == null) return null;
+        return Issue.row("rules", index, "reply", p.part > 0 ? p.reason + "/" + p.part : p.reason);
     }
 
     private static void checkId(String id, String place, int index, Set<String> ids, List<Issue> issues) {
@@ -513,7 +567,13 @@ public final class CloudEdit {
      */
     public static Built build(Config config, Limits limits, boolean serverChanged, Sealer sealer, Map<String, String> fps)
             throws CloudSeal.SealException {
-        List<Issue> issues = validate(config, limits);
+        return build(config, limits, Checks.NONE, serverChanged, sealer, fps);
+    }
+
+    /** {@link #build(Config, Limits, boolean, Sealer, Map)} with the account's switches' checks. */
+    public static Built build(Config config, Limits limits, Checks checks, boolean serverChanged, Sealer sealer, Map<String, String> fps)
+            throws CloudSeal.SealException {
+        List<Issue> issues = validate(config, limits, checks);
         if (serverChanged) {
             for (int i = 0; i < config.commands.size(); i++) {
                 // A revealed row's words are known here: they are sealed again for the new server by themselves.
@@ -578,6 +638,12 @@ public final class CloudEdit {
             rules.add(r);
         }
         out.add("rules", rules);
+        // A field this phase added goes only when the player chose it: left out, the service keeps what it has.
+        if (config.inventory != null) {
+            JsonObject inventory = new JsonObject();
+            inventory.addProperty("enabled", config.inventory);
+            out.add("inventory", inventory);
+        }
         return new Built(out, issues);
     }
 
@@ -642,6 +708,8 @@ public final class CloudEdit {
                 if ("content".equals(reason)) {
                     String category = problem.string("category");
                     out.add(Issue.fromPath(field, "content/" + (category == null ? "other" : category)));
+                } else if ("placeholder_part".equals(reason)) {
+                    out.add(Issue.fromPath(field, "placeholder_part/" + problem.number("part", 0)));
                 } else {
                     out.add(Issue.fromPath(field, reason == null ? "range" : reason));
                 }
