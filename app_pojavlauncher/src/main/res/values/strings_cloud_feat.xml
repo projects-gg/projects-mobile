@@ -101,7 +101,7 @@
     <string name="projects_feat_console_days3">Last 3 days</string>
     <string name="projects_feat_console_share">Share</string>
     <string name="projects_feat_console_save">Save to file</string>
-    <string name="projects_feat_console_export_empty">No lines in this time.</string>
+    <string name="projects_feat_console_export_empty">No lines in this time range.</string>
     <string name="projects_feat_console_export_failed">Couldn\'t download the console.</string>
     <string name="projects_feat_console_saved">The console was saved.</string>
     <string name="projects_feat_console_kind_chat">Chat</string>
