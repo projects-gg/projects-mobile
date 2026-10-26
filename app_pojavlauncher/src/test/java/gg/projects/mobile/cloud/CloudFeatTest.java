@@ -118,6 +118,15 @@ public class CloudFeatTest {
         assertTrue(ConsoleKinds.found(lines.get(1), "menü"));
     }
 
+    private static final ConsoleExport.Names TURKISH = kind -> {
+        switch (kind) {
+            case CHAT: return "Sohbet";
+            case COMMAND: return "Komut";
+            default: return "Konsol";
+        }
+    };
+    private static final ConsoleExport.Names ENGLISH = kind -> kind == ConsoleKinds.FileKind.COMMAND ? "Command" : kind.name();
+
     @Test
     public void downloadsFollowTheContract() {
         // 25 Oct 2026 23:59:58 and 26 Oct 00:00:01 in Turkey (UTC+3).
@@ -126,7 +135,7 @@ public class CloudFeatTest {
                 new CloudModel.ConsoleLine(first, "Merhaba", "n", "chat", "Mert", null),
                 new CloudModel.ConsoleLine(first + 3, "/spawn", "s", "cli", null, null),
                 new CloudModel.ConsoleLine(first + 4, "eski\nsatır", "n"));
-        String text = ConsoleExport.text(lines, ConsoleExport.TURKISH);
+        String text = ConsoleExport.text(lines, TURKISH);
         String[] rows = text.split("\r\n");
         assertEquals("--- 25.10.2026 ---", rows[0]);
         assertEquals("[23:59:58] [Sohbet] Merhaba", rows[1]);
@@ -141,7 +150,7 @@ public class CloudFeatTest {
         assertEquals("Ahmet_AFK-console-2026-10-25.txt", ConsoleExport.fileName("Ahmet_AFK", "en", first));
         assertEquals(first + 2, ConsoleExport.from(ConsoleExport.Range.TODAY, first + 3));
         assertEquals(first + 3 - 3600, ConsoleExport.from(ConsoleExport.Range.HOUR, first + 3));
-        assertEquals("[00:00:01] [Command] /spawn", ConsoleExport.text(lines, ConsoleExport.ENGLISH).split("\r\n")[3]);
+        assertEquals("[00:00:01] [Command] /spawn", ConsoleExport.text(lines, ENGLISH).split("\r\n")[3]);
     }
 
     @Test

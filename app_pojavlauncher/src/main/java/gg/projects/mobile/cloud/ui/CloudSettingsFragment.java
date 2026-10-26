@@ -327,6 +327,21 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
             bar();
         });
         content.addView(owner.view);
+
+        // CAFK-FEAT: the account's own inventory choice, while the service offers the inventory (it applies at the
+        // account's next connection; nothing restarts for it).
+        if (a.features.inventory()) {
+            content.addView(CloudUi.gap(c, 16));
+            LinearLayout invGroup = CloudUi.group(c);
+            boolean shown = mConfig.inventory != null ? mConfig.inventory : a.features.inventoryOn;
+            SwitchCompat inv = CloudUi.toggle(c, getString(R.string.projects_feat_inv_setting), shown, on -> {
+                mConfig.inventory = on;
+                bar();
+            });
+            invGroup.addView(inv);
+            content.addView(invGroup);
+            content.addView(CloudUi.note(c, getString(R.string.projects_feat_inv_private)));
+        }
     }
 
     /** A field-like row that opens a choice (the version list). */
@@ -496,6 +511,13 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
     private void replies(LinearLayout content) {
         final Context c = ctx();
         CloudModel.Limits limits = mService.limits();
+        // CAFK-FEAT: console kinds came on but these rules still match the old way until the settings are saved once.
+        if (mBase != null && mBase.features.legacyRules) {
+            content.addView(CloudUi.notice(c, R.drawable.projects_ic_warning_circle, R.color.projects_gold_300, getString(R.string.projects_feat_legacy_rules)));
+            Button now = CloudUi.textButton(c, getString(R.string.projects_feat_legacy_save), v -> saveConfig(true));
+            now.setEnabled(!mSaving);
+            content.addView(now, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        }
         content.addView(CloudUi.note(c, getString(R.string.projects_cloud_rule_count, mConfig.rules.size(), limits.maxRules)));
         CloudUi.Row add = CloudUi.addRow(c, getString(R.string.projects_cloud_rule_add), v -> CloudRowSheet.rule(this, -1));
         CloudUi.enable(add, mConfig.rules.size() < limits.maxRules);
@@ -520,6 +542,10 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
                 }
                 if (problem != null) row.setLine(problem, R.color.projects_flare_400);
                 else if (rule.paused) row.setLine(getString(R.string.projects_cloud_mod_paused_row), R.color.projects_flare_400);
+                else if (CloudEdit.placeholderIssue(rule, i, mService.checks(mBase)) != null) {
+                    // A reply stored before the switch came on that the save rules refuse: the machine leaves it out.
+                    row.setLine(getString(R.string.projects_feat_rule_not_sent), R.color.projects_gold_300);
+                }
                 else row.setLine(getString(R.string.projects_cloud_rule_line, rule.pattern, CloudWords.span(c, rule.cooldown)), R.color.projects_ash_400);
                 if (!rule.enabled) row.view.setAlpha(0.55f);
                 rows.add(row.view);
@@ -555,15 +581,23 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
         if (mBar == null || mBase == null) return;
         boolean dirty = dirty();
         holdBack(dirty);
-        mBar.set(dirty || mSaving, mSaving, getString(CloudStatus.inGame(mBase)
+        // Only the inventory choice changed: it applies at the next connection, nothing restarts (CAFK-FEAT).
+        boolean onlyInventory = mName.equals(mBase.name) && !serverDirty() && mVersion.equals(mBase.version == null ? "auto" : mBase.version)
+                && mLang.equals("en".equals(mBase.lang) ? "en" : "tr") && mConfig.onlyInventoryDiffers(mOriginal);
+        mBar.set(dirty || mSaving, mSaving, getString(onlyInventory ? R.string.projects_feat_inv_setting_note : CloudStatus.inGame(mBase)
                 ? R.string.projects_cloud_settings_restart_note : R.string.projects_cloud_settings_dirty));
     }
 
     private void save() {
+        saveConfig(false);
+    }
+
+    /** Saves the screen's changes; {@code force} sends the settings even unchanged ("Şimdi kaydet" for old matching). */
+    private void saveConfig(boolean force) {
         final CloudModel.Account base = mBase;
         if (base == null || mSaving) return;
         Context c = ctx();
-        List<CloudEdit.Issue> issues = new ArrayList<>(CloudEdit.validate(mConfig, mService.limits()));
+        List<CloudEdit.Issue> issues = new ArrayList<>(CloudEdit.validate(mConfig, mService.limits(), mService.checks(base)));
         if (!CloudEdit.isGameName(mName)) issues.add(new CloudEdit.Issue("general", -1, "name", "format"));
         boolean serverDirty = serverDirty();
         if (serverDirty) {
@@ -585,7 +619,7 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
         String hostTyped = serverDirty ? mHost.trim() : null;
         String version = mVersion.equals(base.version == null ? "auto" : base.version) ? null : mVersion;
         String lang = mLang.equals("en".equals(base.lang) ? "en" : "tr") ? null : mLang;
-        CloudEdit.Config config = mConfig.same(mOriginal) ? null : mConfig;
+        CloudEdit.Config config = mConfig.same(mOriginal) && !force ? null : mConfig;
         mService.save(base, name, hostTyped, portValue(), version, lang, config, new CloudService.Result<CloudService.SaveOutcome>() {
             @Override
             public void ok(CloudService.SaveOutcome outcome) {
@@ -669,6 +703,11 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
     @Override
     public boolean serverChanged() {
         return serverDirty();
+    }
+
+    @Override
+    public CloudEdit.Checks checks() {
+        return mService.checks(mBase != null ? mBase : account());
     }
 
     @Override

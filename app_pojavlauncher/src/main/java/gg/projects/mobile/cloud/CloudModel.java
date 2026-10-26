@@ -183,8 +183,14 @@ public final class CloudModel {
         public final boolean consoleKinds;
         public final boolean placeholders;
         public final List<String> placeholderCommands;
+        /**
+         * The service names its features at all (a phase-1 Worker): bulk management, which has no switch of its own
+         * ("nothing new on the Worker"), shows from then on (the launcher's rule, FEAT-L).
+         */
+        public final boolean present;
 
-        OfferFeatures(String inventory, boolean consoleKinds, boolean placeholders, List<String> placeholderCommands) {
+        OfferFeatures(String inventory, boolean consoleKinds, boolean placeholders, List<String> placeholderCommands, boolean present) {
+            this.present = present;
             this.inventory = inventory;
             this.consoleKinds = consoleKinds;
             this.placeholders = placeholders;
@@ -199,7 +205,7 @@ public final class CloudModel {
             }
             if (commands.isEmpty()) commands.addAll(DEFAULT_PLACEHOLDER_COMMANDS);
             return new OfferFeatures(inventoryMode(Json.str(o, "inventory", "off")), Json.bool(o, "consoleKinds", false),
-                    Json.bool(o, "placeholders", false), commands);
+                    Json.bool(o, "placeholders", false), commands, o != null);
         }
 
         public static OfferFeatures none() {

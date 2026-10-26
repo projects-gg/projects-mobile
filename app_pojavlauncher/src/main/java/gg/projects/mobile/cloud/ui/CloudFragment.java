@@ -37,6 +37,12 @@ public final class CloudFragment extends CloudScreen {
 
     private String mShape = "";
     private final Map<String, AccountRow> mRows = new LinkedHashMap<>();
+    /** CAFK-FEAT §3.4: the accounts chosen for an action on several at once (a long press starts choosing). */
+    private final java.util.LinkedHashSet<String> mChosen = new java.util.LinkedHashSet<>();
+    private boolean mChoosing;
+    private boolean mBulkBusy;
+    @androidx.annotation.Nullable
+    private BulkBar mBulk;
     private final Runnable mTick = this::render;
     private final Runnable mRefresh = new Runnable() {
         @Override
@@ -50,6 +56,164 @@ public final class CloudFragment extends CloudScreen {
     @Override
     protected void created(View view) {
         mHeader.setTitle(getString(R.string.projects_cloud_title));
+        if (mBottom != null) {
+            mBulk = new BulkBar(view.getContext(), mBottom, new BulkBar.Actions() {
+                @Override
+                public void start() {
+                    bulk(gg.projects.mobile.cloud.CloudBulk.Action.START);
+                }
+
+                @Override
+                public void stop() {
+                    bulk(gg.projects.mobile.cloud.CloudBulk.Action.STOP);
+                }
+
+                @Override
+                public void restart() {
+                    bulk(gg.projects.mobile.cloud.CloudBulk.Action.RESTART);
+                }
+
+                @Override
+                public void copy() {
+                    copySettings();
+                }
+
+                @Override
+                public void selectAll() {
+                    for (CloudModel.Account a : mService.accounts()) mChosen.add(a.id);
+                    chosenChanged();
+                }
+
+                @Override
+                public void done() {
+                    choose(false);
+                }
+            });
+        }
+    }
+
+    /** Several accounts at once: from a service that names its features (phase 1) and with two accounts or more. */
+    private boolean bulkAllowed() {
+        return mService.features().present && mService.accounts().size() >= 2;
+    }
+
+    private void choose(boolean on) {
+        mChoosing = on;
+        if (!on) mChosen.clear();
+        holdBack(on);
+        chosenChanged();
+    }
+
+    private void chosenChanged() {
+        // Accounts that left the list leave the choice.
+        java.util.Set<String> ids = new java.util.HashSet<>();
+        for (CloudModel.Account a : mService.accounts()) ids.add(a.id);
+        mChosen.retainAll(ids);
+        if (mBulk != null) mBulk.set(mChoosing, mChosen.size(), mBulkBusy);
+        long next = update();
+        View view = getView();
+        if (view != null && next > 0) {
+            view.removeCallbacks(mTick);
+            view.postDelayed(mTick, Math.max(1000, next));
+        }
+    }
+
+    @Override
+    protected void onBack() {
+        if (mChoosing) {
+            choose(false);
+            return;
+        }
+        super.onBack();
+    }
+
+    /** Start, stop or reconnect the chosen accounts, one at a time in the list's order; one line for the outcome. */
+    private void bulk(final gg.projects.mobile.cloud.CloudBulk.Action action) {
+        if (mBulkBusy || mChosen.isEmpty()) return;
+        List<String> ids = new ArrayList<>();
+        for (CloudModel.Account a : mService.accounts()) if (mChosen.contains(a.id)) ids.add(a.id);
+        mBulkBusy = true;
+        chosenChanged();
+        mService.bulk(action, ids, new CloudService.Result<gg.projects.mobile.cloud.CloudBulk.Outcome>() {
+            @Override
+            public void ok(gg.projects.mobile.cloud.CloudBulk.Outcome outcome) {
+                mBulkBusy = false;
+                if (!alive()) return;
+                said(action, outcome);
+                choose(false);
+            }
+
+            @Override
+            public void failed(gg.projects.mobile.cloud.CloudProblem problem) {
+                mBulkBusy = false;
+                if (!alive()) return;
+                chosenChanged();
+                problem(problem, mBulk == null ? null : mBulk.anchor());
+            }
+        });
+    }
+
+    private void copySettings() {
+        if (mBulkBusy) return;
+        CloudCopySheet.open(ctx(), mService, mService.accounts(), mChosen, outcome -> {
+            if (!alive()) return;
+            said(gg.projects.mobile.cloud.CloudBulk.Action.COPY, outcome);
+            choose(false);
+        });
+    }
+
+    /** One line for the outcome, with the first failure's reason. */
+    private void said(gg.projects.mobile.cloud.CloudBulk.Action action, gg.projects.mobile.cloud.CloudBulk.Outcome outcome) {
+        android.content.res.Resources r = getResources();
+        String reason = outcome.first == null ? "" : getString(reasonWords(outcome.first));
+        int all;
+        int some;
+        int none;
+        switch (action) {
+            case STOP:
+                all = R.plurals.projects_feat_bulk_stopped;
+                some = R.plurals.projects_feat_bulk_stopped_some;
+                none = R.plurals.projects_feat_bulk_stop_failed;
+                break;
+            case RESTART:
+                all = R.plurals.projects_feat_bulk_restarted;
+                some = R.plurals.projects_feat_bulk_restarted_some;
+                none = R.plurals.projects_feat_bulk_restart_failed;
+                break;
+            case COPY:
+                all = R.plurals.projects_feat_bulk_copied;
+                some = R.plurals.projects_feat_bulk_copied_some;
+                none = R.plurals.projects_feat_bulk_copy_failed;
+                break;
+            default:
+                all = R.plurals.projects_feat_bulk_started;
+                some = R.plurals.projects_feat_bulk_started_some;
+                none = R.plurals.projects_feat_bulk_start_failed;
+                break;
+        }
+        String text;
+        if (outcome.failed == 0) text = r.getQuantityString(all, outcome.done, outcome.done);
+        else if (outcome.done == 0) text = r.getQuantityString(none, outcome.failed, outcome.failed, reason);
+        else text = r.getQuantityString(some, outcome.done, outcome.done, outcome.failed, reason);
+        View anchor = mBulk == null ? null : mBulk.anchor();
+        if (outcome.failed == 0) gg.projects.mobile.ui.Haptics.confirm(anchor);
+        else gg.projects.mobile.ui.Haptics.reject(anchor);
+        gg.projects.mobile.social.ui.SocialUi.toastLong(ctx(), text);
+    }
+
+    private static int reasonWords(gg.projects.mobile.cloud.CloudBulk.Reason reason) {
+        switch (reason) {
+            case EXPIRED: return R.string.projects_feat_bulk_reason_expired;
+            case STAFF: return R.string.projects_feat_bulk_reason_staff;
+            case BLOCKED: return R.string.projects_feat_bulk_reason_blocked;
+            case FULL: return R.string.projects_feat_bulk_reason_full;
+            case CHANGE_LIMIT: return R.string.projects_feat_bulk_reason_change_limit;
+            case NOT_RUNNING: return R.string.projects_feat_bulk_reason_not_running;
+            case RATE_LIMITED: return R.string.projects_feat_bulk_reason_rate_limited;
+            case CONFLICT: return R.string.projects_feat_bulk_reason_conflict;
+            case OFFLINE: return R.string.projects_feat_bulk_reason_offline;
+            default: return R.string.projects_feat_bulk_reason_other;
+        }
     }
 
     @Override
@@ -86,6 +250,8 @@ public final class CloudFragment extends CloudScreen {
             mShape = shape;
             rebuild();
         }
+        if (mChoosing && !bulkAllowed()) choose(false);
+        if (mBulk != null) mBulk.set(mChoosing, mChosen.size(), mBulkBusy);
         long next = update();
         if (next > 0) view.postDelayed(mTick, Math.max(1000, next));
     }
@@ -213,6 +379,8 @@ public final class CloudFragment extends CloudScreen {
         final TextView plus;
         final TextView state;
         final TextView extra;
+        final ImageView check;
+        final ImageView caret;
 
         AccountRow(Context c, final String id) {
             view = new LinearLayout(c);
@@ -223,7 +391,23 @@ public final class CloudFragment extends CloudScreen {
             view.setBackgroundResource(R.drawable.projects_row_ripple);
             view.setClickable(true);
             view.setFocusable(true);
-            view.setOnClickListener(v -> openFor(CloudAccountFragment.class, id));
+            view.setOnClickListener(v -> {
+                if (mChoosing) {
+                    if (!mChosen.remove(id)) mChosen.add(id);
+                    gg.projects.mobile.ui.Haptics.tick(v);
+                    chosenChanged();
+                    return;
+                }
+                openFor(CloudAccountFragment.class, id);
+            });
+            // A long press starts choosing several accounts (CAFK-FEAT §3.4), with this one chosen.
+            view.setOnLongClickListener(v -> {
+                if (!bulkAllowed() || mChoosing) return false;
+                gg.projects.mobile.ui.Haptics.perform(v, gg.projects.mobile.ui.HapticMap.Kind.LONG_PRESS);
+                mChosen.add(id);
+                choose(true);
+                return true;
+            });
             Press.attach(view, Press.Style.ROW);
 
             int unit = Math.max(1, Math.round(c.getResources().getDisplayMetrics().density * 1.25f));
@@ -260,7 +444,13 @@ public final class CloudFragment extends CloudScreen {
             textsLp.setMarginStart(CloudUi.dp(c, 16));
             view.addView(texts, textsLp);
 
-            ImageView caret = new ImageView(c);
+            check = new ImageView(c);
+            check.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+            check.setVisibility(View.GONE);
+            LinearLayout.LayoutParams checkLp = new LinearLayout.LayoutParams(CloudUi.dp(c, 24), CloudUi.dp(c, 24));
+            checkLp.setMarginStart(CloudUi.dp(c, 6));
+            view.addView(check, checkLp);
+            caret = new ImageView(c);
             caret.setImageResource(R.drawable.projects_ic_caret_right);
             caret.setImageTintList(ColorStateList.valueOf(CloudUi.color(c, R.color.projects_ash_400)));
             caret.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
@@ -301,6 +491,15 @@ public final class CloudFragment extends CloudScreen {
             if (plus.getVisibility() == View.VISIBLE) said.append(", ").append(plus.getText());
             said.append(", ").append(words);
             if (more != null) said.append(", ").append(more);
+            boolean picked = mChosen.contains(a.id);
+            check.setVisibility(mChoosing ? View.VISIBLE : View.GONE);
+            caret.setVisibility(mChoosing ? View.GONE : View.VISIBLE);
+            if (mChoosing) {
+                check.setImageResource(picked ? R.drawable.projects_ic_check_square_fill : R.drawable.projects_ic_square);
+                check.setImageTintList(ColorStateList.valueOf(CloudUi.color(c, picked ? R.color.projects_gold_300 : R.color.projects_ash_400)));
+                said.append(", ").append(c.getString(picked ? R.string.projects_cloud_selected : R.string.projects_feat_bulk_select));
+            }
+            view.setActivated(mChoosing && picked);
             view.setContentDescription(said);
         }
     }

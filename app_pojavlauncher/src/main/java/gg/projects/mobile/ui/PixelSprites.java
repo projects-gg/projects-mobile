@@ -178,6 +178,24 @@ public final class PixelSprites {
                 ".fffffffffffff..",
                 ".eeeeeeeeeeee...",
                 "................",
+                "................"),
+        /** A backpack with a buckled flap and a front pocket: a cloud account's live inventory (FEAT-M, from the desktop's ContentIcon). */
+        INVENTORY(true,
+                "................",
+                "................",
+                "......llll......",
+                ".....l....d.....",
+                "....hllllllm....",
+                "...lmmmmmmmmd...",
+                "..lmhmmmmmmmmd..",
+                "..lmmmmmmmmmmd..",
+                "..ldddddddddds..",
+                "..lmmmmhhmmmmd..",
+                "..lmmmmssmmmmd..",
+                "..lmllllllllmd..",
+                "..lmlmmmmmmdmd..",
+                "..lmlmmmmmmdmd..",
+                "...sssssssssss..",
                 "................");
 
         final boolean shadow;

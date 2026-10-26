@@ -43,39 +43,9 @@ public final class ConsoleExport {
         }
     }
 
-    /** The kinds' names in the file's language. */
+    /** The kinds' names in the file's language (the app's strings: Sohbet, Özel, Sunucu, Başlık, Komut, Bağlantı, Hata, Konsol). */
     public interface Names {
         String kind(ConsoleKinds.FileKind kind);
-    }
-
-    public static final Names TURKISH = kind -> {
-        switch (kind) {
-            case CHAT: return "Sohbet";
-            case PRIVATE: return "Özel";
-            case SERVER: return "Sunucu";
-            case TITLE: return "Başlık";
-            case COMMAND: return "Komut";
-            case CONNECTION: return "Bağlantı";
-            case ERROR: return "Hata";
-            default: return "Konsol";
-        }
-    };
-
-    public static final Names ENGLISH = kind -> {
-        switch (kind) {
-            case CHAT: return "Chat";
-            case PRIVATE: return "Private";
-            case SERVER: return "Server";
-            case TITLE: return "Title";
-            case COMMAND: return "Command";
-            case CONNECTION: return "Connection";
-            case ERROR: return "Error";
-            default: return "Console";
-        }
-    };
-
-    public static Names names(String lang) {
-        return "en".equals(lang) ? ENGLISH : TURKISH;
     }
 
     /** The file's text (without the BOM: {@link #bytes} adds it). */

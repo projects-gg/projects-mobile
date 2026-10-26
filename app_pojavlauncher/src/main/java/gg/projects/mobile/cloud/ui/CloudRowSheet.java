@@ -56,6 +56,9 @@ final class CloudRowSheet {
         /** The account's server changes with this save (stored secrets must be typed again for it). */
         boolean serverChanged();
 
+        /** CAFK-FEAT: the save checks the account's switches ask for (placeholders). */
+        CloudEdit.Checks checks();
+
         void reveal(String rowId, CloudService.Result<String> result);
 
         /** The list changed (a row put back, deleted or moved). */
@@ -165,7 +168,7 @@ final class CloudRowSheet {
             timesError.setVisibility(View.GONE);
             words.setError(null);
             boolean ok = true;
-            for (CloudEdit.Issue issue : CloudEdit.validate(trial, host.limits())) {
+            for (CloudEdit.Issue issue : CloudEdit.validate(trial, host.limits(), host.checks())) {
                 if (!"commands".equals(issue.place) || issue.index != at) continue;
                 String text = CloudWords.issue(c, issue, host.limits());
                 switch (issue.field) {
@@ -252,7 +255,11 @@ final class CloudRowSheet {
         int selected = 0;
         for (int i = 0; i < sources.length; i++) if (sources[i].equals(row.from)) selected = i;
         sheet.body.addView(label(c, c.getString(R.string.projects_cloud_rule_from)));
-        sheet.body.addView(CloudUi.choices(c, labels, selected, i -> row.from = sources[i]));
+        final Runnable[] fromChanged = new Runnable[1];
+        sheet.body.addView(CloudUi.choices(c, labels, selected, i -> {
+            row.from = sources[i];
+            if (fromChanged[0] != null) fromChanged[0].run();
+        }));
 
         final SwitchCompat owner = CloudUi.toggle(c, c.getString(R.string.projects_cloud_rule_owner_only), row.ownerOnly, on -> row.ownerOnly = on);
         owner.setPadding(CloudUi.dp(c, 8), 0, CloudUi.dp(c, 4), 0);
@@ -268,6 +275,32 @@ final class CloudRowSheet {
         final SecretField reply = new SecretField(host, row.id, c.getString(R.string.projects_cloud_rule_reply),
                 c.getString(R.string.projects_cloud_rule_reply_hint), row.reply);
         sheet.body.addView(reply.view);
+        // CAFK-FEAT: placeholders in the reply (the account's switch): chips that put {u} and {1}… at the cursor, the
+        // one rule about the parts, and "Dene" on a sample message. Redrawn when the pattern, its kind or "from" changes.
+        if (host.checks().placeholders) {
+            final PlaceholderTools tools = new PlaceholderTools(c, reply, () -> match.value().trim(), () -> row.regex, () -> row.from,
+                    () -> host.config().owner);
+            sheet.body.addView(tools.view, CloudUi.matchWrap());
+            match.input.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+                @Override
+                public void afterTextChanged(Editable s) {
+                    tools.draw();
+                }
+            });
+            regex.setOnCheckedChangeListener((button, on) -> {
+                Haptics.toggle(button, on);
+                row.regex = on;
+                tools.draw();
+            });
+            reply.onChanged(tools::draw);
+            fromChanged[0] = tools::draw;
+        }
 
         final SwitchCompat use = CloudUi.toggle(c, c.getString(R.string.projects_cloud_rule_use), row.enabled, on -> row.enabled = on);
         use.setPadding(CloudUi.dp(c, 8), 0, CloudUi.dp(c, 4), 0);
@@ -290,7 +323,7 @@ final class CloudRowSheet {
             ownerError.setVisibility(View.GONE);
             reply.setError(null);
             boolean ok = true;
-            for (CloudEdit.Issue issue : CloudEdit.validate(trial, host.limits())) {
+            for (CloudEdit.Issue issue : CloudEdit.validate(trial, host.limits(), host.checks())) {
                 if (!"rules".equals(issue.place) || issue.index != at) continue;
                 String text = CloudWords.issue(c, issue, host.limits());
                 switch (issue.field) {
@@ -422,6 +455,24 @@ final class CloudRowSheet {
             return mWords;
         }
 
+        @Nullable
+        private Runnable mChanged;
+
+        /** Called when the words or their kind change (the placeholder tools redraw). */
+        void onChanged(Runnable changed) {
+            mChanged = changed;
+        }
+
+        /** Puts {@code token} at the cursor of a plain line (a placeholder chip); false when the line is secret or sealed. */
+        boolean insert(String token) {
+            if (mInput == null || mWords.secretKind()) return false;
+            int start = Math.max(0, mInput.getSelectionStart());
+            int end = Math.max(0, mInput.getSelectionEnd());
+            mInput.getText().replace(Math.min(start, end), Math.max(start, end), token);
+            mInput.requestFocus();
+            return true;
+        }
+
         void setError(@Nullable String error) {
             mError = error;
             draw();
@@ -517,6 +568,7 @@ final class CloudRowSheet {
                     mWords = on ? CloudEdit.Words.secret(text) : CloudEdit.Words.plain(text);
                     mShown = !on;
                     draw();
+                    if (mChanged != null) mChanged.run();
                 });
                 toggle.setEnabled(!forced);
                 toggle.setPadding(CloudUi.dp(c, 8), 0, CloudUi.dp(c, 4), 0);
@@ -543,6 +595,7 @@ final class CloudRowSheet {
                         } else {
                             mWords = mWords.typed(text);
                         }
+                        if (mChanged != null) mChanged.run();
                         toggle.setEnabled(!sensitive);
                         help.setText(c.getString(sensitive ? R.string.projects_cloud_secret_auto : R.string.projects_cloud_secret_help));
                     }
@@ -595,6 +648,135 @@ final class CloudRowSheet {
                     draw();
                 }
             });
+        }
+    }
+
+    interface Text {
+        String get();
+    }
+
+    interface Flag {
+        boolean get();
+    }
+
+    /**
+     * CAFK-FEAT §3.3 under a reply: "Yazanın adı" and one chip per capturing group of the pattern ("1. parça"…) that put
+     * {@code {u}} and {@code {1}} at the cursor; once the reply holds one, the rule about the parts in one sentence; and
+     * "Dene": a sample message tried on the phone with the save rules and the bot's value class ({@code {u}} is the
+     * player's own name, else "Oyuncu"). Nothing for a secret reply (placeholders are plain text there).
+     */
+    static final class PlaceholderTools {
+        final LinearLayout view;
+        private final Context mContext;
+        private final SecretField mReply;
+        private final Text mPattern;
+        private final Flag mRegex;
+        private final Text mFrom;
+        private final Text mOwner;
+        private final gg.projects.mobile.social.ui.WrapLayout mChips;
+        private final TextView mRule;
+        private final EditText mSample;
+        private final TextView mResult;
+        private String mDrawn = "";
+
+        PlaceholderTools(Context c, SecretField reply, Text pattern, Flag regex, Text from, Text owner) {
+            mContext = c;
+            mReply = reply;
+            mPattern = pattern;
+            mRegex = regex;
+            mFrom = from;
+            mOwner = owner;
+            view = new LinearLayout(c);
+            view.setOrientation(LinearLayout.VERTICAL);
+            mChips = new gg.projects.mobile.social.ui.WrapLayout(c);
+            mChips.setGap(CloudUi.dp(c, 8));
+            mChips.setPadding(CloudUi.dp(c, 8), CloudUi.dp(c, 2), CloudUi.dp(c, 8), CloudUi.dp(c, 2));
+            view.addView(mChips, CloudUi.matchWrap());
+            mRule = CloudUi.note(c, c.getString(R.string.projects_feat_ph_rule));
+            view.addView(mRule);
+            LinearLayout tryRow = new LinearLayout(c);
+            tryRow.setOrientation(LinearLayout.HORIZONTAL);
+            tryRow.setGravity(Gravity.CENTER_VERTICAL);
+            tryRow.setPadding(CloudUi.dp(c, 8), CloudUi.dp(c, 6), CloudUi.dp(c, 8), 0);
+            mSample = new EditText(c);
+            mSample.setBackgroundResource(R.drawable.projects_input);
+            mSample.setTypeface(CloudUi.font(c, R.font.figtree_regular));
+            mSample.setTextSize(15);
+            mSample.setTextColor(CloudUi.color(c, R.color.projects_bone_100));
+            mSample.setHintTextColor(CloudUi.color(c, R.color.projects_ash_400));
+            mSample.setHint(c.getString(R.string.projects_feat_ph_sample));
+            mSample.setSingleLine(true);
+            mSample.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+            mSample.setPadding(CloudUi.dp(c, 14), CloudUi.dp(c, 10), CloudUi.dp(c, 14), CloudUi.dp(c, 10));
+            mSample.setMinimumHeight(CloudUi.dp(c, 48));
+            mSample.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(256)});
+            if (android.os.Build.VERSION.SDK_INT >= 26) mSample.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_NO);
+            tryRow.addView(mSample, CloudUi.weight(1f));
+            Button tryIt = CloudUi.button(c, c.getString(R.string.projects_feat_ph_try), false, v -> tryIt(v));
+            LinearLayout.LayoutParams tryLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            tryLp.setMarginStart(CloudUi.dp(c, 10));
+            tryRow.addView(tryIt, tryLp);
+            view.addView(tryRow, CloudUi.matchWrap());
+            mResult = CloudUi.text(c, "", 14, R.color.projects_ash_300, false);
+            mResult.setPadding(CloudUi.dp(c, 8), CloudUi.dp(c, 6), CloudUi.dp(c, 8), CloudUi.dp(c, 4));
+            mResult.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
+            mResult.setVisibility(View.GONE);
+            view.addView(mResult, CloudUi.matchWrap());
+            draw();
+        }
+
+        void draw() {
+            CloudEdit.Words words = mReply.value();
+            boolean plain = words.kind == CloudEdit.Words.Kind.PLAIN;
+            view.setVisibility(plain ? View.VISIBLE : View.GONE);
+            if (!plain) return;
+            mRule.setVisibility(gg.projects.mobile.cloud.CloudPlaceholders.holds(words.text) ? View.VISIBLE : View.GONE);
+            List<String> chips = gg.projects.mobile.cloud.CloudPlaceholders.chips(mPattern.get(), mRegex.get(), mFrom.get());
+            String key = chips.toString();
+            if (key.equals(mDrawn)) return;
+            mDrawn = key;
+            mChips.removeAllViews();
+            for (final String token : chips) {
+                String label = "{u}".equals(token) ? mContext.getString(R.string.projects_feat_ph_sender)
+                        : mContext.getString(R.string.projects_feat_ph_part, token.charAt(1) - '0');
+                Button chip = CloudUi.button(mContext, label, false, v -> {
+                    if (mReply.insert(token)) Haptics.tick(v);
+                });
+                chip.setTextSize(14);
+                chip.setMinHeight(CloudUi.dp(mContext, 40));
+                chip.setMinimumHeight(CloudUi.dp(mContext, 40));
+                chip.setPadding(CloudUi.dp(mContext, 12), 0, CloudUi.dp(mContext, 12), 0);
+                chip.setCompoundDrawablesRelative(CloudUi.tinted(mContext, R.drawable.projects_ic_plus, R.color.projects_gold_300, 14), null, null, null);
+                chip.setCompoundDrawablePadding(CloudUi.dp(mContext, 6));
+                mChips.addView(chip);
+            }
+        }
+
+        private void tryIt(View from) {
+            String sample = mSample.getText().toString();
+            if (sample.trim().isEmpty()) {
+                Haptics.reject(from);
+                mSample.requestFocus();
+                return;
+            }
+            String owner = mOwner.get();
+            String sender = owner == null || owner.isEmpty() ? mContext.getString(R.string.projects_feat_ph_player) : owner;
+            gg.projects.mobile.cloud.CloudPlaceholders.Run run = gg.projects.mobile.cloud.CloudPlaceholders.tryIt(mPattern.get(), mRegex.get(),
+                    mFrom.get(), mReply.value().text, sample, sender);
+            if (run.reply != null) {
+                mResult.setText(mContext.getString(R.string.projects_feat_ph_matches, run.reply));
+                mResult.setTextColor(CloudUi.color(mContext, R.color.projects_bone_100));
+                Haptics.confirm(from);
+            } else if ("value".equals(run.why)) {
+                mResult.setText(mContext.getString(R.string.projects_feat_ph_no_reply));
+                mResult.setTextColor(CloudUi.color(mContext, R.color.projects_gold_300));
+                Haptics.tick(from);
+            } else {
+                mResult.setText(mContext.getString(R.string.projects_feat_ph_no_match));
+                mResult.setTextColor(CloudUi.color(mContext, R.color.projects_ash_300));
+                Haptics.tick(from);
+            }
+            mResult.setVisibility(View.VISIBLE);
         }
     }
 

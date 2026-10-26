@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- FEAT-M: Telefonda CAFK-FEAT 1. evre (canlı envanter, konsol türleri, yanıtlarda yer tutucular, birden çok hesap) ve
+     Hareket paneli. Sözler sözleşmenin (services/cloud-afk README "Features"), launcher'ın envanter bileşeninin
+     (@pl/ui/inventory texts.ts, oyunun kendi Türkçesi) ve docs/tasks/cafk-feat.md §3 tablolarının. Bir adın sonuna ek
+     gelmez ("%1$s:" ya da "için", "ile"); hesabın kendi düğmesi "Yeniden bağlan" olduğu için burada da öyle. -->
+<resources>
+    <!-- Hesap ekranının satırları -->
+    <string name="projects_feat_inventory">Envanter</string>
+    <string name="projects_feat_inventory_off_short">Kapalı</string>
+    <string name="projects_feat_movement">Hareket</string>
+
+    <!-- Envanter -->
+    <string name="projects_feat_inv_equipment">Ekipman</string>
+    <string name="projects_feat_inv_menu">Menü</string>
+    <string name="projects_feat_inv_close_menu">Menüyü kapat</string>
+    <string name="projects_feat_inv_private">Envanterini yalnız sen görürsün.</string>
+    <string name="projects_feat_inv_not_running">Hesap oyunda değilken envanter görünmez.</string>
+    <string name="projects_feat_inv_off">Envanter görünümü bu hesapta kapalı.</string>
+    <string name="projects_feat_inv_turn_on">Aç</string>
+    <string name="projects_feat_inv_restart">Envanter bir sonraki bağlanmada açılır.</string>
+    <string name="projects_feat_inv_reconnect_now">Şimdi yeniden bağlan</string>
+    <string name="projects_feat_inv_version">Bu Minecraft sürümünde envanter görünmez.</string>
+    <string name="projects_feat_inv_service">Envanter şu an kullanılamıyor.</string>
+    <string name="projects_feat_inv_trade">Takas sürerken envanter kilitli.</string>
+    <string name="projects_feat_inv_view_only">Bu envanterde değişiklik yapamazsın.</string>
+    <string name="projects_feat_inv_slow">Biraz yavaşla; son hamle sayılmadı.</string>
+    <string name="projects_feat_inv_refused">Sunucu bu hamleye izin vermedi.</string>
+    <string name="projects_feat_inv_unreachable">Hesaba şu an ulaşılamıyor.</string>
+    <string name="projects_feat_inv_carry">Bırakmak için bir yuvaya dokun.</string>
+    <string name="projects_feat_inv_put_back">Yerine koy</string>
+    <string name="projects_feat_inv_fix_settings">Önce ayarlardaki sorunu düzelt.</string>
+    <string name="projects_feat_inv_hand">Elinde: %1$s</string>
+    <string name="projects_feat_inv_setting">Envanter görünümü</string>
+    <string name="projects_feat_inv_setting_note">Değişiklik bir sonraki bağlanmada geçerli olur.</string>
+
+    <!-- Ekran okuyucunun bir yuva için söyledikleri -->
+    <string name="projects_feat_inv_empty">Boş</string>
+    <string name="projects_feat_inv_head">Kafa</string>
+    <string name="projects_feat_inv_chest">Göğüs</string>
+    <string name="projects_feat_inv_legs">Bacak</string>
+    <string name="projects_feat_inv_feet">Ayak</string>
+    <string name="projects_feat_inv_offhand">Diğer el</string>
+    <string name="projects_feat_inv_hotbar">Araç çubuğu %1$d</string>
+    <string name="projects_feat_inv_held">elde</string>
+    <string name="projects_feat_inv_waiting">bekliyor</string>
+    <string name="projects_feat_inv_count">%1$d adet</string>
+    <string name="projects_feat_inv_durability_pct">dayanıklılık yüzde %1$d</string>
+    <string name="projects_feat_inv_enchanted">büyülü</string>
+
+    <!-- İpucunun satırları, oyunun yazdığı gibi -->
+    <string name="projects_feat_inv_durability">Dayanıklılık: %1$d / %2$d</string>
+    <string name="projects_feat_inv_inside">%1$s x %2$d</string>
+    <string name="projects_feat_inv_inside_more">ve %1$d tane daha...</string>
+    <string name="projects_feat_inv_inside_unknown">ve daha fazlası...</string>
+    <string name="projects_feat_inv_partial">Bazı özellikleri gösterilemiyor.</string>
+
+    <!-- Bir yuvanın eylemleri (uzun basma): oyunun tıklamaları yaptıklarıyla; sunucu menüsünde tıklamanın kendisi -->
+    <string name="projects_feat_inv_take">Al</string>
+    <string name="projects_feat_inv_take_half">Yarısını al</string>
+    <string name="projects_feat_inv_place">Bırak</string>
+    <string name="projects_feat_inv_swap">Yer değiştir</string>
+    <string name="projects_feat_inv_place_one">Bir tane bırak</string>
+    <string name="projects_feat_inv_to_inventory">Envantere taşı</string>
+    <string name="projects_feat_inv_to_hotbar">Araç çubuğuna taşı</string>
+    <string name="projects_feat_inv_put_on">Giy</string>
+    <string name="projects_feat_inv_to_offhand">Diğer ele taşı</string>
+    <string name="projects_feat_inv_click">Sol tık</string>
+    <string name="projects_feat_inv_right_click">Sağ tık</string>
+    <string name="projects_feat_inv_shift_click">Shift+sol tık</string>
+    <string name="projects_feat_inv_hold">Elde tut</string>
+    <string name="projects_feat_inv_use">Kullan</string>
+    <string name="projects_feat_inv_drop">At</string>
+    <string name="projects_feat_inv_drop_one">Bir tane at</string>
+    <string name="projects_feat_inv_drop_stack">Yığını at</string>
+
+    <!-- Bir hamleden sonra ekran okuyucunun söyledikleri -->
+    <string name="projects_feat_inv_picked_up">%1$s alındı</string>
+    <string name="projects_feat_inv_placed">%1$s bırakıldı</string>
+    <string name="projects_feat_inv_swapped">%1$s ile yer değiştirdi</string>
+    <string name="projects_feat_inv_moved">%1$s taşındı</string>
+    <string name="projects_feat_inv_dropped">%1$s atıldı</string>
+    <string name="projects_feat_inv_used">%1$s kullanıldı</string>
+    <string name="projects_feat_inv_held_now">%1$s elde</string>
+    <string name="projects_feat_inv_put_back_done">%1$s yerine kondu</string>
+
+    <!-- Konsol: türler, süzgeçler, şerit, kayıt -->
+    <string name="projects_feat_console_all">Hepsi</string>
+    <string name="projects_feat_console_chat">Sohbet</string>
+    <string name="projects_feat_console_private">Özel</string>
+    <string name="projects_feat_console_server">Sunucu</string>
+    <string name="projects_feat_console_mine">Komutlarım</string>
+    <string name="projects_feat_console_connection">Bağlantı</string>
+    <string name="projects_feat_console_mentions">Adın geçenler</string>
+    <string name="projects_feat_console_search">Konsolda ara</string>
+    <string name="projects_feat_console_search_clear">Aramayı temizle</string>
+    <string name="projects_feat_console_none">Bu süzgeçte satır yok.</string>
+    <string name="projects_feat_console_show_inventory">Envanterde göster</string>
+    <string name="projects_feat_console_export">Konsol kaydı</string>
+    <string name="projects_feat_console_export_open">Paylaş ya da kaydet</string>
+    <string name="projects_feat_console_hour">Son 1 saat</string>
+    <string name="projects_feat_console_today">Bugün</string>
+    <string name="projects_feat_console_days3">Son 3 gün</string>
+    <string name="projects_feat_console_share">Paylaş</string>
+    <string name="projects_feat_console_save">Dosyaya kaydet</string>
+    <string name="projects_feat_console_export_empty">Bu aralıkta satır yok.</string>
+    <string name="projects_feat_console_export_failed">Kayıt alınamadı. Biraz sonra yeniden dene.</string>
+    <string name="projects_feat_console_saved">Dosya kaydedildi.</string>
+    <string name="projects_feat_console_kind_chat">Sohbet</string>
+    <string name="projects_feat_console_kind_private">Özel</string>
+    <string name="projects_feat_console_kind_server">Sunucu</string>
+    <string name="projects_feat_console_kind_title">Başlık</string>
+    <string name="projects_feat_console_kind_command">Komut</string>
+    <string name="projects_feat_console_kind_connection">Bağlantı</string>
+    <string name="projects_feat_console_kind_error">Hata</string>
+    <string name="projects_feat_console_kind_console">Konsol</string>
+    <string name="projects_feat_console_strip">Oyun ekranında</string>
+
+    <!-- Yanıtlarda yer tutucular -->
+    <string name="projects_feat_ph_sender">Yazanın adı</string>
+    <string name="projects_feat_ph_part">%1$d. parça</string>
+    <string name="projects_feat_ph_try">Dene</string>
+    <string name="projects_feat_ph_sample">Örnek mesaj</string>
+    <string name="projects_feat_ph_matches">Eşleşir. Yanıt: %1$s</string>
+    <string name="projects_feat_ph_no_match">Eşleşmez.</string>
+    <string name="projects_feat_ph_no_reply">Eşleşir, ama bu mesaja yanıt gitmez.</string>
+    <string name="projects_feat_ph_rule">Parçalar yalnız harf, rakam ve alt çizgiyse yanıt gider.</string>
+    <string name="projects_feat_ph_player">Oyuncu</string>
+    <string name="projects_feat_ph_issue_row">Yer tutucu yalnız yanıtlarda kullanılabilir.</string>
+    <string name="projects_feat_ph_issue_part">Bu kalıpta %1$d. parça yok.</string>
+    <string name="projects_feat_ph_issue_sender">Sunucu mesajlarında yazanın adı yok.</string>
+    <string name="projects_feat_ph_issue_start">Yanıt yer tutucuyla başlayamaz.</string>
+    <string name="projects_feat_ph_issue_command">Bu komutta yer tutucu kullanılamaz.</string>
+    <string name="projects_feat_ph_issue_length">Parçalar eklenince yanıt çok uzun olabilir.</string>
+    <string name="projects_feat_legacy_rules">Yanıt kuralların eski eşleşmeyle çalışıyor. Ayarları bir kez kaydet, sunucunun sohbet biçimiyle eşleşsin.</string>
+    <string name="projects_feat_legacy_save">Şimdi kaydet</string>
+    <string name="projects_feat_rule_not_sent">Bu yanıt şu an gönderilmiyor.</string>
+
+    <!-- Birden çok hesap -->
+    <string name="projects_feat_bulk_select">Seç</string>
+    <string name="projects_feat_bulk_select_all">Hepsini seç</string>
+    <string name="projects_feat_bulk_done">Tamam</string>
+    <plurals name="projects_feat_bulk_selected">
+        <item quantity="one">%1$d seçili</item>
+        <item quantity="other">%1$d seçili</item>
+    </plurals>
+    <string name="projects_feat_bulk_copy">Ayarları kopyala</string>
+    <plurals name="projects_feat_bulk_started">
+        <item quantity="one">%1$d hesap başlatıldı.</item>
+        <item quantity="other">%1$d hesap başlatıldı.</item>
+    </plurals>
+    <plurals name="projects_feat_bulk_started_some">
+        <item quantity="one">%1$d hesap başlatıldı, %2$d hesap başlatılamadı: %3$s.</item>
+        <item quantity="other">%1$d hesap başlatıldı, %2$d hesap başlatılamadı: %3$s.</item>
+    </plurals>
+    <plurals name="projects_feat_bulk_stopped">
+        <item quantity="one">%1$d hesap durduruldu.</item>
+        <item quantity="other">%1$d hesap durduruldu.</item>
+    </plurals>
+    <plurals name="projects_feat_bulk_stopped_some">
+        <item quantity="one">%1$d hesap durduruldu, %2$d hesap durdurulamadı: %3$s.</item>
+        <item quantity="other">%1$d hesap durduruldu, %2$d hesap durdurulamadı: %3$s.</item>
+    </plurals>
+    <plurals name="projects_feat_bulk_restarted">
+        <item quantity="one">%1$d hesap yeniden bağlanıyor.</item>
+        <item quantity="other">%1$d hesap yeniden bağlanıyor.</item>
+    </plurals>
+    <plurals name="projects_feat_bulk_restarted_some">
+        <item quantity="one">%1$d hesap yeniden bağlanıyor, %2$d hesap bağlanamadı: %3$s.</item>
+        <item quantity="other">%1$d hesap yeniden bağlanıyor, %2$d hesap bağlanamadı: %3$s.</item>
+    </plurals>
+    <plurals name="projects_feat_bulk_copied">
+        <item quantity="one">%1$d hesaba kopyalandı.</item>
+        <item quantity="other">%1$d hesaba kopyalandı.</item>
+    </plurals>
+    <plurals name="projects_feat_bulk_copied_some">
+        <item quantity="one">%1$d hesaba kopyalandı, %2$d hesap değişmedi: %3$s.</item>
+        <item quantity="other">%1$d hesaba kopyalandı, %2$d hesap değişmedi: %3$s.</item>
+    </plurals>
+    <plurals name="projects_feat_bulk_start_failed">
+        <item quantity="one">%1$d hesap başlatılamadı: %2$s.</item>
+        <item quantity="other">%1$d hesap başlatılamadı: %2$s.</item>
+    </plurals>
+    <plurals name="projects_feat_bulk_stop_failed">
+        <item quantity="one">%1$d hesap durdurulamadı: %2$s.</item>
+        <item quantity="other">%1$d hesap durdurulamadı: %2$s.</item>
+    </plurals>
+    <plurals name="projects_feat_bulk_restart_failed">
+        <item quantity="one">%1$d hesap yeniden bağlanamadı: %2$s.</item>
+        <item quantity="other">%1$d hesap yeniden bağlanamadı: %2$s.</item>
+    </plurals>
+    <plurals name="projects_feat_bulk_copy_failed">
+        <item quantity="one">%1$d hesap değişmedi: %2$s.</item>
+        <item quantity="other">%1$d hesap değişmedi: %2$s.</item>
+    </plurals>
+    <string name="projects_feat_bulk_reason_expired">süresi dolmuş</string>
+    <string name="projects_feat_bulk_reason_staff">yetkili durdurmuş</string>
+    <string name="projects_feat_bulk_reason_blocked">bu sunucuya girilemiyor</string>
+    <string name="projects_feat_bulk_reason_full">sunucu dolu</string>
+    <string name="projects_feat_bulk_reason_change_limit">sunucu çok sık değişti</string>
+    <string name="projects_feat_bulk_reason_not_running">oyunda değil</string>
+    <string name="projects_feat_bulk_reason_rate_limited">çok sık denendi</string>
+    <string name="projects_feat_bulk_reason_conflict">başka yerde değişti</string>
+    <string name="projects_feat_bulk_reason_offline">şu an ulaşılamıyor</string>
+    <string name="projects_feat_bulk_reason_other">bir sorun çıktı</string>
+    <string name="projects_feat_copy_title">%1$s hesabının ayarlarını kopyala</string>
+    <string name="projects_feat_copy_from">Hangi hesabın ayarları kopyalansın?</string>
+    <string name="projects_feat_copy_to">Şu hesaplara kopyalanır: %1$s</string>
+    <string name="projects_feat_copy_what">AFK engelleme, komutlar, otomatik yanıtlar ve oyundaki kendi adın kopyalanır.</string>
+    <string name="projects_feat_copy_server">Sunucu ve sürümü de kopyala</string>
+    <string name="projects_feat_copy_secret_each">Her hesap için şifreyi yaz</string>
+    <string name="projects_feat_copy_secret_same">Hepsine aynısını yaz</string>
+    <string name="projects_feat_copy_secret_for">%2$s için %1$s</string>
+    <string name="projects_feat_copy_confirm">Seçtiğin hesapların bu ayarları değişir; hesaplar yeniden bağlanır.</string>
+    <string name="projects_feat_copy_go">Kopyala</string>
+    <string name="projects_feat_copy_secret_missing">Şifreyi yaz.</string>
+    <string name="projects_feat_copy_pick_targets">Kopyalamak için başka bir hesap da seç.</string>
+
+    <!-- Hareket (3. evre) -->
+    <string name="projects_feat_move_setting_line">Açıkken hesap yürüyebilir; düşebilir ya da ölebilir.</string>
+    <string name="projects_feat_move_forward">İleri</string>
+    <string name="projects_feat_move_back">Geri</string>
+    <string name="projects_feat_move_left">Sola</string>
+    <string name="projects_feat_move_right">Sağa</string>
+    <string name="projects_feat_move_jump">Zıpla</string>
+    <string name="projects_feat_move_sneak">Eğil</string>
+    <string name="projects_feat_move_goto">Koordinata git</string>
+    <string name="projects_feat_move_go_main">Ana hesabının yanına git</string>
+    <string name="projects_feat_move_follow_main">Ana hesabını takip et</string>
+    <string name="projects_feat_move_stop">Dur</string>
+    <string name="projects_feat_move_far">En çok 256 blok uzağa gidebilir.</string>
+    <string name="projects_feat_move_not_near">Ana hesabın yakında değil.</string>
+    <string name="projects_feat_move_no_slot">Şu an hareket için yer yok.</string>
+    <string name="projects_feat_move_overworld">Dünya</string>
+    <string name="projects_feat_move_nether">Nether</string>
+    <string name="projects_feat_move_end">End</string>
+    <string name="projects_feat_move_go">Git</string>
+    <string name="projects_feat_move_going">Gidiyor: %1$d, %2$d, %3$d</string>
+    <string name="projects_feat_move_following">Takip ediyor: %1$s</string>
+    <string name="projects_feat_move_off">Hareket bu hesapta kapalı.</string>
+    <string name="projects_feat_move_needs_owner">Önce ayarlarda oyundaki kendi adını yaz.</string>
+    <string name="projects_feat_move_position">Konum</string>
+</resources>

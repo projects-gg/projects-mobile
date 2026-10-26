@@ -49,6 +49,10 @@ Third-party components added by this fork:
     phone, which is not part of this app.
   - ZXing core (com.google.zxing:core), Apache License 2.0, Copyright ZXing authors, to draw the
     friend code's QR code.
+  - Projects Pixel's glyph bitmaps (the game-like letters of the cloud inventory), Copyright (c) 2022
+    Idrees Hassan (Minecraft Font) and (c) 2026 Projects, SIL Open Font License 1.1
+    (app_pojavlauncher/src/main/assets/licenses/PROJECTS_PIXEL_OFL.txt). Not affiliated with Mojang or
+    Minecraft; it holds no game assets.
   The Apache License 2.0 text: https://www.apache.org/licenses/LICENSE-2.0
 
 All notices of upstream and of the components it bundles are kept unchanged (see README.md

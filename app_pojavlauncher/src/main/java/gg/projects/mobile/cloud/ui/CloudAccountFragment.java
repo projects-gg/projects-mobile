@@ -33,8 +33,7 @@ import gg.projects.mobile.ui.Haptics;
  * assistant's screens (each behind the service's switch for it). Orders, refunds and deleting stay on the site. The
  * screen watches the account live while it is open (the state changes as the account connects).
  *
- * <p>Room is kept for CAFK-FEAT (FEAT-M): the live inventory goes into {@link #mInventory}, under the actions and
- * above the console row.
+ * <p>CAFK-FEAT (FEAT-M): "Envanter" and "Hareket" sit beside the console, each only for an account that may use it.
  */
 public final class CloudAccountFragment extends CloudScreen implements CloudService.LiveListener {
     public static final String TAG = "ProjectsCloudAccountFragment";
@@ -46,9 +45,6 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
     private TextView mHint;
     @Nullable
     private CloudUi.Row mTimeRow;
-    /** FEAT-M: the live inventory ("Envanter"), between the actions and the console row. Empty until then. */
-    @Nullable
-    private LinearLayout mInventory;
     @Nullable
     private CloudService.LiveHandle mLive;
     private boolean mBusy;
@@ -113,6 +109,7 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
                     .append(a.ai.quota.weekResetAt).append(a.ai.quota.giftsLeft);
         }
         key.append('|').append(mService.unread(a.id));
+        key.append('|').append(a.features.inventoryMode).append(a.features.inventoryOn).append(gg.projects.mobile.cloud.movement.Movement.shows(mService, a));
         CloudModel.Offer offer = mService.offer();
         if (offer != null && offer.plus != null) key.append(offer.plus.features).append(offer.plus.sales);
         return key.toString();
@@ -196,18 +193,27 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
             }
         }
 
-        // FEAT-M: "Envanter" (the live inventory) comes here.
-        mInventory = new LinearLayout(c);
-        mInventory.setOrientation(LinearLayout.VERTICAL);
-        mInventory.setVisibility(View.GONE);
-        content.addView(mInventory, CloudUi.matchWrap());
-
-        // The console and the settings.
+        // The console, then the account's live inventory and its movement (CAFK-FEAT: each only while the service, the
+        // machine and the client allow it; an account that may not use one shows no row for it), then the settings.
         content.addView(CloudUi.gap(c, 14));
         LinearLayout group = CloudUi.group(c);
         List<View> rows = new ArrayList<>();
         rows.add(CloudUi.row(c, R.drawable.projects_ic_terminal, getString(R.string.projects_cloud_console),
                 v -> openFor(CloudConsoleFragment.class, a.id)).view);
+        if (a.features.inventory()) {
+            CloudUi.Row inventory = CloudUi.row(c, R.drawable.projects_ic_backpack, getString(R.string.projects_feat_inventory),
+                    v -> openFor(gg.projects.mobile.cloud.inventory.CloudInventoryFragment.class, a.id));
+            if (!a.features.inventoryOn) {
+                inventory.count.setText(getString(R.string.projects_feat_inventory_off_short));
+                inventory.count.setTextColor(CloudUi.color(c, R.color.projects_ash_400));
+                inventory.count.setVisibility(View.VISIBLE);
+            }
+            rows.add(inventory.view);
+        }
+        if (gg.projects.mobile.cloud.movement.Movement.shows(mService, a)) {
+            rows.add(CloudUi.row(c, R.drawable.projects_ic_footprints, getString(R.string.projects_feat_movement),
+                    v -> openFor(gg.projects.mobile.cloud.movement.CloudMovementFragment.class, a.id)).view);
+        }
         rows.add(CloudUi.row(c, R.drawable.projects_ic_sliders, getString(R.string.projects_cloud_settings),
                 v -> openFor(CloudSettingsFragment.class, a.id)).view);
         CloudUi.fill(group, rows);

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- FEAT-M: the only folder the share provider serves: the console logs written for sharing (cache/console/). -->
+<paths>
+    <cache-path name="console" path="console/" />
+</paths>

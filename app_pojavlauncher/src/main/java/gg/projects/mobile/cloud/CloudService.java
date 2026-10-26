@@ -151,6 +151,21 @@ public final class CloudService implements SocialService.Listener {
         return mOffer != null ? mOffer.limits : CloudModel.Limits.defaults();
     }
 
+    /** FEAT-M: debug builds that ask for it run the movement panel against its stand-in machine (never a release). */
+    public boolean movementMock() {
+        return mDebug.movementMock;
+    }
+
+    /** CAFK-FEAT: the service's switches (all off before the first answer and on an older service). */
+    public CloudModel.OfferFeatures features() {
+        return mOffer != null ? mOffer.features : CloudModel.OfferFeatures.none();
+    }
+
+    /** The save checks an account's switches ask for: placeholders by its own features, the service's command list. */
+    public CloudEdit.Checks checks(@Nullable Account account) {
+        return new CloudEdit.Checks(account != null && account.features.placeholders, features().placeholderCommands);
+    }
+
     public boolean signedIn() {
         return SocialService.get(mApp).signedIn();
     }
@@ -593,7 +608,7 @@ public final class CloudService implements SocialService.Listener {
                 final String acct = current.id;
                 CloudEdit.Built built;
                 try {
-                    built = CloudEdit.build(edited, limits(), serverChanged,
+                    built = CloudEdit.build(edited, limits(), checks(current), serverChanged,
                             (text, rowId) -> CloudSeal.seal(key, text, CloudSeal.sealAad(owner, acct, rowId, target)), current.config.fingerprints());
                 } catch (CloudSeal.SealException e) {
                     throw CloudProblem.failed("seal " + e.error);
@@ -632,6 +647,158 @@ public final class CloudService implements SocialService.Listener {
         for (CloudModel.CommandView c : account.config.commands) if (c.payload.secret) return true;
         for (CloudModel.RuleView r : account.config.rules) if (r.reply.secret) return true;
         return false;
+    }
+
+    /**
+     * CAFK-FEAT: the account's inventory view on or off (its own choice, {@code config.inventory}). It applies at the
+     * account's next connection; nothing restarts for it. Stored secrets are kept as they are; a change made elsewhere
+     * meanwhile is read again and the switch tried once more on it. A stored row the save checks refuse comes back as
+     * the issues (the settings screen shows where).
+     */
+    public void setInventory(final String id, final boolean on, final Result<SaveOutcome> result) {
+        run(token -> {
+            for (int attempt = 0; ; attempt++) {
+                Account current = mApi.account(token, id);
+                CloudEdit.Config config = CloudEdit.from(current.config);
+                config.inventory = on;
+                List<CloudEdit.Issue> issues = CloudEdit.validate(config, limits(), checks(current));
+                if (!issues.isEmpty()) return new SaveOutcome(null, null, issues);
+                CloudEdit.Built built;
+                try {
+                    // Every secret is SEALED here (never typed): build keeps them, nothing is sealed.
+                    built = CloudEdit.build(config, limits(), checks(current), false, (text, rowId) -> {
+                        throw new CloudSeal.SealException(CloudSeal.Error.KEY);
+                    }, current.config.fingerprints());
+                } catch (CloudSeal.SealException e) {
+                    throw CloudProblem.failed("seal " + e.error);
+                }
+                if (built.config == null) return new SaveOutcome(null, null, built.issues);
+                try {
+                    return new SaveOutcome(mApi.patchAccount(token, id, current.rev, CloudEdit.patch(current, null, null, null, null, built.config)),
+                            null, Collections.<CloudEdit.Issue>emptyList());
+                } catch (CloudProblem problem) {
+                    if (problem.kind == CloudProblem.Kind.CONFLICT && attempt == 0) continue;
+                    List<CloudEdit.Issue> refused = CloudEdit.fromRefusal(problem);
+                    if (refused != null) return new SaveOutcome(null, null, refused);
+                    throw problem;
+                }
+            }
+        }, new Result<SaveOutcome>() {
+            @Override
+            public void ok(SaveOutcome value) {
+                if (value.saved != null) store(value.saved);
+                result.ok(value);
+            }
+
+            @Override
+            public void failed(CloudProblem problem) {
+                result.failed(problem);
+            }
+        });
+    }
+
+    /**
+     * Several accounts at once (README "Bulk management"): start, stop or reconnect each, in the list's order, waiting
+     * for each answer; one outcome with the first failure's reason. The accounts the service answered with go into the
+     * list as they come.
+     */
+    public void bulk(final CloudBulk.Action action, final List<String> ids, final Result<CloudBulk.Outcome> result) {
+        run(token -> {
+            CloudBulk.Outcome outcome = new CloudBulk.Outcome();
+            for (String id : ids) {
+                try {
+                    final Account answered;
+                    switch (action) {
+                        case STOP: answered = mApi.stop(token, id); break;
+                        case RESTART: answered = mApi.restart(token, id); break;
+                        default: answered = mApi.start(token, id); break;
+                    }
+                    outcome.ok();
+                    mMain.post(() -> store(answered));
+                } catch (CloudProblem problem) {
+                    if (problem.kind == CloudProblem.Kind.SIGNED_OUT) throw problem;
+                    outcome.fail(problem.code);
+                }
+            }
+            return outcome;
+        }, new Result<CloudBulk.Outcome>() {
+            @Override
+            public void ok(CloudBulk.Outcome value) {
+                mFetchedAt = 0;
+                fetchAccounts(true);
+                result.ok(value);
+            }
+
+            @Override
+            public void failed(CloudProblem problem) {
+                mFetchedAt = 0;
+                fetchAccounts(true);
+                result.failed(problem);
+            }
+        });
+    }
+
+    /**
+     * "Ayarları kopyala": {@code source}'s anti-AFK, commands, replies and owner's name onto each target, with the server
+     * and version when {@code server} is true. Secret rows take the words typed for each target ({@code secrets}: target
+     * id → row id → words), sealed here for that target and its server. One {@code PATCH} per target with its own
+     * revision; a change made elsewhere meanwhile is read again and tried once more.
+     */
+    public void copySettings(final Account source, final List<String> targets, final boolean server,
+                             final Map<String, Map<String, String>> secrets, final Result<CloudBulk.Outcome> result) {
+        run(token -> {
+            CloudBulk.Outcome outcome = new CloudBulk.Outcome();
+            final CloudSeal.VaultKey key = vaultKey();
+            final String owner = owner(token);
+            for (final String id : targets) {
+                Map<String, String> typed = secrets.get(id);
+                CloudEdit.Config config = CloudBulk.copied(source.config, typed == null ? Collections.<String, String>emptyMap() : typed);
+                boolean sent = false;
+                for (int attempt = 0; attempt < 2 && !sent; attempt++) {
+                    try {
+                        final Account current = mApi.account(token, id);
+                        final CloudServer target = server ? source.server : current.server;
+                        CloudEdit.Built built;
+                        try {
+                            built = CloudEdit.build(config, limits(), checks(current), false,
+                                    (text, rowId) -> CloudSeal.seal(key, text, CloudSeal.sealAad(owner, id, rowId, target)),
+                                    Collections.<String, String>emptyMap());
+                        } catch (CloudSeal.SealException e) {
+                            throw CloudProblem.failed("seal " + e.error);
+                        }
+                        if (built.config == null) {
+                            outcome.fail("invalid_config");
+                            sent = true;
+                            continue;
+                        }
+                        JsonObject patch = CloudBulk.patch(current, built.config, server && !source.server.equals(current.server) ? source.server : null,
+                                server && !source.version.equals(current.version) ? source.version : null);
+                        final Account answered = mApi.patchAccount(token, id, current.rev, patch);
+                        outcome.ok();
+                        sent = true;
+                        mMain.post(() -> store(answered));
+                    } catch (CloudProblem problem) {
+                        if (problem.kind == CloudProblem.Kind.SIGNED_OUT) throw problem;
+                        if (problem.kind == CloudProblem.Kind.CONFLICT && attempt == 0) continue;
+                        outcome.fail(problem.code);
+                        sent = true;
+                    }
+                }
+            }
+            return outcome;
+        }, new Result<CloudBulk.Outcome>() {
+            @Override
+            public void ok(CloudBulk.Outcome value) {
+                mFetchedAt = 0;
+                fetchAccounts(true);
+                result.ok(value);
+            }
+
+            @Override
+            public void failed(CloudProblem problem) {
+                result.failed(problem);
+            }
+        });
     }
 
     // ---- notifications (the player's switches, the same on every device) ----
@@ -848,6 +1015,18 @@ public final class CloudService implements SocialService.Listener {
         void approval(CloudModel.Approval approval);
 
         void hostOnline(boolean online);
+
+        /** CAFK-FEAT: the status strip (action bar, title, boss bars) of the account. */
+        default void bars(gg.projects.mobile.cloud.console.Bars bars) {}
+    }
+
+    /** CAFK-FEAT: what an inventory screen gets (only while it watches with the inventory). Main thread. */
+    public interface InventoryListener {
+        void invState(gg.projects.mobile.cloud.inventory.InvFrames.Status status);
+
+        void inventory(gg.projects.mobile.cloud.inventory.InvFrames.Inv frame);
+
+        void window(gg.projects.mobile.cloud.inventory.InvFrames.Win frame);
     }
 
     public enum Live { CONNECTING, LIVE, LOST, REPLACED, SIGNED_OUT, HOST_OFFLINE, REFUSED }
@@ -857,12 +1036,25 @@ public final class CloudService implements SocialService.Listener {
         final String acct;
         final boolean ai;
         final LiveListener listener;
+        @Nullable
+        final InventoryListener inventory;
         private boolean mClosed;
 
-        LiveHandle(String acct, boolean ai, LiveListener listener) {
+        LiveHandle(String acct, boolean ai, LiveListener listener, @Nullable InventoryListener inventory) {
             this.acct = acct;
             this.ai = ai;
             this.listener = listener;
+            this.inventory = inventory;
+        }
+
+        /**
+         * Sends one inventory move of this account; {@code answer} comes once, on the main thread (also when the socket
+         * cannot carry it: {@code host_offline}).
+         */
+        @MainThread
+        public void move(gg.projects.mobile.cloud.inventory.InvOp op, gg.projects.mobile.cloud.inventory.InvQueue.Answer answer) {
+            if (mClosed) return;
+            sendMove(this, op, answer);
         }
 
         @MainThread
@@ -899,6 +1091,39 @@ public final class CloudService implements SocialService.Listener {
             broadcast(Live.CONNECTING);
             live = CloudLive.open(mApi, token, host, this);
             for (LiveHandle h : handles) live.watch(h.acct, h.ai);
+            for (LiveHandle h : handles) if (h.inventory != null) live.inventory(h.acct, true);
+        }
+
+        /** Whether any screen still wants {@code acct}'s inventory. */
+        boolean wantsInventory(String acct) {
+            for (LiveHandle h : handles) if (h.acct.equals(acct) && h.inventory != null) return true;
+            return false;
+        }
+
+        @Override
+        public void invState(String acct, gg.projects.mobile.cloud.inventory.InvFrames.Status status) {
+            for (LiveHandle h : of(acct)) if (h.inventory != null) h.inventory.invState(status);
+        }
+
+        @Override
+        public void inventory(String acct, gg.projects.mobile.cloud.inventory.InvFrames.Inv frame) {
+            for (LiveHandle h : of(acct)) if (h.inventory != null) h.inventory.inventory(frame);
+        }
+
+        @Override
+        public void window(String acct, gg.projects.mobile.cloud.inventory.InvFrames.Win frame) {
+            for (LiveHandle h : of(acct)) if (h.inventory != null) h.inventory.window(frame);
+        }
+
+        @Override
+        public void invResult(String id, @Nullable gg.projects.mobile.cloud.inventory.InvFrames.Error error) {
+            gg.projects.mobile.cloud.inventory.InvQueue.Answer answer = mMoves.remove(id);
+            if (answer != null) answer.answered(error);
+        }
+
+        @Override
+        public void bars(String acct, gg.projects.mobile.cloud.console.Bars bars) {
+            for (LiveHandle h : of(acct)) h.listener.bars(bars);
         }
 
         void closeIfIdle() {
@@ -981,6 +1206,7 @@ public final class CloudService implements SocialService.Listener {
         public void ended(CloudLive ended, CloudLiveFrames.After after, long retryAfter, boolean failed) {
             if (ended != live) return;
             live = null;
+            failMoves(host);
             switch (after) {
                 case REPLACED:
                     broadcast(Live.REPLACED);
@@ -1008,6 +1234,10 @@ public final class CloudService implements SocialService.Listener {
     }
 
     private final Map<String, HostSocket> mSockets = new HashMap<>();
+    /** Inventory moves waiting for their {@code invres}, by id, and the machine they went to. */
+    private final Map<String, gg.projects.mobile.cloud.inventory.InvQueue.Answer> mMoves = new HashMap<>();
+    private final Map<String, String> mMoveHosts = new HashMap<>();
+    private long mMoveCounter;
 
     /**
      * Streams one account while a screen shows it ({@code ai}: its AI feed and approvals too). Null when the account
@@ -1016,6 +1246,16 @@ public final class CloudService implements SocialService.Listener {
     @MainThread
     @Nullable
     public LiveHandle watch(String acct, boolean ai, LiveListener listener) {
+        return watch(acct, ai, listener, null);
+    }
+
+    /**
+     * {@link #watch(String, boolean, LiveListener)} with the account's inventory too (CAFK-FEAT): only while an inventory
+     * view is visible (the service streams frames to every watcher that asks).
+     */
+    @MainThread
+    @Nullable
+    public LiveHandle watch(String acct, boolean ai, LiveListener listener, @Nullable InventoryListener inventory) {
         Account account = account(acct);
         if (account == null || account.host == null) return null;
         HostSocket socket = mSockets.get(account.host);
@@ -1024,14 +1264,39 @@ public final class CloudService implements SocialService.Listener {
             mSockets.put(account.host, socket);
         }
         mMain.removeCallbacks(socket.closeIdle);
-        LiveHandle handle = new LiveHandle(acct, ai, listener);
+        LiveHandle handle = new LiveHandle(acct, ai, listener, inventory);
         socket.handles.add(handle);
         if (socket.live == null) socket.connect();
         else {
             socket.live.watch(acct, ai);
+            if (inventory != null) socket.live.inventory(acct, true);
             listener.liveState(socket.state);
         }
         return handle;
+    }
+
+    private void sendMove(LiveHandle handle, gg.projects.mobile.cloud.inventory.InvOp op,
+                          final gg.projects.mobile.cloud.inventory.InvQueue.Answer answer) {
+        Account account = account(handle.acct);
+        HostSocket socket = account == null || account.host == null ? null : mSockets.get(account.host);
+        mMoveCounter = (mMoveCounter + 1) % 1_000_000_000L;
+        String id = "m" + Long.toString(mMoveCounter, 36);
+        if (socket == null || socket.live == null || !socket.live.send(op.frame(handle.acct, id))) {
+            mMain.post(() -> answer.answered(gg.projects.mobile.cloud.inventory.InvFrames.Error.of("host_offline")));
+            return;
+        }
+        mMoves.put(id, answer);
+        mMoveHosts.put(id, socket.host);
+    }
+
+    /** A socket that ended takes its moves with it: they are answered "out of reach" at once (never sent again). */
+    private void failMoves(String host) {
+        for (String id : new ArrayList<>(mMoveHosts.keySet())) {
+            if (!host.equals(mMoveHosts.get(id))) continue;
+            mMoveHosts.remove(id);
+            gg.projects.mobile.cloud.inventory.InvQueue.Answer answer = mMoves.remove(id);
+            if (answer != null) answer.answered(gg.projects.mobile.cloud.inventory.InvFrames.Error.of("host_offline"));
+        }
     }
 
     /** "Burada aç" after the console was opened elsewhere: this phone takes it back. */
@@ -1049,6 +1314,10 @@ public final class CloudService implements SocialService.Listener {
             if (!socket.handles.remove(handle)) continue;
             boolean stillWatched = !socket.of(handle.acct).isEmpty();
             if (!stillWatched && socket.live != null) socket.live.unwatch(handle.acct);
+            else if (handle.inventory != null && socket.live != null && !socket.wantsInventory(handle.acct)) {
+                // The console stays; the inventory stream stops with the last view that wanted it.
+                socket.live.inventory(handle.acct, false);
+            }
             if (socket.handles.isEmpty()) mMain.postDelayed(socket.closeIdle, LIVE_GRACE_MS);
         }
     }
@@ -1059,6 +1328,7 @@ public final class CloudService implements SocialService.Listener {
             mMain.removeCallbacks(socket.closeIdle);
             if (socket.live != null) socket.live.close();
             socket.live = null;
+            failMoves(socket.host);
             socket.broadcast(Live.LOST);
             socket.handles.clear();
         }

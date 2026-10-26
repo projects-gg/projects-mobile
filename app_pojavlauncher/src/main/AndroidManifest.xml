@@ -137,6 +137,18 @@
             </intent-filter>
         </provider>
 
+        <!-- FEAT-M: hands a cloud account's console log (a masked text file in the cache) to the share sheet, one
+             file at a time with read permission for it alone. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.projects.share"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/projects_share_paths" />
+        </provider>
+
         <service android:name=".services.ProgressService"
             android:foregroundServiceType="dataSync"/>
         <service android:name=".services.GameService" android:process=":game"

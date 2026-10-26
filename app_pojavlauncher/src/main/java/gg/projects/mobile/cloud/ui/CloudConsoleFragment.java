@@ -3,19 +3,25 @@ package gg.projects.mobile.cloud.ui;
 import android.content.Context;
 import android.os.Build;
 import android.text.Editable;
+import android.text.SpannableString;
+import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.text.style.ForegroundColorSpan;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -33,6 +39,10 @@ import gg.projects.mobile.cloud.CloudService;
 import gg.projects.mobile.cloud.CloudStatus;
 import gg.projects.mobile.cloud.CloudText;
 import gg.projects.mobile.cloud.CloudWords;
+import gg.projects.mobile.cloud.console.Bars;
+import gg.projects.mobile.cloud.console.ConsoleKinds;
+import gg.projects.mobile.cloud.console.ConsoleShare;
+import gg.projects.mobile.cloud.console.ConsoleViews;
 import gg.projects.mobile.ui.Haptics;
 import gg.projects.mobile.ui.Press;
 
@@ -42,9 +52,12 @@ import gg.projects.mobile.ui.Press;
  * field says so as soon as it looks like one) and the console never shows it back. The list sticks to the bottom
  * while the player is there; scrolled up, "Yeni mesajlar" brings them back.
  *
- * <p>Room is kept for CAFK-FEAT (FEAT-M): the console's filter row goes into {@link #mFilters}, under the state.
+ * <p>With console kinds (CAFK-FEAT §3.2, the account's {@code features.consoleKinds}): lines in their kind's colour,
+ * filter chips (Hepsi, Sohbet, Özel, Sunucu, Komutlarım, Bağlantı, Adın geçenler), a search over the loaded lines, the
+ * strip of what the server keeps on screen in the game, "Envanterde göster" beside a menu's line, and the log shared or
+ * saved as a file. Without them the console is as it was.
  */
-public final class CloudConsoleFragment extends CloudScreen implements CloudService.LiveListener {
+public final class CloudConsoleFragment extends CloudScreen implements CloudService.LiveListener, ConsoleShare.Host {
     public static final String TAG = "ProjectsCloudConsoleFragment";
     private static final int MAX_LINES = 1500;
 
@@ -53,7 +66,7 @@ public final class CloudConsoleFragment extends CloudScreen implements CloudServ
     private final Lines mAdapter = new Lines();
     private LinearLayout mStrip;
     private CloudUi.StateLine mState;
-    /** FEAT-M: the console's filter row (kinds of lines), under the state. Empty until then. */
+    /** The console's filter row (kinds of lines), under the state; empty without console kinds. */
     private LinearLayout mFilters;
     private LinearLayout mNotice;
     private LinearLayout mEmpty;
@@ -61,6 +74,19 @@ public final class CloudConsoleFragment extends CloudScreen implements CloudServ
     private EditText mInput;
     private ImageButton mSend;
     private TextView mNote;
+    @Nullable
+    private ConsoleViews.Chips mChips;
+    @Nullable
+    private ConsoleViews.Strip mBarsView;
+    @Nullable
+    private EditText mSearch;
+    @Nullable
+    private View mSearchRow;
+    private boolean mKinds;
+    private boolean mActionsAdded;
+    /** 0–5 the kinds' chips, 6 "Adın geçenler". */
+    private int mFilter;
+    private String mQuery = "";
     @Nullable
     private CloudService.LiveHandle mLive;
     private CloudService.Live mLiveState = CloudService.Live.CONNECTING;
@@ -71,6 +97,17 @@ public final class CloudConsoleFragment extends CloudScreen implements CloudServ
     private boolean mNoEarlier;
     private String mNoticeShown = "";
     private final Runnable mTick = this::tick;
+    @Nullable
+    private byte[] mPendingSave;
+    private final ActivityResultLauncher<android.content.Intent> mSaveAs = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(), result -> {
+                byte[] bytes = mPendingSave;
+                mPendingSave = null;
+                android.net.Uri uri = result.getData() == null ? null : result.getData().getData();
+                if (result.getResultCode() == android.app.Activity.RESULT_OK && uri != null && bytes != null && getContext() != null) {
+                    ConsoleShare.write(requireContext(), uri, bytes);
+                }
+            });
 
     public CloudConsoleFragment() {
         super(R.layout.fragment_projects_cloud_stream);
@@ -92,7 +129,7 @@ public final class CloudConsoleFragment extends CloudScreen implements CloudServ
         mState.view.setPadding(CloudUi.dp(c, 8), CloudUi.dp(c, 4), CloudUi.dp(c, 8), CloudUi.dp(c, 6));
         mStrip.addView(mState.view, CloudUi.matchWrap());
         mFilters = new LinearLayout(c);
-        mFilters.setOrientation(LinearLayout.HORIZONTAL);
+        mFilters.setOrientation(LinearLayout.VERTICAL);
         mFilters.setVisibility(View.GONE);
         mStrip.addView(mFilters, CloudUi.matchWrap());
         mNotice = new LinearLayout(c);
@@ -153,6 +190,7 @@ public final class CloudConsoleFragment extends CloudScreen implements CloudServ
                 mNoHost = mLive == null;
             }
         }
+        kinds();
         notice();
         empty();
     }
@@ -173,11 +211,156 @@ public final class CloudConsoleFragment extends CloudScreen implements CloudServ
         CloudModel.Account a = account();
         if (a == null) return;
         mHeader.setCaption(a.name);
+        kinds();
         tick();
         composer();
         notice();
         empty();
     }
+
+    // ---- console kinds: the chips, the search, the strip, sharing ----
+
+    /** Shows the kinds' tools while the account has them (they come and go with the service's switch). */
+    private void kinds() {
+        CloudModel.Account a = account();
+        boolean on = a != null && a.features.consoleKinds;
+        if (on == mKinds && (mChips != null || !on)) return;
+        mKinds = on;
+        Context c = ctx();
+        mFilters.removeAllViews();
+        mChips = null;
+        mBarsView = null;
+        mSearch = null;
+        mSearchRow = null;
+        if (!on) {
+            mFilters.setVisibility(View.GONE);
+            mFilter = 0;
+            mQuery = "";
+            mAdapter.refilter();
+            return;
+        }
+        if (!mActionsAdded) {
+            // Header actions: search the loaded lines, share or save the log. Added once; hidden without kinds.
+            mActionsAdded = true;
+            mHeader.addAction(R.drawable.projects_ic_magnifying_glass, R.string.projects_feat_console_search, v -> toggleSearch());
+            mHeader.addAction(R.drawable.projects_ic_share, R.string.projects_feat_console_export_open, v -> {
+                CloudModel.Account account = account();
+                if (account != null) ConsoleShare.open(this, account, lang());
+            });
+        }
+        CharSequence[] labels = {getString(R.string.projects_feat_console_all), getString(R.string.projects_feat_console_chat),
+                getString(R.string.projects_feat_console_private), getString(R.string.projects_feat_console_server),
+                getString(R.string.projects_feat_console_mine), getString(R.string.projects_feat_console_connection),
+                getString(R.string.projects_feat_console_mentions)};
+        mChips = new ConsoleViews.Chips(c, labels, mFilter, i -> {
+            mFilter = i;
+            mAdapter.refilter();
+            empty();
+        });
+        LinearLayout.LayoutParams chipsLp = CloudUi.matchWrap();
+        chipsLp.leftMargin = -CloudUi.dp(c, 4);
+        mFilters.addView(mChips.view, chipsLp);
+
+        LinearLayout searchRow = new LinearLayout(c);
+        searchRow.setOrientation(LinearLayout.HORIZONTAL);
+        searchRow.setGravity(Gravity.CENTER_VERTICAL);
+        EditText search = new EditText(c);
+        search.setBackgroundResource(R.drawable.projects_input);
+        search.setHint(getString(R.string.projects_feat_console_search));
+        search.setHintTextColor(CloudUi.color(c, R.color.projects_ash_400));
+        search.setTextColor(CloudUi.color(c, R.color.projects_bone_100));
+        search.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+        search.setSingleLine(true);
+        search.setMinHeight(CloudUi.dp(c, 44));
+        search.setPadding(CloudUi.dp(c, 14), 0, CloudUi.dp(c, 14), 0);
+        search.setImeOptions(EditorInfo.IME_ACTION_SEARCH);
+        search.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+        search.setCompoundDrawablesRelative(CloudUi.tinted(c, R.drawable.projects_ic_magnifying_glass, R.color.projects_ash_400, 18), null, null, null);
+        search.setCompoundDrawablePadding(CloudUi.dp(c, 8));
+        search.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                mQuery = s.toString();
+                mAdapter.refilter();
+                empty();
+            }
+        });
+        searchRow.addView(search, CloudUi.weight(1f));
+        ImageButton clear = new ImageButton(c);
+        clear.setBackgroundResource(R.drawable.projects_icon_button_ripple);
+        clear.setImageDrawable(CloudUi.tinted(c, R.drawable.projects_ic_x, R.color.projects_bone_100, 20));
+        clear.setContentDescription(getString(R.string.projects_feat_console_search_clear));
+        Press.attach(clear, Press.Style.ICON);
+        clear.setOnClickListener(v -> toggleSearch());
+        searchRow.addView(clear, new LinearLayout.LayoutParams(CloudUi.dp(c, 48), CloudUi.dp(c, 48)));
+        LinearLayout.LayoutParams searchLp = CloudUi.matchWrap();
+        searchLp.topMargin = CloudUi.dp(c, 2);
+        searchRow.setVisibility(mQuery.isEmpty() ? View.GONE : View.VISIBLE);
+        if (!mQuery.isEmpty()) search.setText(mQuery);
+        mFilters.addView(searchRow, searchLp);
+        mSearch = search;
+        mSearchRow = searchRow;
+
+        ConsoleViews.Strip strip = new ConsoleViews.Strip(c);
+        strip.setClock(() -> mService.nowMs());
+        LinearLayout.LayoutParams stripLp = CloudUi.matchWrap();
+        stripLp.topMargin = CloudUi.dp(c, 4);
+        stripLp.bottomMargin = CloudUi.dp(c, 2);
+        mFilters.addView(strip, stripLp);
+        mBarsView = strip;
+        mFilters.setVisibility(View.VISIBLE);
+        mAdapter.refilter();
+    }
+
+    private void toggleSearch() {
+        if (mSearchRow == null || mSearch == null) return;
+        boolean open = mSearchRow.getVisibility() != View.VISIBLE;
+        mSearchRow.setVisibility(open ? View.VISIBLE : View.GONE);
+        InputMethodManager imm = (InputMethodManager) ctx().getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (open) {
+            mSearch.requestFocus();
+            if (imm != null) imm.showSoftInput(mSearch, InputMethodManager.SHOW_IMPLICIT);
+        } else {
+            mSearch.setText("");
+            if (imm != null) imm.hideSoftInputFromWindow(mSearch.getWindowToken(), 0);
+        }
+    }
+
+    @Override
+    public android.app.Activity activity() {
+        return requireActivity();
+    }
+
+    @Override
+    public CloudService service() {
+        return mService;
+    }
+
+    @Override
+    public void saveAs(String name, byte[] bytes) {
+        mPendingSave = bytes;
+        try {
+            mSaveAs.launch(new android.content.Intent(android.content.Intent.ACTION_CREATE_DOCUMENT)
+                    .addCategory(android.content.Intent.CATEGORY_OPENABLE).setType("text/plain")
+                    .putExtra(android.content.Intent.EXTRA_TITLE, name));
+        } catch (RuntimeException e) {
+            mPendingSave = null;
+            toast(getString(R.string.projects_feat_console_export_failed));
+        }
+    }
+
+    @Override
+    public boolean alive() {
+        return super.alive();
+    }
+
+    // ---- the state and the composer ----
 
     private void tick() {
         View view = getView();
@@ -198,7 +381,6 @@ public final class CloudConsoleFragment extends CloudScreen implements CloudServ
         String typed = mInput.getText().toString().trim();
         mSend.setEnabled(inGame && !mSending && !typed.isEmpty());
         mSend.setAlpha(mSend.isEnabled() ? 1f : 0.5f);
-        Context c = ctx();
         if (!inGame) {
             note(getString(R.string.projects_cloud_console_offline), 0);
         } else if (!typed.isEmpty() && CloudText.looksSensitive(typed)) {
@@ -260,15 +442,27 @@ public final class CloudConsoleFragment extends CloudScreen implements CloudServ
         }
     }
 
-    /** "Bağlanılıyor" before the first lines, "Henüz mesaj yok" when there are none. */
+    /** "Bağlanılıyor" before the first lines, "Henüz mesaj yok" when there are none, the filter's own when it hides all. */
     private void empty() {
         if (mEmpty == null) return;
         mEmpty.removeAllViews();
-        if (mAdapter.lineCount() > 0 || mNoHost) {
+        if (mNoHost) {
             mEmpty.setVisibility(View.GONE);
             return;
         }
         Context c = ctx();
+        if (mAdapter.lineCount() > 0) {
+            if (mAdapter.visibleLines() > 0) {
+                mEmpty.setVisibility(View.GONE);
+                return;
+            }
+            TextView none = CloudUi.text(c, getString(R.string.projects_feat_console_none), 14.5f, R.color.projects_ash_300, false);
+            none.setGravity(Gravity.CENTER);
+            none.setPadding(CloudUi.dp(c, 16), CloudUi.dp(c, 32), CloudUi.dp(c, 16), CloudUi.dp(c, 16));
+            mEmpty.addView(none, CloudUi.matchWrap());
+            mEmpty.setVisibility(View.VISIBLE);
+            return;
+        }
         boolean waiting = mLiveState == CloudService.Live.CONNECTING || mLiveState == CloudService.Live.LOST;
         mEmpty.addView(CloudUi.empty(c, gg.projects.mobile.ui.PixelSprites.Sprite.LOGS,
                 getString(waiting ? R.string.projects_cloud_console_connecting : R.string.projects_cloud_console_empty)));
@@ -331,6 +525,7 @@ public final class CloudConsoleFragment extends CloudScreen implements CloudServ
                 }
                 if (older.isEmpty()) mNoEarlier = true;
                 mAdapter.prepend(older, !mNoEarlier);
+                empty();
             }
 
             @Override
@@ -362,9 +557,10 @@ public final class CloudConsoleFragment extends CloudScreen implements CloudServ
             mAdapter.replace(lines, !mNoEarlier);
             mList.scrollToPosition(Math.max(0, mAdapter.getItemCount() - 1));
         } else {
+            int before = mAdapter.getItemCount();
             mAdapter.append(lines, skipped);
-            if (atBottom) mList.scrollToPosition(mAdapter.getItemCount() - 1);
-            else if (!lines.isEmpty()) mJump.setVisibility(View.VISIBLE);
+            if (atBottom) mList.scrollToPosition(Math.max(0, mAdapter.getItemCount() - 1));
+            else if (mAdapter.getItemCount() > before) mJump.setVisibility(View.VISIBLE);
         }
         empty();
     }
@@ -379,6 +575,11 @@ public final class CloudConsoleFragment extends CloudScreen implements CloudServ
     public void hostOnline(boolean online) {
         mHostOnline = online;
         if (alive()) notice();
+    }
+
+    @Override
+    public void bars(Bars bars) {
+        if (alive() && mBarsView != null) mBarsView.set(bars);
     }
 
     // ---- the list ----
@@ -401,10 +602,36 @@ public final class CloudConsoleFragment extends CloudScreen implements CloudServ
         }
     }
 
+    private boolean filtering() {
+        return mKinds && (mFilter != 0 || !mQuery.trim().isEmpty());
+    }
+
+    private boolean shows(Item item) {
+        if (item.type != TYPE_LINE || item.line == null) return item.type == TYPE_EARLIER || !filtering();
+        if (!mKinds) return true;
+        CloudModel.ConsoleLine l = item.line;
+        boolean kind;
+        if (mFilter == 6) {
+            CloudModel.Account a = account();
+            kind = ConsoleKinds.mentions(l, a == null ? null : a.name);
+        } else {
+            kind = ConsoleKinds.shows(ConsoleKinds.Filter.values()[Math.max(0, Math.min(5, mFilter))], l);
+        }
+        return kind && ConsoleKinds.found(l, mQuery);
+    }
+
     private final class Lines extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
-        private final List<Item> mItems = new ArrayList<>();
+        private final List<Item> mAll = new ArrayList<>();
+        /** What shows: all items, or those the filter and search keep. */
+        private List<Item> mItems = mAll;
 
         int lineCount() {
+            int n = 0;
+            for (Item i : mAll) if (i.type == TYPE_LINE) n++;
+            return n;
+        }
+
+        int visibleLines() {
             int n = 0;
             for (Item i : mItems) if (i.type == TYPE_LINE) n++;
             return n;
@@ -412,49 +639,87 @@ public final class CloudConsoleFragment extends CloudScreen implements CloudServ
 
         @Nullable
         CloudModel.ConsoleLine firstLine() {
-            for (Item i : mItems) if (i.type == TYPE_LINE) return i.line;
+            for (Item i : mAll) if (i.type == TYPE_LINE) return i.line;
             return null;
         }
 
         boolean hasLine(CloudModel.ConsoleLine l) {
-            for (Item i : mItems) {
+            for (Item i : mAll) {
                 if (i.line != null && i.line.at == l.at && TextUtils.equals(i.line.text, l.text)) return true;
             }
             return false;
         }
 
-        void replace(List<CloudModel.ConsoleLine> lines, boolean earlier) {
-            mItems.clear();
-            if (earlier && !lines.isEmpty()) mItems.add(new Item(TYPE_EARLIER, null, 0));
-            for (CloudModel.ConsoleLine l : lines) mItems.add(new Item(TYPE_LINE, l, 0));
+        void refilter() {
+            if (!filtering()) {
+                mItems = mAll;
+            } else {
+                List<Item> kept = new ArrayList<>();
+                for (Item i : mAll) if (shows(i)) kept.add(i);
+                mItems = kept;
+            }
             notifyDataSetChanged();
+            if (mList != null && getItemCount() > 0) mList.scrollToPosition(getItemCount() - 1);
+        }
+
+        void replace(List<CloudModel.ConsoleLine> lines, boolean earlier) {
+            mAll.clear();
+            if (earlier && !lines.isEmpty()) mAll.add(new Item(TYPE_EARLIER, null, 0));
+            for (CloudModel.ConsoleLine l : lines) mAll.add(new Item(TYPE_LINE, l, 0));
+            if (filtering()) refilter();
+            else {
+                mItems = mAll;
+                notifyDataSetChanged();
+            }
         }
 
         void append(List<CloudModel.ConsoleLine> lines, int skipped) {
-            int start = mItems.size();
-            if (skipped > 0) mItems.add(new Item(TYPE_SKIPPED, null, skipped));
-            if (mItems.isEmpty() && !lines.isEmpty() && !mNoEarlier) mItems.add(new Item(TYPE_EARLIER, null, 0));
-            for (CloudModel.ConsoleLine l : lines) mItems.add(new Item(TYPE_LINE, l, 0));
-            int over = mItems.size() - MAX_LINES;
+            int start = mAll.size();
+            if (skipped > 0) mAll.add(new Item(TYPE_SKIPPED, null, skipped));
+            if (mAll.isEmpty() && !lines.isEmpty() && !mNoEarlier) mAll.add(new Item(TYPE_EARLIER, null, 0));
+            for (CloudModel.ConsoleLine l : lines) mAll.add(new Item(TYPE_LINE, l, 0));
+            int over = mAll.size() - MAX_LINES;
             if (over > 0) {
-                boolean head = !mItems.isEmpty() && mItems.get(0).type == TYPE_EARLIER;
-                for (int i = 0; i < over; i++) mItems.remove(head ? 1 : 0);
-                notifyDataSetChanged();
+                boolean head = !mAll.isEmpty() && mAll.get(0).type == TYPE_EARLIER;
+                for (int i = 0; i < over; i++) mAll.remove(head ? 1 : 0);
+            }
+            if (filtering()) {
+                List<Item> kept = new ArrayList<>();
+                for (Item i : mAll) if (shows(i)) kept.add(i);
+                int was = mItems.size();
+                mItems = kept;
+                if (over > 0 || kept.size() < was) notifyDataSetChanged();
+                else notifyItemRangeInserted(was, kept.size() - was);
             } else {
-                notifyItemRangeInserted(start, mItems.size() - start);
+                mItems = mAll;
+                if (over > 0) notifyDataSetChanged();
+                else notifyItemRangeInserted(start, mAll.size() - start);
             }
         }
 
         void prepend(List<CloudModel.ConsoleLine> older, boolean keepEarlier) {
-            boolean head = !mItems.isEmpty() && mItems.get(0).type == TYPE_EARLIER;
-            if (head) mItems.remove(0);
+            boolean head = !mAll.isEmpty() && mAll.get(0).type == TYPE_EARLIER;
+            if (head) mAll.remove(0);
             List<Item> before = new ArrayList<>();
             if (keepEarlier) before.add(new Item(TYPE_EARLIER, null, 0));
             for (CloudModel.ConsoleLine l : older) before.add(new Item(TYPE_LINE, l, 0));
-            mItems.addAll(0, before);
+            mAll.addAll(0, before);
+            int shownBefore = before.size();
+            if (filtering()) {
+                List<Item> kept = new ArrayList<>();
+                shownBefore = 0;
+                for (Item i : mAll) {
+                    if (!shows(i)) continue;
+                    kept.add(i);
+                    if (before.contains(i)) shownBefore++;
+                }
+                mItems = kept;
+            } else {
+                mItems = mAll;
+            }
             notifyDataSetChanged();
             // Keep the line the player was reading in place.
-            mLayout.scrollToPositionWithOffset(before.size(), CloudUi.dp(ctx(), 24));
+            mLayout.scrollToPositionWithOffset(shownBefore, CloudUi.dp(ctx(), 24));
         }
 
         @Override
@@ -490,12 +755,22 @@ public final class CloudConsoleFragment extends CloudScreen implements CloudServ
                 TextView time = CloudUi.time(c, 12, R.color.projects_ash_400);
                 time.setPadding(0, CloudUi.dp(c, 3), 0, 0);
                 row.addView(time, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+                LinearLayout body = new LinearLayout(c);
+                body.setOrientation(LinearLayout.VERTICAL);
                 TextView text = CloudUi.text(c, "", 14, R.color.projects_bone_100, false);
                 text.setLineSpacing(0, 1.12f);
                 if (Build.VERSION.SDK_INT >= 23) text.setBreakStrategy(android.text.Layout.BREAK_STRATEGY_SIMPLE);
+                body.addView(text, CloudUi.matchWrap());
+                // "Envanterde göster" beside a menu's line (shown only on such lines).
+                Button link = CloudUi.textButton(c, c.getString(R.string.projects_feat_console_show_inventory), null);
+                link.setMinHeight(CloudUi.dp(c, 40));
+                link.setMinimumHeight(CloudUi.dp(c, 40));
+                link.setPadding(0, 0, CloudUi.dp(c, 12), 0);
+                link.setVisibility(View.GONE);
+                body.addView(link, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
                 LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
                 lp.setMarginStart(CloudUi.dp(c, 10));
-                row.addView(text, lp);
+                row.addView(body, lp);
                 view = row;
             }
             view.setLayoutParams(new RecyclerView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -513,16 +788,48 @@ public final class CloudConsoleFragment extends CloudScreen implements CloudServ
             } else if (item.type == TYPE_SKIPPED) {
                 ((TextView) holder.itemView).setText(c.getResources().getQuantityString(R.plurals.projects_cloud_console_skipped, item.skipped, item.skipped));
             } else if (item.line != null) {
+                final CloudModel.ConsoleLine line = item.line;
                 ViewGroup row = (ViewGroup) holder.itemView;
                 TextView time = (TextView) row.getChildAt(0);
-                TextView text = (TextView) row.getChildAt(1);
-                time.setText(CloudWords.clock(item.line.at));
-                text.setText(item.line.text);
-                int color = "e".equals(item.line.k) ? R.color.projects_flare_400
-                        : "s".equals(item.line.k) ? R.color.projects_gold_300 : R.color.projects_bone_100;
-                text.setTextColor(CloudUi.color(c, color));
+                ViewGroup body = (ViewGroup) row.getChildAt(1);
+                TextView text = (TextView) body.getChildAt(0);
+                Button link = (Button) body.getChildAt(1);
+                time.setText(CloudWords.clock(line.at));
+                text.setTextColor(CloudUi.color(c, toneColor(line)));
+                text.setAlpha("s".equals(line.k) && line.c != null ? 0.9f : 1f);
+                text.setText(styled(c, line));
                 text.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+                final CloudModel.Account a = account();
+                boolean go = "inventory".equals(line.go) && a != null && a.features.inventory();
+                link.setVisibility(go ? View.VISIBLE : View.GONE);
+                link.setOnClickListener(go ? v -> {
+                    Haptics.tick(v);
+                    openFor(gg.projects.mobile.cloud.inventory.CloudInventoryFragment.class, a.id);
+                } : null);
             }
         }
+    }
+
+    /** The kind's colour (docs/tasks/cafk-feat.md §3.2); lines without a kind as before (by {@code k}). */
+    private static int toneColor(CloudModel.ConsoleLine line) {
+        switch (ConsoleKinds.tone(line)) {
+            case CHAT: return R.color.projects_bone_100;
+            case PRIVATE: return R.color.projects_gold_200;
+            case SERVER: return R.color.projects_ash_300;
+            case MINE: return R.color.projects_gold_300;
+            case CLIENT: return R.color.projects_ash_400;
+            case ERROR: return R.color.projects_flare_400;
+            default: return R.color.projects_bone_100;
+        }
+    }
+
+    /** A private line's other player in gold-300 (the rest gold-200); every other line plain. */
+    private static CharSequence styled(Context c, CloudModel.ConsoleLine line) {
+        if (!"pm".equals(line.c) || line.who == null) return line.text;
+        int at = line.text.indexOf(line.who);
+        if (at < 0) return line.text;
+        SpannableString s = new SpannableString(line.text);
+        s.setSpan(new ForegroundColorSpan(CloudUi.color(c, R.color.projects_gold_300)), at, at + line.who.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        return s;
     }
 }

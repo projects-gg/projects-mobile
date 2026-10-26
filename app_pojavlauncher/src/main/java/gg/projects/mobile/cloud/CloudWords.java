@@ -297,6 +297,25 @@ public final class CloudWords {
     public static String issue(Context c, CloudEdit.Issue issue, CloudModel.Limits limits) {
         String p = issue.problem;
         if (p.startsWith("content/")) return c.getString(R.string.projects_cloud_issue_content, category(c, p.substring("content/".length())));
+        // CAFK-FEAT: the placeholder save checks (services/cloud-afk README "Feature errors").
+        if (p.startsWith("placeholder_part/")) {
+            int part;
+            try {
+                part = Integer.parseInt(p.substring("placeholder_part/".length()));
+            } catch (NumberFormatException e) {
+                part = 1;
+            }
+            return c.getString(R.string.projects_feat_ph_issue_part, part);
+        }
+        switch (p) {
+            case "placeholder_row": return c.getString(R.string.projects_feat_ph_issue_row);
+            case "placeholder_part": return c.getString(R.string.projects_feat_ph_issue_part, 1);
+            case "placeholder_sender": return c.getString(R.string.projects_feat_ph_issue_sender);
+            case "placeholder_start": return c.getString(R.string.projects_feat_ph_issue_start);
+            case "placeholder_command": return c.getString(R.string.projects_feat_ph_issue_command);
+            case "placeholder_length": return c.getString(R.string.projects_feat_ph_issue_length);
+            default: break;
+        }
         switch (issue.field) {
             case "delay":
                 return c.getString(R.string.projects_cloud_issue_delay);
