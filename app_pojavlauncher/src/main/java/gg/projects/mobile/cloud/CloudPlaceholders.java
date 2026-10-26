@@ -261,6 +261,8 @@ public final class CloudPlaceholders {
 
     /** "Dene": a sample message against the rule, {@code {u}} filled with {@code sender} (the account's owner, else "Oyuncu"). */
     public static Run tryIt(String match, boolean regex, String from, String reply, String sample, String sender) {
+        // A pattern that cannot match anything is the thing to fix first ("pattern"), not a sample that does not match.
+        if (match == null || match.trim().isEmpty() || (regex && javaPattern(match) == null)) return new Run(null, "pattern");
         String type = "private".equals(from) ? "private" : "server".equals(from) ? "other" : "public";
         return run(match, regex, "any", reply, type, "server".equals(from) ? null : sender, sample, null);
     }

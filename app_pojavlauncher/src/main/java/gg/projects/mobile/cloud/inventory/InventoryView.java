@@ -246,7 +246,7 @@ public final class InventoryView extends View {
         }
         if (mScreen.title != null && !mTitle.isEmpty()) {
             String title = PixelFont.clip(mTitle, w - 16);
-            int x = mScreen.titleCentered ? (w - PixelFont.width(title)) / 2 : mScreen.title[0];
+            int x = mScreen.titleCentered ? (w - PixelFont.advance(title)) / 2 : mScreen.title[0];
             text(canvas, title, x, mScreen.title[1], InvText.TITLE, -1);
         }
         if (mScreen.inventoryLabel != null && !mInventoryLabel.isEmpty()) {
@@ -312,7 +312,9 @@ public final class InventoryView extends View {
         }
         if (item.count > 1) {
             String n = String.valueOf(item.count);
-            text(c, n, gx + 17 - PixelFont.width(n), gy + 9, InvText.WHITE, 0x3f3f3f);
+            // The game's place: x + 19 - 2 - font.width(n), where font.width counts each character's advance (its
+            // last column of light is the item's last, its shadow on the slot's edge).
+            text(c, n, gx + 17 - PixelFont.advance(n), gy + 9, InvText.WHITE, 0x3f3f3f);
         }
         if (save >= 0) c.restoreToCount(save);
     }

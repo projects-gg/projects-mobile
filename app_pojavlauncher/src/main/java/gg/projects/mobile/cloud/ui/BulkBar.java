@@ -54,7 +54,7 @@ final class BulkBar {
         mCount.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
         head.addView(mCount, CloudUi.weight(1f));
         head.addView(CloudUi.textButton(c, c.getString(R.string.projects_feat_bulk_select_all), v -> actions.selectAll()));
-        head.addView(CloudUi.textButton(c, c.getString(R.string.projects_feat_bulk_done), v -> actions.done()));
+        head.addView(CloudUi.textButton(c, c.getString(R.string.projects_feat_bulk_cancel), v -> actions.done()));
         bar.addView(head, CloudUi.matchWrap());
         LinearLayout grid = new LinearLayout(c);
         grid.setOrientation(LinearLayout.VERTICAL);

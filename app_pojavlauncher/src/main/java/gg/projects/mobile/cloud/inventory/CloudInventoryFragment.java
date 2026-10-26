@@ -471,7 +471,8 @@ public final class CloudInventoryFragment extends CloudScreen implements Invento
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(0, 0, 0, CloudUi.dp(c, 12));
         if (item != null) {
-            int unit = Math.max(2, Math.round(c.getResources().getDisplayMetrics().density * 1.5f));
+            // The window's own GUI pixel (the launcher's menu head takes the inventory's too): the same letters as above.
+            int unit = mView != null && mView.scale() > 1 ? mView.scale() : Math.max(2, Math.round(c.getResources().getDisplayMetrics().density * 1.5f));
             PixelLines.Tooltip head = new PixelLines.Tooltip(c, unit);
             head.setLines(InvText.tooltip(item, lang(), words()));
             head.setPadding(CloudUi.dp(c, 24), CloudUi.dp(c, 4), CloudUi.dp(c, 24), CloudUi.dp(c, 12));

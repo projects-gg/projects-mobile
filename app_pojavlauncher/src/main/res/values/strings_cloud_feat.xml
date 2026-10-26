@@ -27,10 +27,10 @@
     <string name="projects_feat_inv_unreachable">Can\'t reach the account right now.</string>
     <string name="projects_feat_inv_carry">Tap a slot to put it down.</string>
     <string name="projects_feat_inv_put_back">Put back</string>
-    <string name="projects_feat_inv_fix_settings">Fix the problem in the settings first.</string>
+    <string name="projects_feat_inv_fix_settings">Fix the marked field in the settings first.</string>
     <string name="projects_feat_inv_hand">In hand: %1$s</string>
     <string name="projects_feat_inv_setting">Inventory view</string>
-    <string name="projects_feat_inv_setting_note">The change applies at the next connection.</string>
+    <string name="projects_feat_inv_setting_note">Takes effect at the next connection.</string>
 
     <!-- What a screen reader says for a slot -->
     <string name="projects_feat_inv_empty">Empty</string>
@@ -91,19 +91,19 @@
     <string name="projects_feat_console_connection">Connection</string>
     <string name="projects_feat_console_mentions">Mentions</string>
     <string name="projects_feat_console_search">Search the console</string>
-    <string name="projects_feat_console_search_clear">Clear search</string>
+    <string name="projects_feat_console_search_close">Close search</string>
     <string name="projects_feat_console_none">No lines for this filter.</string>
     <string name="projects_feat_console_show_inventory">Show in inventory</string>
-    <string name="projects_feat_console_export">Console log</string>
-    <string name="projects_feat_console_export_open">Share or save</string>
+    <string name="projects_feat_console_export">Download the console</string>
+    <string name="projects_feat_console_export_open">Download</string>
     <string name="projects_feat_console_hour">Last hour</string>
     <string name="projects_feat_console_today">Today</string>
     <string name="projects_feat_console_days3">Last 3 days</string>
     <string name="projects_feat_console_share">Share</string>
     <string name="projects_feat_console_save">Save to file</string>
     <string name="projects_feat_console_export_empty">No lines in this time.</string>
-    <string name="projects_feat_console_export_failed">Couldn\'t get the log. Try again in a moment.</string>
-    <string name="projects_feat_console_saved">File saved.</string>
+    <string name="projects_feat_console_export_failed">Couldn\'t download the console.</string>
+    <string name="projects_feat_console_saved">The console was saved.</string>
     <string name="projects_feat_console_kind_chat">Chat</string>
     <string name="projects_feat_console_kind_private">Private</string>
     <string name="projects_feat_console_kind_server">Server</string>
@@ -112,7 +112,7 @@
     <string name="projects_feat_console_kind_connection">Connection</string>
     <string name="projects_feat_console_kind_error">Error</string>
     <string name="projects_feat_console_kind_console">Console</string>
-    <string name="projects_feat_console_strip">On screen in the game</string>
+    <string name="projects_feat_console_strip">What the server keeps on screen</string>
 
     <!-- Reply placeholders -->
     <string name="projects_feat_ph_sender">Sender\'s name</string>
@@ -121,6 +121,8 @@
     <string name="projects_feat_ph_sample">Sample message</string>
     <string name="projects_feat_ph_matches">Matches. Reply: %1$s</string>
     <string name="projects_feat_ph_no_match">No match.</string>
+    <string name="projects_feat_ph_add">Add to the reply</string>
+    <string name="projects_feat_ph_fix_pattern">Fix the pattern first.</string>
     <string name="projects_feat_ph_no_reply">Matches, but no reply goes out for it.</string>
     <string name="projects_feat_ph_rule">The reply goes out only when the parts are letters, digits or underscores.</string>
     <string name="projects_feat_ph_player">Player</string>
@@ -137,10 +139,10 @@
     <!-- Several accounts at once -->
     <string name="projects_feat_bulk_select">Select</string>
     <string name="projects_feat_bulk_select_all">Select all</string>
-    <string name="projects_feat_bulk_done">Done</string>
+    <string name="projects_feat_bulk_cancel">Cancel</string>
     <plurals name="projects_feat_bulk_selected">
-        <item quantity="one">%1$d selected</item>
-        <item quantity="other">%1$d selected</item>
+        <item quantity="one">%1$d account selected</item>
+        <item quantity="other">%1$d accounts selected</item>
     </plurals>
     <string name="projects_feat_bulk_copy">Copy settings</string>
     <plurals name="projects_feat_bulk_started">
@@ -148,49 +150,37 @@
         <item quantity="other">Started %1$d accounts.</item>
     </plurals>
     <plurals name="projects_feat_bulk_started_some">
-        <item quantity="one">Started %1$d account; %2$d couldn\'t start: %3$s.</item>
-        <item quantity="other">Started %1$d accounts; %2$d couldn\'t start: %3$s.</item>
+        <item quantity="one">Started %1$d; %2$d couldn\'t start: %3$s.</item>
+        <item quantity="other">Started %1$d; %2$d couldn\'t start: %3$s.</item>
     </plurals>
     <plurals name="projects_feat_bulk_stopped">
         <item quantity="one">Stopped %1$d account.</item>
         <item quantity="other">Stopped %1$d accounts.</item>
     </plurals>
     <plurals name="projects_feat_bulk_stopped_some">
-        <item quantity="one">Stopped %1$d account; %2$d couldn\'t stop: %3$s.</item>
-        <item quantity="other">Stopped %1$d accounts; %2$d couldn\'t stop: %3$s.</item>
+        <item quantity="one">Stopped %1$d; %2$d couldn\'t stop: %3$s.</item>
+        <item quantity="other">Stopped %1$d; %2$d couldn\'t stop: %3$s.</item>
     </plurals>
     <plurals name="projects_feat_bulk_restarted">
         <item quantity="one">Reconnecting %1$d account.</item>
         <item quantity="other">Reconnecting %1$d accounts.</item>
     </plurals>
     <plurals name="projects_feat_bulk_restarted_some">
-        <item quantity="one">Reconnecting %1$d account; %2$d couldn\'t reconnect: %3$s.</item>
-        <item quantity="other">Reconnecting %1$d accounts; %2$d couldn\'t reconnect: %3$s.</item>
+        <item quantity="one">Reconnecting %1$d; %2$d couldn\'t reconnect: %3$s.</item>
+        <item quantity="other">Reconnecting %1$d; %2$d couldn\'t reconnect: %3$s.</item>
     </plurals>
     <plurals name="projects_feat_bulk_copied">
-        <item quantity="one">Copied to %1$d account.</item>
-        <item quantity="other">Copied to %1$d accounts.</item>
+        <item quantity="one">Copied the settings to %1$d account.</item>
+        <item quantity="other">Copied the settings to %1$d accounts.</item>
     </plurals>
     <plurals name="projects_feat_bulk_copied_some">
-        <item quantity="one">Copied to %1$d account; %2$d didn\'t change: %3$s.</item>
-        <item quantity="other">Copied to %1$d accounts; %2$d didn\'t change: %3$s.</item>
+        <item quantity="one">Copied the settings to %1$d; %2$d couldn\'t take them: %3$s.</item>
+        <item quantity="other">Copied the settings to %1$d; %2$d couldn\'t take them: %3$s.</item>
     </plurals>
-    <plurals name="projects_feat_bulk_start_failed">
-        <item quantity="one">%1$d account couldn\'t start: %2$s.</item>
-        <item quantity="other">%1$d accounts couldn\'t start: %2$s.</item>
-    </plurals>
-    <plurals name="projects_feat_bulk_stop_failed">
-        <item quantity="one">%1$d account couldn\'t stop: %2$s.</item>
-        <item quantity="other">%1$d accounts couldn\'t stop: %2$s.</item>
-    </plurals>
-    <plurals name="projects_feat_bulk_restart_failed">
-        <item quantity="one">%1$d account couldn\'t reconnect: %2$s.</item>
-        <item quantity="other">%1$d accounts couldn\'t reconnect: %2$s.</item>
-    </plurals>
-    <plurals name="projects_feat_bulk_copy_failed">
-        <item quantity="one">%1$d account didn\'t change: %2$s.</item>
-        <item quantity="other">%1$d accounts didn\'t change: %2$s.</item>
-    </plurals>
+    <string name="projects_feat_bulk_none_start">The accounts couldn\'t start: %1$s.</string>
+    <string name="projects_feat_bulk_none_stop">The accounts couldn\'t stop: %1$s.</string>
+    <string name="projects_feat_bulk_none_restart">The accounts couldn\'t reconnect: %1$s.</string>
+    <string name="projects_feat_bulk_none_copy">Couldn\'t copy the settings: %1$s.</string>
     <string name="projects_feat_bulk_reason_expired">it expired</string>
     <string name="projects_feat_bulk_reason_staff">stopped by staff</string>
     <string name="projects_feat_bulk_reason_blocked">we can\'t join this server</string>
@@ -202,13 +192,15 @@
     <string name="projects_feat_bulk_reason_offline">can\'t be reached now</string>
     <string name="projects_feat_bulk_reason_other">something went wrong</string>
     <string name="projects_feat_copy_title">Copy %1$s\'s settings</string>
-    <string name="projects_feat_copy_from">Copy which account\'s settings?</string>
-    <string name="projects_feat_copy_to">Copied to: %1$s</string>
-    <string name="projects_feat_copy_what">Anti-AFK, commands, auto-replies and your in-game name are copied.</string>
+    <string name="projects_feat_copy_from">From</string>
+    <string name="projects_feat_copy_to">To: %1$s</string>
+    <string name="projects_feat_copy_what">Anti-AFK, commands, auto-replies and your own in-game name are copied.</string>
     <string name="projects_feat_copy_server">Also copy server and version</string>
-    <string name="projects_feat_copy_secret_each">Type the password for each account</string>
+    <string name="projects_feat_copy_secret_each">Type for each account</string>
     <string name="projects_feat_copy_secret_same">Use the same for all</string>
-    <string name="projects_feat_copy_secret_for">%1$s for %2$s</string>
+    <string name="projects_feat_copy_secret_for">%1$s: %2$s</string>
+    <string name="projects_feat_copy_secret_field">Password for %1$s</string>
+    <string name="projects_feat_copy_secrets">Secret lines</string>
     <string name="projects_feat_copy_confirm">The chosen accounts\' settings change and they reconnect.</string>
     <string name="projects_feat_copy_go">Copy</string>
     <string name="projects_feat_copy_secret_missing">Type the password.</string>

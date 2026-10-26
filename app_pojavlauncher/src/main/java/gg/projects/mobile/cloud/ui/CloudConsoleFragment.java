@@ -240,10 +240,10 @@ public final class CloudConsoleFragment extends CloudScreen implements CloudServ
             return;
         }
         if (!mActionsAdded) {
-            // Header actions: search the loaded lines, share or save the log. Added once; hidden without kinds.
+            // Header actions: search the loaded lines, download the log (to share or save). Added once; hidden without kinds.
             mActionsAdded = true;
             mHeader.addAction(R.drawable.projects_ic_magnifying_glass, R.string.projects_feat_console_search, v -> toggleSearch());
-            mHeader.addAction(R.drawable.projects_ic_share, R.string.projects_feat_console_export_open, v -> {
+            mHeader.addAction(R.drawable.projects_ic_download_simple, R.string.projects_feat_console_export_open, v -> {
                 CloudModel.Account account = account();
                 if (account != null) ConsoleShare.open(this, account, lang());
             });
@@ -295,7 +295,7 @@ public final class CloudConsoleFragment extends CloudScreen implements CloudServ
         ImageButton clear = new ImageButton(c);
         clear.setBackgroundResource(R.drawable.projects_icon_button_ripple);
         clear.setImageDrawable(CloudUi.tinted(c, R.drawable.projects_ic_x, R.color.projects_bone_100, 20));
-        clear.setContentDescription(getString(R.string.projects_feat_console_search_clear));
+        clear.setContentDescription(getString(R.string.projects_feat_console_search_close));
         Press.attach(clear, Press.Style.ICON);
         clear.setOnClickListener(v -> toggleSearch());
         searchRow.addView(clear, new LinearLayout.LayoutParams(CloudUi.dp(c, 48), CloudUi.dp(c, 48)));

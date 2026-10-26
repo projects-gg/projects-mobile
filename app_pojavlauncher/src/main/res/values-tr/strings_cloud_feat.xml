@@ -28,10 +28,10 @@
     <string name="projects_feat_inv_unreachable">Hesaba şu an ulaşılamıyor.</string>
     <string name="projects_feat_inv_carry">Bırakmak için bir yuvaya dokun.</string>
     <string name="projects_feat_inv_put_back">Yerine koy</string>
-    <string name="projects_feat_inv_fix_settings">Önce ayarlardaki sorunu düzelt.</string>
+    <string name="projects_feat_inv_fix_settings">Önce ayarlarındaki işaretli alanı düzelt.</string>
     <string name="projects_feat_inv_hand">Elinde: %1$s</string>
     <string name="projects_feat_inv_setting">Envanter görünümü</string>
-    <string name="projects_feat_inv_setting_note">Değişiklik bir sonraki bağlanmada geçerli olur.</string>
+    <string name="projects_feat_inv_setting_note">Bir sonraki bağlanmada geçerli olur.</string>
 
     <!-- Ekran okuyucunun bir yuva için söyledikleri -->
     <string name="projects_feat_inv_empty">Boş</string>
@@ -92,19 +92,19 @@
     <string name="projects_feat_console_connection">Bağlantı</string>
     <string name="projects_feat_console_mentions">Adın geçenler</string>
     <string name="projects_feat_console_search">Konsolda ara</string>
-    <string name="projects_feat_console_search_clear">Aramayı temizle</string>
+    <string name="projects_feat_console_search_close">Aramayı kapat</string>
     <string name="projects_feat_console_none">Bu süzgeçte satır yok.</string>
     <string name="projects_feat_console_show_inventory">Envanterde göster</string>
-    <string name="projects_feat_console_export">Konsol kaydı</string>
-    <string name="projects_feat_console_export_open">Paylaş ya da kaydet</string>
+    <string name="projects_feat_console_export">Konsolu indir</string>
+    <string name="projects_feat_console_export_open">İndir</string>
     <string name="projects_feat_console_hour">Son 1 saat</string>
     <string name="projects_feat_console_today">Bugün</string>
     <string name="projects_feat_console_days3">Son 3 gün</string>
     <string name="projects_feat_console_share">Paylaş</string>
     <string name="projects_feat_console_save">Dosyaya kaydet</string>
     <string name="projects_feat_console_export_empty">Bu aralıkta satır yok.</string>
-    <string name="projects_feat_console_export_failed">Kayıt alınamadı. Biraz sonra yeniden dene.</string>
-    <string name="projects_feat_console_saved">Dosya kaydedildi.</string>
+    <string name="projects_feat_console_export_failed">Konsol indirilemedi.</string>
+    <string name="projects_feat_console_saved">Konsol kaydedildi.</string>
     <string name="projects_feat_console_kind_chat">Sohbet</string>
     <string name="projects_feat_console_kind_private">Özel</string>
     <string name="projects_feat_console_kind_server">Sunucu</string>
@@ -113,7 +113,7 @@
     <string name="projects_feat_console_kind_connection">Bağlantı</string>
     <string name="projects_feat_console_kind_error">Hata</string>
     <string name="projects_feat_console_kind_console">Konsol</string>
-    <string name="projects_feat_console_strip">Oyun ekranında</string>
+    <string name="projects_feat_console_strip">Sunucunun ekranda gösterdikleri</string>
 
     <!-- Yanıtlarda yer tutucular -->
     <string name="projects_feat_ph_sender">Yazanın adı</string>
@@ -122,6 +122,8 @@
     <string name="projects_feat_ph_sample">Örnek mesaj</string>
     <string name="projects_feat_ph_matches">Eşleşir. Yanıt: %1$s</string>
     <string name="projects_feat_ph_no_match">Eşleşmez.</string>
+    <string name="projects_feat_ph_add">Yanıta ekle</string>
+    <string name="projects_feat_ph_fix_pattern">Önce aranan sözü düzelt.</string>
     <string name="projects_feat_ph_no_reply">Eşleşir, ama bu mesaja yanıt gitmez.</string>
     <string name="projects_feat_ph_rule">Parçalar yalnız harf, rakam ve alt çizgiyse yanıt gider.</string>
     <string name="projects_feat_ph_player">Oyuncu</string>
@@ -138,10 +140,10 @@
     <!-- Birden çok hesap -->
     <string name="projects_feat_bulk_select">Seç</string>
     <string name="projects_feat_bulk_select_all">Hepsini seç</string>
-    <string name="projects_feat_bulk_done">Tamam</string>
+    <string name="projects_feat_bulk_cancel">Vazgeç</string>
     <plurals name="projects_feat_bulk_selected">
-        <item quantity="one">%1$d seçili</item>
-        <item quantity="other">%1$d seçili</item>
+        <item quantity="one">%1$d hesap seçili</item>
+        <item quantity="other">%1$d hesap seçili</item>
     </plurals>
     <string name="projects_feat_bulk_copy">Ayarları kopyala</string>
     <plurals name="projects_feat_bulk_started">
@@ -165,33 +167,21 @@
         <item quantity="other">%1$d hesap yeniden bağlanıyor.</item>
     </plurals>
     <plurals name="projects_feat_bulk_restarted_some">
-        <item quantity="one">%1$d hesap yeniden bağlanıyor, %2$d hesap bağlanamadı: %3$s.</item>
-        <item quantity="other">%1$d hesap yeniden bağlanıyor, %2$d hesap bağlanamadı: %3$s.</item>
+        <item quantity="one">%1$d hesap yeniden bağlanıyor, %2$d hesap yeniden bağlanamadı: %3$s.</item>
+        <item quantity="other">%1$d hesap yeniden bağlanıyor, %2$d hesap yeniden bağlanamadı: %3$s.</item>
     </plurals>
     <plurals name="projects_feat_bulk_copied">
-        <item quantity="one">%1$d hesaba kopyalandı.</item>
-        <item quantity="other">%1$d hesaba kopyalandı.</item>
+        <item quantity="one">Ayarlar %1$d hesaba kopyalandı.</item>
+        <item quantity="other">Ayarlar %1$d hesaba kopyalandı.</item>
     </plurals>
     <plurals name="projects_feat_bulk_copied_some">
-        <item quantity="one">%1$d hesaba kopyalandı, %2$d hesap değişmedi: %3$s.</item>
-        <item quantity="other">%1$d hesaba kopyalandı, %2$d hesap değişmedi: %3$s.</item>
+        <item quantity="one">Ayarlar %1$d hesaba kopyalandı, %2$d hesaba kopyalanamadı: %3$s.</item>
+        <item quantity="other">Ayarlar %1$d hesaba kopyalandı, %2$d hesaba kopyalanamadı: %3$s.</item>
     </plurals>
-    <plurals name="projects_feat_bulk_start_failed">
-        <item quantity="one">%1$d hesap başlatılamadı: %2$s.</item>
-        <item quantity="other">%1$d hesap başlatılamadı: %2$s.</item>
-    </plurals>
-    <plurals name="projects_feat_bulk_stop_failed">
-        <item quantity="one">%1$d hesap durdurulamadı: %2$s.</item>
-        <item quantity="other">%1$d hesap durdurulamadı: %2$s.</item>
-    </plurals>
-    <plurals name="projects_feat_bulk_restart_failed">
-        <item quantity="one">%1$d hesap yeniden bağlanamadı: %2$s.</item>
-        <item quantity="other">%1$d hesap yeniden bağlanamadı: %2$s.</item>
-    </plurals>
-    <plurals name="projects_feat_bulk_copy_failed">
-        <item quantity="one">%1$d hesap değişmedi: %2$s.</item>
-        <item quantity="other">%1$d hesap değişmedi: %2$s.</item>
-    </plurals>
+    <string name="projects_feat_bulk_none_start">Hesaplar başlatılamadı: %1$s.</string>
+    <string name="projects_feat_bulk_none_stop">Hesaplar durdurulamadı: %1$s.</string>
+    <string name="projects_feat_bulk_none_restart">Hesaplar yeniden bağlanamadı: %1$s.</string>
+    <string name="projects_feat_bulk_none_copy">Ayarlar kopyalanamadı: %1$s.</string>
     <string name="projects_feat_bulk_reason_expired">süresi dolmuş</string>
     <string name="projects_feat_bulk_reason_staff">yetkili durdurmuş</string>
     <string name="projects_feat_bulk_reason_blocked">bu sunucuya girilemiyor</string>
@@ -203,13 +193,15 @@
     <string name="projects_feat_bulk_reason_offline">şu an ulaşılamıyor</string>
     <string name="projects_feat_bulk_reason_other">bir sorun çıktı</string>
     <string name="projects_feat_copy_title">%1$s hesabının ayarlarını kopyala</string>
-    <string name="projects_feat_copy_from">Hangi hesabın ayarları kopyalansın?</string>
-    <string name="projects_feat_copy_to">Şu hesaplara kopyalanır: %1$s</string>
+    <string name="projects_feat_copy_from">Kimden</string>
+    <string name="projects_feat_copy_to">Hangi hesaplara: %1$s</string>
     <string name="projects_feat_copy_what">AFK engelleme, komutlar, otomatik yanıtlar ve oyundaki kendi adın kopyalanır.</string>
     <string name="projects_feat_copy_server">Sunucu ve sürümü de kopyala</string>
-    <string name="projects_feat_copy_secret_each">Her hesap için şifreyi yaz</string>
+    <string name="projects_feat_copy_secret_each">Her hesap için yaz</string>
     <string name="projects_feat_copy_secret_same">Hepsine aynısını yaz</string>
-    <string name="projects_feat_copy_secret_for">%2$s için %1$s</string>
+    <string name="projects_feat_copy_secret_for">%1$s: %2$s</string>
+    <string name="projects_feat_copy_secret_field">%1$s için şifre</string>
+    <string name="projects_feat_copy_secrets">Gizli satırlar</string>
     <string name="projects_feat_copy_confirm">Seçtiğin hesapların bu ayarları değişir; hesaplar yeniden bağlanır.</string>
     <string name="projects_feat_copy_go">Kopyala</string>
     <string name="projects_feat_copy_secret_missing">Şifreyi yaz.</string>

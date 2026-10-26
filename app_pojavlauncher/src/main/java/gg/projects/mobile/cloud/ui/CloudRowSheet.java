@@ -673,6 +673,7 @@ final class CloudRowSheet {
         private final Flag mRegex;
         private final Text mFrom;
         private final Text mOwner;
+        private final TextView mChipsLabel;
         private final gg.projects.mobile.social.ui.WrapLayout mChips;
         private final TextView mRule;
         private final EditText mSample;
@@ -688,6 +689,9 @@ final class CloudRowSheet {
             mOwner = owner;
             view = new LinearLayout(c);
             view.setOrientation(LinearLayout.VERTICAL);
+            mChipsLabel = CloudUi.text(c, c.getString(R.string.projects_feat_ph_add), 13, R.color.projects_ash_300, false);
+            mChipsLabel.setPadding(CloudUi.dp(c, 8), CloudUi.dp(c, 6), CloudUi.dp(c, 8), CloudUi.dp(c, 4));
+            view.addView(mChipsLabel, CloudUi.matchWrap());
             mChips = new gg.projects.mobile.social.ui.WrapLayout(c);
             mChips.setGap(CloudUi.dp(c, 8));
             mChips.setPadding(CloudUi.dp(c, 8), CloudUi.dp(c, 2), CloudUi.dp(c, 8), CloudUi.dp(c, 2));
@@ -735,6 +739,7 @@ final class CloudRowSheet {
             String key = chips.toString();
             if (key.equals(mDrawn)) return;
             mDrawn = key;
+            mChipsLabel.setVisibility(chips.isEmpty() ? View.GONE : View.VISIBLE);
             mChips.removeAllViews();
             for (final String token : chips) {
                 String label = "{u}".equals(token) ? mContext.getString(R.string.projects_feat_ph_sender)
@@ -771,6 +776,10 @@ final class CloudRowSheet {
                 mResult.setText(mContext.getString(R.string.projects_feat_ph_no_reply));
                 mResult.setTextColor(CloudUi.color(mContext, R.color.projects_gold_300));
                 Haptics.tick(from);
+            } else if ("pattern".equals(run.why)) {
+                mResult.setText(mContext.getString(R.string.projects_feat_ph_fix_pattern));
+                mResult.setTextColor(CloudUi.color(mContext, R.color.projects_gold_300));
+                Haptics.reject(from);
             } else {
                 mResult.setText(mContext.getString(R.string.projects_feat_ph_no_match));
                 mResult.setTextColor(CloudUi.color(mContext, R.color.projects_ash_300));

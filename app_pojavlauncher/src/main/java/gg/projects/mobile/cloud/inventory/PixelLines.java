@@ -138,7 +138,8 @@ public final class PixelLines {
             mArt.draw(c, mItem.id, mItem.color, mItem.potion, mItem.glints(), mUnit, mUnit, 16 * mUnit, false);
             if (mItem.count > 1) {
                 String n = String.valueOf(mItem.count);
-                PixelLines.draw(c, mPaint, n, (18 - PixelFont.width(n)) * mUnit, 10 * mUnit, mUnit, InvText.WHITE, 0x3f3f3f, false);
+                // The game's place: x + 19 - 2 - font.width(n), where font.width counts each character's advance.
+                PixelLines.draw(c, mPaint, n, (18 - PixelFont.advance(n)) * mUnit, 10 * mUnit, mUnit, InvText.WHITE, 0x3f3f3f, false);
             }
             if (save >= 0) c.restoreToCount(save);
         }

@@ -173,27 +173,28 @@ public final class CloudFragment extends CloudScreen {
             case STOP:
                 all = R.plurals.projects_feat_bulk_stopped;
                 some = R.plurals.projects_feat_bulk_stopped_some;
-                none = R.plurals.projects_feat_bulk_stop_failed;
+                none = R.string.projects_feat_bulk_none_stop;
                 break;
             case RESTART:
                 all = R.plurals.projects_feat_bulk_restarted;
                 some = R.plurals.projects_feat_bulk_restarted_some;
-                none = R.plurals.projects_feat_bulk_restart_failed;
+                none = R.string.projects_feat_bulk_none_restart;
                 break;
             case COPY:
                 all = R.plurals.projects_feat_bulk_copied;
                 some = R.plurals.projects_feat_bulk_copied_some;
-                none = R.plurals.projects_feat_bulk_copy_failed;
+                none = R.string.projects_feat_bulk_none_copy;
                 break;
             default:
                 all = R.plurals.projects_feat_bulk_started;
                 some = R.plurals.projects_feat_bulk_started_some;
-                none = R.plurals.projects_feat_bulk_start_failed;
+                none = R.string.projects_feat_bulk_none_start;
                 break;
         }
+        // The launcher's words (FEAT-L): a count when some went, none when nothing did.
         String text;
         if (outcome.failed == 0) text = r.getQuantityString(all, outcome.done, outcome.done);
-        else if (outcome.done == 0) text = r.getQuantityString(none, outcome.failed, outcome.failed, reason);
+        else if (outcome.done == 0) text = getString(none, reason);
         else text = r.getQuantityString(some, outcome.done, outcome.done, outcome.failed, reason);
         View anchor = mBulk == null ? null : mBulk.anchor();
         if (outcome.failed == 0) gg.projects.mobile.ui.Haptics.confirm(anchor);

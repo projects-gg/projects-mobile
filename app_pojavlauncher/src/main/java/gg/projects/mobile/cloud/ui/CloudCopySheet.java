@@ -98,13 +98,15 @@ final class CloudCopySheet {
             for (Map.Entry<String, String> row : secrets.entrySet()) {
                 String preview = row.getValue();
                 String first = preview.endsWith("******") ? preview.substring(0, preview.length() - 6) : "";
+                // The row by its visible start ("/login"), as the launcher names it.
+                String named = first.trim().isEmpty() ? preview : first.trim();
                 if (same[0]) {
-                    CloudUi.Field f = secretField(c, preview, first);
+                    CloudUi.Field f = secretField(c, c.getString(R.string.projects_feat_copy_secret_field, named), first);
                     inputs.put("*|" + row.getKey(), f);
                     fields.addView(f.view);
                 } else {
                     for (CloudModel.Account t : targets) {
-                        CloudUi.Field f = secretField(c, c.getString(R.string.projects_feat_copy_secret_for, preview, t.name), first);
+                        CloudUi.Field f = secretField(c, c.getString(R.string.projects_feat_copy_secret_for, t.name, named), first);
                         inputs.put(t.id + "|" + row.getKey(), f);
                         fields.addView(f.view);
                     }
@@ -112,7 +114,7 @@ final class CloudCopySheet {
             }
         };
         if (!secrets.isEmpty()) {
-            root.addView(CloudUi.gap(c, 10));
+            root.addView(CloudRowSheet.label(c, c.getString(R.string.projects_feat_copy_secrets)));
             root.addView(CloudUi.segmented(c, new CharSequence[]{c.getString(R.string.projects_feat_copy_secret_each),
                     c.getString(R.string.projects_feat_copy_secret_same)}, 0, i -> {
                 same[0] = i == 1;

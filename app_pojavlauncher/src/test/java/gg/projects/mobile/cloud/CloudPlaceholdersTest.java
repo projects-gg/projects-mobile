@@ -133,6 +133,9 @@ public class CloudPlaceholdersTest {
         assertEquals("nomatch", CloudPlaceholders.tryIt("selam", false, "any", "Selam {u}", "merhaba", "Oyuncu").why);
         assertEquals("value", CloudPlaceholders.tryIt("^x (.+)$", true, "any", "Tamam {1}", "x a.b", "Oyuncu").why);
         assertEquals("Tamam, Elmas.", CloudPlaceholders.tryIt("^Ödül: (.+)$", true, "server", "Tamam, {1}.", "Ödül: Elmas", "Oyuncu").reply);
+        // A pattern that cannot match is fixed first (the launcher's "Önce aranan sözü düzelt.").
+        assertEquals("pattern", CloudPlaceholders.tryIt("^(x", true, "any", "Tamam {u}", "x", "Oyuncu").why);
+        assertEquals("pattern", CloudPlaceholders.tryIt("  ", false, "any", "Tamam {u}", "x", "Oyuncu").why);
     }
 
     @Test
