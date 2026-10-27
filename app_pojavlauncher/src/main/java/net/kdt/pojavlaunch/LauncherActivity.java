@@ -147,15 +147,34 @@ public class LauncherActivity extends BaseActivity implements gg.projects.mobile
             if (mFriendsPill != null) mFriendsPill.setShownHere(home);
             // MOB-POLISH: "Hesap ekle" is gold only there, beside OYNA.
             if (mAccountSpinner != null) mAccountSpinner.setOnHome(home);
-            // MOB-POLISH: one bar per screen. The account chip, friends and settings are the home's bar; a sub-screen
-            // has its own header with back (both second looks: two stacked bars, "Hesap ekle" above a cloud page read
-            // as a cloud account, and the chip does nothing off home: mSelectAuthMethod). The status bar takes the
-            // colour of the bar below it.
-            if (mTopBar != null) mTopBar.setVisibility(home ? View.VISIBLE : View.GONE);
+            // MOB-POLISH: one bar per screen. The account chip, friends and settings are the home's bar; a screen with
+            // its own header (back and title) shows that alone (both second looks: two stacked bars, "Hesap ekle" above
+            // a cloud page read as a cloud account, and the chip does nothing off home: mSelectAuthMethod). Upstream's
+            // screens without one (the file picker, installers, the Microsoft page) keep the bar and its home button.
+            // The status bar takes the colour of the bar below it.
+            boolean bar = home || !hasOwnHeader(f);
+            if (mTopBar != null) mTopBar.setVisibility(bar ? View.VISIBLE : View.GONE);
             getWindow().setStatusBarColor(ContextCompat.getColor(LauncherActivity.this,
-                    home ? R.color.background_status_bar : R.color.background_app));
+                    bar ? R.color.background_status_bar : R.color.background_app));
         }
     };
+
+    /** MOB-POLISH: the screen draws its own header: the settings' back row, a ScreenHeader, or a view tagged so. */
+    private static boolean hasOwnHeader(@NonNull Fragment f) {
+        if (f instanceof androidx.preference.PreferenceFragmentCompat) return true;
+        View root = f.getView();
+        return root != null && hasHeaderView(root);
+    }
+
+    private static boolean hasHeaderView(View view) {
+        if (view instanceof gg.projects.mobile.ui.ScreenHeader || "projects_own_header".equals(view.getTag())) return true;
+        if (!(view instanceof android.view.ViewGroup)) return false;
+        android.view.ViewGroup group = (android.view.ViewGroup) view;
+        for (int i = 0; i < group.getChildCount(); i++) {
+            if (hasHeaderView(group.getChildAt(i))) return true;
+        }
+        return false;
+    }
 
     /* Listener for the back button in settings */
     private final ExtraListener<String> mBackPreferenceListener = (key, value) -> {
