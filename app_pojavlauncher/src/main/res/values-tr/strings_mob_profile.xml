@@ -16,4 +16,6 @@
     <string name="mob_profile_official_failed">Resmî paket kurulamadı. Tekrar dene.</string>
     <!-- The profile editor's closed section with the engine's settings (JVM arguments, folder, Java, renderer). -->
     <string name="projects_profile_advanced">Gelişmiş</string>
+    <!-- The profile editor's delete action (red words left of "Kaydet"). -->
+    <string name="projects_profile_delete">Profili sil</string>
 </resources>

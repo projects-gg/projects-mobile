@@ -128,7 +128,7 @@
     <string name="customctrl_addsubbutton">Yan-düğme ekle</string>
     <string name="customctrl_selectdefault">Varsayılan kontrolleri seç</string>
     <string name="customctrl_export">Kontrolleri dışa aktar</string>
-    <string name="main_share_logs">Günlük (log) dosyasını paylaş</string>
+    <string name="main_share_logs">Günlük dosyasını paylaş</string>
     <string name="main_install_jar_file">Bir .jar dosyası çalıştır</string>
     <string name="main_play">Oyna</string>
     <string name="autoram_info_msg">Bellek %d MB olarak ayarlandı</string>
@@ -207,7 +207,7 @@
     <string name="notif_channel_name">Genel</string>
     <string name="lazy_service_default_title">Projects Launcher Önplan Hizmeti</string>
     <string name="mcl_setting_veroption_installed">Kurulu</string>
-    <string name="use_global_default">(Genel varsayılanı kullan)</string>
+    <string name="use_global_default">Genel varsayılan</string>
     <string name="default_control">Varsayılan kontroller</string>
     <string name="progresslayout_tasks_in_progress">%d tane görev devam etmekte</string>
     <string name="notification_terminate">Sonlandır</string>

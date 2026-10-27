@@ -200,7 +200,7 @@ public class ProfileAdapter extends BaseAdapter {
         text.append(context.getString(R.string.mob_profile_official_missing));
         Typeface regular = ResourcesCompat.getFont(context, R.font.figtree_regular);
         if (regular != null) text.setSpan(new gg.projects.mobile.ui.FontSpan(regular), start, text.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        text.setSpan(new AbsoluteSizeSpan(13, true), start, text.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        text.setSpan(new AbsoluteSizeSpan(Math.round(android.util.TypedValue.applyDimension(android.util.TypedValue.COMPLEX_UNIT_SP, 13, context.getResources().getDisplayMetrics()))), start, text.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         text.setSpan(new ForegroundColorSpan(ContextCompat.getColor(context, R.color.projects_ash_400)),
                 start, text.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         return text;

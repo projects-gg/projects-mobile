@@ -91,7 +91,7 @@ public class ChatListFragment extends Fragment implements SocialService.Listener
         } catch (RuntimeException ignored) {
             // The text's own font.
         }
-        empty.setSpan(new android.text.style.AbsoluteSizeSpan(16, true), 0, empty.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        empty.setSpan(new android.text.style.AbsoluteSizeSpan(Math.round(android.util.TypedValue.applyDimension(android.util.TypedValue.COMPLEX_UNIT_SP, 16, getResources().getDisplayMetrics()))), 0, empty.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         empty.append('\n').append(getString(R.string.projects_chat_empty_body));
         mEmpty.setText(empty);
         // ICON2: the desktop's speech bubble sprite on the friends' icon tile, as its empty list.

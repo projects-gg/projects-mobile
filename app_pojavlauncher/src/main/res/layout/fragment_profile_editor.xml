@@ -299,27 +299,32 @@
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </ScrollView>
+    <!-- MOB-POLISH: the sheets' footer: deleting is a red word on the left, the one gold action on the right. -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingHorizontal="@dimen/fragment_padding_medium"
+        android:paddingStart="@dimen/fragment_padding_medium"
+        android:paddingEnd="@dimen/fragment_padding_medium"
         android:layout_marginVertical="13dp"
         >
         <com.kdt.mcgui.MineButton
-            android:id="@+id/vprof_editor_save_button"
-            android:layout_width="0dp"
+            android:id="@+id/vprof_editor_delete_button"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/global_save"
-            android:layout_marginEnd="@dimen/padding_medium" />
+            android:text="@string/projects_profile_delete" />
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
 
         <com.kdt.mcgui.MineButton
-            android:id="@+id/vprof_editor_delete_button"
-            android:layout_width="0dp"
+            android:id="@+id/vprof_editor_save_button"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginStart="@dimen/padding_medium"
-            android:text="@string/global_delete" />
+            android:minWidth="160dp"
+            android:text="@string/global_save" />
     </LinearLayout>
 </LinearLayout>

@@ -18,4 +18,6 @@
     <string name="mob_profile_official_failed">Couldn\'t install the official pack. Try again.</string>
     <!-- The profile editor's closed section with the engine's settings (JVM arguments, folder, Java, renderer). -->
     <string name="projects_profile_advanced">Advanced</string>
+    <!-- The profile editor's delete action (red words left of "Kaydet"). -->
+    <string name="projects_profile_delete">Delete profile</string>
 </resources>

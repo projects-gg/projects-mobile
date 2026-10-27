@@ -41,7 +41,7 @@ public final class ProfileRows {
         text.append(version);
         if (sRegular == null) sRegular = ResourcesCompat.getFont(context, R.font.figtree_regular);
         if (sRegular != null) text.setSpan(new FontSpan(sRegular), start, text.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        text.setSpan(new AbsoluteSizeSpan(13, true), start, text.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        text.setSpan(new AbsoluteSizeSpan(Math.round(android.util.TypedValue.applyDimension(android.util.TypedValue.COMPLEX_UNIT_SP, 13, context.getResources().getDisplayMetrics()))), start, text.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         text.setSpan(new ForegroundColorSpan(ContextCompat.getColor(context, R.color.projects_ash_400)),
                 start, text.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         return text;

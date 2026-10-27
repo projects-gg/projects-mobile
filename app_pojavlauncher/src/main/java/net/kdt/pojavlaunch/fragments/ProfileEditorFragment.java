@@ -328,9 +328,17 @@ public class ProfileEditorFragment extends Fragment implements CropperUtils.Crop
 
         mSaveButton = view.findViewById(R.id.vprof_editor_save_button);
         mDeleteButton = view.findViewById(R.id.vprof_editor_delete_button);
-        // Projects: "Sil" is not as loud as "Kaydet" (design.md: one loud thing; deleting is not the goal).
-        mDeleteButton.setBackground(gg.projects.mobile.ui.ChamferDrawable.secondary(view.getContext()));
-        mDeleteButton.setTextColor(androidx.core.content.ContextCompat.getColor(view.getContext(), R.color.projects_bone_100));
+        // MOB-POLISH: "Profili sil" as the sheets' "Komutu sil": red words on the left (deleting is not the goal, and
+        // a second look read the same-size "Sil" beside "Kaydet" as its twin).
+        mDeleteButton.setBackgroundResource(R.drawable.projects_row_ripple);
+        mDeleteButton.setTextColor(androidx.core.content.ContextCompat.getColor(view.getContext(), R.color.projects_flare_400));
+        mDeleteButton.setTypeface(androidx.core.content.res.ResourcesCompat.getFont(view.getContext(), R.font.figtree_semibold));
+        mDeleteButton.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 14);
+        mDeleteButton.setAllCaps(false);
+        int side = Math.round(12 * view.getResources().getDisplayMetrics().density);
+        mDeleteButton.setPadding(side, 0, side, 0);
+        mDeleteButton.setMinHeight(Math.round(48 * view.getResources().getDisplayMetrics().density));
+        mDeleteButton.setMinimumHeight(mDeleteButton.getMinHeight());
         mControlSelectButton = view.findViewById(R.id.vprof_editor_ctrl_button);
         mVersionSelectButton = view.findViewById(R.id.vprof_editor_version_button);
         mGameDirButton = view.findViewById(R.id.vprof_editor_path_button);
