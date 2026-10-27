@@ -46,8 +46,9 @@ import gg.projects.mobile.ui.Haptics;
 import gg.projects.mobile.ui.Press;
 
 /**
- * "Ayarlar" of a cloud account, in three tabs: General (name, server, version, console language, anti-AFK, the
- * player's own name), Commands and Auto-reply (rows edited in sheets). Changes wait in the screen until "Kaydet"; the
+ * "Ayarlar" of a cloud account, in three tabs: Genel (the launcher's "Bağlantı" and "Oyun içi" sections, each under its
+ * heading: name, one address field with the port in it, version, console language; anti-AFK, inventory, movement),
+ * Komutlar and Otomatik yanıt (the name the player plays with, then the rules; rows edited in sheets). Changes wait in the screen until "Kaydet"; the
  * bar at the bottom shows while there are any, and leaving asks first. Secret lines are sealed on this phone when
  * saved; a server change seals revealed ones again and asks to retype the rest. A change made elsewhere meanwhile is
  * not overwritten: the screen offers the newer settings instead.
@@ -138,7 +139,7 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
         List<CloudEdit.Issue> handed = handedIssues();
         if (!handed.isEmpty()) {
             mIssues.addAll(handed);
-            mTab = tabOf(handed.get(0).place);
+            mTab = tabOf(handed.get(0));
         }
         tabs();
         draw();
@@ -176,8 +177,10 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
         return out;
     }
 
-    private static int tabOf(String place) {
-        return "commands".equals(place) ? COMMANDS : "rules".equals(place) ? REPLIES : GENERAL;
+    private static int tabOf(CloudEdit.Issue issue) {
+        if ("commands".equals(issue.place)) return COMMANDS;
+        if ("rules".equals(issue.place) || "owner".equals(issue.field)) return REPLIES;
+        return GENERAL;
     }
 
     /** A small mark before a row's line (the launcher's quiet info line). */
@@ -292,6 +295,8 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
         if (a == null) return;
         int text = InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS;
 
+        // The launcher's two sections, each under its own heading (the phone keeps three tabs: four do not fit 360 dp).
+        content.addView(CloudUi.section(c, getString(R.string.projects_cloud_settings_section_connection)));
         CloudUi.Field name = CloudUi.field(c, getString(R.string.projects_cloud_settings_name), mName, null, text);
         name.input.setFilters(new InputFilter[]{new InputFilter.LengthFilter(16)});
         name.setError(issue("general", -1, "name"));
@@ -301,31 +306,24 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
         });
         content.addView(name.view);
 
-        LinearLayout server = new LinearLayout(c);
-        server.setOrientation(LinearLayout.HORIZONTAL);
-        server.setGravity(Gravity.TOP);
-        CloudUi.Field host = CloudUi.field(c, getString(R.string.projects_cloud_settings_host), mHost, "play.projects.gg",
+        // One address, as Minecraft's own server list has it: the port, when the server needs one, after a colon at
+        // the end (the launcher's AddressField; a separate "Port" field said "Otomatik" for "found by itself").
+        CloudUi.Field host = CloudUi.field(c, getString(R.string.projects_cloud_settings_host), CloudServer.joinAddress(mHost, mPort), "play.projects.gg",
                 InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
-        host.input.setFilters(new InputFilter[]{new InputFilter.LengthFilter(253)});
-        host.setError(issue("general", -1, "server"));
-        watch(host.input, s -> {
-            mHost = s;
-            bar();
-        });
-        server.addView(host.view, CloudUi.weight(1f));
-        CloudUi.Field port = CloudUi.field(c, getString(R.string.projects_cloud_settings_port), mPort,
-                getString(R.string.projects_cloud_settings_port_hint), InputType.TYPE_CLASS_NUMBER);
-        port.input.setFilters(new InputFilter[]{new InputFilter.LengthFilter(5)});
-        port.setError(issue("general", -1, "port"));
-        watch(port.input, s -> {
-            mPort = s;
-            bar();
-        });
-        server.addView(port.view, new LinearLayout.LayoutParams(CloudUi.dp(c, 116), ViewGroup.LayoutParams.WRAP_CONTENT));
-        content.addView(server, CloudUi.matchWrap());
-        if (a.serverChangesLimit > 0) {
-            content.addView(CloudUi.note(c, getString(R.string.projects_cloud_settings_server_changes, a.serverChangesUsed, a.serverChangesLimit)));
+        host.input.setFilters(new InputFilter[]{new InputFilter.LengthFilter(260)});
+        String serverIssue = issue("general", -1, "server");
+        host.setError(serverIssue != null ? serverIssue : issue("general", -1, "port"));
+        // How many server changes this hour, only once one was made (the launcher's rule: "0/6" said nothing).
+        if (a.serverChangesLimit > 0 && a.serverChangesUsed > 0) {
+            host.setHelp(getString(R.string.projects_cloud_settings_server_changes, a.serverChangesUsed, a.serverChangesLimit));
         }
+        watch(host.input, s -> {
+            String[] split = CloudServer.splitAddress(s);
+            mHost = split[0];
+            mPort = split[1];
+            bar();
+        });
+        content.addView(host.view);
 
         content.addView(CloudRowSheet.label(c, getString(R.string.projects_cloud_settings_version)));
         content.addView(picker(c, versionLabel(mVersion), v -> versions()));
@@ -342,7 +340,7 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
             bar();
         }));
 
-        content.addView(CloudUi.gap(c, 20));
+        content.addView(CloudUi.section(c, getString(R.string.projects_cloud_settings_section_game)));
         LinearLayout antiGroup = CloudUi.group(c);
         final LinearLayout delays = new LinearLayout(c);
         delays.setOrientation(LinearLayout.VERTICAL);
@@ -383,17 +381,6 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
         }
         delays.setVisibility(mConfig.antiAfk ? View.VISIBLE : View.GONE);
         content.addView(delays, CloudUi.matchWrap());
-
-        content.addView(CloudUi.gap(c, 8));
-        CloudUi.Field owner = CloudUi.field(c, getString(R.string.projects_cloud_settings_owner), mConfig.owner, null, text);
-        owner.input.setFilters(new InputFilter[]{new InputFilter.LengthFilter(16)});
-        owner.setHelp(getString(R.string.projects_cloud_settings_owner_help));
-        owner.setError(issue("general", -1, "owner"));
-        watch(owner.input, s -> {
-            mConfig.owner = s.trim();
-            bar();
-        });
-        content.addView(owner.view);
 
         // CAFK-FEAT: the account's own inventory choice, while the service offers the inventory (it applies at the
         // account's next connection; nothing restarts for it).
@@ -606,6 +593,18 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
     private void replies(LinearLayout content) {
         final Context c = ctx();
         CloudModel.Limits limits = mService.limits();
+        // "Oynadığın hesabın adı": what "Yalnız bana yanıt versin" listens to, so it leads the rules (the launcher's).
+        CloudUi.Field owner = CloudUi.field(c, getString(R.string.projects_cloud_settings_owner), mConfig.owner, null,
+                InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+        owner.input.setFilters(new InputFilter[]{new InputFilter.LengthFilter(16)});
+        owner.setHelp(getString(R.string.projects_cloud_settings_owner_help));
+        owner.setError(issue("general", -1, "owner"));
+        watch(owner.input, s -> {
+            mConfig.owner = s.trim();
+            bar();
+        });
+        content.addView(owner.view);
+        content.addView(CloudUi.gap(c, 8));
         // CAFK-FEAT: console kinds came on but these rules still match the old way until the settings are saved once.
         if (mBase != null && mBase.features.legacyRules) {
             content.addView(CloudUi.notice(c, R.drawable.projects_ic_warning_circle, R.color.projects_gold_300, getString(R.string.projects_feat_legacy_rules)));
@@ -703,7 +702,12 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
                 issues.add(new CloudEdit.Issue("general", -1, "server",
                         host.problem == CloudServer.Problem.DOT ? "dot" : host.problem == CloudServer.Problem.PRIVATE ? "private" : "format"));
             }
-            if (CloudServer.checkPort(portValue()) != null) issues.add(new CloudEdit.Issue("general", -1, "port", "port"));
+            int port = portValue();
+            if (!mPort.trim().isEmpty() && (port < 1 || port > 65535)) {
+                issues.add(new CloudEdit.Issue("general", -1, "port", "portRange"));
+            } else if (CloudServer.checkPort(port) != null) {
+                issues.add(new CloudEdit.Issue("general", -1, "port", "port"));
+            }
         }
         if (!issues.isEmpty()) {
             showIssues(issues);
@@ -748,7 +752,7 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
     private void showIssues(List<CloudEdit.Issue> issues) {
         mIssues.clear();
         mIssues.addAll(issues);
-        if (!issues.isEmpty()) mTab = tabOf(issues.get(0).place);
+        if (!issues.isEmpty()) mTab = tabOf(issues.get(0));
         tabs();
         draw();
         bar();

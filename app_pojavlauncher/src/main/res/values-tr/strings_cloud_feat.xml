@@ -94,7 +94,8 @@
     <string name="projects_feat_console_mentions">Adın geçenler</string>
     <string name="projects_feat_console_search">Konsolda ara</string>
     <string name="projects_feat_console_search_close">Aramayı kapat</string>
-    <string name="projects_feat_console_none">Bu süzgeçte satır yok.</string>
+    <string name="projects_feat_console_none">Aramana uyan satır yok.</string>
+    <string name="projects_feat_console_none_kind">Bu türde satır yok.</string>
     <string name="projects_feat_console_show_inventory">Envanterde göster</string>
     <string name="projects_feat_console_export">Konsolu indir</string>
     <string name="projects_feat_console_export_open">İndir</string>
@@ -124,7 +125,7 @@
     <string name="projects_feat_ph_matches">Eşleşir. Yanıt: %1$s</string>
     <string name="projects_feat_ph_no_match">Eşleşmez.</string>
     <string name="projects_feat_ph_add">Yanıta ekle</string>
-    <string name="projects_feat_ph_fix_pattern">Önce aranan sözü düzelt.</string>
+    <string name="projects_feat_ph_fix_pattern">Önce kuralın sözünü düzelt.</string>
     <string name="projects_feat_ph_no_reply">Eşleşir, ama bu mesaja yanıt gitmez.</string>
     <string name="projects_feat_ph_rule">Parçalar yalnız harf, rakam ve alt çizgiyse yanıt gider.</string>
     <string name="projects_feat_ph_player">Oyuncu</string>
@@ -221,7 +222,7 @@
     <string name="projects_feat_move_follow_main">Ana hesabını takip et</string>
     <string name="projects_feat_move_stop">Dur</string>
     <string name="projects_feat_move_far">En çok 256 blok uzağa gidebilir.</string>
-    <string name="projects_feat_move_not_near">Ana hesabın yakında değil.</string>
+    <string name="projects_feat_move_not_near">Ana hesabın yakınında değil.</string>
     <string name="projects_feat_move_no_slot">Şu an hareket için yer yok.</string>
     <string name="projects_feat_move_overworld">Dünya</string>
     <string name="projects_feat_move_nether">Nether</string>
@@ -239,7 +240,7 @@
     <string name="projects_feat_move_south">Güney</string>
     <string name="projects_feat_move_east">Doğu</string>
     <string name="projects_feat_move_west">Batı</string>
-    <string name="projects_feat_move_not_near_named">%1$s yakında değil.</string>
+    <string name="projects_feat_move_not_near_named">%1$s yakınında değil.</string>
     <string name="projects_feat_move_one_account">Hareket aynı anda yalnız bir hesabında açık olabilir.</string>
     <string name="projects_feat_move_max_accounts">Hareket en çok %1$d hesabında açık olabilir.</string>
     <string name="projects_feat_move_not_running">Hesap oyunda değilken hareket edemez.</string>

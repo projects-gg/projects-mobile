@@ -15,6 +15,26 @@ public class CloudServerTest {
     }
 
     @Test
+    public void oneAddressFieldHoldsThePort() {
+        assertEquals("play.projects.gg", CloudServer.joinAddress("play.projects.gg", ""));
+        assertEquals("play.projects.gg", CloudServer.joinAddress("play.projects.gg", "0"));
+        assertEquals("mc.sunucu.net:25570", CloudServer.joinAddress("mc.sunucu.net", "25570"));
+        assertEquals("mc.sunucu.net|25570", split("mc.sunucu.net:25570"));
+        assertEquals("mc.sunucu.net|", split(" mc.sunucu.net "));
+        assertEquals("mc.sunucu.net|", split("mc.sunucu.net:"));
+        assertEquals("mc.sunucu.net:abc|", split("mc.sunucu.net:abc"));
+        assertEquals("mc.sunucu.net|999999", split("mc.sunucu.net:999999"));
+        assertEquals("mc.sunucu.net:9999999|", split("mc.sunucu.net:9999999"));
+        assertEquals("2001:db8::1|", split("2001:db8::1"));
+        assertEquals("|25565", split(":25565"));
+    }
+
+    private static String split(String typed) {
+        String[] parts = CloudServer.splitAddress(typed);
+        return parts[0] + "|" + parts[1];
+    }
+
+    @Test
     public void normalizesHosts() {
         assertEquals("play.projects.gg", host(" Play.Projects.GG. "));
         assertEquals("xn--rnek-sunucu-qfb.com", host("Örnek-Sunucu.com"));

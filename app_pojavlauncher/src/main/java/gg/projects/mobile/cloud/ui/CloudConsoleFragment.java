@@ -457,7 +457,10 @@ public final class CloudConsoleFragment extends CloudScreen implements CloudServ
                 mEmpty.setVisibility(View.GONE);
                 return;
             }
-            TextView none = CloudUi.text(c, getString(R.string.projects_feat_console_none), 14.5f, R.color.projects_ash_300, false);
+            // The lead's shared wording while something is searched; a kind chip alone says what it hides.
+            boolean searched = !mQuery.trim().isEmpty();
+            TextView none = CloudUi.text(c, getString(searched ? R.string.projects_feat_console_none
+                    : R.string.projects_feat_console_none_kind), 14.5f, R.color.projects_ash_300, false);
             none.setGravity(Gravity.CENTER);
             none.setPadding(CloudUi.dp(c, 16), CloudUi.dp(c, 32), CloudUi.dp(c, 16), CloudUi.dp(c, 16));
             mEmpty.addView(none, CloudUi.matchWrap());

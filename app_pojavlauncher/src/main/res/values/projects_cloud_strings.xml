@@ -127,8 +127,8 @@
     <!-- The account screen -->
     <string name="projects_cloud_time">Time</string>
     <string name="projects_cloud_ends_on">Ends on %1$s</string>
-    <string name="projects_cloud_renew_opens">You can renew from %1$s.</string>
-    <string name="projects_cloud_site_more">Orders, refunds and deleting are on the site.</string>
+    <string name="projects_cloud_renew_opens">You can extend it from %1$s.</string>
+    <string name="projects_cloud_site_more">Orders, refunds and deleting the account are on afk.projects.gg.</string>
     <string name="projects_cloud_inventory">Inventory</string>
 
     <!-- Moderation (services/cloud-afk README "Moderation player API") -->
@@ -184,8 +184,6 @@
     <string name="projects_cloud_settings_load_failed">Couldn\'t load the settings.</string>
     <string name="projects_cloud_settings_name">Player name</string>
     <string name="projects_cloud_settings_host">Server address</string>
-    <string name="projects_cloud_settings_port">Port</string>
-    <string name="projects_cloud_settings_port_hint">Automatic</string>
     <string name="projects_cloud_settings_version">Game version</string>
     <string name="projects_cloud_settings_version_auto">Automatic</string>
     <string name="projects_cloud_settings_recommended">Recommended</string>
@@ -198,8 +196,10 @@
     <string name="projects_cloud_settings_anti_afk_interval">Sneak interval</string>
     <string name="projects_cloud_settings_at_least">At least</string>
     <string name="projects_cloud_settings_at_most">At most</string>
-    <string name="projects_cloud_settings_owner">Your own in-game name</string>
-    <string name="projects_cloud_settings_owner_help">\"Only from my main account\" rules listen to this name.</string>
+    <string name="projects_cloud_settings_owner">The name you play with</string>
+    <string name="projects_cloud_settings_owner_help">Rules with \"Only reply to me\" turned on answer only this name.</string>
+    <string name="projects_cloud_settings_section_connection">Connection</string>
+    <string name="projects_cloud_settings_section_game">Gameplay</string>
     <string name="projects_cloud_settings_seconds">s</string>
     <string name="projects_cloud_command_add">Add command</string>
     <string name="projects_cloud_command_empty">No commands yet.</string>
@@ -216,6 +216,7 @@
     <string name="projects_cloud_trigger_reconnect_short">When reconnecting, after %1$d s</string>
     <string name="projects_cloud_trigger_interval_short">Every %1$s to %2$s</string>
     <string name="projects_cloud_trigger_daily_short">Every day at %1$s</string>
+    <string name="projects_cloud_command_later">s later</string>
     <string name="projects_cloud_command_delay">Wait</string>
     <string name="projects_cloud_command_times">Times</string>
     <string name="projects_cloud_command_times_help">Turkey time.</string>
@@ -231,21 +232,26 @@
     <string name="projects_cloud_rule_empty">No rules yet.</string>
     <string name="projects_cloud_rule_count">%1$d/%2$d rules</string>
     <string name="projects_cloud_rule_title">Auto-reply</string>
-    <string name="projects_cloud_rule_match">Words to look for</string>
+    <string name="projects_cloud_rule_match">Phrase in the message</string>
+    <string name="projects_cloud_rule_pattern">Custom pattern</string>
+    <string name="projects_cloud_rule_pattern_hint">(?i)^!invite \\w+$</string>
+    <string name="projects_cloud_rule_pattern_help">A regular expression. Start it with (?i) so letter case doesn\'t matter.</string>
+    <string name="projects_cloud_rule_write_myself">I\'ll write the pattern myself</string>
+    <string name="projects_cloud_rule_to_plain">Back to a plain phrase</string>
     <string name="projects_cloud_rule_match_hint">hello</string>
-    <string name="projects_cloud_rule_regex">Regular expression</string>
     <string name="projects_cloud_rule_from">From</string>
     <string name="projects_cloud_rule_from_any">Anywhere</string>
     <string name="projects_cloud_rule_from_player">Player chat</string>
-    <string name="projects_cloud_rule_from_private">Whisper</string>
+    <string name="projects_cloud_rule_from_private">Private messages</string>
     <string name="projects_cloud_rule_from_server">Server message</string>
-    <string name="projects_cloud_rule_owner_only">Only from my main account</string>
-    <string name="projects_cloud_rule_cooldown">Wait</string>
+    <string name="projects_cloud_rule_owner_only">Only reply to me</string>
+    <string name="projects_cloud_rule_owner_help">Works only when %1$s writes.</string>
+    <string name="projects_cloud_rule_cooldown">Time between replies</string>
     <string name="projects_cloud_rule_reply">Reply</string>
     <string name="projects_cloud_rule_reply_hint">I\'m away from the keyboard right now.</string>
     <string name="projects_cloud_rule_use">Use rule</string>
     <string name="projects_cloud_rule_remove">Delete rule</string>
-    <string name="projects_cloud_rule_line">When \"%1$s\" comes, wait %2$s</string>
+    <string name="projects_cloud_rule_line">%1$s, %2$s apart</string>
     <string name="projects_cloud_secret_mark">Secret</string>
     <string name="projects_cloud_secret_help">Secret lines are encrypted on this phone before they\'re sent.</string>
     <string name="projects_cloud_secret_auto">Secret because it holds a password.</string>
@@ -290,7 +296,7 @@
     <string name="projects_cloud_issue_times_many">Up to 6 times.</string>
     <string name="projects_cloud_issue_invalid">Invalid regular expression.</string>
     <string name="projects_cloud_issue_too_complex">This expression is too complex; keep it simpler.</string>
-    <string name="projects_cloud_issue_owner">First write your own in-game name in General.</string>
+    <string name="projects_cloud_issue_owner">First write the name you play with above.</string>
     <string name="projects_cloud_issue_owner_server">Server messages don\'t come from a player, so this rule can\'t use it.</string>
     <string name="projects_cloud_issue_name">A player name has 3-16 letters, numbers or underscores.</string>
     <string name="projects_cloud_issue_name_duplicate">Another of your cloud accounts has this name on this server.</string>
@@ -299,6 +305,7 @@
     <string name="projects_cloud_issue_host_dot">Write the full address, like play.projects.gg</string>
     <string name="projects_cloud_issue_host_private">This address can\'t be reached.</string>
     <string name="projects_cloud_issue_port">This port can\'t be used.</string>
+    <string name="projects_cloud_issue_port_range">The number after the colon (:) must be between 1 and 65535.</string>
     <string name="projects_cloud_issue_blocked">We can\'t join this server.</string>
     <string name="projects_cloud_issue_full">This server has no room for cloud accounts.</string>
     <string name="projects_cloud_issue_change_limit">You\'ve changed the server too often this hour.</string>

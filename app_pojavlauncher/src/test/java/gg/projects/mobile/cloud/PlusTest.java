@@ -165,6 +165,13 @@ public class PlusTest {
         assertEquals("3 Ocak'ta", TrGrammar.locativeDate(3, 1));
         assertEquals("30 Ekim'e", TrGrammar.dativeDate(30, 10));
         assertEquals("1 Haziran'a", TrGrammar.dativeDate(1, 6));
+        assertEquals("12 Kasım'dan", TrGrammar.ablativeDate(12, 11));
+        assertEquals("5 Mart'tan", TrGrammar.ablativeDate(5, 3));
+        assertEquals("19 Eylül'den", TrGrammar.ablativeDate(19, 9));
+        assertEquals("3 Ocak 2027'de", TrGrammar.locativeDate(3, 1, 2027));
+        assertEquals("3 Ocak 2030'da", TrGrammar.locativeDate(3, 1, 2030));
+        assertEquals("3 Ocak 2027'den", TrGrammar.ablativeDate(3, 1, 2027));
+        assertEquals("1 Mayıs 2040'tan", TrGrammar.ablativeDate(1, 5, 2040));
         assertEquals("14:35'e", TrGrammar.dativeTime("14:35"));
         assertEquals("14:30'a", TrGrammar.dativeTime("14:30"));
     }

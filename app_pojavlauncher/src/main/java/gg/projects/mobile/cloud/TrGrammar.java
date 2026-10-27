@@ -50,6 +50,11 @@ public final class TrGrammar {
         return consonant + vowel;
     }
 
+    /** The ablative ending ("'dan", "'den", "'tan", "'ten"), without the apostrophe. */
+    static String ablativeOf(String word) {
+        return locativeOf(word) + "n";
+    }
+
     /** "37.500" → "37.500'e" (the number as written, its dative). */
     public static String dative(String written, long value) {
         return written + "'" + dativeOf(lastWord(value));
@@ -170,6 +175,22 @@ public final class TrGrammar {
     public static String dativeDate(int day, int month) {
         String name = MONTHS[Math.max(0, Math.min(11, month - 1))];
         return day + " " + name + "'" + dativeOf(name.toLowerCase(java.util.Locale.forLanguageTag("tr")));
+    }
+
+    /** "12 Kasım" → "12 Kasım'dan" ("… itibaren"). */
+    public static String ablativeDate(int day, int month) {
+        String name = MONTHS[Math.max(0, Math.min(11, month - 1))];
+        return day + " " + name + "'" + ablativeOf(name.toLowerCase(java.util.Locale.forLanguageTag("tr")));
+    }
+
+    /** "3 Ocak 2027'de": a day of another year, the ending after the year as it is read ("yedi" → 'de). */
+    public static String locativeDate(int day, int month, int year) {
+        return day + " " + MONTHS[Math.max(0, Math.min(11, month - 1))] + " " + year + "'" + locativeOf(lastWord(year));
+    }
+
+    /** "3 Ocak 2027'den". */
+    public static String ablativeDate(int day, int month, int year) {
+        return day + " " + MONTHS[Math.max(0, Math.min(11, month - 1))] + " " + year + "'" + ablativeOf(lastWord(year));
     }
 
     public static String monthName(int month) {

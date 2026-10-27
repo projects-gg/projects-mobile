@@ -492,6 +492,7 @@ public final class CloudFragment extends CloudScreen {
             state.setTextColor(CloudUi.color(c, tone));
             glyph.setSignal(line.signal);
             String more = null;
+            boolean timeLine = false;
             int approvals = a.ai != null && a.plus() && service.plusOn() ? a.ai.pendingApprovals : 0;
             int unread = service.unread(a.id);
             if (approvals > 0) {
@@ -501,6 +502,14 @@ public final class CloudFragment extends CloudScreen {
             } else if (CloudStatus.timeShort(a, service.nowMs())) {
                 // Only the last 7 days (or past the end) ask something of the player; renewing is open any time now.
                 more = CloudWords.timeLeft(c, CloudStatus.timeLeft(a, service.nowMs()));
+                timeLine = true;
+            }
+            // MOB-POLISH (the launcher's SHEET-UX 31): the last week's time is bright and bold, not gold;
+            // gold stays with actions (here: something AFK+ waits on the player for).
+            if (!Boolean.valueOf(timeLine).equals(extra.getTag())) {
+                extra.setTag(timeLine);
+                extra.setTextColor(CloudUi.color(c, timeLine ? R.color.projects_bone_100 : R.color.projects_gold_300));
+                extra.setTypeface(CloudUi.font(c, timeLine ? R.font.figtree_semibold : R.font.figtree_regular));
             }
             extra.setText(more);
             extra.setVisibility(more == null ? View.GONE : View.VISIBLE);

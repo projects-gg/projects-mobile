@@ -127,9 +127,9 @@
 
     <!-- Hesap ekranı -->
     <string name="projects_cloud_time">Süre</string>
-    <string name="projects_cloud_ends_on">%1$s tarihinde bitiyor</string>
-    <string name="projects_cloud_renew_opens">%1$s tarihinden itibaren uzatabilirsin.</string>
-    <string name="projects_cloud_site_more">Siparişler, iade ve silme afk.projects.gg\'de.</string>
+    <string name="projects_cloud_ends_on">%1$s bitiyor</string>
+    <string name="projects_cloud_renew_opens">Süreyi %1$s itibaren uzatabilirsin.</string>
+    <string name="projects_cloud_site_more">Sipariş, iade ve hesap silme işleri afk.projects.gg\'de.</string>
     <string name="projects_cloud_inventory">Envanter</string>
 
     <!-- Moderasyon (services/cloud-afk README "Moderation player API") -->
@@ -185,8 +185,6 @@
     <string name="projects_cloud_settings_load_failed">Ayarlar yüklenemedi.</string>
     <string name="projects_cloud_settings_name">Oyuncu adı</string>
     <string name="projects_cloud_settings_host">Sunucu adresi</string>
-    <string name="projects_cloud_settings_port">Port</string>
-    <string name="projects_cloud_settings_port_hint">Otomatik</string>
     <string name="projects_cloud_settings_version">Oyun sürümü</string>
     <string name="projects_cloud_settings_version_auto">Otomatik</string>
     <string name="projects_cloud_settings_recommended">Önerilen</string>
@@ -199,8 +197,11 @@
     <string name="projects_cloud_settings_anti_afk_interval">Eğilme aralığı</string>
     <string name="projects_cloud_settings_at_least">En az</string>
     <string name="projects_cloud_settings_at_most">En çok</string>
-    <string name="projects_cloud_settings_owner">Oyundaki kendi adın</string>
-    <string name="projects_cloud_settings_owner_help">\"Yalnız ana hesabımdan\" kuralları bu adı tanır.</string>
+    <string name="projects_cloud_settings_owner">Oynadığın hesabın adı</string>
+    <string name="projects_cloud_settings_owner_help">\"Yalnız bana yanıt versin\" açık olan kurallar yalnız bu ad yazınca çalışır.</string>
+    <!-- MOB-POLISH: "Genel" holds the launcher's two sections, each under its own heading. -->
+    <string name="projects_cloud_settings_section_connection">Bağlantı</string>
+    <string name="projects_cloud_settings_section_game">Oyun içi</string>
     <string name="projects_cloud_settings_seconds">sn</string>
     <string name="projects_cloud_command_add">Komut ekle</string>
     <string name="projects_cloud_command_empty">Henüz komut yok.</string>
@@ -217,6 +218,7 @@
     <string name="projects_cloud_trigger_reconnect_short">Yeniden bağlanınca, %1$d sn sonra</string>
     <string name="projects_cloud_trigger_interval_short">%1$s ile %2$s arasında bir</string>
     <string name="projects_cloud_trigger_daily_short">Her gün %1$s</string>
+    <string name="projects_cloud_command_later">sn sonra</string>
     <string name="projects_cloud_command_delay">Bekleme</string>
     <string name="projects_cloud_command_times">Saatler</string>
     <string name="projects_cloud_command_times_help">Türkiye saatiyle.</string>
@@ -232,21 +234,27 @@
     <string name="projects_cloud_rule_empty">Henüz kural yok.</string>
     <string name="projects_cloud_rule_count">%1$d/%2$d kural</string>
     <string name="projects_cloud_rule_title">Otomatik yanıt</string>
-    <string name="projects_cloud_rule_match">Aranan söz</string>
+    <string name="projects_cloud_rule_match">Mesajda geçen söz</string>
+    <!-- A plain phrase by default; the one advanced way is a pattern of the player's own (SHEET-UX 21). -->
+    <string name="projects_cloud_rule_pattern">Özel kalıp</string>
+    <string name="projects_cloud_rule_pattern_hint">(?i)^!davet \\w+$</string>
+    <string name="projects_cloud_rule_pattern_help">Düzenli ifade. Büyük küçük harf fark etmesin diye başına (?i) yaz.</string>
+    <string name="projects_cloud_rule_write_myself">Kalıbı kendim yazacağım</string>
+    <string name="projects_cloud_rule_to_plain">Düz söze dön</string>
     <string name="projects_cloud_rule_match_hint">selam</string>
-    <string name="projects_cloud_rule_regex">Düzenli ifade</string>
     <string name="projects_cloud_rule_from">Kimden</string>
     <string name="projects_cloud_rule_from_any">Her yerden</string>
     <string name="projects_cloud_rule_from_player">Oyuncu sohbeti</string>
-    <string name="projects_cloud_rule_from_private">Fısıltı</string>
+    <string name="projects_cloud_rule_from_private">Özel mesaj</string>
     <string name="projects_cloud_rule_from_server">Sunucu mesajı</string>
-    <string name="projects_cloud_rule_owner_only">Yalnız ana hesabımdan</string>
-    <string name="projects_cloud_rule_cooldown">Bekleme</string>
+    <string name="projects_cloud_rule_owner_only">Yalnız bana yanıt versin</string>
+    <string name="projects_cloud_rule_owner_help">Yalnız %1$s yazınca çalışır.</string>
+    <string name="projects_cloud_rule_cooldown">İki yanıt arası</string>
     <string name="projects_cloud_rule_reply">Yanıt</string>
     <string name="projects_cloud_rule_reply_hint">Şu an klavye başında değilim.</string>
     <string name="projects_cloud_rule_use">Kuralı kullan</string>
     <string name="projects_cloud_rule_remove">Kuralı sil</string>
-    <string name="projects_cloud_rule_line">%1$s, %2$s bekleme</string>
+    <string name="projects_cloud_rule_line">%1$s, %2$s arayla</string>
     <string name="projects_cloud_secret_mark">Gizli</string>
     <string name="projects_cloud_secret_help">Gizli satırlar bu telefonda şifrelenip gönderilir.</string>
     <string name="projects_cloud_secret_auto">Şifre içerdiği için gizli.</string>
@@ -291,7 +299,7 @@
     <string name="projects_cloud_issue_times_many">En çok 6 saat eklenebilir.</string>
     <string name="projects_cloud_issue_invalid">Geçersiz düzenli ifade.</string>
     <string name="projects_cloud_issue_too_complex">Bu ifade fazla karmaşık; daha sade yaz.</string>
-    <string name="projects_cloud_issue_owner">Önce Genel\'de oyundaki kendi adını yaz.</string>
+    <string name="projects_cloud_issue_owner">Önce yukarıda oynadığın hesabın adını yaz.</string>
     <string name="projects_cloud_issue_owner_server">Sunucu mesajları bir oyuncudan gelmez; bu kuralda kullanılamaz.</string>
     <string name="projects_cloud_issue_name">Oyuncu adı 3-16 karakter olmalı: harf, rakam ya da alt çizgi.</string>
     <string name="projects_cloud_issue_name_duplicate">Aynı ad ve sunucuyla başka bir bulut hesabın var.</string>
@@ -300,6 +308,7 @@
     <string name="projects_cloud_issue_host_dot">Tam adresi yaz. Örnek: play.projects.gg</string>
     <string name="projects_cloud_issue_host_private">Bu adrese bağlanılamaz.</string>
     <string name="projects_cloud_issue_port">Bu porta bağlanılamaz.</string>
+    <string name="projects_cloud_issue_port_range">İki nokta üst üsteden (:) sonraki sayı 1 ile 65535 arasında olmalı.</string>
     <string name="projects_cloud_issue_blocked">Bu sunucuya girilemiyor.</string>
     <string name="projects_cloud_issue_full">Bu sunucuda bulut hesapları için yer kalmadı.</string>
     <string name="projects_cloud_issue_change_limit">Bu saat içinde sunucu değiştirme hakkın doldu.</string>

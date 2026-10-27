@@ -22,6 +22,29 @@ public final class CloudServer {
         this.port = port;
     }
 
+    /**
+     * MOB-POLISH: what the one "Sunucu adresi" field shows for a stored host and port, as Minecraft's server list writes
+     * it ("mc.sunucu.net:25570"; the launcher's {@code joinAddress}). No port, 0 or the default: the host alone.
+     */
+    public static String joinAddress(String host, @Nullable String port) {
+        String shown = port == null ? "" : port.trim();
+        return shown.isEmpty() || shown.equals("0") ? host : host + ":" + shown;
+    }
+
+    /**
+     * Host and port in what is typed (the launcher's {@code splitAddress}): digits after the one colon at the end are the
+     * port ("" while there are none); anything else stays in the host, whose own check names the problem; a bare IPv6
+     * address (several colons) has no port.
+     */
+    public static String[] splitAddress(@Nullable String text) {
+        String trimmed = text == null ? "" : text.trim();
+        int colon = trimmed.lastIndexOf(':');
+        if (colon < 0 || trimmed.indexOf(':') != colon) return new String[]{trimmed, ""};
+        String port = trimmed.substring(colon + 1).trim();
+        if (!port.matches("\\d{0,6}")) return new String[]{trimmed, ""};
+        return new String[]{trimmed.substring(0, colon).trim(), port};
+    }
+
     /** Why an address cannot be used. */
     public enum Problem { EMPTY, FORMAT, DOT, PRIVATE, PORT }
 

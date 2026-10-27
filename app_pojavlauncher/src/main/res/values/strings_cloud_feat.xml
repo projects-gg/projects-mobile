@@ -92,7 +92,8 @@
     <string name="projects_feat_console_mentions">Mentions</string>
     <string name="projects_feat_console_search">Search the console</string>
     <string name="projects_feat_console_search_close">Close search</string>
-    <string name="projects_feat_console_none">No lines for this filter.</string>
+    <string name="projects_feat_console_none">No lines match your search.</string>
+    <string name="projects_feat_console_none_kind">No lines of this kind.</string>
     <string name="projects_feat_console_show_inventory">Show in inventory</string>
     <string name="projects_feat_console_export">Download the console</string>
     <string name="projects_feat_console_export_open">Download</string>
@@ -122,7 +123,7 @@
     <string name="projects_feat_ph_matches">Matches. Reply: %1$s</string>
     <string name="projects_feat_ph_no_match">No match.</string>
     <string name="projects_feat_ph_add">Add to the reply</string>
-    <string name="projects_feat_ph_fix_pattern">Fix the pattern first.</string>
+    <string name="projects_feat_ph_fix_pattern">Fix the rule\'s phrase first.</string>
     <string name="projects_feat_ph_no_reply">Matches, but no reply goes out for it.</string>
     <string name="projects_feat_ph_rule">The reply goes out only when the parts are letters, digits or underscores.</string>
     <string name="projects_feat_ph_player">Player</string>

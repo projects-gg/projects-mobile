@@ -130,6 +130,43 @@ public final class CloudWords {
         return new SimpleDateFormat(turkish(c) ? "d MMMM yyyy" : "d MMMM yyyy", locale(c)).format(new Date(seconds * 1000L));
     }
 
+    /**
+     * MOB-POLISH: "19 Kasım'da" ("… bitiyor"), the year only when it is not this year ("3 Ocak 2027'de") /
+     * "19 November", "3 January 2027" ("Ends on …").
+     */
+    public static String dayLocative(Context c, long seconds, long nowSeconds) {
+        Calendar when = Calendar.getInstance();
+        when.setTimeInMillis(seconds * 1000L);
+        boolean thisYear = sameYear(seconds, nowSeconds);
+        if (turkish(c)) {
+            int day = when.get(Calendar.DAY_OF_MONTH);
+            int month = when.get(Calendar.MONTH) + 1;
+            return thisYear ? TrGrammar.locativeDate(day, month) : TrGrammar.locativeDate(day, month, when.get(Calendar.YEAR));
+        }
+        return new SimpleDateFormat(thisYear ? "d MMMM" : "d MMMM yyyy", Locale.UK).format(new Date(seconds * 1000L));
+    }
+
+    /** "12 Kasım'dan" ("… itibaren"), "3 Ocak 2027'den" / "12 November", "3 January 2027" ("from …"). */
+    public static String dayAblative(Context c, long seconds, long nowSeconds) {
+        Calendar when = Calendar.getInstance();
+        when.setTimeInMillis(seconds * 1000L);
+        boolean thisYear = sameYear(seconds, nowSeconds);
+        if (turkish(c)) {
+            int day = when.get(Calendar.DAY_OF_MONTH);
+            int month = when.get(Calendar.MONTH) + 1;
+            return thisYear ? TrGrammar.ablativeDate(day, month) : TrGrammar.ablativeDate(day, month, when.get(Calendar.YEAR));
+        }
+        return new SimpleDateFormat(thisYear ? "d MMMM" : "d MMMM yyyy", Locale.UK).format(new Date(seconds * 1000L));
+    }
+
+    private static boolean sameYear(long seconds, long nowSeconds) {
+        Calendar a = Calendar.getInstance();
+        a.setTimeInMillis(seconds * 1000L);
+        Calendar b = Calendar.getInstance();
+        b.setTimeInMillis(nowSeconds * 1000L);
+        return a.get(Calendar.YEAR) == b.get(Calendar.YEAR);
+    }
+
     /** "14:35" on the phone's clock, 24 hours (the design guide: en-GB). */
     public static String clock(long seconds) {
         return new SimpleDateFormat("HH:mm", Locale.ROOT).format(new Date(seconds * 1000L));
@@ -365,7 +402,7 @@ public final class CloudWords {
                     default: return c.getString(R.string.projects_cloud_issue_host);
                 }
             case "port":
-                return c.getString(R.string.projects_cloud_issue_port);
+                return "portRange".equals(p) ? c.getString(R.string.projects_cloud_issue_port_range) : c.getString(R.string.projects_cloud_issue_port);
             case "version":
                 return c.getString(R.string.projects_cloud_issue_version);
             case "count":

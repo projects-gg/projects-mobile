@@ -232,7 +232,8 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
         time.addView(mTimeRow.view);
         content.addView(time);
         if (!renewable && !a.expired && a.renewalOpensAt > 0) {
-            content.addView(CloudUi.note(c, getString(R.string.projects_cloud_renew_opens, CloudWords.day(c, a.renewalOpensAt))));
+            content.addView(CloudUi.note(c, getString(R.string.projects_cloud_renew_opens,
+                    CloudWords.dayAblative(c, a.renewalOpensAt, mService.nowMs() / 1000))));
         }
 
         // AFK+.
@@ -392,10 +393,10 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
         }
         if (mTimeRow != null) {
             mTimeRow.title.setText(CloudWords.timeLeft(c, CloudStatus.timeLeft(a, mService.nowMs())));
-            // Gold only in the last 7 days (the site's rule); before that it is plain information.
-            mTimeRow.title.setTextColor(CloudUi.color(c, CloudStatus.timeShort(a, mService.nowMs())
-                    ? R.color.projects_gold_300 : R.color.projects_bone_100));
-            mTimeRow.setLine(a.expired ? null : getString(R.string.projects_cloud_ends_on, CloudWords.day(c, a.expiresAt)), R.color.projects_ash_400);
+            // MOB-POLISH (the launcher's SHEET-UX 31): the time stays bright and bold in the last week too;
+            // gold is only "Süreyi uzat" beside it (two gold words read as one).
+            mTimeRow.setLine(a.expired ? null : getString(R.string.projects_cloud_ends_on,
+                    CloudWords.dayLocative(c, a.expiresAt, mService.nowMs() / 1000)), R.color.projects_ash_400);
         }
         if (line.nextChangeMs > 0) view.postDelayed(mTick, Math.max(1000, line.nextChangeMs));
     }
