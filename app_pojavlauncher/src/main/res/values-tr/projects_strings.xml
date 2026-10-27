@@ -142,23 +142,36 @@
     <string name="projects_notice_dropped">Projects paketi Minecraft %1$s sürümünü artık güncellemiyor.</string>
 
     <string name="projects_patch_notes">Yama notları</string>
-    <string name="projects_event_live">Etkinlik sürüyor</string>
+    <string name="projects_patch_read">Tamamını oku</string>
+    <string name="projects_event_live">Süren etkinlik</string>
     <string name="projects_event_next">Sıradaki etkinlik</string>
-    <string name="projects_event_left">kaldı</string>
     <string name="projects_event_started">%1$s başladı</string>
-    <string name="projects_event_running">Sürüyor</string>
     <string name="projects_event_ends_in">%1$s kaldı</string>
+    <!-- Saat, okunuşuna göre ekiyle gelir: "20:00'de", "19:30'da", "15:00'te". -->
+    <string name="projects_event_starts_today">Bugün %1$s başlıyor</string>
+    <string name="projects_event_starts_tomorrow">Yarın %1$s başlıyor</string>
+    <string name="projects_event_starts_on">%1$s %2$s başlıyor</string>
     <plurals name="projects_events_more">
-        <item quantity="one">+%1$d etkinlik</item>
-        <item quantity="other">+%1$d etkinlik</item>
+        <item quantity="one">%1$d etkinlik daha</item>
+        <item quantity="other">%1$d etkinlik daha</item>
     </plurals>
     <string name="projects_events_other">Diğer etkinlikler</string>
-    <string name="projects_countdown_days">gün</string>
-    <string name="projects_countdown_hours">saat</string>
-    <string name="projects_countdown_minutes">dakika</string>
-    <string name="projects_countdown_seconds">saniye</string>
-    <string name="projects_span_days">%1$d gün</string>
-    <string name="projects_span_days_hours">%1$d gün %2$d sa</string>
+    <plurals name="projects_words_days">
+        <item quantity="one">%d gün</item>
+        <item quantity="other">%d gün</item>
+    </plurals>
+    <plurals name="projects_words_hours">
+        <item quantity="one">%d saat</item>
+        <item quantity="other">%d saat</item>
+    </plurals>
+    <plurals name="projects_words_minutes">
+        <item quantity="one">%d dakika</item>
+        <item quantity="other">%d dakika</item>
+    </plurals>
+    <plurals name="projects_words_seconds">
+        <item quantity="one">%d saniye</item>
+        <item quantity="other">%d saniye</item>
+    </plurals>
     <string name="projects_span_hours">%1$d sa</string>
     <string name="projects_span_hours_minutes">%1$d sa %2$d dk</string>
     <string name="projects_span_minutes">%1$d dk</string>
@@ -195,8 +208,6 @@
     <!-- 0.1.4: the dot on unseen news, event reminders and the status page notice. -->
     <string name="projects_news_new">Yeni</string>
     <string name="projects_all_news_new">Tüm haberler, yeni haber var</string>
-    <string name="projects_event_today">Bugün %1$s</string>
-    <string name="projects_event_tomorrow">Yarın %1$s</string>
     <string name="projects_reminder_bell">Hatırlat</string>
     <string name="projects_reminder_explained">Başlamadan 5 dakika önce haber vereceğiz.</string>
     <plurals name="projects_reminder_starts_in">

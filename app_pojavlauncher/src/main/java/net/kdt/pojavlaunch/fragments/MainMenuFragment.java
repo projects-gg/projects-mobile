@@ -57,8 +57,6 @@ public class MainMenuFragment extends Fragment {
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        Button mNewsButton = view.findViewById(R.id.news_button);
-        Button mDiscordButton = view.findViewById(R.id.discord_button);
         Button mCustomControlButton = view.findViewById(R.id.custom_control_button);
         Button mInstallJarButton = view.findViewById(R.id.install_jar_button);
         Button mShareLogsButton = view.findViewById(R.id.share_logs_button);
@@ -68,10 +66,8 @@ public class MainMenuFragment extends Fragment {
         Button mPlayButton = view.findViewById(R.id.play_button);
         mVersionSpinner = view.findViewById(R.id.mc_version_spinner);
 
-        // Projects fork: our wiki; the Discord invite comes from the signed launcher config when it
-        // has one, else the website's own link, which leads to the current invite.
-        mNewsButton.setOnClickListener(v -> Tools.openURL(requireActivity(), Tools.URL_HOME));
-        mDiscordButton.setOnClickListener(v -> Tools.openURL(requireActivity(), ProjectsHomeCard.discordUrl(getString(R.string.discord_invite))));
+        // MOB-POLISH: the wiki and Discord live in the Projects card's community row (HOME1), with the
+        // forum and the social accounts Studio publishes.
         mCustomControlButton.setOnClickListener(v -> startActivity(new Intent(requireContext(), CustomControlsActivity.class)));
         // Projects fork: every account may run installers, offline ones too (upstream: Microsoft only).
         mInstallJarButton.setOnClickListener(v -> runInstallerWithConfirmation(false));
@@ -139,7 +135,9 @@ public class MainMenuFragment extends Fragment {
         });
 
 
-        mNewsButton.setOnLongClickListener((v)->{
+        // Upstream's hidden way to the gamepad mapper (a long press on its "News" button) stays on the
+        // controls row, where it belongs.
+        mCustomControlButton.setOnLongClickListener((v)->{
             Tools.swapFragment(requireActivity(), GamepadMapperFragment.class, GamepadMapperFragment.TAG, null);
             return true;
         });

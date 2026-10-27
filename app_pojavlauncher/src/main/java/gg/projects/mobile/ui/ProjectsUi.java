@@ -52,9 +52,9 @@ public final class ProjectsUi {
     }
 
     /**
-     * M17: the category chip. Projects news shows its category in gold; Minecraft's own updates show
-     * "Minecraft" quieter, in ash with the cube mark (the desktop's quieter Minecraft row), so the
-     * server's own news stays the loud one.
+     * What a story is, in its quiet meta line beside the time ("Yama notları · 3 gün önce"; MOB-POLISH,
+     * the desktop's HOME-TASTE: no coloured category pill). Minecraft's own updates say "Minecraft"
+     * with the cube mark (M17), so the server's own news reads first by its place, not by colour.
      */
     public static void bindCategory(TextView chip, NewsFeed.NewsItem item) {
         Context context = chip.getContext();
@@ -64,8 +64,6 @@ public final class ProjectsUi {
         Object styled = chip.getTag(R.id.projects_chip_minecraft);
         if (styled instanceof Boolean && (Boolean) styled == minecraft) return;
         chip.setTag(R.id.projects_chip_minecraft, minecraft);
-        chip.setTextColor(androidx.core.content.ContextCompat.getColor(context,
-                minecraft ? R.color.projects_ash_300 : R.color.projects_gold_300));
         chip.setCompoundDrawablesRelativeWithIntrinsicBounds(minecraft ? R.drawable.projects_minecraft_glyph : 0, 0, 0, 0);
         chip.setCompoundDrawablePadding(minecraft ? Math.round(4 * context.getResources().getDisplayMetrics().density) : 0);
     }
@@ -97,16 +95,17 @@ public final class ProjectsUi {
         return DateUtils.getRelativeTimeSpanString(millis, now, DateUtils.MINUTE_IN_MILLIS).toString();
     }
 
-    /** "5 gün 3 sa", "2 sa 14 dk", "38 dk", "45 sn": time left in short form. */
+    /**
+     * "2 sa 14 dk", "38 dk", "45 sn" / "2 h 14 min": a compact figure in the short units (docs/design.md
+     * §7). From a day on it takes whole words ("5 gün 3 saat"): Turkish "gün" has no short form, and
+     * "5 gün 3 sa" mixed two styles.
+     */
     public static String span(Context context, long ms) {
         long total = Math.max(0, ms) / 1000;
         long days = total / 86_400;
         long hours = (total % 86_400) / 3_600;
         long minutes = (total % 3_600) / 60;
-        if (days > 0) {
-            return hours > 0 ? context.getString(R.string.projects_span_days_hours, days, hours)
-                    : context.getString(R.string.projects_span_days, days);
-        }
+        if (days > 0) return spanWords(context, ms);
         if (hours > 0) {
             return minutes > 0 ? context.getString(R.string.projects_span_hours_minutes, hours, minutes)
                     : context.getString(R.string.projects_span_hours, hours);
@@ -116,18 +115,59 @@ public final class ProjectsUi {
     }
 
     /**
-     * When an upcoming event starts (the desktop's {@code startMoment}): "Bugün 20:00",
-     * "Yarın 20:00", "Cumartesi 20:00" within the week, "25 Ekim 20:00" beyond it (a weekday alone
-     * would point at the wrong week).
+     * A span in a sentence, in whole words like the column's "5 saat önce" (the desktop's
+     * {@code timeLeftText}): "4 gün 23 saat", "2 saat 14 dakika", "38 dakika", "45 saniye" /
+     * "2 hours 14 minutes". Two units at most, the larger first, a zero second unit left out; it
+     * rounds down and says "1 saniye" to the end rather than "0 saniye".
+     */
+    public static String spanWords(Context context, long ms) {
+        long secs = Math.max(1, ms / 1000);
+        long days = secs / 86_400;
+        long hours = (secs % 86_400) / 3_600;
+        long minutes = (secs % 3_600) / 60;
+        android.content.res.Resources r = context.getResources();
+        if (days > 0) {
+            String d = r.getQuantityString(R.plurals.projects_words_days, (int) days, (int) days);
+            return hours > 0 ? d + " " + r.getQuantityString(R.plurals.projects_words_hours, (int) hours, (int) hours) : d;
+        }
+        if (hours > 0) {
+            String h = r.getQuantityString(R.plurals.projects_words_hours, (int) hours, (int) hours);
+            return minutes > 0 ? h + " " + r.getQuantityString(R.plurals.projects_words_minutes, (int) minutes, (int) minutes) : h;
+        }
+        if (minutes > 0) return r.getQuantityString(R.plurals.projects_words_minutes, (int) minutes, (int) minutes);
+        return r.getQuantityString(R.plurals.projects_words_seconds, (int) secs, (int) secs);
+    }
+
+    /**
+     * The event's time as one sentence in every state (the desktop's card, HOME-TASTE): "2 saat 14
+     * dakika kaldı" while it runs, "20 dakika önce başladı" for one without an end, else when it
+     * starts ({@link #startMoment}).
+     */
+    public static String eventTime(Context context, HomeContent.Event event, long now) {
+        if (event.isLive(now)) {
+            if (event.openEnded) return context.getString(R.string.projects_event_started, relative(event.startsAt, now));
+            return context.getString(R.string.projects_event_ends_in, spanWords(context, event.endsAt - now));
+        }
+        return startMoment(context, event.startsAt, now);
+    }
+
+    /**
+     * When an upcoming event starts, as a sentence like the live ones (the desktop's {@code startsText}):
+     * "Bugün 20:00'de başlıyor", "Yarın …", "Cumartesi …" within the week, "25 Ekim …" beyond it (a
+     * weekday alone would point at the wrong week); the time takes the ending it is read with
+     * ("20:00'de", "19:30'da", "15:00'te"). English: "Starts today at 20:00", "Starts Saturday at
+     * 20:00", "Starts 25 October at 20:00" (en-GB, 24 hours).
      */
     public static String startMoment(Context context, long millis, long now) {
-        Locale locale = locale(context);
-        String time = new SimpleDateFormat("HH:mm", locale).format(new Date(millis));
+        boolean turkish = gg.projects.mobile.language.LanguageManager.isTurkish(context);
+        Locale locale = turkish ? locale(context) : Locale.UK;
+        String clock = new SimpleDateFormat("HH:mm", Locale.ROOT).format(new Date(millis));
+        String time = turkish ? gg.projects.mobile.cloud.TrGrammar.locativeTime(clock) : clock;
         long days = Math.round((startOfDay(millis) - startOfDay(now)) / (double) DateUtils.DAY_IN_MILLIS);
-        if (days == 0) return context.getString(R.string.projects_event_today, time);
-        if (days == 1) return context.getString(R.string.projects_event_tomorrow, time);
-        String pattern = days > 1 && days < 7 ? "EEEE HH:mm" : "d MMMM HH:mm";
-        return new SimpleDateFormat(pattern, locale).format(new Date(millis));
+        if (days == 0) return context.getString(R.string.projects_event_starts_today, time);
+        if (days == 1) return context.getString(R.string.projects_event_starts_tomorrow, time);
+        String day = new SimpleDateFormat(days > 1 && days < 7 ? "EEEE" : "d MMMM", locale).format(new Date(millis));
+        return context.getString(R.string.projects_event_starts_on, day, time);
     }
 
     private static long startOfDay(long millis) {
@@ -217,16 +257,11 @@ public final class ProjectsUi {
         for (final HomeContent.Event event : events) {
             View row = inflater.inflate(R.layout.item_projects_event_row, list, false);
             ((TextView) row.findViewById(R.id.projects_event_row_title)).setText(event.title);
-            TextView state = row.findViewById(R.id.projects_event_row_state);
             TextView time = row.findViewById(R.id.projects_event_row_time);
             boolean live = event.isLive(now);
-            state.setVisibility(live ? View.VISIBLE : View.GONE);
-            if (live) {
-                time.setText(event.openEnded
-                        ? activity.getString(R.string.projects_event_started, relative(event.startsAt, now))
-                        : activity.getString(R.string.projects_event_ends_in, span(activity, event.endsAt - now)));
-            } else {
-                time.setText(startMoment(activity, event.startsAt, now));
+            // The card's sentences, no state word (the desktop's list): "2 saat 14 dakika kaldı".
+            time.setText(eventTime(activity, event, now));
+            if (!live) {
                 final ReminderBellView bell = row.findViewById(R.id.projects_event_row_bell);
                 bell.setVisibility(View.VISIBLE);
                 bell.setSet(Reminders.isSet(activity, event.id), false);
@@ -284,7 +319,9 @@ public final class ProjectsUi {
         View discord = view.findViewById(R.id.projects_article_discord);
         if (!minecraft && source != null && ContentPaths.isHttpsUrl(source)) {
             discord.setVisibility(View.VISIBLE);
-            Press.attach(discord, Press.Style.CARD); // M14
+            // An action: chamfered and quiet like the app's other secondary actions (the two-shape rule).
+            discord.setBackground(ChamferDrawable.secondary(activity));
+            Press.attach(discord, Press.Style.BUTTON); // M14
             discord.setOnClickListener(v -> openUrl(activity, source));
         }
 

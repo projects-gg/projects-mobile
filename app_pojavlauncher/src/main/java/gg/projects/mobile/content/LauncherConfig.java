@@ -81,6 +81,43 @@ public final class LauncherConfig {
         public String discord;
         public String store;
         public String support;
+        /**
+         * HOME1: other links; those with a platform's {@code id} or {@code icon} are the community row's
+         * ({@link CommunityLinks}). Read entry by entry ({@link #parse}): a broken entry drops itself.
+         */
+        public transient List<CustomLink> custom = Collections.emptyList();
+        @SerializedName("custom")
+        JsonElement customJson;
+    }
+
+    public static final class CustomLink {
+        public final String id;
+        public final String label;
+        public final String url;
+        @androidx.annotation.Nullable
+        public final String icon;
+
+        public CustomLink(String id, String label, String url, @androidx.annotation.Nullable String icon) {
+            this.id = id;
+            this.label = label;
+            this.url = url;
+            this.icon = icon;
+        }
+
+        static List<CustomLink> readAll(JsonElement value) {
+            if (value == null || !value.isJsonArray()) return Collections.emptyList();
+            List<CustomLink> out = new ArrayList<>();
+            for (JsonElement entry : value.getAsJsonArray()) {
+                try {
+                    JsonObject o = JsonFields.object(entry, "link");
+                    out.add(new CustomLink(JsonFields.requiredString(o, "id"), JsonFields.requiredString(o, "label"),
+                            JsonFields.requiredString(o, "url"), JsonFields.optionalString(o, "icon")));
+                } catch (JsonFields.Unreadable ignored) {
+                    // Studio never publishes such an entry; the others stay usable.
+                }
+            }
+            return Collections.unmodifiableList(out);
+        }
     }
 
     /**
@@ -151,6 +188,10 @@ public final class LauncherConfig {
             }
         }
         config.events = Collections.unmodifiableList(events);
+        if (config.links != null) {
+            config.links.custom = CustomLink.readAll(config.links.customJson);
+            config.links.customJson = null;
+        }
         config.newsFeed = NewsFeedConfig.read(config.newsFeedJson);
         // Like the events, a value of the wrong type drops only itself.
         JsonElement recommended = config.recommendedMinecraftVersionJson;

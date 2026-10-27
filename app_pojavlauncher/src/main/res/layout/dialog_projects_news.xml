@@ -21,37 +21,55 @@
             android:layout_marginBottom="14dp"
             android:visibility="gone" />
 
+        <TextView
+            android:id="@+id/projects_article_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/tektur_semibold"
+            android:textColor="@color/projects_bone_100"
+            android:textSize="22sp"
+            tools:text="2.3 yama notları" />
+
+        <!-- What it is and when, in one quiet line under the title (MOB-POLISH: no coloured pill). -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
             android:gravity="center_vertical"
+            android:minHeight="36dp"
             android:orientation="horizontal">
 
             <TextView
                 android:id="@+id/projects_article_category"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/projects_chip_background"
-                android:fontFamily="@font/figtree_semibold"
-                android:paddingStart="6dp"
-                android:paddingTop="2dp"
-                android:paddingEnd="6dp"
-                android:paddingBottom="2dp"
-                android:textColor="@color/projects_gold_300"
-                android:textSize="12sp"
+                android:fontFamily="@font/figtree_regular"
+                android:maxLines="1"
+                android:textColor="@color/projects_ash_300"
+                android:textSize="12.5sp"
                 tools:text="Yama notları" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:fontFamily="@font/figtree_regular"
+                android:importantForAccessibility="no"
+                android:text="@string/projects_meta_separator"
+                android:textColor="@color/projects_ash_400"
+                android:textSize="12.5sp" />
 
             <TextView
                 android:id="@+id/projects_article_date"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
+                android:layout_marginStart="6dp"
                 android:layout_weight="1"
                 android:ellipsize="end"
                 android:fontFamily="@font/figtree_regular"
                 android:maxLines="1"
-                android:textColor="@color/projects_ash_400"
-                android:textSize="12sp"
+                android:textColor="@color/projects_ash_300"
+                android:textSize="12.5sp"
                 tools:text="15 Ekim 2026" />
 
             <!-- Discord posts: the original message, with Discord's own symbol and colour. -->
@@ -60,13 +78,12 @@
                 android:layout_width="wrap_content"
                 android:layout_height="36dp"
                 android:layout_marginStart="8dp"
-                android:background="@drawable/projects_pill_background"
                 android:clickable="true"
                 android:focusable="true"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingStart="6dp"
-                android:paddingEnd="10dp"
+                android:paddingStart="8dp"
+                android:paddingEnd="12dp"
                 android:visibility="gone"
                 tools:visibility="visible">
 
@@ -83,20 +100,10 @@
                     android:fontFamily="@font/figtree_semibold"
                     android:maxLines="1"
                     android:text="@string/projects_open_in_discord"
-                    android:textColor="@color/projects_ash_300"
-                    android:textSize="12.5sp" />
+                    android:textColor="@color/projects_bone_100"
+                    android:textSize="13sp" />
             </LinearLayout>
         </LinearLayout>
-
-        <TextView
-            android:id="@+id/projects_article_title"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:fontFamily="@font/tektur_semibold"
-            android:textColor="@color/projects_bone_100"
-            android:textSize="22sp"
-            tools:text="2.3 yama notları" />
 
         <TextView
             android:id="@+id/projects_article_author"

@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Patch notes bullet: a small gold square, as on the desktop. -->
+<!-- Patch notes bullet: a small ash-500 square, as on the desktop (HOME-TASTE: gold stays with OYNA
+     and the actions). -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
     <size
         android:width="4dp"
         android:height="4dp" />
-    <solid android:color="@color/projects_gold_500" />
+    <solid android:color="@color/projects_ash_500" />
 </shape>

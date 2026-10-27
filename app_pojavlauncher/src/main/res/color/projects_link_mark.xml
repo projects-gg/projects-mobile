@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- HOME1: the community row's marks, ash at rest and bone while pressed (the desktop's ash-300 to bone);
+     never the brands' own colours. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:color="@color/projects_bone_100" android:state_pressed="true" />
+    <item android:color="@color/projects_ash_300" />
+</selector>

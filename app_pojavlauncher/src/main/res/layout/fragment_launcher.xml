@@ -68,40 +68,8 @@
 				android:orientation="vertical"
 				tools:targetApi="31">
 
-				<LinearLayout
-					android:layout_width="match_parent"
-					android:layout_height="wrap_content"
-					android:gravity="center_vertical"
-					android:orientation="horizontal">
-
-					<com.kdt.mcgui.LauncherMenuButton
-						android:id="@+id/news_button"
-						style="@style/LauncherMenuButton.Universal"
-						android:layout_width="0dp"
-						android:layout_weight="1"
-						android:drawableStart="@drawable/ic_menu_news"
-						android:text="@string/mcl_tab_wiki" />
-
-					<View
-						android:id="@+id/social_divider"
-						android:layout_width="1dp"
-						android:layout_height="24dp"
-						android:background="@color/projects_obsidian_700" />
-
-					<com.kdt.mcgui.LauncherMenuButton
-						android:id="@+id/discord_button"
-						style="@style/LauncherMenuButton.Universal"
-						android:layout_width="0dp"
-						android:layout_weight="1"
-						android:drawableStart="@drawable/ic_discord"
-						android:text="@string/mcl_button_discord" />
-				</LinearLayout>
-
-				<View
-					android:id="@+id/cloud_divider"
-					style="@style/ProjectsMenuDivider"
-					android:visibility="gone" />
-
+				<!-- MOB-POLISH: the wiki and Discord moved to the Projects card's community row (HOME1). The
+				     7/24 Bulut entry (players without cloud accounts) leads the tools, its divider after it. -->
 				<com.kdt.mcgui.LauncherMenuButton
 					android:id="@+id/cloud_button"
 					style="@style/LauncherMenuButton.Universal"
@@ -110,7 +78,10 @@
 					android:text="@string/projects_cloud_title"
 					android:visibility="gone" />
 
-				<View style="@style/ProjectsMenuDivider" />
+				<View
+					android:id="@+id/cloud_divider"
+					style="@style/ProjectsMenuDivider"
+					android:visibility="gone" />
 
 				<com.kdt.mcgui.LauncherMenuButton
 					android:id="@+id/custom_control_button"

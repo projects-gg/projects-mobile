@@ -9,6 +9,8 @@
     <color name="projects_obsidian_600">#3A3340</color>
     <color name="projects_ash_300">#BDB6C3</color>
     <color name="projects_ash_400">#9B93A3</color>
+    <!-- Placeholders and small marks only, never text (3-4:1). -->
+    <color name="projects_ash_500">#7D7586</color>
     <color name="projects_bone_50">#FBF6EC</color>
     <color name="projects_bone_100">#F3EBDD</color>
     <color name="projects_gold_200">#FAE5B3</color>

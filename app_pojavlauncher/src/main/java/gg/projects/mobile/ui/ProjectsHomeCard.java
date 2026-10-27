@@ -45,9 +45,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
-import java.util.TimeZone;
 
 import gg.projects.mobile.ProjectsContent;
 import gg.projects.mobile.content.DefaultVersion;
@@ -267,17 +265,18 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
     private final ImageView mEventCaret;
     private final TextView mEventTitle;
     private final TextView mEventWhen;
-    private final View mEventCountdown;
-    private final TextView[] mEventCells;
-    private final TextView mEventLeft;
-    private final TextView mEventStarted;
     private final ReminderBellView mEventBell;
     private final View mPatch;
     private final View mPatchDot;
     private final TextView mPatchMeta;
-    private final ImageView mPatchCaret;
+    private final View mPatchWhenRow;
+    private final TextView mPatchRead;
     private final TextView mPatchTitle;
     private final LinearLayout mPatchLines;
+    /** HOME1: the community row, and the links it shows (rebuilt only when they change). */
+    private final LinearLayout mLinks;
+    @Nullable
+    private String mLinksShown;
     private final View mMessage;
     private final TextView mMessageTitle;
     private final TextView mMessageBody;
@@ -299,7 +298,6 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
     private final View mNotifyOfferClose;
     private boolean mNotifyOfferDue;
     private final View mEventActions;
-    private final View mEventGap;
     private final Button mEventJoin;
     @Nullable
     private final UndoBar mUndoBar;
@@ -327,8 +325,6 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
     private HomeContent.Event mEventBound;
     private int mEventCount;
     private String mPatchLinesShown;
-    /** The local day the event's start moment was last written for ("Yarın" becomes "Bugün" at midnight). */
-    private long mEventWhenDay = Long.MIN_VALUE;
     /** The notice's backing drawable (the layout starts with the maintenance one). */
     private int mNoticeBackground = R.drawable.projects_maintenance_background;
     /** The news whose dot is on screen (shown, or faded out while it keeps its room). */
@@ -400,18 +396,15 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         mEventCaret = root.findViewById(R.id.projects_event_caret);
         mEventTitle = root.findViewById(R.id.projects_event_title);
         mEventWhen = root.findViewById(R.id.projects_event_when);
-        mEventCountdown = root.findViewById(R.id.projects_event_countdown);
-        mEventCells = new TextView[]{root.findViewById(R.id.projects_event_days), root.findViewById(R.id.projects_event_hours),
-                root.findViewById(R.id.projects_event_minutes), root.findViewById(R.id.projects_event_seconds)};
-        mEventLeft = root.findViewById(R.id.projects_event_left);
-        mEventStarted = root.findViewById(R.id.projects_event_started);
         mEventBell = root.findViewById(R.id.projects_event_bell);
         mPatch = root.findViewById(R.id.projects_patch);
         mPatchDot = root.findViewById(R.id.projects_patch_dot);
         mPatchMeta = root.findViewById(R.id.projects_patch_meta);
-        mPatchCaret = root.findViewById(R.id.projects_patch_caret);
+        mPatchWhenRow = root.findViewById(R.id.projects_patch_when_row);
+        mPatchRead = root.findViewById(R.id.projects_patch_read);
         mPatchTitle = root.findViewById(R.id.projects_patch_title);
         mPatchLines = root.findViewById(R.id.projects_patch_lines);
+        mLinks = root.findViewById(R.id.projects_links);
         mMessage = root.findViewById(R.id.projects_message);
         mMessageTitle = root.findViewById(R.id.projects_message_title);
         mMessageBody = root.findViewById(R.id.projects_message_body);
@@ -429,7 +422,6 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         mNotifyOfferAllow = root.findViewById(R.id.projects_notify_offer_allow);
         mNotifyOfferClose = root.findViewById(R.id.projects_notify_offer_close);
         mEventActions = root.findViewById(R.id.projects_event_actions);
-        mEventGap = root.findViewById(R.id.projects_event_gap);
         mEventJoin = root.findViewById(R.id.projects_event_join);
         mUndoBar = root instanceof androidx.constraintlayout.widget.ConstraintLayout
                 ? UndoBar.attach((androidx.constraintlayout.widget.ConstraintLayout) root, R.id._background_display_view) : null;
@@ -437,17 +429,27 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         Context context = root.getContext();
         float density = context.getResources().getDisplayMetrics().density;
         mNewsCover.setMaxCoverHeight(Math.round(200 * density));
-        // The bell's box ends at the block's edge (its row reaches into the padding); the icon moves
-        // 5 dp toward it, under the caret above (both centred 9 dp from the content's end).
-        mEventBell.setIconShift(5 * density);
-        // M14: "Projects'e katıl" is the gold face (without OYNA's socket); every tappable part of the
-        // card presses (rows and blocks barely move, buttons sink to 96%) with a haptic.
-        PlayButtons.decorateJoin(mJoinButton);
+        // The bell's box ends 4 dp from the card's edge; its icon moves 7 dp toward it, under the
+        // sections' carets (all centred 21 dp from the card's edge).
+        mEventBell.setIconShift(7 * density);
+        // MOB-POLISH: "Projects'e katıl" is a quiet chamfered action with the gold play mark of the
+        // event's "Katıl"; OYNA below is the one gold button (two gold buttons on one screen were two
+        // loud things). Every tappable part of the card presses (sections barely move, buttons sink to
+        // 96%) with a haptic.
+        mJoinButton.setBackground(ChamferDrawable.secondary(context));
+        Press.attach(mJoinButton, Press.Style.BUTTON);
         mSecondaryButton.setBackground(ChamferDrawable.secondary(context));
+        Press.attach(mSecondaryButton, Press.Style.BUTTON);
+        // The sections under the actions: a hairline along the top instead of a raised box of their own
+        // (no cards inside the card); a section that opens something gets the card's ripple.
+        mModsRow.setBackground(SectionDrawable.pressable(context));
+        setSectionPressable(mEvent, false);
+        setSectionPressable(mPatch, false);
+        mLinks.setBackground(SectionDrawable.divider(context));
         Press.attach(mModsRow, Press.Style.ROW);
         Press.attach(mNews, Press.Style.CARD);
-        Press.attach(mEvent, Press.Style.CARD);
-        Press.attach(mPatch, Press.Style.CARD);
+        Press.attach(mEvent, Press.Style.ROW);
+        Press.attach(mPatch, Press.Style.ROW);
         Press.attach(mNotice, Press.Style.CARD);
         Press.attach(mEventMore, Press.Style.BUTTON);
         Press.attach(mEventBell, Press.Style.ICON);
@@ -795,7 +797,75 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         } else {
             show(mSecondaryButton, false);
         }
+        bindLinks(activity, snapshot);
         scheduleTick(now);
+    }
+
+    /** A section's backing: the hairline, under the card's ripple while it opens something. */
+    private static void setSectionPressable(View section, boolean pressable) {
+        Object current = section.getTag(R.id.projects_section_pressable);
+        if (current instanceof Boolean && (Boolean) current == pressable) return;
+        section.setTag(R.id.projects_section_pressable, pressable);
+        section.setBackground(pressable ? SectionDrawable.pressable(section.getContext())
+                : SectionDrawable.divider(section.getContext()));
+    }
+
+    /**
+     * HOME1 (the desktop's news column row, docs/tasks/home1.md): wiki, Discord and the forum, then the
+     * social accounts Studio publishes, as quiet marks in the text colour (no brand colours; gold is
+     * the one accent). Each opens its https address; the platform's name is its accessible name and
+     * its tooltip. Rebuilt only when the links change.
+     */
+    private void bindLinks(final FragmentActivity activity, @Nullable Snapshot snapshot) {
+        LauncherConfig config = snapshot == null ? null : snapshot.config;
+        List<gg.projects.mobile.content.CommunityLinks.Link> links =
+                gg.projects.mobile.content.CommunityLinks.of(config == null ? null : config.links);
+        StringBuilder key = new StringBuilder();
+        for (gg.projects.mobile.content.CommunityLinks.Link link : links) {
+            key.append(link.platform.key).append(' ').append(link.url).append('\n');
+        }
+        String shown = key.toString();
+        if (shown.equals(mLinksShown)) return;
+        if (mLinksShown != null && mLinks.isShown() && CardMotion.canAnimate(mSceneRoot)) CardMotion.crossfade(mLinks);
+        mLinksShown = shown;
+        mLinks.removeAllViews();
+        float density = activity.getResources().getDisplayMetrics().density;
+        // Nine platforms at most; past seven the marks sit closer so the row never wraps at 360 dp.
+        int width = Math.round((links.size() > 7 ? 36 : 44) * density);
+        int height = Math.round(48 * density);
+        boolean social = false;
+        for (final gg.projects.mobile.content.CommunityLinks.Link link : links) {
+            if (link.platform.social && !social) {
+                social = true;
+                mLinks.addView(new View(activity), new LinearLayout.LayoutParams(0, 1, 1f));
+            }
+            android.widget.ImageButton button = new android.widget.ImageButton(activity);
+            button.setImageResource(linkMark(link.platform));
+            button.setImageTintList(ContextCompat.getColorStateList(activity, R.color.projects_link_mark));
+            button.setBackgroundResource(R.drawable.projects_icon_button_ripple);
+            button.setScaleType(ImageView.ScaleType.CENTER);
+            button.setContentDescription(link.platform.label);
+            if (Build.VERSION.SDK_INT >= 26) button.setTooltipText(link.platform.label);
+            Press.attach(button, Press.Style.ICON);
+            button.setOnClickListener(v -> ProjectsUi.openUrl(activity, link.url));
+            mLinks.addView(button, new LinearLayout.LayoutParams(width, height));
+        }
+        show(mLinks, !links.isEmpty());
+    }
+
+    private static int linkMark(gg.projects.mobile.content.CommunityLinks.Platform platform) {
+        switch (platform) {
+            case WIKI: return R.drawable.projects_ic_book_open_fill;
+            case DISCORD: return R.drawable.projects_ic_brand_discord;
+            case FORUM: return R.drawable.projects_ic_chats_fill;
+            case INSTAGRAM: return R.drawable.projects_ic_brand_instagram;
+            case TIKTOK: return R.drawable.projects_ic_brand_tiktok;
+            case YOUTUBE: return R.drawable.projects_ic_brand_youtube;
+            case X: return R.drawable.projects_ic_brand_x;
+            case TWITCH: return R.drawable.projects_ic_brand_twitch;
+            case KICK:
+            default: return R.drawable.projects_ic_brand_kick;
+        }
     }
 
     /**
@@ -848,10 +918,10 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         mNotice.setFocusable(false);
     }
 
-    /** The status page's active problem: an outage in the error colour with a faint ring, else gold. */
+    /** The status page's active problem: the notices' quiet panel, its icon in the error colour for an outage, else gold. */
     private void bindStatus(final FragmentActivity activity, final FeedStatus status) {
         boolean outage = status.level == FeedStatus.Level.OUTAGE;
-        setNoticeBackground(outage ? R.drawable.projects_notice_outage_background : R.drawable.projects_maintenance_background);
+        setNoticeBackground(R.drawable.projects_maintenance_background);
         mNoticeIcon.setImageResource(outage ? R.drawable.projects_ic_warning_octagon
                 : status.level == FeedStatus.Level.DEGRADED ? R.drawable.projects_ic_warning : R.drawable.projects_ic_megaphone);
         mNoticeIcon.setImageTintList(ContextCompat.getColorStateList(activity,
@@ -900,7 +970,8 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
 
     private void bindNews(final FragmentActivity activity, final Snapshot snapshot, final NewsFeed.NewsItem item) {
         ProjectsUi.bindCategory(mNewsCategory, item);
-        setText(mNewsDate, ProjectsUi.date(activity, item.publishedAtMillis()));
+        // The desktop rows' "Etkinlik · 3 gün önce" (a date once it is older than a week).
+        setText(mNewsDate, ProjectsUi.relative(item.publishedAtMillis(), System.currentTimeMillis()));
         setText(mNewsTitle, item.title);
         setText(mNewsSummary, item.summary);
         show(mNewsSummary, !item.summary.isEmpty());
@@ -909,8 +980,8 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
     }
 
     private void bindEvent(Context context, final HomeContent.Event event, boolean live, int others, boolean opens, long now) {
+        // The block's heading says the state ("Süren etkinlik" / "Sıradaki etkinlik"); no gold, no state chip.
         setText(mEventLabel, context.getString(live ? R.string.projects_event_live : R.string.projects_event_next));
-        mEventLabel.setTextColor(ContextCompat.getColor(context, live ? R.color.projects_gold_300 : R.color.projects_ash_300));
         setText(mEventTitle, event.title);
         show(mEventMore, others > 0);
         if (others > 0) setText(mEventMore, context.getResources().getQuantityString(R.plurals.projects_events_more, others, others));
@@ -919,104 +990,58 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         if (opens) mEventCaret.setImageResource(article ? R.drawable.projects_ic_caret_right : R.drawable.projects_ic_arrow_square_out);
         mEvent.setClickable(opens);
         mEvent.setFocusable(opens);
-        boolean started = live && event.openEnded;
+        setSectionPressable(mEvent, opens);
         // M17: a live event on the server offers "Katıl" in the bell's place (never before it starts).
         boolean joinable = event.offersJoin(now);
-        show(mEventCountdown, !started);
-        show(mEventStarted, started);
-        show(mEventGap, !started);
-        show(mEventLeft, live);
         show(mEventJoin, joinable);
         if (joinable) mEventJoin.setContentDescription(context.getString(R.string.projects_event_join) + ", " + event.title);
-        // "X önce başladı" alone keeps its old place under the title; beside "Katıl" it centres on the button.
-        ViewGroup.MarginLayoutParams actions = (ViewGroup.MarginLayoutParams) mEventActions.getLayoutParams();
-        int top = Math.round((started && !joinable ? 6 : 10) * context.getResources().getDisplayMetrics().density);
-        if (actions.topMargin != top) {
-            actions.topMargin = top;
-            mEventActions.setLayoutParams(actions);
-        }
-        // An upcoming event: when it starts, and the bell.
-        show(mEventWhen, !live);
+        // An upcoming event: the bell at the end of its time line.
         show(mEventBell, !live);
         if (!live) {
-            mEventWhenDay = Long.MIN_VALUE;
             boolean set = Reminders.isSet(context, event.id);
             if (mEventBell.isSet() != set) mEventBell.setSet(set, false);
             mEventBell.setOnClickListener(v -> onBell(mEventBell, event));
         }
-        updateCountdown(context, now);
-    }
-
-    /** The local day of {@code millis} (after 1970), to notice midnight cheaply. */
-    private static long localDay(long millis) {
-        return (millis + TimeZone.getDefault().getOffset(millis)) / 86_400_000L;
-    }
-
-    /** The countdown digits (or "X önce başladı"), updated every second while the card is shown. */
-    private void updateCountdown(Context context, long now) {
-        HomeContent.Event event = mEventBound;
-        if (event == null) return;
-        boolean live = event.isLive(now);
-        if (!live) {
-            long day = localDay(now);
-            if (day != mEventWhenDay) {
-                mEventWhenDay = day;
-                setText(mEventWhen, ProjectsUi.startMoment(context, event.startsAt, now));
-            }
-        }
-        if (live && event.openEnded) {
-            setText(mEventStarted, context.getString(R.string.projects_event_started, ProjectsUi.relative(event.startsAt, now)));
-            return;
-        }
-        long remaining = Math.max(0, (live ? event.endsAt : event.startsAt) - now);
-        long total = remaining / 1000;
-        long[] values = {total / 86_400, (total % 86_400) / 3_600, (total % 3_600) / 60, total % 60};
-        for (int i = 0; i < values.length; i++) {
-            String digits = String.format(Locale.ROOT, "%02d", values[i]);
-            fitDigits(mEventCells[i], digits.length());
-            setText(mEventCells[i], digits);
-        }
-        String spoken = ProjectsUi.span(context, remaining);
-        mEventCountdown.setContentDescription(live ? context.getString(R.string.projects_event_ends_in, spoken) : spoken);
+        updateEventTime(context, now);
     }
 
     /**
-     * Sizes a countdown cell for {@code digits} tabular digits, so the value that changes every
-     * second only redraws the cell instead of measuring the whole menu again (a wrap_content
-     * TextView asks for a new layout on every text change).
+     * The event's time as one sentence, as the desktop's card says it (HOME-TASTE: big ticking digits
+     * outshouted the card): "2 saat 14 dakika kaldı", "20 dakika önce başladı", "Cumartesi 20:00'de
+     * başlıyor".
      */
-    private static void fitDigits(TextView cell, int digits) {
-        Object sized = cell.getTag(R.id.projects_countdown_digits);
-        if (sized instanceof Integer && (Integer) sized == digits) return;
-        StringBuilder sample = new StringBuilder();
-        for (int i = 0; i < digits; i++) sample.append('0');
-        cell.setWidth((int) Math.ceil(cell.getPaint().measureText(sample.toString()))
-                + cell.getCompoundPaddingLeft() + cell.getCompoundPaddingRight());
-        cell.setTag(R.id.projects_countdown_digits, digits);
+    private void updateEventTime(Context context, long now) {
+        HomeContent.Event event = mEventBound;
+        if (event == null) return;
+        setText(mEventWhen, ProjectsUi.eventTime(context, event, now));
     }
 
     private void bindPatch(final FragmentActivity activity, final Snapshot snapshot, @Nullable final NewsFeed.NewsItem notes,
                            @Nullable ModsSummary pack, long now) {
         List<String> lines;
         if (notes != null) {
-            setText(mPatchMeta, ProjectsUi.relative(notes.publishedAtMillis(), now));
+            // One link to the article ("Tamamını oku"): its title, when, and two highlights.
             setText(mPatchTitle, notes.title);
-            show(mPatchTitle, true);
-            show(mPatchCaret, true);
+            setText(mPatchMeta, ProjectsUi.relative(notes.publishedAtMillis(), now));
+            show(mPatchWhenRow, true);
+            show(mPatchRead, true);
             lines = NewsText.newsHighlights(notes.body, notes.summary, 2);
             mPatch.setClickable(true);
             mPatch.setFocusable(true);
+            setSectionPressable(mPatch, true);
             mPatch.setOnClickListener(v -> ProjectsUi.showArticle(activity, snapshot, notes));
         } else {
+            // The pack's changelog: its version as the title, no time and no link (the desktop's).
             String name = pack.packName == null ? "" : pack.packName;
             String version = pack.packVersion == null ? "" : pack.packVersion;
-            setText(mPatchMeta, activity.getString(R.string.projects_pack_version, name, version).trim());
-            show(mPatchTitle, false);
-            show(mPatchCaret, false);
+            setText(mPatchTitle, activity.getString(R.string.projects_pack_version, name, version).trim());
+            show(mPatchWhenRow, false);
+            show(mPatchRead, false);
             lines = NewsText.highlights(pack.changelog, 4);
             mPatch.setOnClickListener(null);
             mPatch.setClickable(false);
             mPatch.setFocusable(false);
+            setSectionPressable(mPatch, false);
         }
         String joined = TextUtils.join("\n", lines);
         if (joined.equals(mPatchLinesShown)) return;
@@ -1035,14 +1060,21 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         mEvent.removeCallbacks(mTick);
         HomeContent.Event event = mEventBound;
         if (!mResumed || event == null) return;
-        long target = event.isLive(now) ? event.endsAt : event.startsAt;
-        long delay = event.isLive(now) && event.openEnded ? 30_000 : ((target - now) % 1000 + 1000) % 1000 + 20;
+        long delay;
+        if (event.isLive(now) && !event.openEnded) {
+            // The words round down: they change just past each whole minute, each second in the last one.
+            long left = Math.max(0, event.endsAt - now);
+            delay = left > 60_000 ? left % 60_000 + 1 : left % 1000 + 1;
+        } else {
+            // "20 dakika önce başladı" moves once a minute; "Yarın …" becomes "Bugün …" at midnight.
+            delay = 60_000 - now % 60_000 + 1;
+        }
         long boundary = HomeContent.nextBoundary(mHome == null ? new ArrayList<HomeContent.Event>() : mHome.events, now);
         if (boundary > 0) delay = Math.min(delay, Math.max(20, boundary - now + 20));
-        mEvent.postDelayed(mTick, delay);
+        mEvent.postDelayed(mTick, Math.max(20, delay));
     }
 
-    /** Every second: new digits; when an event starts or ends, the card re-orders itself on time. */
+    /** When the sentence changes; when an event starts or ends, the card re-orders itself on time. */
     private void tick() {
         if (!mFragment.isAdded() || mHome == null) return;
         long now = System.currentTimeMillis();
@@ -1053,7 +1085,7 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
             render(now);
             return;
         }
-        updateCountdown(mFragment.requireContext(), now);
+        updateEventTime(mFragment.requireContext(), now);
         scheduleTick(now);
     }
 

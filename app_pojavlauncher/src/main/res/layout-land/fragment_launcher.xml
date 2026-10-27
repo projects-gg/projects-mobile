@@ -57,37 +57,7 @@
 				android:orientation="vertical"
 				tools:targetApi="31">
 
-				<LinearLayout
-					android:layout_width="match_parent"
-					android:layout_height="wrap_content"
-					android:gravity="center_vertical"
-					android:orientation="horizontal">
-
-					<com.kdt.mcgui.LauncherMenuButton
-						android:id="@+id/news_button"
-						style="@style/LauncherMenuButton.Universal"
-						android:layout_width="0dp"
-						android:layout_weight="1"
-						android:drawableStart="@drawable/ic_menu_news"
-						android:text="@string/mcl_tab_wiki" />
-
-					<View
-						android:id="@+id/social_divider"
-						android:layout_width="1dp"
-						android:layout_height="24dp"
-						android:background="@color/projects_obsidian_700" />
-
-					<com.kdt.mcgui.LauncherMenuButton
-						android:id="@+id/discord_button"
-						style="@style/LauncherMenuButton.Universal"
-						android:layout_width="0dp"
-						android:layout_weight="1"
-						android:drawableStart="@drawable/ic_discord"
-						android:text="@string/mcl_button_discord" />
-				</LinearLayout>
-
-				<View style="@style/ProjectsMenuDivider" />
-
+				<!-- MOB-POLISH: the wiki and Discord moved to the Projects card's community row (HOME1). -->
 				<com.kdt.mcgui.LauncherMenuButton
 					android:id="@+id/custom_control_button"
 					style="@style/LauncherMenuButton.Universal"

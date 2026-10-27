@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- One line of the patch notes tile: a gold square and the bullet's text. -->
+<!-- One line of the patch notes tile: a small quiet square and the bullet's text. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -11,7 +11,7 @@
         android:layout_width="4dp"
         android:layout_height="4dp"
         android:layout_marginTop="7.5dp"
-        android:background="@drawable/projects_bullet_gold"
+        android:background="@drawable/projects_bullet_quiet"
         android:importantForAccessibility="no" />
 
     <TextView

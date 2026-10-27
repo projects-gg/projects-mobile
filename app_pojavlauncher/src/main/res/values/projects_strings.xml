@@ -146,27 +146,45 @@
     <!-- Home card: patch notes and events (also from the Discord news feed). -->
     <string name="projects_patch_notes">Patch notes</string>
     <string name="projects_pack_version" translatable="false">%1$s %2$s</string>
-    <string name="projects_event_live">Happening now</string>
+    <!-- MOB-POLISH: the desktop news column's words (HOME-TASTE): the patch notes' one link, the event's
+         heading while it runs ("Live" read like a stream), its time as one sentence. -->
+    <string name="projects_patch_read">Read in full</string>
+    <string name="projects_meta_separator" translatable="false">·</string>
+    <string name="projects_event_live">Ongoing event</string>
     <string name="projects_event_next">Next event</string>
-    <string name="projects_event_left">left</string>
     <string name="projects_event_started">Started %1$s</string>
-    <string name="projects_event_running">Live</string>
     <string name="projects_event_ends_in">%1$s left</string>
+    <!-- When an upcoming event starts, a sentence like "2 hours 14 minutes left". -->
+    <string name="projects_event_starts_today">Starts today at %1$s</string>
+    <string name="projects_event_starts_tomorrow">Starts tomorrow at %1$s</string>
+    <string name="projects_event_starts_on">Starts %1$s at %2$s</string>
     <plurals name="projects_events_more">
-        <item quantity="one">+%1$d event</item>
-        <item quantity="other">+%1$d events</item>
+        <item quantity="one">%1$d more event</item>
+        <item quantity="other">%1$d more events</item>
     </plurals>
     <string name="projects_events_other">Other events</string>
-    <string name="projects_countdown_days">days</string>
-    <string name="projects_countdown_hours">hours</string>
-    <string name="projects_countdown_minutes">minutes</string>
-    <string name="projects_countdown_seconds">seconds</string>
-    <string name="projects_span_days">%1$dd</string>
-    <string name="projects_span_days_hours">%1$dd %2$dh</string>
-    <string name="projects_span_hours">%1$dh</string>
-    <string name="projects_span_hours_minutes">%1$dh %2$dm</string>
-    <string name="projects_span_minutes">%1$dm</string>
-    <string name="projects_span_seconds">%1$ds</string>
+    <!-- Spans of time in a sentence: whole words, two units at most ("4 days 23 hours"). -->
+    <plurals name="projects_words_days">
+        <item quantity="one">%d day</item>
+        <item quantity="other">%d days</item>
+    </plurals>
+    <plurals name="projects_words_hours">
+        <item quantity="one">%d hour</item>
+        <item quantity="other">%d hours</item>
+    </plurals>
+    <plurals name="projects_words_minutes">
+        <item quantity="one">%d minute</item>
+        <item quantity="other">%d minutes</item>
+    </plurals>
+    <plurals name="projects_words_seconds">
+        <item quantity="one">%d second</item>
+        <item quantity="other">%d seconds</item>
+    </plurals>
+    <!-- Compact figures keep the short units (docs/design.md §7: "2 h 14 min", "38 min"). -->
+    <string name="projects_span_hours">%1$d h</string>
+    <string name="projects_span_hours_minutes">%1$d h %2$d min</string>
+    <string name="projects_span_minutes">%1$d min</string>
+    <string name="projects_span_seconds">%1$d s</string>
     <string name="projects_open_in_discord">Open in Discord</string>
     <string name="projects_link_no_app">No app can open this link.</string>
 
@@ -199,8 +217,6 @@
     <!-- 0.1.4: the dot on unseen news, event reminders and the status page notice. -->
     <string name="projects_news_new">New</string>
     <string name="projects_all_news_new">All news, new posts</string>
-    <string name="projects_event_today">Today %1$s</string>
-    <string name="projects_event_tomorrow">Tomorrow %1$s</string>
     <string name="projects_reminder_bell">Remind me</string>
     <string name="projects_reminder_explained">We\'ll let you know 5 minutes before it starts.</string>
     <plurals name="projects_reminder_starts_in">

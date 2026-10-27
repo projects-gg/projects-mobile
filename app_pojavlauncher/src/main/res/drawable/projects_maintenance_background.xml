@@ -1,17 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The notice on the Projects card (maintenance, or the status page's problem): maroon, with the
-     gold ripple of the card's rows when it opens the status page. -->
+<!-- The notice on the Projects card (maintenance, or the status page's problem): a quiet raised panel
+     (MOB-POLISH: was maroon); only its icon carries the colour. The card's gold ripple when it opens
+     the status page. -->
 <ripple xmlns:android="http://schemas.android.com/apk/res/android"
-    android:color="#1FF6D58E">
+    android:color="@color/projects_ripple">
     <item>
         <shape android:shape="rectangle">
-            <corners android:radius="8dp" />
-            <solid android:color="@color/projects_ember_900" />
+            <corners android:radius="10dp" />
+            <solid android:color="@color/projects_obsidian_800" />
+            <stroke android:width="1dp" android:color="@color/projects_obsidian_700" />
         </shape>
     </item>
     <item android:id="@android:id/mask">
         <shape android:shape="rectangle">
-            <corners android:radius="8dp" />
+            <corners android:radius="10dp" />
             <solid android:color="#FFFFFFFF" />
         </shape>
     </item>

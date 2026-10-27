@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- A story in "Tüm haberler": the cover, the title, what it is and when in one quiet line (MOB-POLISH,
+     the desktop's rows: no coloured category pill, nothing above the title), the summary. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -18,12 +20,22 @@
         android:id="@+id/projects_item_cover"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="10dp"
+        android:layout_marginBottom="12dp"
         android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/projects_item_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/tektur_semibold"
+        android:textColor="@color/projects_bone_100"
+        android:textSize="17sp"
+        tools:text="Bed Wars turnuvası" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
@@ -31,22 +43,28 @@
             android:id="@+id/projects_item_category"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/projects_chip_background"
-            android:fontFamily="@font/figtree_semibold"
-            android:paddingStart="6dp"
-            android:paddingTop="2dp"
-            android:paddingEnd="6dp"
-            android:paddingBottom="2dp"
-            android:textColor="@color/projects_gold_300"
-            android:textSize="12sp"
+            android:fontFamily="@font/figtree_regular"
+            android:maxLines="1"
+            android:textColor="@color/projects_ash_300"
+            android:textSize="12.5sp"
             tools:text="Etkinlik" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:fontFamily="@font/figtree_regular"
+            android:importantForAccessibility="no"
+            android:text="@string/projects_meta_separator"
+            android:textColor="@color/projects_ash_400"
+            android:textSize="12.5sp" />
 
         <!-- New to the player since the last visit; fades out when read and keeps its room. -->
         <View
             android:id="@+id/projects_item_dot"
             android:layout_width="6dp"
             android:layout_height="6dp"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="6dp"
             android:background="@drawable/projects_news_dot"
             android:contentDescription="@string/projects_news_new"
             android:visibility="gone"
@@ -56,17 +74,20 @@
             android:id="@+id/projects_item_date"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="6dp"
             android:layout_weight="1"
+            android:ellipsize="end"
             android:fontFamily="@font/figtree_regular"
-            android:textColor="@color/projects_ash_400"
-            android:textSize="12sp"
+            android:maxLines="1"
+            android:textColor="@color/projects_ash_300"
+            android:textSize="12.5sp"
             tools:text="15 Ekim 2026" />
 
         <TextView
             android:id="@+id/projects_item_pinned"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
             android:fontFamily="@font/figtree_semibold"
             android:text="@string/projects_pinned"
             android:textColor="@color/projects_ash_400"
@@ -75,24 +96,14 @@
     </LinearLayout>
 
     <TextView
-        android:id="@+id/projects_item_title"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:fontFamily="@font/tektur_semibold"
-        android:textColor="@color/projects_bone_100"
-        android:textSize="17sp"
-        tools:text="Bed Wars turnuvası" />
-
-    <TextView
         android:id="@+id/projects_item_summary"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
+        android:layout_marginTop="6dp"
         android:ellipsize="end"
         android:fontFamily="@font/figtree_regular"
         android:maxLines="3"
-        android:textColor="@color/projects_ash_400"
+        android:textColor="@color/projects_ash_300"
         android:textSize="14sp"
         tools:text="Cumartesi akşamı başlıyor." />
 </LinearLayout>
