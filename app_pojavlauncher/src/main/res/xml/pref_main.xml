@@ -9,9 +9,8 @@
 
     <net.kdt.pojavlaunch.prefs.BackButtonPreference/>
 
-    <PreferenceCategory
-        android:title="@string/preference_category_main_categories"
-        >
+    <!-- MOB-POLISH: the screens' rows without upstream's "Kategoriler" heading above them (a title for
+         nothing the player needs). -->
 
         <Preference
             android:key="video_screen_setting"
@@ -54,7 +53,6 @@
             android:fragment="net.kdt.pojavlaunch.prefs.screens.LauncherPreferenceExperimentalFragment"
             android:icon="@drawable/projects_pref_flask"
             />
-    </PreferenceCategory>
 
     <!-- Projects fork: the app's language (gg.projects.mobile.language). "Otomatik" is Turkish in
          Turkey or on a Turkish phone, else English; it replaces upstream's "force English" switch.
@@ -90,7 +88,7 @@
         android:icon="@drawable/projects_pref_microphone"
         />
     <!-- Projects fork: credits (LGPLv3 upstream notice) -->
-    <Preference
+    <gg.projects.mobile.ui.InfoPreference
         android:key="projects_about"
         android:selectable="false"
         android:title="@string/projects_about_title"

@@ -175,9 +175,9 @@
     <string name="preference_control_title">Kontrol özelleştirmesi</string>
     <string name="preference_control_description">Hareketler, düğmeler ve ölçek</string>
     <string name="preference_java_title">Java ayarları</string>
-    <string name="preference_java_description">Java sürümleri, JVM argümanları, bellek ve sandbox</string>
+    <string name="preference_java_description">Java sürümleri, bellek ve başlatma seçenekleri</string>
     <string name="preference_misc_title">Çeşitli ayarlar</string>
-    <string name="preference_misc_description">Sürüm listesi ve kütüphane kontrolü</string>
+    <string name="preference_misc_description">Sürüm listesi ve oyun dosyası denetimi</string>
     <string name="preference_experimental_description">Dikkatli kullan; bunlar için destek verilmez.</string>
     <string name="preference_sustained_performance_title">Kısıtlı performans modunu aç</string>
     <string name="preference_sustained_performance_description">En yüksek performansı sınırlayarak ısınmayı azaltır.</string>
@@ -374,7 +374,7 @@
     <string name="preference_remap_controller_description">Her bir kontrolcü düğmesine atanmış klavye tuşlarını değiştirmenizi sağlar</string>
     <string name="mcl_button_discord">Discord</string>
     <string name="ltw_render_distance_warning_msg">Ekran kartınız, Sodium veya benzeri modlar olmadan 7\'nin üzerinde görüş mesafesi işleyemez. “Tamam”a tıkladığınızda görüş mesafesi otomatik olarak düşürülecek.</string>
-    <string name="mcl_button_open_directory">Oyun dizinini aç</string>
+    <string name="mcl_button_open_directory">Oyun klasörünü aç</string>
     <string name="local_login_bad_username_title">Bu oyuncu adı kullanılamaz</string>
     <string name="local_login_bad_username_text">Oyuncu adı 3–16 karakter olmalı ve yalnızca Latin harfleri, rakam ya da alt çizgi (_) içermeli.</string>
     <string name="quick_setting_title">Hızlı ayarlar</string>

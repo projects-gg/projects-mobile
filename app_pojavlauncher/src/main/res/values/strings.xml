@@ -157,7 +157,7 @@
     <string name="customctrl_export">Export controlmap</string>
 
     <string name="main_share_logs">Share log file</string>
-    <string name="main_install_jar_file">Execute a .jar</string>
+    <string name="main_install_jar_file">Run a .jar file</string>
     <string name="main_play">Play</string>
     <string name="autoram_info_msg">Memory set to %d MB</string>
     <string name="mcl_setting_check_libraries">Check libraries after downloading</string>
@@ -208,9 +208,9 @@
     <string name="preference_control_title">Control customization</string>
     <string name="preference_control_description">Gestures, buttons and scaling</string>
     <string name="preference_java_title">Java settings</string>
-    <string name="preference_java_description">Java versions, JVM arguments, memory and sandbox</string>
+    <string name="preference_java_description">Java versions, memory and launch options</string>
     <string name="preference_misc_title">Miscellaneous settings</string>
-    <string name="preference_misc_description">Version list and libraries check</string>
+    <string name="preference_misc_description">Version list and game file checks</string>
     <string name="preference_experimental_description">Use with care; there is no support for these.</string>
     <string name="preference_sustained_performance_title">Enable sustained performance mode</string>
     <string name="preference_sustained_performance_description">Limit thermal throttling by limiting peak performance.</string>
@@ -426,7 +426,7 @@
     <string name="preference_remap_controller_description">Allows you to modify the keyboard keys bound to each controller button</string>
     <string name="mcl_button_discord">Discord</string>
     <string name="ltw_render_distance_warning_msg">Your GPU is not capable of rendering above 7 render distance without Sodium or other similar mods. The render distance will be automatically reduced when you click "OK".</string>
-    <string name="mcl_button_open_directory">Open game directory</string>
+    <string name="mcl_button_open_directory">Open game folder</string>
     <string name="discord_invite" translatable="false">https://projects.gg/discord</string>
     <string name="local_login_bad_username_title">Unsuitable username</string>
     <string name="local_login_bad_username_text">The username must be between 3–16 characters long, and must only contain latin letters, numbers 0–9 and underscores.</string>
