@@ -438,6 +438,7 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         // 96%) with a haptic.
         mJoinButton.setBackground(ChamferDrawable.secondary(context));
         Press.attach(mJoinButton, Press.Style.BUTTON);
+        mJoinButton.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> hugStartMark(mJoinButton));
         mSecondaryButton.setBackground(ChamferDrawable.secondary(context));
         Press.attach(mSecondaryButton, Press.Style.BUTTON);
         // The sections under the actions: a hairline along the top instead of a raised box of their own
@@ -551,6 +552,7 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         mJoinButton.removeCallbacks(mBusyWatcher);
         mJoinButton.setEnabled(!joining);
         mJoinButton.setText(joining ? R.string.projects_join_preparing : R.string.projects_join);
+        hugStartMark(mJoinButton);
         // M17: "Katıl" waits too, and its disabled look fades (150 ms) instead of snapping.
         if (mEventJoin.isEnabled() == joining) {
             mEventJoin.setEnabled(!joining);
@@ -799,6 +801,21 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         }
         bindLinks(activity, snapshot);
         scheduleTick(now);
+    }
+
+    /**
+     * The wide join button's play mark right before its centred words: a Button draws its start drawable at the padding's
+     * edge, so in a wide button the mark sat far left of "Projects'e katıl". The free room goes evenly to both sides.
+     */
+    private static void hugStartMark(final Button button) {
+        Drawable mark = button.getCompoundDrawablesRelative()[0];
+        int width = button.getWidth();
+        if (mark == null || width == 0) return;
+        int content = Math.round(button.getPaint().measureText(button.getText().toString()))
+                + mark.getIntrinsicWidth() + button.getCompoundDrawablePadding();
+        final int side = Math.max(Math.round(12 * button.getResources().getDisplayMetrics().density), (width - content) / 2);
+        if (button.getPaddingStart() == side && button.getPaddingEnd() == side) return;
+        button.post(() -> button.setPaddingRelative(side, button.getPaddingTop(), side, button.getPaddingBottom()));
     }
 
     /** A section's backing: the hairline, under the card's ripple while it opens something. */

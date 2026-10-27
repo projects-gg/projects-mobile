@@ -628,6 +628,11 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
                 CloudEdit.Rule rule = mConfig.rules.get(i);
                 CloudUi.Row row = CloudUi.row(c, rule.reply.secretKind() ? R.drawable.projects_ic_lock_line : R.drawable.projects_ic_chat,
                         preview(rule.reply), v -> CloudRowSheet.rule(this, index));
+                // A plain reply's placeholders by name, as in its sheet (the account's switch on).
+                if (!rule.reply.secretKind() && mBase != null && mService.checks(mBase).placeholders) {
+                    row.title.setText(TokenEditText.chipped(c, preview(rule.reply), part -> part == 0
+                            ? getString(R.string.projects_feat_ph_sender) : getString(R.string.projects_feat_ph_part, part)));
+                }
                 row.title.setSingleLine(true);
                 row.title.setEllipsize(TextUtils.TruncateAt.END);
                 String problem = issue("rules", i, null);

@@ -76,7 +76,7 @@
     <string name="projects_cloud_cause_forbiddenTarget">Can\'t connect to this server address</string>
     <string name="projects_cloud_cause_other">Disconnected</string>
 
-    <string name="projects_cloud_hint_wrong_password">Fix the login command in Settings, then start.</string>
+    <string name="projects_cloud_hint_wrong_password">Fix the login password in Settings, then start.</string>
     <string name="projects_cloud_hint_secret_unreadable">Type your secret commands again in Settings, then start.</string>
     <string name="projects_cloud_hint_unreadable_command_row">Type command %1$d again in Settings, then start.</string>
     <string name="projects_cloud_hint_unreadable_reply_row">Type auto-reply %1$d again in Settings, then start.</string>

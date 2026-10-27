@@ -77,7 +77,7 @@
     <string name="projects_cloud_cause_forbiddenTarget">Bu sunucu adresine bağlanılamıyor</string>
     <string name="projects_cloud_cause_other">Bağlantı kesildi</string>
 
-    <string name="projects_cloud_hint_wrong_password">Ayarlar\'da giriş komutunu düzelt, sonra başlat.</string>
+    <string name="projects_cloud_hint_wrong_password">Ayarlar\'da giriş şifresini düzelt, sonra başlat.</string>
     <string name="projects_cloud_hint_secret_unreadable">Ayarlar\'da gizli komutlarını yeniden yaz, sonra başlat.</string>
     <string name="projects_cloud_hint_unreadable_command_row">Ayarlar\'da %1$d. komutu yeniden yaz, sonra başlat.</string>
     <string name="projects_cloud_hint_unreadable_reply_row">Ayarlar\'da %1$d. otomatik yanıtı yeniden yaz, sonra başlat.</string>

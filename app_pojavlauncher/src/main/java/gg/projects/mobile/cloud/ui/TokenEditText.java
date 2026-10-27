@@ -104,6 +104,17 @@ public final class TokenEditText extends AppCompatEditText {
         }
     }
 
+    /** {@code text} with its placeholders drawn as named chips, for a read-only line (the rules list's previews). */
+    public static CharSequence chipped(Context c, String text, Names names) {
+        List<CloudPlaceholders.Token> tokens = CloudPlaceholders.tokens(text);
+        if (tokens.isEmpty()) return text;
+        android.text.SpannableString out = new android.text.SpannableString(text);
+        for (CloudPlaceholders.Token t : tokens) {
+            out.setSpan(new Chip(c, names.name(t.part)), t.at, t.at + 3, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+        return out;
+    }
+
     @Override
     protected void onSelectionChanged(int selStart, int selEnd) {
         super.onSelectionChanged(selStart, selEnd);

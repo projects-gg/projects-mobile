@@ -489,8 +489,13 @@ final class CloudRowSheet {
                 LinearLayout move = new LinearLayout(c);
                 move.setOrientation(LinearLayout.HORIZONTAL);
                 move.setPadding(CloudUi.dp(c, 4), 0, CloudUi.dp(c, 4), 0);
-                move.addView(CloudUi.textButton(c, c.getString(R.string.projects_cloud_command_move_up), v -> mover.move(true)));
-                move.addView(CloudUi.textButton(c, c.getString(R.string.projects_cloud_command_move_down), v -> mover.move(false)));
+                // Quiet: gold stays with the sheet's one action, "Tamam".
+                Button up = CloudUi.textButton(c, c.getString(R.string.projects_cloud_command_move_up), v -> mover.move(true));
+                Button down = CloudUi.textButton(c, c.getString(R.string.projects_cloud_command_move_down), v -> mover.move(false));
+                up.setTextColor(CloudUi.color(c, R.color.projects_bone_100));
+                down.setTextColor(CloudUi.color(c, R.color.projects_bone_100));
+                move.addView(up);
+                move.addView(down);
                 body.addView(move, CloudUi.matchWrap());
             }
             LinearLayout bar = new LinearLayout(c);
