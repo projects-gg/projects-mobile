@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- MOB-POLISH: the article in the app's sheet (BottomPanel): the text fades under the sheet's top while scrolled. -->
+<gg.projects.mobile.social.ui.FadingScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
@@ -11,7 +12,7 @@
         android:paddingStart="20dp"
         android:paddingTop="20dp"
         android:paddingEnd="20dp"
-        android:paddingBottom="8dp">
+        android:paddingBottom="28dp">
 
         <!-- Fixed 16:9 box: the dialog keeps its size when the picture arrives. -->
         <gg.projects.mobile.ui.CoverView
@@ -129,5 +130,20 @@
             android:textIsSelectable="false"
             android:textSize="16sp"
             tools:text="Yenilikler" />
+
+        <!-- The article's own action (its link, another article, minecraft.net): quiet and chamfered. -->
+        <Button
+            android:id="@+id/projects_article_action"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:fontFamily="@font/figtree_semibold"
+            android:minHeight="44dp"
+            android:minWidth="0dp"
+            android:stateListAnimator="@null"
+            android:textAllCaps="false"
+            android:textColor="@color/projects_bone_100"
+            android:textSize="15sp"
+            android:visibility="gone" />
     </LinearLayout>
-</ScrollView>
+</gg.projects.mobile.social.ui.FadingScrollView>

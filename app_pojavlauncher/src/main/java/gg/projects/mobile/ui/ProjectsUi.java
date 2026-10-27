@@ -339,29 +339,42 @@ public final class ProjectsUi {
             discord.setOnClickListener(v -> openUrl(activity, source));
         }
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(activity)
-                .setView(view)
-                .setPositiveButton(R.string.projects_close, null);
+        // MOB-POLISH: the article reads in the app's sheet (both second looks: a floating dialog cut the text above
+        // "Kapat", the screen's header around its corners). The sheet closes by its handle, a tap above it or Back;
+        // the article's own action sits under the text.
+        final android.widget.Button action = view.findViewById(R.id.projects_article_action);
+        final gg.projects.mobile.social.ui.BottomPanel[] panel = new gg.projects.mobile.social.ui.BottomPanel[1];
         if (minecraft) {
             // M17: "minecraft.net'te oku" in the system browser (https only), never "Discord'da aç".
             if (source != null && ContentPaths.isHttpsUrl(source)) {
-                builder.setNeutralButton(R.string.projects_minecraft_read, (d, w) -> openUrl(activity, source));
+                articleAction(activity, action, activity.getString(R.string.projects_minecraft_read), () -> openUrl(activity, source));
             }
-            builder.show();
-            return;
-        }
-        final NewsFeed.Cta cta = item.cta;
-        if (cta != null && cta.label != null && !cta.label.trim().isEmpty()) {
-            if (ContentPaths.isHttpsUrl(cta.url)) {
-                builder.setNeutralButton(cta.label.trim(), (d, w) -> openUrl(activity, cta.url));
-            } else if (cta.newsId != null) {
-                final NewsFeed.NewsItem target = snapshot.home(System.currentTimeMillis()).find(cta.newsId);
-                if (target != null && target != item) {
-                    builder.setNeutralButton(cta.label.trim(), (d, w) -> showArticle(activity, snapshot, target));
+        } else {
+            final NewsFeed.Cta cta = item.cta;
+            if (cta != null && cta.label != null && !cta.label.trim().isEmpty()) {
+                if (ContentPaths.isHttpsUrl(cta.url)) {
+                    articleAction(activity, action, cta.label.trim(), () -> openUrl(activity, cta.url));
+                } else if (cta.newsId != null) {
+                    final NewsFeed.NewsItem target = snapshot.home(System.currentTimeMillis()).find(cta.newsId);
+                    if (target != null && target != item) {
+                        articleAction(activity, action, cta.label.trim(), () -> {
+                            if (panel[0] != null) panel[0].dismiss();
+                            showArticle(activity, snapshot, target);
+                        });
+                    }
                 }
             }
         }
-        builder.show();
+        panel[0] = gg.projects.mobile.social.ui.BottomPanel.of(activity, view, 0.92f);
+        panel[0].show();
+    }
+
+    private static void articleAction(Activity activity, android.widget.Button action, CharSequence label, Runnable run) {
+        action.setText(label);
+        action.setBackground(ChamferDrawable.secondary(activity));
+        Press.attach(action, Press.Style.BUTTON);
+        action.setOnClickListener(v -> run.run());
+        action.setVisibility(View.VISIBLE);
     }
 
     /** An error that says what happened, with "copy details" for support (no codes in the text). */
