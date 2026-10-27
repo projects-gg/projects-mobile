@@ -195,11 +195,11 @@
     <string name="projects_cloud_settings_lang">Konsol dili</string>
     <string name="projects_cloud_settings_server_changes">Bu saat içinde %1$d/%2$d sunucu değişikliği</string>
     <string name="projects_cloud_settings_anti_afk">AFK engelleme</string>
-    <string name="projects_cloud_settings_anti_afk_help">Sunucu seni AFK saymasın diye arada bir çömelir.</string>
+    <string name="projects_cloud_settings_anti_afk_help">Sunucu seni AFK saymasın diye arada bir eğilir.</string>
     <string name="projects_cloud_settings_at_least">En az</string>
     <string name="projects_cloud_settings_at_most">En çok</string>
     <string name="projects_cloud_settings_owner">Oyundaki kendi adın</string>
-    <string name="projects_cloud_settings_owner_help">“Yalnız ana hesabımdan” kuralları bu adı tanır.</string>
+    <string name="projects_cloud_settings_owner_help">\"Yalnız ana hesabımdan\" kuralları bu adı tanır.</string>
     <string name="projects_cloud_settings_seconds">sn</string>
     <string name="projects_cloud_command_add">Komut ekle</string>
     <string name="projects_cloud_command_empty">Henüz komut yok.</string>

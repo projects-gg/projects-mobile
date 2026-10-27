@@ -198,7 +198,7 @@
     <string name="projects_cloud_settings_at_least">At least</string>
     <string name="projects_cloud_settings_at_most">At most</string>
     <string name="projects_cloud_settings_owner">Your own in-game name</string>
-    <string name="projects_cloud_settings_owner_help">“Only from my main account” rules listen to this name.</string>
+    <string name="projects_cloud_settings_owner_help">\"Only from my main account\" rules listen to this name.</string>
     <string name="projects_cloud_settings_seconds">s</string>
     <string name="projects_cloud_command_add">Add command</string>
     <string name="projects_cloud_command_empty">No commands yet.</string>
@@ -244,7 +244,7 @@
     <string name="projects_cloud_rule_reply_hint">I\'m away from the keyboard right now.</string>
     <string name="projects_cloud_rule_use">Use rule</string>
     <string name="projects_cloud_rule_remove">Delete rule</string>
-    <string name="projects_cloud_rule_line">When “%1$s” comes, wait %2$s</string>
+    <string name="projects_cloud_rule_line">When \"%1$s\" comes, wait %2$s</string>
     <string name="projects_cloud_secret_mark">Secret</string>
     <string name="projects_cloud_secret_help">Secret lines are encrypted on this phone before they\'re sent.</string>
     <string name="projects_cloud_secret_auto">Secret because it holds a password.</string>
