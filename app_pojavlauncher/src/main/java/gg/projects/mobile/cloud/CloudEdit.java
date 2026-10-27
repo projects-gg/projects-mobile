@@ -456,7 +456,8 @@ public final class CloudEdit {
         } catch (PatternSyntaxException e) {
             return "invalid";
         }
-        Matcher counts = Pattern.compile("\\{(\\d+)(?:,(\\d*))?}").matcher(value);
+        // "\\}", not "}": Android's regex engine (ICU) refuses a bare closing brace that the JVM's takes as a literal.
+        Matcher counts = Pattern.compile("\\{(\\d+)(?:,(\\d*))?\\}").matcher(value);
         while (counts.find()) {
             if (exceeds(counts.group(1)) || (counts.group(2) != null && !counts.group(2).isEmpty() && exceeds(counts.group(2)))) return "tooComplex";
         }
@@ -541,7 +542,7 @@ public final class CloudEdit {
         char c = pattern.charAt(at);
         if (c == '*' || c == '+') return 1;
         if (c != '{') return 0;
-        Matcher m = Pattern.compile("^\\{(\\d+)(?:(,)(\\d*))?}").matcher(pattern.substring(at));
+        Matcher m = Pattern.compile("^\\{(\\d+)(?:(,)(\\d*))?\\}").matcher(pattern.substring(at));
         if (!m.find()) return 0;
         boolean many = m.group(2) == null ? parse(m.group(1)) > 1 : m.group(3).isEmpty() || parse(m.group(3)) > 1;
         return many ? m.group(0).length() : -m.group(0).length();
