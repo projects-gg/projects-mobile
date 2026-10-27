@@ -197,6 +197,29 @@ public final class ChamferDrawable extends Drawable {
         return states;
     }
 
+    /**
+     * QA-TASTE: the launcher's danger button (packages/ui Button "danger"): flare-400 at 14 % over obsidian-900 with a
+     * flare-400 hairline at 45 %, 22 % while pressed; obsidian-700 while disabled. For what is hard to take back.
+     */
+    public static Drawable danger(Context context) {
+        Rect padding = padding(context, 16, 8);
+        float cut = cut(context);
+        float stroke = context.getResources().getDisplayMetrics().density;
+        int base = ContextCompat.getColor(context, R.color.projects_obsidian_900);
+        int flare = ContextCompat.getColor(context, R.color.projects_flare_400);
+        int ring = androidx.core.graphics.ColorUtils.setAlphaComponent(flare, 0x73);
+        StateListDrawable states = new StateListDrawable();
+        states.addState(new int[]{-android.R.attr.state_enabled},
+                new ChamferDrawable(ContextCompat.getColor(context, R.color.projects_obsidian_700), cut, padding));
+        states.addState(new int[]{android.R.attr.state_pressed},
+                new ChamferDrawable(androidx.core.graphics.ColorUtils.blendARGB(base, flare, 0.22f), ring, stroke, cut, padding));
+        states.addState(new int[]{android.R.attr.state_focused},
+                new ChamferDrawable(androidx.core.graphics.ColorUtils.blendARGB(base, flare, 0.14f),
+                        ContextCompat.getColor(context, R.color.projects_gold_300), 2 * stroke, cut, padding));
+        states.addState(new int[]{}, new ChamferDrawable(androidx.core.graphics.ColorUtils.blendARGB(base, flare, 0.14f), ring, stroke, cut, padding));
+        return states;
+    }
+
     /** Quiet secondary action: transparent with an obsidian-700 outline. */
     public static Drawable secondary(Context context) {
         Rect padding = padding(context, 14, 8);

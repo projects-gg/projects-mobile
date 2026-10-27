@@ -173,7 +173,7 @@ final class InviteCard {
         list.addView(CrewViews.actionRow(activity, R.drawable.projects_ic_prohibit, activity.getString(R.string.projects_social_block),
                 R.color.projects_flare_400, v -> {
                     dialog.dismiss();
-                    SocialUi.confirm(activity, activity.getString(R.string.projects_social_block_title, request.profile.name()),
+                    SocialUi.confirmDanger(activity, activity.getString(R.string.projects_social_block_title, request.profile.name()),
                             activity.getString(R.string.projects_social_block_ask), activity.getString(R.string.projects_social_block),
                             () -> service.block(request.profile, FriendCard.done(activity,
                                     activity.getString(R.string.projects_social_blocked, request.profile.name()))));

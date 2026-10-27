@@ -148,17 +148,11 @@ public class ProfileEditorFragment extends Fragment implements CropperUtils.Crop
             delete();
             return;
         }
-        AlertDialog question = new AlertDialog.Builder(requireContext())
-                .setTitle(getString(R.string.mob_profile_delete_title, storedName()))
-                .setMessage(R.string.mob_profile_delete_projects)
-                .setPositiveButton(R.string.global_delete, (dialog, which) -> {
+        // QA-TASTE: the app's own question (a ghost "Vazgeç", the danger "Sil"), not Android's two gold text buttons.
+        gg.projects.mobile.ui.ConfirmDialog.show(requireActivity(), getString(R.string.mob_profile_delete_title, storedName()),
+                getString(R.string.mob_profile_delete_projects), getString(R.string.global_delete), true, () -> {
                     if (isAdded()) delete();
-                })
-                .setNegativeButton(R.string.mob_profile_delete_cancel, null)
-                .show();
-        // MOB-POLISH: the deleting choice in the error colour, "Vazgeç" in the dialog's own (as removing an account).
-        android.widget.Button remove = question.getButton(AlertDialog.BUTTON_POSITIVE);
-        if (remove != null) remove.setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.projects_flare_400));
+                });
     }
 
     private void delete() {

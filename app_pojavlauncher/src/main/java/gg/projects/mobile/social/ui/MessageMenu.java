@@ -70,7 +70,7 @@ final class MessageMenu {
             actions.addView(CrewViews.actionRow(activity, R.drawable.projects_ic_trash, activity.getString(R.string.projects_chat_delete),
                     R.color.projects_flare_400, v -> {
                         dialog.dismiss();
-                        SocialUi.confirm(activity, activity.getString(R.string.projects_chat_delete_ask), null,
+                        SocialUi.confirmDanger(activity, activity.getString(R.string.projects_chat_delete_ask), null,
                                 activity.getString(R.string.projects_chat_delete), () -> chat.delete(entry.message.conv, entry.message.id,
                                         new SocialChat.Done() {
                                             @Override

@@ -289,15 +289,19 @@ public final class SocialUi {
         show(context, problemText(context, problem), true);
     }
 
-    /** A question with one consequential choice ({@code confirm}) and "Vazgeç". */
+    /**
+     * A question with one consequential choice ({@code confirm}) and "Vazgeç": the app's own dialog (QA-TASTE), the
+     * choice the gold action.
+     */
     public static void confirm(Activity activity, @Nullable String title, @Nullable String message, String confirm,
                                final Runnable onConfirm) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-        if (title != null) builder.setTitle(title);
-        if (message != null) builder.setMessage(message);
-        builder.setPositiveButton(confirm, (d, w) -> onConfirm.run())
-                .setNegativeButton(R.string.projects_social_cancel, null)
-                .show();
+        gg.projects.mobile.ui.ConfirmDialog.show(activity, title, message, confirm, false, onConfirm);
+    }
+
+    /** As {@link #confirm}, for a choice that is hard to take back (removing, blocking, deleting): the danger look. */
+    public static void confirmDanger(Activity activity, @Nullable String title, @Nullable String message, String confirm,
+                                     final Runnable onConfirm) {
+        gg.projects.mobile.ui.ConfirmDialog.show(activity, title, message, confirm, true, onConfirm);
     }
 
     public static void copy(Context context, String label, String text) {

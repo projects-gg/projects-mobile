@@ -450,7 +450,7 @@ final class MessageActions {
         }
         if (book != null && entry.message != null && book.canDelete(entry, hubNow, moderator(service, conv))) {
             menu.addView(row(activity, R.drawable.projects_ic_trash, R.string.projects_chat_delete, R.color.projects_flare_400, close,
-                    () -> SocialUi.confirm(activity, activity.getString(R.string.projects_chat_delete_ask), null,
+                    () -> SocialUi.confirmDanger(activity, activity.getString(R.string.projects_chat_delete_ask), null,
                             activity.getString(R.string.projects_chat_delete), () -> chat.delete(entry.message.conv, entry.message.id,
                                     new SocialChat.Done() {
                                         @Override

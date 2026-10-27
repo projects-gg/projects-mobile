@@ -362,7 +362,7 @@ final class CrewSheets {
             actions.addView(CrewViews.actionRow(activity, R.drawable.projects_ic_user_minus, activity.getString(R.string.projects_crew_remove),
                     R.color.projects_flare_400, v -> {
                         dialog.dismiss();
-                        SocialUi.confirm(activity, activity.getString(R.string.projects_crew_remove),
+                        SocialUi.confirmDanger(activity, activity.getString(R.string.projects_crew_remove),
                                 activity.getString(R.string.projects_crew_remove_ask, member.profile.name()),
                                 activity.getString(R.string.projects_crew_remove), () -> service.removeMember(team.id, userId,
                                         FriendCard.done(activity, activity.getString(R.string.projects_crew_removed, member.profile.name()))));

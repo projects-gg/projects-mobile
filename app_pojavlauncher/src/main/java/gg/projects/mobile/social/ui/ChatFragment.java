@@ -1028,7 +1028,7 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
         actions.addView(CrewViews.actionRow(activity, R.drawable.projects_ic_trash, getString(R.string.projects_chat_clear),
                 R.color.projects_flare_400, v -> {
                     dialog.dismiss();
-                    SocialUi.confirm(activity, getString(R.string.projects_chat_clear), getString(R.string.projects_chat_clear_ask),
+                    SocialUi.confirmDanger(activity, getString(R.string.projects_chat_clear), getString(R.string.projects_chat_clear_ask),
                             getString(R.string.projects_chat_clear), () -> {
                                 service.chat().clearHistory(mConv);
                                 SocialUi.toast(activity, activity.getString(R.string.projects_chat_cleared));

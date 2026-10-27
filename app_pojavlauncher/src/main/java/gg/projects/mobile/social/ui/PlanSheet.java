@@ -319,7 +319,7 @@ final class PlanSheet {
         if (plan.by.equals(service.state().myId())) {
             clear.run();
         } else {
-            SocialUi.confirm(activity, activity.getString(R.string.projects_plans_note_remove),
+            SocialUi.confirmDanger(activity, activity.getString(R.string.projects_plans_note_remove),
                     activity.getString(R.string.projects_plans_note_remove_ask), activity.getString(R.string.projects_plans_note_remove), clear);
         }
     }

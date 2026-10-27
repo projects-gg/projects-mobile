@@ -1537,15 +1537,15 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
                 makeLink(crew.id(), false);
                 break;
             case "leave":
-                SocialUi.confirm(activity, getString(R.string.projects_crew_leave), getString(R.string.projects_crew_leave_ask),
+                SocialUi.confirmDanger(activity, getString(R.string.projects_crew_leave), getString(R.string.projects_crew_leave_ask),
                         getString(R.string.projects_crew_leave), () -> service.leaveTeam(team.id, FriendCard.done(activity, getString(R.string.projects_crew_left))));
                 break;
             case "close":
-                SocialUi.confirm(activity, getString(R.string.projects_crew_close), getString(R.string.projects_crew_close_ask),
+                SocialUi.confirmDanger(activity, getString(R.string.projects_crew_close), getString(R.string.projects_crew_close_ask),
                         getString(R.string.projects_crew_close), () -> service.disbandTeam(team.id, FriendCard.done(activity, getString(R.string.projects_crew_disbanded_done))));
                 break;
             case "disband":
-                SocialUi.confirm(activity, getString(R.string.projects_crew_disband), getString(R.string.projects_crew_disband_ask),
+                SocialUi.confirmDanger(activity, getString(R.string.projects_crew_disband), getString(R.string.projects_crew_disband_ask),
                         getString(R.string.projects_crew_disband), () -> service.disbandTeam(team.id, FriendCard.done(activity, getString(R.string.projects_crew_disbanded_done))));
                 break;
             default:
@@ -1861,7 +1861,7 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         return CrewViews.actionRow(activity, R.drawable.projects_ic_trash, getString(R.string.projects_plans_cancel),
                 R.color.projects_flare_400, v -> {
                     dialog.dismiss();
-                    SocialUi.confirm(activity, getString(R.string.projects_plans_cancel), getString(R.string.projects_plans_cancel_ask),
+                    SocialUi.confirmDanger(activity, getString(R.string.projects_plans_cancel), getString(R.string.projects_plans_cancel_ask),
                             getString(R.string.projects_plans_cancel), () -> {
                                 if (!mPlanBusy.add(plan.id)) return;
                                 render();
@@ -1962,7 +1962,7 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         actions.addView(CrewViews.actionRow(activity, R.drawable.projects_ic_x, getString(R.string.projects_link_off),
                 R.color.projects_flare_400, v -> {
                     dialog.dismiss();
-                    SocialUi.confirm(activity, getString(R.string.projects_link_off), getString(R.string.projects_link_off_ask),
+                    SocialUi.confirmDanger(activity, getString(R.string.projects_link_off), getString(R.string.projects_link_off_ask),
                             getString(R.string.projects_link_off), () -> service.deleteInviteLink(crew.id(), new SocialService.Result<Void>() {
                                 @Override
                                 public void ok(Void value) {

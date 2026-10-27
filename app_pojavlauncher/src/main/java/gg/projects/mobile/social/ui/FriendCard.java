@@ -131,7 +131,7 @@ public final class FriendCard {
         actions.addView(CrewViews.actionRow(activity, R.drawable.projects_ic_user_minus, activity.getString(R.string.projects_social_remove),
                 R.color.projects_ash_300, v -> {
                     dialog.dismiss();
-                    SocialUi.confirm(activity, activity.getString(R.string.projects_social_remove_ask, profile.name()), null,
+                    SocialUi.confirmDanger(activity, activity.getString(R.string.projects_social_remove_ask, profile.name()), null,
                             activity.getString(R.string.projects_social_remove), () -> service.removeFriend(friendId, done(activity,
                                     activity.getString(R.string.projects_social_removed, profile.name()))));
                 }));
@@ -145,7 +145,7 @@ public final class FriendCard {
         actions.addView(CrewViews.actionRow(activity, R.drawable.projects_ic_prohibit, activity.getString(R.string.projects_social_block),
                 R.color.projects_flare_400, v -> {
                     dialog.dismiss();
-                    SocialUi.confirm(activity, activity.getString(R.string.projects_social_block_title, profile.name()),
+                    SocialUi.confirmDanger(activity, activity.getString(R.string.projects_social_block_title, profile.name()),
                             activity.getString(R.string.projects_social_block_ask), activity.getString(R.string.projects_social_block),
                             () -> service.block(profile, done(activity, activity.getString(R.string.projects_social_blocked, profile.name()))));
                 }));
