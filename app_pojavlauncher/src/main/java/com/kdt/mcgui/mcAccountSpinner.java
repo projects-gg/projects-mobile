@@ -337,10 +337,24 @@ public class mcAccountSpinner extends AppCompatSpinner implements AdapterView.On
         requestLayout();
     }
 
-    /** Projects fork: the gold "Hesap ekle" pill while there is no account, else the quiet one. */
+    /**
+     * MOB-POLISH: the gold "Hesap ekle" invitation only on the home screen, beside OYNA (the desktop's
+     * title bar pill); on the other screens (7/24 Bulut, friends, settings) the same pill is quiet, as
+     * a gold pill there competed with each page's own actions (FEAT-M2's second look).
+     */
+    private boolean mOnHome = true;
+
+    public void setOnHome(boolean home) {
+        if (mOnHome == home) return;
+        mOnHome = home;
+        updateChipBackground();
+        if (getAdapter() instanceof android.widget.BaseAdapter) ((android.widget.BaseAdapter) getAdapter()).notifyDataSetChanged();
+    }
+
+    /** Projects fork: the gold "Hesap ekle" pill while there is no account (on the home screen), else the quiet one. */
     private void updateChipBackground() {
         boolean empty = mAccountList.size() <= 1;
-        setBackgroundResource(empty ? R.drawable.projects_account_chip_add : R.drawable.projects_account_chip);
+        setBackgroundResource(empty && mOnHome ? R.drawable.projects_account_chip_add : R.drawable.projects_account_chip);
         // A held chip opens the list by drag-to-open, which skips performClick; with no account that
         // list holds only "Hesap ekle", whose tap selects nothing new. A long-clickable view gets no
         // drag-to-open: the hold opens the account screen like a tap.
@@ -497,9 +511,9 @@ public class mcAccountSpinner extends AppCompatSpinner implements AdapterView.On
             Context context = parent.getContext();
             if (position == 0) {
                 headView.setImageResource(R.drawable.projects_ic_user_plus);
-                headView.setImageTintList(ContextCompat.getColorStateList(context, R.color.projects_gold_300));
+                headView.setImageTintList(ContextCompat.getColorStateList(context, mOnHome ? R.color.projects_gold_300 : R.color.projects_ash_300));
                 name.setText(R.string.main_add_account);
-                name.setTextColor(ContextCompat.getColor(context, R.color.projects_gold_200));
+                name.setTextColor(ContextCompat.getColor(context, mOnHome ? R.color.projects_gold_200 : R.color.projects_bone_100));
                 caret.setVisibility(View.GONE);
             } else {
                 String username = super.getItem(position);

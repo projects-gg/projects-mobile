@@ -141,6 +141,8 @@ public class LauncherActivity extends BaseActivity implements gg.projects.mobile
             mSettingsButton.setHome(!(f instanceof MainMenuFragment));
             // Projects fork (FIX2): the friends pill sits in the top bar of the home screen only.
             if (mFriendsPill != null) mFriendsPill.setShownHere(f instanceof MainMenuFragment);
+            // MOB-POLISH: "Hesap ekle" is gold only there, beside OYNA.
+            if (mAccountSpinner != null) mAccountSpinner.setOnHome(f instanceof MainMenuFragment);
         }
     };
 
