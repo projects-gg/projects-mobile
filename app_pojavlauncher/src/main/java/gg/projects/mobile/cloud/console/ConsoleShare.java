@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Typeface;
 import android.net.Uri;
 import android.view.View;
 import android.widget.Button;
@@ -13,6 +14,7 @@ import android.widget.TextView;
 import androidx.annotation.MainThread;
 import androidx.annotation.Nullable;
 import androidx.core.content.FileProvider;
+import androidx.core.content.res.ResourcesCompat;
 
 import net.kdt.pojavlaunch.R;
 
@@ -63,7 +65,15 @@ public final class ConsoleShare {
         LinearLayout root = new LinearLayout(c);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(CloudUi.dp(c, 16), 0, CloudUi.dp(c, 16), CloudUi.dp(c, 16));
+        // The sheet's title as the app's other sheets: Tektur 17, a heading (design.md §3).
         TextView title = CloudUi.text(c, c.getString(R.string.projects_feat_console_export), 17, R.color.projects_bone_100, true);
+        try {
+            Typeface tektur = ResourcesCompat.getFont(c, R.font.tektur_semibold);
+            if (tektur != null) title.setTypeface(tektur);
+        } catch (RuntimeException e) {
+            // The font stays the app's text face.
+        }
+        if (android.os.Build.VERSION.SDK_INT >= 28) title.setAccessibilityHeading(true);
         title.setPadding(CloudUi.dp(c, 8), CloudUi.dp(c, 2), CloudUi.dp(c, 8), CloudUi.dp(c, 8));
         root.addView(title);
         final ConsoleExport.Range[] ranges = {ConsoleExport.Range.HOUR, ConsoleExport.Range.TODAY, ConsoleExport.Range.DAYS3};

@@ -2,6 +2,7 @@ package gg.projects.mobile.cloud.ui;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.InputFilter;
@@ -18,9 +19,12 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import androidx.annotation.ColorRes;
+import androidx.annotation.DrawableRes;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.SwitchCompat;
+import androidx.core.content.ContextCompat;
 
 import net.kdt.pojavlaunch.R;
 
@@ -174,6 +178,19 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
 
     private static int tabOf(String place) {
         return "commands".equals(place) ? COMMANDS : "rules".equals(place) ? REPLIES : GENERAL;
+    }
+
+    /** A small mark before a row's line (the launcher's quiet info line). */
+    private static void lineMark(CloudUi.Row row, @DrawableRes int icon, @ColorRes int tint) {
+        Context c = row.line.getContext();
+        Drawable mark = ContextCompat.getDrawable(c, icon);
+        if (mark == null) return;
+        mark = mark.mutate();
+        mark.setTint(CloudUi.color(c, tint));
+        int size = CloudUi.dp(c, 14);
+        mark.setBounds(0, 0, size, size);
+        row.line.setCompoundDrawablesRelative(mark, null, null, null);
+        row.line.setCompoundDrawablePadding(CloudUi.dp(c, 6));
     }
 
     private boolean hasFocusedField() {
@@ -407,6 +424,8 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
                 bar();
             });
             sw.setEnabled(!blocked);
+            // A switch that cannot be used dims with its title; the reason under it stays readable (SHEET-UX 33).
+            if (blocked) sw.setAlpha(0.55f);
             moveGroup.addView(sw);
             content.addView(moveGroup);
             String moveIssue = issue("general", -1, "movement");
@@ -620,7 +639,9 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
                 else if (rule.paused) row.setLine(getString(R.string.projects_cloud_mod_paused_row), R.color.projects_flare_400);
                 else if (CloudEdit.placeholderIssue(rule, i, mService.checks(mBase)) != null) {
                     // A reply stored before the switch came on that the save rules refuse: the machine leaves it out.
-                    row.setLine(getString(R.string.projects_feat_rule_not_sent), R.color.projects_gold_300);
+                    // Quiet, after the info mark, as the launcher's line (gold is never a sentence).
+                    row.setLine(getString(R.string.projects_feat_rule_not_sent), R.color.projects_ash_300);
+                    lineMark(row, R.drawable.projects_ic_info, R.color.projects_ash_400);
                 }
                 else row.setLine(getString(R.string.projects_cloud_rule_line, rule.pattern, CloudWords.span(c, rule.cooldown)), R.color.projects_ash_400);
                 if (!rule.enabled) row.view.setAlpha(0.55f);

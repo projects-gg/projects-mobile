@@ -416,12 +416,12 @@ public final class CloudMovementFragment extends CloudScreen implements CloudSer
         middle.addView(direction(c, R.drawable.projects_ic_arrow_right_bold, R.string.projects_feat_move_right, "right"), keyLp(key, tall, gap));
         pad.addView(middle);
         LinearLayout bottom = keyRow(c, gap);
-        View sneak = key(c, R.drawable.projects_ic_arrow_line_down, R.string.projects_feat_move_sneak);
+        View sneak = key(c, 0, R.string.projects_feat_move_sneak);
         sneak.setOnClickListener(v -> send(v, MoveOp.sneak(!(mState != null && mState.sneak)), null));
         sneak.setAccessibilityDelegate(TOGGLE);
         mSneakKey = sneak;
         bottom.addView(sneak, keyLp(key, low, 0));
-        View jump = key(c, R.drawable.projects_ic_arrow_line_up, R.string.projects_feat_move_jump);
+        View jump = key(c, 0, R.string.projects_feat_move_jump);
         jump.setOnClickListener(v -> send(v, MoveOp.jump(), null));
         bottom.addView(jump, keyLp(2 * key + gap, low, gap));
         pad.addView(bottom);
@@ -443,23 +443,35 @@ public final class CloudMovementFragment extends CloudScreen implements CloudSer
         return lp;
     }
 
-    /** One key: its arrow over its word, chamfered and outlined; gold-edged while it is held or stays pressed in. */
+    /**
+     * One key: its arrow over its word, chamfered and outlined; gold-edged while it is held or stays pressed in. Without
+     * an arrow ({@code icon} 0: "Eğil", "Zıpla", words only as on the launcher's pad, where an arrow under "Geri" read as
+     * a second "Geri") the word is a step larger and bright, gold while the key stays pressed in.
+     */
     private View key(Context c, @DrawableRes int icon, @StringRes int words) {
         LinearLayout button = new LinearLayout(c);
         button.setOrientation(LinearLayout.VERTICAL);
         button.setGravity(Gravity.CENTER);
         button.setBackground(ChamferDrawable.key(c));
-        ImageView glyph = new ImageView(c);
-        glyph.setImageResource(icon);
-        glyph.setImageTintList(ColorStateList.valueOf(CloudUi.color(c, R.color.projects_bone_100)));
-        glyph.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-        button.addView(glyph, new LinearLayout.LayoutParams(CloudUi.dp(c, 24), CloudUi.dp(c, 24)));
-        TextView label = CloudUi.text(c, getString(words), 12.5f, R.color.projects_ash_300, true);
+        if (icon != 0) {
+            ImageView glyph = new ImageView(c);
+            glyph.setImageResource(icon);
+            glyph.setImageTintList(ColorStateList.valueOf(CloudUi.color(c, R.color.projects_bone_100)));
+            glyph.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+            button.addView(glyph, new LinearLayout.LayoutParams(CloudUi.dp(c, 24), CloudUi.dp(c, 24)));
+        }
+        TextView label = CloudUi.text(c, getString(words), icon != 0 ? 12.5f : 13.5f,
+                icon != 0 ? R.color.projects_ash_300 : R.color.projects_bone_100, true);
+        if (icon == 0) {
+            label.setDuplicateParentStateEnabled(true);
+            label.setTextColor(new ColorStateList(new int[][]{{android.R.attr.state_activated}, {}},
+                    new int[]{CloudUi.color(c, R.color.projects_gold_200), CloudUi.color(c, R.color.projects_bone_100)}));
+        }
         label.setGravity(Gravity.CENTER);
         label.setMaxLines(1);
         label.setEllipsize(TextUtils.TruncateAt.END);
         LinearLayout.LayoutParams labelLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        labelLp.topMargin = CloudUi.dp(c, 4);
+        if (icon != 0) labelLp.topMargin = CloudUi.dp(c, 4);
         button.addView(label, labelLp);
         button.setClickable(true);
         button.setFocusable(true);
