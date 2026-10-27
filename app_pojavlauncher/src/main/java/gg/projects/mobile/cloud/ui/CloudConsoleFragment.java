@@ -311,7 +311,8 @@ public final class CloudConsoleFragment extends CloudScreen implements CloudServ
         strip.setClock(() -> mService.nowMs());
         LinearLayout.LayoutParams stripLp = CloudUi.matchWrap();
         stripLp.topMargin = CloudUi.dp(c, 4);
-        stripLp.bottomMargin = CloudUi.dp(c, 2);
+        // Room under the card, so the first line below it never touches it (the second look saw them meet at 360 dp).
+        stripLp.bottomMargin = CloudUi.dp(c, 10);
         mFilters.addView(strip, stripLp);
         mBarsView = strip;
         mFilters.setVisibility(View.VISIBLE);

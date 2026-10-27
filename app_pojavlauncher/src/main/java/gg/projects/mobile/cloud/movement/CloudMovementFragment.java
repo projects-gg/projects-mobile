@@ -554,8 +554,12 @@ public final class CloudMovementFragment extends CloudScreen implements CloudSer
         LinearLayout root = new LinearLayout(c);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(CloudUi.dp(c, 16), 0, CloudUi.dp(c, 16), CloudUi.dp(c, 16));
+        // The sheet's title as the app's other sheets: Tektur 17, a heading (design.md §3).
         TextView title = CloudUi.text(c, getString(R.string.projects_feat_move_goto), 17, R.color.projects_bone_100, true);
+        Typeface tektur = font(c, R.font.tektur_semibold);
+        if (tektur != null) title.setTypeface(tektur);
         title.setPadding(CloudUi.dp(c, 8), CloudUi.dp(c, 2), CloudUi.dp(c, 8), CloudUi.dp(c, 6));
+        if (android.os.Build.VERSION.SDK_INT >= 28) title.setAccessibilityHeading(true);
         root.addView(title);
         // Beyond 256 blocks: said before anything goes out; the typed fields stay flare until they change.
         final TextView error = CloudUi.text(c, "", 13.5f, R.color.projects_flare_400, false);
