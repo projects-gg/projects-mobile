@@ -33,6 +33,7 @@ import androidx.annotation.ColorRes;
 import androidx.annotation.DrawableRes;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
+import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
 
 import net.kdt.pojavlaunch.R;
@@ -564,6 +565,8 @@ public final class CloudMovementFragment extends CloudScreen implements CloudSer
         LinearLayout fields = new LinearLayout(c);
         fields.setOrientation(LinearLayout.HORIZONTAL);
         final CloudUi.Field[] xyz = new CloudUi.Field[3];
+        // "Git" waits until a target somewhere else is typed (set once the button exists).
+        final Runnable[] ready = new Runnable[1];
         String[] axes = {"X", "Y", "Z"};
         int[] now = here == null ? null : new int[]{here.x, here.y, here.z};
         for (int i = 0; i < 3; i++) {
@@ -581,6 +584,7 @@ public final class CloudMovementFragment extends CloudScreen implements CloudSer
                 public void afterTextChanged(Editable s) {
                     f.input.setActivated(false);
                     error.setVisibility(View.GONE);
+                    if (ready[0] != null) ready[0].run();
                 }
             });
             xyz[i] = f;
@@ -618,10 +622,13 @@ public final class CloudMovementFragment extends CloudScreen implements CloudSer
             send(v, MoveOp.go(target[0], target[1], target[2]), null);
             if (panel[0] != null) panel[0].dismiss();
         });
+        go.setTextColor(ContextCompat.getColorStateList(c, R.color.projects_on_gold_text));
+        ready[0] = () -> go.setEnabled(!nowhere(xyz, mPos));
+        ready[0].run();
         xyz[2].input.setImeOptions(EditorInfo.IME_ACTION_GO);
         xyz[2].input.setOnEditorActionListener((field, action, event) -> {
             if (action != EditorInfo.IME_ACTION_GO) return false;
-            go.performClick();
+            if (go.isEnabled()) go.performClick();
             return true;
         });
         LinearLayout.LayoutParams goLp = CloudUi.matchWrap();
@@ -633,6 +640,21 @@ public final class CloudMovementFragment extends CloudScreen implements CloudSer
         scroll.addView(root, new ScrollView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         panel[0] = BottomPanel.of(c, scroll, 0.9f);
         panel[0].show();
+    }
+
+    /**
+     * Nothing typed, or the typed target is where it already stands: "Git" has nowhere to go (the launcher's). A field
+     * that does not read as a coordinate counts as somewhere, so "Git" can say which field it is.
+     */
+    private static boolean nowhere(CloudUi.Field[] xyz, @Nullable MoveFrames.Pos here) {
+        for (int i = 0; i < 3; i++) {
+            String typed = xyz[i].value().trim();
+            if (typed.isEmpty()) continue;
+            if (here == null) return false;
+            Integer value = MoveOp.coordinate(typed, i == 1);
+            if (value == null || value != (i == 0 ? here.x : i == 1 ? here.y : here.z)) return false;
+        }
+        return true;
     }
 
     /** The words that change in place: the figures, the line, "Dur", sneaking, the walks, a trade's lock. */
