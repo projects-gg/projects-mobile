@@ -18,8 +18,11 @@ import androidx.annotation.Nullable;
  * scaled by whole numbers, nearest neighbour. Pictures are kept per size (a small cache), so a frame redraw is cheap.
  */
 public final class ItemArt {
-    /** The stand-in's tone on the game's grey inventory (a shade lighter than the slot, never the game's hint grey). */
-    public static final int STANDIN_GREY = 0xffd8d8d8;
+    /**
+     * The stand-in's tone on the game's grey inventory: a shade lighter than the slot (1.3:1 on #8B8B8B), never the game's
+     * hint grey, so the game's white counts read on it (design.md §6 "Cloud inventory"; lead, 27 Oct: #d8d8d8 drowned them).
+     */
+    public static final int STANDIN_GREY = 0xffa0a0a0;
     /** The stand-in's tone on our dark tiles. */
     public static final int STANDIN_DARK = 0xff5a5462;
     /** The edge dark icons get on our dark tiles. */
