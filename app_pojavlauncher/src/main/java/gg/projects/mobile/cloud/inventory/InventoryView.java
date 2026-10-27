@@ -188,6 +188,14 @@ public final class InventoryView extends View {
         return mScale;
     }
 
+    /**
+     * How far the window's visible edge sits inside this view's sides (past the centring and the one-pixel outline that
+     * melts into a dark page): where the line under the window starts and ends.
+     */
+    public int edge() {
+        return Math.max(0, mLeft + mScale);
+    }
+
     // ---- layout ----
 
     @Override

@@ -266,7 +266,25 @@ public final class CloudInventoryFragment extends CloudScreen implements Invento
         rowLp.topMargin = CloudUi.dp(c, 4);
         content.addView(row, rowLp);
 
-        content.addView(CloudUi.note(c, getString(R.string.projects_feat_inv_private)));
+        TextView note = CloudUi.note(c, getString(R.string.projects_feat_inv_private));
+        note.setPaddingRelative(0, note.getPaddingTop(), 0, note.getPaddingBottom());
+        content.addView(note, CloudUi.matchWrap());
+        // The line under the window and the note under it start and end at the window's visible edge (design.md §6 "Our
+        // frame"), whatever whole-pixel scale the window took: set in the window's own layout pass, before it draws.
+        final int bleed = viewLp.leftMargin;
+        view.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> {
+            int inset = bleed + view.edge();
+            align(row, inset);
+            align(note, inset);
+        });
+    }
+
+    private static void align(View v, int inset) {
+        ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
+        if (lp.getMarginStart() == inset && lp.getMarginEnd() == inset) return;
+        lp.setMarginStart(inset);
+        lp.setMarginEnd(inset);
+        v.setLayoutParams(lp);
     }
 
     private static View centered(Context c, View child) {
