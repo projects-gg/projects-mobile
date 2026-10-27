@@ -1,9 +1,6 @@
 package net.kdt.pojavlaunch.fragments;
 
-import static net.kdt.pojavlaunch.Tools.dialogOnUiThread;
-import static net.kdt.pojavlaunch.Tools.openPath;
 import static net.kdt.pojavlaunch.Tools.runOnUiThread;
-import static net.kdt.pojavlaunch.Tools.shareLog;
 
 import android.app.Dialog;
 import android.content.Intent;
@@ -58,9 +55,6 @@ public class MainMenuFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         Button mCustomControlButton = view.findViewById(R.id.custom_control_button);
-        Button mInstallJarButton = view.findViewById(R.id.install_jar_button);
-        Button mShareLogsButton = view.findViewById(R.id.share_logs_button);
-        Button mOpenDirectoryButton = view.findViewById(R.id.open_files_button);
 
         ImageButton mEditProfileButton = view.findViewById(R.id.edit_profile_button);
         Button mPlayButton = view.findViewById(R.id.play_button);
@@ -69,12 +63,8 @@ public class MainMenuFragment extends Fragment {
         // MOB-POLISH: the wiki and Discord live in the Projects card's community row (HOME1), with the
         // forum and the social accounts Studio publishes.
         mCustomControlButton.setOnClickListener(v -> startActivity(new Intent(requireContext(), CustomControlsActivity.class)));
-        // Projects fork: every account may run installers, offline ones too (upstream: Microsoft only).
-        mInstallJarButton.setOnClickListener(v -> runInstallerWithConfirmation(false));
-        mInstallJarButton.setOnLongClickListener(v -> {
-            runInstallerWithConfirmation(true);
-            return true;
-        });
+        // MOB-POLISH: the .jar installer, the log to share and the game folder are tools in Ayarlar
+        // (LauncherPreferenceFragment.setupTools); "Özel kontroller" stays here, the touch player's own tool.
         mEditProfileButton.setOnClickListener(v -> mVersionSpinner.openProfileEditor(requireActivity()));
 
         // Projects fork: Play starts the game. Upstream first asked about Sodium with a single
@@ -102,7 +92,6 @@ public class MainMenuFragment extends Fragment {
         View menuGroup = view.findViewById(R.id.projects_menu_group);
         if (menuGroup != null) menuGroup.setClipToOutline(true);
 
-        mShareLogsButton.setOnClickListener((v) -> shareLog(requireContext()));
 
         // Projects fork (M18): a new install plays Projects: its profile is there and chosen from the first
         // start (upstream's default profile, plain vanilla, was the only one and so Play's choice).
@@ -127,12 +116,6 @@ public class MainMenuFragment extends Fragment {
             else gg.projects.mobile.ui.ProjectsHomeCard.requestServer(connect);
         } else if (gg.projects.mobile.launch.ProjectsRelaunch.take(requireActivity())) view.postDelayed(() -> startAgain(40), 500);
 
-        mOpenDirectoryButton.setOnClickListener((v)-> {
-            if (Tools.isDemoProfile(v.getContext())){ // Say a different message when on demo profile since they might see the hidden demo folder
-                dialogOnUiThread(requireActivity(), getString(R.string.demo_unsupported), getString(R.string.change_account));
-            } else openPath(v.getContext(), getCurrentProfileDirectory(), false); // Projects fork: offline accounts too
-
-        });
 
 
         // Upstream's hidden way to the gamepad mapper (a long press on its "News" button) stays on the
@@ -159,15 +142,6 @@ public class MainMenuFragment extends Fragment {
     }
 
 
-    private File getCurrentProfileDirectory() {
-        String currentProfile = LauncherPreferences.DEFAULT_PREF.getString(LauncherPreferences.PREF_KEY_CURRENT_PROFILE, null);
-        if(!Tools.isValidString(currentProfile)) return new File(Tools.DIR_GAME_NEW);
-        LauncherProfiles.load();
-        MinecraftProfile profileObject = LauncherProfiles.mainProfileJson.profiles.get(currentProfile);
-        if(profileObject == null) return new File(Tools.DIR_GAME_NEW);
-        return Tools.getGameDirPath(profileObject);
-    }
-
     @Override
     public void onResume() {
         super.onResume();
@@ -183,12 +157,5 @@ public class MainMenuFragment extends Fragment {
         mProjectsCard.onPause();
         mSocialRow.onPause();
         mCloudRow.onPause();
-    }
-
-    private void runInstallerWithConfirmation(boolean isCustomArgs) {
-        if (ProgressKeeper.getTaskCount() == 0)
-            Tools.installMod(requireActivity(), isCustomArgs);
-        else
-            Toast.makeText(requireContext(), R.string.tasks_ongoing, Toast.LENGTH_LONG).show();
     }
 }

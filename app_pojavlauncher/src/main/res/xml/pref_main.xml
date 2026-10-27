@@ -87,6 +87,23 @@
         android:key="microphone_permission_request"
         android:icon="@drawable/projects_pref_microphone"
         />
+    <!-- MOB-POLISH: the tools the home screen listed (both second looks: developer tools on the player's home);
+         their own panel here (PreferencePanels: keys projects_tool_*). LauncherPreferenceFragment runs them. -->
+    <Preference
+        android:key="projects_tool_jar"
+        android:title="@string/main_install_jar_file"
+        android:icon="@drawable/ic_menu_install_jar"
+        />
+    <Preference
+        android:key="projects_tool_logs"
+        android:title="@string/main_share_logs"
+        android:icon="@drawable/projects_menu_share"
+        />
+    <Preference
+        android:key="projects_tool_folder"
+        android:title="@string/mcl_button_open_directory"
+        android:icon="@drawable/ic_folder"
+        />
     <!-- Projects fork: credits (LGPLv3 upstream notice) -->
     <gg.projects.mobile.ui.InfoPreference
         android:key="projects_about"

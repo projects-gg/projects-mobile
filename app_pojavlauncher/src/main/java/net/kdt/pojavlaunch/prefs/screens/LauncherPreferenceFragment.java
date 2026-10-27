@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import net.kdt.pojavlaunch.LauncherActivity;
 import net.kdt.pojavlaunch.R;
+import net.kdt.pojavlaunch.Tools;
 import net.kdt.pojavlaunch.prefs.LauncherPreferences;
 
 import gg.projects.mobile.language.AppLanguage;
@@ -31,6 +32,9 @@ public class LauncherPreferenceFragment extends PreferenceFragmentCompat impleme
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         view.setBackgroundColor(getResources().getColor(R.color.background_app));
+        // MOB-POLISH: a row that opens a screen ends in a caret (set before the list is bound: the adapter takes
+        // each row's widget layout once).
+        markScreens(getPreferenceScreen());
         super.onViewCreated(view, savedInstanceState);
         // Projects fork (M14): the screen's header names it; rows press (gold ripple, a light tick);
         // no dividers between rows, the category titles group them.
@@ -42,6 +46,8 @@ public class LauncherPreferenceFragment extends PreferenceFragmentCompat impleme
         setDivider(null);
         RecyclerView list = getListView();
         if (list != null) {
+            // MOB-POLISH: the rows in the app's panels (gg.projects.mobile.ui.PreferencePanels).
+            list.addItemDecoration(new gg.projects.mobile.ui.PreferencePanels(this));
             list.addOnChildAttachStateChangeListener(new RecyclerView.OnChildAttachStateChangeListener() {
                 @Override
                 public void onChildViewAttachedToWindow(@NonNull View row) {
@@ -51,6 +57,15 @@ public class LauncherPreferenceFragment extends PreferenceFragmentCompat impleme
                 @Override
                 public void onChildViewDetachedFromWindow(@NonNull View row) {}
             });
+        }
+    }
+
+    private static void markScreens(@Nullable androidx.preference.PreferenceGroup group) {
+        if (group == null) return;
+        for (int i = 0; i < group.getPreferenceCount(); i++) {
+            Preference preference = group.getPreference(i);
+            if (preference.getFragment() != null) preference.setWidgetLayoutResource(R.layout.projects_pref_chevron);
+            if (preference instanceof androidx.preference.PreferenceCategory) markScreens((androidx.preference.PreferenceGroup) preference);
         }
     }
 
@@ -79,6 +94,42 @@ public class LauncherPreferenceFragment extends PreferenceFragmentCompat impleme
         addPreferencesFromResource(R.xml.pref_main);
         setupNotificationRequestPreference();
         setupLanguagePreference();
+        setupTools();
+    }
+
+    /**
+     * MOB-POLISH: the tools the home screen listed (a .jar installer, the log to share, the game folder), run as the
+     * main menu ran them.
+     */
+    private void setupTools() {
+        requirePreference("projects_tool_jar").setOnPreferenceClickListener(preference -> {
+            if (net.kdt.pojavlaunch.progresskeeper.ProgressKeeper.getTaskCount() == 0) Tools.installMod(requireActivity(), false);
+            else android.widget.Toast.makeText(requireContext(), R.string.tasks_ongoing, android.widget.Toast.LENGTH_LONG).show();
+            return true;
+        });
+        requirePreference("projects_tool_logs").setOnPreferenceClickListener(preference -> {
+            Tools.shareLog(requireContext());
+            return true;
+        });
+        requirePreference("projects_tool_folder").setOnPreferenceClickListener(preference -> {
+            if (Tools.isDemoProfile(requireContext())) {
+                Tools.dialogOnUiThread(requireActivity(), getString(R.string.demo_unsupported), getString(R.string.change_account));
+            } else {
+                Tools.openPath(requireContext(), currentProfileDirectory(), false);
+            }
+            return true;
+        });
+    }
+
+    /** The selected profile's game folder (the main menu's getCurrentProfileDirectory). */
+    private static java.io.File currentProfileDirectory() {
+        String current = LauncherPreferences.DEFAULT_PREF.getString(LauncherPreferences.PREF_KEY_CURRENT_PROFILE, null);
+        if (!Tools.isValidString(current)) return new java.io.File(Tools.DIR_GAME_NEW);
+        net.kdt.pojavlaunch.value.launcherprofiles.LauncherProfiles.load();
+        net.kdt.pojavlaunch.value.launcherprofiles.MinecraftProfile profile =
+                net.kdt.pojavlaunch.value.launcherprofiles.LauncherProfiles.mainProfileJson.profiles.get(current);
+        if (profile == null) return new java.io.File(Tools.DIR_GAME_NEW);
+        return Tools.getGameDirPath(profile);
     }
 
     /** Projects fork: "Dil": "Otomatik (Türkçe)", "Türkçe", "English" (each language in its own words). */
