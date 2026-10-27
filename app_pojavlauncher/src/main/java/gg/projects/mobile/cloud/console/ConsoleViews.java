@@ -60,8 +60,10 @@ public final class ConsoleViews {
                 b.setMinimumHeight(CloudUi.dp(c, 48));
                 b.setMinWidth(0);
                 b.setMinimumWidth(0);
-                b.setPadding(CloudUi.dp(c, 14), 0, CloudUi.dp(c, 14), 0);
+                // The background first: a drawable with insets sets the padding (the toggle's is 0 at the sides, and the
+                // words touched the chamfer on the emulator); the chip's own padding goes on after it.
                 b.setBackground(ChamferDrawable.toggle(c));
+                b.setPadding(CloudUi.dp(c, 14), 0, CloudUi.dp(c, 14), 0);
                 b.setMaxLines(1);
                 Press.attach(b, Press.Style.BUTTON);
                 b.setOnClickListener(v -> {
