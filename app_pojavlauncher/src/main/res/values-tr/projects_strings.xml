@@ -146,6 +146,7 @@
     <string name="projects_event_live">Süren etkinlik</string>
     <string name="projects_event_next">Sıradaki etkinlik</string>
     <string name="projects_event_started">%1$s başladı</string>
+    <string name="projects_event_started_on">%1$s başladı</string>
     <string name="projects_event_ends_in">%1$s kaldı</string>
     <!-- Saat, okunuşuna göre ekiyle gelir: "20:00'de", "19:30'da", "15:00'te". -->
     <string name="projects_event_starts_today">Bugün %1$s başlıyor</string>

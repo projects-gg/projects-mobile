@@ -988,7 +988,7 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
     private void bindNews(final FragmentActivity activity, final Snapshot snapshot, final NewsFeed.NewsItem item) {
         ProjectsUi.bindCategory(mNewsCategory, item);
         // The desktop rows' "Etkinlik · 3 gün önce" (a date once it is older than a week).
-        setText(mNewsDate, ProjectsUi.relative(item.publishedAtMillis(), System.currentTimeMillis()));
+        setText(mNewsDate, ProjectsUi.relative(activity, item.publishedAtMillis(), System.currentTimeMillis()));
         setText(mNewsTitle, item.title);
         setText(mNewsSummary, item.summary);
         show(mNewsSummary, !item.summary.isEmpty());
@@ -1039,7 +1039,7 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         if (notes != null) {
             // One link to the article ("Tamamını oku"): its title, when, and two highlights.
             setText(mPatchTitle, notes.title);
-            setText(mPatchMeta, ProjectsUi.relative(notes.publishedAtMillis(), now));
+            setText(mPatchMeta, ProjectsUi.relative(activity, notes.publishedAtMillis(), now));
             show(mPatchWhenRow, true);
             show(mPatchRead, true);
             lines = NewsText.newsHighlights(notes.body, notes.summary, 2);

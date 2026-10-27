@@ -90,8 +90,15 @@ public final class ProjectsUi {
         return AppDates.dayMonth(context, millis) + " " + AppDates.time(millis);
     }
 
-    /** "2 saat önce", "3 gün önce"; a date for older moments. */
-    public static String relative(long millis, long now) {
+    /**
+     * "az önce", "2 saat önce", "3 gün önce"; from a week on (or a clock ahead of the post) the day
+     * itself in the app's dates ("17 Ekim" / "17 October", another year's with its year), never the
+     * phone's US "Oct 17, 2026" nor a "0 dakika önce".
+     */
+    public static String relative(Context context, long millis, long now) {
+        long ago = now - millis;
+        if (ago >= DateUtils.WEEK_IN_MILLIS || ago < -DateUtils.MINUTE_IN_MILLIS) return AppDates.day(context, millis, now);
+        if (ago < DateUtils.MINUTE_IN_MILLIS) return context.getString(R.string.projects_time_just_now);
         return DateUtils.getRelativeTimeSpanString(millis, now, DateUtils.MINUTE_IN_MILLIS).toString();
     }
 
@@ -145,7 +152,14 @@ public final class ProjectsUi {
      */
     public static String eventTime(Context context, HomeContent.Event event, long now) {
         if (event.isLive(now)) {
-            if (event.openEnded) return context.getString(R.string.projects_event_started, relative(event.startsAt, now));
+            if (event.openEnded) {
+                // "17 Ekim'de başladı" / "Started on 17 October" once "… önce" turned into a date.
+                if (now - event.startsAt >= DateUtils.WEEK_IN_MILLIS) {
+                    return context.getString(R.string.projects_event_started_on,
+                            gg.projects.mobile.cloud.CloudWords.dayLocative(context, event.startsAt / 1000, now / 1000));
+                }
+                return context.getString(R.string.projects_event_started, relative(context, event.startsAt, now));
+            }
             return context.getString(R.string.projects_event_ends_in, spanWords(context, event.endsAt - now));
         }
         return startMoment(context, event.startsAt, now);

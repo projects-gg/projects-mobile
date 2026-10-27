@@ -153,6 +153,7 @@
     <string name="projects_event_live">Ongoing event</string>
     <string name="projects_event_next">Next event</string>
     <string name="projects_event_started">Started %1$s</string>
+    <string name="projects_event_started_on">Started on %1$s</string>
     <string name="projects_event_ends_in">%1$s left</string>
     <!-- When an upcoming event starts, a sentence like "2 hours 14 minutes left". -->
     <string name="projects_event_starts_today">Starts today at %1$s</string>
