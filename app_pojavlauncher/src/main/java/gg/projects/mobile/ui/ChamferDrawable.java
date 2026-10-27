@@ -159,6 +159,26 @@ public final class ChamferDrawable extends Drawable {
         return new android.graphics.drawable.InsetDrawable(states, 0, inset, 0, inset);
     }
 
+    /**
+     * FEAT-M: a key of the movement pad (design.md §6 "Cloud movement"): {@link #outlined} while up, and while it is
+     * activated (a direction held, sneaking on) faint gold with a gold-300 edge, the key that stays pressed in.
+     */
+    public static Drawable key(Context context) {
+        Rect padding = padding(context, 8, 6);
+        float cut = cut(context);
+        float stroke = context.getResources().getDisplayMetrics().density;
+        int gold = ContextCompat.getColor(context, R.color.projects_gold_300);
+        StateListDrawable states = new StateListDrawable();
+        states.addState(new int[]{-android.R.attr.state_enabled}, new ChamferDrawable(0, 0x1FF3EBDD, stroke, cut, padding));
+        states.addState(new int[]{android.R.attr.state_activated, android.R.attr.state_focused},
+                new ChamferDrawable(0x24F6D58E, gold, 2 * stroke, cut, padding));
+        states.addState(new int[]{android.R.attr.state_activated}, new ChamferDrawable(0x24F6D58E, gold, 1.5f * stroke, cut, padding));
+        states.addState(new int[]{android.R.attr.state_pressed}, new ChamferDrawable(0x1AF3EBDD, 0x66F3EBDD, stroke, cut, padding));
+        states.addState(new int[]{android.R.attr.state_focused}, new ChamferDrawable(0, gold, 2 * stroke, cut, padding));
+        states.addState(new int[]{}, new ChamferDrawable(0, 0x47F3EBDD, stroke, cut, padding));
+        return states;
+    }
+
     /** Quiet secondary action: transparent with an obsidian-700 outline. */
     public static Drawable secondary(Context context) {
         Rect padding = padding(context, 14, 8);

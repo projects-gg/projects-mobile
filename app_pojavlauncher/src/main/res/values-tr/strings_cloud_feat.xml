@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- FEAT-M: Telefonda CAFK-FEAT 1. evre (canlı envanter, konsol türleri, yanıtlarda yer tutucular, birden çok hesap) ve
-     Hareket paneli. Sözler sözleşmenin (services/cloud-afk README "Features"), launcher'ın envanter bileşeninin
-     (@pl/ui/inventory texts.ts, oyunun kendi Türkçesi) ve docs/tasks/cafk-feat.md §3 tablolarının. Bir adın sonuna ek
-     gelmez ("%1$s:" ya da "için", "ile"); hesabın kendi düğmesi "Yeniden bağlan" olduğu için burada da öyle. -->
+<!-- FEAT-M: CAFK-FEAT phase 1 on the phone (the live inventory, console kinds, reply placeholders, several accounts at once)
+     and the movement panel. The words are the contract's (services/cloud-afk README "Features"), the launcher's inventory
+     component's (@pl/ui/inventory texts.ts, the game's own words) and docs/tasks/cafk-feat.md §3; short, sentence case.
+     Turkish: no case ending is put after a name ("%1$s:" or "için", "ile" instead); "Yeniden bağlan", as the account's
+     own button says. -->
 <resources>
-    <!-- Hesap ekranının satırları -->
+    <!-- The account screen's rows -->
     <string name="projects_feat_inventory">Envanter</string>
     <string name="projects_feat_inventory_off_short">Kapalı</string>
     <string name="projects_feat_movement">Hareket</string>
 
-    <!-- Envanter -->
+    <!-- The inventory -->
     <string name="projects_feat_inv_equipment">Ekipman</string>
     <string name="projects_feat_inv_menu">Menü</string>
     <string name="projects_feat_inv_close_menu">Menüyü kapat</string>
@@ -33,7 +34,7 @@
     <string name="projects_feat_inv_setting">Envanter görünümü</string>
     <string name="projects_feat_inv_setting_note">Bir sonraki bağlanmada geçerli olur.</string>
 
-    <!-- Ekran okuyucunun bir yuva için söyledikleri -->
+    <!-- What a screen reader says for a slot -->
     <string name="projects_feat_inv_empty">Boş</string>
     <string name="projects_feat_inv_head">Kafa</string>
     <string name="projects_feat_inv_chest">Göğüs</string>
@@ -47,14 +48,14 @@
     <string name="projects_feat_inv_durability_pct">dayanıklılık yüzde %1$d</string>
     <string name="projects_feat_inv_enchanted">büyülü</string>
 
-    <!-- İpucunun satırları, oyunun yazdığı gibi -->
+    <!-- The tooltip's lines, as the game writes them -->
     <string name="projects_feat_inv_durability">Dayanıklılık: %1$d / %2$d</string>
     <string name="projects_feat_inv_inside">%1$s x %2$d</string>
     <string name="projects_feat_inv_inside_more">ve %1$d tane daha...</string>
     <string name="projects_feat_inv_inside_unknown">ve daha fazlası...</string>
     <string name="projects_feat_inv_partial">Bazı özellikleri gösterilemiyor.</string>
 
-    <!-- Bir yuvanın eylemleri (uzun basma): oyunun tıklamaları yaptıklarıyla; sunucu menüsünde tıklamanın kendisi -->
+    <!-- A slot's actions (long press): the game's clicks by what they do; in a server's menu the clicks themselves -->
     <string name="projects_feat_inv_take">Al</string>
     <string name="projects_feat_inv_take_half">Yarısını al</string>
     <string name="projects_feat_inv_place">Bırak</string>
@@ -73,7 +74,7 @@
     <string name="projects_feat_inv_drop_one">Bir tane at</string>
     <string name="projects_feat_inv_drop_stack">Yığını at</string>
 
-    <!-- Bir hamleden sonra ekran okuyucunun söyledikleri -->
+    <!-- What a screen reader hears after a move -->
     <string name="projects_feat_inv_picked_up">%1$s alındı</string>
     <string name="projects_feat_inv_placed">%1$s bırakıldı</string>
     <string name="projects_feat_inv_swapped">%1$s ile yer değiştirdi</string>
@@ -83,7 +84,7 @@
     <string name="projects_feat_inv_held_now">%1$s elde</string>
     <string name="projects_feat_inv_put_back_done">%1$s yerine kondu</string>
 
-    <!-- Konsol: türler, süzgeçler, şerit, kayıt -->
+    <!-- The console: kinds, filters, the strip, downloads -->
     <string name="projects_feat_console_all">Hepsi</string>
     <string name="projects_feat_console_chat">Sohbet</string>
     <string name="projects_feat_console_private">Özel</string>
@@ -115,7 +116,7 @@
     <string name="projects_feat_console_kind_console">Konsol</string>
     <string name="projects_feat_console_strip">Sunucunun ekranda gösterdikleri</string>
 
-    <!-- Yanıtlarda yer tutucular -->
+    <!-- Reply placeholders -->
     <string name="projects_feat_ph_sender">Yazanın adı</string>
     <string name="projects_feat_ph_part">%1$d. parça</string>
     <string name="projects_feat_ph_try">Dene</string>
@@ -137,7 +138,7 @@
     <string name="projects_feat_legacy_save">Şimdi kaydet</string>
     <string name="projects_feat_rule_not_sent">Bu yanıt şu an gönderilmiyor.</string>
 
-    <!-- Birden çok hesap -->
+    <!-- Several accounts at once -->
     <string name="projects_feat_bulk_select">Seç</string>
     <string name="projects_feat_bulk_select_all">Hepsini seç</string>
     <string name="projects_feat_bulk_cancel">Vazgeç</string>
@@ -207,7 +208,7 @@
     <string name="projects_feat_copy_secret_missing">Şifreyi yaz.</string>
     <string name="projects_feat_copy_pick_targets">Kopyalamak için başka bir hesap da seç.</string>
 
-    <!-- Hareket (3. evre) -->
+    <!-- Movement (phase 3) -->
     <string name="projects_feat_move_setting_line">Açıkken hesap yürüyebilir; düşebilir ya da ölebilir.</string>
     <string name="projects_feat_move_forward">İleri</string>
     <string name="projects_feat_move_back">Geri</string>
@@ -256,4 +257,11 @@
     <string name="projects_feat_move_reset">Hesap ışınlandı ya da yeniden doğdu, durdu.</string>
     <string name="projects_feat_move_service_off">Hareket şu an kapalı.</string>
     <string name="projects_feat_move_trade_started">Takas başladı, durdu.</string>
+    <!-- Movement's last words shared with the launcher (FEAT-L, design.md §6 "Cloud movement") -->
+    <string name="projects_feat_move_stepping">Yürüyor.</string>
+    <string name="projects_feat_move_idle">Duruyor.</string>
+    <string name="projects_feat_move_walk_main">Ana hesabın</string>
+    <string name="projects_feat_move_not_in_game">Oyunda değil</string>
+    <string name="projects_feat_move_go_named">%1$s hesabının yanına git</string>
+    <string name="projects_feat_move_follow_named">%1$s hesabını takip et</string>
 </resources>

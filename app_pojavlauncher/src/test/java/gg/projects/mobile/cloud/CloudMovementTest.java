@@ -79,6 +79,34 @@ public class CloudMovementTest {
     }
 
     @Test
+    public void typedCoordinatesKeepTheContractsRange() {
+        assertEquals(Integer.valueOf(120), MoveOp.coordinate(" 120 ", false));
+        assertEquals(Integer.valueOf(-40), MoveOp.coordinate("-40", false));
+        assertEquals(Integer.valueOf(-40), MoveOp.coordinate("−40", false));
+        assertEquals(Integer.valueOf(-40), MoveOp.coordinate("–40", false));
+        assertEquals(Integer.valueOf(2048), MoveOp.coordinate("2048", true));
+        assertEquals(Integer.valueOf(-2048), MoveOp.coordinate("-2048", true));
+        assertNull(MoveOp.coordinate("2049", true));
+        assertEquals(Integer.valueOf(30_000_000), MoveOp.coordinate("30000000", false));
+        assertNull(MoveOp.coordinate("-30000001", false));
+        assertNull(MoveOp.coordinate("123456789", false));
+        assertNull(MoveOp.coordinate("-", false));
+        assertNull(MoveOp.coordinate("", false));
+        assertNull(MoveOp.coordinate("1.5", false));
+        assertNull(MoveOp.coordinate("1e3", false));
+        assertNull(MoveOp.coordinate(null, false));
+    }
+
+    @Test
+    public void stopShowsWhileItMoves() {
+        assertTrue(MoveFrames.State.read(Vectors.json("{\"state\":\"ok\",\"doing\":\"step\"}")).going());
+        assertTrue(MoveFrames.State.read(Vectors.json("{\"state\":\"ok\",\"doing\":\"goto\",\"to\":{\"x\":1,\"y\":64,\"z\":2}}")).going());
+        assertTrue(MoveFrames.State.read(Vectors.json("{\"state\":\"ok\",\"doing\":\"follow\",\"name\":\"Kaan_07\"}")).going());
+        assertFalse(MoveFrames.State.read(Vectors.json("{\"state\":\"ok\",\"doing\":\"idle\",\"ended\":\"arrived\"}")).going());
+        assertFalse(MoveFrames.State.read(Vectors.json("{\"state\":\"off\",\"reason\":\"restart\"}")).going());
+    }
+
+    @Test
     public void framesRead() {
         final List<String> seen = new ArrayList<>();
         CloudLiveFrames.Listener l = new CloudLiveFrames.Listener() {

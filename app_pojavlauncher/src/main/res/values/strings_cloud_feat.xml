@@ -255,4 +255,11 @@
     <string name="projects_feat_move_reset">The account was teleported or respawned; it stopped.</string>
     <string name="projects_feat_move_service_off">Movement is off right now.</string>
     <string name="projects_feat_move_trade_started">A trade started; it stopped.</string>
+    <!-- Movement's last words shared with the launcher (FEAT-L, design.md §6 "Cloud movement") -->
+    <string name="projects_feat_move_stepping">Walking.</string>
+    <string name="projects_feat_move_idle">Standing still.</string>
+    <string name="projects_feat_move_walk_main">Your main account</string>
+    <string name="projects_feat_move_not_in_game">Not in game</string>
+    <string name="projects_feat_move_go_named">Go to %1$s</string>
+    <string name="projects_feat_move_follow_named">Follow %1$s</string>
 </resources>

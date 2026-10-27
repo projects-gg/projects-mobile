@@ -3,21 +3,30 @@ package gg.projects.mobile.cloud.movement;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.ColorStateList;
+import android.text.Editable;
+import android.text.InputFilter;
 import android.text.InputType;
 import android.text.TextUtils;
+import android.text.TextWatcher;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.accessibility.AccessibilityNodeInfo;
+import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.ToggleButton;
 
+import androidx.annotation.ColorRes;
 import androidx.annotation.DrawableRes;
 import androidx.annotation.Nullable;
-import androidx.appcompat.widget.SwitchCompat;
+import androidx.annotation.StringRes;
 
 import net.kdt.pojavlaunch.R;
 
@@ -28,25 +37,35 @@ import java.util.Locale;
 import gg.projects.mobile.cloud.CloudModel;
 import gg.projects.mobile.cloud.CloudProblem;
 import gg.projects.mobile.cloud.CloudService;
+import gg.projects.mobile.cloud.CloudStatus;
 import gg.projects.mobile.cloud.ui.CloudScreen;
 import gg.projects.mobile.cloud.ui.CloudSettingsFragment;
 import gg.projects.mobile.cloud.ui.CloudUi;
+import gg.projects.mobile.mods.Motion;
 import gg.projects.mobile.social.ui.BottomPanel;
 import gg.projects.mobile.ui.ChamferDrawable;
 import gg.projects.mobile.ui.Haptics;
+import gg.projects.mobile.ui.PixelSprites;
 import gg.projects.mobile.ui.Press;
 
 /**
- * "Hareket" of a cloud account (services/cloud-afk README "Movement"): where it stands and where it looks, four big
- * direction buttons relative to that (a tap is one block; held, eight blocks now and again every 1.5 s, and a stop when
- * the finger lifts; every send vibrates), jump and sneak, a walk to coordinates, and going to or following the
- * player's own accounts the service names (never a typed name). The stream runs only while the panel is visible.
+ * "Hareket" of a cloud account (services/cloud-afk README "Movement"; design.md §6 "Cloud movement": the launcher's parts
+ * and words, a game pad, not a form). Where it stands and where it looks; under it one reserved line that is never empty
+ * (a refusal for 4 s, else what it is doing, else how the last walk ended, else that it stands), its words cross-fading
+ * in place, with "Dur" fading in at its end while it moves; the pad in the keys' own shape, relative to where it looks
+ * (İleri over Sola, Geri, Sağa; "Eğil", a key that stays pressed in while it sneaks, beside the wide "Zıpla"; a tap is one
+ * block, held eight now and every 1.5 s and a stop when the finger lifts; every send vibrates); a walk to coordinates;
+ * one row per account the service names (never a typed name). The stream runs only while the panel is visible.
  */
 public final class CloudMovementFragment extends CloudScreen implements CloudService.MovementListener, CloudService.LiveListener {
     public static final String TAG = "ProjectsCloudMovementFragment";
     /** A held direction asks for 8 blocks again this often (the contract's rhythm). */
     private static final long HOLD_REPEAT_MS = 1500;
     private static final long REFUSAL_MS = 4000;
+    /** A trade holds every control but "Dur" at once: one even dim (the launcher's). */
+    private static final float LOCKED_ALPHA = 0.55f;
+    /** The walks to an own account that is not in game wait, dimmed. */
+    private static final float WAITING_ALPHA = 0.5f;
 
     @Nullable
     private CloudService.LiveHandle mHandle;
@@ -61,6 +80,8 @@ public final class CloudMovementFragment extends CloudScreen implements CloudSer
     private String mAskedName;
     /** A direction is held: its release sends a stop. */
     private boolean mHolding;
+    @Nullable
+    private View mHeldKey;
     private boolean mBusy;
     private String mShape = "";
     @Nullable
@@ -70,17 +91,37 @@ public final class CloudMovementFragment extends CloudScreen implements CloudSer
     @Nullable
     private TextView mFacing;
     @Nullable
-    private TextView mActivity;
+    private FadeLine mLine;
     @Nullable
     private Button mStop;
+    private boolean mStopShown;
     @Nullable
-    private SwitchCompat mSneak;
+    private View mSneakKey;
     @Nullable
-    private TextView mRefusal;
+    private LinearLayout mControlBlock;
+    private boolean mLocked;
+    /** The pad's keys and "Koordinata git" (the walks' buttons wait by a rule of their own as well). */
     private final List<View> mControls = new ArrayList<>();
-    private boolean mSneakQuiet;
+    private final List<WalkRow> mWalks = new ArrayList<>();
+    /** A refusal holds the line for a moment. */
+    @Nullable
+    private String mRefusal;
+    /** "Koordinata git"'s typed target, kept between openings of its sheet ("" is where it stands). */
+    private final String[] mTarget = {"", "", ""};
     private final Runnable mRefusalEnd = () -> {
-        if (mRefusal != null) mRefusal.setVisibility(View.INVISIBLE);
+        mRefusal = null;
+        if (alive()) update();
+    };
+
+    /** "Eğil" reads as a switch, on while it sneaks. */
+    private static final View.AccessibilityDelegate TOGGLE = new View.AccessibilityDelegate() {
+        @Override
+        public void onInitializeAccessibilityNodeInfo(View host, AccessibilityNodeInfo info) {
+            super.onInitializeAccessibilityNodeInfo(host, info);
+            info.setClassName(ToggleButton.class.getName());
+            info.setCheckable(true);
+            info.setChecked(host.isActivated());
+        }
     };
 
     @Override
@@ -107,6 +148,7 @@ public final class CloudMovementFragment extends CloudScreen implements CloudSer
         mHandle = null;
         mState = null;
         mShape = "";
+        mRefusal = null;
         View view = getView();
         if (view != null) view.removeCallbacks(mRefusalEnd);
     }
@@ -114,24 +156,26 @@ public final class CloudMovementFragment extends CloudScreen implements CloudSer
     @Override
     protected void render() {
         CloudModel.Account a = account();
-        LinearLayout content = mContent;
-        if (content == null) return;
+        if (mContent == null) return;
         CloudModel.MovementFeatures move = a == null ? null : a.features.movement;
+        // What holds it: the machine's word, else the account's own (not in game: no need to wait for the machine).
         String shape;
-        if (a == null || (mState == null && mLive != CloudService.Live.LOST && mLive != CloudService.Live.HOST_OFFLINE)) shape = "loading";
-        else if (mState == null || move == null) shape = "away";
-        else if (!mState.ok) shape = "off:" + mState.reason + (mBusy ? ":busy" : "");
+        if (a == null) shape = "loading";
+        else if (mState != null && !mState.ok) shape = "off:" + mState.reason + (mBusy ? ":busy" : "");
+        else if (mState == null && !CloudStatus.inGame(a)) shape = "off:not_running";
+        else if (mState == null) shape = mLive == CloudService.Live.LOST || mLive == CloudService.Live.HOST_OFFLINE ? "away" : "loading";
+        else if (move == null) shape = "away";
         else shape = "ok|" + move.main + "|" + move.own;
         if (!shape.equals(mShape)) {
             mShape = shape;
             if ("loading".equals(shape)) {
-                content.removeAllViews();
-                content.addView(CloudUi.loading(ctx()));
-                mFigures = null;
+                LinearLayout content = clear();
+                forget();
+                if (content != null) content.addView(CloudUi.loading(ctx()));
             } else if ("away".equals(shape)) {
-                message(getString(R.string.projects_feat_inv_unreachable), null, null);
+                quiet(getString(R.string.projects_feat_inv_unreachable), null);
             } else if (shape.startsWith("off:")) {
-                buildOff(a, mState.reason);
+                buildOff(a, mState != null ? mState.reason : "not_running");
             } else {
                 build(a);
             }
@@ -139,50 +183,68 @@ public final class CloudMovementFragment extends CloudScreen implements CloudSer
         update();
     }
 
-    /** It cannot move now: one sentence, and where the player can do something about it, the one thing to do. */
-    private void buildOff(final CloudModel.Account a, @Nullable String reason) {
-        if ("setting".equals(reason)) {
-            message(Movement.off(ctx(), reason), getString(R.string.projects_cloud_open_settings),
-                    v -> openFor(CloudSettingsFragment.class, a.id));
-        } else if ("restart".equals(reason)) {
-            message(Movement.off(ctx(), reason), getString(R.string.projects_feat_inv_reconnect_now), this::reconnect);
-        } else {
-            message(Movement.off(ctx(), reason), null, null);
-        }
+    /** The panel's views are gone (a quiet state or a redraw replaces them). */
+    private void forget() {
+        mFigures = null;
+        mDimension = null;
+        mFacing = null;
+        mLine = null;
+        mStop = null;
+        mStopShown = false;
+        mSneakKey = null;
+        mControlBlock = null;
+        mLocked = false;
+        mHeldKey = null;
+        mControls.clear();
+        mWalks.clear();
     }
 
-    private void message(String words, @Nullable String action, @Nullable View.OnClickListener click) {
+    /** It cannot move now: the quiet empty state (the boot), and where the player can do something about it, the one thing. */
+    private void buildOff(final CloudModel.Account a, @Nullable String reason) {
+        Button action = null;
+        if ("setting".equals(reason)) {
+            action = CloudUi.button(ctx(), getString(R.string.projects_cloud_open_settings), true, v -> openFor(CloudSettingsFragment.class, a.id));
+        } else if ("restart".equals(reason) && reconnectable(a)) {
+            action = CloudUi.button(ctx(), getString(R.string.projects_feat_inv_reconnect_now), false, this::reconnect);
+            action.setEnabled(!mBusy);
+        }
+        quiet(Movement.off(ctx(), reason), action);
+    }
+
+    private void quiet(String words, @Nullable View action) {
         LinearLayout content = clear();
+        forget();
         if (content == null) return;
         Context c = ctx();
-        mFigures = null;
-        mControls.clear();
-        LinearLayout box = new LinearLayout(c);
-        box.setOrientation(LinearLayout.VERTICAL);
-        box.setPadding(CloudUi.dp(c, 8), CloudUi.dp(c, 28), CloudUi.dp(c, 8), CloudUi.dp(c, 8));
-        TextView line = CloudUi.text(c, words, 16, R.color.projects_bone_100, false);
-        line.setLineSpacing(0, 1.15f);
-        line.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
-        box.addView(line);
-        if (action != null && click != null) {
-            Button button = CloudUi.button(c, action, true, click);
-            button.setEnabled(!mBusy);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            lp.topMargin = CloudUi.dp(c, 20);
-            button.setMinWidth(CloudUi.dp(c, 140));
-            box.addView(button, lp);
-        }
-        content.addView(box, CloudUi.matchWrap());
+        LinearLayout empty = CloudUi.empty(c, PixelSprites.Sprite.MOVEMENT, words);
+        View sentence = empty.getChildAt(1);
+        if (sentence != null) sentence.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
+        if (action != null) empty.addView(centered(c, action));
+        content.addView(empty);
+    }
+
+    private static boolean reconnectable(CloudModel.Account a) {
+        return CloudStatus.inGame(a) || "connecting".equals(a.live.state) || "waiting".equals(a.live.state);
+    }
+
+    private static View centered(Context c, View child) {
+        FrameLayout box = new FrameLayout(c);
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
+        lp.gravity = Gravity.CENTER_HORIZONTAL;
+        lp.topMargin = CloudUi.dp(c, 18);
+        box.addView(child, lp);
+        box.setLayoutParams(CloudUi.matchWrap());
+        return box;
     }
 
     private void build(final CloudModel.Account a) {
         LinearLayout content = clear();
+        forget();
         if (content == null) return;
         final Context c = ctx();
         final CloudModel.MovementFeatures move = a.features.movement;
-        mControls.clear();
 
-        // Where it stands: three figures, the dimension and where it looks (the direction buttons follow that).
+        // Where it stands: the three figures together on the left, the dimension and where it looks on the right.
         content.addView(CloudUi.section(c, getString(R.string.projects_feat_move_position)));
         LinearLayout where = CloudUi.group(c);
         LinearLayout figures = new LinearLayout(c);
@@ -194,13 +256,17 @@ public final class CloudMovementFragment extends CloudScreen implements CloudSer
         for (int i = 0; i < 3; i++) {
             LinearLayout cell = new LinearLayout(c);
             cell.setOrientation(LinearLayout.VERTICAL);
+            cell.setMinimumWidth(CloudUi.dp(c, 60));
             cell.addView(CloudUi.text(c, axes[i], 12.5f, R.color.projects_ash_400, true));
-            TextView figure = CloudUi.figure(c, "", 22, R.color.projects_bone_100);
-            LinearLayout.LayoutParams fLp = CloudUi.matchWrap();
-            fLp.topMargin = CloudUi.dp(c, 2);
+            // Empty until the first position: the line keeps its height, nothing below moves when it comes.
+            TextView figure = CloudUi.figure(c, "", 21, R.color.projects_bone_100);
+            LinearLayout.LayoutParams fLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            fLp.topMargin = CloudUi.dp(c, 4);
             cell.addView(figure, fLp);
             mFigures[i] = figure;
-            figures.addView(cell, CloudUi.weight(1f));
+            LinearLayout.LayoutParams cellLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            cellLp.setMarginEnd(CloudUi.dp(c, 16));
+            figures.addView(cell, cellLp);
         }
         LinearLayout side = new LinearLayout(c);
         side.setOrientation(LinearLayout.VERTICAL);
@@ -214,142 +280,167 @@ public final class CloudMovementFragment extends CloudScreen implements CloudSer
         facingLp.topMargin = CloudUi.dp(c, 2);
         facingLp.gravity = Gravity.END;
         side.addView(mFacing, facingLp);
-        figures.addView(side, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        figures.addView(side, CloudUi.weight(1f));
         figures.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_YES);
         where.addView(figures);
         content.addView(where);
 
-        // What it is doing, with "Dur" while it walks or follows (a reserved line: nothing below moves).
+        // One reserved line, nothing below moves: a refusal, what it is doing, how the last walk ended or that it stands;
+        // "Dur" (a hand, not the account's square "Durdur") fades in at its end while it moves.
         LinearLayout doing = new LinearLayout(c);
         doing.setOrientation(LinearLayout.HORIZONTAL);
         doing.setGravity(Gravity.CENTER_VERTICAL);
-        doing.setMinimumHeight(CloudUi.dp(c, 56));
-        doing.setPadding(CloudUi.dp(c, 8), 0, 0, 0);
-        TextView activity = CloudUi.text(c, "", 14.5f, R.color.projects_gold_300, false);
-        activity.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
-        doing.addView(activity, CloudUi.weight(1f));
-        mActivity = activity;
-        Button stop = CloudUi.button(c, getString(R.string.projects_feat_move_stop), false, v -> send(v, MoveOp.stop(), null));
-        stop.setCompoundDrawablesRelative(CloudUi.tinted(c, R.drawable.projects_ic_stop, R.color.projects_bone_100, 18), null, null, null);
+        doing.setMinimumHeight(CloudUi.dp(c, 60));
+        doing.setPadding(CloudUi.dp(c, 8), CloudUi.dp(c, 6), 0, CloudUi.dp(c, 6));
+        FadeLine line = new FadeLine(c);
+        LinearLayout.LayoutParams lineLp = CloudUi.weight(1f);
+        lineLp.setMarginEnd(CloudUi.dp(c, 12));
+        doing.addView(line.view, lineLp);
+        mLine = line;
+        Button stop = CloudUi.button(c, getString(R.string.projects_feat_move_stop), false, v -> {
+            if (mStopShown) send(v, MoveOp.stop(), null);
+        });
+        stop.setCompoundDrawablesRelative(CloudUi.tinted(c, R.drawable.projects_ic_hand_palm, R.color.projects_bone_100, 18), null, null, null);
         stop.setCompoundDrawablePadding(CloudUi.dp(c, 8));
+        stop.setAlpha(0f);
+        stop.setVisibility(View.INVISIBLE);
+        stop.setClickable(false);
+        stop.setFocusable(false);
+        stop.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         doing.addView(stop, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         mStop = stop;
         content.addView(doing, CloudUi.matchWrap());
-        TextView refusal = CloudUi.text(c, "", 14, R.color.projects_bone_100, false);
-        refusal.setPadding(CloudUi.dp(c, 8), 0, CloudUi.dp(c, 8), CloudUi.dp(c, 6));
-        refusal.setMinLines(1);
-        refusal.setVisibility(View.INVISIBLE);
-        refusal.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
-        content.addView(refusal, CloudUi.matchWrap());
-        mRefusal = refusal;
 
-        // The direction pad: big chamfered buttons, relative to where it looks; jump in the middle.
-        content.addView(pad(c), CloudUi.matchWrap());
-
-        content.addView(CloudUi.gap(c, 18));
-        LinearLayout sneakGroup = CloudUi.group(c);
-        SwitchCompat sneak = CloudUi.toggle(c, getString(R.string.projects_feat_move_sneak), mState != null && mState.sneak, on -> {
-            if (mSneakQuiet) return;
-            send(mSneak, MoveOp.sneak(on), null);
-        });
-        sneakGroup.addView(sneak);
-        mSneak = sneak;
-        mControls.add(sneak);
-        content.addView(sneakGroup);
-
-        // Going places: coordinates, then the accounts the service names (the main account, the player's others).
-        content.addView(CloudUi.gap(c, 14));
+        // Everything a trade holds, in one block that dims evenly: the pad, the walk to coordinates, the walks.
+        LinearLayout block = new LinearLayout(c);
+        block.setOrientation(LinearLayout.VERTICAL);
+        mControlBlock = block;
+        block.addView(pad(c), CloudUi.matchWrap());
+        block.addView(CloudUi.gap(c, 22));
         LinearLayout go = CloudUi.group(c);
-        List<View> rows = new ArrayList<>();
         CloudUi.Row coords = CloudUi.actionRow(c, R.drawable.projects_ic_crosshair, getString(R.string.projects_feat_move_goto), v -> coordinates());
-        rows.add(coords.view);
+        go.addView(coords.view);
         mControls.add(coords.view);
+        // One row per account the service names: the main one, then the player's others on this server.
         final String main = move == null ? null : move.main;
         if (main != null) {
-            CloudUi.Row toMain = CloudUi.actionRow(c, R.drawable.projects_ic_user_focus, getString(R.string.projects_feat_move_go_main),
-                    v -> send(v, MoveOp.approach(main), main));
-            CloudUi.Row follow = CloudUi.actionRow(c, R.drawable.projects_ic_person_walk, getString(R.string.projects_feat_move_follow_main),
-                    v -> send(v, MoveOp.follow(main), main));
-            rows.add(toMain.view);
-            rows.add(follow.view);
-            mControls.add(toMain.view);
-            mControls.add(follow.view);
+            go.addView(CloudUi.textDivider(c));
+            go.addView(walkRow(c, main, false, getString(R.string.projects_feat_move_go_main), getString(R.string.projects_feat_move_follow_main)));
         }
-        if (move != null) for (final String name : move.own) rows.add(ownRow(c, name));
-        CloudUi.fill(go, rows);
-        content.addView(go);
-        content.addView(CloudUi.note(c, getString(R.string.projects_feat_move_setting_line)));
+        if (move != null) {
+            for (String name : move.own) {
+                go.addView(CloudUi.textDivider(c));
+                go.addView(walkRow(c, name, true, getString(R.string.projects_feat_move_go_named, name),
+                        getString(R.string.projects_feat_move_follow_named, name)));
+            }
+        }
+        block.addView(go);
+        content.addView(block, CloudUi.matchWrap());
+        content.addView(CloudUi.gap(c, 16));
     }
 
-    /** Another of the player's accounts: its name, "Yanına git" and "Takip et". */
-    private View ownRow(Context c, final String name) {
+    /**
+     * One account the service names: its name (the main one with "Ana hesabın" under it, another not in game with "Oyunda
+     * değil"), then its two walks in the contract's short words; TalkBack reads their long sentences.
+     */
+    private View walkRow(Context c, final String name, boolean own, String goLabel, String followLabel) {
         LinearLayout row = new LinearLayout(c);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
-        row.setMinimumHeight(CloudUi.dp(c, 56));
-        row.setPadding(CloudUi.dp(c, 16), 0, CloudUi.dp(c, 8), 0);
-        TextView label = CloudUi.text(c, name, 15.5f, R.color.projects_bone_100, true);
-        label.setMaxLines(1);
-        label.setEllipsize(TextUtils.TruncateAt.END);
-        row.addView(label, CloudUi.weight(1f));
-        Button to = CloudUi.textButton(c, getString(R.string.projects_feat_move_go_to_own), v -> send(v, MoveOp.approach(name), name));
-        to.setContentDescription(getString(R.string.projects_feat_move_go_to_own) + ", " + name);
-        Button follow = CloudUi.textButton(c, getString(R.string.projects_feat_move_follow_own), v -> send(v, MoveOp.follow(name), name));
-        follow.setContentDescription(getString(R.string.projects_feat_move_follow_own) + ", " + name);
+        row.setMinimumHeight(CloudUi.dp(c, 64));
+        row.setPaddingRelative(CloudUi.dp(c, 16), CloudUi.dp(c, 8), CloudUi.dp(c, 10), CloudUi.dp(c, 8));
+        LinearLayout texts = new LinearLayout(c);
+        texts.setOrientation(LinearLayout.VERTICAL);
+        TextView title = CloudUi.text(c, name, 15.5f, R.color.projects_bone_100, true);
+        title.setMaxLines(1);
+        title.setEllipsize(TextUtils.TruncateAt.END);
+        texts.addView(title);
+        TextView note = CloudUi.text(c, own ? "" : getString(R.string.projects_feat_move_walk_main), 13, R.color.projects_ash_400, false);
+        note.setMaxLines(1);
+        note.setEllipsize(TextUtils.TruncateAt.END);
+        note.setVisibility(own ? View.GONE : View.VISIBLE);
+        texts.addView(note);
+        LinearLayout.LayoutParams textsLp = CloudUi.weight(1f);
+        textsLp.setMarginEnd(CloudUi.dp(c, 8));
+        row.addView(texts, textsLp);
+        Button to = walkButton(c, R.string.projects_feat_move_go_to_own, goLabel, v -> send(v, MoveOp.approach(name), name));
+        Button follow = walkButton(c, R.string.projects_feat_move_follow_own, followLabel, v -> send(v, MoveOp.follow(name), name));
         row.addView(to);
-        row.addView(follow);
-        mControls.add(to);
-        mControls.add(follow);
+        LinearLayout.LayoutParams followLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        followLp.setMarginStart(CloudUi.dp(c, 8));
+        row.addView(follow, followLp);
+        mWalks.add(new WalkRow(name, own, note, to, follow));
         return row;
     }
 
+    /** A small outlined walk button: the contract's short words on it, the long sentence for TalkBack. */
+    private static Button walkButton(Context c, @StringRes int words, String spoken, View.OnClickListener click) {
+        Button button = CloudUi.button(c, c.getString(words), false, click);
+        button.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        button.setMinWidth(0);
+        button.setMinimumWidth(0);
+        button.setPadding(CloudUi.dp(c, 12), 0, CloudUi.dp(c, 12), 0);
+        button.setContentDescription(spoken);
+        return button;
+    }
+
+    /** The pad in the keys' own shape: İleri over Sola, Geri, Sağa; under them "Eğil" beside the wide "Zıpla". */
     private View pad(Context c) {
         LinearLayout pad = new LinearLayout(c);
         pad.setOrientation(LinearLayout.VERTICAL);
         pad.setGravity(Gravity.CENTER_HORIZONTAL);
-        pad.setPadding(0, CloudUi.dp(c, 6), 0, 0);
-        int size = CloudUi.dp(c, 78);
+        pad.setPadding(0, CloudUi.dp(c, 4), 0, 0);
+        int key = CloudUi.dp(c, 78);
+        int tall = CloudUi.dp(c, 72);
+        int low = CloudUi.dp(c, 60);
         int gap = CloudUi.dp(c, 10);
-        pad.addView(rowOf(c, size, gap, null, padButton(c, R.drawable.projects_ic_arrow_up_bold, R.string.projects_feat_move_forward, "forward"), null));
-        pad.addView(rowOf(c, size, gap, padButton(c, R.drawable.projects_ic_arrow_left_bold, R.string.projects_feat_move_left, "left"),
-                padButton(c, R.drawable.projects_ic_arrow_line_up, R.string.projects_feat_move_jump, "jump"),
-                padButton(c, R.drawable.projects_ic_arrow_right_bold, R.string.projects_feat_move_right, "right")));
-        pad.addView(rowOf(c, size, gap, null, padButton(c, R.drawable.projects_ic_arrow_down_bold, R.string.projects_feat_move_back, "back"), null));
+        LinearLayout top = keyRow(c, 0);
+        top.addView(direction(c, R.drawable.projects_ic_arrow_up_bold, R.string.projects_feat_move_forward, "forward"), keyLp(key, tall, 0));
+        pad.addView(top);
+        LinearLayout middle = keyRow(c, gap);
+        middle.addView(direction(c, R.drawable.projects_ic_arrow_left_bold, R.string.projects_feat_move_left, "left"), keyLp(key, tall, 0));
+        middle.addView(direction(c, R.drawable.projects_ic_arrow_down_bold, R.string.projects_feat_move_back, "back"), keyLp(key, tall, gap));
+        middle.addView(direction(c, R.drawable.projects_ic_arrow_right_bold, R.string.projects_feat_move_right, "right"), keyLp(key, tall, gap));
+        pad.addView(middle);
+        LinearLayout bottom = keyRow(c, gap);
+        View sneak = key(c, R.drawable.projects_ic_arrow_line_down, R.string.projects_feat_move_sneak);
+        sneak.setOnClickListener(v -> send(v, MoveOp.sneak(!(mState != null && mState.sneak)), null));
+        sneak.setAccessibilityDelegate(TOGGLE);
+        mSneakKey = sneak;
+        bottom.addView(sneak, keyLp(key, low, 0));
+        View jump = key(c, R.drawable.projects_ic_arrow_line_up, R.string.projects_feat_move_jump);
+        jump.setOnClickListener(v -> send(v, MoveOp.jump(), null));
+        bottom.addView(jump, keyLp(2 * key + gap, low, gap));
+        pad.addView(bottom);
         return pad;
     }
 
-    private static LinearLayout rowOf(Context c, int size, int gap, @Nullable View a, View b, @Nullable View d) {
+    private static LinearLayout keyRow(Context c, int topMargin) {
         LinearLayout row = new LinearLayout(c);
         row.setOrientation(LinearLayout.HORIZONTAL);
-        row.setGravity(Gravity.CENTER);
-        View[] cells = {a, b, d};
-        for (int i = 0; i < 3; i++) {
-            View cell = cells[i] != null ? cells[i] : new View(c);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(size, size);
-            if (i > 0) lp.setMarginStart(gap);
-            row.addView(cell, lp);
-        }
-        LinearLayout.LayoutParams rowLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        rowLp.topMargin = gap;
-        row.setLayoutParams(rowLp);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.topMargin = topMargin;
+        row.setLayoutParams(lp);
         return row;
     }
 
-    /**
-     * One pad button: its arrow over its word, chamfered and outlined. A tap steps one block; held, it asks for eight
-     * blocks now and every 1.5 s, and the lifted finger sends a stop.
-     */
-    @SuppressLint("ClickableViewAccessibility")
-    private View padButton(Context c, @DrawableRes int icon, int words, final String action) {
-        final LinearLayout button = new LinearLayout(c);
+    private static LinearLayout.LayoutParams keyLp(int width, int height, int start) {
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(width, height);
+        lp.setMarginStart(start);
+        return lp;
+    }
+
+    /** One key: its arrow over its word, chamfered and outlined; gold-edged while it is held or stays pressed in. */
+    private View key(Context c, @DrawableRes int icon, @StringRes int words) {
+        LinearLayout button = new LinearLayout(c);
         button.setOrientation(LinearLayout.VERTICAL);
         button.setGravity(Gravity.CENTER);
-        button.setBackground(ChamferDrawable.outlined(c));
+        button.setBackground(ChamferDrawable.key(c));
         ImageView glyph = new ImageView(c);
         glyph.setImageResource(icon);
         glyph.setImageTintList(ColorStateList.valueOf(CloudUi.color(c, R.color.projects_bone_100)));
         glyph.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-        button.addView(glyph, new LinearLayout.LayoutParams(CloudUi.dp(c, 26), CloudUi.dp(c, 26)));
+        button.addView(glyph, new LinearLayout.LayoutParams(CloudUi.dp(c, 24), CloudUi.dp(c, 24)));
         TextView label = CloudUi.text(c, getString(words), 12.5f, R.color.projects_ash_300, true);
         label.setGravity(Gravity.CENTER);
         label.setMaxLines(1);
@@ -362,38 +453,47 @@ public final class CloudMovementFragment extends CloudScreen implements CloudSer
         button.setContentDescription(getString(words));
         Press.attach(button, Press.Style.BUTTON);
         mControls.add(button);
-        if ("jump".equals(action)) {
-            button.setOnClickListener(v -> send(v, MoveOp.jump(), null));
-            return button;
-        }
+        return button;
+    }
+
+    /** A direction: a tap steps one block; held, it asks for eight now and every 1.5 s, and the lifted finger stops it. */
+    @SuppressLint("ClickableViewAccessibility")
+    private View direction(Context c, @DrawableRes int icon, @StringRes int words, final String dir) {
+        final View button = key(c, icon, words);
         final Runnable again = new Runnable() {
             @Override
             public void run() {
                 if (!mHolding || !button.isPressed()) return;
-                send(button, MoveOp.step(action, MoveOp.STEP_MAX), null);
+                send(button, MoveOp.step(dir, MoveOp.STEP_MAX), null);
                 button.postDelayed(this, HOLD_REPEAT_MS);
             }
         };
-        button.setOnClickListener(v -> send(v, MoveOp.step(action, 1), null));
+        button.setOnClickListener(v -> send(v, MoveOp.step(dir, 1), null));
         button.setOnLongClickListener(v -> {
             mHolding = true;
-            send(v, MoveOp.step(action, MoveOp.STEP_MAX), null);
+            mHeldKey = v;
+            v.setActivated(true);
+            send(v, MoveOp.step(dir, MoveOp.STEP_MAX), null);
             v.postDelayed(again, HOLD_REPEAT_MS);
             return true;
         });
         button.setOnTouchListener((v, e) -> {
             int act = e.getActionMasked();
-            if ((act == MotionEvent.ACTION_UP || act == MotionEvent.ACTION_CANCEL) && mHolding) {
+            if (act == MotionEvent.ACTION_UP || act == MotionEvent.ACTION_CANCEL) {
                 v.removeCallbacks(again);
-                mHolding = false;
-                send(v, MoveOp.stop(), null);
+                v.setActivated(false);
+                if (mHolding && mHeldKey == v) {
+                    mHolding = false;
+                    mHeldKey = null;
+                    send(v, MoveOp.stop(), null);
+                }
             }
             return false;
         });
         return button;
     }
 
-    /** Sends one operation; a refusal shows under the activity line for a moment. {@code name}: an approach's or follow's. */
+    /** Sends one operation; a refusal holds the line for a moment. {@code name}: an approach's or a follow's. */
     private void send(@Nullable View from, MoveOp op, @Nullable final String name) {
         CloudService.LiveHandle handle = mHandle;
         if (handle == null) return;
@@ -409,18 +509,16 @@ public final class CloudMovementFragment extends CloudScreen implements CloudSer
     }
 
     private void refuse(String words) {
-        if (mRefusal == null) return;
-        mRefusal.setText(words);
-        mRefusal.setVisibility(View.VISIBLE);
-        Haptics.reject(mRefusal);
         View view = getView();
-        if (view != null) {
-            view.removeCallbacks(mRefusalEnd);
-            view.postDelayed(mRefusalEnd, REFUSAL_MS);
-        }
+        if (view == null) return;
+        mRefusal = words;
+        Haptics.reject(mLine != null ? mLine.view : view);
+        view.removeCallbacks(mRefusalEnd);
+        view.postDelayed(mRefusalEnd, REFUSAL_MS);
+        update();
     }
 
-    /** "Koordinata git": three whole numbers, at most 256 blocks away (the machine checks again). */
+    /** "Koordinata git": empty fields mean where it stands now (their hints); a typed target stays for the next time. */
     private void coordinates() {
         final Context c = ctx();
         final MoveFrames.Pos here = mPos;
@@ -430,49 +528,76 @@ public final class CloudMovementFragment extends CloudScreen implements CloudSer
         TextView title = CloudUi.text(c, getString(R.string.projects_feat_move_goto), 17, R.color.projects_bone_100, true);
         title.setPadding(CloudUi.dp(c, 8), CloudUi.dp(c, 2), CloudUi.dp(c, 8), CloudUi.dp(c, 6));
         root.addView(title);
+        // Beyond 256 blocks: said before anything goes out; the typed fields stay flare until they change.
+        final TextView error = CloudUi.text(c, "", 13.5f, R.color.projects_flare_400, false);
+        error.setPadding(CloudUi.dp(c, 8), CloudUi.dp(c, 6), CloudUi.dp(c, 8), 0);
+        error.setVisibility(View.GONE);
+        error.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
         LinearLayout fields = new LinearLayout(c);
         fields.setOrientation(LinearLayout.HORIZONTAL);
         final CloudUi.Field[] xyz = new CloudUi.Field[3];
         String[] axes = {"X", "Y", "Z"};
-        int[] start = here == null ? new int[]{0, 64, 0} : new int[]{here.x, here.y, here.z};
+        int[] now = here == null ? null : new int[]{here.x, here.y, here.z};
         for (int i = 0; i < 3; i++) {
-            CloudUi.Field f = CloudUi.field(c, axes[i], String.valueOf(start[i]), null,
+            final CloudUi.Field f = CloudUi.field(c, axes[i], mTarget[i], now == null ? null : String.valueOf(now[i]),
                     InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED);
+            f.input.setFilters(new InputFilter[]{new InputFilter.LengthFilter(9)});
+            f.input.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+                @Override
+                public void afterTextChanged(Editable s) {
+                    f.input.setActivated(false);
+                    error.setVisibility(View.GONE);
+                }
+            });
             xyz[i] = f;
             fields.addView(f.view, CloudUi.weight(1f));
         }
         root.addView(fields, CloudUi.matchWrap());
-        final TextView error = CloudUi.text(c, "", 13, R.color.projects_flare_400, false);
-        error.setPadding(CloudUi.dp(c, 8), CloudUi.dp(c, 4), CloudUi.dp(c, 8), 0);
-        error.setVisibility(View.GONE);
         root.addView(error);
-        root.addView(CloudUi.note(c, getString(R.string.projects_feat_move_far)));
         final BottomPanel[] panel = new BottomPanel[1];
-        Button go = CloudUi.button(c, getString(R.string.projects_feat_move_go), true, v -> {
+        final Button go = CloudUi.button(c, getString(R.string.projects_feat_move_go), true, v -> {
+            MoveFrames.Pos from = mPos;
             int[] target = new int[3];
+            String[] typed = new String[3];
             for (int i = 0; i < 3; i++) {
-                try {
-                    target[i] = Integer.parseInt(xyz[i].value().trim());
-                } catch (NumberFormatException e) {
-                    // An empty or half-typed box: the field itself shows what is missing.
+                typed[i] = xyz[i].value().trim();
+                Integer value = typed[i].isEmpty()
+                        ? (from == null ? null : Integer.valueOf(i == 0 ? from.x : i == 1 ? from.y : from.z))
+                        : MoveOp.coordinate(typed[i], i == 1);
+                if (value == null) {
+                    // Half typed, out of the game's range, or empty before the first position: this field says so.
                     Haptics.reject(v);
+                    xyz[i].input.setActivated(true);
                     xyz[i].input.requestFocus();
                     return;
                 }
+                target[i] = value;
             }
-            MoveOp op = MoveOp.go(target[0], target[1], target[2]);
-            MoveFrames.Pos from = mPos;
-            if (MoveOp.problem(op.op) != null || (from != null && !MoveOp.withinReach(from, target[0], target[1], target[2]))) {
+            if (from != null && !MoveOp.withinReach(from, target[0], target[1], target[2])) {
                 Haptics.reject(v);
                 error.setText(getString(R.string.projects_feat_move_far));
                 error.setVisibility(View.VISIBLE);
+                for (int i = 0; i < 3; i++) if (!typed[i].isEmpty()) xyz[i].input.setActivated(true);
                 return;
             }
-            send(v, op, null);
+            System.arraycopy(typed, 0, mTarget, 0, 3);
+            send(v, MoveOp.go(target[0], target[1], target[2]), null);
             if (panel[0] != null) panel[0].dismiss();
         });
+        xyz[2].input.setImeOptions(EditorInfo.IME_ACTION_GO);
+        xyz[2].input.setOnEditorActionListener((field, action, event) -> {
+            if (action != EditorInfo.IME_ACTION_GO) return false;
+            go.performClick();
+            return true;
+        });
         LinearLayout.LayoutParams goLp = CloudUi.matchWrap();
-        goLp.topMargin = CloudUi.dp(c, 12);
+        goLp.topMargin = CloudUi.dp(c, 14);
         goLp.leftMargin = CloudUi.dp(c, 8);
         goLp.rightMargin = CloudUi.dp(c, 8);
         root.addView(go, goLp);
@@ -482,13 +607,12 @@ public final class CloudMovementFragment extends CloudScreen implements CloudSer
         panel[0].show();
     }
 
-    /** The words that change in place: the figures, what it is doing, the stop button, sneaking, a trade's lock. */
+    /** The words that change in place: the figures, the line, "Dur", sneaking, the walks, a trade's lock. */
     private void update() {
         MoveFrames.State state = mState;
         if (state == null || !state.ok || mFigures == null) return;
         Context c = ctx();
         MoveFrames.Pos p = mPos;
-        // Before the first position (it follows the state at once) the figures stay empty.
         mFigures[0].setText(p == null ? "" : String.format(Locale.ROOT, "%d", p.x));
         mFigures[1].setText(p == null ? "" : String.format(Locale.ROOT, "%d", p.y));
         mFigures[2].setText(p == null ? "" : String.format(Locale.ROOT, "%d", p.z));
@@ -502,35 +626,89 @@ public final class CloudMovementFragment extends CloudScreen implements CloudSer
         }
         CloudModel.Account a = account();
         String main = a == null || a.features.movement == null ? null : a.features.movement.main;
-        String doing = null;
-        boolean quiet = false;
-        if (state.tradeLock) {
-            doing = getString(R.string.projects_feat_move_trade);
-        } else if ("goto".equals(state.doing) && state.to != null) {
-            doing = getString(R.string.projects_feat_move_going, state.to[0], state.to[1], state.to[2]);
-        } else if ("approach".equals(state.doing) && state.name != null) {
-            doing = getString(R.string.projects_feat_move_approaching, state.name);
-        } else if ("follow".equals(state.doing) && state.name != null) {
-            doing = getString(R.string.projects_feat_move_following, state.name);
-        } else if ("idle".equals(state.doing)) {
-            doing = Movement.ended(c, state.ended, state.name != null ? state.name : mAskedName, main);
-            quiet = true;
+        // The line: a refusal for a moment, else what it is doing, else how the last walk ended, else that it stands.
+        String doing = doing(c, state);
+        String words;
+        @ColorRes int tone;
+        if (mRefusal != null) {
+            words = mRefusal;
+            tone = R.color.projects_flare_400;
+        } else if (doing != null) {
+            words = doing;
+            tone = state.tradeLock ? R.color.projects_bone_100 : R.color.projects_gold_300;
+        } else {
+            String ended = "idle".equals(state.doing) ? Movement.ended(c, state.ended, state.name != null ? state.name : mAskedName, main) : null;
+            words = ended != null ? ended : getString(R.string.projects_feat_move_idle);
+            tone = R.color.projects_ash_300;
         }
-        if (mActivity != null) {
-            mActivity.setText(doing == null ? "" : doing);
-            mActivity.setTextColor(CloudUi.color(c, quiet ? R.color.projects_ash_300 : R.color.projects_gold_300));
+        if (mLine != null) mLine.set(words, tone);
+        showStop(state.going());
+        if (mSneakKey != null) mSneakKey.setActivated(state.sneak);
+        lock(state.tradeLock);
+        // The player's other accounts from the app's own list (no new request): one not in game cannot be walked to.
+        for (WalkRow row : mWalks) row.set(row.own && !ownInGame(row.name), state.tradeLock);
+    }
+
+    /** What it is doing now, in one line; null while it stands. */
+    @Nullable
+    private static String doing(Context c, MoveFrames.State state) {
+        if (state.tradeLock) return c.getString(R.string.projects_feat_move_trade);
+        if ("goto".equals(state.doing) && state.to != null) {
+            return c.getString(R.string.projects_feat_move_going, state.to[0], state.to[1], state.to[2]);
         }
-        if (mStop != null) mStop.setVisibility(state.going() ? View.VISIBLE : View.INVISIBLE);
-        if (mSneak != null && mSneak.isChecked() != state.sneak) {
-            mSneakQuiet = true;
-            mSneak.setChecked(state.sneak);
-            mSneakQuiet = false;
+        if ("approach".equals(state.doing) && state.name != null) return c.getString(R.string.projects_feat_move_approaching, state.name);
+        if ("follow".equals(state.doing) && state.name != null) return c.getString(R.string.projects_feat_move_following, state.name);
+        if ("step".equals(state.doing)) return c.getString(R.string.projects_feat_move_stepping);
+        return null;
+    }
+
+    private boolean ownInGame(String name) {
+        for (CloudModel.Account other : mService.accounts()) {
+            if (other.name.equalsIgnoreCase(name)) return CloudStatus.inGame(other);
         }
-        // An AFK+ deal is open: everything but "Dur" waits.
-        for (View control : mControls) {
-            control.setEnabled(!state.tradeLock);
-            control.setAlpha(state.tradeLock ? 0.45f : 1f);
+        return true;
+    }
+
+    /** "Dur" fades in at the line's end while it moves, and out when it stands (its place stays reserved). */
+    private void showStop(boolean show) {
+        final Button stop = mStop;
+        if (stop == null || show == mStopShown) return;
+        mStopShown = show;
+        stop.setClickable(show);
+        stop.setFocusable(show);
+        stop.setImportantForAccessibility(show ? View.IMPORTANT_FOR_ACCESSIBILITY_AUTO : View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        stop.animate().cancel();
+        if (!Motion.enabled(stop.getContext())) {
+            stop.setAlpha(show ? 1f : 0f);
+            stop.setVisibility(show ? View.VISIBLE : View.INVISIBLE);
+            return;
         }
+        if (show) {
+            stop.setVisibility(View.VISIBLE);
+            stop.animate().alpha(1f).setDuration(150).setInterpolator(Motion.EASE_OUT).start();
+        } else {
+            stop.animate().alpha(0f).setDuration(120).setInterpolator(Motion.EASE_OUT)
+                    .withEndAction(() -> stop.setVisibility(View.INVISIBLE)).start();
+        }
+    }
+
+    /** An AFK+ deal is open: every control but "Dur" waits, the whole block one even dim. */
+    private void lock(boolean locked) {
+        LinearLayout block = mControlBlock;
+        if (block == null) return;
+        for (View control : mControls) control.setEnabled(!locked);
+        if (locked && mHolding) {
+            // A held direction lets go: the machine refuses steps during a trade anyway.
+            mHolding = false;
+            if (mHeldKey != null) mHeldKey.setActivated(false);
+            mHeldKey = null;
+        }
+        if (locked == mLocked) return;
+        mLocked = locked;
+        float to = locked ? LOCKED_ALPHA : 1f;
+        block.animate().cancel();
+        if (Motion.enabled(block.getContext())) block.animate().alpha(to).setDuration(150).setInterpolator(Motion.EASE_OUT).start();
+        else block.setAlpha(to);
     }
 
     private void reconnect(final View from) {
@@ -566,7 +744,10 @@ public final class CloudMovementFragment extends CloudScreen implements CloudSer
     @Override
     public void moveState(MoveFrames.State state) {
         mState = state;
-        if (!state.ok) mHolding = false;
+        if (!state.ok) {
+            mHolding = false;
+            mHeldKey = null;
+        }
         if (alive()) render();
     }
 
@@ -599,6 +780,90 @@ public final class CloudMovementFragment extends CloudScreen implements CloudSer
             mState = null;
             mLive = CloudService.Live.HOST_OFFLINE;
             if (alive()) render();
+        }
+    }
+
+    /** A walk row's parts that change in place (an own account leaving or joining the game, a trade's lock). */
+    private static final class WalkRow {
+        final String name;
+        final boolean own;
+        final TextView note;
+        final Button to;
+        final Button follow;
+
+        WalkRow(String name, boolean own, TextView note, Button to, Button follow) {
+            this.name = name;
+            this.own = own;
+            this.note = note;
+            this.to = to;
+            this.follow = follow;
+        }
+
+        void set(boolean waiting, boolean locked) {
+            if (own) {
+                note.setText(waiting ? note.getContext().getString(R.string.projects_feat_move_not_in_game) : "");
+                note.setVisibility(waiting ? View.VISIBLE : View.GONE);
+            }
+            for (Button b : new Button[]{to, follow}) {
+                b.setEnabled(!waiting && !locked);
+                b.setAlpha(waiting ? WAITING_ALPHA : 1f);
+            }
+        }
+    }
+
+    /** One line whose words cross-fade in place (opacity only; at once with animations off); TalkBack reads new words. */
+    private static final class FadeLine {
+        final FrameLayout view;
+        private final TextView[] mTexts = new TextView[2];
+        private int mFront;
+        private String mWords = "";
+        private int mTone;
+
+        FadeLine(Context c) {
+            view = new FrameLayout(c);
+            for (int i = 0; i < 2; i++) {
+                TextView t = CloudUi.text(c, "", 14.5f, R.color.projects_ash_300, false);
+                t.setMaxLines(2);
+                t.setEllipsize(TextUtils.TruncateAt.END);
+                t.setLineSpacing(0, 1.1f);
+                t.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
+                t.setAlpha(i == 0 ? 1f : 0f);
+                t.setVisibility(i == 0 ? View.VISIBLE : View.INVISIBLE);
+                view.addView(t, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT,
+                        Gravity.CENTER_VERTICAL));
+                mTexts[i] = t;
+            }
+        }
+
+        void set(String words, @ColorRes int tone) {
+            if (words.equals(mWords) && tone == mTone) return;
+            Context c = view.getContext();
+            final TextView front = mTexts[mFront];
+            if (words.equals(mWords)) {
+                front.setTextColor(CloudUi.color(c, tone));
+                mTone = tone;
+                return;
+            }
+            mWords = words;
+            mTone = tone;
+            TextView back = mTexts[1 - mFront];
+            mFront = 1 - mFront;
+            front.animate().cancel();
+            back.animate().cancel();
+            back.setVisibility(View.VISIBLE);
+            back.setTextColor(CloudUi.color(c, tone));
+            back.setText(words);
+            front.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+            back.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_AUTO);
+            if (!Motion.enabled(c)) {
+                back.setAlpha(1f);
+                front.setAlpha(0f);
+                front.setVisibility(View.INVISIBLE);
+                return;
+            }
+            back.animate().alpha(1f).setDuration(150).setInterpolator(Motion.EASE_OUT).start();
+            front.animate().alpha(0f).setDuration(100).setInterpolator(Motion.EASE_OUT)
+                    .withEndAction(() -> front.setVisibility(View.INVISIBLE)).start();
         }
     }
 }

@@ -71,9 +71,9 @@ public final class MoveFrames {
                     "idle".equals(doing) ? Json.str(o, "ended") : null, Json.bool(o, "sneak", false), "trade".equals(Json.str(o, "lock")));
         }
 
-        /** It walks somewhere or follows someone: a stop has something to stop. */
+        /** It takes steps, walks somewhere or follows someone: a stop has something to stop ("Dur" shows). */
         public boolean going() {
-            return "goto".equals(doing) || "approach".equals(doing) || "follow".equals(doing);
+            return ok && ("step".equals(doing) || "goto".equals(doing) || "approach".equals(doing) || "follow".equals(doing));
         }
     }
 

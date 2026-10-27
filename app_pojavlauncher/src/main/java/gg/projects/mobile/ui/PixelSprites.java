@@ -196,6 +196,24 @@ public final class PixelSprites {
                 "..lmlmmmmmmdmd..",
                 "..lmlmmmmmmdmd..",
                 "...sssssssssss..",
+                "................"),
+        /** A laced boot with a folded cuff, toe forward: a cloud account walked by hand (movement; launcher 8d97c11). */
+        MOVEMENT(true,
+                "................",
+                "....hhhhhh......",
+                "....llllll......",
+                "....ssssss......",
+                "....lmmmmd......",
+                "....lmmmhd......",
+                "....lmmmmd......",
+                "....lmmmhdd.....",
+                "....lmmmmmmdd...",
+                "...llmmmmmmmmd..",
+                "...lmmmmmmmmmmd.",
+                "...lmmmmmmmmhmd.",
+                "..sssssssssssss.",
+                "................",
+                "................",
                 "................");
 
         final boolean shadow;

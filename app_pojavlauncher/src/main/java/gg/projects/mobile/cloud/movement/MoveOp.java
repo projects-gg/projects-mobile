@@ -31,6 +31,8 @@ public final class MoveOp {
     public static final int Y_MIN = -2048;
     public static final int Y_MAX = 2048;
     private static final Pattern NAME = Pattern.compile("^[A-Za-z0-9_]{3,16}$");
+    /** A typed coordinate: an optional minus and at most eight digits. */
+    private static final Pattern TYPED = Pattern.compile("^-?[0-9]{1,8}$");
     private static final Map<String, List<String>> FIELDS = new HashMap<>();
 
     static {
@@ -202,5 +204,20 @@ public final class MoveOp {
     /** A name the service may list as a target: what the contract's shape accepts. */
     public static boolean nameOk(@Nullable String name) {
         return name != null && NAME.matcher(name).matches();
+    }
+
+    /**
+     * A coordinate as typed in "Koordinata git": a whole number in the contract's range for its axis ({@code height}: Y),
+     * else null (the launcher's {@code coordinate}). A typographic minus or dash in front counts as a minus.
+     */
+    @Nullable
+    public static Integer coordinate(@Nullable String text, boolean height) {
+        if (text == null) return null;
+        String t = text.trim();
+        if (!t.isEmpty() && (t.charAt(0) == 0x2212 || t.charAt(0) == 0x2013)) t = "-" + t.substring(1);
+        if (!TYPED.matcher(t).matches()) return null;
+        int value = Integer.parseInt(t);
+        if (height) return value >= Y_MIN && value <= Y_MAX ? value : null;
+        return Math.abs(value) <= COORD_MAX ? value : null;
     }
 }
