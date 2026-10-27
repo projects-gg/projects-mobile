@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- MOB-POLISH: a field that opens a picker when tapped (the profile editor's version, controls and
+     folder, its drop-downs): the app's text field (projects_input) with the row ripple inside its
+     6dp corners. -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="@color/projects_ripple">
+    <item android:drawable="@drawable/projects_input" />
+    <item android:id="@android:id/mask">
+        <shape android:shape="rectangle">
+            <corners android:radius="6dp" />
+            <solid android:color="#FFFFFFFF" />
+        </shape>
+    </item>
+</ripple>

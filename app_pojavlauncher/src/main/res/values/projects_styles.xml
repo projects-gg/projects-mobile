@@ -142,33 +142,39 @@
         <item name="android:background">@color/projects_obsidian_700</item>
     </style>
 
-    <!-- Event countdown: Tektur digits with tabular figures, small units below (the desktop's Countdown). -->
-    <!-- The cell's baseline is its unit label's, so "kaldı" sits on the same line. -->
-    <style name="ProjectsCountdownCell">
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_marginEnd">14dp</item>
-        <item name="android:orientation">vertical</item>
-        <item name="android:baselineAlignedChildIndex">1</item>
+    <!-- MOB-POLISH: the profile editor (upstream's form) in the app's look: a label 8dp above its field,
+         the friends' forms' text field, and a chamfered "Seç" beside a field (its background is set in
+         code: ChamferDrawable.secondary). -->
+    <style name="ProjectsEditorLabel" parent="ProjectsFormLabel">
+        <item name="android:layout_marginTop">0dp</item>
+        <item name="android:layout_marginBottom">8dp</item>
     </style>
 
-    <style name="ProjectsCountdownValue">
-        <item name="android:layout_width">wrap_content</item>
+    <style name="ProjectsEditorField">
         <item name="android:layout_height">wrap_content</item>
-        <item name="android:fontFamily">@font/tektur_semibold</item>
-        <item name="android:fontFeatureSettings">tnum</item>
-        <item name="android:includeFontPadding">false</item>
-        <item name="android:textColor">@color/projects_bone_100</item>
-        <item name="android:textSize">21sp</item>
-    </style>
-
-    <style name="ProjectsCountdownUnit">
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_marginTop">3dp</item>
+        <item name="android:minHeight">52dp</item>
+        <item name="android:gravity">center_vertical|start</item>
         <item name="android:fontFamily">@font/figtree_regular</item>
-        <item name="android:textColor">@color/projects_ash_300</item>
-        <item name="android:textSize">11sp</item>
+        <item name="android:importantForAutofill">no</item>
+        <item name="android:paddingStart">14dp</item>
+        <item name="android:paddingEnd">14dp</item>
+        <item name="android:paddingTop">8dp</item>
+        <item name="android:paddingBottom">8dp</item>
+        <item name="android:textColor">@color/projects_bone_100</item>
+        <item name="android:textColorHint">@color/projects_ash_400</item>
+        <item name="android:textSize">16sp</item>
+    </style>
+
+    <style name="ProjectsEditorPick">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">0dp</item>
+        <item name="android:minWidth">72dp</item>
+        <item name="android:minHeight">0dp</item>
+        <item name="android:fontFamily">@font/figtree_semibold</item>
+        <item name="android:stateListAnimator">@null</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textColor">@color/projects_bone_100</item>
+        <item name="android:textSize">15sp</item>
     </style>
 
     <!-- M19: forms on the friends screens ("Ekip kur"): a label, the desktop-like text field, a line for

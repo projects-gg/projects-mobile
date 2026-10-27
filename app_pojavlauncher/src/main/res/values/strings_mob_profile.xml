@@ -16,4 +16,6 @@
     <string name="mob_profile_official_install">Install the official pack</string>
     <string name="mob_profile_official_missing">Not installed</string>
     <string name="mob_profile_official_failed">Couldn\'t install the official pack. Try again.</string>
+    <!-- The profile editor's closed section with the engine's settings (JVM arguments, folder, Java, renderer). -->
+    <string name="projects_profile_advanced">Advanced</string>
 </resources>

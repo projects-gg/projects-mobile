@@ -13,7 +13,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Spinner;
@@ -58,7 +58,13 @@ public class ProfileEditorFragment extends Fragment implements CropperUtils.Crop
     private String mValueToConsume = "";
     private Button mSaveButton, mDeleteButton, mControlSelectButton, mGameDirButton, mVersionSelectButton;
     private Spinner mDefaultRuntime, mDefaultRenderer;
-    private CheckBox mUseANGLE;
+    private CompoundButton mUseANGLE;
+    // MOB-POLISH: the engine's settings under "Gelişmiş" (closed unless one of them was changed); the
+    // fragment keeps it open across a picker's round trip (the view is made again on return).
+    private View mAdvanced, mAdvancedGroup;
+    private ImageView mAdvancedCaret;
+    private android.widget.ScrollView mScroll;
+    private boolean mAdvancedOpen;
     private EditText mDefaultName, mDefaultJvmArgument;
     private TextView mDefaultPath, mDefaultVersion, mDefaultControl;
     private ImageView mProfileIcon;
@@ -119,7 +125,7 @@ public class ProfileEditorFragment extends Fragment implements CropperUtils.Crop
         mVersionSelectButton.setOnClickListener(versionSelectListener);
         mDefaultVersion.setOnClickListener(versionSelectListener);
 
-        mUseANGLE.setOnClickListener(v -> mTempProfile.useANGLE = ((CheckBox) v).isChecked());
+        mUseANGLE.setOnClickListener(v -> mTempProfile.useANGLE = mUseANGLE.isChecked());
 
         // Set up the icon change click listener
         mProfileIcon.setOnClickListener(v -> CropperUtils.startCropper(mCropperLauncher));
@@ -255,6 +261,32 @@ public class ProfileEditorFragment extends Fragment implements CropperUtils.Crop
         mDefaultPath.setText(mTempProfile.gameDir == null ? "" : mTempProfile.gameDir);
         mDefaultControl.setText(mTempProfile.controlFile == null ? "" : mTempProfile.controlFile);
         mUseANGLE.setChecked(mTempProfile.useANGLE);
+        // A changed engine setting shows itself; the Projects profile's own folder and renderer are the pack's.
+        boolean projects = gg.projects.mobile.join.ProjectsProfile.KEY.equals(mProfileKey);
+        boolean changed = (mTempProfile.javaArgs != null && !mTempProfile.javaArgs.trim().isEmpty())
+                || mTempProfile.useANGLE || mTempProfile.javaDir != null
+                || (!projects && (mTempProfile.pojavRendererName != null
+                        || (mTempProfile.gameDir != null && !mTempProfile.gameDir.isEmpty())));
+        showAdvanced(mAdvancedOpen || changed, false);
+    }
+
+    /** Opens or closes "Gelişmiş"; a tap turns the caret and brings the section into view. */
+    private void showAdvanced(boolean open, boolean tapped) {
+        mAdvancedOpen = open;
+        mAdvancedGroup.setVisibility(open ? View.VISIBLE : View.GONE);
+        mAdvanced.setActivated(open);
+        float turn = open ? 180f : 0f;
+        boolean motion = tapped && gg.projects.mobile.mods.Motion.enabled(requireContext());
+        mAdvancedCaret.animate().cancel();
+        if (motion) mAdvancedCaret.animate().rotation(turn).setDuration(180).setInterpolator(gg.projects.mobile.mods.Motion.EASE_OUT).start();
+        else mAdvancedCaret.setRotation(turn);
+        if (open && tapped) {
+            mScroll.post(() -> {
+                int y = Math.max(0, mAdvanced.getTop() - Math.round(8 * getResources().getDisplayMetrics().density));
+                if (motion) mScroll.smoothScrollTo(0, y);
+                else mScroll.scrollTo(0, y);
+            });
+        }
     }
 
     private MinecraftProfile getProfile(@NonNull String profile){
@@ -303,6 +335,17 @@ public class ProfileEditorFragment extends Fragment implements CropperUtils.Crop
         mVersionSelectButton = view.findViewById(R.id.vprof_editor_version_button);
         mGameDirButton = view.findViewById(R.id.vprof_editor_path_button);
         mProfileIcon = view.findViewById(R.id.vprof_editor_profile_icon);
+        // MOB-POLISH: "Seç" beside a field is the app's secondary action (chamfered, bone), not a grey slab.
+        for (Button pick : new Button[]{mControlSelectButton, mVersionSelectButton, mGameDirButton}) {
+            pick.setBackground(gg.projects.mobile.ui.ChamferDrawable.secondary(view.getContext()));
+            gg.projects.mobile.ui.Press.attach(pick, gg.projects.mobile.ui.Press.Style.BUTTON);
+        }
+        mScroll = view.findViewById(R.id.projects_editor_scroll);
+        mAdvanced = view.findViewById(R.id.projects_editor_advanced);
+        mAdvancedGroup = view.findViewById(R.id.projects_editor_advanced_group);
+        mAdvancedCaret = view.findViewById(R.id.projects_editor_advanced_caret);
+        mAdvanced.setOnClickListener(v -> showAdvanced(!mAdvancedOpen, true));
+        gg.projects.mobile.ui.Press.attach(mAdvanced, gg.projects.mobile.ui.Press.Style.ROW);
     }
 
     private void save(){
