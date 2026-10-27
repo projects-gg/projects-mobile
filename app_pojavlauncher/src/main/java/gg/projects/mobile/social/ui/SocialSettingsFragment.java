@@ -2,6 +2,7 @@ package gg.projects.mobile.social.ui;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -10,6 +11,7 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -46,6 +48,8 @@ import gg.projects.mobile.ui.Press;
  */
 public class SocialSettingsFragment extends Fragment implements SocialService.Listener {
     public static final String TAG = "ProjectsSocialSettingsFragment";
+    /** The notification switches while Android keeps the app's notifications off. */
+    private static final float DIMMED = 0.5f;
 
     private LinearLayout mList;
     private String mShown = "";
@@ -120,21 +124,12 @@ public class SocialSettingsFragment extends Fragment implements SocialService.Li
         }
 
         section(R.string.projects_social_notifications);
-        if (!SocialNotifications.canNotify(context)) {
-            TextView off = text(getString(R.string.projects_social_notifications_off), R.color.projects_ash_300);
-            mList.addView(off);
-            Button open = new Button(context, null, android.R.attr.borderlessButtonStyle);
-            open.setText(R.string.projects_open_settings);
-            open.setAllCaps(false);
-            open.setTextColor(ContextCompat.getColor(context, R.color.projects_bone_100));
-            open.setBackground(ChamferDrawable.outlined(context));
-            Press.attach(open, Press.Style.BUTTON);
-            open.setOnClickListener(v -> openNotificationSettings());
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            lp.setMarginStart(dp(8));
-            lp.topMargin = dp(4);
-            mList.addView(open, lp);
-        }
+        // MOB-POLISH: while Android keeps the app's notifications off, one line says so with "Aç" (the 7/24 Bulut
+        // screen's notice), and the switches under it are dimmed instead of gold. They stay usable: they also decide
+        // the app's own lines and the in-game ones, which come anyway.
+        boolean osOn = SocialNotifications.canNotify(context);
+        if (!osOn) mList.addView(notificationsOff(context));
+        int firstSwitch = mList.getChildCount();
         toggle(R.string.projects_social_channel_invites, service.prefs().wantsInvites(), on -> {
             service.prefs().setWants(PushMessage.INVITE, on);
             service.syncPush();
@@ -169,6 +164,9 @@ public class SocialSettingsFragment extends Fragment implements SocialService.Li
             service.prefs().setWants(PushMessage.REQUEST, on);
             service.syncPush();
         });
+        if (!osOn) {
+            for (int i = firstSwitch; i < mList.getChildCount(); i++) mList.getChildAt(i).setAlpha(DIMMED);
+        }
 
         section(R.string.projects_social_blocked_title);
         if (service.state().blocked().isEmpty()) {
@@ -185,6 +183,59 @@ public class SocialSettingsFragment extends Fragment implements SocialService.Li
 
     private int dp(int value) {
         return Math.round(value * getResources().getDisplayMetrics().density);
+    }
+
+    /**
+     * "Bu telefonda bildirimler kapalı." with "Aç" at its end (Android's notification settings for the app), in the
+     * 7/24 Bulut screen's notice: a quiet panel whose small bell carries the colour.
+     */
+    private View notificationsOff(Context context) {
+        LinearLayout panel = new LinearLayout(context);
+        panel.setOrientation(LinearLayout.HORIZONTAL);
+        panel.setGravity(Gravity.CENTER_VERTICAL);
+        GradientDrawable surface = new GradientDrawable();
+        surface.setCornerRadius(dp(10));
+        surface.setColor(ContextCompat.getColor(context, R.color.projects_obsidian_800));
+        surface.setStroke(Math.max(1, dp(1)), ContextCompat.getColor(context, R.color.projects_obsidian_700));
+        panel.setBackground(surface);
+        panel.setPaddingRelative(dp(14), dp(2), dp(2), dp(2));
+        ImageView bell = new ImageView(context);
+        bell.setImageResource(R.drawable.projects_ic_bell_slash);
+        bell.setImageTintList(ContextCompat.getColorStateList(context, R.color.projects_gold_300));
+        bell.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        panel.addView(bell, new LinearLayout.LayoutParams(dp(20), dp(20)));
+        TextView words = new TextView(context);
+        words.setText(R.string.projects_social_notifications_off);
+        words.setTextSize(14);
+        words.setTextColor(ContextCompat.getColor(context, R.color.projects_bone_100));
+        LinearLayout.LayoutParams wordsLp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        wordsLp.setMarginStart(dp(12));
+        panel.addView(words, wordsLp);
+        Button open = new Button(context, null, android.R.attr.borderlessButtonStyle);
+        open.setText(R.string.projects_social_notifications_turn_on);
+        open.setContentDescription(getString(R.string.projects_social_notifications_turn_on_label));
+        open.setAllCaps(false);
+        open.setTextSize(14);
+        open.setTextColor(ContextCompat.getColor(context, R.color.projects_gold_300));
+        try {
+            open.setTypeface(ResourcesCompat.getFont(context, R.font.figtree_semibold));
+        } catch (RuntimeException ignored) {
+            // The theme's font.
+        }
+        open.setMinWidth(0);
+        open.setMinimumWidth(0);
+        open.setMinHeight(dp(48));
+        open.setMinimumHeight(dp(48));
+        open.setPadding(dp(14), 0, dp(14), 0);
+        open.setBackgroundResource(R.drawable.projects_row_ripple);
+        Press.attach(open, Press.Style.BUTTON);
+        open.setOnClickListener(v -> openNotificationSettings());
+        panel.addView(open, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.topMargin = dp(4);
+        lp.bottomMargin = dp(4);
+        panel.setLayoutParams(lp);
+        return panel;
     }
 
     private void section(int title) {

@@ -326,8 +326,8 @@ final class CrewSheets {
             SocialUi.joinProjects(activity);
         });
         LinearLayout actions = view.findViewById(R.id.projects_card_actions);
-        actions.addView(CrewViews.actionRow(activity, R.drawable.projects_ic_discord_glyph, activity.getString(R.string.projects_social_message),
-                R.color.projects_bone_100, v -> SocialUi.openDiscord(activity, member.profile)));
+        actions.addView(CrewViews.discordRow(activity, activity.getString(R.string.projects_social_message),
+                v -> SocialUi.openDiscord(activity, member.profile)));
         Member mine = team.member(me);
         boolean powers = false;
         if (mine != null && mine.founder) {

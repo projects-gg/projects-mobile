@@ -3,7 +3,9 @@
      conversation has the small "Discord'dan mesajlaş" under it; the messages fill the screen, newest at
      the bottom; crew chat has quick replies above the rounded field and its round send button.
      MOB1 (CHAT2): who writes floats over the list's bottom ("Ayşe yazıyor"); a reply's strip and a typed
-     link's card sit over the field; the emoji and sticker button starts the field. -->
+     link's card sit over the field; the emoji and sticker button starts the field.
+     MOB-POLISH: "Discord'dan mesajlaş" is a quiet chamfered chip with Discord's symbol in Blurple (set in code);
+     the messages fade out under the fixed top instead of being cut by a hard line (FadingRecyclerView). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -26,7 +28,6 @@
         android:layout_marginStart="12dp"
         android:layout_marginTop="6dp"
         android:layout_marginBottom="4dp"
-        android:background="@drawable/projects_pill_background"
         android:drawablePadding="8dp"
         android:fontFamily="@font/figtree_semibold"
         android:minWidth="0dp"
@@ -63,7 +64,7 @@
         android:layout_height="0dp"
         android:layout_weight="1">
 
-        <androidx.recyclerview.widget.RecyclerView
+        <gg.projects.mobile.social.ui.FadingRecyclerView
             android:id="@+id/projects_chat_list"
             android:layout_width="match_parent"
             android:layout_height="match_parent"

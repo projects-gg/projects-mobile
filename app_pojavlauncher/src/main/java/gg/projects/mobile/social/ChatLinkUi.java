@@ -13,8 +13,9 @@ import java.util.regex.Pattern;
  * CHAT2: how a link and its card are drawn (the desktop's link-ui.tsx rules, pure): the domain the
  * one-line warning names ("Bu bağlantı ornek.com sitesine gidiyor."), the shape a card holds before
  * it comes (a wide place for a video, a clip or a projects.gg page, else one row) and once it came
- * (by its picture's own proportions), the address a card without a title shows, and which refusal
- * has words of its own. Pure Java.
+ * (by its picture's own proportions), whether a card has anything beyond the link (MOB-POLISH: one
+ * without is not drawn), the address the desktop's plain card shows, and which refusal has words of
+ * its own. Pure Java.
  */
 public final class ChatLinkUi {
     private ChatLinkUi() {}
@@ -66,6 +67,15 @@ public final class ChatLinkUi {
         if (under(h, "twitch.tv")) return CLIP.matcher(path).find() ? Shape.BANNER : Shape.ROW;
         if (h.equals("projects.gg") || h.equals("www.projects.gg")) return Shape.BANNER;
         return Shape.ROW;
+    }
+
+    /**
+     * MOB-POLISH: whether a card that came has anything beyond the link: a title, a picture or a description. One
+     * without (the plain card: the icon, the domain and the address, which the message's text already shows) is not
+     * drawn at all; one with a picture but no title shows the picture and the domain once.
+     */
+    public static boolean showsCard(ChatCards.Card card) {
+        return card.state == ChatCards.State.READY && (card.title != null || card.image != null || card.desc != null);
     }
 
     /** The shape a card that came takes: by its picture's own proportions. */

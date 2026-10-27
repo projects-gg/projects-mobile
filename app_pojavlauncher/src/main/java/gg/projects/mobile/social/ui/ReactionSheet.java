@@ -1,7 +1,6 @@
 package gg.projects.mobile.social.ui;
 
 import android.content.Context;
-import android.graphics.drawable.GradientDrawable;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -73,7 +72,8 @@ final class ReactionSheet {
         content.addView(tabScroll);
         final LinearLayout people = new LinearLayout(context);
         people.setOrientation(LinearLayout.VERTICAL);
-        ScrollView scroll = new ScrollView(context);
+        // MOB-POLISH: the list fades out under the tabs instead of being cut.
+        ScrollView scroll = new FadingScrollView(context);
         scroll.addView(people);
         LinearLayout.LayoutParams scrollLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f);
         scrollLp.topMargin = Math.round(8 * dp);
@@ -247,11 +247,8 @@ final class ReactionSheet {
         tab.setMinWidth(Math.round(48 * dp));
         tab.setPadding(Math.round(12 * dp), 0, Math.round(12 * dp), 0);
         tab.setTextColor(ContextCompat.getColor(context, on ? R.color.projects_gold_300 : R.color.projects_ash_300));
-        GradientDrawable pill = new GradientDrawable();
-        pill.setCornerRadius(18 * dp);
-        pill.setColor(ContextCompat.getColor(context, on ? R.color.projects_obsidian_800 : R.color.projects_obsidian_850));
-        pill.setStroke(Math.max(1, Math.round(dp)), ContextCompat.getColor(context, on ? R.color.projects_gold_700 : R.color.projects_obsidian_700));
-        tab.setBackground(pill);
+        // MOB-POLISH: chamfered like every action (it was a pill); the tab shown is the chosen one.
+        tab.setBackground(SocialChips.choice(context, 7));
         tab.setClickable(true);
         tab.setFocusable(true);
         tab.setSelected(on);

@@ -174,12 +174,15 @@ public final class SocialMenuSheet {
                 continue;
             }
             final SocialMenus.PersonAction action = row.action;
-            View view = CrewViews.actionRow(activity, personIcon(action), personLabel(activity, action, in), personTint(action),
-                    v -> {
-                        dialog.dismiss();
-                        if (action == SocialMenus.PersonAction.REPORT && report != null) report.run();
-                        else runPerson(activity, action, profile, crewId, pending, v);
-                    });
+            View.OnClickListener run = v -> {
+                dialog.dismiss();
+                if (action == SocialMenus.PersonAction.REPORT && report != null) report.run();
+                else runPerson(activity, action, profile, crewId, pending, v);
+            };
+            // MOB-POLISH: "Discord'dan mesaj at" opens Discord: its own symbol in Blurple, as on the friend's card.
+            View view = action == SocialMenus.PersonAction.DISCORD
+                    ? CrewViews.discordRow(activity, personLabel(activity, action, in), run)
+                    : CrewViews.actionRow(activity, personIcon(action), personLabel(activity, action, in), personTint(action), run);
             if (row.disabled) dim(view);
             list.addView(view);
         }

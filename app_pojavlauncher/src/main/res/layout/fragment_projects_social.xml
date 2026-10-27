@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- M19: the friends screen. Signed out: why and how to sign in with Discord. Signed in: the player,
-     the crew, invites, requests and friends by where they are. -->
+     the crew, invites, requests and friends by where they are. MOB-POLISH: both fade out under the header
+     (FadingRecyclerView, FadingScrollView). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -20,7 +21,7 @@
         android:layout_height="0dp"
         android:layout_weight="1">
 
-        <androidx.recyclerview.widget.RecyclerView
+        <gg.projects.mobile.social.ui.FadingRecyclerView
             android:id="@+id/projects_social_list"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -28,7 +29,7 @@
             android:paddingBottom="24dp"
             android:visibility="gone" />
 
-        <ScrollView
+        <gg.projects.mobile.social.ui.FadingScrollView
             android:id="@+id/projects_social_consent"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -218,6 +219,6 @@
                     android:textColor="@color/projects_gold_300"
                     android:textSize="14sp" />
             </LinearLayout>
-        </ScrollView>
+        </gg.projects.mobile.social.ui.FadingScrollView>
     </FrameLayout>
 </LinearLayout>

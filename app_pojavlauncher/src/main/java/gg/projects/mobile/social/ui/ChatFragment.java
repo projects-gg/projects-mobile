@@ -40,11 +40,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import net.kdt.pojavlaunch.R;
 
-import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -70,6 +68,7 @@ import gg.projects.mobile.social.SocialModel.Profile;
 import gg.projects.mobile.social.SocialProblem;
 import gg.projects.mobile.social.SocialService;
 import gg.projects.mobile.social.SocialState;
+import gg.projects.mobile.ui.AppDates;
 import gg.projects.mobile.ui.ContentTiles;
 import gg.projects.mobile.ui.HapticMap;
 import gg.projects.mobile.ui.Haptics;
@@ -297,14 +296,11 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
         });
         buildQuickReplies(context);
         if (ChatConv.isDirect(mConv)) {
-            Drawable glyph = ContextCompat.getDrawable(context, R.drawable.projects_ic_discord_glyph);
-            if (glyph != null) {
-                glyph = glyph.mutate();
-                glyph.setTint(ContextCompat.getColor(context, R.color.projects_ash_300));
-                float dp = getResources().getDisplayMetrics().density;
-                glyph.setBounds(0, 0, Math.round(17 * dp), Math.round(13 * dp));
-                mDiscord.setCompoundDrawablesRelative(glyph, null, null, null);
-            }
+            // MOB-POLISH: a Discord-branded action: Discord's own symbol in Blurple (it was grey) on a quiet chamfered
+            // chip (it was a pill beside the app's chamfered buttons), as the desktop's ghost button.
+            Drawable glyph = SocialChips.discordMark(context, 13);
+            if (glyph != null) mDiscord.setCompoundDrawablesRelative(glyph, null, null, null);
+            mDiscord.setBackground(SocialChips.quiet(context, 7));
             mDiscord.setVisibility(View.VISIBLE);
             Press.attach(mDiscord, Press.Style.BUTTON);
             mDiscord.setOnClickListener(v -> {
@@ -825,8 +821,10 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
             TextView chip = new TextView(context);
             chip.setText(text);
             chip.setTextSize(14);
-            chip.setTextColor(ContextCompat.getColor(context, R.color.projects_gold_300));
-            chip.setBackgroundResource(R.drawable.projects_chat_chip);
+            // MOB-POLISH: quiet chamfered chips, as the desktop's (four gold pills beside "Selam ver" made five gold
+            // things over the field; gold stays for "Selam ver" and the send button).
+            chip.setTextColor(ContextCompat.getColor(context, R.color.projects_ash_300));
+            chip.setBackground(SocialChips.quiet(context, 7));
             chip.setGravity(Gravity.CENTER);
             chip.setMinHeight(Math.round(36 * dp));
             chip.setPadding(Math.round(14 * dp), 0, Math.round(14 * dp), 0);
@@ -1245,7 +1243,8 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
         long day = dayOf(ms);
         if (day == now) return context.getString(R.string.projects_chat_today);
         if (day == yesterday) return context.getString(R.string.projects_chat_yesterday);
-        return DateFormat.getDateInstance(DateFormat.LONG, Locale.getDefault()).format(new Date(ms));
+        // MOB-POLISH: "24 Ekim 2026" / "24 October 2026" (en-GB, not the phone's region).
+        return AppDates.longDate(context, ms);
     }
 
     private void scrollToBottom(boolean smooth) {
@@ -1477,11 +1476,12 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
         hi.setId(R.id.projects_chat_state);
         hi.setText(R.string.projects_welcome_say_hi);
         hi.setTextSize(13);
-        hi.setTextColor(ContextCompat.getColor(context, R.color.projects_gold_300));
+        // MOB-POLISH: the one gold thing here (the desktop's line action): a faint gold chamfered plate, no line.
+        hi.setTextColor(ContextCompat.getColor(context, R.color.projects_gold_200));
         hi.setGravity(Gravity.CENTER);
         hi.setMinHeight(Math.round(36 * dp));
         hi.setPadding(Math.round(14 * dp), 0, Math.round(14 * dp), 0);
-        hi.setBackgroundResource(R.drawable.projects_chat_chip);
+        hi.setBackground(SocialChips.gold(context, 7));
         try {
             hi.setTypeface(androidx.core.content.res.ResourcesCompat.getFont(context, R.font.figtree_semibold));
         } catch (RuntimeException ignored) {
@@ -1668,7 +1668,8 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
         boolean seen = row.seen;
         boolean showMeta = row.last || e.pending() || (e.message != null && e.message.edited()) || seen;
         meta.setVisibility(showMeta && !e.failed() ? View.VISIBLE : View.GONE);
-        String clock = android.text.format.DateFormat.getTimeFormat(context).format(new Date(timeOf(e)));
+        // MOB-POLISH: 24 hours in both languages (the phone's 12-hour setting made English "1:24 AM").
+        String clock = AppDates.time(timeOf(e));
         boolean edited = e.message != null && e.message.edited();
         boolean waiting = e.outbox != null && service.connection() != SocialService.Connection.LIVE;
         // MOB1b: "Görüldü" stands where the check stood; the time and "düzenlendi" stay, as on the desktop (it used to
@@ -1894,11 +1895,8 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
             chip.setMinHeight(Math.round(28 * dp));
             chip.setPadding(Math.round(9 * dp), 0, Math.round(10 * dp), 0);
             chip.setTextColor(ContextCompat.getColor(context, mine ? R.color.projects_gold_200 : R.color.projects_bone_100));
-            GradientDrawable pill = new GradientDrawable();
-            pill.setCornerRadius(14 * dp);
-            pill.setColor(ContextCompat.getColor(context, mine ? R.color.projects_chat_mine : R.color.projects_obsidian_800));
-            pill.setStroke(Math.max(1, Math.round(dp)), ContextCompat.getColor(context, mine ? R.color.projects_gold_700 : R.color.projects_obsidian_700));
-            chip.setBackground(pill);
+            // MOB-POLISH: chamfered as an action (the desktop's reaction chips), the same colours.
+            chip.setBackground(SocialChips.reaction(context, mine));
             String people = getResources().getQuantityString(R.plurals.projects_reactions_chip, r.count(), r.e, r.count());
             if (mine) {
                 people = r.count() == 1 ? getString(R.string.projects_reactions_chip_mine_alone, r.e)

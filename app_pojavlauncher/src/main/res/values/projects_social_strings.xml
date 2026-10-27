@@ -150,6 +150,9 @@
     <string name="projects_social_share_last_seen">Show when I was last seen</string>
     <string name="projects_social_notifications">Notifications</string>
     <string name="projects_social_notifications_off">Notifications are off on this phone.</string>
+    <!-- MOB-POLISH: at the end of that line; it opens Android's notification settings for the app. -->
+    <string name="projects_social_notifications_turn_on">Turn on</string>
+    <string name="projects_social_notifications_turn_on_label">Turn on notifications</string>
     <string name="projects_social_blocked_title">Blocked</string>
     <string name="projects_social_blocked_empty">You haven\'t blocked anyone.</string>
     <string name="projects_social_account">Account</string>

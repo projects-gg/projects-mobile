@@ -2,10 +2,6 @@ package gg.projects.mobile.social.ui;
 
 import android.content.Context;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 
@@ -15,10 +11,11 @@ import gg.projects.mobile.social.PlanTimes;
 import gg.projects.mobile.social.SocialModel.Plan;
 import gg.projects.mobile.social.SocialModel.Profile;
 import gg.projects.mobile.social.SocialState;
+import gg.projects.mobile.ui.AppDates;
 
 /**
  * M21 (TEAM5): how plans and join requests say their times: "Bugün 22:00", "Yarın 22:00", "Cumartesi
- * 22:00" (the phone's clock and language), "12 dk önce", and who answered a plan what.
+ * 22:00" (the app's language, 24 hours: AppDates), "12 dk önce", and who answered a plan what.
  */
 public final class PlanViews {
     private PlanViews() {}
@@ -38,27 +35,19 @@ public final class PlanViews {
         } else if (days == 1) {
             day = context.getString(inline ? R.string.projects_plans_tomorrow_inline : R.string.projects_plans_tomorrow);
         } else if (days > 1 && days < PlanTimes.DAYS) {
-            day = weekday(at);
+            day = AppDates.weekday(context, at * 1000L);
         } else {
-            day = DateFormat.getDateInstance(DateFormat.MEDIUM, Locale.getDefault()).format(new Date(at * 1000L));
+            day = AppDates.mediumDate(context, at * 1000L);
         }
         return context.getString(R.string.projects_plans_when, day, time);
     }
 
-    /** The plan sheet's day: "Bugün", "Yarın", then the weekday's name. */
+    /** The plan sheet's day: "Bugün", "Yarın", then the weekday's name ("Cumartesi", "Saturday"). */
     public static String dayLabel(Context context, PlanTimes.Day day) {
         if (day.offset == 0) return context.getString(R.string.projects_plans_today);
         if (day.offset == 1) return context.getString(R.string.projects_plans_tomorrow);
         // Noon of that day: a clock change at night does not move it to the day before.
-        return weekday(day.start + 12 * 3600);
-    }
-
-    /** The weekday's name in the app's language, capitalised ("Cumartesi", "Saturday"). */
-    static String weekday(long at) {
-        Locale locale = Locale.getDefault();
-        String name = new SimpleDateFormat("EEEE", locale).format(new Date(at * 1000L));
-        if (name.isEmpty()) return name;
-        return name.substring(0, 1).toUpperCase(locale) + name.substring(1);
+        return AppDates.weekday(context, (day.start + 12 * 3600) * 1000L);
     }
 
     /** "az önce", "12 dk önce", "3 sa önce", "2 gün önce". */

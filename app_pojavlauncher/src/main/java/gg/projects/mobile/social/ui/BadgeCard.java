@@ -23,15 +23,10 @@ import com.google.gson.JsonObject;
 import net.kdt.pojavlaunch.R;
 import net.kdt.pojavlaunch.Tools;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.TimeZone;
 
-import gg.projects.mobile.language.LanguageManager;
 import gg.projects.mobile.mods.Motion;
 import gg.projects.mobile.social.BadgeRules;
 import gg.projects.mobile.social.SocialModel;
@@ -40,6 +35,7 @@ import gg.projects.mobile.social.SocialModel.Crew;
 import gg.projects.mobile.social.SocialProblem;
 import gg.projects.mobile.social.SocialService;
 import gg.projects.mobile.social.SocialState;
+import gg.projects.mobile.ui.AppDates;
 import gg.projects.mobile.ui.ChamferDrawable;
 import gg.projects.mobile.ui.Haptics;
 import gg.projects.mobile.ui.Press;
@@ -361,22 +357,11 @@ final class BadgeCard {
         return out.toString();
     }
 
-    /** The month and year a crew was founded ("Eylül 2026"; no day: the desktop's card). */
+    /** The month and year a crew was founded ("Eylül 2026", "September 2026"; no day: the desktop's card). */
     @Nullable
     static String foundedOn(Context context, @Nullable String isoDay) {
-        if (isoDay == null || !isoDay.matches("\\d{4}-\\d{2}-\\d{2}")) return null;
-        try {
-            Locale locale = LanguageManager.effectiveLocale(context);
-            SimpleDateFormat in = new SimpleDateFormat("yyyy-MM-dd", Locale.ROOT);
-            in.setTimeZone(TimeZone.getTimeZone("UTC"));
-            Date date = in.parse(isoDay);
-            if (date == null) return null;
-            SimpleDateFormat out = new SimpleDateFormat("LLLL yyyy", locale);
-            out.setTimeZone(TimeZone.getTimeZone("UTC"));
-            return out.format(date);
-        } catch (Exception e) {
-            return null;
-        }
+        Long at = AppDates.isoDay(isoDay);
+        return at == null ? null : AppDates.monthYear(AppDates.turkish(context), at, AppDates.UTC);
     }
 
     private static SocialModel.TeamSummary summary(Badge badge) {

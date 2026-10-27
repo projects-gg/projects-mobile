@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- M19: "Ekip kur": a live preview of the crew's mark and name, then name, tag, motto, emblem, colour
-     and frame (colour, frame and motto where the service offers looks). -->
+     and frame (colour, frame and motto where the service offers looks). MOB-POLISH: the page fades out under
+     the header (FadingScrollView). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -14,7 +15,7 @@
         android:paddingBottom="4dp"
         android:text="@string/projects_crew_create" />
 
-    <ScrollView
+    <gg.projects.mobile.social.ui.FadingScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1">
@@ -209,5 +210,5 @@
                 android:text="@string/projects_crew_create_submit"
                 android:textSize="16sp" />
         </LinearLayout>
-    </ScrollView>
+    </gg.projects.mobile.social.ui.FadingScrollView>
 </LinearLayout>

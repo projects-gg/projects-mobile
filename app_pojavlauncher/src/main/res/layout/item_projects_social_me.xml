@@ -63,13 +63,13 @@
             android:textSize="13sp"
             tools:text="Çevrimiçi" />
 
-        <!-- M20 (SPAM1): "Sınırlı hesap" on the player's own row only; a tap says what and until when. -->
+        <!-- M20 (SPAM1): "Sınırlı hesap" on the player's own row only; a tap says what and until when.
+             MOB-POLISH: a quiet chamfered chip (SocialChips, set where the row is bound). -->
         <TextView
             android:id="@+id/projects_me_limited"
             android:layout_width="wrap_content"
             android:layout_height="28dp"
             android:layout_marginTop="6dp"
-            android:background="@drawable/projects_limited_chip"
             android:clickable="true"
             android:drawablePadding="5dp"
             android:focusable="true"

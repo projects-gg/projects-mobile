@@ -20,7 +20,6 @@ import androidx.appcompat.app.AlertDialog;
 
 import net.kdt.pojavlaunch.R;
 
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -81,13 +80,14 @@ public final class ProjectsUi {
         return context.getResources().getConfiguration().locale;
     }
 
+    /** "17 Ekim 2026" / "17 October 2026" (MOB-POLISH: British English, never the phone's US order). */
     public static String date(Context context, long millis) {
-        return DateFormat.getDateInstance(DateFormat.LONG, locale(context)).format(new Date(millis));
+        return AppDates.longDate(context, millis);
     }
 
+    /** "17 Ekim 14:30" / "17 October 14:30": 24 hours whatever the phone's clock setting (design.md §7). */
     public static String dateTime(Context context, long millis) {
-        return DateUtils.formatDateTime(context, millis,
-                DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_TIME | DateUtils.FORMAT_ABBREV_MONTH);
+        return AppDates.dayMonth(context, millis) + " " + AppDates.time(millis);
     }
 
     /** "2 saat önce", "3 gün önce"; a date for older moments. */

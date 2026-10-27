@@ -18,14 +18,8 @@ import androidx.core.content.res.ResourcesCompat;
 
 import net.kdt.pojavlaunch.R;
 
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
-import java.util.TimeZone;
-
 import gg.projects.mobile.social.CrewLook;
+import gg.projects.mobile.ui.AppDates;
 import gg.projects.mobile.ui.Press;
 
 /** Small view pieces the friends and crew screens share. */
@@ -89,28 +83,19 @@ public final class CrewViews {
         return line;
     }
 
-    /** A {@code YYYY-MM-DD} day as the phone writes dates ("12 Eylül 2026"), or null. */
+    /** A {@code YYYY-MM-DD} day in the app's language ("12 Eylül 2026", "12 September 2026"), or null. */
     @Nullable
     public static String day(Context context, @Nullable String isoDay) {
-        if (isoDay == null || !isoDay.matches("\\d{4}-\\d{2}-\\d{2}")) return null;
-        try {
-            SimpleDateFormat parser = new SimpleDateFormat("yyyy-MM-dd", Locale.ROOT);
-            parser.setTimeZone(TimeZone.getTimeZone("UTC"));
-            Date date = parser.parse(isoDay);
-            DateFormat format = DateFormat.getDateInstance(DateFormat.LONG, Locale.getDefault());
-            format.setTimeZone(TimeZone.getTimeZone("UTC"));
-            return date == null ? null : format.format(date);
-        } catch (ParseException | RuntimeException e) {
-            return null;
-        }
+        Long at = AppDates.isoDay(isoDay);
+        return at == null ? null : AppDates.longDate(AppDates.turkish(context), at, AppDates.UTC);
     }
 
-    /** A clock time on the phone ("21:30"). */
+    /** A clock time, on 24 hours in both languages ("21:30"; MOB-POLISH: not the phone's 12-hour setting). */
     public static String time(Context context, long seconds) {
-        return android.text.format.DateFormat.getTimeFormat(context).format(new Date(seconds * 1000L));
+        return AppDates.time(seconds * 1000L);
     }
 
-    /** "Bugün 21:30" / "Yarın 08:00", or the date for later days. */
+    /** "Bugün 21:30" / "Yarın 08:00", or the date for later days ("24 Eki 2026 21:30", "24 Oct 2026 21:30"). */
     public static String moment(Context context, long seconds, long nowSeconds) {
         java.util.Calendar day = java.util.Calendar.getInstance();
         day.setTimeInMillis(nowSeconds * 1000L);
@@ -127,6 +112,18 @@ public final class CrewViews {
         String time = time(context, seconds);
         if (at >= today && at < tomorrow) return context.getString(R.string.projects_crew_today_at, time);
         if (at >= tomorrow && at < after) return context.getString(R.string.projects_crew_tomorrow_at, time);
-        return DateFormat.getDateInstance(DateFormat.MEDIUM, Locale.getDefault()).format(new Date(at)) + " " + time;
+        return AppDates.mediumDate(context, at) + " " + time;
+    }
+
+    /**
+     * "Discord'dan mesaj at" in a card or sheet: {@link #actionRow} with Discord's own symbol in Blurple at its own
+     * proportions (a Discord-branded action, design.md §6 Friends), the label as every row's.
+     */
+    public static TextView discordRow(Context context, CharSequence text, View.OnClickListener listener) {
+        TextView row = actionRow(context, R.drawable.projects_ic_discord_glyph, text, R.color.projects_bone_100, listener);
+        // As wide as the other rows' 22 dp icons, so the labels line up.
+        Drawable mark = SocialChips.discordMark(context, 22f / SocialChips.DISCORD_RATIO);
+        if (mark != null) row.setCompoundDrawablesRelative(mark, null, null, null);
+        return row;
     }
 }

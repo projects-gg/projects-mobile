@@ -3,7 +3,8 @@
      friends and leaving. Without one: crew invites, joining with a code and creating a crew.
      M20 (TEAM4): with several crews a rail of their marks under the header (the main crew first, "+"
      last, a gold line under the one shown that slides to the next); "+" shows the invites, the code
-     and "Ekip kur", or at the limit "En çok N ekipte olabilirsin." -->
+     and "Ekip kur", or at the limit "En çok N ekipte olabilirsin."
+     MOB-POLISH: the page fades out under the header and the rail (FadingRecyclerView, FadingScrollView). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -52,7 +53,7 @@
         android:layout_height="0dp"
         android:layout_weight="1">
 
-        <androidx.recyclerview.widget.RecyclerView
+        <gg.projects.mobile.social.ui.FadingRecyclerView
             android:id="@+id/projects_crew_list"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -60,7 +61,7 @@
             android:paddingBottom="24dp"
             android:visibility="gone" />
 
-        <ScrollView
+        <gg.projects.mobile.social.ui.FadingScrollView
             android:id="@+id/projects_crew_none"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -261,6 +262,6 @@
                         tools:visibility="visible" />
                 </LinearLayout>
             </LinearLayout>
-        </ScrollView>
+        </gg.projects.mobile.social.ui.FadingScrollView>
     </FrameLayout>
 </LinearLayout>

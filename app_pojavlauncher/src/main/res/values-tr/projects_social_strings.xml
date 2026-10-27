@@ -141,6 +141,8 @@
     <string name="projects_social_share_last_seen">Son görülmemi göster</string>
     <string name="projects_social_notifications">Bildirimler</string>
     <string name="projects_social_notifications_off">Bu telefonda bildirimler kapalı.</string>
+    <string name="projects_social_notifications_turn_on">Aç</string>
+    <string name="projects_social_notifications_turn_on_label">Bildirimleri aç</string>
     <string name="projects_social_blocked_title">Engellenenler</string>
     <string name="projects_social_blocked_empty">Kimseyi engellemedin.</string>
     <string name="projects_social_account">Hesap</string>

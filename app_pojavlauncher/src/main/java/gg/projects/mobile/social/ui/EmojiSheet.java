@@ -246,8 +246,8 @@ final class EmojiSheet {
                 }
             });
             content.addView(tools);
-            // The grid.
-            grid = new RecyclerView(context);
+            // The grid (MOB-POLISH: it fades out under the tabs and the search instead of being cut).
+            grid = new FadingRecyclerView(context);
             layout = new GridLayoutManager(context, COLUMNS * STICKER_COLUMNS);
             layout.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
                 @Override
@@ -386,18 +386,14 @@ final class EmojiSheet {
             } catch (RuntimeException ignored) {
                 // The theme's font.
             }
+            // MOB-POLISH: chamfered like every action (it was a pill); the tab shown is the chosen one.
+            tab.setBackground(SocialChips.choice(context, 7));
             Press.attach(tab, Press.Style.BUTTON);
             return tab;
         }
 
         private void styleTab(TextView tab, boolean on) {
-            Context context = tab.getContext();
-            GradientDrawable pill = new GradientDrawable();
-            pill.setCornerRadius(18 * dp);
-            pill.setColor(ContextCompat.getColor(context, on ? R.color.projects_obsidian_800 : R.color.projects_obsidian_900));
-            pill.setStroke(Math.max(1, Math.round(dp)), ContextCompat.getColor(context, on ? R.color.projects_gold_700 : R.color.projects_obsidian_700));
-            tab.setBackground(pill);
-            tab.setTextColor(ContextCompat.getColor(context, on ? R.color.projects_gold_300 : R.color.projects_ash_300));
+            tab.setTextColor(ContextCompat.getColor(tab.getContext(), on ? R.color.projects_gold_300 : R.color.projects_ash_300));
             tab.setSelected(on);
         }
 

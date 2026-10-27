@@ -208,15 +208,26 @@ public final class ChatLinkViews {
     }
 
     /**
-     * Draws a link's card into {@code holder}: the hub's card, the plain one (with {@code card} null and
-     * {@code waiting} false: none will come), or while it is on its way its place at the likely size.
-     * {@code fresh}: the card just came (its content fades in).
+     * Draws a link's card into {@code holder}: the hub's card, or while it is on its way its place at the likely size.
+     * {@code fresh}: the card just came (its content fades in). MOB-POLISH: a card with nothing beyond the link (no
+     * title, picture or description: the plain one, and none at all with {@code card} null and {@code waiting} false)
+     * leaves the holder empty and hidden; the message's text already shows the address (it used to come three times:
+     * the text, the domain line, the address line).
      */
     public static void bindCard(final FrameLayout holder, @Nullable ChatCards.Card card, final ChatLinks.MessageLink link,
                                 boolean waiting, boolean fresh, final View.OnClickListener open) {
+        if (card == null ? !waiting : !ChatLinkUi.showsCard(card)) {
+            holder.setVisibility(View.GONE);
+            holder.removeAllViews();
+            holder.setTag(R.id.projects_chat_state, null);
+            holder.setContentDescription(null);
+            holder.setOnClickListener(null);
+            holder.setClickable(false);
+            return;
+        }
         Context context = holder.getContext();
         float dp = context.getResources().getDisplayMetrics().density;
-        String key = (card == null ? (waiting ? "wait" : "plain") : card.state + "|" + card.title) + "|" + link.link.url;
+        String key = (card == null ? "wait" : card.state + "|" + card.title) + "|" + link.link.url;
         // Shown first: the row's bind hides the holder, and an unchanged card keeps its views (MOB1 review).
         holder.setVisibility(View.VISIBLE);
         if (key.equals(holder.getTag(R.id.projects_chat_state)) && holder.getChildCount() > 0) return;
@@ -273,7 +284,6 @@ public final class ChatLinkViews {
         String title = ready ? card.title : null;
         if (title != null) texts.addView(text(context, title, 13.5f, R.color.projects_bone_100, true, 2));
         if (ready && card.desc != null) texts.addView(text(context, card.desc, 12.5f, R.color.projects_ash_400, false, 2));
-        if (title == null) texts.addView(text(context, ChatLinkUi.addressOf(link.link.url, link.host), 12.5f, R.color.projects_ash_300, false, 1));
         if (ready && card.sidePicture()) {
             ImageView side = new ImageView(context);
             side.setScaleType(ImageView.ScaleType.CENTER_CROP);

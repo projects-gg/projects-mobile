@@ -937,6 +937,8 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
                 lock.setBounds(0, 0, size, size);
                 limited.setCompoundDrawablesRelative(lock, null, null, null);
             }
+            // MOB-POLISH: a quiet chamfered chip, as every action (it was a pill).
+            limited.setBackground(SocialChips.quiet(view.getContext(), 5));
             Press.attach(limited, Press.Style.BUTTON);
             limited.setOnClickListener(v -> AccountNotes.limited(requireActivity(), limits));
         }

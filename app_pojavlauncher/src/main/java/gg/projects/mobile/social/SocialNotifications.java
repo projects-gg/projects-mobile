@@ -253,7 +253,8 @@ public final class SocialNotifications {
     public static void showPlanReminder(Context context, String plan, String crew, @Nullable String crewName, long at,
                                         int minutesLeft, long timeoutMs) {
         Context c = LanguageManager.wrap(context);
-        String time = android.text.format.DateFormat.getTimeFormat(c).format(new java.util.Date(at * 1000L));
+        // MOB-POLISH: 24 hours in both languages, as the plan's own card says it.
+        String time = gg.projects.mobile.ui.AppDates.time(at * 1000L);
         String text = minutesLeft > 0
                 ? c.getResources().getQuantityString(R.plurals.projects_plans_remind, minutesLeft, time, minutesLeft)
                 : c.getString(R.string.projects_plans_started, time);

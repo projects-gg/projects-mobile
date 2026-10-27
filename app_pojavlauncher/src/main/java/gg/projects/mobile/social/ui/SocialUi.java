@@ -229,16 +229,17 @@ public final class SocialUi {
         return context.getString(R.string.projects_mod_restricted_until, day(context, until));
     }
 
-    /** A day as the desktop writes it: "28 Ekim" (the year only when it is another one), for limits counted in days. */
+    /**
+     * A day as the desktop writes it: "28 Ekim" / "28 October" (the year only when it is another one), for limits
+     * counted in days.
+     */
     public static String day(Context context, long seconds) {
-        return android.text.format.DateUtils.formatDateTime(context, seconds * 1000L, android.text.format.DateUtils.FORMAT_SHOW_DATE);
+        return gg.projects.mobile.ui.AppDates.day(context, seconds * 1000L, System.currentTimeMillis());
     }
 
-    /** A moment as the phone writes it: "22 Ekim 2026 21:30" (the date in the phone's language, then the time). */
+    /** A moment: "22 Ekim 2026 21:30" / "22 October 2026 21:30" (the date in the app's language, 24 hours). */
     public static String moment(Context context, long seconds) {
-        java.util.Date date = new java.util.Date(seconds * 1000L);
-        java.text.DateFormat day = java.text.DateFormat.getDateInstance(java.text.DateFormat.LONG, java.util.Locale.getDefault());
-        return day.format(date) + " " + android.text.format.DateFormat.getTimeFormat(context).format(date);
+        return gg.projects.mobile.ui.AppDates.dateTime(context, seconds * 1000L);
     }
 
     /** The community rules ("Topluluk kuralları"), in the browser. */

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- M19: "Arkadaş ekle": the player's own code (copy, share, its QR) and a friend's code to find. -->
+<!-- M19: "Arkadaş ekle": the player's own code (copy, share, its QR) and a friend's code to find.
+     MOB-POLISH: the page fades out under the header (FadingScrollView). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -13,7 +14,7 @@
         android:paddingBottom="4dp"
         android:text="@string/projects_social_add" />
 
-    <ScrollView
+    <gg.projects.mobile.social.ui.FadingScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
@@ -236,5 +237,5 @@
                     android:textSize="14sp" />
             </LinearLayout>
         </LinearLayout>
-    </ScrollView>
+    </gg.projects.mobile.social.ui.FadingScrollView>
 </LinearLayout>

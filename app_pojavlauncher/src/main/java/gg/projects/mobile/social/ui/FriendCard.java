@@ -82,8 +82,8 @@ public final class FriendCard {
         });
 
         LinearLayout actions = view.findViewById(R.id.projects_card_actions);
-        actions.addView(CrewViews.actionRow(activity, R.drawable.projects_ic_discord_glyph, activity.getString(R.string.projects_social_message),
-                R.color.projects_bone_100, v -> SocialUi.openDiscord(activity, profile)));
+        actions.addView(CrewViews.discordRow(activity, activity.getString(R.string.projects_social_message),
+                v -> SocialUi.openDiscord(activity, profile)));
         final boolean favourite = service.prefs().favourites().contains(friendId);
         actions.addView(CrewViews.actionRow(activity, favourite ? R.drawable.projects_ic_star_fill : R.drawable.projects_ic_star,
                 activity.getString(favourite ? R.string.projects_social_unfavorite : R.string.projects_social_favorite),
