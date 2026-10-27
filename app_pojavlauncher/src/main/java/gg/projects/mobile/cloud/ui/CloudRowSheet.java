@@ -665,6 +665,12 @@ final class CloudRowSheet {
                 input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
                 input.setMinimumHeight(CloudUi.dp(c, 52));
                 input.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
+                if (!secret) {
+                    // A long line wraps (one line scrolled its start away: "zanın adı …" with big text); still one
+                    // chat line: the keyboard keeps its action key.
+                    input.setHorizontallyScrolling(false);
+                    input.setMaxLines(4);
+                }
                 if (secret && !mShown) input.setTransformationMethod(PasswordTransformationMethod.getInstance());
                 if (android.os.Build.VERSION.SDK_INT >= 26) input.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_NO);
                 input.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(256)});

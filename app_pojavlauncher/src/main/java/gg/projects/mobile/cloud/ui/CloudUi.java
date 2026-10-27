@@ -522,10 +522,11 @@ public final class CloudUi {
     }
 
     public static LinearLayout segmented(Context c, CharSequence[] options, int selected, final Choice choice) {
-        final LinearLayout row = new LinearLayout(c);
+        final List<Button> buttons = new ArrayList<>();
+        final LinearLayout row = new SegmentRow(c, buttons, TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 14,
+                c.getResources().getDisplayMetrics()));
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setPadding(dp(c, 8), dp(c, 2), dp(c, 8), dp(c, 2));
-        final List<Button> buttons = new ArrayList<>();
         for (int i = 0; i < options.length; i++) {
             final int index = i;
             Button b = new Button(c, null, android.R.attr.borderlessButtonStyle);
@@ -555,6 +556,58 @@ public final class CloudUi {
         select(buttons, selected);
         row.setLayoutParams(matchWrap());
         return row;
+    }
+
+    /**
+     * The segmented row's widths (MOB-POLISH; big text cut "Otomatik yanıt" to "Otomatik ya…"): equal while every
+     * label fits its share; else each option takes its words' width plus an equal share of the rest; when even
+     * that is too wide (big text on a narrow phone) the labels shrink together, to 80 % at most, before any "…".
+     */
+    private static final class SegmentRow extends LinearLayout {
+        private final List<Button> mButtons;
+        private final float mTextPx;
+        private final android.text.TextPaint mProbe = new android.text.TextPaint();
+
+        SegmentRow(Context c, List<Button> buttons, float textPx) {
+            super(c);
+            mButtons = buttons;
+            mTextPx = textPx;
+        }
+
+        @Override
+        protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+            if (MeasureSpec.getMode(widthMeasureSpec) != MeasureSpec.UNSPECIFIED && !mButtons.isEmpty()) {
+                fit(MeasureSpec.getSize(widthMeasureSpec));
+            }
+            super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        }
+
+        private void fit(int width) {
+            float space = width - getPaddingLeft() - getPaddingRight();
+            float words = 0f;
+            float sides = 0f;
+            float widest = 0f;
+            for (Button b : mButtons) {
+                LayoutParams lp = (LayoutParams) b.getLayoutParams();
+                space -= lp.getMarginStart() + lp.getMarginEnd();
+                mProbe.set(b.getPaint());
+                mProbe.setTextSize(mTextPx);
+                float text = mProbe.measureText(b.getText().toString());
+                float pad = b.getPaddingLeft() + b.getPaddingRight();
+                words += text;
+                sides += pad;
+                widest = Math.max(widest, text + pad);
+            }
+            float scale = words <= 0f || words + sides <= space ? 1f : Math.max(0.8f, (space - sides) / words);
+            boolean equal = scale == 1f && widest <= space / mButtons.size();
+            float size = mTextPx * scale;
+            for (Button b : mButtons) {
+                if (Math.abs(b.getTextSize() - size) > 0.5f) b.setTextSize(TypedValue.COMPLEX_UNIT_PX, size);
+                LayoutParams lp = (LayoutParams) b.getLayoutParams();
+                lp.width = equal ? 0 : ViewGroup.LayoutParams.WRAP_CONTENT;
+                lp.weight = 1f;
+            }
+        }
     }
 
     /** One choice of several as rows (for longer words): the chosen row carries a gold check. */

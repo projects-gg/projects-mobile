@@ -49,7 +49,8 @@ public final class ConsoleViews {
             // The row runs on past the screen's edge: the chips fade out there instead of being cut (shown only on the
             // side that scrolls).
             view.setHorizontalFadingEdgeEnabled(true);
-            view.setFadingEdgeLength(CloudUi.dp(c, 28));
+            // 48 dp: a cut-off chip ("Komutlarım" at the edge) reads as more to scroll, not as a broken row.
+            view.setFadingEdgeLength(CloudUi.dp(c, 48));
             LinearLayout row = new LinearLayout(c);
             row.setOrientation(LinearLayout.HORIZONTAL);
             row.setPadding(CloudUi.dp(c, 2), 0, CloudUi.dp(c, 2), 0);
