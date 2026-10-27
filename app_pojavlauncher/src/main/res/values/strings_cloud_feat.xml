@@ -258,6 +258,8 @@
     <!-- Movement's last words shared with the launcher (FEAT-L, design.md §6 "Cloud movement") -->
     <string name="projects_feat_move_stepping">Walking.</string>
     <string name="projects_feat_move_idle">Standing still.</string>
+    <string name="projects_feat_move_sneaking">Sneaking.</string>
+    <string name="projects_feat_move_machine_away">Can\'t reach our machine right now.</string>
     <string name="projects_feat_move_walk_main">Your main account</string>
     <string name="projects_feat_move_not_in_game">Not in game</string>
     <string name="projects_feat_move_go_named">Go to %1$s</string>

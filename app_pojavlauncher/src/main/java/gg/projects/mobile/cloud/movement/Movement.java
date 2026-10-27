@@ -58,6 +58,8 @@ public final class Movement {
             case "blocked": return c.getString(R.string.projects_feat_move_blocked);
             case "loop": return c.getString(R.string.projects_feat_move_loop);
             case "rate_limited": return c.getString(R.string.projects_feat_move_slow);
+            // Our machine, never the Minecraft server's word (the launcher's "machineAway").
+            case "host_offline": return c.getString(R.string.projects_feat_move_machine_away);
             default: return c.getString(R.string.projects_feat_inv_unreachable);
         }
     }
