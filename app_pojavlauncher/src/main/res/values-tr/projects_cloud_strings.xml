@@ -751,4 +751,6 @@
     <string name="projects_plus_row_none">Bu aramaya uyan eşya yok.</string>
     <string name="projects_cloud_today_at">Bugün %1$s</string>
     <string name="projects_cloud_yesterday_at">Dün %1$s</string>
+    <!-- MOB-POLISH: a command or rule turned off, before its usual line ("Kapalı · Her girişte, 2 sn sonra"). -->
+    <string name="projects_cloud_row_off">Kapalı · %1$s</string>
 </resources>

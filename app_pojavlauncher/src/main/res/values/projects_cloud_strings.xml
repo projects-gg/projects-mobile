@@ -748,4 +748,6 @@
     <string name="projects_plus_row_none">No item matches this search.</string>
     <string name="projects_cloud_today_at">Today %1$s</string>
     <string name="projects_cloud_yesterday_at">Yesterday %1$s</string>
+    <!-- MOB-POLISH: a command or rule turned off, before its usual line ("Kapalı · Her girişte, 2 sn sonra"). -->
+    <string name="projects_cloud_row_off">Off · %1$s</string>
 </resources>

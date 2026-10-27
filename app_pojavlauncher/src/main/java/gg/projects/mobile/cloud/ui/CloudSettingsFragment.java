@@ -580,6 +580,8 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
                 }
                 if (problem != null) row.setLine(problem, R.color.projects_flare_400);
                 else if (cmd.paused) row.setLine(getString(R.string.projects_cloud_mod_paused_row), R.color.projects_flare_400);
+                // MOB-POLISH: an unused row says so in words too, not only dimmed (the account's "Kapalı").
+                else if (!cmd.enabled) row.setLine(getString(R.string.projects_cloud_row_off, trigger(cmd)), R.color.projects_ash_400);
                 else row.setLine(trigger(cmd), R.color.projects_ash_400);
                 if (!cmd.enabled) row.view.setAlpha(0.55f);
                 rows.add(row.view);
@@ -607,10 +609,25 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
         content.addView(CloudUi.gap(c, 8));
         // CAFK-FEAT: console kinds came on but these rules still match the old way until the settings are saved once.
         if (mBase != null && mBase.features.legacyRules) {
-            content.addView(CloudUi.notice(c, R.drawable.projects_ic_warning_circle, R.color.projects_gold_300, getString(R.string.projects_feat_legacy_rules)));
+            LinearLayout notice = CloudUi.notice(c, R.drawable.projects_ic_warning_circle, R.color.projects_gold_300, getString(R.string.projects_feat_legacy_rules));
             Button now = CloudUi.textButton(c, getString(R.string.projects_feat_legacy_save), v -> saveConfig(true));
             now.setEnabled(!mSaving);
-            content.addView(now, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            // MOB-POLISH: the action inside its notice, under the words (a second look: "Şimdi kaydet" floated
+            // outside the panel); its words line up with the notice's.
+            View words = notice.getChildAt(1);
+            notice.removeViewAt(1);
+            LinearLayout column = new LinearLayout(c);
+            column.setOrientation(LinearLayout.VERTICAL);
+            column.addView(words, CloudUi.matchWrap());
+            LinearLayout.LayoutParams nowLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            nowLp.setMarginStart(-CloudUi.dp(c, 12));
+            nowLp.topMargin = CloudUi.dp(c, 2);
+            nowLp.bottomMargin = -CloudUi.dp(c, 8);
+            column.addView(now, nowLp);
+            LinearLayout.LayoutParams columnLp = CloudUi.weight(1f);
+            columnLp.setMarginStart(CloudUi.dp(c, 12));
+            notice.addView(column, columnLp);
+            content.addView(notice);
         }
         content.addView(CloudUi.note(c, getString(R.string.projects_cloud_rule_count, mConfig.rules.size(), limits.maxRules)));
         CloudUi.Row add = CloudUi.addRow(c, getString(R.string.projects_cloud_rule_add), v -> CloudRowSheet.rule(this, -1));
@@ -647,6 +664,8 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
                     row.setLine(getString(R.string.projects_feat_rule_not_sent), R.color.projects_ash_300);
                     lineMark(row, R.drawable.projects_ic_info, R.color.projects_ash_400);
                 }
+                else if (!rule.enabled) row.setLine(getString(R.string.projects_cloud_row_off,
+                        getString(R.string.projects_cloud_rule_line, rule.pattern, CloudWords.span(c, rule.cooldown))), R.color.projects_ash_400);
                 else row.setLine(getString(R.string.projects_cloud_rule_line, rule.pattern, CloudWords.span(c, rule.cooldown)), R.color.projects_ash_400);
                 if (!rule.enabled) row.view.setAlpha(0.55f);
                 rows.add(row.view);
