@@ -239,6 +239,9 @@ public final class CloudInventoryFragment extends CloudScreen implements Invento
         viewLp.topMargin = CloudUi.dp(c, 6);
         viewLp.leftMargin = -CloudUi.dp(c, 8);
         viewLp.rightMargin = -CloudUi.dp(c, 8);
+        // The page's side padding must not clip that bleed (it cut the window's sides, its outline and bevel, on the
+        // emulator); the slots themselves stay inside the page.
+        content.setClipToPadding(false);
         content.addView(view, viewLp);
         mView = view;
 
