@@ -12,22 +12,22 @@
     <string name="login_online_login_label">Login</string>
 
     <!-- Hint -->
-    <string name="hint_control_mapping">"Touch the top center cogwheel to open the context menu ⚙\nTap a button to customize: edit, resize, remove, or change its keybinds."</string>
+    <string name="hint_control_mapping">"Tap the cog at the top centre for the menu.\nTap a button to change it: edit, resize, remove or set its keys."</string>
 
     <!-- Warnings -->
-    <string name="warning_remove_account">This account will be removed!</string>
+    <string name="warning_remove_account">This account will be removed.</string>
 
     <!-- AlertDialog title -->
     <string name="alerttitle_installmod">Select a mod installer</string>
 
     <!-- Error messages -->
     <string name="error_fatal">Projects Launcher has unexpectedly crashed</string>
-    <string name="error_no_version">No version!</string>
+    <string name="error_no_version">No version.</string>
     <string name="error_show_more">Show more</string>
     <string name="error_show_less">Show less</string>
 
     <!-- Toast messages -->
-    <string name="toast_permission_denied">The read/write to storage permission is required!</string>
+    <string name="toast_permission_denied">Storage read and write permission is needed.</string>
     <string name="toast_optifine_success">Install successful</string>
     <!--
     <string name="toast_3">Exit</string>
@@ -90,14 +90,14 @@
     <string name="global_error_field_empty">This field can\'t be empty</string>
     <string name="global_waiting">Wait</string>
     <string name="global_select">Select</string>
-    <string name="global_retry">Retry</string>
+    <string name="global_retry">Try again</string>
     <string name="global_default">Default</string>
     <string name="global_off">Off</string>
 
     <!-- MainActivity: strings -->
     <string name="mcn_exit_title">Application/Game exited with code %d, check latestlog.txt for more details.</string>
     <string name="mcn_signal_title">Application/Game aborted by fatal signal %d, check latestlog.txt for more details.</string>
-    <string name="mcn_exit_confirm">Are you sure want to force close?</string>
+    <string name="mcn_exit_confirm">Force close the game?</string>
     <string name="mcn_check_fail_vulkan_support">Zink (Vulkan) renderer is not supported on this device!</string>
 
     <!-- MainActivity: Control buttons -->
@@ -181,8 +181,8 @@
     <string name="customctrl_swipeable">Swipeable</string>
     <string name="customctrl_forward_lock">Forward lock</string>
     <string name="customctrl_absolute_tracking">Absolute finger tracking</string>
-    <string name="memory_warning_msg">The current amount of free RAM (%d) is lower than allocated RAM (%d), which may lead to crashes. Change the allocation if the game crashes.</string>
-    <string name="address_memory_warning_msg">The current amount of free addressable RAM space (%d) is lower than the allocated RAM (%d), which will lead to crashes. Change the allocation if the game crashes.</string>
+    <string name="memory_warning_msg">Free memory (%d) is less than the memory given to the game (%d), so it may crash. If it does, give it less.</string>
+    <string name="address_memory_warning_msg">Usable address space (%d) is less than the memory given to the game (%d), so it may crash. If it does, give it less.</string>
     <string name="mcl_memory_allocation">Memory allocation</string>
     <string name="mcl_memory_allocation_subtitle">Controls how much memory is given to Minecraft.</string>
     <string name="multirt_runtime_corrupt">Corrupted Java Runtime</string>
@@ -243,13 +243,13 @@
     <string name="color_default_hex" translatable="false">FFFF0000</string>
     <string name="notif_channel_name">General</string>
     <string name="notif_channel_id" translatable="false">channel_id</string>
-    <string name="lazy_service_default_title">Projects Launcher Foreground Service</string>
+    <string name="lazy_service_default_title">Projects Launcher is running</string>
     <string name="mcl_setting_veroption_installed">Installed</string>
     <string name="use_global_default">Global default</string>
     <string name="default_control">Default controlmap</string>
     <string name="progresslayout_tasks_in_progress">%d tasks in progress</string>
     <string name="notification_terminate">Terminate</string>
-    <string name="notification_game_runs">The game is running!</string>
+    <string name="notification_game_runs">The game is running</string>
     <string name="folder_dialog_create">Create</string>
     <string name="folder_dialog_insert_name">Insert folder name</string>
     <string name="folder_fragment_create">Create folder</string>
@@ -258,13 +258,13 @@
     <string name="main_add_account">Add account</string>
     <string name="tasks_ongoing">Tasks are in progress, please wait</string>
     <string name="no_saved_accounts">No saved accounts</string>
-    <string name="mc_download_failed">Failed to download Minecraft! This could be due to bad network connection, incorrectly placed files, etc..</string>
+    <string name="mc_download_failed">Couldn\'t download Minecraft. Check your internet connection and try again.</string>
     <string name="xerr_unknown">Unknown Xbox Live API error %d</string>
     <string name="xerr_no_account">You don\'t seem to have an Xbox Live account. Please log in once on https://minecraft.net/ and try again.</string>
-    <string name="xerr_adult_verification">An adult needs to verify your account.</string>
-    <string name="xerr_child">Your account is a child account, and needs to be added into a Family in order to log in.</string>
+    <string name="xerr_adult_verification">An adult needs to approve your account.</string>
+    <string name="xerr_child">This is a child account. To sign in, it needs to be added to a Microsoft family.</string>
     <string name="minecraft_not_owned">It seems like this account does not have a Minecraft profile. If you have Xbox Game Pass, please log in on https://minecraft.net/ and set it up.</string>
-    <string name="xerr_not_available">Xbox Live is not available in your country</string>
+    <string name="xerr_not_available">Xbox Live isn\'t available in your country.</string>
     <string name="preference_enable_gyro_title">Enable gyroscope controls</string>
     <string name="preference_enable_gyro_description">Enabling this will allow you to turn in-game by turning your phone.</string>
     <string name="preference_gyro_sensitivity_title">Gyroscope controls sensitivity</string>
@@ -303,7 +303,7 @@
     <string name="forge_dl_searching">Searching for Forge version number</string>
     <string name="neoforge_dl_searching">Searching for NeoForge version number</string>
     <string name="modloader_dl_failed_to_load_list">Failed to load the version list!</string>
-    <string name="forge_dl_no_installer">Sorry, but this version of Forge does not have an installer, which is not yet supported.</string>
+    <string name="forge_dl_no_installer">This Forge version has no installer, so it can\'t be installed.</string>
     <string name="forge_dl_select_version">Select Forge version</string>
     <string name="fabric_dl_progress">Downloading %s loader metadata</string>
     <string name="fabric_dl_loader_version">%s loader version</string>
@@ -341,14 +341,14 @@
     <string name="modpack_download_downloading_mods_fc">Downloading mods (File %d out of %d)</string>
     <string name="modpack_download_applying_overrides">Applying overrides (%d/%d)</string>
     <string name="modpack_install_notification_title">Projects Launcher Modpack Installer</string>
-    <string name="modpack_install_notification_success">Click here to finish modpack installation</string>
+    <string name="modpack_install_notification_success">Tap to finish installing the mod pack.</string>
     <string name="modpack_install_notification_data_not_available">Failed to download mod loader information</string>
     <string name="modpack_install_modloader_download_failed">Failed to download the mod loader files</string>
-    <string name="modpack_install_download_failed">Failed to download modpack files</string>
-    <string name="modpack_install_button">Create modpack profile</string>
+    <string name="modpack_install_download_failed">Couldn\'t download the mod pack\'s files.</string>
+    <string name="modpack_install_button">Create mod pack profile</string>
 
     <string name="notif_error_occured">An error has occurred</string>
-    <string name="notif_error_occured_desc">Click to see more details</string>
+    <string name="notif_error_occured_desc">Tap for details.</string>
     <string name="fabric_dl_only_stable">Show only stable versions</string>
     <string name="dl_tampered_manifest_title">File verification warning</string>
     <string name="dl_tampered_manifest"><![CDATA[The game version manifest on the mirror does not match the official Mojang version manifest, which means it may have been tampered with.<br/>
@@ -363,7 +363,7 @@
     <string name="preference_verify_manifest_title">Verify game version manifest</string>
     <string name="preference_verify_manifest_description">When enabled, the launcher will check the game version manifest along with the libraries.</string>
     <string name="notif_download_finished">The game is ready to launch</string>
-    <string name="notif_download_finished_desc">Click here to start it!</string>
+    <string name="notif_download_finished_desc">Tap to start.</string>
     <string name="preference_category_gestures">Gestures</string>
     <string name="preference_category_buttons">Buttons</string>
     <string name="preference_category_experimental_settings">Experimental settings</string>
@@ -372,8 +372,8 @@
     <string name="preference_category_miscellaneous">Miscellaneous settings</string>
     <string name="preference_category_video">Video settings</string>
     <string name="notification_permission_dialog_title">Permission request</string>
-    <string name="notification_permission_dialog_text">Projects Launcher requires a permission to post notifications to prevent game/modpack downloads from stopping when you leave the app. Without this permission, Android may shut down your downloads when you put Projects Launcher in background mode.</string>
-    <string name="notification_permission_toast">You can always change your mind later by going into Settings</string>
+    <string name="notification_permission_dialog_text">The app needs to post notifications so downloads keep going after you leave it.</string>
+    <string name="notification_permission_toast">You can change this later in Settings.</string>
     <string name="preference_ask_for_notification_title">Allow notifications</string>
     <string name="preference_ask_for_notification_description">Click to re-request the notification permission, required for game/modpack background downloads to work properly.</string>
     <string name="preference_vsync_in_zink_title">Allow V-Sync with Zink</string>
@@ -485,7 +485,7 @@
     <string name="mg_renderer_title_fsr">AMD FSR 1 Upscaling</string>
     <string name="autorendererselectfailed">Auto-renderer select failed, defaulting to HolyGL4ES</string>
     <!--  Make sure the people turning this on can read English.  -->
-    <string name="not_modpack_file">Not a modpack file!</string>
+    <string name="not_modpack_file">Not a mod pack file.</string>
     <string name="global_not_installed">Not Installed</string>
     <string name="global_download">Download</string>
     <string name="multirt_no_internet">Failed to download, check your internet connection.</string>
@@ -498,11 +498,11 @@
     <string name="lwjgl3ify_installer_available_versions">Supported LWJGL3IFY versions</string>
     <string name="lwjgl3ify_installer_broken_versions">Broken LWJGL3ify versions (SDL)</string>
     <string name="new_default_controls">Extracted new default controls into new_default.json. Try it out!</string>
-    <string name="import_modpack_start">Importing modpack…</string>
-    <string name="import_modpack_hash">Hashing modpack file… (%s MB/ %s MB)</string>
-    <string name="import_modpack_json">Reading modpack info…</string>
-    <string name="import_modpack_copy">Copying modpack file to cache… (%s MB/ %s MB)</string>
+    <string name="import_modpack_start">Importing mod pack…</string>
+    <string name="import_modpack_hash">Checking the mod pack file… (%s MB / %s MB)</string>
+    <string name="import_modpack_json">Reading the mod pack\'s info…</string>
+    <string name="import_modpack_copy">Copying the mod pack file… (%s MB / %s MB)</string>
     <string name="angelica_found_sfpew_notice">Angelica mod found, Simple FPE Wrapper not needed</string>
-    <string name="use_angle_checkbox">Use ANGLE (might help FPS)</string>
+    <string name="use_angle_checkbox">Faster drawing (experimental)</string>
 
 </resources>

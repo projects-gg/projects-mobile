@@ -243,7 +243,7 @@
     <string name="projects_sodium_disable_and_start">Sodium\'u kapatıp başlat</string>
     <string name="projects_game_closed">Oyun beklenmedik şekilde kapandı.</string>
     <string name="projects_share_log">Kaydı paylaş</string>
-    <string name="projects_modpack_browse">Modpack ara</string>
+    <string name="projects_modpack_browse">Mod paketi ara</string>
     <string name="projects_modpack_import">Zip ya da mrpack içe aktar</string>
     <string name="projects_control_button_name">Tuş adı</string>
     <string name="projects_language_title">Dil</string>
@@ -308,7 +308,7 @@
     <string name="projects_minecraft_read">minecraft.net\'te oku</string>
     <string name="projects_event_join">Katıl</string>
     <!-- M17: Settings, under About: small and quiet. -->
-    <string name="projects_not_affiliated">Mojang veya Minecraft ile bağlantılı değildir.</string>
+    <string name="projects_not_affiliated">Resmî bir Minecraft ürünü değildir. Mojang veya Microsoft tarafından onaylanmamıştır ve onlarla bağlantılı değildir.</string>
     <!-- M18: the channel of "Projects hazır" and its failure (Android's notification settings). -->
     <string name="projects_ready_channel">Projects hazır</string>
     <string name="projects_ready_channel_description">Projects oynamaya hazır olunca ya da hazırlanamayınca haber verir.</string>

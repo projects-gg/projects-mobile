@@ -252,7 +252,7 @@
     <string name="projects_sodium_disable_and_start">Turn off Sodium and start</string>
     <string name="projects_game_closed">The game closed unexpectedly.</string>
     <string name="projects_share_log">Share log</string>
-    <string name="projects_modpack_browse">Browse modpacks</string>
+    <string name="projects_modpack_browse">Browse mod packs</string>
     <string name="projects_modpack_import">Import a zip or mrpack</string>
     <string name="projects_control_button_name">Button name</string>
     <string name="projects_language_title">Language</string>
@@ -326,7 +326,7 @@
     <string name="projects_minecraft_read">Read on minecraft.net</string>
     <string name="projects_event_join">Join</string>
     <!-- M17: Settings, under About: small and quiet (the owner's decision of 18 October 2026). -->
-    <string name="projects_not_affiliated">Not affiliated with Mojang or Minecraft.</string>
+    <string name="projects_not_affiliated">Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft.</string>
     <!-- M18: the channel of "Projects is ready" and its failure (Android's notification settings). -->
     <string name="projects_ready_channel">Projects ready</string>
     <string name="projects_ready_channel_description">Tells you when Projects is ready to play, or when it could not be set up.</string>

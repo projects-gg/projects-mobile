@@ -7,18 +7,18 @@
     <string name="login_online_username_hint">Oyuncu adı</string>
     <string name="login_online_login_label">Giriş yap</string>
     <!-- Hint -->
-    <string name="hint_control_mapping">"Menü için üst ortadaki dişliye dokun ⚙\nBir tuşa dokunup düzenle: değiştir, boyutlandır, kaldır ya da tuş ata."</string>
+    <string name="hint_control_mapping">"Menü için üst ortadaki dişli simgesine dokun.\nBir tuşa dokunup düzenle: değiştir, boyutlandır, kaldır ya da tuş ata."</string>
     <!-- Warnings -->
-    <string name="warning_remove_account">Bu hesap kaldırılacak!</string>
+    <string name="warning_remove_account">Bu hesap kaldırılacak.</string>
     <!-- AlertDialog title -->
     <string name="alerttitle_installmod">Bir mod yükleyicisi seç</string>
     <!-- Error messages -->
     <string name="error_fatal">Projects Launcher beklenmedik bir sebepten dolayı çöktü</string>
-    <string name="error_no_version">Sürüm yok!</string>
+    <string name="error_no_version">Sürüm yok.</string>
     <string name="error_show_more">Daha fazla göster</string>
     <string name="error_show_less">Daha az göster</string>
     <!-- Toast messages -->
-    <string name="toast_permission_denied">Depolamaya okuma/yazma izni gerekli!</string>
+    <string name="toast_permission_denied">Depolamaya okuma ve yazma izni gerekiyor.</string>
     <string name="toast_optifine_success">Yükleme başarılı</string>
     <!--
     <string name="toast_3">Exit</string>
@@ -72,13 +72,13 @@
     <string name="global_error_field_empty">Bu alan boş bırakılamaz</string>
     <string name="global_waiting">Bekleyin</string>
     <string name="global_select">Seç</string>
-    <string name="global_retry">Tekrar deneyin</string>
+    <string name="global_retry">Tekrar dene</string>
     <string name="global_default">Varsayılan</string>
     <string name="global_off">Kapalı</string>
     <!-- MainActivity: strings -->
     <string name="mcn_exit_title">Uygulama/Oyundan %d koduyla çıkıldı, daha fazla bilgi için latestlog.txt\'ye bakın.</string>
     <string name="mcn_signal_title">Uygulama/Oyun, ciddi bir sinyal (%d) nedeniyle sonlandırıldı. Daha fazla bilgi için latestlog.txt dosyasını kontrol edin.</string>
-    <string name="mcn_exit_confirm">Zorla kapatmak istediğinize emin misiniz?</string>
+    <string name="mcn_exit_confirm">Oyun zorla kapatılsın mı?</string>
     <string name="mcn_check_fail_vulkan_support">Zink (Vulkan) işleyicisi bu cihazda desteklenmiyor!</string>
     <!-- MainActivity: Control buttons -->
     <string name="control_chat">Sohbet</string>
@@ -133,7 +133,7 @@
     <string name="main_play">Oyna</string>
     <string name="autoram_info_msg">Bellek %d MB olarak ayarlandı</string>
     <string name="mcl_setting_check_libraries">İndirmeden sonra kütüphaneleri kontrol et</string>
-    <string name="mcl_setting_check_libraries_subtitle">Bu seçenek mümkünse başlatıcıyı kütüphane hash\'ini kontrol etmeye zorlar. Bozuk indirmeleri engeller.</string>
+    <string name="mcl_setting_check_libraries_subtitle">Mümkünse launcher kütüphanelerin hash\'ini denetler. Bozuk indirmeleri önler.</string>
     <string name="dl_library_sha_fail">\"%s\" kütüphanesi hasarlı ve yeniden indirilecek</string>
     <string name="dl_library_sha_unknown">\"%s\" kütüphanesi kontrol edilemiyor, düzgün olduğu varsayılacak</string>
     <string name="dl_library_sha_pass">\"%s\" kütüphanesi iyi durumda ve kullanılabilir</string>
@@ -141,7 +141,7 @@
     <string name="mcl_disable_gestures_subtitle">Blok kırmak için basılı tutma ve blok koymak için dokunma gibi hareketleri devre dışı bırakır.</string>
     <string name="mcl_disable_swap_hand">El değiştirmek için çift dokunmayı devre dışı bırak</string>
     <string name="mcl_disable_swap_hand_subtitle">İkinci elde değiştirmek için kısayol çubuğu ögesine iki kez dokunmayı devre dışı bırakır.</string>
-    <string name="mcl_setting_title_mousespeed">İmleç Hızı</string>
+    <string name="mcl_setting_title_mousespeed">İmleç hızı</string>
     <string name="mcl_setting_subtitle_mousespeed">Sanal farenin hızını ayarlar.</string>
     <string name="mcl_setting_title_grab_mouse">Sanal imleç kullan</string>
     <string name="mcl_setting_subtitle_grab_mouse">İmlecin oyun içinde kaldığından emin olur. Farenin dokunmatik kontrol düzeniyle etkileşime geçmesini engeller.</string>
@@ -149,11 +149,11 @@
     <string name="customctrl_swipeable">Kaydırılabilir</string>
     <string name="customctrl_forward_lock">İleri kilidi</string>
     <string name="customctrl_absolute_tracking">Mutlak parmak takibi</string>
-    <string name="memory_warning_msg">Şuanki boş bellek (%d) verilecek bellekten (%d) daha az, bu durum çökmelere sebep olabilir. Eğer oyun çökerse verilen belleği değiştirin.</string>
-    <string name="address_memory_warning_msg">Mevcut kullanılabilir adreslenebilir bellek miktarı (%d), ayrılan bellek (%d) miktarından daha az ve bu çökme sorunlarına yol açabilir. Oyun çökerse bellek tahsisini değiştirin.</string>
+    <string name="memory_warning_msg">Boş bellek (%d) oyuna ayrılan bellekten (%d) az, oyun çökebilir. Çökerse ayrılan belleği düşür.</string>
+    <string name="address_memory_warning_msg">Kullanılabilir adres alanı (%d) ayrılan bellekten (%d) az, oyun çökebilir. Çökerse ayrılan belleği düşür.</string>
     <string name="mcl_memory_allocation">Bellek ayırma</string>
     <string name="mcl_memory_allocation_subtitle">Minecraft\'a ne kadar bellek verileceğini kontrol eder.</string>
-    <string name="multirt_runtime_corrupt">Bozuk Java Runtime</string>
+    <string name="multirt_runtime_corrupt">Java bozuk</string>
     <string name="multirt_runtime_incompatiblearch">Uyumsuz mimari: %s</string>
     <string name="multirt_config_title">Java Runtime\'lar</string>
     <string name="multirt_config_add">Yeni ekle</string>
@@ -169,7 +169,7 @@
     <string name="pvc_gameDirectory">Oyun dizini</string>
     <string name="pvc_jvmArgs">JVM argümanları</string>
     <string name="preference_mouse_start_title">Sanal imleç açık olarak başla</string>
-    <string name="preference_mouse_start_description">Bu seçenek açık olduğunda, başlangıçta Sanal Fare görünür olacak.</string>
+    <string name="preference_mouse_start_description">Açıkken sanal fare başlangıçta görünür.</string>
     <string name="preference_video_title">Video ve görüntü işleyici</string>
     <string name="preference_video_description">Çözünürlük, işleyici ve performans</string>
     <string name="preference_control_title">Kontrol özelleştirmesi</string>
@@ -186,7 +186,7 @@
     <string name="preference_edit_controls_title">Özel kontrolleri düzenle</string>
     <string name="preference_edit_controls_summary">İhtiyaçlarınıza göre kontrol şemasını ayarlayın.</string>
     <string name="preference_category_gyro_controls">Jiroskop kontrolleri</string>
-    <string name="preference_category_virtual_mouse">Sanal Fare</string>
+    <string name="preference_category_virtual_mouse">Sanal fare</string>
     <string name="preference_gyro_invert_x_axis">X eksenini ters çevir</string>
     <string name="preference_gyro_invert_y_axis">Y eksenini tersine çevir</string>
     <string name="preference_gyro_invert_x_axis_description">Yatay ekseni ters çevir.</string>
@@ -203,15 +203,15 @@
     <string name="pedit_java_runtime">Java sürümü</string>
     <string name="pedit_renderer">İşleyici</string>
     <string name="arc_capes_title">Cosmetica Pelerinleri</string>
-    <string name="arc_capes_desc">Cosmetica\'nın (eskiden Arc olarak biliniyordu) Pelerinlerini etkinleştirir. Daha fazla bilgi için lütfen https://cosmetica.cc\'u ziyaret edin. OptiFine gerektirir.</string>
+    <string name="arc_capes_desc">Cosmetica\'nın (eski adı Arc) pelerinlerini açar. Ayrıntılar https://cosmetica.cc adresinde. OptiFine gerekir.</string>
     <string name="notif_channel_name">Genel</string>
-    <string name="lazy_service_default_title">Projects Launcher Önplan Hizmeti</string>
+    <string name="lazy_service_default_title">Projects Launcher çalışıyor</string>
     <string name="mcl_setting_veroption_installed">Kurulu</string>
     <string name="use_global_default">Genel varsayılan</string>
     <string name="default_control">Varsayılan kontroller</string>
     <string name="progresslayout_tasks_in_progress">%d tane görev devam etmekte</string>
     <string name="notification_terminate">Sonlandır</string>
-    <string name="notification_game_runs">Oyun şu anda çalışıyor!</string>
+    <string name="notification_game_runs">Oyun açık</string>
     <string name="folder_dialog_create">Oluştur</string>
     <string name="folder_dialog_insert_name">Dosya ismini girin</string>
     <string name="folder_fragment_create">Klasör oluştur</string>
@@ -220,13 +220,13 @@
     <string name="main_add_account">Hesap ekle</string>
     <string name="tasks_ongoing">Bir işlem sürüyor, biraz bekle.</string>
     <string name="no_saved_accounts">Kayıtlı hesap yok</string>
-    <string name="mc_download_failed">Minecraft\'ı indirmek başarısız oldu! Bu kötü internet bağlantısı, yanlış yerleştirilmiş dosyalar vb… sebebiyle olabilir.</string>
+    <string name="mc_download_failed">Minecraft indirilemedi. İnternet bağlantını kontrol edip tekrar dene.</string>
     <string name="xerr_unknown">Bilinmeyen XBOX Live API hatası %d</string>
     <string name="xerr_no_account">Xbox Live hesabın yok gibi görünüyor. https://minecraft.net/ adresinde bir kez giriş yapıp tekrar dene.</string>
-    <string name="xerr_adult_verification">Bir yetişkinin hesabınızı onaylaması gerekiyor.</string>
-    <string name="xerr_child">Hesabınız bir çocuk hesabı ve giriş yapabilmek için bir aileye eklenmesi gerekiyor.</string>
+    <string name="xerr_adult_verification">Hesabını bir yetişkinin onaylaması gerekiyor.</string>
+    <string name="xerr_child">Bu bir çocuk hesabı. Giriş yapmak için bir Microsoft ailesine eklenmesi gerekiyor.</string>
     <string name="minecraft_not_owned">Bu hesabın Minecraft profili yok gibi görünüyor. Xbox Game Pass kullanıyorsan https://minecraft.net/ adresinde giriş yapıp profilini oluştur.</string>
-    <string name="xerr_not_available">Xbox Live ülkenizde mevcut değil</string>
+    <string name="xerr_not_available">Xbox Live bulunduğun ülkede yok.</string>
     <string name="preference_enable_gyro_title">Jiroskop kontrollerini etkinleştir</string>
     <string name="preference_enable_gyro_description">Bunu etkinleştirmek, telefonunuzu çevirerek oyun içi dönüş yapmanızı sağlayacaktır.</string>
     <string name="preference_gyro_sensitivity_title">Jiroskop kontrolleri hassaslığı</string>
@@ -260,7 +260,7 @@
     <string name="forge_dl_progress">%s için yükleyici indiriliyor</string>
     <string name="forge_dl_searching">Forge sürüm numarası aranıyor</string>
     <string name="modloader_dl_failed_to_load_list">Sürüm listesi yüklenemedi!</string>
-    <string name="forge_dl_no_installer">Üzgünüz, bu Forge sürümünün yükleyicisinin kurulum dosyası bulunmuyor, bu nedenle şuanlık desteklenmemektedir.</string>
+    <string name="forge_dl_no_installer">Bu Forge sürümünün kurulum dosyası yok, bu yüzden kurulamıyor.</string>
     <string name="forge_dl_select_version">Forge sürümünü seç</string>
     <string name="fabric_dl_progress">%s yükleyici meta verileri indiriliyor</string>
     <string name="fabric_dl_loader_version">%s yükleyici sürümü</string>
@@ -292,27 +292,27 @@
     <string name="modpack_download_downloading_mods_fc">Modlar indiriliyor (%d dosyadan %d tanesi)</string>
     <string name="modpack_download_applying_overrides">Overrides uygulanıyor (%d/%d)</string>
     <string name="modpack_install_notification_title">Projects Launcher Mod Paketi Yükleyicisi</string>
-    <string name="modpack_install_notification_success">Modpack kurulumunu tamamlamak için buraya tıklayın</string>
+    <string name="modpack_install_notification_success">Mod paketini kurmayı bitirmek için dokun.</string>
     <string name="modpack_install_notification_data_not_available">Mod yükleyici bilgileri indirilemedi</string>
     <string name="modpack_install_modloader_download_failed">Mod yükleyici dosyaları indirilemedi</string>
-    <string name="modpack_install_download_failed">Modpack dosyaları indirilemedi</string>
-    <string name="modpack_install_button">Modpack profili oluştur</string>
+    <string name="modpack_install_download_failed">Mod paketinin dosyaları indirilemedi.</string>
+    <string name="modpack_install_button">Mod paketi profili oluştur</string>
     <string name="notif_error_occured">Bir hata oluştu</string>
-    <string name="notif_error_occured_desc">Daha fazla ayrıntı görmek için tıklayın</string>
+    <string name="notif_error_occured_desc">Ayrıntılar için dokun.</string>
     <string name="fabric_dl_only_stable">Sadece kararlı sürümleri göster</string>
     <string name="dl_tampered_manifest_title">Dosya doğrulama hatası</string>
-    <string name="dl_tampered_manifest"><![CDATA[Aynadaki oyun sürümü bildirimi resmi Mojang sürüm bildirimi ile eşleşmiyor, bu da üzerinde oynanmış olabileceği anlamına geliyor.<br/>
-        <b>Bu güvenli değil. Devam ederseniz kişisel bilgileriniz risk altında olabilir.</b><br/>
-        Mirror\'ı kullanmaya devam etmek istiyorsanız, \"Manifest kontrollerini kapat\" düğmesine basın ve indirmeyi yeniden başlatın.<br/>
-        Resmi indirme kaynağını kullanmak istiyorsanız, \"Resmi siteye geç\" düğmesine basın ve indirmeyi yeniden başlatın.<br/>]]></string>
-    <string name="dl_turn_off_manifest_checks">Manifest kontrollerini kapatın</string>
-    <string name="dl_switch_to_official_site">Resmi siteye geçiş yapın</string>
+    <string name="dl_tampered_manifest"><![CDATA[Aynadaki oyun sürümü bildirimi resmî Mojang bildirimiyle eşleşmiyor, üzerinde oynanmış olabilir.<br/>
+        <b>Bu güvenli değil. Devam edersen kişisel bilgilerin risk altında olabilir.</b><br/>
+        Aynayı kullanmaya devam etmek istiyorsan \"Manifest denetimlerini kapat\"a bas ve indirmeyi yeniden başlat.<br/>
+        Resmî indirme kaynağını kullanmak istiyorsan \"Resmî siteye geç\"e bas ve indirmeyi yeniden başlat.<br/>]]></string>
+    <string name="dl_turn_off_manifest_checks">Manifest denetimlerini kapat</string>
+    <string name="dl_switch_to_official_site">Resmî siteye geç</string>
     <string name="preference_download_source_title">Oyun indirme kaynağı</string>
-    <string name="preference_download_source_description">Resmi indirme sunucusunu kullanmak yerine bir indirme mirror\'u seçin</string>
+    <string name="preference_download_source_description">Resmî indirme sunucusu yerine bir ayna seç.</string>
     <string name="preference_verify_manifest_title">Oyun sürümü manifestini doğrula</string>
-    <string name="preference_verify_manifest_description">Etkinleştirildiğinde, başlatıcı kütüphanelerle birlikte oyun sürümü manifest\'ini kontrol edecektir.</string>
+    <string name="preference_verify_manifest_description">Açıkken launcher kütüphanelerle birlikte oyun sürümünün manifest\'ini denetler.</string>
     <string name="notif_download_finished">Oyun başlatılmaya hazır</string>
-    <string name="notif_download_finished_desc">Başlatmak için buraya tıklayın!</string>
+    <string name="notif_download_finished_desc">Başlatmak için dokun.</string>
     <string name="preference_category_gestures">Hareketler</string>
     <string name="preference_category_buttons">Düğmeler</string>
     <string name="preference_category_experimental_settings">Deneysel ayarlar</string>
@@ -321,8 +321,8 @@
     <string name="preference_category_miscellaneous">Çeşitli ayarlar</string>
     <string name="preference_category_video">Video ayarları</string>
     <string name="notification_permission_dialog_title">İzin isteği</string>
-    <string name="notification_permission_dialog_text">Projects Launcher, uygulamadan ayrıldığınızda oyun/mod paketi indirmelerinin durmasını önlemek için bildirim gönderme izni gerektirir. Bu izin olmadan, Android Projects Launcher\'ı arka plan moduna aldığınızda indirmelerinizi kapatabilir.</string>
-    <string name="notification_permission_toast">Fikrinizi daha sonra Ayarlar\'a girerek her zaman değiştirebilirsiniz</string>
+    <string name="notification_permission_dialog_text">Uygulamadan çıkınca indirmeler durmasın diye bildirim izni gerekiyor.</string>
+    <string name="notification_permission_toast">İzni sonra Ayarlar\'dan değiştirebilirsin.</string>
     <string name="preference_ask_for_notification_title">Bildirimlere izin ver</string>
     <string name="preference_ask_for_notification_description">Arka planda oyun ve mod paketi indirebilmek için gerekir. İzni yeniden istemek için dokun.</string>
     <string name="preference_vsync_in_zink_title">Zink ile V-Sync\'ye izin ver</string>
@@ -373,7 +373,7 @@
     <string name="preference_remap_controller_title">Kontrolcü tuș atamalarını değiştir</string>
     <string name="preference_remap_controller_description">Her bir kontrolcü düğmesine atanmış klavye tuşlarını değiştirmenizi sağlar</string>
     <string name="mcl_button_discord">Discord</string>
-    <string name="ltw_render_distance_warning_msg">Ekran kartınız, Sodium veya benzeri modlar olmadan 7\'nin üzerinde görüş mesafesi işleyemez. “Tamam”a tıkladığınızda görüş mesafesi otomatik olarak düşürülecek.</string>
+    <string name="ltw_render_distance_warning_msg">Ekran kartın Sodium gibi bir mod olmadan 7\'den uzak görüş mesafesini çizemez. \"Tamam\"a basınca görüş mesafesi kendiliğinden düşer.</string>
     <string name="mcl_button_open_directory">Oyun klasörünü aç</string>
     <string name="local_login_bad_username_title">Bu oyuncu adı kullanılamaz</string>
     <string name="local_login_bad_username_text">Oyuncu adı 3–16 karakter olmalı ve yalnızca Latin harfleri, rakam ya da alt çizgi (_) içermeli.</string>
@@ -397,9 +397,9 @@
     <string name="mg_renderer_summary_angleDepthClearFixMode">Sadece ANGLE\'ı etki eder, Performansa etkisi olabilir.</string>
     <string name="preference_experimental_title">Deneysel ayarlar</string>
     <string name="mg_renderer_title_gl43exts">Deneysel OpenGL 4.3 uzantılarını destekliyormuş gibi göster</string>
-    <string name="mg_renderer_summary_gl43exts">Mod çökmelerine yardımcı olabilir. Ihtiyaç yoksa devre dışı bırakın, çökmelere sebep olabilir.</string>
+    <string name="mg_renderer_summary_gl43exts">Mod çökmelerine yardımcı olabilir. İhtiyaç yoksa kapat, çökmeye yol açabilir.</string>
     <string name="mg_renderer_title_computeShaderext">Deneysel Compute Shader uzantısını destekliyormuş gibi göster</string>
-    <string name="mg_renderer_summary_computeShaderext">Shader paketi bozulmalarına yardımcı olabilir. Ihtiyaç yoksa devre dışı bırakın, çökmelere sebep olabilir.</string>
+    <string name="mg_renderer_summary_computeShaderext">Shader paketi bozulmalarına yardımcı olabilir. İhtiyaç yoksa kapat, çökmeye yol açabilir.</string>
     <string name="mg_renderer_title_multidrawCompute">Hesaplama ile Çoklu Çizim Taklidi Kullan</string>
     <string name="mg_renderer_summary_multidrawCompute">Çoklu çizim emülasyonu için hesaplama shader’larını kullanır</string>
     <string name="demo_versions_supported">Sadece Vanilla 1.3.1 ve üzeri sürümler deneme hesaplarında desteklenmektedir</string>
@@ -432,7 +432,7 @@
     <string name="mg_renderer_summary_dsaExt">Iris shader paketlerine yardımcı olabilir; AcceleratedRendering modu için gerekir.</string>
     <string name="error_invalid_value">Geçersiz değer.</string>
     <string name="minecraft_no_username_set">Minecraft oyuncu adın henüz yok. Giriş yapmadan önce Minecraft sitesinde bir ad belirle.</string>
-    <string name="use_angle_checkbox">ANGLE kullan (FPS\'i artırabilir)</string>
+    <string name="use_angle_checkbox">Daha hızlı çizim (deneysel)</string>
     <string name="create_lwjgl3ify_profile">LWJGL3ify profili oluştur</string>
     <!-- Projects fork (0.1.5): renderer names upstream left untranslated. -->
     <string name="mcl_setting_renderer_ng_gl4es">Krypton Wrapper (tüm sürümler, hızlı)</string>
@@ -447,7 +447,7 @@
     <string name="controllableFound">Controllable açılışta zaman zaman çökebiliyor. Tekrar dene ya da modu kaldır.</string>
     <string name="mg_renderer_title_fsr">AMD FSR 1 ile ölçekleme</string>
     <string name="autorendererselectfailed">İşleyici kendiliğinden seçilemedi, Holy GL4ES kullanılıyor</string>
-    <string name="not_modpack_file">Bu bir modpack dosyası değil.</string>
+    <string name="not_modpack_file">Bu bir mod paketi dosyası değil.</string>
     <string name="global_not_installed">Kurulu değil</string>
     <string name="global_download">İndir</string>
     <string name="multirt_no_internet">İndirilemedi. İnternet bağlantını kontrol et.</string>
@@ -457,9 +457,9 @@
     <string name="lwjgl3ify_installer_available_versions">Desteklenen LWJGL3ify sürümleri</string>
     <string name="lwjgl3ify_installer_broken_versions">Bozuk LWJGL3ify sürümleri (SDL)</string>
     <string name="new_default_controls">Yeni varsayılan tuş düzeni hazır, dene.</string>
-    <string name="import_modpack_start">Modpack içe aktarılıyor…</string>
-    <string name="import_modpack_hash">Modpack dosyası denetleniyor… (%s MB / %s MB)</string>
-    <string name="import_modpack_json">Modpack bilgileri okunuyor…</string>
-    <string name="import_modpack_copy">Modpack dosyası kopyalanıyor… (%s MB / %s MB)</string>
+    <string name="import_modpack_start">Mod paketi içe aktarılıyor…</string>
+    <string name="import_modpack_hash">Mod paketi dosyası denetleniyor… (%s MB / %s MB)</string>
+    <string name="import_modpack_json">Mod paketinin bilgileri okunuyor…</string>
+    <string name="import_modpack_copy">Mod paketi dosyası kopyalanıyor… (%s MB / %s MB)</string>
     <string name="angelica_found_sfpew_notice">Angelica bulundu, Simple FPE Wrapper gerekmiyor</string>
 </resources>
