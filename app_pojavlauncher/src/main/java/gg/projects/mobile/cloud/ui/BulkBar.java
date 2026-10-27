@@ -82,12 +82,16 @@ final class BulkBar {
         return row;
     }
 
-    /** Shows the bar with the chosen count (or hides it); {@code busy} while an action runs. */
-    void set(boolean show, int chosen, boolean busy) {
+    /**
+     * Shows the bar with the chosen count (or hides it); {@code busy} while an action runs. {@code can}: start, stop,
+     * reconnect, copy, each true while at least one chosen account can take it (a start for accounts all in game waits).
+     */
+    void set(boolean show, int chosen, boolean busy, boolean[] can) {
         Context c = mHost.getContext();
         mCount.setText(c.getResources().getQuantityString(R.plurals.projects_feat_bulk_selected, chosen, chosen));
-        for (Button b : mButtons) {
-            b.setEnabled(!busy && chosen > 0);
+        for (int i = 0; i < mButtons.length; i++) {
+            Button b = mButtons[i];
+            b.setEnabled(!busy && chosen > 0 && (can == null || can[i]));
             b.setAlpha(b.isEnabled() ? 1f : 0.5f);
         }
         if (show == mShown) return;

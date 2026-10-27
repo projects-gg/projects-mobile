@@ -97,6 +97,22 @@ public final class CloudFragment extends CloudScreen {
         return mService.features().present && mService.accounts().size() >= 2;
     }
 
+    /**
+     * Which of the bar's actions some chosen account can take now: start (its button would start it), stop (it runs or
+     * waits to), reconnect (in game, connecting or waiting), copy (always: it copies onto them).
+     */
+    private boolean[] bulkCan() {
+        boolean start = false, stop = false, restart = false;
+        for (CloudModel.Account a : mService.accounts()) {
+            if (!mChosen.contains(a.id)) continue;
+            CloudStatus.Primary p = CloudStatus.primary(a);
+            start |= p == CloudStatus.Primary.START;
+            stop |= p == CloudStatus.Primary.STOP;
+            restart |= CloudStatus.inGame(a) || "connecting".equals(a.live.state) || "waiting".equals(a.live.state);
+        }
+        return new boolean[]{start, stop, restart, true};
+    }
+
     private void choose(boolean on) {
         mChoosing = on;
         if (!on) mChosen.clear();
@@ -109,7 +125,7 @@ public final class CloudFragment extends CloudScreen {
         java.util.Set<String> ids = new java.util.HashSet<>();
         for (CloudModel.Account a : mService.accounts()) ids.add(a.id);
         mChosen.retainAll(ids);
-        if (mBulk != null) mBulk.set(mChoosing, mChosen.size(), mBulkBusy);
+        if (mBulk != null) mBulk.set(mChoosing, mChosen.size(), mBulkBusy, bulkCan());
         long next = update();
         View view = getView();
         if (view != null && next > 0) {
@@ -252,7 +268,7 @@ public final class CloudFragment extends CloudScreen {
             rebuild();
         }
         if (mChoosing && !bulkAllowed()) choose(false);
-        if (mBulk != null) mBulk.set(mChoosing, mChosen.size(), mBulkBusy);
+        if (mBulk != null) mBulk.set(mChoosing, mChosen.size(), mBulkBusy, bulkCan());
         long next = update();
         if (next > 0) view.postDelayed(mTick, Math.max(1000, next));
     }
