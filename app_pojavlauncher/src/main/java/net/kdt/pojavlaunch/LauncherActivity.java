@@ -128,6 +128,7 @@ public class LauncherActivity extends BaseActivity implements gg.projects.mobile
     private FragmentContainerView mFragmentView;
     private gg.projects.mobile.ui.TopBarButton mSettingsButton;
     private gg.projects.mobile.social.ui.FriendsPill mFriendsPill;
+    private View mTopBar;
     private ProgressLayout mProgressLayout;
     private ProgressServiceKeeper mProgressServiceKeeper;
     private ModloaderInstallTracker mInstallTracker;
@@ -137,12 +138,22 @@ public class LauncherActivity extends BaseActivity implements gg.projects.mobile
     private final FragmentManager.FragmentLifecycleCallbacks mFragmentCallbackListener = new FragmentManager.FragmentLifecycleCallbacks() {
         @Override
         public void onFragmentResumed(@NonNull FragmentManager fm, @NonNull Fragment f) {
+            // Only the screen in the container decides (a child or a dialog fragment is not a screen).
+            if (f.getParentFragment() != null || f.getId() != R.id.container_fragment) return;
+            boolean home = f instanceof MainMenuFragment;
             // Projects fork (M14): the glyph turns from settings to home instead of being swapped.
-            mSettingsButton.setHome(!(f instanceof MainMenuFragment));
+            mSettingsButton.setHome(!home);
             // Projects fork (FIX2): the friends pill sits in the top bar of the home screen only.
-            if (mFriendsPill != null) mFriendsPill.setShownHere(f instanceof MainMenuFragment);
+            if (mFriendsPill != null) mFriendsPill.setShownHere(home);
             // MOB-POLISH: "Hesap ekle" is gold only there, beside OYNA.
-            if (mAccountSpinner != null) mAccountSpinner.setOnHome(f instanceof MainMenuFragment);
+            if (mAccountSpinner != null) mAccountSpinner.setOnHome(home);
+            // MOB-POLISH: one bar per screen. The account chip, friends and settings are the home's bar; a sub-screen
+            // has its own header with back (both second looks: two stacked bars, "Hesap ekle" above a cloud page read
+            // as a cloud account, and the chip does nothing off home: mSelectAuthMethod). The status bar takes the
+            // colour of the bar below it.
+            if (mTopBar != null) mTopBar.setVisibility(home ? View.VISIBLE : View.GONE);
+            getWindow().setStatusBarColor(ContextCompat.getColor(LauncherActivity.this,
+                    home ? R.color.background_status_bar : R.color.background_app));
         }
     };
 
@@ -567,6 +578,7 @@ public class LauncherActivity extends BaseActivity implements gg.projects.mobile
         mFragmentView = findViewById(R.id.container_fragment);
         mSettingsButton = findViewById(R.id.setting_button);
         mFriendsPill = findViewById(R.id.projects_friends_pill);
+        mTopBar = findViewById(R.id.projects_top_bar);
         mAccountSpinner = findViewById(R.id.account_spinner);
         mProgressLayout = findViewById(R.id.progress_layout);
     }
