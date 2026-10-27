@@ -740,7 +740,8 @@ public final class CloudUi {
             text.setText(words);
             int tone;
             switch (line.tone) {
-                case OK: tone = R.color.projects_jade_400; break;
+                // QA-TASTE: as the launcher, the words bone and the colour in the bars; colour in words only for trouble.
+                case OK: tone = R.color.projects_bone_100; break;
                 case ERROR: tone = R.color.projects_flare_400; break;
                 case WARN: tone = R.color.projects_gold_300; break;
                 default: tone = R.color.projects_ash_300; break;

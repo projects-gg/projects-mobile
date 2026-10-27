@@ -137,9 +137,15 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
         CloudStatus.Primary primary = CloudStatus.primary(a);
         // A stop whose remedy is in the settings (a wrong password, a command to fix, a server or version to pick):
         // the settings are the gold action, since starting again would stop the same way; "Başlat" stays beside them.
+        CloudStatus.Hint hint = CloudStatus.of(a, mService.nowMs(), lang()).hint;
         boolean fix = (primary == CloudStatus.Primary.START || primary == CloudStatus.Primary.NONE)
-                && CloudStatus.fixInSettings(CloudStatus.of(a, mService.nowMs(), lang()).hint);
-        if (fix) {
+                && CloudStatus.fixInSettings(hint);
+        if (fix && hint == CloudStatus.Hint.WRONG_PASSWORD) {
+            // QA-TASTE / AFK-CLEAR: the one way on is the password. "Başlat" would send the same refused one again (AuthMe
+            // servers kick or ban for it); the settings open on the login line, and their "Kaydet ve başlat" starts it.
+            actions.addView(CloudUi.button(c, getString(R.string.projects_cloud_fix_password), true,
+                    v -> open(CloudSettingsFragment.class, CloudSettingsFragment.password(a.id))), CloudUi.weight(1f));
+        } else if (fix) {
             actions.addView(CloudUi.button(c, getString(R.string.projects_cloud_open_settings), true,
                     v -> openFor(CloudSettingsFragment.class, a.id)), CloudUi.weight(1f));
             if (primary == CloudStatus.Primary.START) {
@@ -227,6 +233,10 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
                 renewable ? v -> mService.openSite(requireActivity(), "/satin-al?hesap=" + a.id) : null);
         if (renewable) {
             mTimeRow.count.setText(getString(a.expired ? R.string.projects_cloud_reactivate : R.string.projects_cloud_renew));
+            // QA-TASTE: quiet until the last week, gold in it or once ended (the launcher's "Süreyi uzat"). Extending is
+            // open any time unless Studio's last-days window is on (the API's renewal.open; the sentence below then).
+            boolean lastWeek = a.expired || a.expiresAt - mService.nowMs() / 1000 <= 7 * 86_400L;
+            mTimeRow.count.setTextColor(CloudUi.color(c, lastWeek ? R.color.projects_gold_300 : R.color.projects_ash_300));
             mTimeRow.count.setVisibility(View.VISIBLE);
         }
         time.addView(mTimeRow.view);
@@ -466,7 +476,7 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
                     SocialUi.toastLong(c, getString(R.string.projects_cloud_error_downgrade_limit));
                     return;
                 }
-                SocialUi.confirm(requireActivity(), getString(R.string.projects_plus_downgrade_title),
+                SocialUi.confirmDanger(requireActivity(), getString(R.string.projects_plus_downgrade_title),
                         getString(R.string.projects_plus_downgrade_body, CloudWords.span(c, preview.plainGainSeconds)),
                         getString(R.string.projects_plus_downgrade), () -> downgrade(from));
             }

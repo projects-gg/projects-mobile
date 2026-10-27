@@ -12,7 +12,7 @@
       "expiresAt": 1794834000,
       "expired": false,
       "graceUntil": 1796043600,
-      "renewal": { "open": false, "opensAt": 1794229200 },
+      "renewal": { "open": true, "opensAt": 1790254800 },
       "desired": "run",
       "hold": null,
       "live": { "state": "running", "since": 1792831680 },

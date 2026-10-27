@@ -8,6 +8,8 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.annotation.Nullable;
+
 import net.kdt.pojavlaunch.R;
 
 import gg.projects.mobile.mods.Motion;
@@ -23,6 +25,8 @@ final class SaveBar {
     private final Button mSave;
     private final Button mCancel;
     private boolean mShown;
+    @Nullable
+    private CharSequence mLabel;
 
     SaveBar(Context c, FrameLayout host, final Runnable onCancel, final Runnable onSave) {
         mHost = host;
@@ -53,11 +57,17 @@ final class SaveBar {
         return mSave;
     }
 
+    /** The main button's words instead of "Kaydet" ("Kaydet ve başlat"); null for "Kaydet". */
+    void setSaveLabel(@Nullable CharSequence label) {
+        mLabel = label;
+    }
+
     void set(boolean show, boolean saving, CharSequence words) {
         Context c = mHost.getContext();
         mSave.setEnabled(!saving);
         mCancel.setEnabled(!saving);
-        mSave.setText(c.getString(saving ? R.string.projects_cloud_settings_saving : R.string.projects_cloud_settings_save));
+        mSave.setText(saving ? c.getString(R.string.projects_cloud_settings_saving)
+                : mLabel != null ? mLabel : c.getString(R.string.projects_cloud_settings_save));
         mText.setText(saving ? c.getString(R.string.projects_cloud_settings_saving) : words);
         if (show == mShown) return;
         mShown = show;

@@ -60,6 +60,14 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
     private static final int REPLIES = 2;
     /** What a save elsewhere refused, four strings per issue (place, index, field, problem). */
     private static final String ARG_ISSUES = "gg.projects.mobile.cloud.ISSUES";
+    /** "Şifreyi düzelt": the settings open on the login line, marked with the server's answer. */
+    private static final String ARG_PASSWORD = "gg.projects.mobile.cloud.PASSWORD";
+
+    public static Bundle password(String account) {
+        Bundle args = args(account);
+        args.putBoolean(ARG_PASSWORD, true);
+        return args;
+    }
 
     /**
      * The settings opened to fix what a save elsewhere refused (the inventory's "Aç"): those rows marked, on the first
@@ -137,6 +145,8 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
         mIssues.clear();
         mConflict = null;
         List<CloudEdit.Issue> handed = handedIssues();
+        CloudEdit.Issue password = handedPassword();
+        if (password != null) handed.add(0, password);
         if (!handed.isEmpty()) {
             mIssues.addAll(handed);
             mTab = tabOf(handed.get(0));
@@ -156,6 +166,40 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
                 public void failed(CloudProblem problem) {}
             });
         }
+    }
+
+    /**
+     * QA-TASTE / AFK-CLEAR: "Şifreyi düzelt" opened the settings: the login line (a command first, else a reply) marked
+     * with what the server said, on its tab; without one, the commands. Taken once.
+     */
+    @Nullable
+    private CloudEdit.Issue handedPassword() {
+        Bundle args = getArguments();
+        if (args == null || !args.getBoolean(ARG_PASSWORD, false)) return null;
+        args.remove(ARG_PASSWORD);
+        for (int i = 0; i < mConfig.commands.size(); i++) {
+            CloudEdit.Words w = mConfig.commands.get(i).words;
+            if (isLogin(w)) return new CloudEdit.Issue("commands", i, "text", passwordProblem(w));
+        }
+        for (int i = 0; i < mConfig.rules.size(); i++) {
+            CloudEdit.Words w = mConfig.rules.get(i).reply;
+            if (isLogin(w)) return new CloudEdit.Issue("rules", i, "reply", passwordProblem(w));
+        }
+        mTab = COMMANDS;
+        return null;
+    }
+
+    private static boolean isLogin(CloudEdit.Words w) {
+        return w.kind != CloudEdit.Words.Kind.PLAIN || gg.projects.mobile.cloud.CloudText.looksSensitive(w.text);
+    }
+
+    private static String passwordProblem(CloudEdit.Words w) {
+        return w.kind == CloudEdit.Words.Kind.SEALED ? "wrongPasswordSealed" : "wrongPassword";
+    }
+
+    /** The account stopped on its login password: saving starts it again (AFK-CLEAR's "Kaydet ve başlat"). */
+    private boolean stoppedOnPassword() {
+        return mBase != null && mBase.hold != null && "cause".equals(mBase.hold.kind) && "wrongPassword".equals(mBase.hold.cause);
     }
 
     /** The issues {@link #marked} handed over, taken once: a later reload of the account shows the settings as they are. */
@@ -704,6 +748,7 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
         // Only the inventory choice changed: it applies at the next connection, nothing restarts (CAFK-FEAT).
         boolean onlyInventory = mName.equals(mBase.name) && !serverDirty() && mVersion.equals(mBase.version == null ? "auto" : mBase.version)
                 && mLang.equals("en".equals(mBase.lang) ? "en" : "tr") && mConfig.onlyInventoryDiffers(mOriginal);
+        mBar.setSaveLabel(stoppedOnPassword() ? getString(R.string.projects_cloud_settings_save_start) : null);
         mBar.set(dirty || mSaving, mSaving, getString(onlyInventory ? R.string.projects_feat_inv_setting_note : CloudStatus.inGame(mBase)
                 ? R.string.projects_cloud_settings_restart_note : R.string.projects_cloud_settings_dirty));
     }
@@ -745,6 +790,7 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
         String version = mVersion.equals(base.version == null ? "auto" : base.version) ? null : mVersion;
         String lang = mLang.equals("en".equals(base.lang) ? "en" : "tr") ? null : mLang;
         CloudEdit.Config config = mConfig.same(mOriginal) && !force ? null : mConfig;
+        final boolean startAfter = stoppedOnPassword();
         mService.save(base, name, hostTyped, portValue(), version, lang, config, new CloudService.Result<CloudService.SaveOutcome>() {
             @Override
             public void ok(CloudService.SaveOutcome outcome) {
@@ -752,7 +798,8 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
                 if (!alive()) return;
                 if (outcome.saved != null) {
                     Haptics.confirm(saveButton());
-                    toast(getString(R.string.projects_cloud_settings_saved, outcome.saved.name));
+                    if (startAfter) startAfterSave(outcome.saved);
+                    else toast(getString(R.string.projects_cloud_settings_saved, outcome.saved.name));
                     begin(outcome.saved);
                 } else if (outcome.conflict != null) {
                     mConflict = outcome.conflict;
@@ -768,6 +815,23 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
                 mSaving = false;
                 if (!alive()) return;
                 bar();
+                problem(problem, saveButton());
+            }
+        });
+    }
+
+    /** "Kaydet ve başlat": the corrected login goes out once, the start the account page no longer offers. */
+    private void startAfterSave(final CloudModel.Account saved) {
+        mService.start(saved.id, new CloudService.Result<CloudModel.Account>() {
+            @Override
+            public void ok(CloudModel.Account value) {
+                if (alive()) toast(getString(R.string.projects_cloud_settings_saved_starting, value.name));
+            }
+
+            @Override
+            public void failed(CloudProblem problem) {
+                if (!alive()) return;
+                toast(getString(R.string.projects_cloud_settings_saved, saved.name));
                 problem(problem, saveButton());
             }
         });

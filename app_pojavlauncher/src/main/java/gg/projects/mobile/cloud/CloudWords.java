@@ -345,6 +345,8 @@ public final class CloudWords {
             return c.getString(R.string.projects_feat_ph_issue_part, part);
         }
         switch (p) {
+            case "wrongPassword": return c.getString(R.string.projects_cloud_issue_wrong_password);
+            case "wrongPasswordSealed": return c.getString(R.string.projects_cloud_issue_wrong_password_sealed);
             case "placeholder_row": return c.getString(R.string.projects_feat_ph_issue_row);
             case "placeholder_part": return c.getString(R.string.projects_feat_ph_issue_part, 1);
             case "placeholder_sender": return c.getString(R.string.projects_feat_ph_issue_sender);

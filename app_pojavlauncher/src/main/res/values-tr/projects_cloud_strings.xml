@@ -135,7 +135,7 @@
     <!-- Moderasyon (services/cloud-afk README "Moderation player API") -->
     <string name="projects_cloud_mod_warn">%1$s için uyarı: %2$s. Tekrarlanırsa hesap durdurulur.</string>
     <string name="projects_cloud_mod_rows">%1$s: bir satırın durduruldu (%2$s). Düzelt ya da sil.</string>
-    <string name="projects_cloud_mod_ai">%1$s: AFK+ yapay zekâsı durduruldu (%2$s). Hesabın AFK\'de kalıyor.</string>
+    <string name="projects_cloud_mod_ai">%1$s: AFK+ yapay zekâsı durduruldu (%2$s). Hesabın AFK\'da kalıyor.</string>
     <string name="projects_cloud_mod_suspend">%1$s durduruldu: %2$s. Yanlışlık olduğunu düşünüyorsan itiraz et.</string>
     <string name="projects_cloud_mod_appeal_received">İtirazın alındı. En geç 3 gün içinde bakacağız.</string>
     <string name="projects_cloud_mod_overturned">İtirazın kabul edildi. %1$s yeniden açıldı, durduğu süre eklendi.</string>
@@ -275,7 +275,7 @@
     <string name="projects_cloud_settings_done">Tamam</string>
     <string name="projects_cloud_settings_saved">%1$s ayarları kaydedildi</string>
     <string name="projects_cloud_settings_conflict">Hesap başka bir yerde değişti.</string>
-    <string name="projects_cloud_settings_load_latest">Son halini yükle</string>
+    <string name="projects_cloud_settings_load_latest">Son hâlini yükle</string>
     <string name="projects_cloud_discard_title">Değişiklikler kaydedilmedi</string>
     <string name="projects_cloud_discard_body">Kaydetmeden çıkarsan yaptığın değişiklikler silinir.</string>
     <string name="projects_cloud_discard_keep">Düzenlemeye dön</string>
@@ -340,7 +340,7 @@
     <string name="projects_cloud_notify_to">Bitiş</string>
     <string name="projects_cloud_notify_load_failed">Bildirim ayarların yüklenemedi.</string>
     <string name="projects_cloud_channel_group">7/24 Bulut</string>
-    <string name="projects_cloud_channel_alerts">Bulut AFK uyarıları</string>
+    <string name="projects_cloud_channel_alerts">7/24 Bulut uyarıları</string>
     <string name="projects_cloud_channel_deals">AFK+ onay ve anlaşmalar</string>
     <string name="projects_cloud_channel_info">AFK+ bilgi</string>
 
@@ -361,10 +361,10 @@
     <string name="projects_cloud_notice_quota_full_plain">Kontörün bitti.</string>
     <string name="projects_cloud_notice_quota_80">%1$s: Kontörün çoğu kullanıldı.</string>
     <string name="projects_cloud_notice_gift_ending">Hediye kontörün %1$s bitiyor.</string>
-    <string name="projects_cloud_notice_summary">%1$s: bugün %2$d PM, %3$d anlaşma.</string>
+    <string name="projects_cloud_notice_summary">%1$s: bugün %2$d mesaj, %3$d anlaşma.</string>
     <string name="projects_cloud_notice_paused_staff">%1$s: AFK+ yetkililerce duraklatıldı.</string>
-    <string name="projects_cloud_notice_paused_service">AFK+ bakımda; hesapların AFK\'de kalıyor.</string>
-    <string name="projects_cloud_notice_paused_outage">%1$s: AFK+ şu an yanıt veremiyor; hesap AFK\'de kalıyor.</string>
+    <string name="projects_cloud_notice_paused_service">AFK+ bakımda; hesapların AFK\'da kalıyor.</string>
+    <string name="projects_cloud_notice_paused_outage">%1$s: AFK+ şu an yanıt veremiyor; hesap AFK\'da kalıyor.</string>
     <string name="projects_cloud_notice_incident">%1$s: uygunsuz mesajlar geldi; o oyuncuya artık cevap verilmiyor.</string>
     <string name="projects_cloud_notice_message">%1$s: yeni mesaj.</string>
     <plurals name="projects_cloud_notice_messages">
@@ -432,7 +432,7 @@
     <string name="projects_plus_ai_quota">Kontörün bitti; %1$s yenilenir</string>
     <string name="projects_plus_ai_quota_plain">Kontörün bitti</string>
     <string name="projects_plus_ai_budget">Bugün için duraklatıldı; yarın kendiliğinden döner</string>
-    <string name="projects_plus_ai_outage">Asistan şu an yanıt veremiyor; hesap AFK\'de kalıyor</string>
+    <string name="projects_plus_ai_outage">Asistan şu an yanıt veremiyor; hesap AFK\'da kalıyor</string>
     <string name="projects_plus_ai_host">Kısa süreliğine duraklatıldı</string>
     <string name="projects_plus_ai_service">AFK+ bakımda</string>
     <string name="projects_plus_ai_paused">Şimdilik duraklatıldı</string>
@@ -440,7 +440,7 @@
     <string name="projects_plus_ai_staff">Yetkililer durdurdu</string>
     <string name="projects_plus_ai_restricted">AFK+\'dan uzaklaştırıldın</string>
     <string name="projects_plus_ai_service_off">AFK+ şu an kapalı</string>
-    <string name="projects_plus_ai_server">Asistan yalnız Projects\'te çalışır; bu hesap şimdilik yalnız AFK\'de kalıyor</string>
+    <string name="projects_plus_ai_server">Asistan yalnız Projects\'te çalışır; bu hesap şimdilik yalnız AFK\'da kalıyor</string>
     <string name="projects_plus_ai_gate">Asistan güvenlik için durdu; yeniden başlatabilirsin</string>
     <string name="projects_plus_ai_muted">Sunucu bota susturma verdi; asistan durdu</string>
     <string name="projects_plus_ai_moderation">Asistan kural ihlali nedeniyle durduruldu</string>
@@ -579,7 +579,7 @@
     <string name="projects_plus_problem_limit">Bir listede en çok %1$d satır olabilir.</string>
 
     <!-- Asistan -->
-    <string name="projects_plus_persona">Üslup</string>
+    <string name="projects_plus_persona">Konuşma tarzı</string>
     <string name="projects_plus_preset_friendly">Samimi</string>
     <string name="projects_plus_preset_brief">Kısa</string>
     <string name="projects_plus_preset_polite">Kibar</string>
@@ -734,7 +734,7 @@
     <string name="projects_plus_change_schedule_hours">Çalışma saatleri değişti</string>
     <string name="projects_plus_change_break_on">Mola verildi</string>
     <string name="projects_plus_change_break_off">Mola bitti</string>
-    <string name="projects_plus_change_persona">Üslup ya da durum değişti</string>
+    <string name="projects_plus_change_persona">Konuşma tarzı ya da durum değişti</string>
     <string name="projects_plus_change_replies">Cevap ayarları değişti</string>
     <string name="projects_plus_change_blocked">Engellenenler değişti</string>
     <string name="projects_plus_change_other">Ayarlar değişti</string>
@@ -753,4 +753,10 @@
     <string name="projects_cloud_yesterday_at">Dün %1$s</string>
     <!-- MOB-POLISH: a command or rule turned off, before its usual line ("Kapalı · Her girişte, 2 sn sonra"). -->
     <string name="projects_cloud_row_off">Kapalı · %1$s</string>
+    <!-- QA-TASTE / AFK-CLEAR: a refused login password: one way on, the settings on the login line, "save and start". -->
+    <string name="projects_cloud_fix_password">Şifreyi düzelt</string>
+    <string name="projects_cloud_settings_save_start">Kaydet ve başlat</string>
+    <string name="projects_cloud_settings_saved_starting">%1$s kaydedildi, başlatılıyor.</string>
+    <string name="projects_cloud_issue_wrong_password">Sunucu bu şifreyi kabul etmedi. Doğrusunu yaz.</string>
+    <string name="projects_cloud_issue_wrong_password_sealed">Sunucu bu şifreyi kabul etmedi. \"Değiştir\"e bas, doğrusunu yaz.</string>
 </resources>

@@ -337,7 +337,7 @@
     <string name="projects_cloud_notify_to">To</string>
     <string name="projects_cloud_notify_load_failed">Couldn\'t load your notification settings.</string>
     <string name="projects_cloud_channel_group">24/7 Cloud</string>
-    <string name="projects_cloud_channel_alerts">Cloud AFK alerts</string>
+    <string name="projects_cloud_channel_alerts">24/7 Cloud alerts</string>
     <string name="projects_cloud_channel_deals">AFK+ approvals and deals</string>
     <string name="projects_cloud_channel_info">AFK+ info</string>
 
@@ -358,7 +358,7 @@
     <string name="projects_cloud_notice_quota_full_plain">You\'re out of AI credits.</string>
     <string name="projects_cloud_notice_quota_80">%1$s: most of your AI credits are used.</string>
     <string name="projects_cloud_notice_gift_ending">Your gift AI credits end %1$s.</string>
-    <string name="projects_cloud_notice_summary">%1$s: %2$d DMs, %3$d deals today.</string>
+    <string name="projects_cloud_notice_summary">%1$s: %2$d messages, %3$d deals today.</string>
     <string name="projects_cloud_notice_paused_staff">%1$s: AFK+ was paused by staff.</string>
     <string name="projects_cloud_notice_paused_service">AFK+ is under maintenance; your accounts stay AFK.</string>
     <string name="projects_cloud_notice_paused_outage">%1$s: AFK+ can\'t answer right now; the account stays AFK.</string>
@@ -439,7 +439,7 @@
     <string name="projects_plus_ai_service_off">AFK+ is off right now</string>
     <string name="projects_plus_ai_server">The assistant works only on Projects; for now this account just stays AFK</string>
     <string name="projects_plus_ai_gate">The assistant stopped for safety; you can start it again</string>
-    <string name="projects_plus_ai_muted">The server muted the bot; the assistant stopped</string>
+    <string name="projects_plus_ai_muted">The server muted the account. The assistant stopped.</string>
     <string name="projects_plus_ai_moderation">The assistant was stopped for a rule violation</string>
     <string name="projects_plus_ai_off">The assistant is off</string>
     <string name="projects_plus_ai_unknown">The assistant\'s state is unavailable right now</string>
@@ -481,7 +481,7 @@
     <string name="projects_plus_approve">Approve</string>
     <string name="projects_plus_lower">Lower the price</string>
     <string name="projects_plus_lower_title">Pay at most</string>
-    <string name="projects_plus_lower_help">The assistant bargains again up to this amount.</string>
+    <string name="projects_plus_lower_help">The assistant haggles again up to this amount.</string>
     <string name="projects_plus_lower_label">At most</string>
     <string name="projects_plus_lower_go">Keep bargaining</string>
     <string name="projects_plus_lower_range">Enter less than %1$s.</string>
@@ -576,7 +576,7 @@
     <string name="projects_plus_problem_limit">Up to %1$d rows in a list.</string>
 
     <!-- Assistant -->
-    <string name="projects_plus_persona">Style</string>
+    <string name="projects_plus_persona">Tone</string>
     <string name="projects_plus_preset_friendly">Friendly</string>
     <string name="projects_plus_preset_brief">Brief</string>
     <string name="projects_plus_preset_polite">Polite</string>
@@ -750,4 +750,10 @@
     <string name="projects_cloud_yesterday_at">Yesterday %1$s</string>
     <!-- MOB-POLISH: a command or rule turned off, before its usual line ("Kapalı · Her girişte, 2 sn sonra"). -->
     <string name="projects_cloud_row_off">Off · %1$s</string>
+    <!-- QA-TASTE / AFK-CLEAR: a refused login password: one way on, the settings on the login line, "save and start". -->
+    <string name="projects_cloud_fix_password">Fix password</string>
+    <string name="projects_cloud_settings_save_start">Save and start</string>
+    <string name="projects_cloud_settings_saved_starting">%1$s saved and starting.</string>
+    <string name="projects_cloud_issue_wrong_password">The server didn\'t accept this password. Type the right one.</string>
+    <string name="projects_cloud_issue_wrong_password_sealed">The server didn\'t accept this password. Press \"Change\" and type the right one.</string>
 </resources>
