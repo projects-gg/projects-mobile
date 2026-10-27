@@ -622,10 +622,11 @@ public final class CloudInventoryFragment extends CloudScreen implements Invento
                     Haptics.confirm(from);
                     mTurnedOn = true;
                 } else {
-                    // A stored row the save checks refuse: the settings say where.
+                    // A stored row the save checks refuse: the settings open on its tab with it marked, as the toast
+                    // says (opened plainly they showed "Genel" with nothing marked).
                     Haptics.reject(from);
                     SocialUi.toastLong(ctx(), getString(R.string.projects_feat_inv_fix_settings));
-                    openFor(CloudSettingsFragment.class, a.id);
+                    open(CloudSettingsFragment.class, CloudSettingsFragment.marked(a.id, outcome.issues));
                 }
                 mShape = "";
                 render();

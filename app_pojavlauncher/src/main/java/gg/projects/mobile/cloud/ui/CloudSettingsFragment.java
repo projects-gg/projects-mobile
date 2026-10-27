@@ -2,6 +2,7 @@ package gg.projects.mobile.cloud.ui;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
+import android.os.Bundle;
 import android.text.Editable;
 import android.text.InputFilter;
 import android.text.InputType;
@@ -52,6 +53,25 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
     private static final int GENERAL = 0;
     private static final int COMMANDS = 1;
     private static final int REPLIES = 2;
+    /** What a save elsewhere refused, four strings per issue (place, index, field, problem). */
+    private static final String ARG_ISSUES = "gg.projects.mobile.cloud.ISSUES";
+
+    /**
+     * The settings opened to fix what a save elsewhere refused (the inventory's "Aç"): those rows marked, on the first
+     * one's tab, as after a refused "Kaydet" here.
+     */
+    public static Bundle marked(String account, List<CloudEdit.Issue> issues) {
+        Bundle args = args(account);
+        ArrayList<String> flat = new ArrayList<>();
+        for (CloudEdit.Issue i : issues) {
+            flat.add(i.place);
+            flat.add(String.valueOf(i.index));
+            flat.add(i.field);
+            flat.add(i.problem);
+        }
+        args.putStringArrayList(ARG_ISSUES, flat);
+        return args;
+    }
 
     @Nullable
     private CloudModel.Account mBase;
@@ -111,6 +131,11 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
         mLang = "en".equals(a.lang) ? "en" : "tr";
         mIssues.clear();
         mConflict = null;
+        List<CloudEdit.Issue> handed = handedIssues();
+        if (!handed.isEmpty()) {
+            mIssues.addAll(handed);
+            mTab = tabOf(handed.get(0).place);
+        }
         tabs();
         draw();
         bar();
@@ -126,6 +151,29 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
                 public void failed(CloudProblem problem) {}
             });
         }
+    }
+
+    /** The issues {@link #marked} handed over, taken once: a later reload of the account shows the settings as they are. */
+    private List<CloudEdit.Issue> handedIssues() {
+        List<CloudEdit.Issue> out = new ArrayList<>();
+        Bundle args = getArguments();
+        ArrayList<String> flat = args == null ? null : args.getStringArrayList(ARG_ISSUES);
+        if (flat == null) return out;
+        args.remove(ARG_ISSUES);
+        for (int i = 0; i + 3 < flat.size(); i += 4) {
+            int index;
+            try {
+                index = Integer.parseInt(flat.get(i + 1));
+            } catch (NumberFormatException e) {
+                continue;
+            }
+            out.add(new CloudEdit.Issue(flat.get(i), index, flat.get(i + 2), flat.get(i + 3)));
+        }
+        return out;
+    }
+
+    private static int tabOf(String place) {
+        return "commands".equals(place) ? COMMANDS : "rules".equals(place) ? REPLIES : GENERAL;
     }
 
     private boolean hasFocusedField() {
@@ -679,12 +727,7 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
     private void showIssues(List<CloudEdit.Issue> issues) {
         mIssues.clear();
         mIssues.addAll(issues);
-        int tab = mTab;
-        if (!issues.isEmpty()) {
-            String place = issues.get(0).place;
-            tab = "commands".equals(place) ? COMMANDS : "rules".equals(place) ? REPLIES : GENERAL;
-        }
-        mTab = tab;
+        if (!issues.isEmpty()) mTab = tabOf(issues.get(0).place);
         tabs();
         draw();
         bar();
