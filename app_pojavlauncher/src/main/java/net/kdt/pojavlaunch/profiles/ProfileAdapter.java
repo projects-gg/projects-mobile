@@ -1,47 +1,84 @@
 package net.kdt.pojavlaunch.profiles;
 
-import android.graphics.Color;
+import android.content.Context;
+import android.graphics.ColorMatrix;
+import android.graphics.ColorMatrixColorFilter;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.AbsoluteSizeSpan;
+import android.text.style.ForegroundColorSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 
-import androidx.core.graphics.ColorUtils;
+import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.res.ResourcesCompat;
 
 import net.kdt.pojavlaunch.R;
-import net.kdt.pojavlaunch.Tools;
 import net.kdt.pojavlaunch.prefs.LauncherPreferences;
 import net.kdt.pojavlaunch.value.launcherprofiles.LauncherProfiles;
 import net.kdt.pojavlaunch.value.launcherprofiles.MinecraftProfile;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import fr.spse.extended_view.ExtendedTextView;
+import gg.projects.mobile.join.ProfileOrder;
+import gg.projects.mobile.join.ProjectsProfile;
 
 /*
  * Adapter for listing launcher profiles in a Spinner
  */
 public class ProfileAdapter extends BaseAdapter {
+    /**
+     * MOB2: the "Resmî paketi kur" row (the Projects emblem dimmed, "Kurulu değil" under it), first in
+     * the list while the Projects profile is missing: where that profile stands otherwise.
+     */
+    public static final Object OFFICIAL_ROW = new Object() {
+        @NonNull
+        @Override
+        public String toString() {
+            return "projects_official_row";
+        }
+    };
+
     private Map<String, MinecraftProfile> mProfiles;
     private final MinecraftProfile dummy = new MinecraftProfile();
     private List<String> mProfileList;
     private ProfileAdapterExtra[] mExtraEntires;
+    private boolean mOfficialRow;
+    private Drawable mOfficialIcon;
+    private CharSequence mOfficialLabel;
 
     public ProfileAdapter(ProfileAdapterExtra[] extraEntries) {
         reloadProfiles(extraEntries);
     }
+
+    /** MOB2: offers {@link #OFFICIAL_ROW} while the Projects profile is missing (the play bar's list). */
+    public void setOfficialRow(boolean offered) {
+        if (mOfficialRow == offered) return;
+        mOfficialRow = offered;
+        super.notifyDataSetChanged();
+    }
+
+    /** Rows before the profiles: the official pack's row while it stands in for the Projects profile. */
+    private int leadingRows() {
+        return mOfficialRow && !mProfiles.containsKey(ProjectsProfile.KEY) ? 1 : 0;
+    }
+
     /*
      * Gets how much profiles are loaded in the adapter right now
      * @returns loaded profile count
      */
     @Override
     public int getCount() {
-        return mProfileList.size() + mExtraEntires.length;
+        return leadingRows() + mProfileList.size() + mExtraEntires.length;
     }
     /*
      * Gets the profile at a given index
@@ -50,9 +87,12 @@ public class ProfileAdapter extends BaseAdapter {
      */
     @Override
     public Object getItem(int position) {
+        int leading = leadingRows();
+        if (position >= 0 && position < leading) return OFFICIAL_ROW;
+        position -= leading;
         int profileListSize = mProfileList.size();
         int extraPosition = position - profileListSize;
-        if(position < profileListSize){
+        if(position >= 0 && position < profileListSize){
             String profileName = mProfileList.get(position);
             if(mProfiles.containsKey(profileName)) return profileName;
         }else if(extraPosition >= 0 && extraPosition < mExtraEntires.length) {
@@ -64,7 +104,16 @@ public class ProfileAdapter extends BaseAdapter {
 
 
     public int resolveProfileIndex(String name) {
-        return mProfileList.indexOf(name);
+        int index = mProfileList.indexOf(name);
+        return index < 0 ? -1 : index + leadingRows();
+    }
+
+    /**
+     * MOB2: where the list's first profile is ({@link ProfileOrder}), or -1 without profiles. A choice
+     * that is gone falls here, never to a HashMap's first entry or to a row that is no profile.
+     */
+    public int firstProfilePosition() {
+        return mProfileList.isEmpty() ? -1 : leadingRows();
     }
 
     @Override
@@ -75,7 +124,8 @@ public class ProfileAdapter extends BaseAdapter {
     @Override
     public void notifyDataSetChanged() {
         mProfiles = new HashMap<>(LauncherProfiles.mainProfileJson.profiles);
-        mProfileList = new ArrayList<>(Arrays.asList(mProfiles.keySet().toArray(new String[0])));
+        // MOB2: the list's own order (Projects, the default profile, then by name), not a HashMap's.
+        mProfileList = ProfileOrder.keys(mProfiles, Locale.getDefault());
         super.notifyDataSetChanged();
     }
 
@@ -117,19 +167,58 @@ public class ProfileAdapter extends BaseAdapter {
         if (!(v instanceof com.kdt.mcgui.mcVersionSpinner)) gg.projects.mobile.ui.ProfileRows.listRowBackground(extendedTextView, false);
     }
 
+    /**
+     * MOB2: the official pack's quiet row, as the desktop's "Kurulu değil" card: the emblem at half
+     * strength without its colours, "Resmî paketi kur" over "Kurulu değil" in the meta style. No gold,
+     * never the selected tint.
+     */
+    public void setViewOfficial(View v) {
+        ExtendedTextView extendedTextView = (ExtendedTextView) v;
+        Context context = v.getContext();
+        if (mOfficialIcon == null) mOfficialIcon = dimmedEmblem(context);
+        if (mOfficialLabel == null) mOfficialLabel = officialLabel(context);
+        extendedTextView.setCompoundDrawablesRelative(mOfficialIcon, null, extendedTextView.getCompoundsDrawables()[2], null);
+        extendedTextView.setText(mOfficialLabel);
+        if (!(v instanceof com.kdt.mcgui.mcVersionSpinner)) gg.projects.mobile.ui.ProfileRows.listRowBackground(extendedTextView, false);
+    }
+
+    private static Drawable dimmedEmblem(Context context) {
+        Drawable emblem = ResourcesCompat.getDrawable(context.getResources(), R.drawable.ic_projects_profile, null);
+        if (emblem == null) return null;
+        // Its own copy: the profile icon cache hands the same drawable to the Projects profile's rows.
+        emblem = emblem.mutate();
+        ColorMatrix gray = new ColorMatrix();
+        gray.setSaturation(0f);
+        emblem.setColorFilter(new ColorMatrixColorFilter(gray));
+        emblem.setAlpha(128);
+        return emblem;
+    }
+
+    private static CharSequence officialLabel(Context context) {
+        SpannableStringBuilder text = new SpannableStringBuilder(context.getString(R.string.mob_profile_official_install)).append('\n');
+        int start = text.length();
+        text.append(context.getString(R.string.mob_profile_official_missing));
+        Typeface regular = ResourcesCompat.getFont(context, R.font.figtree_regular);
+        if (regular != null) text.setSpan(new gg.projects.mobile.ui.FontSpan(regular), start, text.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        text.setSpan(new AbsoluteSizeSpan(13, true), start, text.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        text.setSpan(new ForegroundColorSpan(ContextCompat.getColor(context, R.color.projects_ash_400)),
+                start, text.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        return text;
+    }
+
     public void setView(View v, Object object, boolean displaySelection) {
         if(object instanceof String) {
             setViewProfile(v, (String) object, displaySelection);
         }else if(object instanceof ProfileAdapterExtra) {
             setViewExtra(v, (ProfileAdapterExtra) object);
+        }else if(object == OFFICIAL_ROW) {
+            setViewOfficial(v);
         }
     }
 
     /** Reload profiles from the file */
     public void reloadProfiles(){
         LauncherProfiles.load();
-        mProfiles = new HashMap<>(LauncherProfiles.mainProfileJson.profiles);
-        mProfileList = new ArrayList<>(Arrays.asList(mProfiles.keySet().toArray(new String[0])));
         notifyDataSetChanged();
     }
 

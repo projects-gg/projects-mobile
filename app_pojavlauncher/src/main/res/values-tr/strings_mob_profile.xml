@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- MOB2: deleting a profile (into a 30-day trash, with "Geri al" on the home screen), and the official pack's
+     quiet row in the profile list while the Projects profile is gone (the desktop's LIB1 words). No case ending
+     is put after the name: "%1$s silindi", "%1$s silinsin mi?". -->
+<resources>
+    <string name="mob_profile_delete_title">%1$s silinsin mi?</string>
+    <string name="mob_profile_delete_projects">Dünyaların ve modların telefonda kalır, resmî paketi istediğin zaman yeniden kurabilirsin.</string>
+    <string name="mob_profile_delete_cancel">Vazgeç</string>
+    <string name="mob_profile_deleted">%1$s silindi</string>
+    <string name="mob_profile_restored">%1$s geri geldi</string>
+    <string name="mob_profile_unnamed">Profil</string>
+    <string name="mob_profile_delete_failed">Profil silinemedi. Tekrar dene.</string>
+    <string name="mob_profile_undo_failed">Profil geri alınamadı.</string>
+    <string name="mob_profile_official_install">Resmî paketi kur</string>
+    <string name="mob_profile_official_missing">Kurulu değil</string>
+    <string name="mob_profile_official_failed">Resmî paket kurulamadı. Tekrar dene.</string>
+</resources>

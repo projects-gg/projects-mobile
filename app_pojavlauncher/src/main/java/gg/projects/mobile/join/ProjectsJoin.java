@@ -133,6 +133,8 @@ public final class ProjectsJoin {
         ProgressLayout.setProgress(ProgressLayout.INSTALL_MODPACK, 0, R.string.projects_join_preparing);
         Snapshot snapshot = ProjectsContent.latestBlocking(app);
         MinecraftProfile existing = ProjectsProfile.find();
+        // MOB-POLISH: a Projects profile the player deleted comes back from the trash first, with its settings.
+        if (existing == null) existing = ProjectsProfile.restoreFromTrash();
         File gameDir = ProjectsProfile.gameDir();
         PackState state = PackState.load(gameDir);
         PackChoice choice = snapshot.packChoice(state);

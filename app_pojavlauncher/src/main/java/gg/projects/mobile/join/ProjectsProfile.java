@@ -39,29 +39,86 @@ public final class ProjectsProfile {
     /**
      * Creates the profile, or moves it to {@code versionId} when one is given. A profile that
      * already exists keeps its version when {@code versionId} is null (vanilla stays pinned).
+     * MOB2: a profile the player deleted comes back from the trash ({@link ProfileRemoval}) with the
+     * player's own settings (renderer, Java, icon, controls) on its own folder, instead of a new one.
      */
     @WorkerThread
     public static MinecraftProfile ensure(String versionId) {
-        LauncherProfiles.load();
-        MinecraftProfile profile = LauncherProfiles.mainProfileJson.profiles.get(KEY);
-        boolean changed = false;
-        if (profile == null) {
-            profile = new MinecraftProfile();
-            profile.name = NAME;
-            profile.icon = ICON;
-            profile.gameDir = GAME_DIR;
-            profile.lastVersionId = versionId != null ? versionId : MinecraftProfile.LATEST_RELEASE;
-            LauncherProfiles.mainProfileJson.profiles.put(KEY, profile);
-            changed = true;
-        } else if (versionId != null && !versionId.equals(profile.lastVersionId)) {
-            profile.lastVersionId = versionId;
-            changed = true;
+        return ensure(versionId, null);
+    }
+
+    /**
+     * {@link #ensure(String)}; a profile made new (none in the trash either) starts on {@code versionId},
+     * else on {@code freshVersion}, else on the newest release.
+     */
+    @WorkerThread
+    private static MinecraftProfile ensure(String versionId, String freshVersion) {
+        synchronized (ProfileRemoval.LOCK) {
+            LauncherProfiles.load();
+            MinecraftProfile profile = LauncherProfiles.mainProfileJson.profiles.get(KEY);
+            boolean changed = false;
+            boolean restored = false;
+            if (profile == null) {
+                profile = ProfileRemoval.fromTrash(KEY);
+                restored = profile != null;
+                if (!restored) {
+                    profile = new MinecraftProfile();
+                    profile.name = NAME;
+                    profile.icon = ICON;
+                    profile.gameDir = GAME_DIR;
+                    profile.lastVersionId = versionId != null ? versionId
+                            : freshVersion != null ? freshVersion : MinecraftProfile.LATEST_RELEASE;
+                } else if (versionId != null) {
+                    profile.lastVersionId = versionId;
+                }
+                LauncherProfiles.mainProfileJson.profiles.put(KEY, profile);
+                changed = true;
+            } else if (versionId != null && !versionId.equals(profile.lastVersionId)) {
+                profile.lastVersionId = versionId;
+                changed = true;
+            }
+            if (profile.gameDir == null) {
+                profile.gameDir = GAME_DIR;
+                changed = true;
+            }
+            if (changed) LauncherProfiles.write();
+            if (restored) {
+                // Out of the trash only once it is back in launcher_profiles.json.
+                ProfileRemoval.forget(KEY);
+                Log.i(TAG, "Projects profile back from the trash with its settings");
+            }
+            return profile;
         }
-        if (profile.gameDir == null) {
-            profile.gameDir = GAME_DIR;
-            changed = true;
+    }
+
+    /**
+     * MOB-POLISH: the deleted profile back from the trash when it is there, before a join decides anything (an
+     * offline phone with the pack installed starts it as it is); null when it is neither there nor in the trash.
+     */
+    @WorkerThread
+    @androidx.annotation.Nullable
+    public static MinecraftProfile restoreFromTrash() {
+        synchronized (ProfileRemoval.LOCK) {
+            MinecraftProfile there = find();
+            if (there != null) return there;
+            if (ProfileRemoval.fromTrash(KEY) == null) return null;
+            return ensure(null, null);
         }
-        if (changed) LauncherProfiles.write();
+    }
+
+    /**
+     * MOB2: "Resmî paketi kur" in the profile list: the profile again (from the trash with the player's
+     * own settings when it is there, else new on {@code freshVersion}, which its first join moves to the
+     * pack's version), its folder made, and Play's choice. The pack's files come with the first start, as
+     * on the desktop.
+     */
+    @WorkerThread
+    public static MinecraftProfile install(String freshVersion) {
+        MinecraftProfile profile = ensure(null, freshVersion);
+        File dir = gameDir(profile);
+        if (!dir.isDirectory() && !dir.mkdirs()) Log.w(TAG, "cannot create " + dir);
+        // The game runs in another process and reads the selection from disk.
+        LauncherPreferences.DEFAULT_PREF.edit().putString(LauncherPreferences.PREF_KEY_CURRENT_PROFILE, KEY).commit();
         return profile;
     }
 

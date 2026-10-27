@@ -6,21 +6,26 @@ import static net.kdt.pojavlaunch.fragments.ProfileEditorFragment.DELETED_PROFIL
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.transition.Slide;
 import android.transition.Transition;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.PopupWindow;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.FragmentActivity;
 
+import net.kdt.pojavlaunch.PojavApplication;
 import net.kdt.pojavlaunch.R;
 import net.kdt.pojavlaunch.Tools;
 import net.kdt.pojavlaunch.extra.ExtraConstants;
@@ -31,7 +36,14 @@ import net.kdt.pojavlaunch.prefs.LauncherPreferences;
 import net.kdt.pojavlaunch.profiles.ProfileAdapter;
 import net.kdt.pojavlaunch.profiles.ProfileAdapterExtra;
 
+import java.io.IOException;
+
 import fr.spse.extended_view.ExtendedTextView;
+import gg.projects.mobile.join.DefaultProfiles;
+import gg.projects.mobile.join.ProfileRemoval;
+import gg.projects.mobile.join.ProjectsProfile;
+import gg.projects.mobile.ui.Haptics;
+import gg.projects.mobile.ui.UndoBar;
 
 /**
  * A class implementing custom spinner like behavior, notably:
@@ -39,6 +51,10 @@ import fr.spse.extended_view.ExtendedTextView;
  */
 public class mcVersionSpinner extends ExtendedTextView {
     private static final int VERSION_SPINNER_PROFILE_CREATE = 0;
+    private static final String TAG = "ProjectsProfiles";
+    private static final Handler MAIN = new Handler(Looper.getMainLooper());
+    /** MOB2: frames the home screen's undo bar is waited for (it is made with the home card). */
+    private static final int UNDO_BAR_TRIES = 10;
     public mcVersionSpinner(@NonNull Context context) {
         super(context);
         init();
@@ -57,6 +73,8 @@ public class mcVersionSpinner extends ExtendedTextView {
     private PopupWindow mPopupWindow = null;
     private Object mPopupAnimation;
     private int mSelectedIndex;
+    private int mUndoBarTries;
+    private final Runnable mShowPendingUndo = this::showPendingUndo;
 
     private final ProfileAdapter mProfileAdapter = new ProfileAdapter(new ProfileAdapterExtra[]{
             new ProfileAdapterExtra(VERSION_SPINNER_PROFILE_CREATE,
@@ -68,9 +86,11 @@ public class mcVersionSpinner extends ExtendedTextView {
     /** Set the selection AND saves it as a shared preference */
     public void setProfileSelection(int position){
         setSelection(position);
+        // MOB2: only a profile is Play's choice (not the "Resmî paketi kur" or "Yeni profil" rows).
+        Object item = mProfileAdapter.getItem(position);
+        if (!(item instanceof String)) return;
         LauncherPreferences.DEFAULT_PREF.edit()
-                .putString(LauncherPreferences.PREF_KEY_CURRENT_PROFILE,
-                        mProfileAdapter.getItem(position).toString())
+                .putString(LauncherPreferences.PREF_KEY_CURRENT_PROFILE, (String) item)
                 .apply();
     }
 
@@ -92,6 +112,11 @@ public class mcVersionSpinner extends ExtendedTextView {
     /** Reload profiles from the file, forcing the spinner to consider the new data */
     public void reloadProfiles(){
         mProfileAdapter.reloadProfiles();
+        // MOB2: rows can move (the list has its own order, and the "Resmî paketi kur" row comes and
+        // goes): the play bar keeps showing Play's choice, and its edit button opens that profile.
+        int index = mProfileAdapter.resolveProfileIndex(
+                LauncherPreferences.DEFAULT_PREF.getString(LauncherPreferences.PREF_KEY_CURRENT_PROFILE, ""));
+        if (index >= 0) setSelection(index);
     }
 
     /** Initialize various behaviors */
@@ -110,15 +135,20 @@ public class mcVersionSpinner extends ExtendedTextView {
         setPaddingRelative(startPadding, 0, endPadding, 0);
         setCompoundDrawablePadding(getContext().getResources().getDimensionPixelOffset(R.dimen.projects_space_md));
         gg.projects.mobile.ui.Press.attach(this, gg.projects.mobile.ui.Press.Style.ROW);
+        // MOB2: while the Projects profile is gone, the list offers it again first ("Resmî paketi kur").
+        mProfileAdapter.setOfficialRow(true);
 
-        int profileIndex;
+        int profileIndex = -1;
         String extra_value = (String) ExtraCore.consumeValue(ExtraConstants.REFRESH_VERSION_SPINNER);
-        if(extra_value != null){
-            profileIndex = extra_value.equals(DELETED_PROFILE) ? 0
-                    : getProfileAdapter().resolveProfileIndex(extra_value);
-        }else
+        if(extra_value == null) {
             profileIndex = mProfileAdapter.resolveProfileIndex(
                     LauncherPreferences.DEFAULT_PREF.getString(LauncherPreferences.PREF_KEY_CURRENT_PROFILE,""));
+        } else if (!extra_value.equals(DELETED_PROFILE)) {
+            profileIndex = mProfileAdapter.resolveProfileIndex(extra_value);
+        }
+        // MOB2: a choice that is gone falls to the list's first profile, never to a HashMap's first
+        // entry (practically random) nor to a row that is no profile.
+        if (profileIndex < 0) profileIndex = mProfileAdapter.firstProfilePosition();
 
         setProfileSelection(Math.max(0,profileIndex));
 
@@ -150,6 +180,93 @@ public class mcVersionSpinner extends ExtendedTextView {
         }
     }
 
+    /**
+     * MOB2: "Resmî paketi kur": the Projects profile again, with the player's own settings when the
+     * trash still has them, chosen for Play; OYNA's join brings the pack's files, as on the desktop.
+     */
+    private void installOfficial() {
+        final String version = DefaultProfiles.recommended();
+        PojavApplication.sExecutorService.execute(() -> {
+            boolean made;
+            try {
+                made = ProjectsProfile.install(version) != null;
+            } catch (RuntimeException e) {
+                Log.w(TAG, "Projects profile not made", e);
+                made = false;
+            }
+            final boolean ok = made;
+            MAIN.post(() -> {
+                // The choice is on disk already: a home screen made meanwhile shows it.
+                if (!isAttachedToWindow()) return;
+                if (!ok) {
+                    Haptics.reject(this);
+                    Toast.makeText(getContext(), R.string.mob_profile_official_failed, Toast.LENGTH_LONG).show();
+                    return;
+                }
+                reloadProfiles();
+                int index = mProfileAdapter.resolveProfileIndex(ProjectsProfile.KEY);
+                if (index >= 0) setProfileSelection(index);
+                Haptics.confirm(this);
+            });
+        });
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        // MOB2: a profile deleted in the editor offers "Geri al" on the home screen the editor closes onto.
+        if (ProfileRemoval.hasUndo()) {
+            mUndoBarTries = 0;
+            post(mShowPendingUndo);
+        }
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        removeCallbacks(mShowPendingUndo);
+        super.onDetachedFromWindow();
+    }
+
+    /** "<Ad> silindi" with "Geri al" in the home screen's undo bar (made with the home card). */
+    private void showPendingUndo() {
+        if (!isAttachedToWindow() || !ProfileRemoval.hasUndo()) return;
+        final UndoBar bar = UndoBar.find(this);
+        if (bar == null) {
+            if (++mUndoBarTries < UNDO_BAR_TRIES) postDelayed(mShowPendingUndo, 50);
+            return;
+        }
+        final ProfileRemoval.Undo undo = ProfileRemoval.takeUndo();
+        if (undo == null) return;
+        bar.show(getContext().getString(R.string.mob_profile_deleted, undo.name), R.drawable.projects_ic_trash,
+                () -> undoDelete(bar, undo));
+    }
+
+    /** "Geri al": the profile back from the trash under its own key, Play's choice again. */
+    private void undoDelete(final UndoBar bar, final ProfileRemoval.Undo undo) {
+        PojavApplication.sExecutorService.execute(() -> {
+            boolean restored;
+            try {
+                restored = ProfileRemoval.restore(undo.key);
+            } catch (IOException | RuntimeException e) {
+                Log.w(TAG, "profile not taken back", e);
+                restored = false;
+            }
+            final boolean back = restored;
+            MAIN.post(() -> {
+                if (!isAttachedToWindow()) return;
+                if (!back) {
+                    bar.dismiss();
+                    Toast.makeText(getContext(), R.string.mob_profile_undo_failed, Toast.LENGTH_LONG).show();
+                    return;
+                }
+                reloadProfiles();
+                int index = mProfileAdapter.resolveProfileIndex(undo.key);
+                if (index >= 0) setProfileSelection(index);
+                bar.showResult(getContext().getString(R.string.mob_profile_restored, undo.name), R.drawable.projects_ic_history);
+            });
+        });
+    }
+
 
     /** Create the listView and popup window for the interface, and set up the click behavior */
     @SuppressLint("ClickableViewAccessibility")
@@ -161,6 +278,9 @@ public class mcVersionSpinner extends ExtendedTextView {
             if(item instanceof String) {
                 hidePopup(true);
                 setProfileSelection(position);
+            }else if(item == ProfileAdapter.OFFICIAL_ROW) { // MOB2
+                hidePopup(true);
+                installOfficial();
             }else if(item instanceof ProfileAdapterExtra) {
                 hidePopup(false);
                 performExtraAction((ProfileAdapterExtra) item);

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- MOB2: deleting a profile (into a 30-day trash, with "Undo" on the home screen), and the official pack's
+     quiet row in the profile list while the Projects profile is gone (the desktop's LIB1 words). Short,
+     sentence case; "%1$s" is the profile's name as the list shows it. -->
+<resources>
+    <string name="mob_profile_delete_title">Delete %1$s?</string>
+    <!-- The one sentence before the Projects profile goes: what stays, and the way back. -->
+    <string name="mob_profile_delete_projects">Your worlds and mods stay on the phone, and you can install the official pack again any time.</string>
+    <string name="mob_profile_delete_cancel">Cancel</string>
+    <string name="mob_profile_deleted">%1$s deleted</string>
+    <string name="mob_profile_restored">%1$s is back</string>
+    <!-- Stands in for the name of a profile that has none. -->
+    <string name="mob_profile_unnamed">Profile</string>
+    <string name="mob_profile_delete_failed">Couldn\'t delete the profile. Try again.</string>
+    <string name="mob_profile_undo_failed">Couldn\'t bring the profile back.</string>
+    <string name="mob_profile_official_install">Install the official pack</string>
+    <string name="mob_profile_official_missing">Not installed</string>
+    <string name="mob_profile_official_failed">Couldn\'t install the official pack. Try again.</string>
+</resources>

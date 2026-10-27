@@ -18,12 +18,15 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.AppCompatCheckBox;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
 
 import net.kdt.pojavlaunch.R;
 import net.kdt.pojavlaunch.Tools;
@@ -100,16 +103,7 @@ public class ProfileEditorFragment extends Fragment implements CropperUtils.Crop
             Tools.backToMainMenu(requireActivity());
         });
 
-        mDeleteButton.setOnClickListener(v -> {
-            if(LauncherProfiles.mainProfileJson.profiles.size() > 1){
-                ProfileIconCache.dropIcon(mProfileKey);
-                LauncherProfiles.mainProfileJson.profiles.remove(mProfileKey);
-                LauncherProfiles.write();
-                ExtraCore.setValue(ExtraConstants.REFRESH_VERSION_SPINNER, DELETED_PROFILE);
-            }
-
-            Tools.removeCurrentFragment(requireActivity());
-        });
+        mDeleteButton.setOnClickListener(v -> onDelete());
 
 
         View.OnClickListener gameDirListener = getGameDirListener();
@@ -131,6 +125,60 @@ public class ProfileEditorFragment extends Fragment implements CropperUtils.Crop
         mProfileIcon.setOnClickListener(v -> CropperUtils.startCropper(mCropperLauncher));
 
         loadValues(LauncherPreferences.DEFAULT_PREF.getString(LauncherPreferences.PREF_KEY_CURRENT_PROFILE, ""), view.getContext());
+    }
+
+    /**
+     * MOB2: "Sil" moves the profile to the trash (30 days) and leaves its game folder (worlds, mods)
+     * where it is; the home screen then offers "Geri al" and Play's choice moves to the list's first
+     * profile. The Projects profile asks first, in one sentence. The only profile stays (one must
+     * remain), and a profile not saved yet has nothing to delete: the editor just closes.
+     */
+    private void onDelete() {
+        if (!gg.projects.mobile.join.ProfileRemoval.canDelete(mProfileKey)) {
+            Tools.removeCurrentFragment(requireActivity());
+            return;
+        }
+        if (!gg.projects.mobile.join.ProjectsProfile.KEY.equals(mProfileKey)) {
+            delete();
+            return;
+        }
+        new AlertDialog.Builder(requireContext())
+                .setTitle(getString(R.string.mob_profile_delete_title, storedName()))
+                .setMessage(R.string.mob_profile_delete_projects)
+                .setPositiveButton(R.string.global_delete, (dialog, which) -> {
+                    if (isAdded()) delete();
+                })
+                .setNegativeButton(R.string.mob_profile_delete_cancel, null)
+                .show();
+    }
+
+    private void delete() {
+        FragmentActivity activity = requireActivity();
+        String name = storedName();
+        String chosen;
+        try {
+            chosen = gg.projects.mobile.join.ProfileRemoval.delete(mProfileKey);
+        } catch (IOException | RuntimeException e) {
+            Log.w(TAG, "profile not deleted", e);
+            Toast.makeText(activity, R.string.mob_profile_delete_failed, Toast.LENGTH_LONG).show();
+            return;
+        }
+        if (chosen != null) {
+            ProfileIconCache.dropIcon(mProfileKey);
+            // The home screen's play bar shows Play's new choice; its undo bar offers "Geri al".
+            ExtraCore.setValue(ExtraConstants.REFRESH_VERSION_SPINNER, chosen);
+            gg.projects.mobile.join.ProfileRemoval.offerUndo(mProfileKey, name);
+        }
+        Tools.removeCurrentFragment(activity);
+    }
+
+    /** The stored profile's name as the player reads it ("Varsayılan"; "Profil" when it has none). */
+    private String storedName() {
+        MinecraftProfile stored = LauncherProfiles.mainProfileJson == null ? null
+                : LauncherProfiles.mainProfileJson.profiles.get(mProfileKey);
+        String name = stored != null ? stored.name : mTempProfile != null ? mTempProfile.name : null;
+        return gg.projects.mobile.join.ProfileNames.shown(name,
+                getString(R.string.projects_profile_default_name), getString(R.string.mob_profile_unnamed));
     }
 
     private View.OnClickListener getGameDirListener() {
@@ -198,7 +246,9 @@ public class ProfileEditorFragment extends Fragment implements CropperUtils.Crop
 
         mDefaultVersion.setText(mTempProfile.lastVersionId);
         mDefaultJvmArgument.setText(mTempProfile.javaArgs == null ? "" : mTempProfile.javaArgs);
-        mDefaultName.setText(mTempProfile.name);
+        // MOB2: Amethyst's "(Default)" profile by the name the profile list gives it ("Varsayılan").
+        mDefaultName.setText(gg.projects.mobile.join.ProfileNames.editable(mTempProfile.name,
+                context.getString(R.string.projects_profile_default_name)));
         mDefaultPath.setText(mTempProfile.gameDir == null ? "" : mTempProfile.gameDir);
         mDefaultControl.setText(mTempProfile.controlFile == null ? "" : mTempProfile.controlFile);
         mUseANGLE.setChecked(mTempProfile.useANGLE);
@@ -256,7 +306,10 @@ public class ProfileEditorFragment extends Fragment implements CropperUtils.Crop
         //First, check for potential issues in the inputs
         mTempProfile.lastVersionId = mDefaultVersion.getText().toString();
         mTempProfile.controlFile = mDefaultControl.getText().toString();
-        mTempProfile.name = mDefaultName.getText().toString();
+        // MOB2: the localized default name left as it was keeps the stored one (the app knows the
+        // default profile by it); a name the player typed is the new name.
+        mTempProfile.name = gg.projects.mobile.join.ProfileNames.saved(mTempProfile.name,
+                mDefaultName.getText().toString(), getString(R.string.projects_profile_default_name));
         mTempProfile.javaArgs = mDefaultJvmArgument.getText().toString()
                 .replaceAll("[\r\n]+", " ")
                 .trim();

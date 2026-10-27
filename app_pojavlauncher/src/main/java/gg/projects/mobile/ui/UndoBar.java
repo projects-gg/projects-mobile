@@ -118,6 +118,19 @@ public final class UndoBar extends LinearLayout {
         return bar;
     }
 
+    /**
+     * MOB2: the bar {@link #attach} put on {@code view}'s screen ({@code view} or one of its parents
+     * holds it), or null when that screen has none yet.
+     */
+    @Nullable
+    public static UndoBar find(View view) {
+        for (View at = view; at != null; at = at.getParent() instanceof View ? (View) at.getParent() : null) {
+            Object bar = at.getTag(R.id.projects_undo_bar);
+            if (bar instanceof UndoBar) return (UndoBar) bar;
+        }
+        return null;
+    }
+
     /** Shows {@code message} with "Geri al" doing {@code onUndo} (and the bar leaving). */
     public void show(CharSequence message, @Nullable Runnable onUndo) {
         removeCallbacks(mLeave);
@@ -137,6 +150,15 @@ public final class UndoBar extends LinearLayout {
         }
         enter();
         postDelayed(mLeave, undo ? STAY_MS : RESULT_STAY_MS + 1200);
+    }
+
+    /**
+     * MOB2: as {@link #show(CharSequence, Runnable)} for a line that is no success but something gone
+     * ("Projects silindi"): {@code mark} in quiet ash where the jade check would be.
+     */
+    public void show(CharSequence message, @DrawableRes int mark, @Nullable Runnable onUndo) {
+        show(message, onUndo);
+        setMark(mark, R.color.projects_ash_400);
     }
 
     /**
