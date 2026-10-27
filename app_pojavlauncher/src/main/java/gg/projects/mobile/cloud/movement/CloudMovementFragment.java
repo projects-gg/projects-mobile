@@ -174,8 +174,8 @@ public final class CloudMovementFragment extends CloudScreen implements CloudSer
         if (a == null) shape = "loading";
         else if (mState != null && !mState.ok) shape = "off:" + mState.reason + (mBusy ? ":busy" : "");
         else if (mState == null && !CloudStatus.inGame(a)) shape = "off:not_running";
-        else if (mState == null) shape = mLive == CloudService.Live.LOST || mLive == CloudService.Live.HOST_OFFLINE ? "away" : "loading";
-        else if (move == null) shape = "away";
+        else if (mState == null) shape = mLive == CloudService.Live.LOST || mLive == CloudService.Live.HOST_OFFLINE ? "away:" + mLive : "loading";
+        else if (move == null) shape = "away:" + mLive;
         else shape = "ok|" + move.main + "|" + move.own;
         if (!shape.equals(mShape)) {
             mShape = shape;
@@ -183,7 +183,7 @@ public final class CloudMovementFragment extends CloudScreen implements CloudSer
                 LinearLayout content = clear();
                 forget();
                 if (content != null) content.addView(CloudUi.loading(ctx()));
-            } else if ("away".equals(shape)) {
+            } else if (shape.startsWith("away:")) {
                 // Our machine away is said as such (never the Minecraft server's word); a lost socket, the account.
                 quiet(getString(mLive == CloudService.Live.HOST_OFFLINE ? R.string.projects_feat_move_machine_away
                         : R.string.projects_feat_inv_unreachable), null);
