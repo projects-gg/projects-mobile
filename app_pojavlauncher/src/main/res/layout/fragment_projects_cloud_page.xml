@@ -21,7 +21,8 @@
         android:paddingEnd="12dp"
         android:visibility="gone" />
 
-    <ScrollView
+    <!-- MOB-POLISH: rows fade under the header instead of being sliced mid-letter. -->
+    <gg.projects.mobile.social.ui.FadingScrollView
         android:id="@+id/projects_cloud_scroll"
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -41,7 +42,7 @@
             android:paddingStart="12dp"
             android:paddingEnd="12dp"
             android:paddingBottom="28dp" />
-    </ScrollView>
+    </gg.projects.mobile.social.ui.FadingScrollView>
 
     <FrameLayout
         android:id="@+id/projects_cloud_bottom"

@@ -11,7 +11,8 @@
 	android:layout_height="match_parent"
 	android:background="@color/background_app">
 
-	<ScrollView
+	<!-- MOB-POLISH: rows fade under the sticky bar above instead of being sliced mid-letter. -->
+	<gg.projects.mobile.social.ui.FadingScrollView
 		android:id="@+id/projects_menu_scroll"
 		android:layout_width="match_parent"
 		android:layout_height="0dp"
@@ -118,7 +119,7 @@
 					android:text="@string/mcl_button_open_directory" />
 			</LinearLayout>
 		</LinearLayout>
-	</ScrollView>
+	</gg.projects.mobile.social.ui.FadingScrollView>
 
 	<!-- The play bar's backing (cosmetic): from 8dp above the profile row to the bottom. -->
 	<Space
