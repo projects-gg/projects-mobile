@@ -179,6 +179,24 @@ public final class ChamferDrawable extends Drawable {
         return states;
     }
 
+    /**
+     * FEAT-M: a walk button of the movement panel that the machine just refused: {@link #key}'s shape with a flare-400
+     * edge (70 %, the launcher's) while the line above says why.
+     */
+    public static Drawable keyRefused(Context context) {
+        Rect padding = padding(context, 8, 6);
+        float cut = cut(context);
+        float stroke = context.getResources().getDisplayMetrics().density;
+        int flare = (ContextCompat.getColor(context, R.color.projects_flare_400) & 0x00FFFFFF) | 0xB3000000;
+        StateListDrawable states = new StateListDrawable();
+        states.addState(new int[]{-android.R.attr.state_enabled}, new ChamferDrawable(0, 0x1FF3EBDD, stroke, cut, padding));
+        states.addState(new int[]{android.R.attr.state_pressed}, new ChamferDrawable(0x1AF3EBDD, flare, 1.5f * stroke, cut, padding));
+        states.addState(new int[]{android.R.attr.state_focused},
+                new ChamferDrawable(0, ContextCompat.getColor(context, R.color.projects_gold_300), 2 * stroke, cut, padding));
+        states.addState(new int[]{}, new ChamferDrawable(0, flare, 1.5f * stroke, cut, padding));
+        return states;
+    }
+
     /** Quiet secondary action: transparent with an obsidian-700 outline. */
     public static Drawable secondary(Context context) {
         Rect padding = padding(context, 14, 8);

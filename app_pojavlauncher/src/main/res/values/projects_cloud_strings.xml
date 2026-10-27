@@ -195,6 +195,7 @@
     <string name="projects_cloud_settings_server_changes">%1$d/%2$d server changes this hour</string>
     <string name="projects_cloud_settings_anti_afk">Anti-AFK</string>
     <string name="projects_cloud_settings_anti_afk_help">Sneaks now and then so the server doesn\'t count you as AFK.</string>
+    <string name="projects_cloud_settings_anti_afk_interval">Sneak interval</string>
     <string name="projects_cloud_settings_at_least">At least</string>
     <string name="projects_cloud_settings_at_most">At most</string>
     <string name="projects_cloud_settings_owner">Your own in-game name</string>

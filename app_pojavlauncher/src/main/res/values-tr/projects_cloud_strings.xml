@@ -196,6 +196,7 @@
     <string name="projects_cloud_settings_server_changes">Bu saat içinde %1$d/%2$d sunucu değişikliği</string>
     <string name="projects_cloud_settings_anti_afk">AFK engelleme</string>
     <string name="projects_cloud_settings_anti_afk_help">Sunucu seni AFK saymasın diye arada bir eğilir.</string>
+    <string name="projects_cloud_settings_anti_afk_interval">Eğilme aralığı</string>
     <string name="projects_cloud_settings_at_least">En az</string>
     <string name="projects_cloud_settings_at_most">En çok</string>
     <string name="projects_cloud_settings_owner">Oyundaki kendi adın</string>

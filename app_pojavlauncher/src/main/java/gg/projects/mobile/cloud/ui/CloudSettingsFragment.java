@@ -289,6 +289,8 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
         antiGroup.addView(anti);
         content.addView(antiGroup);
         content.addView(CloudUi.note(c, getString(R.string.projects_cloud_settings_anti_afk_help)));
+        // "Eğilme aralığı" (the launcher's word: it sneaks), never "Hareket": that is the movement block at the end.
+        delays.addView(CloudRowSheet.label(c, getString(R.string.projects_cloud_settings_anti_afk_interval)));
         LinearLayout pair = new LinearLayout(c);
         pair.setOrientation(LinearLayout.HORIZONTAL);
         CloudUi.Field least = CloudUi.field(c, getString(R.string.projects_cloud_settings_at_least), String.valueOf(mConfig.delayMin), null,

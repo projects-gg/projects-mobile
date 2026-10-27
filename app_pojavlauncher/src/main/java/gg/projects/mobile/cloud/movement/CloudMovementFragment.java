@@ -70,8 +70,8 @@ public final class CloudMovementFragment extends CloudScreen implements CloudSer
     /** A held direction asks for 8 blocks again this often (the contract's rhythm). */
     private static final long HOLD_REPEAT_MS = 1500;
     private static final long REFUSAL_MS = 4000;
-    /** A trade holds every control but "Dur" at once: one even dim (the launcher's). */
-    private static final float LOCKED_ALPHA = 0.55f;
+    /** A trade holds every control but "Dur" at once: one even dim, as far as a disabled control (the launcher's 45 %). */
+    private static final float LOCKED_ALPHA = 0.45f;
     /** The walks to an own account that is not in game wait, dimmed. */
     private static final float WAITING_ALPHA = 0.5f;
 
@@ -105,15 +105,17 @@ public final class CloudMovementFragment extends CloudScreen implements CloudSer
     private boolean mStopShown;
     @Nullable
     private View mSneakKey;
+    /** The pad, "Koordinata git" and the walks: what a trade holds, as one block. */
     @Nullable
-    private LinearLayout mControlBlock;
+    private InertBlock mControlBlock;
     private boolean mLocked;
-    /** The pad's keys and "Koordinata git" (the walks' buttons wait by a rule of their own as well). */
-    private final List<View> mControls = new ArrayList<>();
     private final List<WalkRow> mWalks = new ArrayList<>();
     /** A refusal holds the line for a moment. */
     @Nullable
     private String mRefusal;
+    /** The walk the machine just refused ("approach:kaan_07"): its button keeps a flare edge while the line says why. */
+    @Nullable
+    private String mRefusedWalk;
     /** "Koordinata git"'s typed target, kept between openings of its sheet ("" is where it stands). */
     private final String[] mTarget = {"", "", ""};
     /** The last walk to coordinates seen in the stream (one started elsewhere fills empty fields once). */
@@ -121,6 +123,7 @@ public final class CloudMovementFragment extends CloudScreen implements CloudSer
     private String mSeenGoto;
     private final Runnable mRefusalEnd = () -> {
         mRefusal = null;
+        mRefusedWalk = null;
         if (alive()) update();
     };
 
@@ -160,6 +163,7 @@ public final class CloudMovementFragment extends CloudScreen implements CloudSer
         mState = null;
         mShape = "";
         mRefusal = null;
+        mRefusedWalk = null;
         View view = getView();
         if (view != null) view.removeCallbacks(mRefusalEnd);
     }
@@ -207,7 +211,6 @@ public final class CloudMovementFragment extends CloudScreen implements CloudSer
         mControlBlock = null;
         mLocked = false;
         mHeldKey = null;
-        mControls.clear();
         mWalks.clear();
     }
 
@@ -273,7 +276,7 @@ public final class CloudMovementFragment extends CloudScreen implements CloudSer
             where.addView(figure, lp);
             mFigures[i] = figure;
         }
-        TextView side = CloudUi.text(c, "", 13.5f, R.color.projects_bone_100, true);
+        TextView side = CloudUi.text(c, "", 12.5f, R.color.projects_ash_300, false);
         side.setGravity(Gravity.END);
         side.setMaxLines(2);
         LinearLayout.LayoutParams sideLp = CloudUi.weight(1f);
@@ -310,7 +313,7 @@ public final class CloudMovementFragment extends CloudScreen implements CloudSer
         content.addView(doing, CloudUi.matchWrap());
 
         // Everything a trade holds, in one block that dims evenly: the pad, the walk to coordinates, the walks.
-        LinearLayout block = new LinearLayout(c);
+        InertBlock block = new InertBlock(c);
         block.setOrientation(LinearLayout.VERTICAL);
         mControlBlock = block;
         block.addView(pad(c), CloudUi.matchWrap());
@@ -318,21 +321,24 @@ public final class CloudMovementFragment extends CloudScreen implements CloudSer
         LinearLayout go = CloudUi.group(c);
         CloudUi.Row coords = CloudUi.actionRow(c, R.drawable.projects_ic_crosshair, getString(R.string.projects_feat_move_goto), v -> coordinates());
         go.addView(coords.view);
-        mControls.add(coords.view);
-        // One row per account the service names: the main one, then the player's others on this server.
+        block.addView(go);
+        // Under "Hesapların" (the launcher's heading), one row per account the service names: the main one, then the
+        // player's others on this server.
         final String main = move == null ? null : move.main;
-        if (main != null) {
-            go.addView(CloudUi.textDivider(c));
-            go.addView(walkRow(c, main, false, getString(R.string.projects_feat_move_go_main), getString(R.string.projects_feat_move_follow_main)));
-        }
-        if (move != null) {
-            for (String name : move.own) {
-                go.addView(CloudUi.textDivider(c));
-                go.addView(walkRow(c, name, true, getString(R.string.projects_feat_move_go_named, name),
+        List<String> own = move == null ? new ArrayList<>() : move.own;
+        if (main != null || !own.isEmpty()) {
+            block.addView(CloudUi.section(c, getString(R.string.projects_feat_move_walks_title)));
+            LinearLayout walks = CloudUi.group(c);
+            if (main != null) {
+                walks.addView(walkRow(c, main, false, getString(R.string.projects_feat_move_go_main), getString(R.string.projects_feat_move_follow_main)));
+            }
+            for (String name : own) {
+                if (walks.getChildCount() > 0) walks.addView(CloudUi.textDivider(c));
+                walks.addView(walkRow(c, name, true, getString(R.string.projects_feat_move_go_named, name),
                         getString(R.string.projects_feat_move_follow_named, name)));
             }
+            block.addView(walks);
         }
-        block.addView(go);
         content.addView(block, CloudUi.matchWrap());
         content.addView(CloudUi.gap(c, 16));
     }
@@ -458,7 +464,6 @@ public final class CloudMovementFragment extends CloudScreen implements CloudSer
         button.setFocusable(true);
         button.setContentDescription(getString(words));
         Press.attach(button, Press.Style.BUTTON);
-        mControls.add(button);
         return button;
     }
 
@@ -499,29 +504,46 @@ public final class CloudMovementFragment extends CloudScreen implements CloudSer
         return button;
     }
 
-    /** Sends one operation; a refusal holds the line for a moment. {@code name}: an approach's or a follow's. */
+    /**
+     * Sends one operation. A refusal holds the line for a moment (a refused walk's button keeps a flare edge meanwhile);
+     * the next operation the machine takes ends it at once (the launcher's). {@code name}: an approach's or a follow's.
+     */
     private void send(@Nullable View from, MoveOp op, @Nullable final String name) {
         CloudService.LiveHandle handle = mHandle;
         if (handle == null) return;
         if (from != null) Haptics.tick(from);
         if (name != null) mAskedName = name;
+        String action = op.action();
+        final String walk = name != null && ("approach".equals(action) || "follow".equals(action))
+                ? action + ":" + name.toLowerCase(Locale.ROOT) : null;
         handle.moveOp(op, error -> {
-            if (error == null || !alive()) return;
+            if (!alive()) return;
+            if (error == null) {
+                if (mRefusal != null || mRefusedWalk != null) endRefusal();
+                return;
+            }
             CloudModel.Account a = account();
             String main = a == null || a.features.movement == null ? null : a.features.movement.main;
             String words = Movement.refusal(ctx(), error, name, main);
-            if (words != null) refuse(words);
+            if (words != null) refuse(words, walk);
         });
     }
 
-    private void refuse(String words) {
+    private void refuse(String words, @Nullable String walk) {
         View view = getView();
         if (view == null) return;
         mRefusal = words;
+        mRefusedWalk = walk;
         Haptics.reject(mLine != null ? mLine.view : view);
         view.removeCallbacks(mRefusalEnd);
         view.postDelayed(mRefusalEnd, REFUSAL_MS);
         update();
+    }
+
+    private void endRefusal() {
+        View view = getView();
+        if (view != null) view.removeCallbacks(mRefusalEnd);
+        mRefusalEnd.run();
     }
 
     /** "Koordinata git": empty fields mean where it stands now (their hints); a typed target stays for the next time. */
@@ -628,7 +650,7 @@ public final class CloudMovementFragment extends CloudScreen implements CloudSer
         if (mSide != null) {
             String dim = p == null ? "" : Movement.dimension(c, p.dim);
             String facing = p == null ? "" : getString(R.string.projects_feat_move_facing, Movement.facing(c, p.facing));
-            mSide.setText(sideText(c, dim, facing));
+            mSide.setText(sideText(dim, facing));
             View line = (View) mSide.getParent();
             line.setContentDescription(p == null ? getString(R.string.projects_feat_move_position)
                     : getString(R.string.projects_feat_move_position) + ": X " + p.x + ", Y " + p.y + ", Z " + p.z + ", "
@@ -644,27 +666,30 @@ public final class CloudMovementFragment extends CloudScreen implements CloudSer
         }
         CloudModel.Account a = account();
         String main = a == null || a.features.movement == null ? null : a.features.movement.main;
-        // The line: a refusal for a moment, else what it is doing, else how the last walk ended, else that it stands.
+        // The line: a refusal for a moment, else what it is doing (a trade's hold grey, with the lock), else how the last
+        // walk ended, else that it stands.
         String doing = doing(c, state);
         String words;
         @ColorRes int tone;
+        boolean held = false;
         if (mRefusal != null) {
             words = mRefusal;
             tone = R.color.projects_flare_400;
         } else if (doing != null) {
             words = doing;
-            tone = state.tradeLock ? R.color.projects_bone_100 : R.color.projects_gold_300;
+            held = state.tradeLock;
+            tone = held ? R.color.projects_ash_300 : R.color.projects_gold_300;
         } else {
             String ended = "idle".equals(state.doing) ? Movement.ended(c, state.ended, state.name != null ? state.name : mAskedName, main) : null;
             words = ended != null ? ended : getString(state.sneak ? R.string.projects_feat_move_sneaking : R.string.projects_feat_move_idle);
             tone = R.color.projects_ash_300;
         }
-        if (mLine != null) mLine.set(words, tone);
+        if (mLine != null) mLine.set(words, tone, held);
         showStop(state.going());
         if (mSneakKey != null) mSneakKey.setActivated(state.sneak);
         lock(state.tradeLock);
         // The player's other accounts from the app's own list (no new request): one not in game cannot be walked to.
-        for (WalkRow row : mWalks) row.set(row.own && !ownInGame(row.name), state);
+        for (WalkRow row : mWalks) row.set(row.own && !ownInGame(row.name), state, mRefusedWalk);
     }
 
     /** "X 128": the axis small and quiet, its number in Tektur (the game's own form of a position). */
@@ -678,19 +703,15 @@ public final class CloudMovementFragment extends CloudScreen implements CloudSer
         return s;
     }
 
-    /** The dimension, then where it looks, quieter; each kept whole when the end of the line has to wrap. */
-    private static CharSequence sideText(Context c, String dim, String facing) {
-        if (dim.isEmpty() && facing.isEmpty()) return "";
+    /**
+     * The dimension, then where it looks, as quiet as each other (the launcher's); each kept whole when the end of the
+     * line has to wrap (an em space between them may break, the spaces inside them may not).
+     */
+    private static String sideText(String dim, String facing) {
         char keep = (char) 0x00A0;
-        SpannableStringBuilder s = new SpannableStringBuilder(dim.replace(' ', keep));
-        s.append("  ");
-        int start = s.length();
-        s.append(facing.replace(' ', keep));
-        s.setSpan(new AbsoluteSizeSpan(sp(c, 12.5f)), start, s.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        s.setSpan(new ForegroundColorSpan(CloudUi.color(c, R.color.projects_ash_300)), start, s.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        Typeface regular = font(c, R.font.figtree_regular);
-        if (regular != null) s.setSpan(new FontSpan(regular), start, s.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        return s;
+        if (dim.isEmpty()) return facing.replace(' ', keep);
+        if (facing.isEmpty()) return dim.replace(' ', keep);
+        return dim.replace(' ', keep) + (char) 0x2003 + facing.replace(' ', keep);
     }
 
     /** How wide "X 000" is in the line's own type: an axis keeps at least that. */
@@ -759,11 +780,13 @@ public final class CloudMovementFragment extends CloudScreen implements CloudSer
         }
     }
 
-    /** An AFK+ deal is open: every control but "Dur" waits, the whole block one even dim. */
+    /**
+     * An AFK+ deal is open: every control but "Dur" waits, the whole block one even dim (opacity only; no control takes
+     * a disabled look of its own on top) and out of reach of touch, focus and TalkBack (the launcher's inert).
+     */
     private void lock(boolean locked) {
-        LinearLayout block = mControlBlock;
+        InertBlock block = mControlBlock;
         if (block == null) return;
-        for (View control : mControls) control.setEnabled(!locked);
         if (locked && mHolding) {
             // A held direction lets go: the machine refuses steps during a trade anyway.
             mHolding = false;
@@ -772,6 +795,7 @@ public final class CloudMovementFragment extends CloudScreen implements CloudSer
         }
         if (locked == mLocked) return;
         mLocked = locked;
+        block.setInert(locked);
         float to = locked ? LOCKED_ALPHA : 1f;
         block.animate().cancel();
         if (Motion.enabled(block.getContext())) block.animate().alpha(to).setDuration(150).setInterpolator(Motion.EASE_OUT).start();
@@ -850,6 +874,40 @@ public final class CloudMovementFragment extends CloudScreen implements CloudSer
         }
     }
 
+    /**
+     * The block a trade holds (the web's {@code inert}): while inert no touch reaches the controls (a finger already
+     * down gets its cancel, so a held key lets go), none takes the focus, and TalkBack skips them; the line above says
+     * why. The controls keep their own look: the block's opacity is the one dim.
+     */
+    private static final class InertBlock extends LinearLayout {
+        private boolean mInert;
+
+        InertBlock(Context c) {
+            super(c);
+        }
+
+        void setInert(boolean inert) {
+            mInert = inert;
+            setDescendantFocusability(inert ? FOCUS_BLOCK_DESCENDANTS : FOCUS_AFTER_DESCENDANTS);
+            setImportantForAccessibility(inert ? IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS : IMPORTANT_FOR_ACCESSIBILITY_AUTO);
+            if (inert) {
+                View focused = findFocus();
+                if (focused != null) focused.clearFocus();
+            }
+        }
+
+        @Override
+        public boolean onInterceptTouchEvent(MotionEvent e) {
+            return mInert || super.onInterceptTouchEvent(e);
+        }
+
+        @SuppressLint("ClickableViewAccessibility")
+        @Override
+        public boolean onTouchEvent(MotionEvent e) {
+            return mInert || super.onTouchEvent(e);
+        }
+    }
+
     /** A walk row's parts that change in place (an own account leaving or joining the game, a trade's lock). */
     private static final class WalkRow {
         final String name;
@@ -866,7 +924,11 @@ public final class CloudMovementFragment extends CloudScreen implements CloudSer
             this.follow = follow;
         }
 
-        void set(boolean waiting, MoveFrames.State state) {
+        /** The walk of this row the machine refused, while the line says why: "approach", "follow" or null. */
+        @Nullable
+        private String mRefused;
+
+        void set(boolean waiting, MoveFrames.State state, @Nullable String refusedWalk) {
             Context c = note.getContext();
             if (own) {
                 note.setText(waiting ? c.getString(R.string.projects_feat_move_not_in_game) : "");
@@ -877,9 +939,24 @@ public final class CloudMovementFragment extends CloudScreen implements CloudSer
             pressed(to, toward && "approach".equals(state.doing));
             pressed(follow, toward && "follow".equals(state.doing));
             for (Button b : new Button[]{to, follow}) {
-                b.setEnabled(!waiting && !state.tradeLock);
+                b.setEnabled(!waiting);
                 b.setAlpha(waiting ? WAITING_ALPHA : 1f);
             }
+            String key = ":" + name.toLowerCase(Locale.ROOT);
+            String refused = refusedWalk == null ? null
+                    : refusedWalk.equals("approach" + key) ? "approach" : refusedWalk.equals("follow" + key) ? "follow" : null;
+            if (!TextUtils.equals(refused, mRefused)) {
+                mRefused = refused;
+                edge(to, "approach".equals(refused));
+                edge(follow, "follow".equals(refused));
+            }
+        }
+
+        /** A refused walk's flare edge, or the key's own; the button keeps its padding (a background brings its own). */
+        private static void edge(Button b, boolean refused) {
+            int start = b.getPaddingStart(), top = b.getPaddingTop(), end = b.getPaddingEnd(), bottom = b.getPaddingBottom();
+            b.setBackground(refused ? ChamferDrawable.keyRefused(b.getContext()) : ChamferDrawable.key(b.getContext()));
+            b.setPaddingRelative(start, top, end, bottom);
         }
 
         private static void pressed(Button b, boolean on) {
@@ -889,13 +966,17 @@ public final class CloudMovementFragment extends CloudScreen implements CloudSer
         }
     }
 
-    /** One line whose words cross-fade in place (opacity only; at once with animations off); TalkBack reads new words. */
+    /**
+     * One line whose words cross-fade in place (opacity only; at once with animations off); TalkBack reads new words. A
+     * trade's hold carries the lock before its words (the launcher's LockSimple, quiet).
+     */
     private static final class FadeLine {
         final FrameLayout view;
         private final TextView[] mTexts = new TextView[2];
         private int mFront;
         private String mWords = "";
         private int mTone;
+        private boolean mLock;
 
         FadeLine(Context c) {
             view = new FrameLayout(c);
@@ -913,23 +994,27 @@ public final class CloudMovementFragment extends CloudScreen implements CloudSer
             }
         }
 
-        void set(String words, @ColorRes int tone) {
-            if (words.equals(mWords) && tone == mTone) return;
+        void set(String words, @ColorRes int tone, boolean lock) {
+            if (words.equals(mWords) && tone == mTone && lock == mLock) return;
             Context c = view.getContext();
             final TextView front = mTexts[mFront];
             if (words.equals(mWords)) {
                 front.setTextColor(CloudUi.color(c, tone));
+                if (lock != mLock) lock(front, lock);
                 mTone = tone;
+                mLock = lock;
                 return;
             }
             mWords = words;
             mTone = tone;
+            mLock = lock;
             TextView back = mTexts[1 - mFront];
             mFront = 1 - mFront;
             front.animate().cancel();
             back.animate().cancel();
             back.setVisibility(View.VISIBLE);
             back.setTextColor(CloudUi.color(c, tone));
+            lock(back, lock);
             back.setText(words);
             front.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
             back.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_AUTO);
@@ -942,6 +1027,13 @@ public final class CloudMovementFragment extends CloudScreen implements CloudSer
             back.animate().alpha(1f).setDuration(150).setInterpolator(Motion.EASE_OUT).start();
             front.animate().alpha(0f).setDuration(100).setInterpolator(Motion.EASE_OUT)
                     .withEndAction(() -> front.setVisibility(View.INVISIBLE)).start();
+        }
+
+        private static void lock(TextView t, boolean on) {
+            Context c = t.getContext();
+            t.setCompoundDrawablesRelative(on ? CloudUi.tinted(c, R.drawable.projects_ic_lock_bold, R.color.projects_ash_400, 14) : null,
+                    null, null, null);
+            t.setCompoundDrawablePadding(on ? CloudUi.dp(c, 6) : 0);
         }
     }
 }

@@ -263,6 +263,7 @@
     <string name="projects_feat_move_sneaking">Eğiliyor.</string>
     <string name="projects_feat_move_machine_away">Makinemize şu an ulaşılamıyor.</string>
     <string name="projects_feat_move_walk_main">Ana hesabın</string>
+    <string name="projects_feat_move_walks_title">Hesapların</string>
     <string name="projects_feat_move_not_in_game">Oyunda değil</string>
     <string name="projects_feat_move_go_named">%1$s hesabının yanına git</string>
     <string name="projects_feat_move_follow_named">%1$s hesabını takip et</string>

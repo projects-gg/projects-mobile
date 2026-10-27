@@ -261,6 +261,7 @@
     <string name="projects_feat_move_sneaking">Sneaking.</string>
     <string name="projects_feat_move_machine_away">Can\'t reach our machine right now.</string>
     <string name="projects_feat_move_walk_main">Your main account</string>
+    <string name="projects_feat_move_walks_title">Your accounts</string>
     <string name="projects_feat_move_not_in_game">Not in game</string>
     <string name="projects_feat_move_go_named">Go to %1$s</string>
     <string name="projects_feat_move_follow_named">Follow %1$s</string>
