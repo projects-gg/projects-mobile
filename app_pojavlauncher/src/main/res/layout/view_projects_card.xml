@@ -590,7 +590,7 @@
                 android:layout_height="32dp"
                 android:layout_marginStart="8dp"
                 android:layout_marginEnd="8dp"
-                android:background="@drawable/projects_icon_button_ripple"
+                android:background="@drawable/projects_row_ripple"
                 android:drawableEnd="@drawable/projects_ic_caret_right_small"
                 android:drawablePadding="2dp"
                 android:fontFamily="@font/figtree_semibold"
