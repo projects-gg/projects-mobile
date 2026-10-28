@@ -49,6 +49,10 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
     private CloudService.LiveHandle mLive;
     private boolean mBusy;
     private final Runnable mTick = this::tick;
+    /** The AFK+ credits as the machine counts them now (replies left, gifts, bought packs); null until it answered. */
+    @Nullable
+    private CloudModel.QuotaView mQuota;
+    private boolean mQuotaAsked;
 
     @Override
     public void onResume() {
@@ -60,6 +64,25 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
     protected void started() {
         CloudModel.Account a = account();
         if (a != null && mLive == null) mLive = mService.watch(a.id, a.plus() && mService.plusOn(), this);
+        if (a != null && a.plus() && mService.plusOn() && !mQuotaAsked) {
+            // Once a visit: the replies left and the bought credits are the machine's live figures, not the list's brief.
+            mQuotaAsked = true;
+            mService.quota(a.id, new CloudService.Result<CloudModel.QuotaView>() {
+                @Override
+                public void ok(CloudModel.QuotaView value) {
+                    mQuota = value;
+                    if (alive()) {
+                        mShape = "";
+                        render();
+                    }
+                }
+
+                @Override
+                public void failed(gg.projects.mobile.cloud.CloudProblem problem) {
+                    mQuotaAsked = false;
+                }
+            });
+        }
     }
 
     @Override
@@ -106,12 +129,15 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
         if (a.ai != null) {
             key.append('|').append(a.ai.state).append(a.ai.reason).append(a.ai.until).append(a.ai.pendingApprovals).append(a.ai.buy);
             if (a.ai.quota != null) key.append(a.ai.quota.pct5).append(a.ai.quota.pctWeek).append(a.ai.quota.w5hResetAt)
-                    .append(a.ai.quota.weekResetAt).append(a.ai.quota.giftsLeft);
+                    .append(a.ai.quota.weekResetAt).append(a.ai.quota.giftsLeft).append(a.ai.quota.boughtLeft);
         }
+        if (mQuota != null) key.append('|').append(mQuota.estReplies).append(mQuota.boughtRemaining).append(mQuota.frozen);
         key.append('|').append(mService.unread(a.id));
         key.append('|').append(a.features.inventoryMode).append(a.features.inventoryOn).append(gg.projects.mobile.cloud.movement.Movement.shows(a));
         CloudModel.Offer offer = mService.offer();
-        if (offer != null && offer.plus != null) key.append(offer.plus.features).append(offer.plus.sales);
+        if (offer != null && offer.plus != null) {
+            key.append(offer.plus.features).append(offer.plus.sales).append(offer.plus.topup != null && offer.plus.topup.selling());
+        }
         return key.toString();
     }
 
@@ -307,14 +333,14 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
             rows.add(messages.view);
         }
         rows.add(CloudUi.row(c, R.drawable.projects_ic_arrows_left_right, getString(R.string.projects_plus_rules),
-                v -> openFor(PlusRulesFragment.class, a.id)).view);
+                v -> openFor(PlusOrdersFragment.class, a.id)).view);
         rows.add(CloudUi.row(c, R.drawable.projects_ic_user_circle, getString(R.string.projects_plus_assistant),
                 v -> openFor(PlusAssistantFragment.class, a.id)).view);
         if (mService.plusFeature("schedule")) {
             rows.add(CloudUi.row(c, R.drawable.projects_ic_moon, getString(R.string.projects_plus_schedule),
                     v -> openFor(PlusScheduleFragment.class, a.id)).view);
         }
-        rows.add(CloudUi.row(c, R.drawable.projects_ic_wallet, getString(R.string.projects_plus_safety),
+        rows.add(CloudUi.row(c, R.drawable.projects_ic_wallet, getString(R.string.projects_fine_title),
                 v -> openFor(PlusSafetyFragment.class, a.id)).view);
         rows.add(CloudUi.row(c, R.drawable.projects_ic_pulse, getString(R.string.projects_plus_activity),
                 v -> openFor(PlusActivityFragment.class, a.id)).view);
@@ -343,7 +369,17 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
                 gift.setPadding(CloudUi.dp(c, 16), 0, CloudUi.dp(c, 16), CloudUi.dp(c, 12));
                 credits.addView(gift);
             }
+            credits(c, credits, q);
             content.addView(credits);
+            // "Kontör al" opens the site's packs for this account (AFK+ extra credits): only while the site sells them,
+            // the account is AFK+ and its credits are not frozen. Buying and refunds are the site's.
+            CloudModel.Offer offer = mService.offer();
+            boolean selling = offer != null && offer.plus != null && offer.plus.topup != null && offer.plus.topup.selling();
+            boolean frozen = (mQuota != null && mQuota.frozen) || (a.ai != null && "staff".equals(a.ai.reason));
+            if (selling && !a.expired && !frozen) {
+                content.addView(CloudUi.siteLink(c, getString(R.string.projects_credits_buy),
+                        v -> mService.openSite(requireActivity(), "/hesap/" + a.id + "/afk-plus?ek-kontor=1")), wrap());
+            }
         }
 
         if (!a.expired) {
@@ -356,6 +392,39 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
             // What it does, in the site's sentence: the name alone read as if the account were not 7/24 Bulut already.
             content.addView(CloudUi.note(c, getString(R.string.projects_plus_downgrade_note)));
         }
+    }
+
+    /**
+     * The live credits under the bars (AFK+ extra credits, the site's and the launcher's words): "Yaklaşık N cevap kaldı",
+     * then how many of them the bought credits pay for, or, once the windows and the gifts are used up, that the bought
+     * credits are in use now. Nothing while the machine has not answered.
+     */
+    private void credits(Context c, LinearLayout credits, CloudModel.QuotaBrief brief) {
+        CloudModel.QuotaView q = mQuota;
+        if (q == null) return;
+        int pad = CloudUi.dp(c, 16);
+        if (q.estReplies > 0) {
+            int n = (int) Math.min(Integer.MAX_VALUE, q.estReplies);
+            TextView replies = CloudUi.text(c, getResources().getQuantityString(R.plurals.projects_credits_replies, n, n), 13.5f,
+                    R.color.projects_bone_100, false);
+            replies.setPadding(pad, 0, pad, CloudUi.dp(c, 6));
+            credits.addView(replies);
+        }
+        long bought = q.boughtRemaining > 0 ? q.boughtRemaining : brief.boughtLeft;
+        if (bought <= 0) return;
+        long windows = Math.max(0, Math.min(q.w5hCap - q.w5hUsed, q.weekCap - q.weekUsed));
+        long gifts = q.giftsLeft();
+        TextView line;
+        if (windows == 0 && gifts == 0) {
+            line = CloudUi.text(c, getString(R.string.projects_credits_bought_in_use), 13.5f, R.color.projects_bone_100, true);
+        } else {
+            long share = q.estReplies <= 0 ? 0 : (long) Math.floor((double) bought * q.estReplies / (double) (windows + gifts + bought));
+            if (share <= 0) return;
+            int n = (int) Math.min(Integer.MAX_VALUE, share);
+            line = CloudUi.text(c, getResources().getQuantityString(R.plurals.projects_credits_bought, n, n), 13, R.color.projects_ash_300, false);
+        }
+        line.setPadding(pad, 0, pad, CloudUi.dp(c, 12));
+        credits.addView(line);
     }
 
     /** One allowance: its name and when it resets on one line, the bar under it. */
@@ -514,8 +583,6 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
     @Override
     public void console(List<CloudModel.ConsoleLine> lines, int skipped, boolean snapshot) {}
 
-    @Override
-    public void feed(List<CloudModel.FeedItem> items, boolean snapshot) {}
 
     @Override
     public void approval(CloudModel.Approval approval) {

@@ -117,28 +117,27 @@ public abstract class CloudScreen extends Fragment implements CloudService.Liste
     /** What a visit starts: reads, the live watch (called once per visit, with the account known). */
     protected void started() {}
 
-    private boolean mCatalogAsked;
+    private boolean mNamesAsked;
 
     /**
-     * Reads the AFK+ account's item catalog once (its profile comes with the AFK+ settings), so item names are the
-     * catalog's own words in the player's language; {@link #catalogArrived()} redraws.
+     * Reads, once a visit, what item names need: the AFK+ account's settings (its custom items' own names and its
+     * server's Minecraft version) and that version's item data (the game's own names in the player's language, from our
+     * CDN or the phone's copy); {@link #namesArrived()} redraws.
      */
-    protected void ensureCatalog() {
+    protected void ensureItemNames() {
         final CloudModel.Account a = account();
-        if (mCatalogAsked || a == null || !a.plus()) return;
-        mCatalogAsked = true;
+        if (mNamesAsked || a == null || !a.plus()) return;
+        mNamesAsked = true;
+        CloudModel.PlusDoc known = mService.lastPlus(a.id);
+        if (known != null && mService.cachedItemData(known.server.mc) != null) return;
         mService.plus(a.id, new CloudService.Result<CloudModel.PlusDoc>() {
             @Override
             public void ok(CloudModel.PlusDoc doc) {
-                if (doc.profileId == null || doc.profileId.isEmpty()) return;
-                if (mService.cachedCatalog(doc.profileId) != null) {
-                    if (alive()) catalogArrived();
-                    return;
-                }
-                mService.catalog(doc.profileId, new CloudService.Result<CloudModel.PlusCatalog>() {
+                if (alive()) namesArrived();
+                mService.itemData(doc.server.mc, new CloudService.Result<gg.projects.mobile.cloud.items.ItemData>() {
                     @Override
-                    public void ok(CloudModel.PlusCatalog value) {
-                        if (alive()) catalogArrived();
+                    public void ok(gg.projects.mobile.cloud.items.ItemData value) {
+                        if (alive()) namesArrived();
                     }
 
                     @Override
@@ -148,12 +147,17 @@ public abstract class CloudScreen extends Fragment implements CloudService.Liste
 
             @Override
             public void failed(CloudProblem problem) {
-                mCatalogAsked = false;
+                mNamesAsked = false;
             }
         });
     }
 
-    protected void catalogArrived() {}
+    protected void namesArrived() {}
+
+    /** An item's name in the player's language for this screen's account ({@code custom:<k>} by the player's own name). */
+    protected String itemName(String ref) {
+        return mService.itemName(accountId(), ref, lang());
+    }
 
     /** Draws the screen from the service's state (called often: a screen keeps what did not change). */
     protected abstract void render();

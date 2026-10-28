@@ -84,6 +84,9 @@ public class LanguagePairsTest {
         // FEAT-M: the cloud features (inventory, console kinds, placeholders, bulk, movement).
         english.putAll(texts(new File(RES, "values/strings_cloud_feat.xml")));
         turkish.putAll(texts(new File(RES, "values-tr/strings_cloud_feat.xml")));
+        // FREE-M: catalog-free AFK+ (orders, the audit log, fine-tuning, receipts, talk and tag, bought credits).
+        english.putAll(texts(new File(RES, "values/strings_cloud_plus.xml")));
+        turkish.putAll(texts(new File(RES, "values-tr/strings_cloud_plus.xml")));
         TreeSet<String> missingTurkish = new TreeSet<>(english.keySet());
         missingTurkish.removeAll(turkish.keySet());
         TreeSet<String> missingEnglish = new TreeSet<>(turkish.keySet());
@@ -115,7 +118,7 @@ public class LanguagePairsTest {
     @Test
     public void theEnglishInterfaceHasNoTurkishLeft() throws Exception {
         for (String file : new String[]{"values/projects_strings.xml", "values/projects_social_strings.xml", "values/projects_cloud_strings.xml",
-                "values/strings_cloud_feat.xml", "values/strings.xml"}) {
+                "values/strings_cloud_feat.xml", "values/strings_cloud_plus.xml", "values/strings.xml"}) {
             for (Map.Entry<String, String> text : texts(new File(RES, file)).entrySet()) {
                 if (TURKISH_ON_PURPOSE.contains(text.getKey())) continue;
                 assertTrue(file + ": " + text.getKey() + " = " + text.getValue(), !TURKISH_LETTER.matcher(text.getValue()).find());

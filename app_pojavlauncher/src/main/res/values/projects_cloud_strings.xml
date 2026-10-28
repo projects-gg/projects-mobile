@@ -456,7 +456,7 @@
     <string name="projects_plus_quota_frozen">Staff froze your AI credits.</string>
     <string name="projects_plus_approvals">Approvals</string>
     <string name="projects_plus_messages">Messages</string>
-    <string name="projects_plus_rules">Buying and selling</string>
+    <string name="projects_plus_rules">Orders</string>
     <string name="projects_plus_assistant">Assistant</string>
     <string name="projects_plus_schedule">Working hours</string>
     <string name="projects_plus_safety">Spending limits</string>

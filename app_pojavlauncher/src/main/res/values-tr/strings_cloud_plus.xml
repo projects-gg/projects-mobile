@@ -1,0 +1,432 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- FREE-M: catalog-free AFK+ on the phone (orders in the player's own words with their card, the order form, picking from
+     the bot's inventory, approvals with "Takas sende" and the first sight, the audit log, fine-tuning, receipts, talk and tag
+     settings, bought credits). The words are the launcher's and the site's (apps/launcher/src/locales/tr-afkplus.ts,
+     afkplus-free.md §7.6), so the three surfaces read as one product. Short, sentence case, "sen"; no case ending after a
+     player's name ("ile", "için" or a colon instead); amounts carry the game's money, never lira. -->
+<resources>
+    <string name="projects_plus_custom_item">Özel eşya</string>
+    <string name="projects_ai_note">Asistan yapay zekâdır, hata yapabilir.</string>
+
+    <!-- Siparişler -->
+    <string name="projects_order_intake_label">Ne almak ya da satmak istiyorsun?</string>
+    <string name="projects_order_intake_hint">Örnek: Elytra alırım, en fazla 40 bin</string>
+    <string name="projects_order_check">Kontrol et</string>
+    <string name="projects_order_reading">Okunuyor</string>
+    <string name="projects_order_form">Formla ekle</string>
+    <string name="projects_order_pick">Envanterden seç</string>
+    <plurals name="projects_order_left">
+        <item quantity="other">Bugün %d kez daha kontrol edebilirsin.</item>
+    </plurals>
+    <string name="projects_order_check_failed">Yazdığın kontrol edilemedi.</string>
+    <string name="projects_order_maintenance">Bakım bitince sipariş ekleyebilirsin.</string>
+    <string name="projects_order_ai_paused">Yapay zekâ bakımda. Formla ekleyebilirsin.</string>
+    <string name="projects_order_ai_away">Yapay zekâya şu an ulaşılamıyor. Formla ekleyebilirsin.</string>
+    <string name="projects_order_offline">Makinemize şu an ulaşılamıyor. Formla ekleyebilirsin.</string>
+    <string name="projects_order_typed_off">Yazıyla sipariş şu an kapalı. Formla ekleyebilirsin.</string>
+    <string name="projects_order_daily">Bugün daha fazla kontrol edilemez. Formla ekleyebilirsin.</string>
+    <string name="projects_order_rate">Biraz bekleyip yeniden dene.</string>
+    <string name="projects_order_reject_length">Ne istediğini kısaca yaz.</string>
+    <string name="projects_order_reject_link">Bağlantı eklenemez.</string>
+    <string name="projects_order_reject_command">Komut eklenemez.</string>
+    <string name="projects_order_reject_personal">Telefon, e-posta ve banka bilgisi eklenemez.</string>
+    <string name="projects_order_reject_unsafe">Bu metinden sipariş oluşturulamaz.</string>
+    <string name="projects_order_reject_too_big">Bu tutar çok büyük.</string>
+    <plurals name="projects_order_reject_orders_full">
+        <item quantity="other">En fazla %d etkin sipariş olabilir. Birini durdur ya da sil.</item>
+    </plurals>
+    <string name="projects_order_reject_no_item">Eşyanın adını yaz.</string>
+    <string name="projects_order_reject_many_items">Her eşyayı ayrı yaz.</string>
+    <string name="projects_order_rule_prepay">Asistan önden ödeme yapmaz, önden eşya vermez.</string>
+    <string name="projects_order_rule_pay_cmd">Asistan para göndermez; ödeme yalnız takasta olur.</string>
+    <string name="projects_order_rule_disclose">Asistan bütçeni ve sınırlarını kimseye söylemez.</string>
+    <string name="projects_order_rule_hide_ai">Asistan yapay zekâ olduğunu saklamaz.</string>
+    <string name="projects_order_rule_off_platform">Asistan kimseyi başka uygulamaya çağırmaz.</string>
+    <string name="projects_order_rule_third_party">Asistan yalnız ona yazana cevap verir.</string>
+    <string name="projects_order_rule_rmt">Gerçek parayla ticaret yapılmaz.</string>
+    <string name="projects_order_server_owner">Bu sunucuda asistan konuşur ve anlaşır; takası sen yaparsın.</string>
+    <string name="projects_order_server_off">Bu sunucuda AFK+ kapalı; hesabın normal AFK olarak çalışıyor.</string>
+    <string name="projects_order_away_title">Makinemize şu an ulaşılamıyor</string>
+    <string name="projects_order_away_body">Hesabın hâlâ oyunda olabilir. Son bilinen durum aşağıda.</string>
+    <string name="projects_order_service_title">AFK+ bakımda</string>
+    <string name="projects_order_service_body">Siparişlerin bakım bitince devam eder.</string>
+    <string name="projects_order_active">Etkin</string>
+    <string name="projects_order_finished">Biten</string>
+    <string name="projects_order_empty">Henüz sipariş yok.</string>
+    <string name="projects_order_progress_bought">%1$d / %2$d alındı</string>
+    <string name="projects_order_progress_sold">%1$d / %2$d satıldı</string>
+    <string name="projects_order_meta_at_most">en fazla %1$s</string>
+    <string name="projects_order_meta_at_least">en az %1$s</string>
+    <string name="projects_order_per_piece">tanesi %1$s</string>
+    <string name="projects_order_in_total">toplam %1$s</string>
+    <string name="projects_order_ends_today">bugün bitiyor</string>
+    <plurals name="projects_order_days_left">
+        <item quantity="other">%d gün kaldı</item>
+    </plurals>
+    <string name="projects_order_as_of_line">Son bilgi %1$s</string>
+    <string name="projects_order_edit">Düzenle</string>
+    <string name="projects_order_pause">Durdur</string>
+    <string name="projects_order_resume">Sürdür</string>
+    <string name="projects_order_extend">Süreyi uzat</string>
+    <string name="projects_order_restart">Yeniden başlat</string>
+    <string name="projects_order_remove">Sil</string>
+    <string name="projects_order_to_approvals">Seni bekleyenleri aç</string>
+    <string name="projects_order_saved">%1$s siparişi kaydedildi.</string>
+    <string name="projects_order_changed">%1$s siparişi güncellendi.</string>
+    <string name="projects_order_removed">Sipariş silindi.</string>
+    <string name="projects_order_undo">Geri al</string>
+    <string name="projects_order_remove_deferred">Takas bitince silinir.</string>
+    <plurals name="projects_order_extended">
+        <item quantity="other">Sipariş %d gün uzatıldı.</item>
+    </plurals>
+    <string name="projects_order_gone">Bu sipariş artık yok.</string>
+    <string name="projects_order_failed">Sipariş kaydedilemedi.</string>
+    <string name="projects_order_writes_daily">Bugün daha fazla sipariş değişikliği yapılamaz.</string>
+    <string name="projects_order_undo_failed">Sipariş geri alınamadı.</string>
+    <string name="projects_order_status_waiting_ok">Onayın bekleniyor</string>
+    <string name="projects_order_status_your_trade">Takas sende</string>
+    <string name="projects_order_status_trading">Takasta</string>
+    <string name="projects_order_status_done">Tamamlandı</string>
+    <string name="projects_order_status_expired">Süresi doldu</string>
+    <string name="projects_order_status_paused">Durduruldu</string>
+    <string name="projects_order_status_buy_off">Alış kapalı</string>
+    <string name="projects_order_status_sell_off">Satış kapalı</string>
+    <string name="projects_order_status_haggling">Pazarlıkta</string>
+    <string name="projects_order_status_looking">Aranıyor</string>
+    <string name="projects_order_status_looking_sell">Alıcı aranıyor</string>
+    <string name="projects_order_status_service">Bakımda</string>
+
+    <!-- The order card -->
+    <string name="projects_card_no_item">Eşya seçilmedi</string>
+    <string name="projects_card_unset">Yazılmadı</string>
+    <string name="projects_card_to_buy">Alınacak</string>
+    <string name="projects_card_to_sell">Satılacak</string>
+    <string name="projects_card_qty">Adet</string>
+    <string name="projects_card_target">Hedef</string>
+    <string name="projects_card_at_most">En fazla</string>
+    <string name="projects_card_at_least">En az</string>
+    <string name="projects_card_each">adet başına</string>
+    <string name="projects_card_for_item">Karşılığında %1$s</string>
+    <string name="projects_card_for_money">Karşılığında para</string>
+    <string name="projects_card_for_money_bare">Oyundaki parayla</string>
+    <string name="projects_card_style">Pazarlık: %1$s</string>
+    <plurals name="projects_card_valid">
+        <item quantity="other">%d gün geçerli</item>
+    </plurals>
+    <string name="projects_card_bot">Takası asistan yapar.</string>
+    <string name="projects_card_owner">Takası sen yaparsın.</string>
+    <string name="projects_card_durability">En az %%%1$d dayanıklı</string>
+    <string name="projects_card_named">örsle ad verilmiş olabilir</string>
+    <string name="projects_card_cursed">lanetli olabilir</string>
+    <string name="projects_card_wrote">Yazdığın: \"%1$s\"</string>
+    <string name="projects_card_discard">Vazgeç</string>
+    <string name="projects_card_edit">Düzenle</string>
+    <string name="projects_card_save">Kaydet</string>
+    <string name="projects_card_answer_first">Kaydetmeden önce soruyu cevapla.</string>
+    <string name="projects_card_answer_first_many">Kaydetmeden önce soruları cevapla.</string>
+    <string name="projects_card_fix_first">Kaydetmeden önce Düzenle ile eksikleri tamamla.</string>
+    <string name="projects_card_note_approval_pref">Sormadan tamamlaması için ince ayardan yetkiyi değiştir.</string>
+    <string name="projects_card_note_named_player">Siparişler herkese açıktır; bir oyuncuya bağlanmaz.</string>
+    <string name="projects_card_note_notify_only">Harcama sınırı koymadığın için almaz; bulunca haber verir.</string>
+    <string name="projects_card_note_item_pay_off">Eşyayla takas ayarlarında kapalı; takas parayla yapılır.</string>
+
+    <!-- The card's questions -->
+    <string name="projects_q_which">Hangisi?</string>
+    <string name="projects_q_side">Alıyor musun, satıyor musun?</string>
+    <string name="projects_q_buying">Alıyorum</string>
+    <string name="projects_q_selling">Satıyorum</string>
+    <string name="projects_q_custom">\"%1$s\" oyunda yok. Asistan onu nasıl tanısın?</string>
+    <string name="projects_q_custom_pick">Envanterden seç</string>
+    <string name="projects_q_custom_first_seen">İlk görünce bana sor</string>
+    <string name="projects_q_custom_fix">Adı düzelt</string>
+    <string name="projects_q_limit_buy">En fazla ne kadar verirsin?</string>
+    <string name="projects_q_limit_sell">En az kaça satarsın?</string>
+    <string name="projects_q_other">Başka</string>
+    <string name="projects_q_other_label">Başka bir tutar</string>
+    <string name="projects_q_use">Bunu kullan</string>
+    <string name="projects_q_pay_buy">Karşılığında ne vereceksin?</string>
+    <string name="projects_q_pay_sell">Karşılığında ne istiyorsun?</string>
+    <string name="projects_q_pay_money">Para</string>
+    <string name="projects_q_pay_off_item">Eşyayla takas ayarlarında kapalı. Açılsın mı?</string>
+    <string name="projects_q_pay_off_money">Parayla takas ayarlarında kapalı. Açılsın mı?</string>
+    <string name="projects_q_turn_on">Aç</string>
+    <string name="projects_q_use_money">Parayla yap</string>
+    <string name="projects_q_use_item">Eşyayla yap</string>
+    <string name="projects_q_per">%1$s adet başına mı, toplam mı?</string>
+    <string name="projects_q_each">Adet başına</string>
+    <string name="projects_q_total">Toplam</string>
+    <string name="projects_q_qty">Kaç tane?</string>
+    <string name="projects_q_far">En fazla %1$s doğru mu? Hedefin %2$s.</string>
+    <string name="projects_q_yes_right">Evet, doğru</string>
+    <string name="projects_q_fix">Düzelt</string>
+    <string name="projects_q_over_cap">Bu fiyat tek alım sınırını (%1$s) aşıyor.</string>
+    <string name="projects_q_raise">Sınırı %1$s yap</string>
+    <string name="projects_q_use_cap">Fiyatı %1$s yap</string>
+
+    <!-- The order form -->
+    <string name="projects_form_new_title">Yeni sipariş</string>
+    <string name="projects_form_edit_title">Siparişi düzenle</string>
+    <string name="projects_form_side">Al ya da sat</string>
+    <string name="projects_form_buy">Al</string>
+    <string name="projects_form_sell">Sat</string>
+    <string name="projects_form_item">Eşya</string>
+    <string name="projects_form_search">Eşya ara</string>
+    <string name="projects_form_no_match">Bu aramayla eşleşen eşya yok.</string>
+    <string name="projects_form_custom_item">Özel eşya</string>
+    <string name="projects_form_custom_typed">\"%1$s\" adıyla özel eşya</string>
+    <string name="projects_form_data_failed">Eşya listesi şu an yüklenemedi.</string>
+    <string name="projects_form_retry">Tekrar dene</string>
+    <string name="projects_form_custom_name">Eşyanın adı</string>
+    <string name="projects_form_custom_known">Asistan bu eşyayı bu adla anar.</string>
+    <string name="projects_form_custom_first_sight">Asistan bu eşyayı ilk gördüğünde sana sorar.</string>
+    <string name="projects_form_qty">Adet</string>
+    <plurals name="projects_form_stacks">
+        <item quantity="other">%d yığın</item>
+    </plurals>
+    <string name="projects_form_in_return">Karşılığında</string>
+    <string name="projects_form_money">Para</string>
+    <string name="projects_form_pay_item">Eşya</string>
+    <string name="projects_form_pay_with">Ödenecek eşya</string>
+    <string name="projects_form_unit">Fiyat</string>
+    <string name="projects_form_each">Adet başına</string>
+    <string name="projects_form_total">Toplam</string>
+    <string name="projects_form_target">Hedef fiyat</string>
+    <string name="projects_form_at_most">En fazla</string>
+    <string name="projects_form_at_least">En az</string>
+    <string name="projects_form_count_of">%1$s (%2$s adedi)</string>
+    <string name="projects_form_money_bare">Oyundaki parayla.</string>
+    <string name="projects_form_style">Pazarlık</string>
+    <string name="projects_form_valid">Geçerlilik</string>
+    <string name="projects_form_valid_keep">Aynı kalsın</string>
+    <plurals name="projects_form_days">
+        <item quantity="other">%d gün</item>
+    </plurals>
+    <string name="projects_form_who">Takası kim yapsın?</string>
+    <string name="projects_form_who_bot">Asistan</string>
+    <string name="projects_form_who_me">Ben</string>
+    <string name="projects_form_conditions">%1$s için şartlar</string>
+    <string name="projects_form_durability">En az dayanıklılık</string>
+    <string name="projects_form_enchantments">Büyüler</string>
+    <string name="projects_form_add_enchantment">Büyü ekle</string>
+    <string name="projects_form_level_down">%1$s seviyesini düşür</string>
+    <string name="projects_form_level_up">%1$s seviyesini artır</string>
+    <string name="projects_form_remove_enchantment">%1$s büyüsünü kaldır</string>
+    <string name="projects_form_named">Örsle ad verilmiş olabilir</string>
+    <string name="projects_form_cursed">Lanetli olabilir</string>
+    <string name="projects_form_error_item">Eşya seç.</string>
+    <string name="projects_form_error_price">Fiyat yaz.</string>
+    <string name="projects_form_error_amount">Bir tutar yaz: örnek 40.000 ya da 40 bin.</string>
+    <string name="projects_form_error_at_most">En fazla, hedeften küçük olamaz.</string>
+    <string name="projects_form_error_at_least">En az, hedeften büyük olamaz.</string>
+    <string name="projects_form_error_value">Bu değer kabul edilmiyor.</string>
+    <string name="projects_form_error_same">Eşya kendisiyle takas edilemez.</string>
+    <string name="projects_form_error_name">1 ile 32 karakter arasında bir ad yaz.</string>
+    <string name="projects_form_error_name_link">Ad, bağlantı ya da telefon numarası içeremez.</string>
+    <string name="projects_form_error_name_form">Ad, komut ya da renk kodu içeremez.</string>
+    <string name="projects_form_error_active">Etkin sipariş sınırına ulaştın. Birini durdur ya da sil.</string>
+    <string name="projects_form_error_stored">Saklanan sipariş sınırına ulaştın. Biten bir siparişi sil.</string>
+    <string name="projects_form_error_custom_full">Daha fazla özel eşya eklenemez.</string>
+
+    <!-- Envanterden seç -->
+    <string name="projects_pick_exact">Asistan bu eşyayı birebir tanır; adı aynı olan başka eşyayı kabul etmez.</string>
+    <string name="projects_pick_reading">Eşya okunuyor</string>
+    <string name="projects_pick_error">Eşya seçilemedi.</string>
+    <string name="projects_pick_own_only">Yalnız hesabın kendi envanterinden seçebilirsin.</string>
+    <string name="projects_pick_failed_empty">Bu yuva artık boş.</string>
+    <string name="projects_pick_failed_stale">Bu yuvadaki eşya değişti. Yeniden seç.</string>
+    <string name="projects_pick_failed_unparsed">Bu eşya tanınamadı.</string>
+    <string name="projects_pick_failed_container">Sandıklar ve shulker kutuları seçilemez.</string>
+    <string name="projects_pick_failed_not_in_game">Hesap oyunda değilken envanter görünmez.</string>
+    <string name="projects_pick_failed_inventory_off">Envanter görünümü bu hesapta kapalı.</string>
+    <string name="projects_pick_failed_custom_off">Sunucuya özel eşyalar şu an seçilemez.</string>
+    <string name="projects_pick_offline">Makinemize şu an ulaşılamıyor.</string>
+    <string name="projects_items_unnamed">Adsız eşya</string>
+
+    <!-- Onaylar: Takas sende, İlk görüş -->
+    <string name="projects_handoff_title">Takas sende</string>
+    <string name="projects_handoff_body">%1$s ile anlaştın: %2$s. Takası oyunda yap, sonra burada işaretle.</string>
+    <string name="projects_handoff_yes">Takas oldu</string>
+    <string name="projects_handoff_no">Olmadı</string>
+    <string name="projects_handoff_done">Takas kaydedildi</string>
+    <string name="projects_handoff_not_done">Anlaşma kapatıldı</string>
+    <plurals name="projects_handoff_hours_left">
+        <item quantity="other">%d saat kaldı</item>
+    </plurals>
+    <string name="projects_firstsight_title">İlk görüş</string>
+    <string name="projects_firstsight_question">Aradığın %1$s bu mu?</string>
+    <string name="projects_firstsight_yes">Evet, bu</string>
+    <string name="projects_firstsight_no">Hayır</string>
+    <string name="projects_firstsight_yes_done">Eşya tanındı</string>
+    <string name="projects_firstsight_no_done">Bu eşya kabul edilmeyecek</string>
+    <string name="projects_approval_party_buy">Satıcı: %1$s</string>
+    <string name="projects_approval_party_sell">Alıcı: %1$s</string>
+    <string name="projects_approval_why_authority">Anlaşınca sana sormasını seçtin</string>
+    <string name="projects_approval_closed_gone">Teklif kalmadığı için kapandı</string>
+    <string name="projects_approval_closed_stopped">Asistan durduğu için kapandı</string>
+    <string name="projects_approval_sent_yes">Onayın iletildi</string>
+    <string name="projects_approval_sent_no">Reddin iletildi</string>
+
+    <!-- Akış: the audit log -->
+    <string name="projects_audit_tab">Akış</string>
+    <string name="projects_audit_filter_all">Tümü</string>
+    <string name="projects_audit_filter_deals">Anlaşmalar</string>
+    <string name="projects_audit_filter_messages">Mesajlar</string>
+    <string name="projects_audit_filter_warnings">Uyarılar</string>
+    <string name="projects_audit_today">Bugün</string>
+    <string name="projects_audit_yesterday">Dün</string>
+    <string name="projects_audit_older">Daha eski kayıtlar</string>
+    <string name="projects_audit_empty">Henüz kayıt yok. Asistan bir mesaj aldığında burada görürsün.</string>
+    <string name="projects_audit_none_here">Bu türde kayıt yok.</string>
+    <string name="projects_audit_off">Kayıtlar şu an kapalı.</string>
+    <string name="projects_audit_offline">Daha önce gördüklerin aşağıda; yenileri bağlantı dönünce görünür.</string>
+    <string name="projects_audit_offline_empty">Kayıtlar bağlantı dönünce görünür.</string>
+    <string name="projects_audit_kept">Kayıt 7 gün tutulur.</string>
+    <string name="projects_audit_hidden">Uygunsuz mesaj gizlendi.</string>
+    <string name="projects_audit_show">Göster</string>
+    <string name="projects_audit_someone">Bir oyuncu</string>
+    <string name="projects_audit_pm_in">%1$s yazdı:</string>
+    <string name="projects_audit_reply">Asistan cevap verdi:</string>
+    <string name="projects_audit_owner_msg">Sen yazdın:</string>
+    <string name="projects_audit_offer">%1$s ile pazarlıkta %2$s teklif edildi</string>
+    <string name="projects_audit_counter">%1$s, %2$s istedi</string>
+    <string name="projects_audit_agree">%1$s ile anlaşıldı: %2$s</string>
+    <string name="projects_audit_ask_owner">Onayın istendi</string>
+    <string name="projects_audit_ask_owner_of">%1$s için onayın istendi</string>
+    <string name="projects_audit_owner_ok">Onayladın</string>
+    <string name="projects_audit_owner_no">Reddettin</string>
+    <string name="projects_audit_owner_timeout">Onay süresi doldu</string>
+    <string name="projects_audit_trade_start">Takas başladı</string>
+    <string name="projects_audit_trade_done">Takas tamamlandı: %1$s</string>
+    <string name="projects_audit_trade_done_bare">Takas tamamlandı</string>
+    <string name="projects_audit_trade_fail">Takas olmadı: %1$s</string>
+    <string name="projects_audit_handoff">Takas sana bırakıldı</string>
+    <string name="projects_audit_handoff_done">Takası yaptın</string>
+    <string name="projects_audit_handoff_no">Takas olmadı</string>
+    <string name="projects_audit_cancel">Pazarlık bırakıldı: %1$s</string>
+    <string name="projects_audit_refuse">Cevap verilmedi: %1$s</string>
+    <string name="projects_audit_refuse_who">%1$s yazdı, cevap verilmedi: %2$s</string>
+    <string name="projects_audit_found">Sohbette satılık bulundu: %1$s, %2$s</string>
+    <string name="projects_audit_found_bare">Sohbette satılık bulundu: %1$s</string>
+    <string name="projects_audit_confirm_item">Eşya için onayın istendi</string>
+    <string name="projects_audit_confirm_item_of">%1$s için onayın istendi</string>
+    <string name="projects_audit_order_done">Sipariş tamamlandı</string>
+    <string name="projects_audit_order_expired">Siparişin süresi doldu</string>
+    <string name="projects_audit_paused">Asistan durdu: %1$s</string>
+    <string name="projects_audit_paused_bare">Asistan durdu</string>
+    <string name="projects_audit_resumed">Asistan yeniden çalışıyor</string>
+    <string name="projects_audit_quota">Kontörün bitti</string>
+    <string name="projects_audit_gate">Güvenlik kuralı bir işlemi durdurdu</string>
+    <string name="projects_audit_gate_why">Güvenlik kuralı bir işlemi durdurdu: %1$s</string>
+    <string name="projects_audit_other">Bir işlem kaydedildi</string>
+    <string name="projects_audit_r_blocked">engellediğin oyuncu</string>
+    <string name="projects_audit_r_friends_only">arkadaş listende değil</string>
+    <string name="projects_audit_r_side_off">alış ya da satış kapalı</string>
+    <string name="projects_audit_r_pay_kind">ödeme türü uymadı</string>
+    <string name="projects_audit_r_rules">kural dışı istek</string>
+    <string name="projects_audit_r_unsafe">uygunsuz mesaj</string>
+    <string name="projects_audit_r_injection">talimat denemesi</string>
+    <string name="projects_audit_r_rate">çok sık yazdı</string>
+    <string name="projects_audit_r_hours">çalışma saatleri dışında</string>
+    <string name="projects_audit_r_break">moladasın</string>
+    <string name="projects_audit_r_quota">kontör bitti</string>
+    <string name="projects_audit_r_limit">en fazla fiyatın üstünde</string>
+    <string name="projects_audit_r_budget">harcama sınırı doldu</string>
+    <string name="projects_audit_r_price">fiyat olağan dışı</string>
+    <string name="projects_audit_r_mismatch">takastaki eşya farklıydı</string>
+    <string name="projects_audit_r_timeout">süre doldu</string>
+    <string name="projects_audit_r_far">uzaktaydı</string>
+    <string name="projects_audit_r_busy">başka takastaydı</string>
+    <string name="projects_audit_r_owner">sen reddettin</string>
+    <string name="projects_audit_r_service">bakım</string>
+    <string name="projects_audit_r_gate">güvenlik kuralı</string>
+    <string name="projects_audit_r_not_looking">sipariş bitti</string>
+    <string name="projects_audit_r_other">başka bir neden</string>
+
+    <!-- Takas geçmişi: receipts -->
+    <string name="projects_receipt_tab">Takas geçmişi</string>
+    <string name="projects_receipt_empty">Henüz takas yok.</string>
+    <string name="projects_receipt_more">Daha eski takaslar</string>
+    <string name="projects_receipt_bought">%1$s alındı</string>
+    <string name="projects_receipt_sold">%1$s satıldı</string>
+    <string name="projects_receipt_paid_with">%1$s ile ödendi</string>
+    <string name="projects_receipt_party_buy">Satıcı: %1$s</string>
+    <string name="projects_receipt_party_sell">Alıcı: %1$s</string>
+    <string name="projects_receipt_auto">Sormadan (ince ayarına göre)</string>
+    <string name="projects_receipt_approved">Sen onayladın</string>
+    <string name="projects_receipt_owner">Takası sen yaptın, sen bildirdin</string>
+    <string name="projects_receipt_review">İncelemede</string>
+    <string name="projects_receipt_review_note">Yetkililer bu takasa bakıyor; sonuçlanınca sayılır.</string>
+    <string name="projects_receipt_money_note">Tutarlar oyundaki parayla; gerçek para el değiştirmez.</string>
+    <string name="projects_receipt_failed">Takas geçmişi yüklenemedi.</string>
+
+    <!-- İnce ayar -->
+    <string name="projects_plus_change_fine">İnce ayar değişti</string>
+    <string name="projects_fine_title">İnce ayar</string>
+    <string name="projects_fine_authority">Asistan ne yapsın?</string>
+    <string name="projects_fine_reply">Yalnız cevap ver</string>
+    <string name="projects_fine_ask">Pazarlık et, bana sor</string>
+    <string name="projects_fine_deal">Pazarlık et ve tamamla</string>
+    <string name="projects_fine_reply_help">Pazarlık etmez, teklifleri sana iletir.</string>
+    <string name="projects_fine_ask_help">Anlaşınca onayını bekler.</string>
+    <string name="projects_fine_deal_help">Sınırlarının içinde sormadan tamamlar.</string>
+    <string name="projects_fine_buy">Alış</string>
+    <string name="projects_fine_sell">Satış</string>
+    <string name="projects_fine_pay">Ödeme</string>
+    <string name="projects_fine_pay_money">Para</string>
+    <string name="projects_fine_pay_items">Eşya</string>
+    <string name="projects_fine_pay_both">İkisi de</string>
+    <string name="projects_fine_who">Kimlerle</string>
+    <string name="projects_fine_who_all">Herkes</string>
+    <string name="projects_fine_who_friends">Yalnız arkadaşlarım</string>
+    <string name="projects_fine_friends_hint">Oyuncu adı</string>
+    <string name="projects_fine_friends_add">Ad ekle</string>
+    <string name="projects_fine_friends_remove">%1$s adını çıkar</string>
+    <string name="projects_fine_friends_remove_short">Çıkar</string>
+    <string name="projects_fine_friends_empty">Listede kimse yokken asistan kimseyle takas konuşmaz.</string>
+    <string name="projects_fine_friends_format">3-16 karakter: harf, rakam ya da alt çizgi.</string>
+    <string name="projects_fine_friends_duplicate">Bu ad zaten listede.</string>
+    <string name="projects_fine_friends_blocked">Bu oyuncuyu engelledin; önce engeli kaldır.</string>
+    <plurals name="projects_fine_friends_full">
+        <item quantity="other">En çok %d ad eklenebilir.</item>
+    </plurals>
+    <string name="projects_fine_secret">Asistan bütçeni ve sınırlarını kimseye söylemez.</string>
+    <string name="projects_fine_spending">Harcama</string>
+
+    <!-- Sohbet ve etiket -->
+    <string name="projects_talk_player">Oyuncu gibi konuşsun</string>
+    <string name="projects_talk_player_help">Sohbette resmi dil yerine oyuncu gibi konuşur.</string>
+    <string name="projects_talk_on_topic">Konu dışına çıkmasın</string>
+    <string name="projects_talk_sample">Örnek cevap</string>
+    <string name="projects_talk_plain_friendly">Merhaba, 32.000 olur mu?</string>
+    <string name="projects_talk_plain_brief">32.000?</string>
+    <string name="projects_talk_plain_polite">Merhaba, 32.000 sizin için uygun olur mu?</string>
+    <string name="projects_talk_plain_playful">Selam, 32.000\'e el sıkışalım mı?</string>
+    <string name="projects_talk_sample_friendly">slm knk, 32k olur mu</string>
+    <string name="projects_talk_sample_brief">32k?</string>
+    <string name="projects_talk_sample_polite">merhaba, 32k olur mu?</string>
+    <string name="projects_talk_sample_playful">32k\'ya anlaşalım mı xd</string>
+    <string name="projects_tag_switch">Mesajlarının başına etiket koysun</string>
+    <string name="projects_tag_label">Etiket</string>
+    <string name="projects_tag_error_empty">Etiketi yaz ya da kapat.</string>
+    <string name="projects_tag_error_length">En çok %1$d karakter olabilir.</string>
+    <string name="projects_tag_error_form">Yalnız harf, rakam, boşluk ve basit işaretler kullanılabilir.</string>
+    <string name="projects_tag_error_staff">Etiket yetkili ya da sistem gibi görünemez.</string>
+    <string name="projects_tag_error_name">Etikette başka bir oyuncunun adı olamaz.</string>
+    <string name="projects_tag_error_contact">Etikette bağlantı, iletişim bilgisi ya da uygulama adı olamaz.</string>
+    <string name="projects_tag_error_words">Bu etiket kullanılamaz.</string>
+
+    <!-- Kontör: bought credits -->
+    <plurals name="projects_credits_replies">
+        <item quantity="other">Yaklaşık %d cevap kaldı</item>
+    </plurals>
+    <plurals name="projects_credits_bought">
+        <item quantity="other">Yaklaşık %d tanesi aldığın kontörden</item>
+    </plurals>
+    <string name="projects_credits_bought_in_use">Aldığın kontör şu an kullanılıyor.</string>
+    <string name="projects_credits_buy">Kontör al</string>
+    <string name="projects_credits_notice_bought">%1$s: Kontörün bitti, aldığın kontör kullanılıyor.</string>
+
+    <!-- Notices of orders -->
+    <string name="projects_notice_handoff">%1$s: anlaşma tamam, takası sen yapacaksın.</string>
+    <string name="projects_notice_first_sight">%1$s: %2$s için onayın gerekiyor.</string>
+</resources>

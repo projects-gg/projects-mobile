@@ -459,7 +459,7 @@
     <string name="projects_plus_quota_frozen">Kontörün yetkililerce donduruldu.</string>
     <string name="projects_plus_approvals">Onaylar</string>
     <string name="projects_plus_messages">Mesajlar</string>
-    <string name="projects_plus_rules">Alım ve satım</string>
+    <string name="projects_plus_rules">Siparişler</string>
     <string name="projects_plus_assistant">Asistan</string>
     <string name="projects_plus_schedule">Çalışma saatleri</string>
     <string name="projects_plus_safety">Harcama sınırları</string>

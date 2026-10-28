@@ -1,9 +1,11 @@
 package gg.projects.mobile.cloud.ui;
 
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -12,36 +14,51 @@ import androidx.annotation.Nullable;
 import net.kdt.pojavlaunch.R;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 import gg.projects.mobile.cloud.CloudApi;
 import gg.projects.mobile.cloud.CloudModel;
 import gg.projects.mobile.cloud.CloudProblem;
 import gg.projects.mobile.cloud.CloudService;
 import gg.projects.mobile.cloud.CloudWords;
+import gg.projects.mobile.cloud.PlusModel;
+import gg.projects.mobile.ui.AppDates;
 
 /**
- * "Etkinlik": what the assistant did, in three tabs. Canlı: its feed as it happens (messages, offers, deals, finds;
- * counterparts' texts are masked by the service). Alım ve satımlar: the trades, with the average, lowest and highest
- * price per item. Geçen hafta: the weekly report's numbers for this account.
+ * "Akış": what the assistant did, in three tabs. Akış: the audit log (every step and how it ended, live from the
+ * machine; what this phone saw stays 7 days and shows while the machine is away), filtered by kind, under day headings.
+ * Takas geçmişi: the receipts, with each item's average, lowest and highest price. Geçen hafta: the weekly report's
+ * numbers for this account. Counterparts' texts are masked by the service; an unsuitable one stays folded until "Göster".
  */
 public final class PlusActivityFragment extends CloudScreen implements CloudService.LiveListener {
     public static final String TAG = "ProjectsPlusActivityFragment";
-    private static final int FEED = 0;
-    private static final int TRADES = 1;
+    private static final int AUDIT = 0;
+    private static final int RECEIPTS = 1;
     private static final int WEEK = 2;
+    private static final String[] GROUPS = {null, "deals", "messages", "warnings"};
 
-    private int mTab = FEED;
-    private final List<CloudModel.FeedItem> mFeed = new ArrayList<>();
+    private int mTab = AUDIT;
+    private int mGroup = 0;
+    /** The log as shown: what the phone kept and what the machine sent, newest first, each entry once. */
+    private final List<PlusModel.AuditEntry> mAudit = new ArrayList<>();
+    private boolean mKeptRead;
+    private boolean mAuditLoaded;
+    /** {@code host_offline}, {@code feature_off} or another failure of the last page; null when it came. */
     @Nullable
-    private String mFeedNext;
-    private boolean mFeedLoaded;
-    private boolean mFeedFailed;
-    private final List<CloudModel.Deal> mDeals = new ArrayList<>();
+    private String mAuditProblem;
+    private boolean mAuditMore;
+    private boolean mAuditLoading;
+    private final Set<Long> mShown = new HashSet<>();
+    private final List<PlusModel.Receipt> mReceipts = new ArrayList<>();
     @Nullable
-    private String mDealsNext;
-    private boolean mDealsLoaded;
+    private String mReceiptsNext;
+    private boolean mReceiptsLoaded;
+    private boolean mReceiptsFailed;
     @Nullable
     private CloudApi.DealSummary mSummary;
     @Nullable
@@ -63,11 +80,11 @@ public final class PlusActivityFragment extends CloudScreen implements CloudServ
         if (mLive == null) mLive = mService.watch(a.id, true, this);
         tabs();
         load(false);
-        ensureCatalog();
+        ensureItemNames();
     }
 
     @Override
-    protected void catalogArrived() {
+    protected void namesArrived() {
         draw();
     }
 
@@ -84,8 +101,8 @@ public final class PlusActivityFragment extends CloudScreen implements CloudServ
         if (mTop == null || mTabsShown) return;
         mTabsShown = true;
         List<CharSequence> names = new ArrayList<>();
-        names.add(getString(R.string.projects_plus_feed));
-        names.add(getString(R.string.projects_plus_trades));
+        names.add(getString(R.string.projects_audit_tab));
+        names.add(getString(R.string.projects_receipt_tab));
         if (mService.plusFeature("report")) names.add(getString(R.string.projects_plus_week));
         LinearLayout tabs = CloudUi.segmented(ctx(), names.toArray(new CharSequence[0]), mTab, i -> {
             mTab = i;
@@ -98,26 +115,35 @@ public final class PlusActivityFragment extends CloudScreen implements CloudServ
         mTop.setVisibility(View.VISIBLE);
     }
 
-    private void load(boolean more) {
+    @Nullable
+    private PlusModel.Server server() {
+        String id = accountId();
+        CloudModel.PlusDoc doc = id == null ? null : mService.lastPlus(id);
+        return doc == null ? null : doc.server;
+    }
+
+    private void load(final boolean more) {
         final CloudModel.Account a = account();
         if (a == null) return;
         switch (mTab) {
-            case TRADES:
-                if (mDealsLoaded && !more) return;
-                mService.deals(a.id, more ? mDealsNext : null, new CloudService.Result<CloudApi.DealPage>() {
+            case RECEIPTS:
+                if (mReceiptsLoaded && !more) return;
+                mService.receipts(a.id, more ? mReceiptsNext : null, new CloudService.Result<PlusModel.ReceiptPage>() {
                     @Override
-                    public void ok(CloudApi.DealPage page) {
-                        if (!more) mDeals.clear();
-                        mDeals.addAll(page.deals);
-                        mDealsNext = page.next;
-                        mDealsLoaded = true;
-                        if (alive()) draw();
+                    public void ok(PlusModel.ReceiptPage page) {
+                        if (!more) mReceipts.clear();
+                        mReceipts.addAll(page.receipts);
+                        mReceiptsNext = page.next;
+                        mReceiptsLoaded = true;
+                        mReceiptsFailed = false;
+                        if (alive() && mTab == RECEIPTS) draw();
                     }
 
                     @Override
                     public void failed(CloudProblem problem) {
-                        mDealsLoaded = true;
-                        if (alive()) draw();
+                        mReceiptsFailed = !mReceiptsLoaded;
+                        mReceiptsLoaded = true;
+                        if (alive() && mTab == RECEIPTS) draw();
                     }
                 });
                 if (!more && mService.plusFeature("report")) {
@@ -125,7 +151,7 @@ public final class PlusActivityFragment extends CloudScreen implements CloudServ
                         @Override
                         public void ok(CloudApi.DealSummary value) {
                             mSummary = value;
-                            if (alive() && mTab == TRADES) draw();
+                            if (alive() && mTab == RECEIPTS) draw();
                         }
 
                         @Override
@@ -140,38 +166,68 @@ public final class PlusActivityFragment extends CloudScreen implements CloudServ
                     public void ok(List<CloudModel.WeeklyAccount> value) {
                         mWeek = value;
                         mWeekFailed = false;
-                        if (alive()) draw();
+                        if (alive() && mTab == WEEK) draw();
                     }
 
                     @Override
                     public void failed(CloudProblem problem) {
                         mWeekFailed = true;
-                        if (alive()) draw();
+                        if (alive() && mTab == WEEK) draw();
                     }
                 });
                 break;
             default:
-                if (mFeedLoaded && !more) return;
-                mService.feed(a.id, more ? mFeedNext : null, new CloudService.Result<CloudApi.FeedPage>() {
+                if (!mKeptRead) {
+                    mKeptRead = true;
+                    mService.keptAudit(a.id, new CloudService.Result<List<PlusModel.AuditEntry>>() {
+                        @Override
+                        public void ok(List<PlusModel.AuditEntry> value) {
+                            merge(value);
+                            if (alive() && mTab == AUDIT) draw();
+                        }
+
+                        @Override
+                        public void failed(CloudProblem problem) {}
+                    });
+                }
+                if ((mAuditLoaded && !more) || mAuditLoading) return;
+                mAuditLoading = true;
+                Long before = more && !mAudit.isEmpty() ? mAudit.get(mAudit.size() - 1).s : null;
+                mService.audit(a.id, before, GROUPS[mGroup], new CloudService.Result<PlusModel.AuditPage>() {
                     @Override
-                    public void ok(CloudApi.FeedPage page) {
-                        if (!more) mFeed.clear();
-                        mFeed.addAll(page.items);
-                        mFeedNext = page.next;
-                        mFeedLoaded = true;
-                        mFeedFailed = false;
-                        if (alive()) draw();
+                    public void ok(PlusModel.AuditPage page) {
+                        mAuditLoading = false;
+                        merge(page.items);
+                        mAuditMore = page.more;
+                        mAuditLoaded = true;
+                        mAuditProblem = null;
+                        if (alive() && mTab == AUDIT) draw();
                     }
 
                     @Override
                     public void failed(CloudProblem problem) {
-                        mFeedFailed = !mFeedLoaded;
-                        mFeedLoaded = true;
-                        if (alive()) draw();
+                        mAuditLoading = false;
+                        mAuditLoaded = true;
+                        mAuditMore = false;
+                        mAuditProblem = problem.is("feature_off") ? "feature_off"
+                                : problem.kind == CloudProblem.Kind.HOST_OFFLINE ? "host_offline" : "failed";
+                        if (alive() && mTab == AUDIT) draw();
                     }
                 });
                 break;
         }
+    }
+
+    /** Adds entries to the log once each (by their sequence), newest first. */
+    private void merge(List<PlusModel.AuditEntry> entries) {
+        boolean changed = false;
+        for (PlusModel.AuditEntry e : entries) {
+            if (mShown.add(e.s)) {
+                mAudit.add(e);
+                changed = true;
+            }
+        }
+        if (changed) Collections.sort(mAudit, (x, y) -> Long.compare(y.s, x.s));
     }
 
     @Override
@@ -185,14 +241,14 @@ public final class PlusActivityFragment extends CloudScreen implements CloudServ
         LinearLayout content = clear();
         if (content == null) return;
         switch (mTab) {
-            case TRADES: trades(content); break;
+            case RECEIPTS: receipts(content); break;
             case WEEK: week(content); break;
-            default: feed(content); break;
+            default: audit(content); break;
         }
     }
 
-    private View more(Context c, View.OnClickListener click) {
-        android.widget.Button button = CloudUi.textButton(c, getString(R.string.projects_cloud_console_earlier), click);
+    private View more(Context c, int words, View.OnClickListener click) {
+        android.widget.Button button = CloudUi.textButton(c, getString(words), click);
         LinearLayout box = new LinearLayout(c);
         box.setGravity(Gravity.CENTER_HORIZONTAL);
         box.addView(button);
@@ -200,86 +256,146 @@ public final class PlusActivityFragment extends CloudScreen implements CloudServ
         return box;
     }
 
-    // ---- the live feed ----
+    // ---- the audit log ----
 
-    private void feed(LinearLayout content) {
-        Context c = ctx();
-        if (!mFeedLoaded) {
+    private void audit(LinearLayout content) {
+        final Context c = ctx();
+        content.addView(CloudUi.segmented(c, new CharSequence[]{getString(R.string.projects_audit_filter_all),
+                getString(R.string.projects_audit_filter_deals), getString(R.string.projects_audit_filter_messages),
+                getString(R.string.projects_audit_filter_warnings)}, mGroup, i -> {
+            mGroup = i;
+            draw();
+        }));
+        if ("feature_off".equals(mAuditProblem)) {
+            content.addView(CloudUi.empty(c, gg.projects.mobile.ui.PixelSprites.Sprite.LOGS, getString(R.string.projects_audit_off)));
+            return;
+        }
+        boolean away = "host_offline".equals(mAuditProblem) || "failed".equals(mAuditProblem);
+        List<PlusModel.AuditEntry> shown = new ArrayList<>();
+        for (PlusModel.AuditEntry e : mAudit) if (e.in(GROUPS[mGroup])) shown.add(e);
+        if (away) {
+            content.addView(CloudUi.notice(c, R.drawable.projects_ic_warning_circle, R.color.projects_ash_300,
+                    getString(mAudit.isEmpty() ? R.string.projects_audit_offline_empty : R.string.projects_audit_offline)));
+        }
+        if (!mAuditLoaded && mAudit.isEmpty()) {
             content.addView(CloudUi.loading(c));
             return;
         }
-        if (mFeedFailed) {
-            content.addView(CloudUi.empty(c, gg.projects.mobile.ui.PixelSprites.Sprite.FAILED, getString(R.string.projects_cloud_error_host_offline)));
+        if (mAudit.isEmpty()) {
+            if (!away) content.addView(CloudUi.empty(c, gg.projects.mobile.ui.PixelSprites.Sprite.AFK, getString(R.string.projects_audit_empty)));
             return;
         }
-        if (mFeed.isEmpty()) {
-            content.addView(CloudUi.empty(c, gg.projects.mobile.ui.PixelSprites.Sprite.AFK, getString(R.string.projects_plus_feed_empty)));
-            return;
+        if (shown.isEmpty()) {
+            content.addView(CloudUi.note(c, getString(R.string.projects_audit_none_here)));
+        } else {
+            long now = mService.nowMs();
+            String day = null;
+            LinearLayout group = null;
+            for (PlusModel.AuditEntry e : shown) {
+                String heading = dayHeading(c, e.t, now);
+                if (!heading.equals(day)) {
+                    day = heading;
+                    content.addView(CloudUi.section(c, heading));
+                    group = CloudUi.group(c);
+                    content.addView(group);
+                } else if (group != null) {
+                    group.addView(CloudUi.textDivider(c));
+                }
+                if (group != null) group.addView(entryRow(c, e));
+            }
         }
-        content.addView(CloudUi.gap(c, 6));
-        LinearLayout group = CloudUi.group(c);
-        List<View> rows = new ArrayList<>();
-        long now = mService.nowSeconds();
-        for (CloudModel.FeedItem item : mFeed) rows.add(feedRow(c, item, now));
-        CloudUi.fill(group, rows);
-        content.addView(group);
-        if (mFeedNext != null) content.addView(more(c, v -> load(true)));
+        if (mAuditMore && !away) content.addView(more(c, R.string.projects_audit_older, v -> load(true)));
+        content.addView(CloudUi.note(c, getString(R.string.projects_audit_kept)));
+        content.addView(CloudUi.note(c, getString(R.string.projects_ai_note)));
     }
 
-    private String item(@Nullable String id, @Nullable Long qty) {
-        if (id == null) return "";
-        String name = mService.itemName(id, lang());
-        return CloudWords.qtyName(ctx(), qty == null ? 1 : qty, name);
+    private static String dayHeading(Context c, long ms, long nowMs) {
+        Calendar day = Calendar.getInstance();
+        day.setTimeInMillis(ms);
+        Calendar today = Calendar.getInstance();
+        today.setTimeInMillis(nowMs);
+        long a = day.get(Calendar.YEAR) * 400L + day.get(Calendar.DAY_OF_YEAR);
+        long b = today.get(Calendar.YEAR) * 400L + today.get(Calendar.DAY_OF_YEAR);
+        if (a == b) return c.getString(R.string.projects_audit_today);
+        if (b - a == 1) return c.getString(R.string.projects_audit_yesterday);
+        return AppDates.day(c, ms, nowMs);
     }
 
-    private String money(@Nullable Long value) {
-        return value == null ? "" : CloudWords.money(ctx(), value);
-    }
-
-    private View feedRow(Context c, CloudModel.FeedItem f, long now) {
-        String who = f.counterpart == null ? "" : f.counterpart;
-        String title;
-        int icon = R.drawable.projects_ic_pulse;
-        switch (f.kind == null ? "" : f.kind) {
-            case "pm_in": title = getString(R.string.projects_plus_feed_pm_in, who); icon = R.drawable.projects_ic_chat; break;
-            case "pm_out": title = getString(R.string.projects_plus_feed_pm_out, who); icon = R.drawable.projects_ic_chat; break;
-            case "offer": title = getString(R.string.projects_plus_feed_offer, who, item(f.item, f.qty), money(f.price)); icon = R.drawable.projects_ic_arrows_left_right; break;
-            case "counter": title = getString(R.string.projects_plus_feed_counter, who, money(f.price)); icon = R.drawable.projects_ic_arrows_left_right; break;
-            case "deal": title = getString(R.string.projects_plus_feed_deal, who, item(f.item, f.qty), money(f.price)); icon = R.drawable.projects_ic_check_circle; break;
-            case "approval": title = getString(R.string.projects_plus_feed_approval, item(f.item, f.qty)); icon = R.drawable.projects_ic_check_circle; break;
-            case "approval_answer": title = getString(R.string.projects_plus_feed_approval_answer); icon = R.drawable.projects_ic_check_circle; break;
-            case "trade_started": title = getString(R.string.projects_plus_feed_trade_started, who); icon = R.drawable.projects_ic_arrows_left_right; break;
-            case "trade_done": title = getString(R.string.projects_plus_feed_trade_done, who); icon = R.drawable.projects_ic_check_circle; break;
-            case "trade_failed": title = getString(R.string.projects_plus_feed_trade_failed, who); icon = R.drawable.projects_ic_warning_circle; break;
-            case "trade_cancelled": title = getString(R.string.projects_plus_feed_trade_cancelled, who); icon = R.drawable.projects_ic_x; break;
-            case "found": title = getString(R.string.projects_plus_feed_found, item(f.item, f.qty), money(f.price)); icon = R.drawable.projects_ic_backpack; break;
-            case "suspicious": title = getString(R.string.projects_plus_feed_suspicious); icon = R.drawable.projects_ic_warning_circle; break;
-            case "ai_stopped": title = getString(R.string.projects_plus_feed_ai_stopped); break;
-            case "ai_resumed": title = getString(R.string.projects_plus_feed_ai_resumed); break;
-            case "summary": title = getString(R.string.projects_plus_feed_summary); icon = R.drawable.projects_ic_history; break;
-            case "review": title = getString(R.string.projects_plus_feed_review); icon = R.drawable.projects_ic_warning_circle; break;
-            default: title = getString(R.string.projects_plus_feed_other); break;
+    /** One entry: the time in its column, the line (an icon only where the kind means something), a message's text under it. */
+    private View entryRow(final Context c, final PlusModel.AuditEntry e) {
+        LinearLayout row = new LinearLayout(c);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setPadding(CloudUi.dp(c, 16), CloudUi.dp(c, 12), CloudUi.dp(c, 16), CloudUi.dp(c, 12));
+        TextView time = CloudUi.time(c, 13, R.color.projects_ash_400);
+        time.setText(AppDates.time(e.t));
+        row.addView(time, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        LinearLayout texts = new LinearLayout(c);
+        texts.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout first = new LinearLayout(c);
+        first.setOrientation(LinearLayout.HORIZONTAL);
+        first.setGravity(Gravity.TOP);
+        int[] icon = PlusWords.auditIcon(e.k);
+        if (icon[0] != 0) {
+            ImageView glyph = new ImageView(c);
+            glyph.setImageResource(icon[0]);
+            glyph.setImageTintList(ColorStateList.valueOf(CloudUi.color(c, icon[1])));
+            glyph.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+            LinearLayout.LayoutParams glyphLp = new LinearLayout.LayoutParams(CloudUi.dp(c, 16), CloudUi.dp(c, 16));
+            glyphLp.topMargin = CloudUi.dp(c, 2);
+            glyphLp.setMarginEnd(CloudUi.dp(c, 8));
+            first.addView(glyph, glyphLp);
         }
-        CloudUi.Row row = CloudUi.row(c, icon, title, null);
-        row.title.setTextSize(14.5f);
-        if (f.text != null && !f.text.isEmpty()) row.setLine(f.text, R.color.projects_ash_300);
-        row.count.setText(CloudWords.past(c, f.at, now, false));
-        row.count.setTextColor(CloudUi.color(c, R.color.projects_ash_400));
-        row.count.setTextSize(12.5f);
-        row.count.setVisibility(View.VISIBLE);
-        return row.view;
+        String line = PlusWords.auditLine(c, e, server(), this::itemName);
+        TextView words = CloudUi.text(c, line, 14.5f, R.color.projects_bone_100, false);
+        words.setLineSpacing(0, 1.12f);
+        first.addView(words, CloudUi.weight(1f));
+        texts.addView(first);
+        if (e.x != null && !e.x.isEmpty()) {
+            final TextView said = CloudUi.text(c, e.h && !mShownHidden.contains(e.s) ? getString(R.string.projects_audit_hidden) : e.x, 14,
+                    R.color.projects_ash_300, false);
+            said.setLineSpacing(0, 1.12f);
+            said.setPadding(0, CloudUi.dp(c, 4), 0, 0);
+            texts.addView(said);
+            if (e.h && !mShownHidden.contains(e.s)) {
+                android.widget.Button show = CloudUi.textButton(c, getString(R.string.projects_audit_show), v -> {
+                    mShownHidden.add(e.s);
+                    draw();
+                });
+                show.setPadding(0, 0, CloudUi.dp(c, 12), 0);
+                texts.addView(show, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            }
+        }
+        LinearLayout.LayoutParams textsLp = CloudUi.weight(1f);
+        textsLp.setMarginStart(CloudUi.dp(c, 12));
+        row.addView(texts, textsLp);
+        row.setContentDescription(time.getText() + ", " + line + (e.x != null && !(e.h && !mShownHidden.contains(e.s)) ? ", " + e.x : ""));
+        row.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_YES);
+        row.setLayoutParams(CloudUi.matchWrap());
+        return row;
     }
 
-    // ---- trades ----
+    /** Folded entries the player opened ("Göster"), by sequence: they stay open while the screen is up. */
+    private final Set<Long> mShownHidden = new HashSet<>();
 
-    private void trades(LinearLayout content) {
+    // ---- receipts ----
+
+    private void receipts(LinearLayout content) {
         Context c = ctx();
-        if (!mDealsLoaded) {
+        if (!mReceiptsLoaded) {
             content.addView(CloudUi.loading(c));
             return;
         }
-        if (mDeals.isEmpty()) {
-            content.addView(CloudUi.empty(c, gg.projects.mobile.ui.PixelSprites.Sprite.PACK, getString(R.string.projects_plus_trades_empty)));
+        if (mReceiptsFailed) {
+            content.addView(CloudUi.empty(c, gg.projects.mobile.ui.PixelSprites.Sprite.FAILED, getString(R.string.projects_receipt_failed)));
+            content.addView(CloudUi.textButton(c, getString(R.string.projects_cloud_retry), v -> {
+                mReceiptsLoaded = false;
+                load(false);
+                draw();
+            }), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            return;
+        }
+        if (mReceipts.isEmpty()) {
+            content.addView(CloudUi.empty(c, gg.projects.mobile.ui.PixelSprites.Sprite.PACK, getString(R.string.projects_receipt_empty)));
             return;
         }
         CloudApi.DealSummary summary = mSummary;
@@ -294,7 +410,7 @@ public final class PlusActivityFragment extends CloudScreen implements CloudServ
                 row.addView(CloudItemArt.tile(c, s.item, 36), new LinearLayout.LayoutParams(CloudUi.dp(c, 36), CloudUi.dp(c, 36)));
                 LinearLayout texts = new LinearLayout(c);
                 texts.setOrientation(LinearLayout.VERTICAL);
-                texts.addView(CloudUi.text(c, mService.itemName(s.item, lang()), 15, R.color.projects_bone_100, true));
+                texts.addView(CloudUi.text(c, itemName(s.item), 15, R.color.projects_bone_100, true));
                 String line = getString(R.string.projects_plus_summary_avg) + " " + CloudWords.money(c, s.avgUnit) + ", "
                         + getString(R.string.projects_plus_summary_min).toLowerCase(CloudWords.locale(c)) + " " + CloudWords.money(c, s.minUnit) + ", "
                         + getString(R.string.projects_plus_summary_max).toLowerCase(CloudWords.locale(c)) + " " + CloudWords.money(c, s.maxUnit);
@@ -314,41 +430,54 @@ public final class PlusActivityFragment extends CloudScreen implements CloudServ
         LinearLayout group = CloudUi.group(c);
         List<View> rows = new ArrayList<>();
         long now = mService.nowSeconds();
-        for (CloudModel.Deal d : mDeals) rows.add(dealRow(c, d, now));
+        boolean money = false;
+        for (PlusModel.Receipt r : mReceipts) {
+            rows.add(receiptRow(c, r, now));
+            money |= r.money();
+        }
         CloudUi.fill(group, rows);
         content.addView(group);
-        if (mDealsNext != null) content.addView(more(c, v -> load(true)));
+        if (mReceiptsNext != null) content.addView(more(c, R.string.projects_receipt_more, v -> load(true)));
+        // A receipt with a bare figure could read as real money.
+        if (money) content.addView(CloudUi.note(c, getString(R.string.projects_receipt_money_note)));
     }
 
-    private View dealRow(Context c, CloudModel.Deal d, long now) {
+    private View receiptRow(Context c, PlusModel.Receipt r, long now) {
         LinearLayout row = new LinearLayout(c);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
         row.setMinimumHeight(CloudUi.dp(c, 64));
         row.setPadding(CloudUi.dp(c, 12), CloudUi.dp(c, 10), CloudUi.dp(c, 16), CloudUi.dp(c, 10));
-        row.addView(CloudItemArt.tile(c, d.item, 40), new LinearLayout.LayoutParams(CloudUi.dp(c, 40), CloudUi.dp(c, 40)));
+        row.addView(CloudItemArt.tile(c, r.item, 40), new LinearLayout.LayoutParams(CloudUi.dp(c, 40), CloudUi.dp(c, 40)));
         LinearLayout texts = new LinearLayout(c);
         texts.setOrientation(LinearLayout.VERTICAL);
-        texts.addView(CloudUi.text(c, item(d.item, d.qty), 15, R.color.projects_bone_100, true));
-        String line;
-        int color = R.color.projects_ash_300;
-        switch (d.status == null ? "" : d.status) {
-            case "failed": line = getString(R.string.projects_plus_trade_failed); color = R.color.projects_flare_400; break;
-            case "cancelled": line = getString(R.string.projects_plus_trade_cancelled); break;
-            case "review": line = getString(R.string.projects_plus_trade_review); color = R.color.projects_gold_300; break;
-            default:
-                line = getString("sell".equals(d.side) ? R.string.projects_plus_trade_sold : R.string.projects_plus_trade_bought, d.counterpart)
-                        + ", " + getString("approved".equals(d.approval) ? R.string.projects_plus_trade_approved : R.string.projects_plus_trade_auto)
-                        .toLowerCase(CloudWords.locale(c));
-                break;
+        boolean sell = "sell".equals(r.side);
+        String what = CloudWords.qtyName(c, r.qty, itemName(r.item));
+        texts.addView(CloudUi.text(c, getString(sell ? R.string.projects_receipt_sold : R.string.projects_receipt_bought, what), 15,
+                R.color.projects_bone_100, true));
+        String party = getString(sell ? R.string.projects_receipt_party_sell : R.string.projects_receipt_party_buy, r.counterpart);
+        String how;
+        switch (r.approval) {
+            case "approved": how = getString(R.string.projects_receipt_approved); break;
+            case "owner": how = getString(R.string.projects_receipt_owner); break;
+            default: how = getString(R.string.projects_receipt_auto); break;
         }
-        texts.addView(CloudUi.text(c, line, 13, color, false));
-        texts.addView(CloudUi.text(c, CloudWords.past(c, d.at, now, true), 12, R.color.projects_ash_400, false));
+        texts.addView(CloudUi.text(c, party, 13, R.color.projects_ash_300, false));
+        texts.addView(CloudUi.text(c, r.review ? getString(R.string.projects_receipt_review_note) : how, 12.5f, R.color.projects_ash_400, false));
+        if (!r.money()) texts.addView(CloudUi.text(c, getString(R.string.projects_receipt_paid_with, itemName(r.pay)), 12.5f, R.color.projects_ash_400, false));
+        texts.addView(CloudUi.text(c, CloudWords.past(c, r.at / 1000L, now, true), 12, R.color.projects_ash_400, false));
         LinearLayout.LayoutParams lp = CloudUi.weight(1f);
         lp.setMarginStart(CloudUi.dp(c, 12));
         row.addView(texts, lp);
-        TextView price = CloudUi.figure(c, CloudWords.money(c, d.price), 15, "completed".equals(d.status) ? R.color.projects_bone_100 : R.color.projects_ash_400);
-        row.addView(price);
+        LinearLayout right = new LinearLayout(c);
+        right.setOrientation(LinearLayout.VERTICAL);
+        right.setGravity(Gravity.END);
+        String priceText = PlusWords.price(c, r.price, r.pay, server(), this::itemName);
+        right.addView(CloudUi.figure(c, priceText, 15, r.review ? R.color.projects_ash_400 : R.color.projects_bone_100));
+        if (r.review) right.addView(CloudUi.text(c, getString(R.string.projects_receipt_review), 12.5f, R.color.projects_ash_300, false));
+        row.addView(right);
+        row.setContentDescription(what + ", " + party + ", " + priceText);
+        row.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_YES);
         return row;
     }
 
@@ -383,6 +512,7 @@ public final class PlusActivityFragment extends CloudScreen implements CloudServ
         rows.add(figure(c, getString(R.string.projects_plus_week_allowance), pct));
         CloudUi.fillFigures(group, rows);
         content.addView(group);
+        content.addView(CloudUi.note(c, getString(R.string.projects_ai_note)));
     }
 
     private static View figure(Context c, String label, String value) {
@@ -398,24 +528,21 @@ public final class PlusActivityFragment extends CloudScreen implements CloudServ
     public void console(List<CloudModel.ConsoleLine> lines, int skipped, boolean snapshot) {}
 
     @Override
-    public void feed(List<CloudModel.FeedItem> items, boolean snapshot) {
-        if (snapshot && mFeedLoaded) return;
-        List<CloudModel.FeedItem> fresh = new ArrayList<>();
-        for (CloudModel.FeedItem item : items) {
-            boolean known = false;
-            for (CloudModel.FeedItem have : mFeed) if (have.id.equals(item.id)) known = true;
-            if (!known) fresh.add(item);
-        }
-        if (fresh.isEmpty()) return;
-        // The feed is newest first; frames bring the newest last.
-        for (CloudModel.FeedItem item : fresh) mFeed.add(0, item);
-        mFeedLoaded = true;
-        if (alive() && mTab == FEED) draw();
+    public void audit(List<PlusModel.AuditEntry> items) {
+        int before = mAudit.size();
+        merge(items);
+        if (mAudit.size() != before && alive() && mTab == AUDIT) draw();
     }
 
     @Override
     public void approval(CloudModel.Approval approval) {}
 
     @Override
-    public void hostOnline(boolean online) {}
+    public void hostOnline(boolean online) {
+        // The machine is back: the page the phone could not read comes now.
+        if (online && "host_offline".equals(mAuditProblem)) {
+            mAuditLoaded = false;
+            if (mTab == AUDIT) load(false);
+        }
+    }
 }

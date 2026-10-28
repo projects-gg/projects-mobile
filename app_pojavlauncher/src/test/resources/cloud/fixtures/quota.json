@@ -1,11 +1,41 @@
 {
-  "w5h": { "used": 1700, "cap": 5000, "resetAt": 1792857600 },
-  "week": { "used": 12200, "cap": 20000, "resetAt": 1793062800 },
-  "gifts": [ { "id": "gr_01ABCDEF2345", "remaining": 1500, "expiresAt": 1793451600 } ],
-  "promo": { "pct": 150, "label": { "tr": "Bayram haftası", "en": "Holiday week" }, "until": 1793062800 },
+  "w5h": {
+    "used": 1700,
+    "cap": 5000,
+    "resetAt": 1792857600
+  },
+  "week": {
+    "used": 12200,
+    "cap": 20000,
+    "resetAt": 1793062800
+  },
+  "gifts": [
+    {
+      "id": "gr_01ABCDEF2345",
+      "remaining": 1500,
+      "expiresAt": 1793451600
+    }
+  ],
+  "promo": {
+    "pct": 150,
+    "label": {
+      "tr": "Bayram haftası",
+      "en": "Holiday week"
+    },
+    "until": 1793062800
+  },
   "frozen": false,
   "estReplies": 160,
   "pct5": 34,
   "pctWeek": 61,
-  "asOf": 1792846790
+  "asOf": 1792846790,
+  "bought": {
+    "remaining": 14500,
+    "packs": [
+      {
+        "id": "gr_01JBX8Z9K2M4P",
+        "remaining": 14500
+      }
+    ]
+  }
 }

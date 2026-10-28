@@ -22,6 +22,8 @@ import java.util.concurrent.Executors;
 
 import gg.projects.mobile.ProjectsContent;
 import gg.projects.mobile.cloud.CloudModel.Account;
+import gg.projects.mobile.cloud.items.ItemData;
+import gg.projects.mobile.cloud.items.ItemDataStore;
 import gg.projects.mobile.social.Backoff;
 import gg.projects.mobile.social.SocialService;
 
@@ -43,7 +45,6 @@ public final class CloudService implements SocialService.Listener {
     private static final long ACCOUNTS_STALE_MS = 60_000;
     private static final long VAULT_FRESH_MS = 5 * 60_000;
     private static final long VERSIONS_FRESH_MS = 5 * 60_000;
-    private static final long CATALOG_FRESH_MS = 60 * 60_000;
     /** A live socket stays this long after its last screen leaves (a quick look elsewhere keeps it). */
     private static final long LIVE_GRACE_MS = 10_000;
     /** A movement operation the machine has not answered by now is out of reach (the contract's 3 s, and the way back). */
@@ -106,8 +107,15 @@ public final class CloudService implements SocialService.Listener {
     @Nullable
     private CloudModel.Versions mVersions;
     private long mVersionsAt;
-    private final Map<String, CloudModel.PlusCatalog> mCatalogs = new HashMap<>();
-    private final Map<String, Long> mCatalogsAt = new HashMap<>();
+    /** The game's item data by the Minecraft version asked for ("" for the manifest's default), once per process. */
+    private final Map<String, ItemData> mItemData = new HashMap<>();
+    private final Map<String, List<Result<ItemData>>> mItemDataWaiting = new HashMap<>();
+    @Nullable
+    private ItemDataStore mItemStore;
+    @Nullable
+    private PlusAuditCache mAuditCache;
+    /** Each account's last AFK+ settings read here (custom items' names for notices and lists). */
+    private final Map<String, CloudModel.PlusDoc> mPlusDocs = new HashMap<>();
     /** The newest unread counts of "Mesajlar" by account (from the last inbox read). */
     private final Map<String, Integer> mUnread = new HashMap<>();
 
@@ -297,7 +305,13 @@ public final class CloudService implements SocialService.Listener {
         mFetchedAt = 0;
         mFetchedFor = null;
         mUnread.clear();
+        mPlusDocs.clear();
         mPrefs.clearAccount();
+        // The audit log is the player's: it goes with the session (README "Deleting data": the devices drop their caches).
+        mIo.execute(() -> {
+            PlusAuditCache cache = auditCache();
+            if (cache != null) cache.keepOnly(Collections.<String>emptyList());
+        });
         CloudNotifications.cancelAll(mApp);
         changed();
     }
@@ -368,6 +382,13 @@ public final class CloudService implements SocialService.Listener {
                     if (list.now > 0) mSkewMs = list.now * 1000 - (asked + mFetchedAt) / 2;
                     mLoad = Load.LOADED;
                     remember();
+                    // The kept audit logs of accounts that are not AFK+ any more go (the launcher's auditPrune).
+                    final List<String> plus = new ArrayList<>();
+                    for (Account a : list.accounts) if (a.plus()) plus.add(a.id);
+                    mIo.execute(() -> {
+                        PlusAuditCache cache = auditCache();
+                        if (cache != null) cache.keepOnly(plus);
+                    });
                     changed();
                 });
             } catch (final CloudProblem problem) {
@@ -811,11 +832,182 @@ public final class CloudService implements SocialService.Listener {
     // ---- AFK+ ----
 
     public void plus(final String id, Result<CloudModel.PlusDoc> result) {
-        run(token -> mApi.plus(token, id), result);
+        run(token -> mApi.plus(token, id), keepDoc(id, result));
     }
 
     public void putPlus(final String id, final long aiRev, final JsonObject config, Result<CloudModel.PlusDoc> result) {
-        run(token -> mApi.putPlus(token, id, aiRev, config), result);
+        run(token -> mApi.putPlus(token, id, aiRev, config), keepDoc(id, result));
+    }
+
+    /** The account's last AFK+ settings read on this phone (null: none yet). */
+    @Nullable
+    public CloudModel.PlusDoc lastPlus(String id) {
+        return mPlusDocs.get(id);
+    }
+
+    /** Keeps the settings an answer brought (custom items' names), then hands them on. */
+    private Result<CloudModel.PlusDoc> keepDoc(final String id, final Result<CloudModel.PlusDoc> result) {
+        return new Result<CloudModel.PlusDoc>() {
+            @Override
+            public void ok(CloudModel.PlusDoc value) {
+                rememberDoc(id, value);
+                result.ok(value);
+            }
+
+            @Override
+            public void failed(CloudProblem problem) {
+                result.failed(problem);
+            }
+        };
+    }
+
+    /** After an order write: the settings with the new document and revision. */
+    @MainThread
+    public void rememberDoc(String id, CloudModel.PlusDoc doc) {
+        mPlusDocs.put(id, doc);
+        Map<String, String[]> names = new HashMap<>();
+        for (JsonObject custom : gg.projects.mobile.social.Json.objects(doc.config, "customItems")) {
+            String k = gg.projects.mobile.social.Json.str(custom, "k");
+            String name = gg.projects.mobile.social.Json.str(custom, "name");
+            if (k != null && name != null && !name.isEmpty()) names.put(id + "|custom:" + k, new String[]{name, name});
+        }
+        mPrefs.rememberItems(names);
+    }
+
+    // ---- AFK+ trade orders ----
+
+    /** "Kontrol et". */
+    public void checkOrder(final String id, final String text, final String lang, Result<PlusModel.Check> result) {
+        run(token -> mApi.checkOrder(token, id, text, lang), result);
+    }
+
+    public void postOrder(final String id, final long aiRev, final JsonObject order, @Nullable final com.google.gson.JsonArray customItems,
+                          @Nullable final JsonObject settings, Result<PlusModel.Written> result) {
+        run(token -> mApi.postOrder(token, id, aiRev, order, customItems, settings), result);
+    }
+
+    public void patchOrder(final String id, final long aiRev, final String orderId, final JsonObject fields, Result<PlusModel.Written> result) {
+        run(token -> mApi.patchOrder(token, id, aiRev, orderId, fields), result);
+    }
+
+    public void deleteOrder(final String id, final long aiRev, final String orderId, Result<PlusModel.Written> result) {
+        run(token -> mApi.deleteOrder(token, id, aiRev, orderId), result);
+    }
+
+    /** "Envanterden seç": what the machine read in the picked slot. */
+    public void pick(final String id, final int slot, final String itemId, @Nullable final Long cmd, @Nullable final String model,
+                     Result<PlusModel.Pick> result) {
+        run(token -> mApi.pick(token, id, slot, itemId, cmd, model), result);
+    }
+
+    /** A page of the audit log from the machine; what it brings is kept on the phone (7 days) with what came before. */
+    public void audit(final String id, @Nullable final Long before, @Nullable final String group, final Result<PlusModel.AuditPage> result) {
+        run(token -> {
+            PlusModel.AuditPage page = mApi.audit(token, id, before, null, 100, group);
+            PlusAuditCache cache = auditCache();
+            if (cache != null) cache.merge(id, page.items, nowMs());
+            return page;
+        }, result);
+    }
+
+    /** What this phone kept of the account's audit log (newest first; read off the main thread, answered on it). */
+    public void keptAudit(final String id, final Result<List<PlusModel.AuditEntry>> result) {
+        mIo.execute(() -> {
+            PlusAuditCache cache = auditCache();
+            final List<PlusModel.AuditEntry> kept = cache == null ? Collections.<PlusModel.AuditEntry>emptyList() : cache.read(id, nowMs());
+            mMain.post(() -> result.ok(kept));
+        });
+    }
+
+    @Nullable
+    private synchronized PlusAuditCache auditCache() {
+        if (mAuditCache == null) mAuditCache = new PlusAuditCache(new java.io.File(mApp.getFilesDir(), "plus-audit"));
+        return mAuditCache;
+    }
+
+    public void receipts(final String id, @Nullable final String before, Result<PlusModel.ReceiptPage> result) {
+        run(token -> mApi.receipts(token, id, before), result);
+    }
+
+    // ---- the game's item data (FREE-ITEMS: names, stacks, durability, enchantments) ----
+
+    /** The item data of Minecraft {@code mc} (null: the manifest's default), from the CDN or the phone's copy. */
+    @MainThread
+    public void itemData(@Nullable final String mc, final Result<ItemData> result) {
+        final String key = mc == null ? "" : mc;
+        ItemData known = mItemData.get(key);
+        if (known != null) {
+            result.ok(known);
+            return;
+        }
+        List<Result<ItemData>> waiting = mItemDataWaiting.get(key);
+        if (waiting != null) {
+            waiting.add(result);
+            return;
+        }
+        waiting = new ArrayList<>();
+        waiting.add(result);
+        mItemDataWaiting.put(key, waiting);
+        mIo.execute(() -> {
+            final ItemData data = itemStore().load(mc);
+            // The search tables are built here, not on the first keystroke.
+            if (data != null) data.warm(CloudWords.lang(mApp));
+            mMain.post(() -> {
+                List<Result<ItemData>> those = mItemDataWaiting.remove(key);
+                if (data != null) mItemData.put(key, data);
+                if (those == null) return;
+                for (Result<ItemData> r : those) {
+                    if (data != null) r.ok(data);
+                    else r.failed(CloudProblem.unavailable("item data"));
+                }
+            });
+        });
+    }
+
+    /** The item data of {@code mc} if this process loaded it already. */
+    @Nullable
+    @MainThread
+    public ItemData cachedItemData(@Nullable String mc) {
+        return mItemData.get(mc == null ? "" : mc);
+    }
+
+    private synchronized ItemDataStore itemStore() {
+        if (mItemStore == null) mItemStore = new ItemDataStore(mApp.getCacheDir(), mApi.client());
+        return mItemStore;
+    }
+
+    /**
+     * An item's name in {@code lang}: a custom item ({@code custom:<k>}) by the account's own name for it, a vanilla one by
+     * the item data this process read (remembered for notices), else the phone's record, else its id's words.
+     */
+    @MainThread
+    public String itemName(@Nullable String acct, String ref, String lang) {
+        if (ref.startsWith("custom:")) {
+            String k = ref.substring("custom:".length());
+            CloudModel.PlusDoc doc = acct == null ? null : mPlusDocs.get(acct);
+            if (doc != null) {
+                for (JsonObject custom : gg.projects.mobile.social.Json.objects(doc.config, "customItems")) {
+                    if (k.equals(gg.projects.mobile.social.Json.str(custom, "k"))) {
+                        String name = gg.projects.mobile.social.Json.str(custom, "name");
+                        if (name != null && !name.isEmpty()) return name;
+                    }
+                }
+            }
+            String remembered = acct == null ? null : mPrefs.rememberedName(acct + "|" + ref, lang);
+            return remembered != null ? remembered : mApp.getString(net.kdt.pojavlaunch.R.string.projects_plus_custom_item);
+        }
+        for (ItemData data : mItemData.values()) {
+            String name = data.name(ref, lang);
+            if (name != null) {
+                Map<String, String[]> names = new HashMap<>();
+                String tr = data.name(ref, "tr");
+                String en = data.name(ref, "en");
+                names.put(ref, new String[]{tr == null ? name : tr, en == null ? name : en});
+                mPrefs.rememberItems(names);
+                return name;
+            }
+        }
+        return mPrefs.itemName(ref, lang);
     }
 
     /** {@code pause}/{@code resume}/{@code block}/{@code unblock}/{@code forget}/{@code reset_spent}; the account's AI view is updated. */
@@ -861,14 +1053,6 @@ public final class CloudService implements SocialService.Listener {
 
     public void quota(final String id, Result<CloudModel.QuotaView> result) {
         run(token -> mApi.quota(token, id), result);
-    }
-
-    public void feed(final String id, @Nullable final String after, Result<CloudApi.FeedPage> result) {
-        run(token -> mApi.feed(token, id, after), result);
-    }
-
-    public void deals(final String id, @Nullable final String after, Result<CloudApi.DealPage> result) {
-        run(token -> mApi.deals(token, id, after), result);
     }
 
     public void dealSummary(final String id, Result<CloudApi.DealSummary> result) {
@@ -927,10 +1111,6 @@ public final class CloudService implements SocialService.Listener {
         }, result);
     }
 
-    public void parse(final String id, final String text, final String lang, Result<CloudModel.ParseDraft> result) {
-        run(token -> mApi.parse(token, id, text, lang), result);
-    }
-
     public void history(final String id, Result<List<CloudModel.HistoryEntry>> result) {
         run(token -> mApi.history(token, id), result);
     }
@@ -945,43 +1125,6 @@ public final class CloudService implements SocialService.Listener {
 
     public void downgrade(final String id, Result<Account> result) {
         accountAction(token -> mApi.downgrade(token, id), result);
-    }
-
-    /** A game mode's catalog (no session; cached an hour); its names are kept for notices. */
-    public void catalog(final String mode, final Result<CloudModel.PlusCatalog> result) {
-        CloudModel.PlusCatalog cached = mCatalogs.get(mode);
-        Long at = mCatalogsAt.get(mode);
-        if (cached != null && at != null && System.currentTimeMillis() - at < CATALOG_FRESH_MS) {
-            result.ok(cached);
-            return;
-        }
-        mIo.execute(() -> {
-            try {
-                final CloudModel.PlusCatalog catalog = mApi.catalog(mode);
-                mPrefs.rememberItems(catalog);
-                mMain.post(() -> {
-                    mCatalogs.put(mode, catalog);
-                    mCatalogsAt.put(mode, System.currentTimeMillis());
-                    result.ok(catalog);
-                });
-            } catch (final CloudProblem problem) {
-                mMain.post(() -> result.failed(problem));
-            }
-        });
-    }
-
-    @Nullable
-    public CloudModel.PlusCatalog cachedCatalog(String mode) {
-        return mCatalogs.get(mode);
-    }
-
-    /** An item's name: the catalog's, else the phone's record, else its id without {@code minecraft:}. */
-    public String itemName(String id, String lang) {
-        for (CloudModel.PlusCatalog c : mCatalogs.values()) {
-            CloudModel.PlusCatalog.Item item = c.item(id);
-            if (item != null) return item.name(lang);
-        }
-        return mPrefs.itemName(id, lang);
     }
 
     // ---- the site ----
@@ -1007,9 +1150,13 @@ public final class CloudService implements SocialService.Listener {
 
         void console(List<CloudModel.ConsoleLine> lines, int skipped, boolean snapshot);
 
-        void feed(List<CloudModel.FeedItem> items, boolean snapshot);
-
         void approval(CloudModel.Approval approval);
+
+        /** AFK+: new audit log entries (already kept on the phone). */
+        default void audit(List<PlusModel.AuditEntry> items) {}
+
+        /** AFK+: orders whose progress or live state changed. */
+        default void orders(Map<String, PlusModel.OrderView> orders) {}
 
         void hostOnline(boolean online);
 
@@ -1231,8 +1378,25 @@ public final class CloudService implements SocialService.Listener {
         }
 
         @Override
-        public void feed(String acct, List<CloudModel.FeedItem> items, boolean snapshot) {
-            for (LiveHandle h : of(acct)) if (h.ai) h.listener.feed(items, snapshot);
+        public void audit(final String acct, final List<PlusModel.AuditEntry> items) {
+            if (items.isEmpty()) return;
+            for (LiveHandle h : of(acct)) if (h.ai) h.listener.audit(items);
+            mIo.execute(() -> {
+                PlusAuditCache cache = auditCache();
+                if (cache != null) cache.merge(acct, items, nowMs());
+            });
+        }
+
+        @Override
+        public void orders(String acct, Map<String, PlusModel.OrderView> orders) {
+            for (LiveHandle h : of(acct)) if (h.ai) h.listener.orders(orders);
+            CloudModel.PlusDoc doc = mPlusDocs.get(acct);
+            if (doc != null) mPlusDocs.put(acct, doc.withOrders(orders));
+        }
+
+        @Override
+        public void message(String acct, int count, long at) {
+            if (count > unread(acct)) setUnread(acct, count);
         }
 
         @Override

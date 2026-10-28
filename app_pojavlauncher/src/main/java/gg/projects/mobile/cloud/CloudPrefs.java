@@ -78,21 +78,27 @@ public final class CloudPrefs {
         e.apply();
     }
 
-    /** Items' Turkish and English names from the catalogs the app read, for notices. */
-    public void rememberItems(CloudModel.PlusCatalog catalog) {
+    /**
+     * Items' Turkish and English names the screens showed (the item data's, and each account's custom items under
+     * {@code <acct>|custom:<k>}), for notices that come while no screen has the data: {@code names} maps a key to
+     * {tr, en}.
+     */
+    public void rememberItems(Map<String, String[]> remembered) {
+        if (remembered.isEmpty()) return;
         JsonObject names = Json.parseObject(mPrefs.getString("itemNames", null));
         if (names == null) names = new JsonObject();
         boolean changed = false;
-        for (CloudModel.PlusCatalog.Item item : catalog.items) {
+        for (Map.Entry<String, String[]> item : remembered.entrySet()) {
             JsonObject entry = new JsonObject();
-            entry.addProperty("tr", item.tr);
-            entry.addProperty("en", item.en);
-            if (!entry.equals(names.get(item.id))) {
-                names.add(item.id, entry);
+            entry.addProperty("tr", item.getValue()[0]);
+            entry.addProperty("en", item.getValue()[1]);
+            if (!entry.equals(names.get(item.getKey()))) {
+                names.remove(item.getKey());
+                names.add(item.getKey(), entry);
                 changed = true;
             }
         }
-        // A bounded record: the newest catalogs win.
+        // A bounded record: the newest names win.
         if (names.size() > 600) {
             JsonObject trimmed = new JsonObject();
             int skip = names.size() - 600;
@@ -106,13 +112,26 @@ public final class CloudPrefs {
         if (changed) mPrefs.edit().putString("itemNames", names.toString()).apply();
     }
 
+    /** A remembered name in {@code lang} ({@code key} as {@link #rememberItems} keeps it), or null. */
+    @androidx.annotation.Nullable
+    public String rememberedName(String key, String lang) {
+        JsonObject names = Json.parseObject(mPrefs.getString("itemNames", null));
+        JsonObject entry = Json.obj(names, key);
+        String name = entry == null ? null : Json.str(entry, "en".equals(lang) ? "en" : "tr");
+        return name == null || name.isEmpty() ? null : name;
+    }
+
     /** An item's name in {@code lang}; one the app never saw reads without its {@code minecraft:} part. */
     public String itemName(String id, String lang) {
-        JsonObject names = Json.parseObject(mPrefs.getString("itemNames", null));
-        JsonObject entry = Json.obj(names, id);
-        String name = entry == null ? null : Json.str(entry, "en".equals(lang) ? "en" : "tr");
-        if (name != null && !name.isEmpty()) return name;
-        String bare = CloudModel.PlusCatalog.bareName(id);
+        String name = rememberedName(id, lang);
+        if (name != null) return name;
+        return bareName(id);
+    }
+
+    /** {@code minecraft:diamond_block} → "Diamond block" (an item no data names yet). */
+    public static String bareName(String id) {
+        int colon = id.lastIndexOf(':');
+        String bare = (colon >= 0 ? id.substring(colon + 1) : id).replace('_', ' ');
         return bare.isEmpty() ? id : Character.toUpperCase(bare.charAt(0)) + bare.substring(1);
     }
 

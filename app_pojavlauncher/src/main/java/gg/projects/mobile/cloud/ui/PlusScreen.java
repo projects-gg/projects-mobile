@@ -33,8 +33,6 @@ abstract class PlusScreen extends CloudScreen {
     protected PlusConfig mOriginal;
     @Nullable
     protected PlusConfig mEdit;
-    @Nullable
-    protected CloudModel.PlusCatalog mCatalog;
     /** What the last check or refusal found: the document's path and a reason key. */
     protected final List<String[]> mProblems = new ArrayList<>();
     protected boolean mSaving;
@@ -56,11 +54,6 @@ abstract class PlusScreen extends CloudScreen {
     /** Draws the editor from {@link #mEdit} (called when the document arrives, is saved or put back). */
     protected abstract void draw(LinearLayout content);
 
-    /** Whether the screen needs the item catalog (names, the money's limits). */
-    protected boolean wantsCatalog() {
-        return true;
-    }
-
     @Override
     protected void started() {
         if (mDoc == null) load();
@@ -74,7 +67,6 @@ abstract class PlusScreen extends CloudScreen {
             @Override
             public void ok(CloudModel.PlusDoc doc) {
                 if (!alive()) return;
-                if (wantsCatalog() && doc.profileId != null) catalog(doc.profileId);
                 begin(doc);
             }
 
@@ -84,24 +76,6 @@ abstract class PlusScreen extends CloudScreen {
                 mFailed = true;
                 render();
             }
-        });
-    }
-
-    private void catalog(String profile) {
-        CloudModel.PlusCatalog cached = mService.cachedCatalog(profile);
-        if (cached != null) {
-            mCatalog = cached;
-            return;
-        }
-        mService.catalog(profile, new CloudService.Result<CloudModel.PlusCatalog>() {
-            @Override
-            public void ok(CloudModel.PlusCatalog value) {
-                mCatalog = value;
-                if (alive() && mEdit != null && !dirty()) redraw();
-            }
-
-            @Override
-            public void failed(CloudProblem problem) {}
         });
     }
 
@@ -179,14 +153,22 @@ abstract class PlusScreen extends CloudScreen {
     protected String words(String field, String reason) {
         Context c = ctx();
         switch (reason) {
-            case "order": return getString(field.startsWith("sell") ? R.string.projects_plus_problem_order_sell : R.string.projects_plus_problem_order_buy);
-            case "item": return getString(R.string.projects_plus_problem_item);
-            case "limit": return getString(R.string.projects_plus_problem_limit, mCatalog == null ? PlusConfig.LIST_MAX : Math.min(PlusConfig.LIST_MAX, mCatalog.listMax));
             case "limits": return getString(R.string.projects_plus_limit_order);
-            case "name": return getString(R.string.projects_cloud_issue_name);
-            case "text": return getString(R.string.projects_plus_text_length, field.endsWith("intro") ? PlusConfig.INTRO_MAX : PlusConfig.STATUS_MAX);
+            case "name": return field.startsWith("who.") ? getString(R.string.projects_fine_friends_format) : getString(R.string.projects_cloud_issue_name);
+            case "blocked": return getString(R.string.projects_fine_friends_blocked);
+            case "limit": return field.startsWith("who.")
+                    ? getResources().getQuantityString(R.plurals.projects_fine_friends_full, PlusConfig.FRIENDS_MAX, PlusConfig.FRIENDS_MAX)
+                    : getString(R.string.projects_plus_problem_range);
+            case "empty": return getString(R.string.projects_tag_error_empty);
+            case "length": return field.startsWith("persona.prefix") ? getString(R.string.projects_tag_error_length, PlusConfig.TAG_MAX)
+                    : getString(R.string.projects_plus_problem_range);
+            case "text": {
+                if (field.startsWith("persona.prefix")) return PlusWords.tagProblem(c, null);
+                return getString(R.string.projects_plus_text_length, field.endsWith("intro") ? PlusConfig.INTRO_MAX : PlusConfig.STATUS_MAX);
+            }
             case "range": return getString(R.string.projects_plus_problem_range);
             default: {
+                if (reason.startsWith("tag:")) return PlusWords.tagProblem(c, reason.substring(4));
                 String judged = CloudWords.judgeText(c, reason);
                 return judged != null ? judged : getString(R.string.projects_cloud_issue_other);
             }
@@ -199,7 +181,10 @@ abstract class PlusScreen extends CloudScreen {
         final PlusConfig edit = mEdit;
         if (a == null || doc == null || edit == null || mSaving) return;
         mProblems.clear();
-        for (PlusConfig.Problem p : edit.check(mCatalog, mService.nowSeconds())) mProblems.add(new String[]{p.field, p.reason});
+        for (PlusConfig.Problem p : edit.check(doc.server.maxDeal, doc.rules.approvalTimeoutMin, doc.rules.approvalTimeoutMax,
+                mService.nowSeconds())) {
+            mProblems.add(new String[]{p.field, p.reason});
+        }
         if (!mProblems.isEmpty()) {
             Haptics.reject(mBar == null ? null : mBar.saveButton());
             redraw();
@@ -208,7 +193,7 @@ abstract class PlusScreen extends CloudScreen {
         }
         mSaving = true;
         bar();
-        mService.putPlus(a.id, doc.aiRev, edit.toJson(), new CloudService.Result<CloudModel.PlusDoc>() {
+        mService.putPlus(a.id, doc.aiRev, edit.settingsJson(), new CloudService.Result<CloudModel.PlusDoc>() {
             @Override
             public void ok(CloudModel.PlusDoc saved) {
                 mSaving = false;
@@ -231,6 +216,8 @@ abstract class PlusScreen extends CloudScreen {
                 String field = problem.field();
                 if (problem.kind == CloudProblem.Kind.REFUSED && field != null) {
                     String reason = problem.reason();
+                    // The tag rule's own problem ("staff", "name", "link"...) words the tag's line.
+                    if ("persona.prefix.text".equals(field) && problem.problem() != null) reason = "tag:" + problem.problem();
                     mProblems.add(new String[]{field, reason == null ? "range" : reason});
                     redraw();
                     bar();
@@ -258,8 +245,4 @@ abstract class PlusScreen extends CloudScreen {
                 .show();
     }
 
-    public String itemName(String id) {
-        if (mCatalog != null) return mCatalog.itemName(id, lang());
-        return mService.itemName(id, lang());
-    }
 }

@@ -517,7 +517,7 @@ public final class CloudWords {
     /** A history change in words ("Elytra en fazla 40.000 yerine 45.000"). */
     public static String change(Context c, PlusFormat.Change change, CloudService service) {
         String lang = lang(c);
-        String item = change.item == null ? "" : service.itemName(change.item, lang);
+        String item = change.item == null ? "" : service.itemName(null, change.item, lang);
         switch (change.kind) {
             case AI_ON: return c.getString(R.string.projects_plus_change_ai_on);
             case AI_OFF: return c.getString(R.string.projects_plus_change_ai_off);
@@ -552,9 +552,19 @@ public final class CloudWords {
             case PERSONA: return c.getString(R.string.projects_plus_change_persona);
             case REPLIES: return c.getString(R.string.projects_plus_change_replies);
             case BLOCKED: return c.getString(R.string.projects_plus_change_blocked);
+            case FINE: return c.getString(R.string.projects_plus_change_fine);
             case OTHER:
             default: return c.getString(R.string.projects_plus_change_other);
         }
+    }
+
+    /** An item a notice names: a custom item ({@code custom:<k>}) by the player's own name kept for that account. */
+    private static String noticeItem(Context c, CloudPrefs prefs, @Nullable String acct, String ref, String lang) {
+        if (ref.startsWith("custom:")) {
+            String own = acct == null ? null : prefs.rememberedName(acct + "|" + ref, lang);
+            return own != null ? own : c.getString(R.string.projects_plus_custom_item);
+        }
+        return prefs.itemName(ref, lang);
     }
 
     public static String limitLabel(Context c, String key) {
@@ -577,7 +587,10 @@ public final class CloudWords {
     public static String[] notice(Context c, CloudNotice n, CloudPrefs prefs, long nowSeconds) {
         String lang = lang(c);
         String name = n.name() == null ? c.getString(R.string.projects_cloud_title) : n.name();
-        String item = n.get("item") == null ? "" : prefs.itemName(n.get("item"), lang);
+        String item = n.get("item") == null ? "" : noticeItem(c, prefs, n.get("acct"), n.get("item"), lang);
+        // The price counts the paying item when the deal is paid with one ("3 Elmas"), else it is money.
+        String pay = n.get("pay");
+        boolean payItem = pay != null && !"money".equals(pay);
         long qty = n.number("qty", 1);
         long price = n.number("price", 0);
         String title = c.getString(R.string.projects_cloud_title);
@@ -592,9 +605,17 @@ public final class CloudWords {
                 return new String[]{title, c.getString(R.string.projects_cloud_notice_expired, name)};
             case "found":
                 return new String[]{c.getString(R.string.projects_plus_title), c.getString(R.string.projects_cloud_notice_found, name, item, money(c, price))};
-            case "approval":
+            case "approval": {
+                String kind = n.get("approvalKind");
+                // Orders' notices (README "AFK+ notifications"): the devices write their texts; never a counterpart's name.
+                if ("handoff".equals(kind)) return new String[]{c.getString(R.string.projects_plus_title), c.getString(R.string.projects_notice_handoff, name)};
+                if ("confirm_item".equals(kind)) {
+                    return new String[]{c.getString(R.string.projects_plus_title), c.getString(R.string.projects_notice_first_sight, name, item)};
+                }
+                String priceText = payItem ? qtyName(c, price, noticeItem(c, prefs, n.get("acct"), pay, lang)) : money(c, price);
                 return new String[]{c.getString(R.string.projects_cloud_notice_approval, name),
-                        c.getString(R.string.projects_cloud_notice_deal_line, String.valueOf(qty), item, money(c, price))};
+                        c.getString(R.string.projects_cloud_notice_deal_line, String.valueOf(qty), item, priceText)};
+            }
             case "deal_done":
                 return new String[]{c.getString(R.string.projects_plus_title), c.getString("sell".equals(n.get("side"))
                         ? R.string.projects_cloud_notice_sold : R.string.projects_cloud_notice_bought, name, String.valueOf(qty), item, moneyDative(c, price))};
@@ -603,6 +624,8 @@ public final class CloudWords {
             case "quota": {
                 String which = n.get("which");
                 if ("80".equals(which)) return new String[]{c.getString(R.string.projects_plus_title), c.getString(R.string.projects_cloud_notice_quota_80, name)};
+                // AFK+ extra credits: the windows and the gifts are used up, the bought credits are in use now.
+                if ("bought".equals(which)) return new String[]{c.getString(R.string.projects_plus_title), c.getString(R.string.projects_credits_notice_bought, name)};
                 if ("gift".equals(which)) {
                     long expires = n.number("expires", 0);
                     return new String[]{c.getString(R.string.projects_plus_title), c.getString(R.string.projects_cloud_notice_gift_ending,

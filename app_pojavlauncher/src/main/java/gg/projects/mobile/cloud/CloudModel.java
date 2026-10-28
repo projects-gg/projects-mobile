@@ -331,6 +331,13 @@ public final class CloudModel {
         public final int termsVersion;
         /** The QoL features Studio has on. */
         public final Set<String> features;
+        /** {@code servers.any}: AFK+ runs on any server (Studio's {@code features.anyServer}). */
+        public final boolean anyServer;
+        /** {@code servers.verified}: the server keys where the bot itself trades. */
+        public final List<String> verifiedServers;
+        /** AFK+ extra credits; null while Studio's {@code features.topup} is off (or from an older service). */
+        @Nullable
+        public final PlusModel.Topup topup;
 
         private OfferPlus(JsonObject o) {
             mode = Json.str(o, "mode", "on");
@@ -339,6 +346,10 @@ public final class CloudModel {
             soldOut = Json.bool(Json.obj(o, "stock"), "soldOut", false);
             refundWindowHours = (int) Json.num(o, "refundWindowHours", 0);
             termsVersion = (int) Json.num(o, "termsVersion", 0);
+            JsonObject servers = Json.obj(o, "servers");
+            anyServer = Json.bool(servers, "any", false);
+            verifiedServers = Collections.unmodifiableList(Json.strings(servers, "verified"));
+            topup = PlusModel.Topup.read(Json.obj(o, "topup"));
             Set<String> on = new HashSet<>();
             JsonObject f = Json.obj(o, "features");
             if (f != null) {
@@ -476,6 +487,8 @@ public final class CloudModel {
         @Nullable
         public final Long exhaustedUntil;
         public final long giftsLeft;
+        /** Bought credits left (AFK+ extra credits); 0 from an older agent. */
+        public final long boughtLeft;
 
         private QuotaBrief(JsonObject o) {
             pct5 = (int) Json.num(o, "pct5", 0);
@@ -484,6 +497,7 @@ public final class CloudModel {
             weekResetAt = Json.num(o, "weekResetAt", 0);
             exhaustedUntil = Json.numOrNull(o, "exhaustedUntil");
             giftsLeft = Json.num(o, "giftsLeft", 0);
+            boughtLeft = Math.max(0, Json.num(o, "boughtLeft", 0));
         }
 
         @Nullable
@@ -533,6 +547,8 @@ public final class CloudModel {
         public final String tradeOff;
         /** {@code on}, or {@code notify}: no spending authority yet (buy rows only report). */
         public final String buy;
+        /** Who makes this account's trades: {@code bot} (a verified profile) or {@code owner} ("Takas sende"). */
+        public final String tradeBy;
         public final int pendingApprovals;
         @Nullable
         public final QuotaBrief quota;
@@ -551,6 +567,7 @@ public final class CloudModel {
             tradeOn = Json.bool(trade, "on", false);
             tradeOff = Json.str(trade, "off");
             buy = Json.str(trade, "buy", "on");
+            tradeBy = "bot".equals(Json.str(trade, "by")) ? "bot" : "owner";
             pendingApprovals = (int) Json.num(o, "pendingApprovals", 0);
             quota = QuotaBrief.read(Json.obj(o, "quota"));
             asOf = Json.numOrNull(o, "asOf");
@@ -932,17 +949,43 @@ public final class CloudModel {
 
     // ---- AFK+ ----
 
-    /** An approval the bot waits for ({@code Approval}). */
+    /**
+     * An approval the bot waits for ({@code Approval}, AFK+ trade orders → "Handing over and first sight"): {@code deal}
+     * (OK the bot's deal), {@code handoff} ("Takas sende": the player makes the trade and says how it went) or
+     * {@code confirm_item} ("Aradığın … bu mu?": a typed custom item met an item in a trade window).
+     */
     public static final class Approval {
         public final String id;
         public final String acct;
+        /** {@code deal}, {@code handoff} or {@code confirm_item}. */
+        public final String kind;
+        /** The order it is for, or null. */
+        @Nullable
+        public final String order;
+        /** confirm_item: the custom item asked about ({@code k}) and whether it is the order's item or its payment. */
+        @Nullable
+        public final String customKey;
+        @Nullable
+        public final String customField;
         public final String side;
         public final String item;
         public final long qty;
+        /** The price: money, or the paying item's count when {@link #pay} is an item. */
         public final long price;
-        public final String currency;
+        /** {@code money} or the paying item's reference. */
+        public final String pay;
         public final String counterpart;
         public final List<String> why;
+        /** confirm_item: the item in the window (its id, look, name and lore lines as plain text). */
+        @Nullable
+        public final String seenId;
+        @Nullable
+        public final String seenName;
+        public final List<String> seenLore;
+        @Nullable
+        public final Long seenCmd;
+        @Nullable
+        public final String seenModel;
         public final long createdAt;
         public final long expiresAt;
         /** {@code pending}, {@code approved}, {@code rejected}, {@code expired} or {@code closed}. */
@@ -955,19 +998,44 @@ public final class CloudModel {
         private Approval(JsonObject o) {
             id = Json.str(o, "id", "");
             acct = Json.str(o, "acct", "");
+            String k = Json.str(o, "kind", "deal");
+            kind = "handoff".equals(k) || "confirm_item".equals(k) ? k : "deal";
+            order = Json.str(o, "order");
+            JsonObject custom = Json.obj(o, "custom");
+            customKey = Json.str(custom, "k");
+            customField = Json.str(custom, "field");
             JsonObject deal = Json.obj(o, "deal");
-            side = Json.str(deal, "side", "buy");
+            side = "sell".equals(Json.str(deal, "side")) ? "sell" : "buy";
             item = Json.str(deal, "item", "");
-            qty = Json.num(deal, "qty", 1);
-            price = Json.num(deal, "price", 0);
-            currency = Json.str(deal, "currency", "");
+            qty = Math.max(1, Json.num(deal, "qty", 1));
+            price = Math.max(0, Json.num(deal, "price", 0));
+            pay = Json.str(deal, "pay", "money");
             counterpart = Json.str(o, "counterpart", "");
             why = Json.strings(o, "why");
+            JsonObject seen = Json.obj(o, "seen");
+            seenId = Json.str(seen, "id");
+            seenName = Json.str(seen, "name");
+            seenLore = Json.strings(seen, "lore");
+            seenCmd = Json.numOrNull(seen, "cmd");
+            seenModel = Json.str(seen, "model");
             createdAt = Json.num(o, "createdAt", 0);
             expiresAt = Json.num(o, "expiresAt", 0);
             state = Json.str(o, "state", "pending");
             maxPrice = Json.numOrNull(o, "maxPrice");
             closed = Json.str(o, "closed");
+        }
+
+        public boolean handoff() {
+            return "handoff".equals(kind);
+        }
+
+        public boolean confirmItem() {
+            return "confirm_item".equals(kind);
+        }
+
+        /** Whether the price is money (else it counts the paying item). */
+        public boolean money() {
+            return "money".equals(pay);
         }
 
         @Nullable
@@ -989,82 +1057,6 @@ public final class CloudModel {
         }
     }
 
-    /** A line of the live feed ({@code FeedItem}). */
-    public static final class FeedItem {
-        public final String id;
-        public final long at;
-        public final String kind;
-        @Nullable
-        public final String counterpart;
-        @Nullable
-        public final String text;
-        @Nullable
-        public final String item;
-        @Nullable
-        public final Long qty;
-        @Nullable
-        public final Long price;
-        @Nullable
-        public final String currency;
-        @Nullable
-        public final String reason;
-
-        private FeedItem(JsonObject o) {
-            id = Json.str(o, "id", "");
-            at = Json.num(o, "at", 0);
-            kind = Json.str(o, "kind", "");
-            counterpart = Json.str(o, "counterpart");
-            text = Json.str(o, "text");
-            item = Json.str(o, "item");
-            qty = Json.numOrNull(o, "qty");
-            price = Json.numOrNull(o, "price");
-            currency = Json.str(o, "currency");
-            reason = Json.str(o, "reason");
-        }
-
-        public static List<FeedItem> list(@Nullable JsonObject o, String key) {
-            List<FeedItem> out = new ArrayList<>();
-            for (JsonObject f : Json.objects(o, key)) if (Json.str(f, "id") != null) out.add(new FeedItem(f));
-            return out;
-        }
-    }
-
-    /** A deal of the trade history ({@code Deal}). */
-    public static final class Deal {
-        public final String id;
-        public final String side;
-        public final String item;
-        public final long qty;
-        public final long price;
-        public final String currency;
-        public final String counterpart;
-        public final String status;
-        @Nullable
-        public final String reason;
-        public final String approval;
-        public final long at;
-
-        private Deal(JsonObject o) {
-            id = Json.str(o, "id", "");
-            side = Json.str(o, "side", "buy");
-            item = Json.str(o, "item", "");
-            qty = Json.num(o, "qty", 1);
-            price = Json.num(o, "price", 0);
-            currency = Json.str(o, "currency", "");
-            counterpart = Json.str(o, "counterpart", "");
-            status = Json.str(o, "status", "completed");
-            reason = Json.str(o, "reason");
-            approval = Json.str(o, "approval", "auto");
-            at = Json.num(o, "at", 0);
-        }
-
-        public static List<Deal> list(@Nullable JsonObject o, String key) {
-            List<Deal> out = new ArrayList<>();
-            for (JsonObject d : Json.objects(o, key)) if (Json.str(d, "id") != null) out.add(new Deal(d));
-            return out;
-        }
-    }
-
     /** {@code QuotaView}: the two windows, gifts, a promotion, "≈ N yanıt kaldı". */
     public static final class QuotaView {
         public final long w5hUsed;
@@ -1083,8 +1075,11 @@ public final class CloudModel {
         public final int pct5;
         public final int pctWeek;
         public final long asOf;
+        /** Bought credits left (AFK+ extra credits); 0 from an older agent. */
+        public final long boughtRemaining;
 
         private QuotaView(JsonObject o) {
+            boughtRemaining = Math.max(0, Json.num(Json.obj(o, "bought"), "remaining", 0));
             JsonObject w5h = Json.obj(o, "w5h");
             w5hUsed = Json.num(w5h, "used", 0);
             w5hCap = Json.num(w5h, "cap", 0);
@@ -1140,23 +1135,28 @@ public final class CloudModel {
     /**
      * {@code GET /accounts/:id/plus}: the AFK+ settings as stored (kept whole as JSON: a {@code PUT} writes the
      * document back with only the player's changes, so nothing the phone does not know is lost or refused), with
-     * their revision, the persona texts' judgement and the game mode's profile.
+     * their revision, the persona texts' judgement, the account's server as AFK+ sees it ({@code server}), the limits a
+     * client checks by ({@code rules}) and each order's live view ({@code orders}).
      */
     public static final class PlusDoc {
         public final JsonObject config;
         public final long aiRev;
         public final Judge intro;
         public final Judge status;
-        @Nullable
-        public final String profileId;
-        @Nullable
-        public final String profileName;
-        public final boolean profileTrade;
+        public final PlusModel.Server server;
+        public final PlusModel.Rules rules;
+        /** Each order's status and progress (absent for an order the machine has not seen yet). */
+        public final Map<String, PlusModel.OrderView> orders;
         /** What the assistant has spent, when the machine answered (CAFK-W5); null otherwise. */
         @Nullable
         public final Spent spent;
+        /** Set when the order views are the machine's last snapshot, not a live answer. */
+        @Nullable
+        public final Long asOf;
+        private final JsonObject mRaw;
 
         private PlusDoc(JsonObject o) {
+            mRaw = o;
             JsonObject c = Json.obj(o, "config");
             config = c == null ? new JsonObject() : c;
             aiRev = Json.num(o, "aiRev", 0);
@@ -1164,124 +1164,54 @@ public final class CloudModel {
             JsonObject judge = Json.obj(o, "judge");
             intro = Judge.read(Json.obj(judge, "intro"));
             status = Judge.read(Json.obj(judge, "status"));
-            JsonObject profile = Json.obj(o, "profile");
-            profileId = Json.str(profile, "id");
-            JsonElement name = profile == null ? null : profile.get("name");
-            profileName = name == null ? null : name.isJsonPrimitive() ? name.getAsString()
-                    : name.isJsonObject() ? Json.str(name.getAsJsonObject(), "tr") : null;
-            profileTrade = Json.bool(profile, "trade", false);
+            server = PlusModel.Server.read(Json.obj(o, "server"));
+            rules = PlusModel.Rules.read(Json.obj(o, "rules"));
+            orders = Collections.unmodifiableMap(PlusModel.OrderView.map(Json.obj(o, "orders")));
+            asOf = Json.numOrNull(o, "asOf");
         }
 
         @Nullable
         public static PlusDoc read(@Nullable JsonObject o) {
             return o == null || Json.obj(o, "config") == null ? null : new PlusDoc(o);
         }
-    }
 
-    /** {@code GET /plus/catalog}: the items the bot trades in a mode, with Turkish and English names. */
-    public static final class PlusCatalog {
-        public static final class Item {
-            public final String id;
-            public final String tr;
-            public final String en;
-            public final String sprite;
-            public final int stack;
-            public final boolean damageable;
-
-            Item(JsonObject o) {
-                id = Json.str(o, "id", "");
-                tr = Json.str(o, "tr", id);
-                en = Json.str(o, "en", tr);
-                sprite = Json.str(o, "sprite", "");
-                stack = (int) Json.num(o, "stack", 64);
-                damageable = Json.bool(o, "damageable", false);
-            }
-
-            public String name(String lang) {
-                return "en".equals(lang) ? en : tr;
-            }
-        }
-
-        public static final class Enchantment {
-            public final String id;
-            public final String tr;
-            public final String en;
-            public final int max;
-
-            Enchantment(JsonObject o) {
-                id = Json.str(o, "id", "");
-                tr = Json.str(o, "tr", id);
-                en = Json.str(o, "en", tr);
-                max = (int) Json.num(o, "max", 1);
-            }
-
-            public String name(String lang) {
-                return "en".equals(lang) ? en : tr;
-            }
-        }
-
-        public final String mode;
+        /** The mode's name in {@code lang}, or null for the generic profile. */
         @Nullable
-        public final Localized name;
-        public final List<Item> items;
-        public final List<Enchantment> enchantments;
-        public final String currency;
-        public final long maxDeal;
-        public final int listMax;
-        public final int approvalTimeoutMin;
-        public final int approvalTimeoutMax;
-        private final Map<String, Item> mById = new LinkedHashMap<>();
+        public String profileName(String lang) {
+            return server.name == null ? null : server.name.in(lang);
+        }
 
-        private PlusCatalog(JsonObject o) {
-            mode = Json.str(o, "mode", "");
-            name = Localized.read(Json.obj(o, "name"));
-            List<Item> list = new ArrayList<>();
-            for (JsonObject i : Json.objects(o, "items")) {
-                Item item = new Item(i);
-                if (item.id.isEmpty()) continue;
-                list.add(item);
-                mById.put(item.id, item);
+        /**
+         * After a write ({@code PUT}, an order route): the new settings and revision; the server, the rules, the spent
+         * sums and the order views stay as read (a new order has no view yet; {@code judge} comes again only with
+         * {@code PUT}).
+         */
+        public PlusDoc with(JsonObject newConfig, long newRev, @Nullable JsonObject judge) {
+            JsonObject next = mRaw.deepCopy();
+            next.add("config", newConfig);
+            next.addProperty("aiRev", newRev);
+            if (judge != null) next.add("judge", judge);
+            return new PlusDoc(next);
+        }
+
+        /** With the order views an {@code aiord} frame brought (merged by id; their status is derived by the screen). */
+        public PlusDoc withOrders(Map<String, PlusModel.OrderView> changed) {
+            JsonObject next = mRaw.deepCopy();
+            JsonObject views = Json.obj(next, "orders");
+            if (views == null) {
+                views = new JsonObject();
+                next.add("orders", views);
             }
-            items = Collections.unmodifiableList(list);
-            List<Enchantment> e = new ArrayList<>();
-            for (JsonObject en : Json.objects(o, "enchantments")) e.add(new Enchantment(en));
-            enchantments = Collections.unmodifiableList(e);
-            JsonObject money = Json.obj(o, "money");
-            currency = Json.str(money, "currency", "");
-            maxDeal = Json.num(money, "maxDeal", 10_000_000L);
-            JsonObject limits = Json.obj(o, "limits");
-            listMax = (int) Json.num(limits, "listMax", 10);
-            int lo = 1;
-            int hi = 60;
-            if (limits != null && limits.has("approvalTimeoutMin") && limits.get("approvalTimeoutMin").isJsonArray()
-                    && limits.getAsJsonArray("approvalTimeoutMin").size() == 2) {
-                lo = limits.getAsJsonArray("approvalTimeoutMin").get(0).getAsInt();
-                hi = limits.getAsJsonArray("approvalTimeoutMin").get(1).getAsInt();
+            for (Map.Entry<String, PlusModel.OrderView> e : changed.entrySet()) {
+                JsonObject v = new JsonObject();
+                v.addProperty("status", e.getValue().status);
+                v.addProperty("got", e.getValue().got);
+                v.addProperty("at", e.getValue().at);
+                if (e.getValue().live != null) v.addProperty("live", e.getValue().live);
+                views.add(e.getKey(), v);
             }
-            approvalTimeoutMin = lo;
-            approvalTimeoutMax = hi;
-        }
-
-        @Nullable
-        public static PlusCatalog read(@Nullable JsonObject o) {
-            return o == null ? null : new PlusCatalog(o);
-        }
-
-        @Nullable
-        public Item item(String id) {
-            return mById.get(id);
-        }
-
-        /** The item's name in {@code lang}; an id the catalog lacks reads without its {@code minecraft:} part. */
-        public String itemName(String id, String lang) {
-            Item item = mById.get(id);
-            return item != null ? item.name(lang) : bareName(id);
-        }
-
-        public static String bareName(String id) {
-            int colon = id.lastIndexOf(':');
-            String bare = colon >= 0 ? id.substring(colon + 1) : id;
-            return bare.replace('_', ' ');
+            next.remove("asOf");
+            return new PlusDoc(next);
         }
     }
 
@@ -1418,45 +1348,6 @@ public final class CloudModel {
 
         public static InboxPage read(@Nullable JsonObject o) {
             return new InboxPage(o == null ? new JsonObject() : o);
-        }
-    }
-
-    /** {@code ParseDraft}: a rule's draft from one typed sentence (QoL Q2), never stored by itself. */
-    public static final class ParseDraft {
-        public final String side;
-        @Nullable
-        public final String item;
-        public final List<String> candidates;
-        public final long qty;
-        public final String unit;
-        @Nullable
-        public final Long target;
-        @Nullable
-        public final Long max;
-        @Nullable
-        public final Long min;
-        public final String style;
-        public final String approval;
-        public final List<String> issues;
-
-        private ParseDraft(JsonObject draft, List<String> issues) {
-            side = Json.str(draft, "side", "buy");
-            item = Json.str(draft, "item");
-            candidates = Json.strings(draft, "candidates");
-            qty = Math.max(1, Json.num(draft, "qty", 1));
-            unit = Json.str(draft, "unit", "total");
-            target = Json.numOrNull(draft, "target");
-            max = Json.numOrNull(draft, "max");
-            min = Json.numOrNull(draft, "min");
-            style = Json.str(draft, "style", "balanced");
-            approval = Json.str(draft, "approval", "above");
-            this.issues = issues;
-        }
-
-        @Nullable
-        public static ParseDraft read(@Nullable JsonObject o) {
-            JsonObject draft = Json.obj(o, "draft");
-            return draft == null ? null : new ParseDraft(draft, Json.strings(o, "issues"));
         }
     }
 

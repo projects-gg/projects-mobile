@@ -36,10 +36,6 @@ public final class PlusScheduleFragment extends PlusScreen {
         return R.string.projects_plus_schedule;
     }
 
-    @Override
-    protected boolean wantsCatalog() {
-        return false;
-    }
 
     @Override
     protected void draw(LinearLayout content) {

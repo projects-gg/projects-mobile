@@ -13,29 +13,32 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import gg.projects.mobile.social.Json;
 
 /**
- * An AFK+ account's settings ({@code AfkPlusConfig} v1, services/cloud-afk README) as the phone edits them: a copy of
- * the stored document changed in place, so a {@code PUT} writes back exactly what the service gave with only the
- * player's changes (fields the phone does not know stay, nothing unknown is ever added). Typed accessors, new rows in
- * the contract's shape, and the checks the Worker makes, before anything is sent ({@code invalid_plus_config}).
+ * An AFK+ account's settings ({@code AfkPlusConfig} v2, services/cloud-afk README "AfkPlusConfig v2") as the phone's
+ * settings screens edit them: a copy of the stored document changed in place, so a {@code PUT} writes back what the
+ * service gave with only the player's changes (fields the phone does not know stay, nothing unknown is ever added).
+ * Orders and custom items have their own routes: {@link #settingsJson()} leaves them out of a {@code PUT} (the stored
+ * ones stay), and {@link #orders()} / {@link #customItems()} only read them. The checks are the Worker's for the fields
+ * these screens edit, before anything is sent; the Worker and the agent have the last word ({@code invalid_plus_config}).
  */
 public final class PlusConfig {
-    public static final int LIST_MAX = 10;
     public static final int BLOCKED_MAX = 100;
+    public static final int FRIENDS_MAX = 50;
     public static final int WINDOWS_MAX = 7;
     public static final int INTRO_MAX = 60;
     public static final int STATUS_MAX = 80;
+    public static final int TAG_MAX = 16;
+    public static final String TAG_DEFAULT = "[AFK+]";
     public static final int QTY_MAX = 9999;
     public static final long PAUSE_MAX_SECONDS = 90L * 86_400;
     public static final String[] PRESETS = {"friendly", "brief", "polite", "playful"};
     public static final String[] STATUS_PRESETS = {"back_soon", "back_evening", "back_tomorrow", "weekend", "busy"};
     public static final String[] STYLES = {"patient", "balanced", "quick"};
-    public static final String[] APPROVALS = {"auto", "above", "always"};
+    public static final String[] AUTHORITIES = {"reply", "ask", "deal"};
+    public static final String[] PAYS = {"money", "items", "both"};
 
     private final JsonObject mDoc;
 
@@ -43,17 +46,26 @@ public final class PlusConfig {
         mDoc = stored.deepCopy();
     }
 
-    /** The document to send (the stored one with the changes). */
+    /** The whole document (the stored one with the changes). */
     public JsonObject toJson() {
         return mDoc.deepCopy();
+    }
+
+    /** What a settings screen sends ({@code PUT}): the document without its orders and custom items (the stored ones stay). */
+    public JsonObject settingsJson() {
+        JsonObject out = mDoc.deepCopy();
+        out.remove("orders");
+        out.remove("customItems");
+        return out;
     }
 
     public PlusConfig copy() {
         return new PlusConfig(mDoc);
     }
 
+    /** Whether the settings a screen edits are the same (orders and custom items change through their own routes). */
     public boolean same(PlusConfig other) {
-        return mDoc.equals(other.mDoc);
+        return settingsJson().equals(other.settingsJson());
     }
 
     private JsonObject obj(String key) {
@@ -135,12 +147,39 @@ public final class PlusConfig {
         }
     }
 
+    /** Small talk on; "Konu dışına çıkmasın" is its opposite (default: small talk off, the switch on). */
     public boolean smallTalk() {
-        return Json.bool(Json.obj(mDoc, "persona"), "smallTalk", true);
+        return Json.bool(Json.obj(mDoc, "persona"), "smallTalk", false);
     }
 
     public void setSmallTalk(boolean on) {
         obj("persona").addProperty("smallTalk", on);
+    }
+
+    /** "Oyuncu gibi konuşsun": chats like a player, not in formal language (default off). */
+    public boolean playerTalk() {
+        return Json.bool(Json.obj(mDoc, "persona"), "playerTalk", false);
+    }
+
+    public void setPlayerTalk(boolean on) {
+        obj("persona").addProperty("playerTalk", on);
+    }
+
+    /** "Mesajlarının başına etiket koysun": the player's choice, off by default. */
+    public boolean tagOn() {
+        return Json.bool(Json.obj(Json.obj(mDoc, "persona"), "prefix"), "on", false);
+    }
+
+    public String tagText() {
+        return Json.str(Json.obj(Json.obj(mDoc, "persona"), "prefix"), "text", TAG_DEFAULT);
+    }
+
+    /** Sets the tag; a document without one gets it only when the player changes it (an older service never sees the field). */
+    public void setTag(boolean on, String text) {
+        JsonObject prefix = new JsonObject();
+        prefix.addProperty("on", on);
+        prefix.addProperty("text", text);
+        obj("persona").add("prefix", prefix);
     }
 
     /** {@code all}, {@code trade} or {@code off}. */
@@ -210,6 +249,54 @@ public final class PlusConfig {
         else trade.addProperty("returnRow", row);
     }
 
+    // ---- fine-tuning ("İnce ayar") ----
+
+    /** "Asistan ne yapsın?": {@code reply}, {@code ask} (default) or {@code deal}. */
+    public String authority() {
+        String a = Json.str(mDoc, "authority", "ask");
+        return "reply".equals(a) || "deal".equals(a) ? a : "ask";
+    }
+
+    public void setAuthority(String authority) {
+        mDoc.addProperty("authority", authority);
+    }
+
+    /** "Alış" / "Satış": an order of a side switched off waits. */
+    public boolean allows(String side) {
+        return Json.bool(Json.obj(mDoc, "allow"), "sell".equals(side) ? "sell" : "buy", true);
+    }
+
+    public void setAllows(String side, boolean on) {
+        obj("allow").addProperty("sell".equals(side) ? "sell" : "buy", on);
+    }
+
+    /** What deals may be paid with: {@code money} (default), {@code items} or {@code both}. */
+    public String pay() {
+        String p = Json.str(mDoc, "pay", "money");
+        return "items".equals(p) || "both".equals(p) ? p : "money";
+    }
+
+    public void setPay(String pay) {
+        mDoc.addProperty("pay", pay);
+    }
+
+    /** "Kimlerle": {@code all} or {@code friends}. */
+    public String whoMode() {
+        return "friends".equals(Json.str(Json.obj(mDoc, "who"), "mode")) ? "friends" : "all";
+    }
+
+    public List<String> friends() {
+        return Json.strings(Json.obj(mDoc, "who"), "friends");
+    }
+
+    public void setWho(String mode, List<String> friends) {
+        JsonObject who = obj("who");
+        who.addProperty("mode", mode);
+        JsonArray a = new JsonArray();
+        for (String n : friends) a.add(n);
+        who.add("friends", a);
+    }
+
     // ---- blocked players ----
 
     public List<String> blocked() {
@@ -241,7 +328,7 @@ public final class PlusConfig {
         return (int) Json.num(Json.obj(mDoc, "limits"), "approvalTimeoutMin", 10);
     }
 
-    /** Buy rows only report what they find until a budget and a per-deal ceiling are set. */
+    /** Buy orders for money the bot would trade itself only report what they find until both limits are set. */
     public boolean canSpend() {
         return limit("totalBudget") != null && limit("perDealMax") != null;
     }
@@ -306,249 +393,51 @@ public final class PlusConfig {
         setNullable(mDoc, "pauseUntil", until);
     }
 
-    // ---- buy and sell rows ----
+    // ---- orders and custom items (read only here: they have their own routes) ----
 
-    /** A buy or sell row (a view on the document: changes go into it). */
-    public static final class Row {
-        public final boolean buy;
-        final JsonObject o;
-
-        Row(boolean buy, JsonObject o) {
-            this.buy = buy;
-            this.o = o;
-        }
-
-        /** A view on {@code o} (a row the screen edits apart from the document, put back with {@link #replaceRow}). */
-        public static Row of(boolean buy, JsonObject o) {
-            return new Row(buy, o);
-        }
-
-        public String id() {
-            return Json.str(o, "id", "");
-        }
-
-        public String item() {
-            return Json.str(o, "item", "");
-        }
-
-        public void setItem(String item) {
-            o.addProperty("item", item);
-        }
-
-        public long qty() {
-            return Json.num(o, "qty", 1);
-        }
-
-        public void setQty(long qty) {
-            o.addProperty("qty", qty);
-        }
-
-        /** {@code each} or {@code total}: whether the amounts are per item or for {@link #qty} items. */
-        public String unit() {
-            return Json.str(o, "unit", "total");
-        }
-
-        public void setUnit(String unit) {
-            o.addProperty("unit", unit);
-        }
-
-        public long target() {
-            return Json.num(o, "target", 0);
-        }
-
-        public void setTarget(long value) {
-            o.addProperty("target", value);
-        }
-
-        /** Buy: the ceiling ({@code max}); sell: the floor ({@code min}). */
-        public long bound() {
-            return Json.num(o, buy ? "max" : "min", 0);
-        }
-
-        public void setBound(long value) {
-            o.addProperty(buy ? "max" : "min", value);
-        }
-
-        public String style() {
-            return Json.str(o, "style", "balanced");
-        }
-
-        public void setStyle(String style) {
-            o.addProperty("style", style);
-        }
-
-        public String approval() {
-            return Json.str(o, "approval", "above");
-        }
-
-        public void setApproval(String approval) {
-            o.addProperty("approval", approval);
-        }
-
-        public long dailyQty() {
-            return Json.num(o, "dailyQty", 1);
-        }
-
-        public void setDailyQty(long qty) {
-            o.addProperty("dailyQty", qty);
-        }
-
-        public boolean notifyFound() {
-            return Json.bool(o, "notify", true);
-        }
-
-        public void setNotifyFound(boolean on) {
-            if (buy) o.addProperty("notify", on);
-        }
-
-        public boolean enabled() {
-            return Json.bool(o, "enabled", true);
-        }
-
-        public void setEnabled(boolean on) {
-            o.addProperty("enabled", on);
-        }
-
-        public int minDurabilityPct() {
-            return (int) Json.num(Json.obj(o, "req"), "minDurabilityPct", 0);
-        }
-
-        public void setMinDurabilityPct(int pct) {
-            if (!buy) return;
-            req().addProperty("minDurabilityPct", pct);
-        }
-
-        public boolean allowCustomName() {
-            return Json.bool(Json.obj(o, "req"), "allowCustomName", false);
-        }
-
-        public void setAllowCustomName(boolean on) {
-            if (buy) req().addProperty("allowCustomName", on);
-        }
-
-        public boolean allowCurses() {
-            return Json.bool(Json.obj(o, "req"), "allowCurses", false);
-        }
-
-        public void setAllowCurses(boolean on) {
-            if (buy) req().addProperty("allowCurses", on);
-        }
-
-        private JsonObject req() {
-            JsonObject req = Json.obj(o, "req");
-            if (req == null) {
-                req = new JsonObject();
-                req.add("ench", new JsonObject());
-                req.addProperty("minDurabilityPct", 0);
-                req.addProperty("allowCustomName", false);
-                req.addProperty("allowCurses", false);
-                o.add("req", req);
-            }
-            return req;
-        }
-
-        public JsonObject json() {
-            return o.deepCopy();
-        }
-    }
-
-    public List<Row> rows(boolean buy) {
-        List<Row> out = new ArrayList<>();
-        JsonArray a = Json.arr(mDoc, buy ? "buy" : "sell");
-        for (JsonElement e : a) if (e.isJsonObject()) out.add(new Row(buy, e.getAsJsonObject()));
+    /** The orders as stored (copies), in the document's order. */
+    public List<JsonObject> orders() {
+        List<JsonObject> out = new ArrayList<>();
+        for (JsonObject o : Json.objects(mDoc, "orders")) out.add(o.deepCopy());
         return out;
     }
 
-    private JsonArray list(boolean buy) {
-        String key = buy ? "buy" : "sell";
-        JsonElement e = mDoc.get(key);
-        if (e == null || !e.isJsonArray()) {
-            JsonArray a = new JsonArray();
-            mDoc.add(key, a);
-            return a;
-        }
-        return e.getAsJsonArray();
-    }
-
-    /** The ids of both lists (unique across them). */
-    public Set<String> rowIds() {
-        Set<String> ids = new HashSet<>();
-        for (Row r : rows(true)) ids.add(r.id());
-        for (Row r : rows(false)) ids.add(r.id());
-        return ids;
-    }
-
-    /** A new row id: {@code ^[a-z0-9]{1,8}$}, unique across buy and sell. */
-    public String newRowId(java.util.Random random) {
-        Set<String> taken = rowIds();
-        String alphabet = "abcdefghijklmnopqrstuvwxyz0123456789";
-        for (int tries = 0; tries < 1000; tries++) {
-            StringBuilder id = new StringBuilder();
-            for (int i = 0; i < 6; i++) id.append(alphabet.charAt(random.nextInt(alphabet.length())));
-            if (!taken.contains(id.toString())) return id.toString();
-        }
-        throw new IllegalStateException("no free id");
-    }
-
-    /** A new row in the contract's shape (the defaults the site uses). */
-    public static JsonObject newRow(boolean buy, String id, String item, long qty, String unit, long target, long bound, String style,
-                                    String approval) {
-        JsonObject o = new JsonObject();
-        o.addProperty("id", id);
-        o.addProperty("item", item);
-        if (buy) {
-            JsonObject req = new JsonObject();
-            req.add("ench", new JsonObject());
-            req.addProperty("minDurabilityPct", 0);
-            req.addProperty("allowCustomName", false);
-            req.addProperty("allowCurses", false);
-            o.add("req", req);
-        }
-        o.addProperty("qty", qty);
-        o.addProperty("unit", unit);
-        o.addProperty("target", target);
-        o.addProperty(buy ? "max" : "min", bound);
-        o.addProperty("style", style);
-        o.addProperty("approval", approval);
-        o.addProperty("dailyQty", Math.max(1, Math.min(QTY_MAX, buy ? qty : qty * 2)));
-        if (buy) o.addProperty("notify", true);
-        o.addProperty("enabled", true);
-        return o;
-    }
-
-    public void addRow(boolean buy, JsonObject row) {
-        list(buy).add(row);
-    }
-
-    public void replaceRow(boolean buy, String id, JsonObject row) {
-        JsonArray a = list(buy);
-        for (int i = 0; i < a.size(); i++) {
-            JsonElement e = a.get(i);
-            if (e.isJsonObject() && id.equals(Json.str(e.getAsJsonObject(), "id"))) {
-                a.set(i, row);
-                return;
-            }
-        }
-        a.add(row);
-    }
-
-    public void removeRow(boolean buy, String id) {
-        JsonArray a = list(buy);
-        for (int i = a.size() - 1; i >= 0; i--) {
-            JsonElement e = a.get(i);
-            if (e.isJsonObject() && id.equals(Json.str(e.getAsJsonObject(), "id"))) a.remove(i);
-        }
-    }
-
+    /** The order {@code id} (a copy), or null. */
     @Nullable
-    public Row row(boolean buy, String id) {
-        for (Row r : rows(buy)) if (r.id().equals(id)) return r;
+    public JsonObject order(String id) {
+        for (JsonObject o : Json.objects(mDoc, "orders")) if (id.equals(Json.str(o, "id"))) return o.deepCopy();
         return null;
     }
 
-    // ---- checks (the Worker's rules; it and the agent have the last word) ----
+    public List<JsonObject> customItems() {
+        List<JsonObject> out = new ArrayList<>();
+        for (JsonObject o : Json.objects(mDoc, "customItems")) out.add(o.deepCopy());
+        return out;
+    }
 
-    /** Where a problem is: {@code field} the document's path ({@code buy[2].max}), {@code reason} a key the screen words. */
+    /** The custom item {@code k} (a copy), or null. */
+    @Nullable
+    public JsonObject customItem(String k) {
+        for (JsonObject o : Json.objects(mDoc, "customItems")) if (k.equals(Json.str(o, "k"))) return o.deepCopy();
+        return null;
+    }
+
+    /** A new custom item key ({@code ^c[0-9a-z]{1,4}$}) that is in neither this document nor {@code taken}. */
+    public String newCustomKey(java.util.Random random, Set<String> taken) {
+        Set<String> used = new HashSet<>(taken);
+        for (JsonObject o : Json.objects(mDoc, "customItems")) used.add(Json.str(o, "k", ""));
+        String alphabet = "abcdefghijklmnopqrstuvwxyz0123456789";
+        for (int tries = 0; tries < 1000; tries++) {
+            StringBuilder k = new StringBuilder("c");
+            for (int i = 0; i < 4; i++) k.append(alphabet.charAt(random.nextInt(alphabet.length())));
+            if (!used.contains(k.toString())) return k.toString();
+        }
+        throw new IllegalStateException("no free custom item key");
+    }
+
+    // ---- checks (the Worker's rules for the fields the settings screens edit; it and the agent have the last word) ----
+
+    /** Where a problem is: {@code field} the document's path ({@code limits.perDealMax}), {@code reason} a key the screen words. */
     public static final class Problem {
         public final String field;
         public final String reason;
@@ -558,72 +447,52 @@ public final class PlusConfig {
             this.reason = reason;
         }
 
-        /** The list and row a path names ({@code buy}, 2), or null for a field outside the lists. */
-        @Nullable
-        public String list() {
-            Matcher m = ROW_PATH.matcher(field);
-            return m.find() ? m.group(1) : null;
-        }
-
-        public int index() {
-            Matcher m = ROW_PATH.matcher(field);
-            return m.find() ? Integer.parseInt(m.group(2)) : -1;
-        }
-
         @Override
         public String toString() {
             return field + ":" + reason;
         }
     }
 
-    private static final Pattern ROW_PATH = Pattern.compile("^(buy|sell)\\[(\\d+)]");
-    private static final Pattern ROW_ID = Pattern.compile("^[a-z0-9]{1,8}$");
-
-    /** The problems the service would refuse, found here; {@code catalog} may be null (items are not checked then). */
-    public List<Problem> check(@Nullable CloudModel.PlusCatalog catalog, long now) {
+    /**
+     * The problems the service would refuse in the settings, found here: amounts within the mode's money ({@code maxDeal}),
+     * the approval limit not above the per-deal limit, the approval time within {@code [timeoutMin, timeoutMax]}, the
+     * names (blocked, friends: in-game names, each once, a friend not blocked), persona text lengths, the tag rule's
+     * length, working hours and the break. A tag's own words are checked by {@code PlusText} while the player types.
+     */
+    public List<Problem> check(long maxDeal, int timeoutMin, int timeoutMax, long now) {
         List<Problem> problems = new ArrayList<>();
-        long maxDeal = catalog == null ? 10_000_000L : catalog.maxDeal;
-        int listMax = catalog == null ? LIST_MAX : Math.min(LIST_MAX, catalog.listMax);
-        Set<String> ids = new HashSet<>();
-        for (int pass = 0; pass < 2; pass++) {
-            boolean buy = pass == 0;
-            String key = buy ? "buy" : "sell";
-            List<Row> rows = rows(buy);
-            if (rows.size() > listMax) problems.add(new Problem(key, "limit"));
-            for (int i = 0; i < rows.size(); i++) {
-                Row r = rows.get(i);
-                String path = key + "[" + i + "]";
-                if (!ROW_ID.matcher(r.id()).matches() || !ids.add(r.id())) problems.add(new Problem(path + ".id", "id"));
-                if (catalog != null && catalog.item(r.item()) == null) problems.add(new Problem(path + ".item", "item"));
-                if (r.qty() < 1 || r.qty() > QTY_MAX) problems.add(new Problem(path + ".qty", "range"));
-                if (r.target() < 1 || r.target() > maxDeal) problems.add(new Problem(path + ".target", "range"));
-                if (r.bound() < 1 || r.bound() > maxDeal) problems.add(new Problem(path + (buy ? ".max" : ".min"), "range"));
-                else if (buy ? r.target() > r.bound() : r.bound() > r.target()) problems.add(new Problem(path + (buy ? ".max" : ".min"), "order"));
-                if (r.dailyQty() < 1 || r.dailyQty() > QTY_MAX) problems.add(new Problem(path + ".dailyQty", "range"));
-            }
-        }
         Long perDeal = limit("perDealMax");
         Long approvalAbove = limit("approvalAbove");
         for (String k : new String[]{"perDealMax", "dailySpendMax", "totalBudget", "approvalAbove", "newCounterpartApprovalAbove"}) {
             Long v = limit(k);
-            // The Worker refuses any amount above the profile's money.maxDeal.
             if (v != null && (v < 1 || v > maxDeal)) problems.add(new Problem("limits." + k, "range"));
         }
         if (perDeal != null && approvalAbove != null && approvalAbove > perDeal) problems.add(new Problem("limits.approvalAbove", "limits"));
-        if (balanceFloor() < 0) problems.add(new Problem("limits.balanceFloor", "range"));
+        if (balanceFloor() < 0 || balanceFloor() > maxDeal) problems.add(new Problem("limits.balanceFloor", "range"));
         int timeout = approvalTimeoutMin();
-        int lo = catalog == null ? 1 : catalog.approvalTimeoutMin;
-        int hi = catalog == null ? 60 : catalog.approvalTimeoutMax;
-        if (timeout < lo || timeout > hi) problems.add(new Problem("limits.approvalTimeoutMin", "range"));
+        if (timeout < timeoutMin || timeout > timeoutMax) problems.add(new Problem("limits.approvalTimeoutMin", "range"));
         List<String> blocked = blocked();
         if (blocked.size() > BLOCKED_MAX) problems.add(new Problem("blocked", "limit"));
-        Set<String> names = new HashSet<>();
+        Set<String> blockedNames = new HashSet<>();
         for (int i = 0; i < blocked.size(); i++) {
             String n = blocked.get(i);
-            if (!CloudEdit.isGameName(n) || !names.add(n.toLowerCase(Locale.ROOT))) problems.add(new Problem("blocked[" + i + "]", "name"));
+            if (!CloudEdit.isGameName(n) || !blockedNames.add(n.toLowerCase(Locale.ROOT))) problems.add(new Problem("blocked[" + i + "]", "name"));
+        }
+        List<String> friends = friends();
+        if (friends.size() > FRIENDS_MAX) problems.add(new Problem("who.friends", "limit"));
+        Set<String> friendNames = new HashSet<>();
+        for (int i = 0; i < friends.size(); i++) {
+            String n = friends.get(i);
+            String low = n.toLowerCase(Locale.ROOT);
+            if (!CloudEdit.isGameName(n) || !friendNames.add(low)) problems.add(new Problem("who.friends[" + i + "]", "name"));
+            else if (blockedNames.contains(low)) problems.add(new Problem("who.friends[" + i + "]", "blocked"));
         }
         if (intro().codePointCount(0, intro().length()) > INTRO_MAX) problems.add(new Problem("persona.intro", "text"));
         if (status().codePointCount(0, status().length()) > STATUS_MAX) problems.add(new Problem("persona.status", "text"));
+        String tag = tagText().trim();
+        int tagLength = tag.codePointCount(0, tag.length());
+        if (tagOn() && tagLength == 0) problems.add(new Problem("persona.prefix.text", "empty"));
+        else if (tagLength > TAG_MAX) problems.add(new Problem("persona.prefix.text", "length"));
         List<Window> windows = windows();
         if (windows.size() > WINDOWS_MAX) problems.add(new Problem("schedule.windows", "range"));
         if (scheduleOn() && windows.isEmpty()) problems.add(new Problem("schedule.windows", "range"));
@@ -640,21 +509,20 @@ public final class PlusConfig {
         return problems;
     }
 
-    /** "En fazla" given alone: the target is 80 % of it, rounded to the profile's steps (the concept's "Hedef 32.000"). */
-    public static long suggestedTarget(long max) {
-        long target = Math.round(max * 0.8);
-        long step = target >= 10_000 ? 500 : 50;
-        return Math.max(1, (target / step) * step);
-    }
-
-    /** Whether a typed number is an in-game amount (digits, with dots or commas as group marks, or "40k"). */
+    /** Whether a typed number is an in-game amount (digits, with dots or commas as group marks, or "40k", "40 bin"). */
     @Nullable
     public static Long parseAmount(@Nullable String typed) {
         if (typed == null) return null;
         String t = typed.trim().toLowerCase(Locale.ROOT).replace(" ", "");
         if (t.isEmpty()) return null;
         long factor = 1;
-        if (t.endsWith("k")) {
+        if (t.endsWith("bin")) {
+            factor = 1000;
+            t = t.substring(0, t.length() - 3);
+        } else if (t.endsWith("milyon")) {
+            factor = 1_000_000;
+            t = t.substring(0, t.length() - 6);
+        } else if (t.endsWith("k")) {
             factor = 1000;
             t = t.substring(0, t.length() - 1);
         } else if (t.endsWith("m")) {

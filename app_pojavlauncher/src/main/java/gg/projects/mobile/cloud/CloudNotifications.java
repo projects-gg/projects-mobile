@@ -158,7 +158,11 @@ public final class CloudNotifications {
         String tag = tagOf(n);
         String approval = n.approvalId();
         if ("approval".equals(n.event) && approval != null && n.account() != null) {
-            builder.addAction(0, c.getString(R.string.projects_cloud_reject), CloudActionReceiver.reject(c, n.account(), approval));
+            // Only the no on a notification (no money decision from it): "Reddet", or for orders "Olmadı" / "Hayır".
+            String kind = n.get("approvalKind");
+            int no = "handoff".equals(kind) ? R.string.projects_handoff_no : "confirm_item".equals(kind) ? R.string.projects_firstsight_no
+                    : R.string.projects_cloud_reject;
+            builder.addAction(0, c.getString(no), CloudActionReceiver.reject(c, n.account(), approval));
             long expires = n.number("expires", 0);
             long left = expires * 1000L - System.currentTimeMillis();
             if (left > 0) {

@@ -1,32 +1,63 @@
 {
   "config": {
-    "v": 1,
+    "v": 2,
     "enabled": true,
     "mode": "projects-smp",
     "lang": "auto",
-    "persona": { "preset": "friendly", "intro": "Ahmet'in AFK+ asistanı", "status": "", "statusPreset": "back_evening", "smallTalk": true },
+    "persona": { "preset": "friendly", "intro": "gecekurdu_ asistanı", "status": "", "statusPreset": "back_evening", "smallTalk": false,
+                 "playerTalk": false, "prefix": { "on": false, "text": "[AFK+]" } },
     "replies": { "scope": "trade", "away": true, "saveAt": 80 },
-    "buy": [
-      { "id": "b1", "item": "minecraft:elytra",
-        "req": { "ench": {}, "minDurabilityPct": 90, "allowCustomName": false, "allowCurses": false },
-        "qty": 1, "unit": "total", "target": 32000, "max": 40000, "style": "balanced",
-        "approval": "above", "dailyQty": 1, "notify": true, "enabled": true }
+    "authority": "ask",
+    "allow": { "buy": true, "sell": true },
+    "pay": "money",
+    "who": { "mode": "all", "friends": [] },
+    "orders": [
+      { "id": "a1", "on": true, "side": "buy", "item": "minecraft:elytra", "qty": 1,
+        "req": { "ench": {}, "dur": 90, "named": false, "cursed": false },
+        "pay": "money", "unit": "total", "target": 32000, "limit": 40000, "style": "balanced", "trade": "auto",
+        "until": 1793883600, "note": "Elytra alırım, en fazla 40 bin", "src": "text", "at": 1792673990 },
+      { "id": "s1", "on": true, "side": "sell", "item": "minecraft:diamond", "qty": 64, "req": null,
+        "pay": "money", "unit": "each", "target": 120, "limit": 100, "style": "patient", "trade": "auto",
+        "until": 1794574800, "note": "", "src": "form", "at": 1792590000 },
+      { "id": "y1", "on": true, "side": "buy", "item": "custom:c1yk", "qty": 5,
+        "req": { "ench": {}, "dur": 0, "named": false, "cursed": false },
+        "pay": "money", "unit": "each", "target": 1800, "limit": 2200, "style": "balanced", "trade": "owner",
+        "until": 1793710800, "note": "", "src": "inv", "at": 1792760400 },
+      { "id": "t1", "on": true, "side": "buy", "item": "minecraft:totem_of_undying", "qty": 1,
+        "req": { "ench": {}, "dur": 0, "named": false, "cursed": false },
+        "pay": "money", "unit": "total", "target": 20000, "limit": 25000, "style": "quick", "trade": "auto",
+        "until": 1793451600, "note": "", "src": "form", "at": 1792500000 }
     ],
-    "sell": [
-      { "id": "s1", "item": "minecraft:diamond", "qty": 64, "unit": "each", "target": 120, "min": 100,
-        "style": "patient", "approval": "auto", "dailyQty": 128, "enabled": true }
+    "customItems": [
+      { "k": "c1yk", "name": "Yakut", "base": "minecraft:red_dye", "fp": "3f9a1c0e7b2d4a6f8e1c5b3a9d7f2e4c",
+        "look": { "cmd": 1001 }, "from": "inv", "at": 1792760400 }
     ],
     "limits": { "perDealMax": 50000, "dailySpendMax": 100000, "totalBudget": 300000, "balanceFloor": 20000,
                 "approvalAbove": 35000, "newCounterpartApprovalAbove": 10000, "approvalTimeoutMin": 10 },
     "discovery": { "scanChat": true, "proactivePm": true, "ads": false, "adTemplate": "buy-basic" },
     "trade": { "returnRow": "c2" },
     "summaryAt": "21:00",
-    "blocked": ["SomePlayer"],
+    "blocked": ["spamci_99"],
     "schedule": { "on": true, "windows": [ { "days": [1, 2, 3, 4, 5], "from": "16:00", "to": "23:30" }, { "days": [6, 7], "from": "10:00", "to": "02:00" } ] },
     "pauseUntil": null
   },
   "aiRev": 14,
   "spent": { "total": 132000, "today": 37500 },
-  "judge": { "intro": { "state": "ok", "at": 1792800000 }, "status": { "state": "ok", "at": 1792800000 } },
-  "profile": { "id": "projects-smp", "name": "Survival", "trade": true }
+  "judge": { "intro": { "state": "ok", "at": 1792840000 }, "status": { "state": "ok", "at": 1792840000 } },
+  "server": {
+    "kind": "verified", "mode": "projects-smp", "name": { "tr": "Survival", "en": "Survival" }, "trade": "bot",
+    "money": { "label": null, "maxDeal": 10000000, "currency": "smp" }, "mc": "26.3",
+    "ads": [ { "id": "buy-basic", "tr": "Elytra alıyorum, yaz", "en": "Buying an Elytra, message me" } ], "on": true
+  },
+  "rules": {
+    "orderMax": 10, "orderStore": 20, "customItemsMax": 20, "orderDaysDefault": 14, "orderDaysMax": 30, "buyStacksPerDay": 1,
+    "checksPerDay": 20, "checksLeft": 17, "friendsMax": 50, "noteMax": 200, "textMax": 200, "approvalTimeoutMin": [1, 60],
+    "features": { "orders": true, "audit": true, "customItems": true, "itemPay": false }
+  },
+  "orders": {
+    "a1": { "status": "haggling", "got": 0, "at": 0, "live": "haggling" },
+    "s1": { "status": "looking", "got": 20, "at": 1792833000, "live": null },
+    "y1": { "status": "your_trade", "got": 0, "at": 0, "live": "your_trade" },
+    "t1": { "status": "done", "got": 1, "at": 1792760000, "live": null }
+  }
 }

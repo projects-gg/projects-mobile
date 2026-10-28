@@ -569,8 +569,6 @@ public final class CloudConsoleFragment extends CloudScreen implements CloudServ
         empty();
     }
 
-    @Override
-    public void feed(List<CloudModel.FeedItem> items, boolean snapshot) {}
 
     @Override
     public void approval(CloudModel.Approval approval) {}

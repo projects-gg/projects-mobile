@@ -116,7 +116,6 @@ public class CloudMovementTest {
             @Override public void host(boolean online) {}
             @Override public void error(String code, String acct) {}
             @Override public void ai(String acct, JsonObject ai) {}
-            @Override public void feed(String acct, List<CloudModel.FeedItem> items, boolean snapshot) {}
             @Override public void approval(String acct, CloudModel.Approval approval) {}
             @Override public void bye(String reason) {}
 

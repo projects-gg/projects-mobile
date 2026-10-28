@@ -47,8 +47,19 @@ public class CloudLiveFramesTest {
         }
 
         @Override
-        public void feed(String acct, List<CloudModel.FeedItem> items, boolean snapshot) {
-            calls.add("aifeed " + acct + " " + items.size() + " " + snapshot);
+        public void audit(String acct, List<PlusModel.AuditEntry> items) {
+            calls.add("aud " + acct + " " + items.size() + " " + items.get(0).k + " " + items.get(0).day());
+        }
+
+        @Override
+        public void orders(String acct, java.util.Map<String, PlusModel.OrderView> orders) {
+            PlusModel.OrderView a1 = orders.get("a1");
+            calls.add("aiord " + acct + " " + orders.size() + " " + a1.got + " " + a1.live);
+        }
+
+        @Override
+        public void message(String acct, int count, long at) {
+            calls.add("aimsg " + acct + " " + count);
         }
 
         @Override
@@ -73,14 +84,18 @@ public class CloudLiveFramesTest {
                 "{\"t\":\"host\",\"online\":false}",
                 "{\"t\":\"error\",\"code\":\"host_offline\",\"acct\":\"a_1\"}",
                 "{\"t\":\"aist\",\"acct\":\"a_1\",\"ai\":{\"state\":\"paused\",\"reason\":\"quota\"}}",
-                "{\"t\":\"aifeed\",\"acct\":\"a_1\",\"items\":[{\"id\":\"01J\",\"at\":1,\"kind\":\"pm_in\",\"counterpart\":\"Kaan_07\",\"text\":\"selam\"}],\"snapshot\":true}",
+                "{\"t\":\"aud\",\"acct\":\"a_1\",\"items\":[{\"s\":20750000012,\"t\":1792846801000,\"k\":\"pm_in\",\"w\":\"lavci_42\",\"x\":\"selam\"},"
+                        + "{\"s\":20750000013,\"t\":1792846802000,\"k\":\"reply\",\"x\":\"selam\"}]}",
+                "{\"t\":\"aiord\",\"acct\":\"a_1\",\"orders\":{\"a1\":{\"got\":1,\"at\":1792846801,\"live\":\"trading\"}}}",
+                "{\"t\":\"aimsg\",\"acct\":\"a_1\",\"count\":2,\"at\":1792846801}",
                 "{\"t\":\"aiapproval\",\"acct\":\"a_1\",\"approval\":{\"id\":\"01JBXK3D2E\",\"state\":\"approved\",\"deal\":{\"side\":\"buy\"}}}",
                 "{\"t\":\"bye\",\"reason\":\"session\"}",
                 "{\"t\":\"pong\"}",
         };
         for (String f : frames) assertTrue(f, CloudLiveFrames.dispatch(Vectors.json(f), r));
         assertEquals("[hello true [a_1, a_2] 600 1792846800, st a_1 running, con a_1 2 3 false <Kaan> selam/n, con a_1 0 0 true, "
-                + "host false, error host_offline a_1, aist a_1 paused, aifeed a_1 1 true, aiapproval a_1 approved, bye session]", r.calls.toString());
+                + "host false, error host_offline a_1, aist a_1 paused, aud a_1 2 pm_in 20750, aiord a_1 1 1 trading, aimsg a_1 2, "
+                + "aiapproval a_1 approved, bye session]", r.calls.toString());
         assertFalse(CloudLiveFrames.dispatch(Vectors.json("{\"t\":\"later\"}"), r));
         assertFalse(CloudLiveFrames.dispatch(Vectors.json("{\"t\":\"st\"}"), r));
         assertFalse(CloudLiveFrames.dispatch(null, r));

@@ -4,6 +4,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import java.io.IOException;
@@ -150,13 +151,6 @@ public final class CloudApi {
         return new CloudSeal.VaultKey(kid, alg, key);
     }
 
-    @WorkerThread
-    public CloudModel.PlusCatalog catalog(String mode) throws CloudProblem {
-        CloudModel.PlusCatalog catalog = CloudModel.PlusCatalog.read(send("GET", "plus/catalog?mode=" + encode(mode), null, null, null, Repeat.SAFE));
-        if (catalog == null) throw CloudProblem.unavailable("catalog");
-        return catalog;
-    }
-
     // ---- the player and accounts ----
 
     @WorkerThread
@@ -297,39 +291,90 @@ public final class CloudApi {
         return require(send("POST", accountPath(id, "/plus/control"), token, body, null, Repeat.NEVER));
     }
 
-    public static final class FeedPage {
-        public final List<CloudModel.FeedItem> items;
-        @Nullable
-        public final String next;
+    // ---- AFK+ trade orders ("Siparişler") ----
 
-        FeedPage(List<CloudModel.FeedItem> items, @Nullable String next) {
-            this.items = items;
-            this.next = next;
-        }
-    }
-
+    /** "Kontrol et": the service reads the typed order once and answers with a draft and its questions. */
     @WorkerThread
-    public FeedPage feed(String token, String id, @Nullable String after) throws CloudProblem {
-        JsonObject o = require(send("GET", accountPath(id, "/plus/feed") + "?limit=50" + afterParam(after), token, null, null, Repeat.SAFE));
-        return new FeedPage(CloudModel.FeedItem.list(o, "items"), Json.str(o, "next"));
+    public PlusModel.Check checkOrder(String token, String id, String text, String lang) throws CloudProblem {
+        JsonObject body = new JsonObject();
+        body.addProperty("text", text);
+        body.addProperty("lang", "en".equals(lang) ? "en" : "tr");
+        PlusModel.Check check = PlusModel.Check.read(send("POST", accountPath(id, "/plus/orders/check"), token, body, null, Repeat.NEVER));
+        if (check == null) throw CloudProblem.unavailable("order check");
+        return check;
     }
 
-    public static final class DealPage {
-        public final List<CloudModel.Deal> deals;
-        @Nullable
-        public final String next;
-
-        DealPage(List<CloudModel.Deal> deals, @Nullable String next) {
-            this.deals = deals;
-            this.next = next;
-        }
-    }
-
+    /**
+     * Saves a new order ({@code order} without {@code id} and {@code at}), or puts a deleted one back ("Geri al": with
+     * both); {@code customItems} the at most 2 new custom items it names, {@code settings} a chip's change saved with it.
+     */
     @WorkerThread
-    public DealPage deals(String token, String id, @Nullable String after) throws CloudProblem {
-        String query = after == null ? "" : "?after=" + encode(after);
-        JsonObject o = require(send("GET", accountPath(id, "/plus/deals") + query, token, null, null, Repeat.SAFE));
-        return new DealPage(CloudModel.Deal.list(o, "deals"), Json.str(o, "next"));
+    public PlusModel.Written postOrder(String token, String id, long aiRev, JsonObject order, @Nullable JsonArray customItems,
+                                       @Nullable JsonObject settings) throws CloudProblem {
+        JsonObject body = new JsonObject();
+        body.add("order", order);
+        if (customItems != null && customItems.size() > 0) body.add("customItems", customItems);
+        if (settings != null && settings.size() > 0) body.add("settings", settings);
+        return written(send("POST", accountPath(id, "/plus/orders"), token, body, "\"" + aiRev + "\"", Repeat.NEVER));
+    }
+
+    /** Changes an order: any of its fields, or {@code {"extend": true}} ("Süreyi uzat"). */
+    @WorkerThread
+    public PlusModel.Written patchOrder(String token, String id, long aiRev, String orderId, JsonObject fields) throws CloudProblem {
+        return written(send("PATCH", orderPath(id, orderId), token, fields, "\"" + aiRev + "\"", Repeat.NEVER));
+    }
+
+    /** Deletes an order; {@code deferred} while its trade runs (it goes when the trade ends). */
+    @WorkerThread
+    public PlusModel.Written deleteOrder(String token, String id, long aiRev, String orderId) throws CloudProblem {
+        return written(send("DELETE", orderPath(id, orderId), token, null, "\"" + aiRev + "\"", Repeat.NEVER));
+    }
+
+    /** "Envanterden seç": the machine reads the item in {@code slot} (5–45 as the live inventory shows it). */
+    @WorkerThread
+    public PlusModel.Pick pick(String token, String id, int slot, String itemId, @Nullable Long cmd, @Nullable String model) throws CloudProblem {
+        JsonObject body = new JsonObject();
+        body.addProperty("slot", slot);
+        body.addProperty("id", itemId);
+        if (cmd != null) body.addProperty("cmd", cmd);
+        if (model != null) body.addProperty("model", model);
+        PlusModel.Pick pick = PlusModel.Pick.read(Json.obj(require(send("POST", accountPath(id, "/plus/items/pick"), token, body, null, Repeat.NEVER)), "pick"));
+        if (pick == null) throw CloudProblem.unavailable("pick");
+        return pick;
+    }
+
+    /** A page of the audit log, newest first: {@code before}/{@code after} an entry's {@code s}; {@code group} or null. */
+    @WorkerThread
+    public PlusModel.AuditPage audit(String token, String id, @Nullable Long before, @Nullable Long after, int limit, @Nullable String group)
+            throws CloudProblem {
+        StringBuilder q = new StringBuilder("?limit=").append(Math.max(1, Math.min(200, limit)));
+        if (before != null) q.append("&before=").append(before);
+        if (after != null) q.append("&after=").append(after);
+        if (group != null) q.append("&group=").append(encode(group));
+        return PlusModel.AuditPage.read(send("GET", accountPath(id, "/plus/audit") + q, token, null, null, Repeat.SAFE));
+    }
+
+    /** Receipts (completed deals and those under review), newest first; {@code before} continues a page. */
+    @WorkerThread
+    public PlusModel.ReceiptPage receipts(String token, String id, @Nullable String before) throws CloudProblem {
+        String query = before == null ? "" : "?before=" + encode(before);
+        JsonObject o = require(send("GET", accountPath(id, "/plus/receipts") + query, token, null, null, Repeat.SAFE));
+        JsonElement next = o.get("next");
+        String cursor = next == null || next.isJsonNull() ? null : next.getAsString();
+        return new PlusModel.ReceiptPage(PlusModel.Receipt.list(o, "receipts"), cursor);
+    }
+
+    private static PlusModel.Written written(@Nullable JsonObject o) throws CloudProblem {
+        PlusModel.Written w = PlusModel.Written.read(o);
+        if (w == null) throw CloudProblem.unavailable("order write");
+        return w;
+    }
+
+    private static final Pattern ORDER_ID = Pattern.compile("^[a-z0-9]{1,8}$");
+
+    private static String orderPath(String id, String orderId) throws CloudProblem {
+        if (orderId == null || !ORDER_ID.matcher(orderId).matches()) throw CloudProblem.failed("bad order id");
+        return accountPath(id, "/plus/orders/" + orderId);
     }
 
     @WorkerThread
@@ -420,16 +465,6 @@ public final class CloudApi {
     }
 
     @WorkerThread
-    public CloudModel.ParseDraft parse(String token, String id, String text, String lang) throws CloudProblem {
-        JsonObject body = new JsonObject();
-        body.addProperty("text", text);
-        body.addProperty("lang", "en".equals(lang) ? "en" : "tr");
-        CloudModel.ParseDraft draft = CloudModel.ParseDraft.read(send("POST", accountPath(id, "/plus/parse"), token, body, null, Repeat.NEVER));
-        if (draft == null) throw CloudProblem.unavailable("parse");
-        return draft;
-    }
-
-    @WorkerThread
     public List<CloudModel.HistoryEntry> history(String token, String id) throws CloudProblem {
         return CloudModel.HistoryEntry.list(send("GET", accountPath(id, "/plus/history"), token, null, null, Repeat.SAFE), "entries");
     }
@@ -458,7 +493,7 @@ public final class CloudApi {
 
     @WorkerThread
     public DealSummary dealSummary(String token, String id) throws CloudProblem {
-        JsonObject o = require(send("GET", accountPath(id, "/plus/deals/summary"), token, null, null, Repeat.SAFE));
+        JsonObject o = require(send("GET", accountPath(id, "/plus/receipts/summary"), token, null, null, Repeat.SAFE));
         return new DealSummary(Json.num(o, "from", 0), Json.num(o, "to", 0), CloudModel.ItemSummary.list(o, "items"), Json.arr(o, "totals"));
     }
 
@@ -509,7 +544,8 @@ public final class CloudApi {
     static String route(String path) {
         String bare = path.contains("?") ? path.substring(0, path.indexOf('?')) : path;
         return bare.replaceAll("a_[0-9A-HJKMNP-TV-Z]{16}", ":id").replaceAll("/approvals/[0-9A-HJKMNP-TV-Z]{26}", "/approvals/:aid")
-                .replaceAll("/inbox/[A-Za-z0-9_]{3,16}", "/inbox/:name").replaceAll("/history/\\d+", "/history/:rev");
+                .replaceAll("/inbox/[A-Za-z0-9_]{3,16}", "/inbox/:name").replaceAll("/history/\\d+", "/history/:rev")
+                .replaceAll("/plus/orders/(?!check$)[a-z0-9]{1,8}$", "/plus/orders/:oid");
     }
 
     /** Sends one request; the answer's JSON (null for 204), or the problem. */

@@ -167,7 +167,7 @@ public class CloudApiTest {
                     return reply(502, "<html>Bad gateway</html>", "text/html");
                 case "POST accounts/a_7KQ2MZ3P9TW4XB1C/send":
                     return reply(400, "{\"error\":{\"code\":\"invalid_command\",\"message\":\"x\",\"reason\":\"secret\"}}", "application/json");
-                case "GET accounts/a_7KQ2MZ3P9TW4XB1C/plus/feed":
+                case "GET accounts/a_7KQ2MZ3P9TW4XB1C/plus/audit":
                     return reply(503, "{\"error\":{\"code\":\"host_offline\",\"message\":\"x\",\"hostId\":\"kz1\",\"retryAfter\":30}}", "application/json");
                 case "GET accounts/a_7KQ2MZ3P9TW4XB1C/plus":
                     return reply(200, Vectors.resource("cloud/fixtures/plus.json"), "application/json");
@@ -245,8 +245,8 @@ public class CloudApiTest {
             assertEquals("secret", problem.reason());
         }
         try {
-            mApi.feed("pls_token", "a_7KQ2MZ3P9TW4XB1C", null);
-            fail("fed");
+            mApi.audit("pls_token", "a_7KQ2MZ3P9TW4XB1C", null, null, 100, "deals");
+            fail("read the log");
         } catch (CloudProblem problem) {
             assertEquals(CloudProblem.Kind.HOST_OFFLINE, problem.kind);
             assertEquals(30, problem.retryAfter);
@@ -286,13 +286,16 @@ public class CloudApiTest {
         CloudModel.PlusDoc doc = mApi.plus("pls_token", "a_7KQ2MZ3P9TW4XB1C");
         PlusConfig config = new PlusConfig(doc.config);
         config.setScheduleOn(false);
-        mApi.putPlus("pls_token", "a_7KQ2MZ3P9TW4XB1C", doc.aiRev, config.toJson());
+        mApi.putPlus("pls_token", "a_7KQ2MZ3P9TW4XB1C", doc.aiRev, config.settingsJson());
         assertEquals("\"14\"", mHeaders.get("PUT accounts/a_7KQ2MZ3P9TW4XB1C/plus if-match"));
         JsonObject sent = Vectors.json(mBodies.get("PUT accounts/a_7KQ2MZ3P9TW4XB1C/plus"));
         assertEquals(false, sent.getAsJsonObject("schedule").get("on").getAsBoolean());
-        // Everything else exactly as stored.
+        // Everything else exactly as stored, without the orders and custom items (their own routes keep them).
         sent.getAsJsonObject("schedule").addProperty("on", true);
-        assertEquals(doc.config, sent);
+        JsonObject stored = doc.config.deepCopy();
+        stored.remove("orders");
+        stored.remove("customItems");
+        assertEquals(stored, sent);
     }
 
     @Test

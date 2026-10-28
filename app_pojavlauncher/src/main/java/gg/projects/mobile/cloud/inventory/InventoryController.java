@@ -259,8 +259,6 @@ public final class InventoryController implements CloudService.InventoryListener
     @Override
     public void console(List<CloudModel.ConsoleLine> lines, int skipped, boolean snapshot) {}
 
-    @Override
-    public void feed(List<CloudModel.FeedItem> items, boolean snapshot) {}
 
     @Override
     public void approval(CloudModel.Approval approval) {}

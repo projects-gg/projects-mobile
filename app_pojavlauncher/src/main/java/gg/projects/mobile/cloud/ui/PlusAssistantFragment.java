@@ -26,6 +26,8 @@ import gg.projects.mobile.cloud.CloudEdit;
 import gg.projects.mobile.cloud.CloudModel;
 import gg.projects.mobile.cloud.CloudWords;
 import gg.projects.mobile.cloud.PlusConfig;
+import gg.projects.mobile.cloud.plus.PlusText;
+import gg.projects.mobile.social.ChatText;
 import gg.projects.mobile.ui.Haptics;
 
 /**
@@ -39,11 +41,6 @@ public final class PlusAssistantFragment extends PlusScreen {
     @Override
     protected int title() {
         return R.string.projects_plus_assistant;
-    }
-
-    @Override
-    protected boolean wantsCatalog() {
-        return false;
     }
 
     private interface Typed {
@@ -85,7 +82,12 @@ public final class PlusAssistantFragment extends PlusScreen {
                 getString(R.string.projects_plus_preset_playful)}, Math.max(0, index(PlusConfig.PRESETS, e.preset())), i -> {
             e.setPreset(PlusConfig.PRESETS[i]);
             changed();
+            sample();
         }));
+        // How a reply reads with these settings (the tag only while it is on and valid; the player's talk when chosen).
+        mSample = CloudUi.note(c, "");
+        content.addView(mSample);
+        sample();
         CloudUi.Field intro = CloudUi.field(c, getString(R.string.projects_plus_intro), e.intro(), getString(R.string.projects_plus_intro_hint),
                 InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
         intro.input.setFilters(new InputFilter[]{new InputFilter.LengthFilter(PlusConfig.INTRO_MAX)});
@@ -135,14 +137,7 @@ public final class PlusAssistantFragment extends PlusScreen {
         content.addView(statusGroup);
         content.addView(own, CloudUi.matchWrap());
 
-        LinearLayout talk = CloudUi.group(c);
-        talk.addView(CloudUi.toggle(c, getString(R.string.projects_plus_small_talk), e.smallTalk(), on -> {
-            e.setSmallTalk(on);
-            changed();
-        }));
-        LinearLayout.LayoutParams talkLp = CloudUi.matchWrap();
-        talkLp.topMargin = CloudUi.dp(c, 12);
-        content.addView(talk, talkLp);
+        talk(content, e);
 
         // Who it answers, and how.
         content.addView(CloudRowSheet.label(c, getString(R.string.projects_plus_scope)));
@@ -215,6 +210,89 @@ public final class PlusAssistantFragment extends PlusScreen {
         // Players it never answers.
         content.addView(CloudUi.section(c, getString(R.string.projects_plus_blocked)));
         blocked(content, e);
+    }
+
+    @Nullable
+    private TextView mSample;
+
+    /** "Örnek cevap: …" for the chosen tone, in the player's talk when that is on, after the tag when it is on. */
+    private void sample() {
+        PlusConfig e = mEdit;
+        TextView sample = mSample;
+        if (e == null || sample == null) return;
+        int i = Math.max(0, index(PlusConfig.PRESETS, e.preset()));
+        int[] plain = {R.string.projects_talk_plain_friendly, R.string.projects_talk_plain_brief, R.string.projects_talk_plain_polite,
+                R.string.projects_talk_plain_playful};
+        int[] player = {R.string.projects_talk_sample_friendly, R.string.projects_talk_sample_brief, R.string.projects_talk_sample_polite,
+                R.string.projects_talk_sample_playful};
+        String line = getString(e.playerTalk() ? player[i] : plain[i]);
+        String tag = e.tagText().trim();
+        if (e.tagOn() && PlusText.checkPrefix(tag, names(e)) == null) line = ChatText.clean(tag) + " " + line;
+        sample.setText(getString(R.string.projects_talk_sample) + ": " + line);
+    }
+
+    /** The names a tag may not hold: the friends and the blocked players of these settings. */
+    private static List<String> names(PlusConfig e) {
+        List<String> names = new ArrayList<>(e.friends());
+        names.addAll(e.blocked());
+        return names;
+    }
+
+    /**
+     * How it talks (AFKPLUS-TONE, 27 Oct 2026, the launcher's and the site's words): like a player or not, small talk said
+     * as its opposite ("Konu dışına çıkmasın", on by default), and the tag before its lines (the player's choice, off by
+     * default), checked while it is typed.
+     */
+    private void talk(LinearLayout content, final PlusConfig e) {
+        final Context c = ctx();
+        LinearLayout talk = CloudUi.group(c);
+        talk.addView(CloudUi.toggle(c, getString(R.string.projects_talk_player), e.playerTalk(), on -> {
+            e.setPlayerTalk(on);
+            changed();
+            sample();
+        }));
+        TextView playerHelp = CloudUi.text(c, getString(R.string.projects_talk_player_help), 13, R.color.projects_ash_400, false);
+        playerHelp.setPadding(CloudUi.dp(c, 16), 0, CloudUi.dp(c, 16), CloudUi.dp(c, 12));
+        talk.addView(playerHelp);
+        talk.addView(CloudUi.textDivider(c));
+        talk.addView(CloudUi.toggle(c, getString(R.string.projects_talk_on_topic), !e.smallTalk(), on -> {
+            e.setSmallTalk(!on);
+            changed();
+        }));
+        talk.addView(CloudUi.textDivider(c));
+        final LinearLayout tagBox = new LinearLayout(c);
+        tagBox.setOrientation(LinearLayout.VERTICAL);
+        tagBox.setPadding(CloudUi.dp(c, 8), 0, CloudUi.dp(c, 8), CloudUi.dp(c, 8));
+        final CloudUi.Field tag = CloudUi.field(c, getString(R.string.projects_tag_label), e.tagText(), PlusConfig.TAG_DEFAULT,
+                InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+        tag.input.setFilters(new InputFilter[]{new InputFilter.LengthFilter(32)});
+        String stored = problemAt("persona.prefix.text");
+        if (stored != null) tag.setError(stored);
+        watch(tag.input, s -> {
+            e.setTag(e.tagOn(), s);
+            String typed = s.trim();
+            String problem = e.tagOn() ? PlusText.checkPrefix(typed, names(e)) : null;
+            tag.setError(problem == null ? null : PlusWords.tagProblem(c, typed.isEmpty() ? "empty" : problem));
+            changed();
+            sample();
+        });
+        tagBox.addView(tag.view);
+        tagBox.setVisibility(e.tagOn() ? View.VISIBLE : View.GONE);
+        talk.addView(CloudUi.toggle(c, getString(R.string.projects_tag_switch), e.tagOn(), on -> {
+            String text = tag.value().trim().isEmpty() ? PlusConfig.TAG_DEFAULT : tag.value();
+            // Off: a tag that would not pass goes back to what is stored, so turning it off never saves a bad one.
+            if (!on && PlusText.checkPrefix(text, names(e)) != null && mOriginal != null) text = mOriginal.tagText();
+            e.setTag(on, text);
+            if (!text.equals(tag.value())) tag.input.setText(text);
+            tag.setError(null);
+            tagBox.setVisibility(on ? View.VISIBLE : View.GONE);
+            changed();
+            sample();
+        }));
+        talk.addView(tagBox, CloudUi.matchWrap());
+        LinearLayout.LayoutParams talkLp = CloudUi.matchWrap();
+        talkLp.topMargin = CloudUi.dp(c, 12);
+        content.addView(talk, talkLp);
     }
 
     private void judge(CloudUi.Field field, @Nullable CloudModel.Judge judge, String path) {

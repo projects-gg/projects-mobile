@@ -32,9 +32,16 @@ public final class CloudLiveFrames {
 
         void ai(String acct, JsonObject ai);
 
-        void feed(String acct, List<CloudModel.FeedItem> items, boolean snapshot);
-
         void approval(String acct, CloudModel.Approval approval);
+
+        /** AFK+: new audit log entries ({@code aud}, batches at least 2 s apart). */
+        default void audit(String acct, List<PlusModel.AuditEntry> items) {}
+
+        /** AFK+: orders whose progress or live state changed ({@code aiord}; their status is the client's to derive). */
+        default void orders(String acct, java.util.Map<String, PlusModel.OrderView> orders) {}
+
+        /** AFK+ (QoL Q1): a message the assistant left to the owner ({@code aimsg}): "Mesajlar" is read again. */
+        default void message(String acct, int count, long at) {}
 
         void bye(@Nullable String reason);
 
@@ -98,9 +105,17 @@ public final class CloudLiveFrames {
                 listener.ai(acct, ai);
                 return true;
             }
-            case "aifeed":
+            case "aud":
                 if (acct == null) return false;
-                listener.feed(acct, CloudModel.FeedItem.list(message, "items"), Json.bool(message, "snapshot", false));
+                listener.audit(acct, PlusModel.AuditEntry.list(message, "items"));
+                return true;
+            case "aiord":
+                if (acct == null) return false;
+                listener.orders(acct, PlusModel.OrderView.map(Json.obj(message, "orders")));
+                return true;
+            case "aimsg":
+                if (acct == null) return false;
+                listener.message(acct, (int) Json.num(message, "count", 0), Json.num(message, "at", 0));
                 return true;
             case "aiapproval": {
                 CloudModel.Approval approval = CloudModel.Approval.read(Json.obj(message, "approval"));

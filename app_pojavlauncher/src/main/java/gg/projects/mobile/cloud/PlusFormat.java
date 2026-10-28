@@ -81,7 +81,7 @@ public final class PlusFormat {
     public static final class Change {
         public enum Kind {
             AI_ON, AI_OFF, ROW_ADDED, ROW_REMOVED, ROW_TARGET, ROW_BOUND, ROW_QTY, ROW_ON, ROW_OFF, ROW_OTHER, LIMIT, SCHEDULE_ON,
-            SCHEDULE_OFF, SCHEDULE_HOURS, BREAK_ON, BREAK_OFF, PERSONA, REPLIES, BLOCKED, OTHER
+            SCHEDULE_OFF, SCHEDULE_HOURS, BREAK_ON, BREAK_OFF, PERSONA, REPLIES, BLOCKED, FINE, OTHER
         }
 
         public final Kind kind;
@@ -120,8 +120,16 @@ public final class PlusFormat {
         boolean wasOn = Json.bool(before, "enabled", true);
         boolean isOn = Json.bool(after, "enabled", true);
         if (wasOn != isOn) out.add(Change.of(isOn ? Change.Kind.AI_ON : Change.Kind.AI_OFF));
-        rows(out, true, before, after);
-        rows(out, false, before, after);
+        orders(out, before, after);
+        // "İnce ayar": the authority, the sides, the payment, the counterparts.
+        for (String key : new String[]{"authority", "allow", "pay", "who"}) {
+            com.google.gson.JsonElement b = before.get(key);
+            com.google.gson.JsonElement a = after.get(key);
+            if (b == null ? a != null : !b.equals(a)) {
+                out.add(Change.of(Change.Kind.FINE));
+                break;
+            }
+        }
         JsonObject lb = Json.obj(before, "limits");
         JsonObject la = Json.obj(after, "limits");
         for (String key : new String[]{"perDealMax", "dailySpendMax", "totalBudget", "balanceFloor", "approvalAbove",
@@ -153,15 +161,15 @@ public final class PlusFormat {
         return a == null ? b == null : a.equals(b);
     }
 
-    private static void rows(List<Change> out, boolean buy, JsonObject before, JsonObject after) {
-        String key = buy ? "buy" : "sell";
-        String bound = buy ? "max" : "min";
+    /** The orders' changes (AfkPlusConfig v2 {@code orders}): added, removed, their bound, target, quantity, paused or resumed. */
+    private static void orders(List<Change> out, JsonObject before, JsonObject after) {
         Map<String, JsonObject> old = new HashMap<>();
-        for (JsonObject r : Json.objects(before, key)) old.put(Json.str(r, "id", ""), r);
+        for (JsonObject r : Json.objects(before, "orders")) old.put(Json.str(r, "id", ""), r);
         Map<String, JsonObject> now = new HashMap<>();
-        for (JsonObject r : Json.objects(after, key)) now.put(Json.str(r, "id", ""), r);
-        for (JsonObject r : Json.objects(after, key)) {
+        for (JsonObject r : Json.objects(after, "orders")) now.put(Json.str(r, "id", ""), r);
+        for (JsonObject r : Json.objects(after, "orders")) {
             String id = Json.str(r, "id", "");
+            boolean buy = !"sell".equals(Json.str(r, "side"));
             JsonObject was = old.get(id);
             String item = Json.str(r, "item", "");
             if (was == null) {
@@ -171,20 +179,22 @@ public final class PlusFormat {
             int before0 = out.size();
             long tb = Json.num(was, "target", 0);
             long ta = Json.num(r, "target", 0);
-            long bb = Json.num(was, bound, 0);
-            long ba = Json.num(r, bound, 0);
+            long bb = Json.num(was, "limit", 0);
+            long ba = Json.num(r, "limit", 0);
             long qb = Json.num(was, "qty", 0);
             long qa = Json.num(r, "qty", 0);
-            if (bb != ba) out.add(new Change(Change.Kind.ROW_BOUND, buy, item, bound, bb, ba));
+            if (bb != ba) out.add(new Change(Change.Kind.ROW_BOUND, buy, item, "limit", bb, ba));
             if (tb != ta) out.add(new Change(Change.Kind.ROW_TARGET, buy, item, "target", tb, ta));
             if (qb != qa) out.add(new Change(Change.Kind.ROW_QTY, buy, item, "qty", qb, qa));
-            boolean eb = Json.bool(was, "enabled", true);
-            boolean ea = Json.bool(r, "enabled", true);
+            boolean eb = Json.bool(was, "on", true);
+            boolean ea = Json.bool(r, "on", true);
             if (eb != ea) out.add(new Change(ea ? Change.Kind.ROW_ON : Change.Kind.ROW_OFF, buy, item, null, null, null));
             if (out.size() == before0 && !was.equals(r)) out.add(new Change(Change.Kind.ROW_OTHER, buy, item, null, null, null));
         }
-        for (JsonObject r : Json.objects(before, key)) {
-            if (!now.containsKey(Json.str(r, "id", ""))) out.add(new Change(Change.Kind.ROW_REMOVED, buy, Json.str(r, "item", ""), null, null, null));
+        for (JsonObject r : Json.objects(before, "orders")) {
+            if (!now.containsKey(Json.str(r, "id", ""))) {
+                out.add(new Change(Change.Kind.ROW_REMOVED, !"sell".equals(Json.str(r, "side")), Json.str(r, "item", ""), null, null, null));
+            }
         }
     }
 }
