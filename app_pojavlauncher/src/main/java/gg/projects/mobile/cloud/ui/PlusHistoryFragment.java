@@ -109,7 +109,7 @@ public final class PlusHistoryFragment extends CloudScreen {
         List<String> lines = new ArrayList<>();
         if (index + 1 < mEntries.size()) {
             for (PlusFormat.Change change : PlusFormat.diff(mEntries.get(index + 1).config, e.config)) {
-                lines.add(CloudWords.change(c, change, mService));
+                lines.add(CloudWords.change(c, change, mService, accountId()));
                 if (lines.size() == MAX_LINES) break;
             }
         }

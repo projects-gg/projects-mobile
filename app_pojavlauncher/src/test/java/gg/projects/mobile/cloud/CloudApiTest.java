@@ -175,6 +175,22 @@ public class CloudApiTest {
                     return reply(200, Vectors.resource("cloud/fixtures/plus.json"), "application/json");
                 case "POST accounts/a_7KQ2MZ3P9TW4XB1C/plus/approvals/01JBXK3D2E5F6G7H8J9K0M1N2P":
                     return reply(409, "{\"error\":{\"code\":\"approval_closed\",\"message\":\"x\",\"state\":\"expired\"}}", "application/json");
+                case "POST accounts/a_7KQ2MZ3P9TW4XB1C/plus/orders":
+                    return reply(201, "{\"order\":{\"id\":\"k3f9a0b2\",\"on\":true,\"side\":\"buy\",\"item\":\"minecraft:elytra\",\"at\":1792846800},"
+                            + "\"config\":{\"v\":2,\"orders\":[]},\"aiRev\":15}", "application/json");
+                case "DELETE accounts/a_7KQ2MZ3P9TW4XB1C/plus/orders/a1":
+                    return reply(200, "{\"config\":{\"v\":2},\"aiRev\":16,\"deferred\":true}", "application/json");
+                case "PATCH accounts/a_7KQ2MZ3P9TW4XB1C/plus/orders/s1":
+                    return reply(412, "{\"error\":{\"code\":\"rev_conflict\",\"message\":\"x\",\"aiRev\":21}}", "application/json");
+                case "POST accounts/a_7KQ2MZ3P9TW4XB1C/plus/orders/check":
+                    return reply(200, "{\"draft\":{\"side\":null,\"item\":\"minecraft:elytra\"},\"questions\":[{\"kind\":\"side\"}],"
+                            + "\"notes\":[\"named_player\"],\"left\":4}", "application/json");
+                case "POST accounts/a_7KQ2MZ3P9TW4XB1C/plus/items/pick":
+                    return reply(422, "{\"error\":{\"code\":\"pick_failed\",\"message\":\"x\",\"reason\":\"container\"}}", "application/json");
+                case "GET accounts/a_7KQ2MZ3P9TW4XB1C/plus/receipts":
+                    return reply(200, "{\"receipts\":[{\"at\":1792846800000,\"order\":\"a1\",\"side\":\"buy\",\"item\":\"minecraft:elytra\","
+                            + "\"qty\":1,\"price\":37500,\"pay\":\"money\",\"currency\":\"smp\",\"counterpart\":\"lavci_42\",\"approval\":\"owner\","
+                            + "\"review\":false}],\"next\":1792840000000}", "application/json");
                 case "GET me/notifications":
                     return reply(429, "{\"error\":{\"code\":\"rate_limited\",\"message\":\"x\"}}", "application/json");
                 case "POST accounts/a_7KQ2MZ3P9TW4XB1C/stop":
@@ -296,6 +312,53 @@ public class CloudApiTest {
         stored.remove("orders");
         stored.remove("customItems");
         assertEquals(stored, sent);
+    }
+
+    @Test
+    public void ordersHaveTheirOwnRoutesOnTheRevision() throws Exception {
+        JsonObject order = Vectors.json("{\"on\":true,\"side\":\"buy\",\"item\":\"minecraft:elytra\",\"qty\":1}");
+        com.google.gson.JsonArray custom = new com.google.gson.JsonArray();
+        PlusModel.Written w = mApi.postOrder("pls_token", "a_7KQ2MZ3P9TW4XB1C", 14, order, custom, null);
+        assertEquals("\"14\"", mHeaders.get("POST accounts/a_7KQ2MZ3P9TW4XB1C/plus/orders if-match"));
+        // No empty customItems or settings on the wire.
+        assertEquals("{\"order\":{\"on\":true,\"side\":\"buy\",\"item\":\"minecraft:elytra\",\"qty\":1}}",
+                mBodies.get("POST accounts/a_7KQ2MZ3P9TW4XB1C/plus/orders"));
+        assertEquals(15, w.aiRev);
+        assertEquals("k3f9a0b2", w.order.get("id").getAsString());
+        PlusModel.Written gone = mApi.deleteOrder("pls_token", "a_7KQ2MZ3P9TW4XB1C", 15, "a1");
+        assertTrue(gone.deferred);
+        assertEquals(16, gone.aiRev);
+        try {
+            mApi.patchOrder("pls_token", "a_7KQ2MZ3P9TW4XB1C", 16, "s1", Vectors.json("{\"extend\":true}"));
+            fail("patched");
+        } catch (CloudProblem problem) {
+            assertEquals(CloudProblem.Kind.CONFLICT, problem.kind);
+            assertEquals(21, problem.number("aiRev", 0));
+        }
+        PlusModel.Check check = mApi.checkOrder("pls_token", "a_7KQ2MZ3P9TW4XB1C", "40 bine kadar elytra", "tr");
+        assertEquals("{\"text\":\"40 bine kadar elytra\",\"lang\":\"tr\"}", mBodies.get("POST accounts/a_7KQ2MZ3P9TW4XB1C/plus/orders/check"));
+        assertEquals(4, check.left);
+        assertEquals("side", check.questions.get(0).getAsJsonObject().get("kind").getAsString());
+        assertEquals(java.util.Arrays.asList("named_player"), check.notes);
+        try {
+            mApi.pick("pls_token", "a_7KQ2MZ3P9TW4XB1C", 18, "minecraft:shulker_box", null, null);
+            fail("picked");
+        } catch (CloudProblem problem) {
+            assertTrue(problem.is("pick_failed"));
+            assertEquals("container", problem.reason());
+        }
+        assertEquals("{\"slot\":18,\"id\":\"minecraft:shulker_box\"}", mBodies.get("POST accounts/a_7KQ2MZ3P9TW4XB1C/plus/items/pick"));
+        PlusModel.ReceiptPage page = mApi.receipts("pls_token", "a_7KQ2MZ3P9TW4XB1C", null);
+        assertEquals("owner", page.receipts.get(0).approval);
+        assertEquals("1792840000000", page.next);
+        assertEquals("accounts/:id/plus/orders/:oid", CloudApi.route("accounts/a_7KQ2MZ3P9TW4XB1C/plus/orders/a1"));
+        assertEquals("accounts/:id/plus/orders/check", CloudApi.route("accounts/a_7KQ2MZ3P9TW4XB1C/plus/orders/check"));
+        try {
+            mApi.deleteOrder("pls_token", "a_7KQ2MZ3P9TW4XB1C", 16, "../x");
+            fail("sent a bad id");
+        } catch (CloudProblem problem) {
+            assertEquals(CloudProblem.Kind.FAILED, problem.kind);
+        }
     }
 
     @Test

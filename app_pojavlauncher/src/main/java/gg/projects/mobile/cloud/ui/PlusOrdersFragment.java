@@ -225,11 +225,12 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
 
     private String status(JsonObject order) {
         CloudModel.PlusDoc doc = mDoc;
-        PlusConfig cfg = config();
         String id = Json.str(order, "id", "");
         PlusModel.OrderView view = doc == null ? null : doc.orders.get(id);
+        // The sides straight from the document (a PlusConfig would copy it for every row).
+        JsonObject allow = doc == null ? null : Json.obj(doc.config, "allow");
         OrderDraft.State state = new OrderDraft.State(now(), view == null ? 0 : view.got, view == null ? null : view.live,
-                cfg.allows("buy"), cfg.allows("sell"));
+                Json.bool(allow, "buy", true), Json.bool(allow, "sell", true));
         return OrderDraft.statusOf(order, state).wire();
     }
 

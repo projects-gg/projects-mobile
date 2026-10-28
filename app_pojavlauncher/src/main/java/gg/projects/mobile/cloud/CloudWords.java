@@ -516,8 +516,13 @@ public final class CloudWords {
 
     /** A history change in words ("Elytra en fazla 40.000 yerine 45.000"). */
     public static String change(Context c, PlusFormat.Change change, CloudService service) {
+        return change(c, change, service, null);
+    }
+
+    /** {@link #change(Context, PlusFormat.Change, CloudService)} naming {@code acct}'s custom items by their own names. */
+    public static String change(Context c, PlusFormat.Change change, CloudService service, @Nullable String acct) {
         String lang = lang(c);
-        String item = change.item == null ? "" : service.itemName(null, change.item, lang);
+        String item = change.item == null ? "" : service.itemName(acct, change.item, lang);
         switch (change.kind) {
             case AI_ON: return c.getString(R.string.projects_plus_change_ai_on);
             case AI_OFF: return c.getString(R.string.projects_plus_change_ai_off);
