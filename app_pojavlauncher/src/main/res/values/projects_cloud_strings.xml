@@ -133,14 +133,22 @@
 
     <!-- Moderation (services/cloud-afk README "Moderation player API") -->
     <string name="projects_cloud_mod_warn">Warning for %1$s: %2$s. If it happens again, the account will be stopped.</string>
-    <string name="projects_cloud_mod_rows">%1$s: a row was paused (%2$s). Edit or delete it.</string>
+    <string name="projects_cloud_mod_rows">%1$s: a row was stopped (%2$s). Fix or delete it.</string>
     <string name="projects_cloud_mod_ai">%1$s: AFK+ AI was paused (%2$s). Your account stays AFK.</string>
     <string name="projects_cloud_mod_suspend">%1$s was stopped: %2$s. If you think this is a mistake, appeal.</string>
     <string name="projects_cloud_mod_appeal_received">We got your appeal. We\'ll look at it within 3 days.</string>
     <string name="projects_cloud_mod_overturned">Your appeal was accepted. %1$s is back, and the lost time was added.</string>
-    <string name="projects_cloud_mod_upheld">We reviewed your appeal; the decision stands.</string>
+    <string name="projects_cloud_mod_upheld">We reviewed your appeal. The decision stands.</string>
     <string name="projects_cloud_mod_appeal">Appeal</string>
     <string name="projects_cloud_mod_paused_row">Paused</string>
+    <string name="projects_cloud_mod_overturned_other">Your appeal was accepted. The decision on %1$s was lifted.</string>
+    <string name="projects_cloud_mod_lifted_suspend">%1$s is back, and the lost time was added.</string>
+    <string name="projects_cloud_mod_lifted">The decision on %1$s was lifted.</string>
+    <string name="projects_cloud_report">Report this as a mistake</string>
+    <string name="projects_cloud_report_sending">Sending</string>
+    <string name="projects_cloud_report_sent">Thanks, a staff member will look at it. Meanwhile, you can fix the line and save.</string>
+    <string name="projects_cloud_report_not_needed">This row can be saved now.</string>
+    <string name="projects_cloud_report_limit">You can send at most 3 reports a day.</string>
     <string name="projects_cloud_category_advertising">advertising</string>
     <string name="projects_cloud_category_spam">spam</string>
     <string name="projects_cloud_category_scam">scam</string>
@@ -311,7 +319,7 @@
     <string name="projects_cloud_issue_change_limit">You\'ve changed the server too often this hour.</string>
     <string name="projects_cloud_issue_version">This version isn\'t supported right now.</string>
     <string name="projects_cloud_issue_limit">You\'ve reached the line limit.</string>
-    <string name="projects_cloud_issue_content">This line looks like %1$s; edit or delete it.</string>
+    <string name="projects_cloud_issue_content">This row seems to contain %1$s. Fix or delete it.</string>
     <string name="projects_cloud_issue_other">Fix this field.</string>
 
     <!-- Notification settings -->

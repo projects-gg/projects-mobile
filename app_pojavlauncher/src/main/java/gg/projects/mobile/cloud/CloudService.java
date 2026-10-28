@@ -76,6 +76,18 @@ public final class CloudService implements SocialService.Listener {
         return sInstance != null;
     }
 
+    /** The account as this phone last saw it in this process, for a notice's words (null: not read here yet). */
+    @Nullable
+    public static Account seen(@Nullable String id) {
+        CloudService service;
+        synchronized (CloudService.class) {
+            service = sInstance;
+        }
+        if (service == null || id == null) return null;
+        for (Account a : service.mAccounts) if (a.id.equals(id)) return a;
+        return null;
+    }
+
     private final Context mApp;
     private final CloudDebug mDebug;
     private final CloudApi mApi;
@@ -92,7 +104,8 @@ public final class CloudService implements SocialService.Listener {
 
     @Nullable
     private CloudModel.Me mMe;
-    private List<Account> mAccounts = Collections.emptyList();
+    // Replaced whole (an unmodifiable list), read by a notice's words on another thread too (seen()).
+    private volatile List<Account> mAccounts = Collections.emptyList();
     private Load mLoad = Load.IDLE;
     private long mFetchedAt;
     private boolean mFetching;
@@ -1078,6 +1091,11 @@ public final class CloudService implements SocialService.Listener {
                 result.failed(problem);
             }
         });
+    }
+
+    /** "Yanlışsa bildir" (MOD-W2): the text of a row a save refused for its content, for a staff member to look at. */
+    public void refusalReport(final String id, final String text, Result<JsonObject> result) {
+        run(token -> mApi.refusalReport(token, id, text), result);
     }
 
     public void approvals(final String id, Result<List<CloudModel.Approval>> result) {

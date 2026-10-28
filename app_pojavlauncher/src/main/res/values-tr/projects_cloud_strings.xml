@@ -133,15 +133,23 @@
     <string name="projects_cloud_inventory">Envanter</string>
 
     <!-- Moderasyon (services/cloud-afk README "Moderation player API") -->
-    <string name="projects_cloud_mod_warn">%1$s için uyarı: %2$s. Tekrarlanırsa hesap durdurulur.</string>
+    <string name="projects_cloud_mod_warn">%1$s için uyarı: %2$s. Bir daha olursa hesap durdurulur.</string>
     <string name="projects_cloud_mod_rows">%1$s: bir satırın durduruldu (%2$s). Düzelt ya da sil.</string>
-    <string name="projects_cloud_mod_ai">%1$s: AFK+ yapay zekâsı durduruldu (%2$s). Hesabın AFK\'da kalıyor.</string>
+    <string name="projects_cloud_mod_ai">%1$s: AFK+ yapay zekâsı durduruldu (%2$s). Hesabın AFK\'de kalıyor.</string>
     <string name="projects_cloud_mod_suspend">%1$s durduruldu: %2$s. Yanlışlık olduğunu düşünüyorsan itiraz et.</string>
     <string name="projects_cloud_mod_appeal_received">İtirazın alındı. En geç 3 gün içinde bakacağız.</string>
     <string name="projects_cloud_mod_overturned">İtirazın kabul edildi. %1$s yeniden açıldı, durduğu süre eklendi.</string>
-    <string name="projects_cloud_mod_upheld">İtirazını inceledik; karar değişmedi.</string>
+    <string name="projects_cloud_mod_upheld">İtirazını inceledik. Karar değişmedi.</string>
     <string name="projects_cloud_mod_appeal">İtiraz et</string>
     <string name="projects_cloud_mod_paused_row">Durduruldu</string>
+    <string name="projects_cloud_mod_overturned_other">İtirazın kabul edildi. %1$s için verilen karar kaldırıldı.</string>
+    <string name="projects_cloud_mod_lifted_suspend">%1$s yeniden açıldı, durduğu süre eklendi.</string>
+    <string name="projects_cloud_mod_lifted">%1$s için verilen karar kaldırıldı.</string>
+    <string name="projects_cloud_report">Yanlışsa bildir</string>
+    <string name="projects_cloud_report_sending">Gönderiliyor</string>
+    <string name="projects_cloud_report_sent">Sağ ol, bir yetkili bakacak. Bu arada satırı düzeltip kaydedebilirsin.</string>
+    <string name="projects_cloud_report_not_needed">Bu satır artık kaydedilebilir.</string>
+    <string name="projects_cloud_report_limit">Bugün en çok 3 kez bildirebilirsin.</string>
     <string name="projects_cloud_category_advertising">reklam</string>
     <string name="projects_cloud_category_spam">spam</string>
     <string name="projects_cloud_category_scam">dolandırıcılık</string>
@@ -314,7 +322,7 @@
     <string name="projects_cloud_issue_change_limit">Bu saat içinde sunucu değiştirme hakkın doldu.</string>
     <string name="projects_cloud_issue_version">Bu sürüm şu an desteklenmiyor.</string>
     <string name="projects_cloud_issue_limit">Satır sınırına ulaştın.</string>
-    <string name="projects_cloud_issue_content">Bu satır %1$s içeriyor gibi görünüyor; düzelt ya da sil.</string>
+    <string name="projects_cloud_issue_content">Bu satır %1$s içeriyor gibi görünüyor. Düzelt ya da sil.</string>
     <string name="projects_cloud_issue_other">Bu alanı düzelt.</string>
 
     <!-- Bildirim ayarları -->

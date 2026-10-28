@@ -198,6 +198,12 @@ public class CloudApiTest {
                     return reply(200, "{\"receipts\":[{\"at\":1792846800000,\"order\":\"a1\",\"side\":\"buy\",\"item\":\"minecraft:elytra\","
                             + "\"qty\":1,\"price\":37500,\"pay\":\"money\",\"currency\":\"smp\",\"counterpart\":\"lavci_42\",\"approval\":\"owner\","
                             + "\"review\":false}],\"next\":1792840000000}", "application/json");
+                case "POST accounts/a_7KQ2MZ3P9TW4XB1C/refusal-report":
+                    return reply(201, "{\"received\":true}", "application/json");
+                case "POST accounts/a_8RT4WQ2N6P1KJH3D/refusal-report":
+                    return reply(409, "{\"error\":{\"code\":\"not_refused\",\"message\":\"x\"}}", "application/json");
+                case "POST accounts/a_3MN7PQ4R8ST2VW5X/refusal-report":
+                    return reply(429, "{\"error\":{\"code\":\"rate_limited\",\"message\":\"x\",\"retryAfter\":3600}}", "application/json");
                 case "GET me/notifications":
                     return reply(429, "{\"error\":{\"code\":\"rate_limited\",\"message\":\"x\"}}", "application/json");
                 case "POST accounts/a_7KQ2MZ3P9TW4XB1C/stop":
@@ -390,6 +396,26 @@ public class CloudApiTest {
         PlusModel.AdPreview preview = PlusModel.AdPreview.read(w.adPreview);
         assertEquals("Al\u0131yorum: 4 Elytra, PM at", preview.lines.get(0));
         assertEquals(60, preview.everyMin);
+    }
+
+    /** MOD-W2: "Yanlışsa bildir" sends the refused row's text; the two answers clients put in words. */
+    @Test
+    public void refusalReports() throws Exception {
+        assertTrue(mApi.refusalReport("pls_token", "a_7KQ2MZ3P9TW4XB1C", "satarim elmas").get("received").getAsBoolean());
+        assertEquals("{\"text\":\"satarim elmas\"}", mBodies.get("POST accounts/a_7KQ2MZ3P9TW4XB1C/refusal-report"));
+        assertEquals("Bearer pls_token", mHeaders.get("POST accounts/a_7KQ2MZ3P9TW4XB1C/refusal-report auth"));
+        try {
+            mApi.refusalReport("pls_token", "a_8RT4WQ2N6P1KJH3D", "satarim elmas");
+            fail("reported");
+        } catch (CloudProblem problem) {
+            assertTrue(problem.is("not_refused"));
+        }
+        try {
+            mApi.refusalReport("pls_token", "a_3MN7PQ4R8ST2VW5X", "satarim elmas");
+            fail("reported");
+        } catch (CloudProblem problem) {
+            assertTrue(problem.is("rate_limited"));
+        }
     }
 
     @Test

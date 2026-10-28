@@ -291,6 +291,18 @@ public final class CloudApi {
         return require(send("POST", accountPath(id, "/plus/control"), token, body, null, Repeat.NEVER));
     }
 
+    /**
+     * "Yanlışsa bildir" (MOD-W2, README "Saving" → refusal reports): {@code 201 {received: true}}; {@code 409
+     * not_refused} (the row can be saved now), {@code 429 rate_limited} (3 a day). {@code text}: the refused row's, trimmed,
+     * 1 to 256 UTF-16 units.
+     */
+    @WorkerThread
+    public JsonObject refusalReport(String token, String id, String text) throws CloudProblem {
+        JsonObject body = new JsonObject();
+        body.addProperty("text", text);
+        return require(send("POST", accountPath(id, "/refusal-report"), token, body, null, Repeat.NEVER));
+    }
+
     // ---- AFK+ trade orders ("Siparişler") ----
 
     /** "Kontrol et": the service reads the typed order once and answers with a draft and its questions. */

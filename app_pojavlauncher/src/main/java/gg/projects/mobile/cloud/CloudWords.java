@@ -451,16 +451,31 @@ public final class CloudWords {
         CloudModel.Moderation m = account.moderation;
         if (m == null) return null;
         String category = category(c, m.category);
-        if ("overturned".equals(m.appealState)) return c.getString(R.string.projects_cloud_mod_overturned, account.name);
+        if ("overturned".equals(m.appealState)) {
+            return "suspend".equals(m.step) ? c.getString(R.string.projects_cloud_mod_overturned, account.name)
+                    : c.getString(R.string.projects_cloud_mod_overturned_other, account.name);
+        }
         if ("open".equals(m.appealState)) return c.getString(R.string.projects_cloud_mod_appeal_received);
         if ("upheld".equals(m.appealState)) return c.getString(R.string.projects_cloud_mod_upheld);
         switch (m.step) {
+            case "warn": return c.getString(R.string.projects_cloud_mod_warn, account.name, category);
             case "restrict_rows": return c.getString(R.string.projects_cloud_mod_rows, account.name, category);
             case "pause_ai": return c.getString(R.string.projects_cloud_mod_ai, account.name, category);
             case "suspend": return c.getString(R.string.projects_cloud_mod_suspend, account.name, category);
-            case "warn":
-            default: return c.getString(R.string.projects_cloud_mod_warn, account.name, category);
+            // A step this version does not know: no sentence rather than the wrong one.
+            default: return null;
         }
+    }
+
+    /**
+     * Whether the account as this phone last saw it was suspended by {@code caseId} (README "Moderation player API": the
+     * notice of an answer and {@code lifted} carry no step, so only then "a suspension"; else the other sentence).
+     */
+    private static boolean suspendedBy(@Nullable String acct, @Nullable String caseId) {
+        if (caseId == null) return false;
+        CloudModel.Account seen = CloudService.seen(acct);
+        CloudModel.Moderation m = seen == null ? null : seen.moderation;
+        return m != null && caseId.equals(m.caseId) && "suspend".equals(m.step);
     }
 
     // ---- the assistant ----
@@ -665,17 +680,27 @@ public final class CloudWords {
             case "night":
                 return new String[]{c.getString(R.string.projects_cloud_notice_night), nightText(c, n)};
             case "moderation": {
-                String step = n.get("step") == null ? "warn" : n.get("step");
+                String step = n.get("step");
+                if (step == null) return null;
                 String category = category(c, n.get("category"));
+                boolean suspended = suspendedBy(n.get("acct"), n.get("case"));
                 String text;
                 switch (step) {
+                    case "warn": text = c.getString(R.string.projects_cloud_mod_warn, name, category); break;
                     case "restrict_rows": text = c.getString(R.string.projects_cloud_mod_rows, name, category); break;
                     case "pause_ai": text = c.getString(R.string.projects_cloud_mod_ai, name, category); break;
                     case "suspend": text = c.getString(R.string.projects_cloud_mod_suspend, name, category); break;
                     case "appeal_received": text = c.getString(R.string.projects_cloud_mod_appeal_received); break;
                     case "upheld": text = c.getString(R.string.projects_cloud_mod_upheld); break;
-                    case "overturned": text = c.getString(R.string.projects_cloud_mod_overturned, name); break;
-                    default: text = c.getString(R.string.projects_cloud_mod_warn, name, category); break;
+                    case "overturned":
+                        text = c.getString(suspended ? R.string.projects_cloud_mod_overturned : R.string.projects_cloud_mod_overturned_other, name);
+                        break;
+                    // MOD-W2: staff lifted an applied step without an appeal.
+                    case "lifted":
+                        text = c.getString(suspended ? R.string.projects_cloud_mod_lifted_suspend : R.string.projects_cloud_mod_lifted, name);
+                        break;
+                    // A step this version does not know: no notice rather than the warning's words (the launcher's way).
+                    default: return null;
                 }
                 return new String[]{title, text};
             }

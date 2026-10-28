@@ -29,8 +29,12 @@ import androidx.core.content.ContextCompat;
 import net.kdt.pojavlaunch.R;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+
+import com.google.gson.JsonObject;
 
 import gg.projects.mobile.cloud.CloudEdit;
 import gg.projects.mobile.cloud.CloudModel;
@@ -97,6 +101,8 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
     private String mLang = "tr";
     private int mTab = GENERAL;
     private final List<CloudEdit.Issue> mIssues = new ArrayList<>();
+    /** "Yanlışsa bildir" by the refused text (MOD-W2): "" while it is sent, then the answer's words. */
+    private final Map<String, String> mReports = new HashMap<>();
     private boolean mSaving;
     @Nullable
     private CloudModel.Account mConflict;
@@ -277,6 +283,93 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
             }
         }
         return null;
+    }
+
+    /** The save's refusal of this row for its content (the only one "Yanlışsa bildir" goes under), or null. */
+    @Nullable
+    private CloudEdit.Issue contentIssue(String place, int index) {
+        for (CloudEdit.Issue i : mIssues) {
+            if (i.place.equals(place) && i.index == index && i.problem.startsWith("content/")) return i;
+        }
+        return null;
+    }
+
+    /**
+     * The row with "Yanlışsa bildir" under it (MOD-W2): a quiet underlined link, bone, the screen's one gold stays "Kaydet";
+     * once answered, one plain line in its place. An edit clears the refusal and the link with it, so the row's text now
+     * is the refused one; it goes trimmed, 1 to 256 UTF-16 units (no link otherwise).
+     */
+    private View withReport(CloudUi.Row row, @Nullable String refused) {
+        final String text = refused == null ? "" : refused.trim();
+        if (text.isEmpty() || text.length() > 256) return row.view;
+        Context c = ctx();
+        LinearLayout cell = new LinearLayout(c);
+        cell.setOrientation(LinearLayout.VERTICAL);
+        cell.addView(row.view);
+        String answer = mReports.get(text);
+        if (answer != null && !answer.isEmpty()) {
+            TextView line = CloudUi.text(c, answer, 13.5f, R.color.projects_ash_300, false);
+            line.setPadding(CloudUi.dp(c, 56), 0, CloudUi.dp(c, 16), CloudUi.dp(c, 12));
+            line.setLineSpacing(0, 1.15f);
+            cell.addView(line);
+            return cell;
+        }
+        boolean sending = answer != null;
+        TextView link = CloudUi.text(c, getString(sending ? R.string.projects_cloud_report_sending : R.string.projects_cloud_report),
+                14, R.color.projects_bone_100, false);
+        link.setPaintFlags(link.getPaintFlags() | android.graphics.Paint.UNDERLINE_TEXT_FLAG);
+        link.setGravity(Gravity.CENTER_VERTICAL);
+        link.setMinHeight(CloudUi.dp(c, 48));
+        link.setPadding(CloudUi.dp(c, 12), 0, CloudUi.dp(c, 12), 0);
+        if (sending) {
+            link.setEnabled(false);
+            link.setAlpha(0.6f);
+        } else {
+            link.setBackgroundResource(R.drawable.projects_row_ripple);
+            link.setOnClickListener(v -> report(text, v));
+        }
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.setMarginStart(CloudUi.dp(c, 44));
+        lp.bottomMargin = CloudUi.dp(c, 4);
+        cell.addView(link, lp);
+        return cell;
+    }
+
+    /** One report at a time a text; its answer replaces the link (and is read out); other failures keep the link. */
+    private void report(final String text, final View from) {
+        final CloudModel.Account a = mBase;
+        if (a == null || mReports.containsKey(text)) return;
+        mReports.put(text, "");
+        Haptics.tick(from);
+        draw();
+        mService.refusalReport(a.id, text, new CloudService.Result<JsonObject>() {
+            @Override
+            public void ok(JsonObject value) {
+                if (!alive()) return;
+                answered(text, getString(R.string.projects_cloud_report_sent));
+            }
+
+            @Override
+            public void failed(CloudProblem problem) {
+                if (!alive()) return;
+                if (problem.is("not_refused")) {
+                    answered(text, getString(R.string.projects_cloud_report_not_needed));
+                } else if (problem.is("rate_limited")) {
+                    answered(text, getString(R.string.projects_cloud_report_limit));
+                } else {
+                    mReports.remove(text);
+                    draw();
+                    problem(problem, null);
+                }
+            }
+        });
+    }
+
+    private void answered(String text, String words) {
+        mReports.put(text, words);
+        draw();
+        View root = getView();
+        if (root != null) root.announceForAccessibility(words);
     }
 
     // ---- drawing ----
@@ -628,7 +721,7 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
                 else if (!cmd.enabled) row.setLine(getString(R.string.projects_cloud_row_off, trigger(cmd)), R.color.projects_ash_400);
                 else row.setLine(trigger(cmd), R.color.projects_ash_400);
                 if (!cmd.enabled) row.view.setAlpha(0.55f);
-                rows.add(row.view);
+                rows.add(contentIssue("commands", i) != null && !cmd.words.secretKind() ? withReport(row, cmd.words.text) : row.view);
             }
             rows.add(add.view);
             CloudUi.fill(group, rows);
@@ -712,7 +805,9 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
                         getString(R.string.projects_cloud_rule_line, rule.pattern, CloudWords.span(c, rule.cooldown))), R.color.projects_ash_400);
                 else row.setLine(getString(R.string.projects_cloud_rule_line, rule.pattern, CloudWords.span(c, rule.cooldown)), R.color.projects_ash_400);
                 if (!rule.enabled) row.view.setAlpha(0.55f);
-                rows.add(row.view);
+                CloudEdit.Issue refused = contentIssue("rules", i);
+                rows.add(refused != null && !"match".equals(refused.field) && !rule.reply.secretKind()
+                        ? withReport(row, rule.reply.text) : row.view);
             }
             rows.add(add.view);
             CloudUi.fill(group, rows);
