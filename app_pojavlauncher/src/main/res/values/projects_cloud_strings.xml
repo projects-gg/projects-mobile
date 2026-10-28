@@ -125,7 +125,7 @@
     <string name="projects_cloud_failed">Couldn\'t do that. Try again.</string>
 
     <!-- The account screen -->
-    <string name="projects_cloud_time">Time</string>
+    <string name="projects_cloud_time">Time left</string>
     <string name="projects_cloud_ends_on">Ends on %1$s</string>
     <string name="projects_cloud_renew_opens">You can extend it from %1$s.</string>
     <string name="projects_cloud_site_more">Orders, refunds and deleting the account are on afk.projects.gg.</string>
