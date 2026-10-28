@@ -110,6 +110,14 @@ public final class CloudProblem extends Exception {
         return Json.str(error, "reason");
     }
 
+    /**
+     * {@code 422 order_rejected {reason: "question", rule: "rmt"}} (28 Oct 2026): the text's money may be real money; the
+     * player says whether it is the game's ("Bu oyun parasi") and the check runs again with {@code inGame}.
+     */
+    public boolean asksMoney() {
+        return is("order_rejected") && "question".equals(reason()) && "rmt".equals(string("rule"));
+    }
+
     /** {@code invalid_pattern}'s and {@code invalid_plus_config}'s {@code problem}. */
     @Nullable
     public String problem() {

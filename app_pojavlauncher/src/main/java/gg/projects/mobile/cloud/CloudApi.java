@@ -296,9 +296,18 @@ public final class CloudApi {
     /** "Kontrol et": the service reads the typed order once and answers with a draft and its questions. */
     @WorkerThread
     public PlusModel.Check checkOrder(String token, String id, String text, String lang) throws CloudProblem {
+        return checkOrder(token, id, text, lang, false);
+    }
+
+    /**
+     * "Kontrol et"; {@code inGame}: the player said the text's money is the game's ("Bu oyun parasi", after a
+     * {@code 422 order_rejected {reason: "question", rule: "rmt"}}): its money words pass, rails never.
+     */
+    public PlusModel.Check checkOrder(String token, String id, String text, String lang, boolean inGame) throws CloudProblem {
         JsonObject body = new JsonObject();
         body.addProperty("text", text);
         body.addProperty("lang", "en".equals(lang) ? "en" : "tr");
+        if (inGame) body.addProperty("inGame", true);
         PlusModel.Check check = PlusModel.Check.read(send("POST", accountPath(id, "/plus/orders/check"), token, body, null, Repeat.NEVER));
         if (check == null) throw CloudProblem.unavailable("order check");
         return check;

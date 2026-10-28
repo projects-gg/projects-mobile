@@ -838,7 +838,7 @@ public final class CloudService implements SocialService.Listener {
     }
 
     public void putPlus(final String id, final long aiRev, final JsonObject config, Result<CloudModel.PlusDoc> result) {
-        run(token -> mApi.putPlus(token, id, aiRev, config), keepDoc(id, result));
+        run(token -> mApi.putPlus(token, id, aiRev, config), keepWritten(id, result));
     }
 
     /** The account's last AFK+ settings read on this phone (null: none yet). */
@@ -848,6 +848,27 @@ public final class CloudService implements SocialService.Listener {
     }
 
     /** Keeps the settings an answer brought (custom items' names), then hands them on. */
+    /**
+     * A write's answer ({@code PUT}, a restore) holds no rules, spent sums or order views: it is laid over the document
+     * read before, so a screen after a save still knows them (the payment choice needs {@code rules.features.itemPay}).
+     */
+    private Result<CloudModel.PlusDoc> keepWritten(final String id, final Result<CloudModel.PlusDoc> result) {
+        return new Result<CloudModel.PlusDoc>() {
+            @Override
+            public void ok(CloudModel.PlusDoc value) {
+                CloudModel.PlusDoc known = mPlusDocs.get(id);
+                CloudModel.PlusDoc merged = known == null ? value : known.after(value);
+                rememberDoc(id, merged);
+                result.ok(merged);
+            }
+
+            @Override
+            public void failed(CloudProblem problem) {
+                result.failed(problem);
+            }
+        };
+    }
+
     private Result<CloudModel.PlusDoc> keepDoc(final String id, final Result<CloudModel.PlusDoc> result) {
         return new Result<CloudModel.PlusDoc>() {
             @Override
@@ -880,7 +901,12 @@ public final class CloudService implements SocialService.Listener {
 
     /** "Kontrol et". */
     public void checkOrder(final String id, final String text, final String lang, Result<PlusModel.Check> result) {
-        run(token -> mApi.checkOrder(token, id, text, lang), result);
+        checkOrder(id, text, lang, false, result);
+    }
+
+    /** "Kontrol et" again once the player said the money is the game's ("Bu oyun parasi"). */
+    public void checkOrder(final String id, final String text, final String lang, final boolean inGame, Result<PlusModel.Check> result) {
+        run(token -> mApi.checkOrder(token, id, text, lang, inGame), result);
     }
 
     public void postOrder(final String id, final long aiRev, final JsonObject order, @Nullable final com.google.gson.JsonArray customItems,
@@ -1132,7 +1158,7 @@ public final class CloudService implements SocialService.Listener {
     }
 
     public void restore(final String id, final long rev, final long aiRev, Result<CloudModel.PlusDoc> result) {
-        run(token -> mApi.restore(token, id, rev, aiRev), result);
+        run(token -> mApi.restore(token, id, rev, aiRev), keepWritten(id, result));
     }
 
     public void downgradePreview(final String id, Result<CloudModel.DowngradePreview> result) {

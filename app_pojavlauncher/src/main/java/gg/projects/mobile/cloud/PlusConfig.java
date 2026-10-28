@@ -39,6 +39,9 @@ public final class PlusConfig {
     public static final String[] STYLES = {"patient", "balanced", "quick"};
     public static final String[] AUTHORITIES = {"reply", "ask", "deal"};
     public static final String[] PAYS = {"money", "items", "both"};
+    /** The chat ads' intervals a player may choose ({@code discovery.adEveryMin}, minutes; an hour by default). */
+    public static final int[] AD_EVERY = {30, 45, 60, 120};
+    public static final int AD_EVERY_DEFAULT = 60;
 
     private final JsonObject mDoc;
 
@@ -88,6 +91,14 @@ public final class PlusConfig {
         return Json.bool(mDoc, "enabled", true);
     }
 
+    /**
+     * ProBot AI waits for the player's first start ({@code ready}, the Worker's own key on a first grant). A write sends it
+     * back as it was read and never makes it; "ProBot AI'ı başlat" ({@code control resume}) drops it.
+     */
+    public boolean ready() {
+        return Json.bool(mDoc, "ready", false);
+    }
+
     public void setEnabled(boolean on) {
         mDoc.addProperty("enabled", on);
     }
@@ -104,8 +115,9 @@ public final class PlusConfig {
         mDoc.addProperty("lang", lang);
     }
 
+    /** The talk style; settings that lack it read as "Kibar" ({@code polite}, 28 Oct 2026). */
     public String preset() {
-        return Json.str(Json.obj(mDoc, "persona"), "preset", "friendly");
+        return Json.str(Json.obj(mDoc, "persona"), "preset", "polite");
     }
 
     public void setPreset(String preset) {
@@ -156,9 +168,9 @@ public final class PlusConfig {
         obj("persona").addProperty("smallTalk", on);
     }
 
-    /** "Oyuncu gibi konuşsun": chats like a player, not in formal language (default off). */
+    /** "Oyuncu gibi konuşsun": chats like a player, not in formal language (settings that lack it read it as on, 28 Oct 2026). */
     public boolean playerTalk() {
-        return Json.bool(Json.obj(mDoc, "persona"), "playerTalk", false);
+        return Json.bool(Json.obj(mDoc, "persona"), "playerTalk", true);
     }
 
     public void setPlayerTalk(boolean on) {
@@ -230,6 +242,29 @@ public final class PlusConfig {
         obj("discovery").addProperty("proactivePm", on);
     }
 
+    /** "Sohbete ilan versin": the active orders announced in public chat (off by default). */
+    public boolean ads() {
+        return Json.bool(Json.obj(mDoc, "discovery"), "ads", false);
+    }
+
+    public void setAds(boolean on) {
+        obj("discovery").addProperty("ads", on);
+    }
+
+    /**
+     * The player's minutes between ads ({@code discovery.adEveryMin}); null when the document has none (it reads an hour).
+     * A write sends it back as read; only the player's choice adds it (and only where the Worker sends {@code adPreview}).
+     */
+    @Nullable
+    public Integer adEveryMin() {
+        Long v = Json.numOrNull(Json.obj(mDoc, "discovery"), "adEveryMin");
+        return v == null ? null : (int) (long) v;
+    }
+
+    public void setAdEveryMin(int minutes) {
+        obj("discovery").addProperty("adEveryMin", minutes);
+    }
+
     public String summaryAt() {
         return Json.str(mDoc, "summaryAt", "21:00");
     }
@@ -247,6 +282,22 @@ public final class PlusConfig {
         JsonObject trade = obj("trade");
         if (row == null) trade.add("returnRow", JsonNull.INSTANCE);
         else trade.addProperty("returnRow", row);
+    }
+
+    /**
+     * The money's name the player gives ({@code trade.currency}, 28 Oct 2026) where the profile names none; null: none.
+     * A write without the key keeps the stored one (the document sends back what it read).
+     */
+    @Nullable
+    public String currency() {
+        return Json.str(Json.obj(mDoc, "trade"), "currency");
+    }
+
+    /** Sets the money's name; null clears it (written as null: the stored document then has no name). */
+    public void setCurrency(@Nullable String name) {
+        JsonObject trade = obj("trade");
+        if (name == null) trade.add("currency", JsonNull.INSTANCE);
+        else trade.addProperty("currency", name);
     }
 
     // ---- fine-tuning ("İnce ayar") ----
@@ -493,6 +544,17 @@ public final class PlusConfig {
         int tagLength = tag.codePointCount(0, tag.length());
         if (tagOn() && tagLength == 0) problems.add(new Problem("persona.prefix.text", "empty"));
         else if (tagLength > TAG_MAX) problems.add(new Problem("persona.prefix.text", "length"));
+        // The money's name and the ads' interval (28 Oct 2026): the Worker's rules, where a write carries them.
+        String currency = currency();
+        if (currency != null && gg.projects.mobile.cloud.plus.PlusText.checkCurrency(currency) != null) {
+            problems.add(new Problem("trade.currency", "text"));
+        }
+        Integer every = adEveryMin();
+        if (every != null) {
+            boolean known = false;
+            for (int allowed : AD_EVERY) if (allowed == every) known = true;
+            if (!known) problems.add(new Problem("discovery.adEveryMin", "range"));
+        }
         List<Window> windows = windows();
         if (windows.size() > WINDOWS_MAX) problems.add(new Problem("schedule.windows", "range"));
         if (scheduleOn() && windows.isEmpty()) problems.add(new Problem("schedule.windows", "range"));

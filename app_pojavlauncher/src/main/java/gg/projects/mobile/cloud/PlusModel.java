@@ -36,9 +36,14 @@ public final class PlusModel {
         public final CloudModel.Localized name;
         /** Who makes the trades of orders with {@code trade: "auto"}: {@code bot} or {@code owner}. */
         public final String trade;
-        /** The money's name to write after amounts ("Coin"); null: bare amounts and once "Oyundaki parayla". */
+        /**
+         * The money's name to write after amounts ("Coin"): the profile's, else the player's {@code trade.currency} (both
+         * languages alike); null: bare amounts and once "Oyundaki parayla".
+         */
         @Nullable
         public final CloudModel.Localized moneyLabel;
+        /** The name is the profile's: the "Para birimi" setting shows it and cannot change it (28 Oct 2026). */
+        public final boolean moneyFixed;
         public final long maxDeal;
         public final String currency;
         /** The account's Minecraft version (its item data); null: the manifest's default. */
@@ -56,6 +61,7 @@ public final class PlusModel {
             trade = "bot".equals(Json.str(o, "trade")) ? "bot" : "owner";
             JsonObject money = Json.obj(o, "money");
             moneyLabel = CloudModel.Localized.read(Json.obj(money, "label"));
+            moneyFixed = Json.bool(money, "fixed", false);
             maxDeal = Math.max(1, Json.num(money, "maxDeal", GENERIC_MAX_DEAL));
             currency = Json.str(money, "currency", "");
             mc = Json.str(o, "mc");
@@ -104,6 +110,8 @@ public final class PlusModel {
         public final boolean audit;
         public final boolean customItems;
         public final boolean itemPay;
+        /** Studio's {@code features.currency}: the player may name the money ({@code trade.currency}); off by default. */
+        public final boolean currency;
 
         private Rules(JsonObject o) {
             orderMax = (int) Json.num(o, "orderMax", 10);
@@ -132,6 +140,7 @@ public final class PlusModel {
             audit = Json.bool(f, "audit", true);
             customItems = Json.bool(f, "customItems", true);
             itemPay = Json.bool(f, "itemPay", false);
+            currency = Json.bool(f, "currency", false);
         }
 
         public static Rules read(@Nullable JsonObject o) {
@@ -412,19 +421,71 @@ public final class PlusModel {
         public final long aiRev;
         /** {@code DELETE} while the order's trade runs: it goes when the trade ends ("Takas bitince silinir."). */
         public final boolean deferred;
+        /** The chat ads' preview for the new orders ({@code adPreview}); null from a Worker before it. */
+        @Nullable
+        public final JsonObject adPreview;
 
-        Written(@Nullable JsonObject order, JsonObject config, long aiRev, boolean deferred) {
+        Written(@Nullable JsonObject order, JsonObject config, long aiRev, boolean deferred, @Nullable JsonObject adPreview) {
             this.order = order;
             this.config = config;
             this.aiRev = aiRev;
             this.deferred = deferred;
+            this.adPreview = adPreview;
         }
 
         @Nullable
         static Written read(@Nullable JsonObject o) {
             JsonObject config = Json.obj(o, "config");
             if (config == null) return null;
-            return new Written(Json.obj(o, "order"), config, Json.num(o, "aiRev", 0), Json.bool(o, "deferred", false));
+            return new Written(Json.obj(o, "order"), config, Json.num(o, "aiRev", 0), Json.bool(o, "deferred", false),
+                    Json.obj(o, "adPreview"));
+        }
+    }
+
+    /**
+     * {@code AdPreview} (README "AFK+ chat ads", 28 Oct 2026): the ads' interval and the next lines, in the answers of
+     * {@code GET}, {@code PUT}, a restore and every order write. Null where a Worker sends none: the screens then show
+     * the ads' switch alone.
+     */
+    public static final class AdPreview {
+        /** The shortest interval this server allows: max(30, the profile's, Studio's). */
+        public final int floorMin;
+        /** The interval in use: max(the player's, the floor), doubled while a spam warning holds. */
+        public final int everyMin;
+        /** The next (at most) 3 lines the rotation says, message text only; empty without an active order or names. */
+        public final List<String> lines;
+        /** When the first of them goes while ads run (seconds); null otherwise. */
+        @Nullable
+        public final Long nextAt;
+        /** The session's first spam warning (seconds), or null. */
+        @Nullable
+        public final Long warningAt;
+        /** The interval while the warning holds. */
+        public final int warningEveryMin;
+        /** A second warning or a mute stopped the ads until the AFK+ day ends. */
+        public final boolean stoppedToday;
+        /** An active order's item has no name from the machine yet: no line (never an id in its place). */
+        public final boolean namesPending;
+
+        private AdPreview(JsonObject o) {
+            floorMin = (int) Math.max(30, Json.num(o, "floorMin", 30));
+            everyMin = (int) Math.max(floorMin, Json.num(o, "everyMin", floorMin));
+            List<String> list = new ArrayList<>();
+            for (String line : Json.strings(o, "lines")) {
+                if (!line.isEmpty() && list.size() < 3) list.add(line);
+            }
+            lines = Collections.unmodifiableList(list);
+            nextAt = Json.numOrNull(o, "nextAt");
+            JsonObject warning = Json.obj(o, "warning");
+            warningAt = warning == null ? null : Json.numOrNull(warning, "at");
+            warningEveryMin = warning == null ? everyMin : (int) Json.num(warning, "everyMin", everyMin);
+            stoppedToday = Json.bool(o, "stoppedToday", false);
+            namesPending = Json.bool(o, "namesPending", false);
+        }
+
+        @Nullable
+        public static AdPreview read(@Nullable JsonObject o) {
+            return o == null ? null : new AdPreview(o);
         }
     }
 

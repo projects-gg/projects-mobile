@@ -282,6 +282,59 @@ public final class PlusText {
         return false;
     }
 
+    /** The longest money name the player may set ({@code trade.currency}, code points). */
+    public static final int CURRENCY_MAX = 16;
+    /** The money signs a name may hold besides Latin letters: dollar, euro, lira and pound. */
+    private static final String CURRENCY_SIGNS = "$" + (char) 0x20AC + (char) 0x20BA + (char) 0x00A3;
+    /** A money name's other characters: space, dot, underscore and hyphen. */
+    private static final String CURRENCY_MARKS = " ._-";
+
+    private static boolean currencyChars(String cleaned) {
+        for (int i = 0; i < cleaned.length(); ) {
+            int c = cleaned.codePointAt(i);
+            boolean ok = latinLetter(c) || CURRENCY_MARKS.indexOf(c) >= 0 || CURRENCY_SIGNS.indexOf(c) >= 0;
+            if (!ok) return false;
+            i += Character.charCount(c);
+        }
+        return true;
+    }
+
+    private static boolean currencyShown(String cleaned) {
+        for (int i = 0; i < cleaned.length(); ) {
+            int c = cleaned.codePointAt(i);
+            if (latinLetter(c) || CURRENCY_SIGNS.indexOf(c) >= 0) return true;
+            i += Character.charCount(c);
+        }
+        return false;
+    }
+
+    /**
+     * The money's name the player gives ({@code trade.currency}, 28 Oct 2026; afkplus-text.mjs {@code checkCurrency}): null
+     * when it may be saved, else its problem, the first that fails in this order: {@code length} (empty), {@code form}
+     * (another character than a Latin letter, a space, {@code . _ -} or a money sign; no digit, none shown; a colour code),
+     * {@code length} (over 16), {@code phone}, {@code words}, {@code link}, {@code email}, {@code iban}, {@code tckn},
+     * {@code card}, {@code platform}. It goes into the model's context and after amounts in the bot's lines, so it passes
+     * the tag's checks but the staff and name ones.
+     */
+    @Nullable
+    public static String checkCurrency(@Nullable String raw) {
+        String cleaned = clean(raw);
+        if (cleaned.isEmpty()) return "length";
+        if (formProblem(cleaned) || !currencyChars(cleaned) || !currencyShown(cleaned) || !showsSomething(cleaned)) return "form";
+        if (cp(cleaned) > CURRENCY_MAX) return "length";
+        String rejection = chatRejection(cleaned);
+        if (rejection != null) return rejection;
+        if (anyLink(cleaned)) return "link";
+        String contact = contactProblem(cleaned);
+        if (contact == null) contact = platformProblem(cleaned);
+        return contact;
+    }
+
+    /** The money's name as it is saved: cleaned like chat text (the Worker stores it so). */
+    public static String cleanCurrency(@Nullable String raw) {
+        return clean(raw);
+    }
+
     /**
      * The tag before the bot's lines: null when it may be saved, else its problem, the first that fails in this order:
      * {@code length} (empty), {@code form}, {@code length} (over 16), {@code link}, {@code phone}, {@code words}, {@code email}, {@code iban},

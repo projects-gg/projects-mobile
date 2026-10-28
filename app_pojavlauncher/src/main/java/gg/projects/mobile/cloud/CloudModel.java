@@ -536,6 +536,7 @@ public final class CloudModel {
     public static final class AiView {
         /** {@code on}, {@code paused}, {@code off} or {@code unknown}. */
         public final String state;
+        /** Why it is off or paused; {@code ready} (28 Oct 2026): a first grant waits for the player's start. */
         @Nullable
         public final String reason;
         @Nullable
@@ -577,6 +578,11 @@ public final class CloudModel {
         @Nullable
         public static AiView read(@Nullable JsonObject o) {
             return o == null ? null : new AiView(o);
+        }
+
+        /** ProBot AI has never been started: a first grant waits for the player ("ProBot AI'ı başlat"). */
+        public boolean waitsForStart() {
+            return "off".equals(state) && "ready".equals(reason);
         }
     }
 
@@ -1153,6 +1159,9 @@ public final class CloudModel {
         /** Set when the order views are the machine's last snapshot, not a live answer. */
         @Nullable
         public final Long asOf;
+        /** The chat ads' interval and next lines; null from a Worker before them (28 Oct 2026). */
+        @Nullable
+        public final PlusModel.AdPreview adPreview;
         private final JsonObject mRaw;
 
         private PlusDoc(JsonObject o) {
@@ -1168,6 +1177,7 @@ public final class CloudModel {
             rules = PlusModel.Rules.read(Json.obj(o, "rules"));
             orders = Collections.unmodifiableMap(PlusModel.OrderView.map(Json.obj(o, "orders")));
             asOf = Json.numOrNull(o, "asOf");
+            adPreview = PlusModel.AdPreview.read(Json.obj(o, "adPreview"));
         }
 
         @Nullable
@@ -1187,10 +1197,40 @@ public final class CloudModel {
          * {@code PUT}).
          */
         public PlusDoc with(JsonObject newConfig, long newRev, @Nullable JsonObject judge) {
+            return with(newConfig, newRev, judge, null, null);
+        }
+
+        /**
+         * {@link #with(JsonObject, long, JsonObject)} with what a write may bring besides: the chat ads' preview for the
+         * new document and, from a {@code PUT}, the server as it resolves it (its money name follows {@code trade.currency}).
+         */
+        public PlusDoc with(JsonObject newConfig, long newRev, @Nullable JsonObject judge, @Nullable JsonObject preview,
+                            @Nullable JsonObject newServer) {
             JsonObject next = mRaw.deepCopy();
             next.add("config", newConfig);
             next.addProperty("aiRev", newRev);
             if (judge != null) next.add("judge", judge);
+            if (preview != null) next.add("adPreview", preview);
+            if (newServer != null) next.add("server", newServer);
+            return new PlusDoc(next);
+        }
+
+        /** ProBot AI has never been started: a first grant's document waits for the player ({@code ready}). */
+        public boolean waitsForStart() {
+            return Json.bool(config, "ready", false);
+        }
+
+        /**
+         * After a {@code PUT} or a restore, whose answer holds only {@code config}, {@code aiRev}, {@code judge},
+         * {@code server} and {@code adPreview}: this document with them; the rules, the spent sums and the order views
+         * stay as read.
+         */
+        public PlusDoc after(PlusDoc answer) {
+            JsonObject next = mRaw.deepCopy();
+            for (String key : new String[]{"config", "aiRev", "judge", "server", "adPreview"}) {
+                com.google.gson.JsonElement value = answer.mRaw.get(key);
+                if (value != null && !value.isJsonNull()) next.add(key, value.deepCopy());
+            }
             return new PlusDoc(next);
         }
 

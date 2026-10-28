@@ -78,6 +78,52 @@ public class PlusTest {
         assertTrue(problems(check(config)), check(config).isEmpty());
     }
 
+    /**
+     * 28 Oct 2026: the money's name, the ads' interval and the first start go back as they were read and are never made;
+     * settings that lack the talk style and "Oyuncu gibi konuşsun" read as "Kibar" with it on, a stored value stays.
+     */
+    @Test
+    public void moneyNameAdsAndTheFirstStart() {
+        JsonObject bare = Vectors.json("{\"v\":2,\"enabled\":false,\"ready\":true,\"persona\":{},\"trade\":{\"returnRow\":null},"
+                + "\"discovery\":{\"ads\":false}}");
+        PlusConfig fresh = new PlusConfig(bare);
+        assertTrue(fresh.ready());
+        assertEquals("polite", fresh.preset());
+        assertTrue(fresh.playerTalk());
+        assertNull(fresh.currency());
+        assertNull(fresh.adEveryMin());
+        JsonObject untouched = fresh.settingsJson();
+        // Read, never made: no currency, no interval; the Worker's ready goes back as it came.
+        assertFalse(untouched.getAsJsonObject("trade").has("currency"));
+        assertFalse(untouched.getAsJsonObject("discovery").has("adEveryMin"));
+        assertFalse(untouched.getAsJsonObject("persona").has("preset"));
+        assertTrue(untouched.get("ready").getAsBoolean());
+        fresh.setCurrency("ripple");
+        fresh.setAdEveryMin(45);
+        fresh.setAds(true);
+        JsonObject sent = fresh.settingsJson();
+        assertEquals("ripple", sent.getAsJsonObject("trade").get("currency").getAsString());
+        assertEquals(45, sent.getAsJsonObject("discovery").get("adEveryMin").getAsInt());
+        assertTrue(sent.getAsJsonObject("discovery").get("ads").getAsBoolean());
+        assertTrue(problems(check(fresh)), check(fresh).isEmpty());
+        // Clearing writes null (the stored name goes); a name with a digit and an odd interval are the Worker's refusals.
+        fresh.setCurrency(null);
+        assertTrue(fresh.settingsJson().getAsJsonObject("trade").get("currency").isJsonNull());
+        assertNull(fresh.currency());
+        fresh.setCurrency("coin2");
+        fresh.setAdEveryMin(50);
+        assertEquals("[trade.currency:text, discovery.adEveryMin:range]", problems(check(fresh)));
+        // A stored value stays whatever it is.
+        PlusConfig stored = new PlusConfig(Vectors.json("{\"v\":2,\"persona\":{\"preset\":\"friendly\",\"playerTalk\":false},"
+                + "\"trade\":{\"currency\":\"TL\"},\"discovery\":{\"adEveryMin\":120}}"));
+        assertEquals("friendly", stored.preset());
+        assertFalse(stored.playerTalk());
+        assertEquals("TL", stored.currency());
+        assertEquals(Integer.valueOf(120), stored.adEveryMin());
+        assertFalse(stored.ready());
+        assertEquals("TL", stored.settingsJson().getAsJsonObject("trade").get("currency").getAsString());
+    }
+
     @Test
     public void sameIgnoresOrdersAndCustomItems() {
         PlusConfig a = new PlusConfig(doc().config);

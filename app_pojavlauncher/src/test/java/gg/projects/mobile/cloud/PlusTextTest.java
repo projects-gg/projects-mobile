@@ -59,6 +59,33 @@ public class PlusTextTest {
         assertTrue("tag cases run: " + checked, checked >= 20);
     }
 
+    /** The money's name ({@code trade.currency}, 28 Oct 2026): the config cases whose answer is about it, or that keep it. */
+    @Test
+    public void moneyNamesAsTheConfigCasesCheckThem() {
+        JsonObject vectors = Vectors.load("cloud/afkplus-config-v2.json");
+        int checked = 0;
+        List<String> wrong = new ArrayList<>();
+        for (JsonObject c : Json.objects(vectors, "cases")) {
+            JsonObject trade = Json.obj(Json.obj(c, "input"), "trade");
+            if (trade == null || !trade.has("currency") || !trade.get("currency").isJsonPrimitive()
+                    || !trade.get("currency").getAsJsonPrimitive().isString()) {
+                continue;
+            }
+            JsonObject result = Json.obj(c, "result");
+            boolean about = "trade.currency".equals(Json.str(result, "field"));
+            // Studio's switch is the service's to apply; the text rule alone is the phone's.
+            if (about && !"text".equals(Json.str(result, "reason"))) continue;
+            if (!about && !Json.bool(result, "ok", false)) continue;
+            String got = PlusText.checkCurrency(trade.get("currency").getAsString());
+            String expected = about ? Json.str(result, "problem") : null;
+            checked++;
+            if (expected == null ? got != null : !expected.equals(got)) wrong.add(Json.str(c, "name") + ": " + expected + " != " + got);
+        }
+        assertEquals(new ArrayList<String>(), wrong);
+        assertTrue("money name cases run: " + checked, checked >= 12);
+        assertEquals("Altın Para", PlusText.cleanCurrency("  Altın   Para "));
+    }
+
     @Test
     public void contactDetails() {
         assertEquals("email", PlusText.contactProblem("ali@gmail"));

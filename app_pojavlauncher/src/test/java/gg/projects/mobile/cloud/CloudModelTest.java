@@ -14,6 +14,52 @@ import java.util.List;
 
 /** The player API's objects read leniently (fixtures in the contract's shapes, with fields this app does not know). */
 public class CloudModelTest {
+    /** 28 Oct 2026: the chat ads' preview, the money's fixed name, Studio's currency switch and the first start. */
+    @Test
+    public void adsPreviewMoneyAndTheFirstStart() {
+        CloudModel.PlusDoc doc = CloudModel.PlusDoc.read(Vectors.json("{\"config\":{\"v\":2,\"enabled\":false,\"ready\":true},"
+                + "\"aiRev\":0,\"server\":{\"kind\":\"verified\",\"mode\":\"projects-smp\",\"trade\":\"bot\","
+                + "\"money\":{\"label\":{\"tr\":\"ripple\",\"en\":\"ripple\"},\"fixed\":true,\"maxDeal\":10000000,\"currency\":\"ripple\"}},"
+                + "\"rules\":{\"features\":{\"itemPay\":true,\"currency\":true}},"
+                + "\"adPreview\":{\"floorMin\":45,\"everyMin\":120,\"lines\":[\"Al\u0131yorum: 4 Elytra, PM at\",\"\",\"b\",\"c\",\"d\"],"
+                + "\"nextAt\":1792850400,\"warning\":{\"at\":1792846000,\"everyMin\":120},\"stoppedToday\":false,\"namesPending\":false}}"));
+        assertTrue(doc.waitsForStart());
+        assertTrue(doc.server.moneyFixed);
+        assertEquals("ripple", doc.server.moneyLabel.in("tr"));
+        assertTrue(doc.rules.currency);
+        PlusModel.AdPreview ads = doc.adPreview;
+        assertEquals(45, ads.floorMin);
+        assertEquals(120, ads.everyMin);
+        // At most three lines, never an empty one.
+        assertEquals(java.util.Arrays.asList("Al\u0131yorum: 4 Elytra, PM at", "b", "c"), ads.lines);
+        assertEquals(Long.valueOf(1792850400L), ads.nextAt);
+        assertEquals(Long.valueOf(1792846000L), ads.warningAt);
+        assertFalse(ads.stoppedToday);
+        // A Worker before them: no preview, no fixed name, the switch off, started.
+        CloudModel.PlusDoc old = CloudModel.PlusDoc.read(Vectors.json("{\"config\":{\"v\":2},\"aiRev\":3,\"server\":{\"money\":{}},"
+                + "\"rules\":{\"features\":{\"itemPay\":true}}}"));
+        assertNull(old.adPreview);
+        assertFalse(old.server.moneyFixed);
+        assertFalse(old.rules.currency);
+        assertFalse(old.waitsForStart());
+        // A PUT's answer laid over the read document keeps the rules and takes the new preview and server.
+        CloudModel.PlusDoc answer = CloudModel.PlusDoc.read(Vectors.json("{\"config\":{\"v\":2,\"trade\":{\"currency\":\"coin\"}},"
+                + "\"aiRev\":4,\"server\":{\"money\":{\"label\":{\"tr\":\"coin\",\"en\":\"coin\"},\"fixed\":false}},"
+                + "\"adPreview\":{\"floorMin\":30,\"everyMin\":60,\"lines\":[],\"nextAt\":null,\"warning\":null,"
+                + "\"stoppedToday\":true,\"namesPending\":true}}"));
+        CloudModel.PlusDoc merged = old.after(answer);
+        assertEquals(4, merged.aiRev);
+        assertTrue(merged.rules.itemPay);
+        assertEquals("coin", merged.server.moneyLabel.in("en"));
+        assertTrue(merged.adPreview.stoppedToday);
+        assertTrue(merged.adPreview.namesPending);
+        assertNull(merged.adPreview.warningAt);
+        // The account's AI view: never started.
+        CloudModel.AiView ai = CloudModel.AiView.read(Vectors.json("{\"state\":\"off\",\"reason\":\"ready\"}"));
+        assertTrue(ai.waitsForStart());
+        assertFalse(CloudModel.AiView.read(Vectors.json("{\"state\":\"off\",\"reason\":\"player\"}")).waitsForStart());
+    }
+
     @Test
     public void theOfferAndItsAfkPlusSwitches() {
         CloudModel.Offer offer = CloudModel.Offer.read(Vectors.json(Vectors.resource("cloud/fixtures/offer.json")));

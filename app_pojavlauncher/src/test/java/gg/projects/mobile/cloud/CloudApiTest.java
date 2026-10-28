@@ -185,6 +185,13 @@ public class CloudApiTest {
                 case "POST accounts/a_7KQ2MZ3P9TW4XB1C/plus/orders/check":
                     return reply(200, "{\"draft\":{\"side\":null,\"item\":\"minecraft:elytra\"},\"questions\":[{\"kind\":\"side\"}],"
                             + "\"notes\":[\"named_player\"],\"left\":4}", "application/json");
+                case "POST accounts/a_8RT4WQ2N6P1KJH3D/plus/orders/check":
+                    return reply(422, "{\"error\":{\"code\":\"order_rejected\",\"message\":\"x\",\"reason\":\"question\",\"rule\":\"rmt\"}}",
+                            "application/json");
+                case "POST accounts/a_8RT4WQ2N6P1KJH3D/plus/orders":
+                    return reply(201, "{\"order\":{\"id\":\"k3f9a0b3\"},\"config\":{\"v\":2},\"aiRev\":5,"
+                            + "\"adPreview\":{\"floorMin\":30,\"everyMin\":60,\"lines\":[\"Al\\u0131yorum: 4 Elytra, PM at\"],"
+                            + "\"nextAt\":null,\"warning\":null,\"stoppedToday\":false,\"namesPending\":false}}", "application/json");
                 case "POST accounts/a_7KQ2MZ3P9TW4XB1C/plus/items/pick":
                     return reply(422, "{\"error\":{\"code\":\"pick_failed\",\"message\":\"x\",\"reason\":\"container\"}}", "application/json");
                 case "GET accounts/a_7KQ2MZ3P9TW4XB1C/plus/receipts":
@@ -359,6 +366,30 @@ public class CloudApiTest {
         } catch (CloudProblem problem) {
             assertEquals(CloudProblem.Kind.FAILED, problem.kind);
         }
+    }
+
+    /** 28 Oct 2026: money that may be real is a question, "Bu oyun parası" sends inGame; an order write brings the ads' preview. */
+    @Test
+    public void theMoneyQuestionAndTheAdsPreview() throws Exception {
+        try {
+            mApi.checkOrder("pls_token", "a_8RT4WQ2N6P1KJH3D", "64 elmas 100 tl", "tr");
+            fail("checked");
+        } catch (CloudProblem problem) {
+            assertTrue(problem.asksMoney());
+        }
+        assertEquals("{\"text\":\"64 elmas 100 tl\",\"lang\":\"tr\"}", mBodies.get("POST accounts/a_8RT4WQ2N6P1KJH3D/plus/orders/check"));
+        try {
+            mApi.checkOrder("pls_token", "a_8RT4WQ2N6P1KJH3D", "64 elmas 100 tl", "tr", true);
+            fail("checked");
+        } catch (CloudProblem problem) {
+            assertTrue(problem.asksMoney());
+        }
+        assertEquals("{\"text\":\"64 elmas 100 tl\",\"lang\":\"tr\",\"inGame\":true}",
+                mBodies.get("POST accounts/a_8RT4WQ2N6P1KJH3D/plus/orders/check"));
+        PlusModel.Written w = mApi.postOrder("pls_token", "a_8RT4WQ2N6P1KJH3D", 4, Vectors.json("{\"side\":\"buy\"}"), null, null);
+        PlusModel.AdPreview preview = PlusModel.AdPreview.read(w.adPreview);
+        assertEquals("Al\u0131yorum: 4 Elytra, PM at", preview.lines.get(0));
+        assertEquals(60, preview.everyMin);
     }
 
     @Test
