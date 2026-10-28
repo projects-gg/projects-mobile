@@ -24,6 +24,10 @@ import java.util.regex.Pattern;
  *
  * <p>Pure Java, written to run on Android's ICU regex engine too (explicit [0-9] classes, no bare braces, bounded
  * look-behinds). The source stays ASCII: the folded phrase lists are ASCII already, the few other characters are code points.
+ *
+ * <p>28 Oct 2026 (the reference at bdfaeef): the server's own money name ({@link RuleContext#currency}) is never real
+ * money; the {@code rmt} rule refuses only its rails, and money words that may be the server's are a question
+ * ({@code question:rmt}) until the player says the money is the game's ({@link RuleContext#inGame}, "this is in-game money").
  */
 public final class OrderRules {
     private OrderRules() {}
@@ -48,6 +52,9 @@ public final class OrderRules {
         private int minute;
         private int today;
         private int perDay = 20;
+        @Nullable
+        private String currency;
+        private boolean inGame;
 
         /** The account profile's {@code money.maxDeal} (default: the generic profile's). */
         public RuleContext maxDeal(long value) {
@@ -84,11 +91,30 @@ public final class OrderRules {
             perDay = value;
             return this;
         }
+
+        /**
+         * The server's money name (the profile's {@code money.label}, else the player's {@code trade.currency}; null: none):
+         * an amount written with it is no real money, and when it is a real-money word ("TL"), neither are the money words
+         * made of it ("tl ile").
+         */
+        public RuleContext currency(@Nullable String value) {
+            currency = value;
+            return this;
+        }
+
+        /** The player said the text's money is the game's ("this is in-game money"): its money words pass; rails never do. */
+        public RuleContext inGame(boolean value) {
+            inGame = value;
+            return this;
+        }
     }
 
     /** A check's answer: {@code result} and the card's {@code notes}. */
     public static final class RuleCheck {
-        /** {@code ok}, {@code question:limit} (stored only with a limit), {@code reject:<reason>} or {@code reject:loosen:<rule>}. */
+        /**
+         * {@code ok}, {@code question:rmt} (money words that may be the server's: the player says whether they are),
+         * {@code question:limit} (stored only with a limit), {@code reject:<reason>} or {@code reject:loosen:<rule>}.
+         */
         public final String result;
         /** {@code approval_pref}: the authority decides, not the text. */
         public final List<String> notes;
@@ -101,6 +127,11 @@ public final class OrderRules {
         /** Whether the text is refused ({@code reject:...}). */
         public boolean rejected() {
             return result.startsWith("reject:");
+        }
+
+        /** Whether the check asks the player whether the money is the game's ({@code question:rmt}). */
+        public boolean asksMoney() {
+            return result.equals("question:rmt");
         }
 
         @Override
@@ -157,7 +188,8 @@ public final class OrderRules {
     };
 
     /** Real-money words: an amount written with one of them is real money talk (RMT). */
-    private static final String[] CURRENCY_WORDS = {"tl", "lira", "try", "usd", "dolar", "dollar", "euro", "eur"};
+    public static final List<String> CURRENCY_WORDS =
+            Collections.unmodifiableList(Arrays.asList("tl", "lira", "try", "usd", "dolar", "dollar", "euro", "eur"));
 
     /** The value of digits with separators and a multiplier, or why it cannot be told. */
     public static final class Digits {
@@ -371,6 +403,23 @@ public final class OrderRules {
         return -1;
     }
 
+    /**
+     * The server's own money name right at {@code at} (after at most one space), in the money form: its end, else -1. Like a
+     * currency word: an ending after an apostrophe, and on names of 4 letters or more letters glued on ("ripplea").
+     */
+    private static int ownAt(String form, int at, @Nullable String own) {
+        if (own == null || own.isEmpty()) return -1;
+        int start = at;
+        if (charAt(form, start) == ' ') start++;
+        if (!form.startsWith(own, start)) return -1;
+        int end = start + own.length();
+        if (own.length() >= 4 && Character.isLetter(own.codePointBefore(own.length()))) {
+            while (end < form.length() && Character.isLetter(form.charAt(end))) end++;
+        }
+        end += caseEnding(form, end);
+        return boundaryAt(form, end) ? end : -1;
+    }
+
     /** JavaScript's Number() of a string of digits (empty reads 0). */
     private static double number(String digits) {
         return digits.isEmpty() ? 0 : Double.parseDouble(digits);
@@ -470,7 +519,17 @@ public final class OrderRules {
 
     /** The number-like tokens of a text, left to right; digits glued to letters are no amount. */
     public static Tokens tokenize(String text) {
+        return tokenize(text, null);
+    }
+
+    /**
+     * {@link #tokenize(String)} with the server's money name {@code own} (the profile's {@code money.label}, else the player's
+     * {@code trade.currency}): an amount written with it, the name after it or the sign before it, is the server's money,
+     * not real money, though the name is a real-money word or sign ("TL", "$"); every other real-money word and sign still is.
+     */
+    public static Tokens tokenize(String text, @Nullable String own) {
         String form = moneyForm(text);
+        String ownForm = own == null ? null : moneyForm(own);
         List<MoneyToken> tokens = new ArrayList<>();
         int stray = 0;
         int i = 0;
@@ -489,7 +548,8 @@ public final class OrderRules {
                 continue;
             }
             boolean loneSeparator = (before == '.' || before == ',') && !isDigit(charAt(form, i - 2));
-            boolean rmt = isSign(before) || (before == ' ' && isSign(charAt(form, i - 2)));
+            int sign = isSign(before) ? before : before == ' ' && isSign(charAt(form, i - 2)) ? charAt(form, i - 2) : -1;
+            boolean rmt = sign != -1 && !(ownForm != null && ownForm.length() == 1 && ownForm.charAt(0) == sign);
             Unit unit = null;
             UnitHit found = unitAt(form, end);
             if (found != null) {
@@ -498,8 +558,11 @@ public final class OrderRules {
             } else if (charAt(form, end) == '\'') {
                 end += caseEnding(form, end);
             }
-            int currencyEnd = currencyAt(form, end);
-            if (currencyEnd != -1) {
+            int ownEnd = ownAt(form, end, ownForm);
+            int currencyEnd = ownEnd == -1 ? currencyAt(form, end) : -1;
+            if (ownEnd != -1) {
+                end = ownEnd;
+            } else if (currencyEnd != -1) {
                 rmt = true;
                 end = currencyEnd;
             }
@@ -690,6 +753,19 @@ public final class OrderRules {
     private static final List<String> RMT = list("papara", "iban", "steam kart", "steam karti", "hediye kart", "hediye karti",
             "gercek para", "gercek parayla", "real money", "paypal", "gift card", "ininal");
 
+    /**
+     * The {@code rmt} rule's rails: real money whatever a server calls its money (payment apps, gift cards, "real money"),
+     * always refused, no button.
+     */
+    public static final List<String> RMT_RAILS = listPlus(RMT, "gercek parali", "irl money", "for real money");
+
+    /**
+     * Money words that may be the server's own money (a server's money may be called "TL", "dolar" or "nakit"): asked about
+     * ({@code question:rmt}) until the player says it is the game's, never refused.
+     */
+    public static final List<String> RMT_UNSURE = list("tl ile", "tl ye", "tlye", "lira ile", "liraya", "dolarla", "euro ile",
+            "nakit", "for cash");
+
     /** One hard rule and the phrases that attempt to loosen it. */
     public static final class Loosen {
         /** {@code prepay}, {@code pay_cmd}, {@code disclose}, {@code hide_ai}, {@code rmt}, {@code off_platform}, {@code third_party}. */
@@ -705,8 +781,9 @@ public final class OrderRules {
     /**
      * Attempts to loosen a hard rule ({@code loosen:<rule>}), checked in this order. Phrases are folded words (patterns.rs's
      * form); a phrase's last word of 4 letters or more may carry an ending. {@code rmt} comes before {@code off_platform}:
-     * payment apps (papara, ininal, a steam card) are real money first. {@code rmt} also holds for an amount written with a
-     * real-money word or sign, {@code off_platform} for every name of {@link #PLATFORM_WORDS} as a whole word.
+     * payment apps (papara, ininal, a steam card) are real money first. Only the rails refuse {@code rmt}: the money words
+     * ({@link #RMT_UNSURE}, an amount with a real-money word or sign) are a question after every refusal.
+     * {@code off_platform} also holds for every name of {@link #PLATFORM_WORDS} as a whole word.
      */
     public static final List<Loosen> LOOSEN = Collections.unmodifiableList(Arrays.asList(
             new Loosen("prepay", listPlus(SCAM, "once ben oder", "once ben odey", "once ben veri", "once ben gonder",
@@ -724,8 +801,7 @@ public final class OrderRules {
                     "gercek oyuncu gibi", "ben gibi davran", "dont say you are a bot", "dont say youre a bot",
                     "do not say you are a bot", "pretend to be human", "pretend you are human", "act human",
                     "act like a human")),
-            new Loosen("rmt", listPlus(RMT, "tl ile", "tl ye", "tlye", "lira ile", "liraya", "dolarla", "euro ile",
-                    "gercek parali", "irl money", "for real money", "for cash", "nakit")),
+            new Loosen("rmt", RMT_RAILS),
             new Loosen("off_platform", list("baska uygulama", "ozelden konusalim", "dmden yaz", "other app", "move to dm",
                     "add me on")),
             new Loosen("third_party", list("herkese yaz", "herkese mesaj", "herkese pm", "herkese ozel", "mesaj at",
@@ -830,9 +906,37 @@ public final class OrderRules {
         return ChatText.check(cleaned) != ChatText.Problem.EMPTY;
     }
 
+    /** The server's own name as the rmt phrases read it, when it is a real-money word ("tl"); else null. */
+    @Nullable
+    private static String ownWordOf(@Nullable String own) {
+        String form = own == null ? null : moneyForm(own);
+        return form != null && CURRENCY_WORDS.contains(form) ? form : null;
+    }
+
+    /**
+     * Money words that may be the server's own: an {@link #RMT_UNSURE} phrase or an amount with a real-money word or sign
+     * ({@code tokens}, read with the server's name {@code own}); the server's own name never is, nor, when it is a
+     * real-money word ("TL"), the phrases made of it ("tl ile").
+     */
+    private static boolean moneyUnsure(List<String> list, List<MoneyToken> tokens, @Nullable String own) {
+        String ownWord = ownWordOf(own);
+        List<String> phrases = RMT_UNSURE;
+        if (ownWord != null) {
+            phrases = new ArrayList<>();
+            for (String phrase : RMT_UNSURE) {
+                if (!phrase.split(" ")[0].startsWith(ownWord)) phrases.add(phrase);
+            }
+        }
+        if (anyPhrase(list, phrases)) return true;
+        for (MoneyToken token : tokens) {
+            if (token.rmt) return true;
+        }
+        return false;
+    }
+
     /**
      * The free rule check: {@code result} and the card's notes. The first rule that holds answers, in this order: length,
-     * link, command, personal, unsafe, loosen, too_big, orders_full, rate, daily.
+     * link, command, personal, unsafe, loosen, too_big, orders_full, rate, daily, then the questions (money first).
      */
     public static RuleCheck checkOrderText(@Nullable String text, RuleContext ctx) {
         String cleaned = cleanOrderText(text);
@@ -847,15 +951,14 @@ public final class OrderRules {
                 || anyPhrase(list, IMPERSONATION)) {
             return new RuleCheck("reject:unsafe", notes);
         }
-        List<MoneyToken> tokens = tokenize(cleaned).tokens;
+        String own = ctx.currency;
+        List<MoneyToken> tokens = tokenize(cleaned, own).tokens;
         for (Loosen loosen : LOOSEN) {
             boolean hit = anyPhrase(list, loosen.phrases);
             if (loosen.rule.equals("off_platform")) hit = hit || platformNamed(list);
-            if (loosen.rule.equals("rmt")) {
-                for (MoneyToken token : tokens) hit = hit || token.rmt;
-            }
             if (hit) return new RuleCheck("reject:loosen:" + loosen.rule, notes);
         }
+        boolean unsure = moneyUnsure(list, tokens, own);
         for (MoneyToken token : tokens) {
             if (token.problem == null && token.value > ctx.maxDeal) return new RuleCheck("reject:too_big", notes);
         }
@@ -863,6 +966,7 @@ public final class OrderRules {
         if (ctx.minute >= 3) return new RuleCheck("reject:rate", notes);
         if (ctx.today >= ctx.perDay) return new RuleCheck("reject:daily", notes);
         if (anyPhrase(list, APPROVAL_PREF)) notes.add("approval_pref");
+        if (unsure && !ctx.inGame) return new RuleCheck("question:rmt", notes);
         if (anyPhrase(list, NO_LIMIT)) return new RuleCheck("question:limit", notes);
         return new RuleCheck("ok", notes);
     }

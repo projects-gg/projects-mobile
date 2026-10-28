@@ -146,6 +146,8 @@ public class PlusDraftTest {
         if (ctx.has("minute")) rc.minute((int) Json.num(ctx, "minute", 0));
         if (ctx.has("today")) rc.today((int) Json.num(ctx, "today", 0));
         if (ctx.has("perDay")) rc.perDay((int) Json.num(ctx, "perDay", 0));
+        if (ctx.has("currency")) rc.currency(Json.str(ctx, "currency"));
+        if (ctx.has("inGame")) rc.inGame(Json.bool(ctx, "inGame", false));
         return rc;
     }
 
