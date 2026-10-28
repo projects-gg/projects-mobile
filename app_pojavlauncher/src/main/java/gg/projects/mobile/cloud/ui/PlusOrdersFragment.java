@@ -270,12 +270,15 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
         bottom();
     }
 
+    /** One note for what holds the section: its title, and under it one sentence (quiet). */
     private View notice(Context c, int title, int body) {
-        LinearLayout box = CloudUi.notice(c, R.drawable.projects_ic_info, R.color.projects_ash_300, getString(title));
-        TextView more = CloudUi.text(c, getString(body), 13.5f, R.color.projects_ash_300, false);
-        more.setPadding(CloudUi.dp(c, 44), 0, CloudUi.dp(c, 12), CloudUi.dp(c, 10));
-        box.addView(more);
-        return box;
+        android.text.SpannableStringBuilder words = new android.text.SpannableStringBuilder(getString(title));
+        words.setSpan(new android.text.style.StyleSpan(android.graphics.Typeface.BOLD), 0, words.length(), android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        int start = words.length();
+        words.append('\n').append(getString(body));
+        words.setSpan(new android.text.style.ForegroundColorSpan(CloudUi.color(c, R.color.projects_ash_300)), start, words.length(),
+                android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        return CloudUi.notice(c, R.drawable.projects_ic_info, R.color.projects_ash_300, words);
     }
 
     // ---- the intake ----

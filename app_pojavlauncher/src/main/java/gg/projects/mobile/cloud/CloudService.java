@@ -972,7 +972,10 @@ public final class CloudService implements SocialService.Listener {
     }
 
     private synchronized ItemDataStore itemStore() {
-        if (mItemStore == null) mItemStore = new ItemDataStore(mApp.getCacheDir(), mApi.client());
+        if (mItemStore == null) {
+            mItemStore = mDebug.itemData == null ? new ItemDataStore(mApp.getCacheDir(), mApi.client())
+                    : new ItemDataStore(mApp.getCacheDir(), mApi.client(), mDebug.itemData);
+        }
         return mItemStore;
     }
 
