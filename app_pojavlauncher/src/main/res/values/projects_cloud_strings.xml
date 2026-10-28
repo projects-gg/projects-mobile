@@ -308,7 +308,7 @@
     <string name="projects_cloud_issue_owner_server">Server messages don\'t come from a player, so this rule can\'t use it.</string>
     <string name="projects_cloud_issue_name">A player name has 3-16 letters, numbers or underscores.</string>
     <string name="projects_cloud_issue_name_duplicate">Another of your cloud accounts has this name on this server.</string>
-    <string name="projects_cloud_issue_name_protected">This name is kept for staff.</string>
+    <string name="projects_cloud_issue_name_protected">This name is protected for staff on the server. 24/7 Cloud can\'t join with it.</string>
     <string name="projects_cloud_issue_host">An address has only letters, numbers, dots, dashes and underscores.</string>
     <string name="projects_cloud_issue_host_dot">Write the full address, like play.projects.gg</string>
     <string name="projects_cloud_issue_host_private">This address can\'t be reached.</string>
