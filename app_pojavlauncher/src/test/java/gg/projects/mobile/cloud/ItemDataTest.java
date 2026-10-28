@@ -13,7 +13,6 @@ import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
-import com.sun.net.httpserver.HttpServer;
 
 import org.junit.After;
 import org.junit.Rule;
@@ -28,8 +27,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.Proxy;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.ArrayList;
@@ -54,7 +54,7 @@ import okhttp3.OkHttpClient;
  * FREE-M-ITEMS: the item data reader and search (a port of {@code @pl/ui/items} item-data.ts; the cases of its test, on the same
  * small hand-written file) and the loader ({@code plus_items.rs}'s rules: a manifest fresh for five minutes with the last good
  * copy kept, files checked by SHA-256 and size, nothing unchecked kept, the old file kept when a new one fails), the loader
- * against a local {@code HttpServer}.
+ * against a local HTTP server (a plain socket: the Android unit test classpath has no JDK HTTP server).
  */
 public class ItemDataTest {
     private static final String SMALL = resource("cloud/itemdata/small.json");
@@ -694,43 +694,88 @@ public class ItemDataTest {
 
     // ---- the loader ----
 
-    /** A local stand-in for the CDN: serves {@code files} under {@code /itemdata/v1/} and notes every path asked. */
+    /**
+     * A local stand-in for the CDN: serves {@code files} under {@code /itemdata/v1/} (one request a connection; a path in
+     * {@code chunked} without a length) and notes every path asked.
+     */
     private static final class Cdn {
         static final String PREFIX = "/itemdata/v1/";
-        final HttpServer server;
+        final ServerSocket server;
         final Map<String, byte[]> files = new ConcurrentHashMap<>();
         final Set<String> chunked = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
         final List<String> asked = new CopyOnWriteArrayList<>();
         volatile int failWith;
 
         Cdn() throws IOException {
-            server = HttpServer.create(new InetSocketAddress(InetAddress.getByAddress(new byte[]{127, 0, 0, 1}), 0), 0);
-            server.createContext("/", exchange -> {
-                String path = exchange.getRequestURI().getPath();
-                asked.add(path);
-                try {
-                    if (failWith != 0) {
-                        exchange.sendResponseHeaders(failWith, -1);
+            server = new ServerSocket(0, 50, InetAddress.getByAddress(new byte[]{127, 0, 0, 1}));
+            Thread accept = new Thread(() -> {
+                while (!server.isClosed()) {
+                    final Socket socket;
+                    try {
+                        socket = server.accept();
+                    } catch (IOException e) {
                         return;
                     }
-                    byte[] body = files.get(path);
-                    if (body == null) {
-                        exchange.sendResponseHeaders(404, -1);
-                        return;
-                    }
-                    exchange.sendResponseHeaders(200, chunked.contains(path) ? 0 : body.length);
-                    try (OutputStream out = exchange.getResponseBody()) {
-                        out.write(body);
-                    }
-                } finally {
-                    exchange.close();
+                    Thread one = new Thread(() -> serve(socket), "cdn-request");
+                    one.setDaemon(true);
+                    one.start();
                 }
-            });
-            server.start();
+            }, "cdn");
+            accept.setDaemon(true);
+            accept.start();
+        }
+
+        private void serve(Socket socket) {
+            try (Socket s = socket) {
+                String head = readHead(s.getInputStream());
+                String[] first = head.split("\r\n", 2)[0].split(" ");
+                String path = first.length > 1 ? first[1] : "/";
+                int query = path.indexOf('?');
+                if (query >= 0) path = path.substring(0, query);
+                asked.add(path);
+                OutputStream out = s.getOutputStream();
+                byte[] body = files.get(path);
+                if (failWith != 0) {
+                    status(out, failWith, "Content-Length: 0");
+                } else if (body == null) {
+                    status(out, 404, "Content-Length: 0");
+                } else if (chunked.contains(path)) {
+                    status(out, 200, "Transfer-Encoding: chunked");
+                    if (body.length > 0) {
+                        out.write((Integer.toHexString(body.length) + "\r\n").getBytes(StandardCharsets.US_ASCII));
+                        out.write(body);
+                        out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
+                    }
+                    out.write("0\r\n\r\n".getBytes(StandardCharsets.US_ASCII));
+                } else {
+                    status(out, 200, "Content-Length: " + body.length);
+                    out.write(body);
+                }
+                out.flush();
+            } catch (IOException ignored) {
+                // The client went away.
+            }
+        }
+
+        private static void status(OutputStream out, int code, String length) throws IOException {
+            out.write(("HTTP/1.1 " + code + " X\r\n" + length + "\r\nConnection: close\r\n\r\n").getBytes(StandardCharsets.US_ASCII));
+        }
+
+        /** The request's line and headers (up to the empty line). */
+        private static String readHead(InputStream in) throws IOException {
+            ByteArrayOutputStream head = new ByteArrayOutputStream();
+            int matched = 0;
+            int b;
+            while (matched < 4 && (b = in.read()) != -1) {
+                head.write(b);
+                boolean want = (matched % 2 == 0) ? b == '\r' : b == '\n';
+                matched = want ? matched + 1 : (b == '\r' ? 1 : 0);
+            }
+            return new String(head.toByteArray(), StandardCharsets.US_ASCII);
         }
 
         String base() {
-            return "http://127.0.0.1:" + server.getAddress().getPort() + PREFIX;
+            return "http://127.0.0.1:" + server.getLocalPort() + PREFIX;
         }
 
         void put(String path, byte[] bytes) {
@@ -750,7 +795,11 @@ public class ItemDataTest {
         }
 
         void stop() {
-            server.stop(0);
+            try {
+                server.close();
+            } catch (IOException ignored) {
+                // Closed already.
+            }
         }
     }
 
