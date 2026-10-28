@@ -500,8 +500,8 @@
     <string name="projects_setup_a_no_away">.</string>
     <string name="projects_setup_a_always">All the time</string>
     <string name="projects_setup_a_hours">Only during the hours you chose</string>
-    <string name="projects_setup_a_more">Low-credit saving, daily summary, account type</string>
-    <string name="projects_setup_a_more_no_saver">Daily summary, account type</string>
+    <string name="projects_setup_a_more">Low-credit saving, daily summary</string>
+    <string name="projects_setup_a_more_no_saver">Daily summary</string>
     <string name="projects_setup_adv_money">Daily limit, lowest balance to keep</string>
     <string name="projects_setup_adv_money_currency">Daily limit, lowest balance to keep, currency</string>
     <string name="projects_setup_adv_act">Payment, time to answer an approval</string>

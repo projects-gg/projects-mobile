@@ -376,6 +376,11 @@ final class PlusEditors {
 
     /** An amount field for a limit: its label, the words under it, its problem; null clears it. */
     private static PlusAmount limitField(final Host h, Drawn drawn, final String key, @Nullable String help, @Nullable String hint) {
+        return limitField(h, drawn, key, help, hint, null);
+    }
+
+    private static PlusAmount limitField(final Host h, Drawn drawn, final String key, @Nullable final String help,
+                                         @Nullable String hint, @Nullable final Runnable after) {
         Context c = h.ctx();
         final PlusConfig e = h.edit();
         Long value = e.limit(key);
@@ -383,10 +388,14 @@ final class PlusEditors {
         if (hint != null) amount.field.input.setHint(hint);
         String problem = h.problemAt("limits." + key);
         if (problem != null) amount.field.setError(problem);
-        else if (help != null) amount.field.setHelp(help);
+        else if (help != null && value == null) amount.field.setHelp(help);
         amount.onChange(() -> {
-            e.setLimit(key, amount.value());
+            Long typed = amount.value();
+            e.setLimit(key, typed);
+            // Emptied again: the field's own line ("Boş bırakırsan ...") instead of the amount in words.
+            if (typed == null && help != null && !amount.unreadable()) amount.field.setHelp(help);
             h.changed();
+            if (after != null) after.run();
         });
         drawn.fields.put("limits." + key, amount.field.view);
         return amount;
@@ -398,29 +407,53 @@ final class PlusEditors {
         final PlusConfig e = h.edit();
         CloudModel.PlusDoc doc = h.doc();
         if (setup) {
-            // The setup's one choice: two amounts, or "Şimdilik alım yapmasın" (the site's and the launcher's setup).
-            final boolean notNow = h.notNow();
+            // The setup's one choice (the site's rule, SETUP-UX 29 Oct): two amounts, or "Şimdilik alım yapmasın". With
+            // the switch on nothing is bought (both limits null) and the typed amounts stay, dimmed, for a change of
+            // mind; off, or an amount typed (which turns it off), they count again.
+            final boolean[] quiet = {false};
+            final PlusAmount[] amounts = new PlusAmount[2];
+            final String[] keys = {"perDealMax", "totalBudget"};
             LinearLayout group = CloudUi.group(c);
-            group.addView(CloudUi.toggle(c, c.getString(R.string.projects_setup_not_now), notNow, on -> {
-                h.setNotNow(on);
-                if (on) {
-                    e.setLimit("perDealMax", null);
-                    e.setLimit("totalBudget", null);
-                }
-                h.changed();
-                h.rebuild();
-            }));
+            final androidx.appcompat.widget.SwitchCompat notNow = CloudUi.toggle(c, c.getString(R.string.projects_setup_not_now),
+                    h.notNow(), on -> {
+                        if (quiet[0]) return;
+                        h.setNotNow(on);
+                        for (int i = 0; i < amounts.length; i++) {
+                            if (amounts[i] == null) continue;
+                            e.setLimit(keys[i], on ? null : amounts[i].value());
+                            amounts[i].field.view.setAlpha(on ? 0.45f : 1f);
+                        }
+                        h.changed();
+                    });
+            group.addView(notNow);
             TextView help = CloudUi.text(c, c.getString(R.string.projects_setup_not_now_help), 13, R.color.projects_ash_400, false);
             help.setPadding(CloudUi.dp(c, 16), 0, CloudUi.dp(c, 16), CloudUi.dp(c, 12));
             group.addView(help);
             content.addView(group);
-            if (notNow) {
-                content.addView(CloudUi.note(c, c.getString(R.string.projects_fine_secret)));
-                return;
-            }
+            Runnable typed = () -> {
+                if (quiet[0] || !notNow.isChecked()) return;
+                boolean any = false;
+                for (PlusAmount a : amounts) if (a != null && a.value() != null) any = true;
+                if (!any) return;
+                quiet[0] = true;
+                notNow.setChecked(false);
+                quiet[0] = false;
+                h.setNotNow(false);
+                for (int i = 0; i < amounts.length; i++) {
+                    if (amounts[i] == null) continue;
+                    e.setLimit(keys[i], amounts[i].value());
+                    amounts[i].field.view.setAlpha(1f);
+                }
+            };
+            amounts[0] = limitField(h, drawn, keys[0], c.getString(R.string.projects_limit_no_buy), null, typed);
+            amounts[1] = limitField(h, drawn, keys[1], c.getString(R.string.projects_limit_no_buy), null, typed);
+            if (notNow.isChecked()) for (PlusAmount a : amounts) a.field.view.setAlpha(0.45f);
+            content.addView(amounts[0].field.view);
+            content.addView(amounts[1].field.view);
+        } else {
+            content.addView(limitField(h, drawn, "perDealMax", c.getString(R.string.projects_limit_no_buy), null).field.view);
+            content.addView(limitField(h, drawn, "totalBudget", c.getString(R.string.projects_limit_no_buy), null).field.view);
         }
-        content.addView(limitField(h, drawn, "perDealMax", c.getString(R.string.projects_limit_no_buy), null).field.view);
-        content.addView(limitField(h, drawn, "totalBudget", c.getString(R.string.projects_limit_no_buy), null).field.view);
         if (setup) {
             String required = h.problemAt("setup.money");
             if (required != null) content.addView(errorLine(c, required));

@@ -135,15 +135,22 @@ public final class PlusSetupFragment extends CloudScreen implements PlusEditors.
         return mEdit == null ? new ArrayList<JsonObject>() : mEdit.orders();
     }
 
+    /** The active orders (a paused order is not counted: SETUP-UX's rule, 29 Oct). */
+    private List<JsonObject> activeOrders() {
+        List<JsonObject> active = new ArrayList<>();
+        for (JsonObject o : currentOrders()) if (Json.bool(o, "on", true)) active.add(o);
+        return active;
+    }
+
     private static boolean buys(List<JsonObject> orders) {
         for (JsonObject o : orders) if (!"sell".equals(Json.str(o, "side"))) return true;
         return false;
     }
 
-    /** Whether the money step is skipped: every order sells (no buying needs spending). */
+    /** Whether the money step is skipped: every active order sells (no buying needs spending). */
     private boolean skipsMoney() {
-        List<JsonObject> orders = currentOrders();
-        return !orders.isEmpty() && !buys(orders);
+        List<JsonObject> active = activeOrders();
+        return !active.isEmpty() && !buys(active);
     }
 
     private void draw() {
@@ -478,13 +485,16 @@ public final class PlusSetupFragment extends CloudScreen implements PlusEditors.
         return super.alive();
     }
 
-    /** On by itself without a buy order ("sipariş yoksa açık gelir"), off with one or with both amounts; then as set. */
+    /**
+     * "Şimdilik alım yapmasın" (the site's rule, SETUP-UX 29 Oct): off with an active buy order or a typed amount, on
+     * without any active order; then as the player set it.
+     */
     @Override
     public boolean notNow() {
         if (mNotNow != null) return mNotNow;
         PlusConfig e = mEdit;
-        if (e != null && e.canSpend()) return false;
-        return !buys(currentOrders());
+        if (e != null && (e.limit("perDealMax") != null || e.limit("totalBudget") != null)) return false;
+        return !buys(activeOrders());
     }
 
     @Override

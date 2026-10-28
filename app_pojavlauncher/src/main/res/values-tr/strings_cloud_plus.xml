@@ -490,8 +490,8 @@
     <string name="projects_setup_a_no_away">.</string>
     <string name="projects_setup_a_always">Her zaman</string>
     <string name="projects_setup_a_hours">Yalnız seçtiğin saatlerde</string>
-    <string name="projects_setup_a_more">Kontör tasarrufu, günlük özet, hesap türü</string>
-    <string name="projects_setup_a_more_no_saver">Günlük özet, hesap türü</string>
+    <string name="projects_setup_a_more">Kontör tasarrufu, günlük özet</string>
+    <string name="projects_setup_a_more_no_saver">Günlük özet</string>
     <string name="projects_setup_adv_money">Günlük sınır, en az kalacak bakiye</string>
     <string name="projects_setup_adv_money_currency">Günlük sınır, en az kalacak bakiye, para birimi</string>
     <string name="projects_setup_adv_act">Ödeme, onay bekleme süresi</string>
