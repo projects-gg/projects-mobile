@@ -329,7 +329,7 @@
     <string name="projects_cloud_notify_gift_ending">Gift AI credits ending</string>
     <string name="projects_cloud_notify_summary">Daily summary</string>
     <string name="projects_cloud_notify_weekly">Weekly report</string>
-    <string name="projects_cloud_notify_paused">The assistant paused</string>
+    <string name="projects_cloud_notify_paused">ProBot AI paused</string>
     <string name="projects_cloud_notify_incident">Suspicious message blocked</string>
     <string name="projects_cloud_notify_quiet">Quiet hours</string>
     <string name="projects_cloud_notify_quiet_help">No phone notifications in quiet hours; what you missed comes in one notification when they end.</string>
@@ -419,30 +419,30 @@
 
     <!-- AFK+ on the account screen -->
     <string name="projects_plus_title">AFK+</string>
-    <string name="projects_plus_assistant_switch">Assistant</string>
-    <string name="projects_plus_ai_on">The assistant is on</string>
-    <string name="projects_plus_ai_notify_only">The assistant is on; it only reports finds until you set a spending authority</string>
-    <string name="projects_plus_ai_break">The assistant is on a break until %1$s</string>
-    <string name="projects_plus_ai_break_plain">The assistant is on a break</string>
-    <string name="projects_plus_ai_schedule">Outside working hours; back at %1$s</string>
+    <string name="projects_plus_assistant_switch">ProBot AI</string>
+    <string name="projects_plus_ai_on">ProBot AI is on</string>
+    <string name="projects_plus_ai_notify_only">You set no spending limit, so ProBot AI doesn\'t buy. It tells you what it finds.</string>
+    <string name="projects_plus_ai_break">ProBot AI is on a break until %1$s</string>
+    <string name="projects_plus_ai_break_plain">ProBot AI is on a break</string>
+    <string name="projects_plus_ai_schedule">Outside working hours. Back at %1$s</string>
     <string name="projects_plus_ai_schedule_plain">Outside working hours</string>
-    <string name="projects_plus_ai_quota">Out of AI credits; they reset at %1$s</string>
+    <string name="projects_plus_ai_quota">Out of AI credits. They reset at %1$s</string>
     <string name="projects_plus_ai_quota_plain">Out of AI credits</string>
-    <string name="projects_plus_ai_budget">Paused for today; back by itself tomorrow</string>
-    <string name="projects_plus_ai_outage">The assistant can\'t answer right now; the account stays AFK</string>
+    <string name="projects_plus_ai_budget">Paused for today. Back by itself tomorrow</string>
+    <string name="projects_plus_ai_outage">ProBot AI can\'t answer right now. Your account stays AFK.</string>
     <string name="projects_plus_ai_host">Paused for a short while</string>
     <string name="projects_plus_ai_service">AFK+ is under maintenance</string>
     <string name="projects_plus_ai_paused">Paused for now</string>
-    <string name="projects_plus_ai_player">You stopped the assistant</string>
+    <string name="projects_plus_ai_player">You stopped ProBot AI</string>
     <string name="projects_plus_ai_staff">Stopped by staff</string>
     <string name="projects_plus_ai_restricted">You\'re removed from AFK+</string>
     <string name="projects_plus_ai_service_off">AFK+ is off right now</string>
-    <string name="projects_plus_ai_server">The assistant works only on Projects; for now this account just stays AFK</string>
-    <string name="projects_plus_ai_gate">The assistant stopped for safety; you can start it again</string>
-    <string name="projects_plus_ai_muted">The server muted the account. The assistant stopped.</string>
-    <string name="projects_plus_ai_moderation">The assistant was stopped for a rule violation</string>
-    <string name="projects_plus_ai_off">The assistant is off</string>
-    <string name="projects_plus_ai_unknown">The assistant\'s state is unavailable right now</string>
+    <string name="projects_plus_ai_server">ProBot AI doesn\'t work on this server. Your account stays AFK.</string>
+    <string name="projects_plus_ai_gate">ProBot AI stopped for safety. You can start it again.</string>
+    <string name="projects_plus_ai_muted">The server muted the account, so ProBot AI stopped. You can start it again.</string>
+    <string name="projects_plus_ai_moderation">Staff stopped ProBot AI</string>
+    <string name="projects_plus_ai_off">ProBot AI is off</string>
+    <string name="projects_plus_ai_unknown">ProBot AI\'s state can\'t be read right now</string>
     <string name="projects_plus_set_limits">Set limits</string>
     <string name="projects_plus_quota_5h">5-hour</string>
     <string name="projects_plus_quota_week">Weekly</string>
@@ -457,16 +457,16 @@
     <string name="projects_plus_approvals">Approvals</string>
     <string name="projects_plus_messages">Messages</string>
     <string name="projects_plus_rules">Orders</string>
-    <string name="projects_plus_assistant">Assistant</string>
+    <string name="projects_plus_assistant">ProBot AI</string>
     <string name="projects_plus_schedule">Working hours</string>
     <string name="projects_plus_safety">Spending limits</string>
     <string name="projects_plus_activity">Feed</string>
     <string name="projects_plus_history">Settings history</string>
     <string name="projects_plus_upgrade">Upgrade to AFK+</string>
     <string name="projects_plus_downgrade">Switch to 24/7 Cloud</string>
-    <string name="projects_plus_downgrade_note">If you switch to 24/7 Cloud, AFK+ ends; the time left converts to 24/7 Cloud time.</string>
+    <string name="projects_plus_downgrade_note">If you switch to 24/7 Cloud, AFK+ ends. The time left converts to 24/7 Cloud time.</string>
     <string name="projects_plus_downgrade_title">Switch to 24/7 Cloud?</string>
-    <string name="projects_plus_downgrade_body">Your AFK+ time left becomes %1$s of 24/7 Cloud; the assistant stops at once.</string>
+    <string name="projects_plus_downgrade_body">Your AFK+ time left becomes %1$s of 24/7 Cloud. ProBot AI stops at once.</string>
     <string name="projects_plus_downgrade_done">The account is on 24/7 Cloud now.</string>
     <string name="projects_plus_load_failed">Couldn\'t load the AFK+ settings.</string>
 
@@ -481,11 +481,11 @@
     <string name="projects_plus_approve">Approve</string>
     <string name="projects_plus_lower">Lower the price</string>
     <string name="projects_plus_lower_title">Pay at most</string>
-    <string name="projects_plus_lower_help">The assistant haggles again up to this amount.</string>
+    <string name="projects_plus_lower_help">ProBot AI haggles again up to this amount.</string>
     <string name="projects_plus_lower_label">At most</string>
     <string name="projects_plus_lower_go">Keep bargaining</string>
     <string name="projects_plus_lower_range">Enter less than %1$s.</string>
-    <string name="projects_plus_approved">Approved; the trade starts.</string>
+    <string name="projects_plus_approved">Approved. The trade starts.</string>
     <string name="projects_plus_why_above">Above your approval limit</string>
     <string name="projects_plus_why_new">First deal with this player</string>
     <string name="projects_plus_why_always">Asks every time for this item</string>
@@ -502,8 +502,8 @@
     <string name="projects_plus_inbox_empty">No messages yet.</string>
     <string name="projects_plus_inbox_reply">Write a reply</string>
     <string name="projects_plus_inbox_send">Send</string>
-    <string name="projects_plus_inbox_first">When you write, the assistant stays quiet in this chat for 30 minutes.</string>
-    <string name="projects_plus_inbox_quiet">The assistant is quiet in this chat until %1$s.</string>
+    <string name="projects_plus_inbox_first">When you write, ProBot AI stays quiet in this chat for 30 minutes.</string>
+    <string name="projects_plus_inbox_quiet">ProBot AI is quiet in this chat until %1$s.</string>
     <string name="projects_plus_inbox_hand_back">Hand back now</string>
     <string name="projects_plus_inbox_cannot">You can only reply to players who wrote to you in the last 24 hours.</string>
     <string name="projects_plus_inbox_rejected">Phone numbers, e-mail, bank details and links can\'t be shared.</string>
@@ -512,7 +512,7 @@
     <string name="projects_plus_inbox_hidden">Inappropriate message hidden.</string>
     <string name="projects_plus_inbox_show">Show</string>
     <string name="projects_plus_inbox_you">You</string>
-    <string name="projects_plus_inbox_assistant">Assistant</string>
+    <string name="projects_plus_inbox_assistant">ProBot AI</string>
     <string name="projects_plus_inbox_blocked">Blocked</string>
 
     <!-- Buying and selling (QoL Q2) -->
@@ -575,14 +575,14 @@
     <string name="projects_plus_problem_item">Pick an item from the list.</string>
     <string name="projects_plus_problem_limit">Up to %1$d rows in a list.</string>
 
-    <!-- Assistant -->
+    <!-- ProBot AI -->
     <string name="projects_plus_persona">Tone</string>
     <string name="projects_plus_preset_friendly">Friendly</string>
     <string name="projects_plus_preset_brief">Brief</string>
     <string name="projects_plus_preset_polite">Polite</string>
     <string name="projects_plus_preset_playful">Playful</string>
     <string name="projects_plus_intro">Introduction</string>
-    <string name="projects_plus_intro_hint">Ahmet\'s AFK+ assistant</string>
+    <string name="projects_plus_intro_hint">KaraKartal\'s ProBot AI</string>
     <string name="projects_plus_intro_help">How it introduces itself in its first message.</string>
     <string name="projects_plus_status">Your status</string>
     <string name="projects_plus_status_back_soon">Back soon</string>
@@ -638,7 +638,7 @@
     <string name="projects_plus_day_7">Sun</string>
     <string name="projects_plus_break">Take a break</string>
     <string name="projects_plus_break_until">Until</string>
-    <string name="projects_plus_break_on">The assistant is on a break until %1$s.</string>
+    <string name="projects_plus_break_on">ProBot AI is on a break until %1$s.</string>
     <string name="projects_plus_break_end">End the break</string>
 
     <!-- Spending limits -->
@@ -655,7 +655,7 @@
     <string name="projects_plus_limit_none">No limit</string>
     <string name="projects_plus_limit_order">The approval limit can\'t be above the per-deal maximum.</string>
     <string name="projects_plus_reset_spent">Reset spending</string>
-    <string name="projects_plus_reset_spent_body">What was used of the total limit goes back to zero; today\'s spending stays.</string>
+    <string name="projects_plus_reset_spent_body">What was used of the total limit goes back to zero. Today\'s spending stays.</string>
     <string name="projects_plus_reset_spent_done">Spending reset.</string>
     <string name="projects_plus_spent_today">Spent today</string>
     <string name="projects_plus_spent_total">Total limit used</string>
@@ -667,23 +667,23 @@
     <string name="projects_plus_feed_empty">Nothing yet.</string>
     <string name="projects_plus_trades_empty">No trades yet.</string>
     <string name="projects_plus_feed_pm_in">%1$s wrote</string>
-    <string name="projects_plus_feed_pm_out">Assistant to %1$s</string>
+    <string name="projects_plus_feed_pm_out">ProBot AI to %1$s</string>
     <string name="projects_plus_feed_offer">%1$s offered %2$s for %3$s</string>
     <string name="projects_plus_feed_counter">Counter offer to %1$s: %2$s</string>
     <string name="projects_plus_feed_deal">Deal with %1$s: %2$s for %3$s</string>
     <string name="projects_plus_feed_approval">Asked you about %1$s</string>
-    <string name="projects_plus_feed_approval_answer">Your answer reached the assistant</string>
+    <string name="projects_plus_feed_approval_answer">Your answer reached ProBot AI</string>
     <string name="projects_plus_feed_trade_started">Trade with %1$s started</string>
     <string name="projects_plus_feed_trade_done">Trade with %1$s went through</string>
     <string name="projects_plus_feed_trade_failed">Trade with %1$s fell through</string>
     <string name="projects_plus_feed_trade_cancelled">Trade with %1$s was cancelled</string>
     <string name="projects_plus_feed_found">Found %1$s (%2$s)</string>
     <string name="projects_plus_feed_suspicious">A suspicious message was held back</string>
-    <string name="projects_plus_feed_ai_stopped">The assistant stopped</string>
-    <string name="projects_plus_feed_ai_resumed">The assistant is back</string>
+    <string name="projects_plus_feed_ai_stopped">ProBot AI stopped</string>
+    <string name="projects_plus_feed_ai_resumed">ProBot AI is running again</string>
     <string name="projects_plus_feed_summary">Daily summary</string>
     <string name="projects_plus_feed_review">Under review</string>
-    <string name="projects_plus_feed_other">Assistant</string>
+    <string name="projects_plus_feed_other">ProBot AI</string>
     <string name="projects_plus_trade_bought">Bought from %1$s</string>
     <string name="projects_plus_trade_sold">Sold to %1$s</string>
     <string name="projects_plus_trade_failed">Fell through</string>
@@ -708,7 +708,7 @@
     <!-- Settings history (QoL Q7) -->
     <string name="projects_plus_history_empty">No saved settings yet.</string>
     <string name="projects_plus_history_restore">Go back to this</string>
-    <string name="projects_plus_history_restore_body">Your settings go back to this; later changes stay in the history.</string>
+    <string name="projects_plus_history_restore_body">Your settings go back to this. Later changes stay in the history.</string>
     <string name="projects_plus_history_restored">Your settings went back.</string>
     <string name="projects_plus_history_by_restore">Went back</string>
     <string name="projects_plus_change_bound_buy">%1$s at most %3$s instead of %2$s</string>
@@ -724,8 +724,8 @@
     <string name="projects_plus_change_limit">%1$s %3$s instead of %2$s</string>
     <string name="projects_plus_change_limit_set">%1$s set to %2$s</string>
     <string name="projects_plus_change_limit_removed">%1$s removed</string>
-    <string name="projects_plus_change_ai_on">Assistant switched on</string>
-    <string name="projects_plus_change_ai_off">Assistant stopped</string>
+    <string name="projects_plus_change_ai_on">ProBot AI started</string>
+    <string name="projects_plus_change_ai_off">ProBot AI stopped</string>
     <string name="projects_plus_change_schedule_on">Working hours on</string>
     <string name="projects_plus_change_schedule_off">Working hours off</string>
     <string name="projects_plus_change_schedule_hours">Working hours changed</string>

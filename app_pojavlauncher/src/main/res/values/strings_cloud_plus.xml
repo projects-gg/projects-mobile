@@ -5,7 +5,7 @@
      the three surfaces read as one product. The unit is "AI credits". -->
 <resources>
     <string name="projects_plus_custom_item">Custom item</string>
-    <string name="projects_ai_note">The assistant is AI and can make mistakes.</string>
+    <string name="projects_ai_note">ProBot AI can make mistakes.</string>
 
     <!-- Orders -->
     <string name="projects_order_intake_label">What do you want to buy or sell?</string>
@@ -38,15 +38,15 @@
     </plurals>
     <string name="projects_order_reject_no_item">Write the item\'s name.</string>
     <string name="projects_order_reject_many_items">Write each item separately.</string>
-    <string name="projects_order_rule_prepay">The assistant never pays or hands over items first.</string>
-    <string name="projects_order_rule_pay_cmd">The assistant never sends money; payment only happens in a trade.</string>
-    <string name="projects_order_rule_disclose">The assistant never tells anyone your budget or limits.</string>
-    <string name="projects_order_rule_hide_ai">The assistant never hides that it\'s AI.</string>
-    <string name="projects_order_rule_off_platform">The assistant never moves chats to other apps.</string>
-    <string name="projects_order_rule_third_party">The assistant only answers whoever wrote to it.</string>
+    <string name="projects_order_rule_prepay">ProBot AI never pays or hands over items first.</string>
+    <string name="projects_order_rule_pay_cmd">ProBot AI never sends money and only pays in a trade.</string>
+    <string name="projects_order_rule_disclose">ProBot AI never tells anyone your budget or limits.</string>
+    <string name="projects_order_rule_hide_ai">ProBot AI never hides that it\'s AI.</string>
+    <string name="projects_order_rule_off_platform">ProBot AI never moves chats to other apps.</string>
+    <string name="projects_order_rule_third_party">ProBot AI only answers whoever wrote to it.</string>
     <string name="projects_order_rule_rmt">There\'s no trading for real money.</string>
-    <string name="projects_order_server_owner">On this server the assistant chats and agrees on deals; you make the trades.</string>
-    <string name="projects_order_server_off">AFK+ is off on this server; your account runs as normal AFK.</string>
+    <string name="projects_order_server_owner">On this server ProBot AI chats and agrees on deals. You make the trades.</string>
+    <string name="projects_order_server_off">AFK+ is off on this server. Your account runs as normal AFK.</string>
     <string name="projects_order_away_title">Our machine can\'t be reached right now</string>
     <string name="projects_order_away_body">Your account may still be in game. The last known state is below.</string>
     <string name="projects_order_service_title">AFK+ is under maintenance</string>
@@ -117,7 +117,7 @@
         <item quantity="one">Valid for %d day</item>
         <item quantity="other">Valid for %d days</item>
     </plurals>
-    <string name="projects_card_bot">The assistant makes the trade.</string>
+    <string name="projects_card_bot">ProBot AI makes the trade.</string>
     <string name="projects_card_owner">You make the trade.</string>
     <string name="projects_card_durability">At least %1$d%% durability</string>
     <string name="projects_card_named">can be anvil-renamed</string>
@@ -130,16 +130,16 @@
     <string name="projects_card_answer_first_many">Answer the questions before saving.</string>
     <string name="projects_card_fix_first">Fill in what\'s missing with Edit before saving.</string>
     <string name="projects_card_note_approval_pref">To close deals without asking, change its permissions.</string>
-    <string name="projects_card_note_named_player">Orders are open to everyone; they can\'t be tied to one player.</string>
-    <string name="projects_card_note_notify_only">You set no spending limit, so it doesn\'t buy; it tells you what it finds.</string>
-    <string name="projects_card_note_item_pay_off">Item swaps are off in your settings; it trades for money.</string>
+    <string name="projects_card_note_named_player">Orders are open to everyone. They can\'t be tied to one player.</string>
+    <string name="projects_card_note_notify_only">You set no spending limit, so it doesn\'t buy. It tells you what it finds.</string>
+    <string name="projects_card_note_item_pay_off">Item swaps are off in your settings. It trades for money.</string>
 
     <!-- The card's questions -->
     <string name="projects_q_which">Which one?</string>
     <string name="projects_q_side">Buying or selling?</string>
     <string name="projects_q_buying">Buying</string>
     <string name="projects_q_selling">Selling</string>
-    <string name="projects_q_custom">\"%1$s\" isn\'t in the game. How should the assistant know it?</string>
+    <string name="projects_q_custom">\"%1$s\" isn\'t in the game. How should ProBot AI know it?</string>
     <string name="projects_q_custom_pick">Pick from inventory</string>
     <string name="projects_q_custom_first_seen">Ask me the first time it sees one</string>
     <string name="projects_q_custom_fix">Fix the name</string>
@@ -181,8 +181,8 @@
     <string name="projects_form_data_failed">The item list can\'t load right now.</string>
     <string name="projects_form_retry">Try again</string>
     <string name="projects_form_custom_name">The item\'s name</string>
-    <string name="projects_form_custom_known">The assistant calls it by this name.</string>
-    <string name="projects_form_custom_first_sight">The assistant asks you the first time it sees one.</string>
+    <string name="projects_form_custom_known">ProBot AI calls this item by this name.</string>
+    <string name="projects_form_custom_first_sight">ProBot AI asks you the first time it sees this item.</string>
     <string name="projects_form_qty">Quantity</string>
     <plurals name="projects_form_stacks">
         <item quantity="one">%d stack</item>
@@ -208,7 +208,7 @@
         <item quantity="other">%d days</item>
     </plurals>
     <string name="projects_form_who">Who makes the trade?</string>
-    <string name="projects_form_who_bot">The assistant</string>
+    <string name="projects_form_who_bot">ProBot AI</string>
     <string name="projects_form_who_me">Me</string>
     <string name="projects_form_conditions">Conditions for %1$s</string>
     <string name="projects_form_durability">Minimum durability</string>
@@ -234,7 +234,7 @@
     <string name="projects_form_error_custom_full">No more custom items can be added.</string>
 
     <!-- Pick from inventory -->
-    <string name="projects_pick_exact">The assistant knows this exact item; a different item with the same name won\'t be accepted.</string>
+    <string name="projects_pick_exact">ProBot AI knows this exact item. Another item with the same name won\'t pass.</string>
     <string name="projects_pick_reading">Reading the item</string>
     <string name="projects_pick_error">Couldn\'t pick the item.</string>
     <string name="projects_pick_own_only">Pick from the account\'s own inventory.</string>
@@ -267,7 +267,7 @@
     <string name="projects_approval_party_sell">Selling to %1$s</string>
     <string name="projects_approval_why_authority">You chose to approve deals yourself</string>
     <string name="projects_approval_closed_gone">Closed because the offer is gone</string>
-    <string name="projects_approval_closed_stopped">Closed because the assistant stopped</string>
+    <string name="projects_approval_closed_stopped">Closed because ProBot AI stopped</string>
     <string name="projects_approval_sent_yes">Your OK went through</string>
     <string name="projects_approval_sent_no">Your no went through</string>
 
@@ -280,17 +280,17 @@
     <string name="projects_audit_today">Today</string>
     <string name="projects_audit_yesterday">Yesterday</string>
     <string name="projects_audit_older">Older entries</string>
-    <string name="projects_audit_empty">Nothing logged yet. You\'ll see it here when the assistant gets a message.</string>
+    <string name="projects_audit_empty">Nothing logged yet. You\'ll see it here when ProBot AI gets a message.</string>
     <string name="projects_audit_none_here">Nothing of this kind.</string>
     <string name="projects_audit_off">The log is off right now.</string>
-    <string name="projects_audit_offline">What you saw before is below; new entries show once the connection is back.</string>
+    <string name="projects_audit_offline">What you saw before is below. New entries show once the connection is back.</string>
     <string name="projects_audit_offline_empty">The log shows once the connection is back.</string>
     <string name="projects_audit_kept">The log is kept for 7 days.</string>
     <string name="projects_audit_hidden">Inappropriate message hidden.</string>
     <string name="projects_audit_show">Show</string>
     <string name="projects_audit_someone">A player</string>
     <string name="projects_audit_pm_in">%1$s wrote:</string>
-    <string name="projects_audit_reply">The assistant replied:</string>
+    <string name="projects_audit_reply">ProBot AI replied:</string>
     <string name="projects_audit_owner_msg">You wrote:</string>
     <string name="projects_audit_offer">Offered %1$s %2$s</string>
     <string name="projects_audit_counter">%1$s asked for %2$s</string>
@@ -316,9 +316,9 @@
     <string name="projects_audit_confirm_item_of">Asked you about %1$s</string>
     <string name="projects_audit_order_done">Order done</string>
     <string name="projects_audit_order_expired">Order expired</string>
-    <string name="projects_audit_paused">The assistant stopped: %1$s</string>
-    <string name="projects_audit_paused_bare">The assistant stopped</string>
-    <string name="projects_audit_resumed">The assistant is running again</string>
+    <string name="projects_audit_paused">ProBot AI stopped: %1$s</string>
+    <string name="projects_audit_paused_bare">ProBot AI stopped</string>
+    <string name="projects_audit_resumed">ProBot AI is running again</string>
     <string name="projects_audit_quota">You\'re out of AI credits</string>
     <string name="projects_audit_gate">A safety rule stopped an action</string>
     <string name="projects_audit_gate_why">A safety rule stopped an action: %1$s</string>
@@ -360,18 +360,18 @@
     <string name="projects_receipt_approved">You approved</string>
     <string name="projects_receipt_owner">You made the trade and reported it</string>
     <string name="projects_receipt_review">Under review</string>
-    <string name="projects_receipt_review_note">Staff are looking at this trade; it counts once settled.</string>
-    <string name="projects_receipt_money_note">Amounts are in-game money; no real money changes hands.</string>
+    <string name="projects_receipt_review_note">Staff are looking at this trade. It counts once settled.</string>
+    <string name="projects_receipt_money_note">Amounts are in-game money. No real money changes hands.</string>
     <string name="projects_receipt_failed">Couldn\'t load the trade history.</string>
 
     <!-- Fine-tuning -->
     <string name="projects_plus_change_fine">Fine-tuning changed</string>
     <string name="projects_fine_title">Fine-tuning</string>
-    <string name="projects_fine_authority">What should the assistant do?</string>
+    <string name="projects_fine_authority">What should ProBot AI do?</string>
     <string name="projects_fine_reply">Only reply</string>
     <string name="projects_fine_ask">Haggle, then ask me</string>
     <string name="projects_fine_deal">Haggle and close the deal</string>
-    <string name="projects_fine_reply_help">Doesn\'t haggle; passes offers on to you.</string>
+    <string name="projects_fine_reply_help">Doesn\'t haggle. Passes offers on to you.</string>
     <string name="projects_fine_ask_help">Asks you before closing a deal.</string>
     <string name="projects_fine_deal_help">Closes deals within your limits without asking.</string>
     <string name="projects_fine_buy">Buying</string>
@@ -387,15 +387,15 @@
     <string name="projects_fine_friends_add">Add a name</string>
     <string name="projects_fine_friends_remove">Remove %1$s</string>
     <string name="projects_fine_friends_remove_short">Remove</string>
-    <string name="projects_fine_friends_empty">With nobody on the list, the assistant talks trade with no one.</string>
+    <string name="projects_fine_friends_empty">With nobody on the list, ProBot AI talks trade with no one.</string>
     <string name="projects_fine_friends_format">3-16 characters: letters, digits or underscores.</string>
     <string name="projects_fine_friends_duplicate">This name is already on the list.</string>
-    <string name="projects_fine_friends_blocked">You blocked this player; unblock them first.</string>
+    <string name="projects_fine_friends_blocked">You blocked this player. Unblock them first.</string>
     <plurals name="projects_fine_friends_full">
         <item quantity="one">Up to %d name.</item>
         <item quantity="other">Up to %d names.</item>
     </plurals>
-    <string name="projects_fine_secret">The assistant never tells anyone your budget or limits.</string>
+    <string name="projects_fine_secret">ProBot AI never tells anyone your budget or limits.</string>
     <string name="projects_fine_spending">Spending</string>
 
     <!-- Talk and tag -->
@@ -432,10 +432,10 @@
     </plurals>
     <string name="projects_credits_bought_in_use">Now using the AI credits you bought.</string>
     <string name="projects_credits_buy">Buy AI credits</string>
-    <string name="projects_credits_notice_bought">%1$s: You\'re out of AI credits; your bought ones are in use now.</string>
+    <string name="projects_credits_notice_bought">%1$s: You\'re out of AI credits. Your bought ones are in use now.</string>
 
     <!-- Notices of orders -->
-    <string name="projects_notice_handoff">%1$s: deal agreed; you\'ll make the trade.</string>
+    <string name="projects_notice_handoff">%1$s: deal agreed. You\'ll make the trade.</string>
     <string name="projects_notice_first_sight">%1$s needs your OK on %2$s.</string>
     <string name="projects_order_busy">Your last change is still saving. Give it a moment.</string>
     <string name="projects_form_pay_forced">Item swaps are off right now. Write the price again in money.</string>

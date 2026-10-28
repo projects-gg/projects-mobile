@@ -6,7 +6,7 @@
      player's name ("ile", "için" or a colon instead); amounts carry the game's money, never lira. -->
 <resources>
     <string name="projects_plus_custom_item">Özel eşya</string>
-    <string name="projects_ai_note">Asistan yapay zekâdır, hata yapabilir.</string>
+    <string name="projects_ai_note">ProBot AI yapay zekâdır, hata yapabilir.</string>
 
     <!-- Siparişler -->
     <string name="projects_order_intake_label">Ne almak ya da satmak istiyorsun?</string>
@@ -37,15 +37,15 @@
     </plurals>
     <string name="projects_order_reject_no_item">Eşyanın adını yaz.</string>
     <string name="projects_order_reject_many_items">Her eşyayı ayrı yaz.</string>
-    <string name="projects_order_rule_prepay">Asistan önden ödeme yapmaz, önden eşya vermez.</string>
-    <string name="projects_order_rule_pay_cmd">Asistan para göndermez; ödeme yalnız takasta olur.</string>
-    <string name="projects_order_rule_disclose">Asistan bütçeni ve sınırlarını kimseye söylemez.</string>
-    <string name="projects_order_rule_hide_ai">Asistan yapay zekâ olduğunu saklamaz.</string>
-    <string name="projects_order_rule_off_platform">Asistan kimseyi başka uygulamaya çağırmaz.</string>
-    <string name="projects_order_rule_third_party">Asistan yalnız ona yazana cevap verir.</string>
+    <string name="projects_order_rule_prepay">ProBot AI önden ödeme yapmaz, önden eşya vermez.</string>
+    <string name="projects_order_rule_pay_cmd">ProBot AI para göndermez, ödeme yalnız takasta olur.</string>
+    <string name="projects_order_rule_disclose">ProBot AI bütçeni ve sınırlarını kimseye söylemez.</string>
+    <string name="projects_order_rule_hide_ai">ProBot AI yapay zekâ olduğunu saklamaz.</string>
+    <string name="projects_order_rule_off_platform">ProBot AI kimseyi başka uygulamaya çağırmaz.</string>
+    <string name="projects_order_rule_third_party">ProBot AI yalnız ona yazana cevap verir.</string>
     <string name="projects_order_rule_rmt">Gerçek parayla ticaret yapılmaz.</string>
-    <string name="projects_order_server_owner">Bu sunucuda asistan konuşur ve anlaşır; takası sen yaparsın.</string>
-    <string name="projects_order_server_off">Bu sunucuda AFK+ kapalı; hesabın normal AFK olarak çalışıyor.</string>
+    <string name="projects_order_server_owner">Bu sunucuda ProBot AI konuşur ve anlaşır. Takası sen yaparsın.</string>
+    <string name="projects_order_server_off">Bu sunucuda AFK+ kapalı. Hesabın normal AFK olarak çalışıyor.</string>
     <string name="projects_order_away_title">Makinemize şu an ulaşılamıyor</string>
     <string name="projects_order_away_body">Hesabın hâlâ oyunda olabilir. Son bilinen durum aşağıda.</string>
     <string name="projects_order_service_title">AFK+ bakımda</string>
@@ -113,7 +113,7 @@
     <plurals name="projects_card_valid">
         <item quantity="other">%d gün geçerli</item>
     </plurals>
-    <string name="projects_card_bot">Takası asistan yapar.</string>
+    <string name="projects_card_bot">Takası ProBot AI yapar.</string>
     <string name="projects_card_owner">Takası sen yaparsın.</string>
     <string name="projects_card_durability">En az %%%1$d dayanıklı</string>
     <string name="projects_card_named">örsle ad verilmiş olabilir</string>
@@ -126,16 +126,16 @@
     <string name="projects_card_answer_first_many">Kaydetmeden önce soruları cevapla.</string>
     <string name="projects_card_fix_first">Kaydetmeden önce Düzenle ile eksikleri tamamla.</string>
     <string name="projects_card_note_approval_pref">Sormadan tamamlaması için ince ayardan yetkiyi değiştir.</string>
-    <string name="projects_card_note_named_player">Siparişler herkese açıktır; bir oyuncuya bağlanmaz.</string>
-    <string name="projects_card_note_notify_only">Harcama sınırı koymadığın için almaz; bulunca haber verir.</string>
-    <string name="projects_card_note_item_pay_off">Eşyayla takas ayarlarında kapalı; takas parayla yapılır.</string>
+    <string name="projects_card_note_named_player">Siparişler herkese açıktır. Bir oyuncuya bağlanmaz.</string>
+    <string name="projects_card_note_notify_only">Harcama sınırı koymadığın için almaz. Bulunca haber verir.</string>
+    <string name="projects_card_note_item_pay_off">Eşyayla takas ayarlarında kapalı. Takas parayla yapılır.</string>
 
     <!-- The card's questions -->
     <string name="projects_q_which">Hangisi?</string>
     <string name="projects_q_side">Alıyor musun, satıyor musun?</string>
     <string name="projects_q_buying">Alıyorum</string>
     <string name="projects_q_selling">Satıyorum</string>
-    <string name="projects_q_custom">\"%1$s\" oyunda yok. Asistan onu nasıl tanısın?</string>
+    <string name="projects_q_custom">\"%1$s\" oyunda yok. ProBot AI onu nasıl tanısın?</string>
     <string name="projects_q_custom_pick">Envanterden seç</string>
     <string name="projects_q_custom_first_seen">İlk görünce bana sor</string>
     <string name="projects_q_custom_fix">Adı düzelt</string>
@@ -177,8 +177,8 @@
     <string name="projects_form_data_failed">Eşya listesi şu an yüklenemedi.</string>
     <string name="projects_form_retry">Tekrar dene</string>
     <string name="projects_form_custom_name">Eşyanın adı</string>
-    <string name="projects_form_custom_known">Asistan bu eşyayı bu adla anar.</string>
-    <string name="projects_form_custom_first_sight">Asistan bu eşyayı ilk gördüğünde sana sorar.</string>
+    <string name="projects_form_custom_known">ProBot AI bu eşyayı bu adla anar.</string>
+    <string name="projects_form_custom_first_sight">ProBot AI bu eşyayı ilk gördüğünde sana sorar.</string>
     <string name="projects_form_qty">Adet</string>
     <plurals name="projects_form_stacks">
         <item quantity="other">%d yığın</item>
@@ -202,7 +202,7 @@
         <item quantity="other">%d gün</item>
     </plurals>
     <string name="projects_form_who">Takası kim yapsın?</string>
-    <string name="projects_form_who_bot">Asistan</string>
+    <string name="projects_form_who_bot">ProBot AI</string>
     <string name="projects_form_who_me">Ben</string>
     <string name="projects_form_conditions">%1$s için şartlar</string>
     <string name="projects_form_durability">En az dayanıklılık</string>
@@ -228,7 +228,7 @@
     <string name="projects_form_error_custom_full">Daha fazla özel eşya eklenemez.</string>
 
     <!-- Envanterden seç -->
-    <string name="projects_pick_exact">Asistan bu eşyayı birebir tanır; adı aynı olan başka eşyayı kabul etmez.</string>
+    <string name="projects_pick_exact">ProBot AI bu eşyayı birebir tanır. Adı aynı olan başka eşyayı kabul etmez.</string>
     <string name="projects_pick_reading">Eşya okunuyor</string>
     <string name="projects_pick_error">Eşya seçilemedi.</string>
     <string name="projects_pick_own_only">Yalnız hesabın kendi envanterinden seçebilirsin.</string>
@@ -260,7 +260,7 @@
     <string name="projects_approval_party_sell">Alıcı: %1$s</string>
     <string name="projects_approval_why_authority">Anlaşınca sana sormasını seçtin</string>
     <string name="projects_approval_closed_gone">Teklif kalmadığı için kapandı</string>
-    <string name="projects_approval_closed_stopped">Asistan durduğu için kapandı</string>
+    <string name="projects_approval_closed_stopped">ProBot AI durduğu için kapandı</string>
     <string name="projects_approval_sent_yes">Onayın iletildi</string>
     <string name="projects_approval_sent_no">Reddin iletildi</string>
 
@@ -273,17 +273,17 @@
     <string name="projects_audit_today">Bugün</string>
     <string name="projects_audit_yesterday">Dün</string>
     <string name="projects_audit_older">Daha eski kayıtlar</string>
-    <string name="projects_audit_empty">Henüz kayıt yok. Asistan bir mesaj aldığında burada görürsün.</string>
+    <string name="projects_audit_empty">Henüz kayıt yok. ProBot AI bir mesaj aldığında burada görürsün.</string>
     <string name="projects_audit_none_here">Bu türde kayıt yok.</string>
     <string name="projects_audit_off">Kayıtlar şu an kapalı.</string>
-    <string name="projects_audit_offline">Daha önce gördüklerin aşağıda; yenileri bağlantı dönünce görünür.</string>
+    <string name="projects_audit_offline">Daha önce gördüklerin aşağıda. Yenileri bağlantı dönünce görünür.</string>
     <string name="projects_audit_offline_empty">Kayıtlar bağlantı dönünce görünür.</string>
     <string name="projects_audit_kept">Kayıt 7 gün tutulur.</string>
     <string name="projects_audit_hidden">Uygunsuz mesaj gizlendi.</string>
     <string name="projects_audit_show">Göster</string>
     <string name="projects_audit_someone">Bir oyuncu</string>
     <string name="projects_audit_pm_in">%1$s yazdı:</string>
-    <string name="projects_audit_reply">Asistan cevap verdi:</string>
+    <string name="projects_audit_reply">ProBot AI cevap verdi:</string>
     <string name="projects_audit_owner_msg">Sen yazdın:</string>
     <string name="projects_audit_offer">%1$s ile pazarlıkta %2$s teklif edildi</string>
     <string name="projects_audit_counter">%1$s, %2$s istedi</string>
@@ -309,9 +309,9 @@
     <string name="projects_audit_confirm_item_of">%1$s için onayın istendi</string>
     <string name="projects_audit_order_done">Sipariş tamamlandı</string>
     <string name="projects_audit_order_expired">Siparişin süresi doldu</string>
-    <string name="projects_audit_paused">Asistan durdu: %1$s</string>
-    <string name="projects_audit_paused_bare">Asistan durdu</string>
-    <string name="projects_audit_resumed">Asistan yeniden çalışıyor</string>
+    <string name="projects_audit_paused">ProBot AI durdu: %1$s</string>
+    <string name="projects_audit_paused_bare">ProBot AI durdu</string>
+    <string name="projects_audit_resumed">ProBot AI yeniden çalışıyor</string>
     <string name="projects_audit_quota">Kontörün bitti</string>
     <string name="projects_audit_gate">Güvenlik kuralı bir işlemi durdurdu</string>
     <string name="projects_audit_gate_why">Güvenlik kuralı bir işlemi durdurdu: %1$s</string>
@@ -353,14 +353,14 @@
     <string name="projects_receipt_approved">Sen onayladın</string>
     <string name="projects_receipt_owner">Takası sen yaptın, sen bildirdin</string>
     <string name="projects_receipt_review">İncelemede</string>
-    <string name="projects_receipt_review_note">Yetkililer bu takasa bakıyor; sonuçlanınca sayılır.</string>
-    <string name="projects_receipt_money_note">Tutarlar oyundaki parayla; gerçek para el değiştirmez.</string>
+    <string name="projects_receipt_review_note">Yetkililer bu takasa bakıyor. Sonuçlanınca sayılır.</string>
+    <string name="projects_receipt_money_note">Tutarlar oyundaki parayla. Gerçek para el değiştirmez.</string>
     <string name="projects_receipt_failed">Takas geçmişi yüklenemedi.</string>
 
     <!-- İnce ayar -->
     <string name="projects_plus_change_fine">İnce ayar değişti</string>
     <string name="projects_fine_title">İnce ayar</string>
-    <string name="projects_fine_authority">Asistan ne yapsın?</string>
+    <string name="projects_fine_authority">ProBot AI ne yapsın?</string>
     <string name="projects_fine_reply">Yalnız cevap ver</string>
     <string name="projects_fine_ask">Pazarlık et, bana sor</string>
     <string name="projects_fine_deal">Pazarlık et ve tamamla</string>
@@ -380,14 +380,14 @@
     <string name="projects_fine_friends_add">Ad ekle</string>
     <string name="projects_fine_friends_remove">%1$s adını çıkar</string>
     <string name="projects_fine_friends_remove_short">Çıkar</string>
-    <string name="projects_fine_friends_empty">Listede kimse yokken asistan kimseyle takas konuşmaz.</string>
+    <string name="projects_fine_friends_empty">Listede kimse yokken ProBot AI kimseyle takas konuşmaz.</string>
     <string name="projects_fine_friends_format">3-16 karakter: harf, rakam ya da alt çizgi.</string>
     <string name="projects_fine_friends_duplicate">Bu ad zaten listede.</string>
-    <string name="projects_fine_friends_blocked">Bu oyuncuyu engelledin; önce engeli kaldır.</string>
+    <string name="projects_fine_friends_blocked">Bu oyuncuyu engelledin. Önce engeli kaldır.</string>
     <plurals name="projects_fine_friends_full">
         <item quantity="other">En çok %d ad eklenebilir.</item>
     </plurals>
-    <string name="projects_fine_secret">Asistan bütçeni ve sınırlarını kimseye söylemez.</string>
+    <string name="projects_fine_secret">ProBot AI bütçeni ve sınırlarını kimseye söylemez.</string>
     <string name="projects_fine_spending">Harcama</string>
 
     <!-- Sohbet ve etiket -->
