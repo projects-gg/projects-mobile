@@ -429,4 +429,6 @@
     <!-- Notices of orders -->
     <string name="projects_notice_handoff">%1$s: anlaşma tamam, takası sen yapacaksın.</string>
     <string name="projects_notice_first_sight">%1$s: %2$s için onayın gerekiyor.</string>
+    <string name="projects_order_busy">Önceki değişiklik kaydediliyor, biraz bekle.</string>
+    <string name="projects_form_pay_forced">Eşyayla takas şu an kapalı. Fiyatı para olarak yeniden yaz.</string>
 </resources>

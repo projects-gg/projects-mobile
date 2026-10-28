@@ -120,6 +120,12 @@ public class PlusTest {
         assertEquals(Long.valueOf(2_000_000), PlusConfig.parseAmount("2m"));
         assertNull(PlusConfig.parseAmount("kırk"));
         assertNull(PlusConfig.parseAmount("0"));
+        // Twelve digits at most, also with a factor (the words under a field read up to 999 billion).
+        assertEquals(Long.valueOf(999_999_000_000L), PlusConfig.parseAmount("999999m"));
+        assertNull(PlusConfig.parseAmount("1000000m"));
+        assertNull(PlusConfig.parseAmount("1000000000k"));
+        assertNull(PlusConfig.parseAmount("1000000 milyon"));
+        assertEquals("dokuz yüz doksan dokuz milyar dokuz yüz doksan dokuz milyon", TrGrammar.words(999_999_000_000L, "tr"));
     }
 
     @Test

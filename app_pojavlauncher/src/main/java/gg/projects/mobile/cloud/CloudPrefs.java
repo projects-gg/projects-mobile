@@ -21,6 +21,8 @@ import gg.projects.mobile.social.Json;
 public final class CloudPrefs {
     private static final String FILE = "projects_cloud";
     private final SharedPreferences mPrefs;
+    @androidx.annotation.Nullable
+    private JsonObject mNames;
 
     public CloudPrefs(Context context) {
         mPrefs = context.getApplicationContext().getSharedPreferences(FILE, Context.MODE_PRIVATE);
@@ -83,10 +85,9 @@ public final class CloudPrefs {
      * {@code <acct>|custom:<k>}), for notices that come while no screen has the data: {@code names} maps a key to
      * {tr, en}.
      */
-    public void rememberItems(Map<String, String[]> remembered) {
+    public synchronized void rememberItems(Map<String, String[]> remembered) {
         if (remembered.isEmpty()) return;
-        JsonObject names = Json.parseObject(mPrefs.getString("itemNames", null));
-        if (names == null) names = new JsonObject();
+        JsonObject names = names();
         boolean changed = false;
         for (Map.Entry<String, String[]> item : remembered.entrySet()) {
             JsonObject entry = new JsonObject();
@@ -107,15 +108,25 @@ public final class CloudPrefs {
                 trimmed.add(e.getKey(), e.getValue());
             }
             names = trimmed;
+            mNames = trimmed;
             changed = true;
         }
         if (changed) mPrefs.edit().putString("itemNames", names.toString()).apply();
     }
 
+    /** The remembered names, read once (a feed names many items; each read parsed the whole record). */
+    private synchronized JsonObject names() {
+        if (mNames == null) {
+            JsonObject read = Json.parseObject(mPrefs.getString("itemNames", null));
+            mNames = read == null ? new JsonObject() : read;
+        }
+        return mNames;
+    }
+
     /** A remembered name in {@code lang} ({@code key} as {@link #rememberItems} keeps it), or null. */
     @androidx.annotation.Nullable
-    public String rememberedName(String key, String lang) {
-        JsonObject names = Json.parseObject(mPrefs.getString("itemNames", null));
+    public synchronized String rememberedName(String key, String lang) {
+        JsonObject names = names();
         JsonObject entry = Json.obj(names, key);
         String name = entry == null ? null : Json.str(entry, "en".equals(lang) ? "en" : "tr");
         return name == null || name.isEmpty() ? null : name;

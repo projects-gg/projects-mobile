@@ -455,7 +455,7 @@ public final class PlusApprovalsFragment extends CloudScreen implements CloudSer
         root.addView(CloudUi.note(c, getString(R.string.projects_plus_lower_help)));
         final PlusAmount amount = new PlusAmount(c, getString(R.string.projects_plus_lower_label), suggestedLower(ap.price));
         root.addView(amount.field.view);
-        final BottomPanel panel = BottomPanel.of(c, root, 0.7f);
+        final BottomPanel panel = keep(BottomPanel.of(c, root, 0.7f));
         Button go = CloudUi.button(c, getString(R.string.projects_plus_lower_go), true, v -> {
             Long value = amount.value();
             if (value == null || value < 1 || value >= ap.price) {

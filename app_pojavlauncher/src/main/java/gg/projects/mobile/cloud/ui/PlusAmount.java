@@ -52,7 +52,7 @@ final class PlusAmount {
 
     private void say(String typed) {
         Long v = PlusConfig.parseAmount(typed);
-        field.setHelp(v == null ? null : TrGrammar.words(v, CloudWords.lang(mContext)));
+        field.setHelp(v == null || v >= 1_000_000_000_000L ? null : TrGrammar.words(v, CloudWords.lang(mContext)));
     }
 
     @Nullable

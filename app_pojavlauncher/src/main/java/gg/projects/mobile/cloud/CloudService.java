@@ -110,6 +110,8 @@ public final class CloudService implements SocialService.Listener {
     /** The game's item data by the Minecraft version asked for ("" for the manifest's default), once per process. */
     private final Map<String, ItemData> mItemData = new HashMap<>();
     private final Map<String, List<Result<ItemData>>> mItemDataWaiting = new HashMap<>();
+    /** Items whose names this process already remembered for notices. */
+    private final java.util.Set<String> mNamedItems = new java.util.HashSet<>();
     @Nullable
     private ItemDataStore mItemStore;
     @Nullable
@@ -949,9 +951,17 @@ public final class CloudService implements SocialService.Listener {
         waiting.add(result);
         mItemDataWaiting.put(key, waiting);
         mIo.execute(() -> {
-            final ItemData data = itemStore().load(mc);
-            // The search tables are built here, not on the first keystroke.
-            if (data != null) data.warm(CloudWords.lang(mApp));
+            ItemData loaded;
+            try {
+                loaded = itemStore().load(mc);
+                // The search tables are built here, not on the first keystroke.
+                if (loaded != null) loaded.warm(CloudWords.lang(mApp));
+            } catch (Throwable t) {
+                // Even out of memory on a big file: no data (the screens say so), and the waiting list still hears.
+                Log.w(TAG, "item data not read: " + t.getClass().getSimpleName());
+                loaded = null;
+            }
+            final ItemData data = loaded;
             mMain.post(() -> {
                 List<Result<ItemData>> those = mItemDataWaiting.remove(key);
                 if (data != null) mItemData.put(key, data);
@@ -1002,11 +1012,14 @@ public final class CloudService implements SocialService.Listener {
         for (ItemData data : mItemData.values()) {
             String name = data.name(ref, lang);
             if (name != null) {
-                Map<String, String[]> names = new HashMap<>();
-                String tr = data.name(ref, "tr");
-                String en = data.name(ref, "en");
-                names.put(ref, new String[]{tr == null ? name : tr, en == null ? name : en});
-                mPrefs.rememberItems(names);
+                // Remembered once a process for notices (a long feed names the same items again and again).
+                if (mNamedItems.add(ref)) {
+                    Map<String, String[]> names = new HashMap<>();
+                    String tr = data.name(ref, "tr");
+                    String en = data.name(ref, "en");
+                    names.put(ref, new String[]{tr == null ? name : tr, en == null ? name : en});
+                    mPrefs.rememberItems(names);
+                }
                 return name;
             }
         }

@@ -136,7 +136,13 @@ public final class PlusAuditCache {
             if (!tmp.delete()) tmp.deleteOnExit();
             return;
         }
-        if (f.exists() && !f.delete()) return;
+        // On Android a rename replaces the old file at once (killed in between, the old log stays); where it cannot
+        // (Windows, the JVM tests) the old one goes first.
+        if (tmp.renameTo(f)) return;
+        if (f.exists() && !f.delete()) {
+            if (!tmp.delete()) tmp.deleteOnExit();
+            return;
+        }
         if (!tmp.renameTo(f) && !tmp.delete()) tmp.deleteOnExit();
     }
 }

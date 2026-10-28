@@ -533,7 +533,8 @@ public final class PlusConfig {
             t = t.replace(',', '.');
             if (!t.matches("^\\d+(\\.\\d{1,3})?$")) return null;
             double v = Double.parseDouble(t) * factor;
-            return v < 1 || v > 1e12 ? null : Math.round(v);
+            // Twelve digits at most, as typed digits (the words under a field read up to 999 billion).
+            return v < 1 || v >= 1e12 ? null : Math.round(v);
         }
         String digits = t.replace(".", "").replace(",", "");
         if (!digits.matches("^\\d{1,12}$")) return null;

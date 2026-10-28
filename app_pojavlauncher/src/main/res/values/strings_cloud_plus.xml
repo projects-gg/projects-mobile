@@ -439,4 +439,6 @@
     <!-- Notices of orders -->
     <string name="projects_notice_handoff">%1$s: deal agreed; you\'ll make the trade.</string>
     <string name="projects_notice_first_sight">%1$s needs your OK on %2$s.</string>
+    <string name="projects_order_busy">Your last change is still saving. Give it a moment.</string>
+    <string name="projects_form_pay_forced">Item swaps are off right now. Write the price again in money.</string>
 </resources>

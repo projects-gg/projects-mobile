@@ -39,6 +39,7 @@ import gg.projects.mobile.cloud.plus.OrderDraft;
 import gg.projects.mobile.cloud.plus.PlusText;
 import gg.projects.mobile.social.Json;
 import gg.projects.mobile.social.ui.BottomPanel;
+import gg.projects.mobile.social.ui.SocialUi;
 import gg.projects.mobile.ui.Haptics;
 import gg.projects.mobile.ui.Press;
 
@@ -77,13 +78,24 @@ final class PlusOrderSheet {
 
         long nowSeconds();
 
-        /** {@code POST} a new order (with its new custom items); {@code fromCard}: it finishes the card's draft. */
-        void saveNew(View from, JsonObject order, @Nullable JsonArray custom, @Nullable Runnable done, boolean fromCard);
+        /** Keeps a sheet to close it with the screen; returns it. */
+        BottomPanel sheet(BottomPanel panel);
 
-        /** {@code PATCH} an order's changed fields. */
-        void saveChange(View from, String orderId, JsonObject fields);
+        /**
+         * {@code POST} a new order (with its new custom items); {@code fromCard}: it finishes the card's draft. False when
+         * another write is still going (nothing was sent); else {@code saved} hears how it ended.
+         */
+        boolean saveNew(View from, JsonObject order, @Nullable JsonArray custom, boolean fromCard, Saved saved);
+
+        /** {@code PATCH} an order's changed fields; false when another write is still going. */
+        boolean saveChange(View from, String orderId, JsonObject fields, Saved saved);
 
         void removeOrder(View from, JsonObject order);
+    }
+
+    /** How a write ended: saved (the form closes), or not (it stays with what the player typed; the screen said why). */
+    interface Saved {
+        void saved(boolean ok);
     }
 
     private static final int[] DAYS = {7, 14, 30};
@@ -151,6 +163,12 @@ final class PlusOrderSheet {
         TextView itemError;
         TextView payError;
         boolean confirmedFar;
+        /** An item payment while swaps are off became money: its counts are no prices, the player writes new ones. */
+        boolean payForced;
+        /** A write is out: the form waits for its answer. */
+        boolean saving;
+        @Nullable
+        Button saveButton;
         /** The quantity as typed (kept across a rebuild when the item changes). */
         @Nullable
         String qtyText;
@@ -206,7 +224,7 @@ final class PlusOrderSheet {
             dynamic = new LinearLayout(c);
             dynamic.setOrientation(LinearLayout.VERTICAL);
             scroll.addView(root, new ScrollView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-            panel = BottomPanel.of(c, scroll, 0.92f);
+            panel = host.sheet(BottomPanel.of(c, scroll, 0.92f));
         }
 
         private static JsonObject emptyReq() {
@@ -382,17 +400,19 @@ final class PlusOrderSheet {
                 }
                 dynamic.addView(payError);
             } else if (!money()) {
-                // An item payment while swaps are off (an old order): it can only become money.
+                // An item payment while swaps are off (an old order): it can only become money, at prices written anew.
                 pay = "money";
+                payForced = true;
             }
+            if (payForced) dynamic.addView(CloudUi.note(c, c.getString(R.string.projects_form_pay_forced)));
             if (many) {
                 dynamic.addView(CloudRowSheet.label(c, c.getString(R.string.projects_form_unit)));
                 dynamic.addView(CloudUi.segmented(c, new CharSequence[]{c.getString(R.string.projects_form_each), c.getString(R.string.projects_form_total)},
                         "each".equals(unit) ? 0 : 1, i -> unit = i == 0 ? "each" : "total"));
             }
             JsonObject base = order != null ? order : draft;
-            long t = target == null ? Json.num(base, "target", 0) : target.value() == null ? 0 : target.value();
-            long l = limit == null ? Json.num(base, "limit", 0) : limit.value() == null ? 0 : limit.value();
+            long t = target == null ? (payForced ? 0 : Json.num(base, "target", 0)) : target.value() == null ? 0 : target.value();
+            long l = limit == null ? (payForced ? 0 : Json.num(base, "limit", 0)) : limit.value() == null ? 0 : limit.value();
             String payName = money() ? null : nameOf(pay.isEmpty() ? null : pay);
             String targetLabel = c.getString(R.string.projects_form_target);
             String limitLabel = c.getString("sell".equals(side) ? R.string.projects_form_at_least : R.string.projects_form_at_most);
@@ -458,7 +478,7 @@ final class PlusOrderSheet {
                 dynamic.addView(CloudRowSheet.label(c, c.getString(R.string.projects_form_enchantments)));
                 final JsonObject ench = Json.obj(req, "ench");
                 if (ench != null) {
-                    for (final Map.Entry<String, JsonElement> e : new ArrayList<>(ench.entrySet())) dynamic.addView(enchRow(e.getKey(), e.getValue().getAsInt()));
+                    for (final Map.Entry<String, JsonElement> e : new ArrayList<>(ench.entrySet())) dynamic.addView(enchRow(e.getKey(), PlusWords.level(e.getValue())));
                 }
                 if (ench == null || ench.size() < 8) {
                     dynamic.addView(CloudUi.textButton(c, c.getString(R.string.projects_form_add_enchantment), v -> addEnchantment(info)),
@@ -542,7 +562,7 @@ final class PlusOrderSheet {
             rows.setOrientation(LinearLayout.VERTICAL);
             scroll.addView(rows);
             list.addView(scroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-            final BottomPanel picker = BottomPanel.of(c, list, 0.8f);
+            final BottomPanel picker = host.sheet(BottomPanel.of(c, list, 0.8f));
             for (final ItemData.EnchantmentInfo e : pool) {
                 TextView row = CloudUi.text(c, data.enchantmentName(e.id, host.lang()), 15.5f, R.color.projects_bone_100, false);
                 row.setMinHeight(CloudUi.dp(c, 48));
@@ -625,7 +645,7 @@ final class PlusOrderSheet {
             list.setOrientation(LinearLayout.VERTICAL);
             scroll.addView(list);
             box.addView(scroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, CloudUi.dp(c, 380)));
-            final BottomPanel picker = BottomPanel.of(c, box, 0.88f);
+            final BottomPanel picker = host.sheet(BottomPanel.of(c, box, 0.88f));
             final List<ItemData.Extra> extras = new ArrayList<>();
             for (JsonObject custom : cfg.customItems()) {
                 String k = Json.str(custom, "k");
@@ -734,17 +754,42 @@ final class PlusOrderSheet {
             Button cancel = CloudUi.textButton(c, c.getString(R.string.projects_card_discard), v -> panel.dismiss());
             cancel.setTextColor(CloudUi.color(c, R.color.projects_ash_300));
             bar.addView(cancel);
-            Button save = CloudUi.button(c, c.getString(R.string.projects_card_save), true, this::save);
+            Button save = CloudUi.button(c, c.getString(saving ? R.string.projects_cloud_settings_saving : R.string.projects_card_save), true, this::save);
             save.setMinWidth(CloudUi.dp(c, 120));
+            save.setEnabled(!saving);
             LinearLayout.LayoutParams saveLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             saveLp.setMarginStart(CloudUi.dp(c, 8));
             bar.addView(save, saveLp);
+            saveButton = save;
             if (root.getChildCount() > 2) root.removeViewAt(2);
             root.addView(bar, CloudUi.matchWrap());
         }
 
+        /** While a write is out the button says so and takes no second tap; the form closes only once it is saved. */
+        void setSaving(boolean on) {
+            saving = on;
+            Button save = saveButton;
+            if (save == null) return;
+            save.setEnabled(!on);
+            save.setText(on ? R.string.projects_cloud_settings_saving : R.string.projects_card_save);
+        }
+
+        void sent(View from, boolean started) {
+            if (started) return;
+            // Another write (a row's, the card's) is still out: nothing went, the form stays as typed.
+            setSaving(false);
+            Haptics.reject(from);
+            SocialUi.toast(c, c.getString(R.string.projects_order_busy));
+        }
+
+        void savedResult(boolean ok) {
+            setSaving(false);
+            if (ok) panel.dismiss();
+        }
+
         /** Checks the form as the service would and sends it. */
         void save(View from) {
+            if (saving) return;
             boolean ok = true;
             itemError.setVisibility(View.GONE);
             payError.setVisibility(View.GONE);
@@ -829,9 +874,12 @@ final class PlusOrderSheet {
             JsonObject built = orderJson(n, t, l, dur);
             if (editing) {
                 JsonObject fields = changed(built);
-                panel.dismiss();
-                if (fields.size() == 0) return;
-                host.saveChange(from, Json.str(order, "id", ""), fields);
+                if (fields.size() == 0) {
+                    panel.dismiss();
+                    return;
+                }
+                setSaving(true);
+                sent(from, host.saveChange(from, Json.str(order, "id", ""), fields, this::savedResult));
                 return;
             }
             JsonArray custom = new JsonArray();
@@ -843,8 +891,8 @@ final class PlusOrderSheet {
                     custom.add(out);
                 }
             }
-            panel.dismiss();
-            host.saveNew(from, built, custom, null, draft != null);
+            setSaving(true);
+            sent(from, host.saveNew(from, built, custom, draft != null, this::savedResult));
         }
 
         int activeCount() {

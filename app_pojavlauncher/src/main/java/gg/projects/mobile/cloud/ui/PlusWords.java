@@ -23,6 +23,18 @@ final class PlusWords {
         String name(String ref);
     }
 
+    /** Whether a JSON value is a number (a list the service sends may hold anything). */
+    static boolean isNumber(@Nullable com.google.gson.JsonElement e) {
+        return e != null && e.isJsonPrimitive() && e.getAsJsonPrimitive().isNumber();
+    }
+
+    /** An enchantment's level as an order keeps it; a missing or odd one reads as the lowest (I). */
+    static int level(@Nullable com.google.gson.JsonElement e) {
+        if (!isNumber(e)) return 1;
+        long v = e.getAsLong();
+        return v < 1 ? 1 : v > 255 ? 255 : (int) v;
+    }
+
     /** An order's status in a word ({@code status} as {@code statusOf} gives it; {@code side} for the side-specific ones). */
     static String status(Context c, String status, String side) {
         boolean sell = "sell".equals(side);

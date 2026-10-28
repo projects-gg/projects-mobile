@@ -140,7 +140,7 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
             @Override
             public void ok(CloudModel.PlusDoc doc) {
                 if (!alive()) return;
-                mDoc = doc;
+                takeDoc(doc);
                 if (doc.rules.checksLeft != null) mChecksLeft = doc.rules.checksLeft;
                 loadData(doc);
                 draw();
@@ -594,7 +594,7 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
             List<String> cond = new ArrayList<>();
             if (pct > 0) cond.add(getString(R.string.projects_card_durability, (int) pct));
             JsonObject ench = Json.obj(req, "ench");
-            if (ench != null) for (Map.Entry<String, JsonElement> e : ench.entrySet()) cond.add(enchText(e.getKey(), e.getValue().getAsInt()));
+            if (ench != null) for (Map.Entry<String, JsonElement> e : ench.entrySet()) cond.add(enchText(e.getKey(), PlusWords.level(e.getValue())));
             if (Json.bool(req, "named", false)) cond.add(getString(R.string.projects_card_named));
             if (Json.bool(req, "cursed", false)) cond.add(getString(R.string.projects_card_cursed));
             if (!cond.isEmpty()) lines.add(capitalize(join(cond)));
@@ -778,6 +778,7 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
                 boolean sell = "sell".equals(Json.str(q, "side"));
                 text = getString(sell ? R.string.projects_q_limit_sell : R.string.projects_q_limit_buy);
                 for (JsonElement a : Json.arr(q, "amounts")) {
+                    if (!PlusWords.isNumber(a)) continue;
                     final long amount = a.getAsLong();
                     chips.add(price(amount, Json.str(draft, "pay", "money")), v -> answer(q, OrderDraft.Choice.amount(amount)));
                 }
@@ -810,6 +811,7 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
             case "qty": {
                 text = getString(R.string.projects_q_qty);
                 for (JsonElement a : Json.arr(q, "amounts")) {
+                    if (!PlusWords.isNumber(a)) continue;
                     final long amount = a.getAsLong();
                     chips.add(String.valueOf(amount), v -> answer(q, OrderDraft.Choice.amount(amount)));
                 }
@@ -937,12 +939,22 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
         }
         JsonArray custom = new JsonArray();
         for (JsonObject item : Json.objects(draft, "customItems")) custom.add(newCustom(item));
-        write(from, order, custom, mCardSettings, true, () -> {
-            mDraft = null;
-            mNotes.clear();
-            mCardSettings = null;
-            if (mField != null) mField.input.setText("");
-        });
+        if (!write(from, order, custom, mCardSettings, true, this::cardSaved, null)) busy(from);
+    }
+
+    /** The card's order is saved: the card and its words go. */
+    private void cardSaved() {
+        mDraft = null;
+        mNotes.clear();
+        mCardSettings = null;
+        mOtherOpen = null;
+        if (mField != null) mField.input.setText("");
+    }
+
+    /** Another write is still out: nothing was sent. */
+    private void busy(@Nullable View from) {
+        if (from != null) Haptics.reject(from);
+        toast(getString(R.string.projects_order_busy));
     }
 
     /** A new custom item as the order write takes it (without {@code at}: the service sets it). */
@@ -958,20 +970,29 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
         void done();
     }
 
-    /** {@code POST …/plus/orders}: the order (new, or put back with its id and {@code at}), its new custom items, a chip's settings. */
-    private void write(final View from, final JsonObject order, @Nullable final JsonArray custom, @Nullable final JsonObject settings,
-                       final boolean retry, @Nullable final Done done) {
+    /**
+     * {@code POST …/plus/orders}: the order (new, or put back with its id and {@code at}), its new custom items, a chip's
+     * settings. False when another write is still out (nothing sent); else {@code after} hears how it ended (the
+     * problem already shown).
+     */
+    private boolean write(final View from, final JsonObject order, @Nullable final JsonArray custom, @Nullable final JsonObject settings,
+                          final boolean retry, @Nullable final Done done, @Nullable final PlusOrderSheet.Saved after) {
         final CloudModel.Account a = account();
         final CloudModel.PlusDoc doc = mDoc;
-        if (a == null || doc == null || mSaving) return;
+        if (mSaving) return false;
+        if (a == null || doc == null) {
+            if (after != null) after.saved(false);
+            return true;
+        }
         mSaving = true;
         mService.postOrder(a.id, doc.aiRev, order, custom, settings, new CloudService.Result<PlusModel.Written>() {
             @Override
             public void ok(PlusModel.Written w) {
                 mSaving = false;
                 written(w);
+                if (done != null && isAdded()) done.done();
+                if (after != null) after.saved(true);
                 if (!alive()) return;
-                if (done != null) done.done();
                 Haptics.confirm(from);
                 JsonObject saved = w.order == null ? order : w.order;
                 toast(getString(R.string.projects_order_saved, itemName(Json.str(saved, "item", ""))));
@@ -981,28 +1002,52 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
             @Override
             public void failed(CloudProblem problem) {
                 mSaving = false;
-                if (!alive()) return;
+                if (!alive()) {
+                    if (after != null) after.saved(false);
+                    return;
+                }
                 if (problem.kind == CloudProblem.Kind.CONFLICT && retry) {
                     // Changed elsewhere (another device, an approval): read the new revision and send once more.
-                    reloadThen(() -> write(from, order, custom, settings, false, done));
+                    reloadThen(() -> {
+                        String id = Json.str(order, "id");
+                        if (id != null && config().order(id) != null) {
+                            // Put back elsewhere meanwhile: it is there.
+                            if (after != null) after.saved(true);
+                            draw();
+                            return;
+                        }
+                        if (!write(from, order, custom, settings, false, done, after)) {
+                            busy(from);
+                            if (after != null) after.saved(false);
+                        }
+                    }, after);
                     return;
                 }
                 writeProblem(problem, from);
+                if (after != null) after.saved(false);
                 draw();
             }
         });
+        return true;
     }
 
-    private void patch(final View from, final String orderId, final JsonObject fields, final boolean retry, final int toastWords) {
+    /** {@code PATCH …/plus/orders/<id>}: false when another write is still out (nothing sent). */
+    private boolean patch(final View from, final String orderId, final JsonObject fields, final boolean retry, final int toastWords,
+                          @Nullable final PlusOrderSheet.Saved after) {
         final CloudModel.Account a = account();
         final CloudModel.PlusDoc doc = mDoc;
-        if (a == null || doc == null || mSaving) return;
+        if (mSaving) return false;
+        if (a == null || doc == null) {
+            if (after != null) after.saved(false);
+            return true;
+        }
         mSaving = true;
         mService.patchOrder(a.id, doc.aiRev, orderId, fields, new CloudService.Result<PlusModel.Written>() {
             @Override
             public void ok(PlusModel.Written w) {
                 mSaving = false;
                 written(w);
+                if (after != null) after.saved(true);
                 if (!alive()) return;
                 Haptics.confirm(from);
                 JsonObject saved = w.order;
@@ -1019,22 +1064,34 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
             @Override
             public void failed(CloudProblem problem) {
                 mSaving = false;
-                if (!alive()) return;
+                if (!alive()) {
+                    if (after != null) after.saved(false);
+                    return;
+                }
                 if (problem.kind == CloudProblem.Kind.CONFLICT && retry) {
-                    reloadThen(() -> patch(from, orderId, fields, false, toastWords));
+                    reloadThen(() -> {
+                        if (!patch(from, orderId, fields, false, toastWords, after)) {
+                            busy(from);
+                            if (after != null) after.saved(false);
+                        }
+                    }, after);
                     return;
                 }
                 writeProblem(problem, from);
+                if (after != null) after.saved(false);
                 draw();
             }
         });
+        return true;
     }
 
-    private void delete(final View from, final JsonObject order, final boolean retry) {
+    /** {@code DELETE …/plus/orders/<id>}: false when another write is still out (nothing sent). */
+    private boolean delete(final View from, final JsonObject order, final boolean retry) {
         final CloudModel.Account a = account();
         final CloudModel.PlusDoc doc = mDoc;
         final String id = Json.str(order, "id");
-        if (a == null || doc == null || id == null || mSaving) return;
+        if (mSaving) return false;
+        if (a == null || doc == null || id == null) return true;
         mSaving = true;
         mService.deleteOrder(a.id, doc.aiRev, id, new CloudService.Result<PlusModel.Written>() {
             @Override
@@ -1058,13 +1115,16 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
                 mSaving = false;
                 if (!alive()) return;
                 if (problem.kind == CloudProblem.Kind.CONFLICT && retry) {
-                    reloadThen(() -> delete(from, order, false));
+                    reloadThen(() -> {
+                        if (!delete(from, order, false)) busy(from);
+                    }, null);
                     return;
                 }
                 writeProblem(problem, from);
                 draw();
             }
         });
+        return true;
     }
 
     /** An order write's answer: the new settings and revision (the order views stay until the machine sends new ones). */
@@ -1076,21 +1136,33 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
         mService.rememberDoc(id, mDoc);
     }
 
-    private void reloadThen(final Runnable then) {
+    /** Reads the settings again (after a 412), then {@code then}; {@code after} hears a failed read. */
+    private void reloadThen(final Runnable then, @Nullable final PlusOrderSheet.Saved after) {
         CloudModel.Account a = account();
-        if (a == null) return;
+        if (a == null) {
+            if (after != null) after.saved(false);
+            return;
+        }
         mService.plus(a.id, new CloudService.Result<CloudModel.PlusDoc>() {
             @Override
             public void ok(CloudModel.PlusDoc doc) {
-                mDoc = doc;
+                takeDoc(doc);
                 if (alive()) then.run();
+                else if (after != null) after.saved(false);
             }
 
             @Override
             public void failed(CloudProblem problem) {
                 if (alive()) problem(problem, null);
+                if (after != null) after.saved(false);
             }
         });
+    }
+
+    /** A read's settings, unless a write here already holds a newer revision (a slow read must not take a saved order back). */
+    private void takeDoc(CloudModel.PlusDoc doc) {
+        CloudModel.PlusDoc known = mDoc;
+        if (known == null || doc.aiRev >= known.aiRev) mDoc = doc;
     }
 
     private void writeProblem(CloudProblem p, @Nullable View from) {
@@ -1257,7 +1329,7 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
         TextView sub = CloudUi.text(c, meta(c, order, status), 13.5f, R.color.projects_ash_300, false);
         sub.setPadding(CloudUi.dp(c, 8), 0, CloudUi.dp(c, 8), CloudUi.dp(c, 8));
         root.addView(sub);
-        final BottomPanel panel = BottomPanel.of(c, root, 0.7f);
+        final BottomPanel panel = keep(BottomPanel.of(c, root, 0.7f));
         LinearLayout group = CloudUi.group(c);
         List<View> rows = new ArrayList<>();
         boolean finished = PlusWords.finished(status);
@@ -1279,13 +1351,13 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
                         panel.dismiss();
                         JsonObject fields = new JsonObject();
                         fields.addProperty("on", !on);
-                        patch(v, id, fields, true, R.string.projects_order_changed);
+                        if (!patch(v, id, fields, true, R.string.projects_order_changed, null)) busy(v);
                     }).view);
             rows.add(CloudUi.actionRow(c, R.drawable.projects_ic_clock, getString(R.string.projects_order_extend), v -> {
                 panel.dismiss();
                 JsonObject fields = new JsonObject();
                 fields.addProperty("extend", true);
-                patch(v, id, fields, true, R.plurals.projects_order_extended);
+                if (!patch(v, id, fields, true, R.plurals.projects_order_extended, null)) busy(v);
             }).view);
         }
         if (writable && finished) {
@@ -1297,7 +1369,7 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
         if (writable) {
             CloudUi.Row remove = CloudUi.actionRow(c, R.drawable.projects_ic_trash, getString(R.string.projects_order_remove), v -> {
                 panel.dismiss();
-                delete(v, order, true);
+                if (!delete(v, order, true)) busy(v);
             });
             remove.title.setTextColor(CloudUi.color(c, R.color.projects_flare_400));
             rows.add(remove.view);
@@ -1315,7 +1387,7 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
         order.addProperty("on", true);
         int days = mDoc == null ? 14 : mDoc.rules.orderDaysDefault;
         order.addProperty("until", now() + days * 86_400L);
-        write(from, order, null, null, true, null);
+        if (!write(from, order, null, null, true, null, null)) busy(from);
     }
 
     // ---- "Geri al" ----
@@ -1340,9 +1412,12 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
         bar.addView(text, CloudUi.weight(1f));
         final JsonObject undo = mUndo;
         bar.addView(CloudUi.textButton(c, getString(R.string.projects_order_undo), v -> {
-            mUndo = null;
-            // Put back with its id and "at", so its progress returns.
-            write(v, undo, null, null, true, null);
+            // Put back with its id and "at", so its progress returns; the bar goes once it is back.
+            boolean sent = write(v, undo, null, null, true, null, ok -> {
+                if (ok && mUndo == undo) mUndo = null;
+                if (alive()) bottom();
+            });
+            if (!sent) busy(v);
         }));
         bottom.addView(bar, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         bottom.setVisibility(View.VISIBLE);
@@ -1542,26 +1617,23 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
     }
 
     @Override
-    public void saveNew(View from, JsonObject order, @Nullable JsonArray custom, @Nullable Runnable done, boolean fromCard) {
-        write(from, order, custom, fromCard ? mCardSettings : null, true, () -> {
-            if (fromCard) {
-                mDraft = null;
-                mNotes.clear();
-                mCardSettings = null;
-                if (mField != null) mField.input.setText("");
-            }
-            if (done != null) done.run();
-        });
+    public BottomPanel sheet(BottomPanel panel) {
+        return keep(panel);
     }
 
     @Override
-    public void saveChange(View from, String orderId, JsonObject fields) {
-        patch(from, orderId, fields, true, R.string.projects_order_changed);
+    public boolean saveNew(View from, JsonObject order, @Nullable JsonArray custom, boolean fromCard, PlusOrderSheet.Saved saved) {
+        return write(from, order, custom, fromCard ? mCardSettings : null, true, fromCard ? this::cardSaved : null, saved);
+    }
+
+    @Override
+    public boolean saveChange(View from, String orderId, JsonObject fields, PlusOrderSheet.Saved saved) {
+        return patch(from, orderId, fields, true, R.string.projects_order_changed, saved);
     }
 
     @Override
     public void removeOrder(View from, JsonObject order) {
-        delete(from, order, true);
+        if (!delete(from, order, true)) busy(from);
     }
 
     // ---- the live socket ----

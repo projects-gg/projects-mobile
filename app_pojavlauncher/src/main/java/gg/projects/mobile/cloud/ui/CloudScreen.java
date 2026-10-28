@@ -19,6 +19,7 @@ import gg.projects.mobile.cloud.CloudModel;
 import gg.projects.mobile.cloud.CloudProblem;
 import gg.projects.mobile.cloud.CloudService;
 import gg.projects.mobile.cloud.CloudWords;
+import gg.projects.mobile.social.ui.BottomPanel;
 import gg.projects.mobile.social.ui.SocialUi;
 import gg.projects.mobile.ui.Haptics;
 import gg.projects.mobile.ui.ScreenHeader;
@@ -43,6 +44,8 @@ public abstract class CloudScreen extends Fragment implements CloudService.Liste
     protected FrameLayout mBottom;
     private OnBackPressedCallback mBack;
     private boolean mStarted;
+    /** The sheets this screen opened: they close with its view (a tap on a sheet whose screen is gone finds no context). */
+    private final java.util.List<BottomPanel> mPanels = new java.util.ArrayList<>();
 
     protected CloudScreen() {
         super(R.layout.fragment_projects_cloud_page);
@@ -78,6 +81,20 @@ public abstract class CloudScreen extends Fragment implements CloudService.Liste
 
     /** The screen's own views (after the shared ones are found). */
     protected void created(View view) {}
+
+    /** Keeps a sheet to close it with this screen's view; returns it. */
+    protected BottomPanel keep(BottomPanel panel) {
+        for (java.util.Iterator<BottomPanel> it = mPanels.iterator(); it.hasNext(); ) if (!it.next().showing()) it.remove();
+        mPanels.add(panel);
+        return panel;
+    }
+
+    @Override
+    public void onDestroyView() {
+        for (BottomPanel panel : mPanels) panel.dialog().dismiss();
+        mPanels.clear();
+        super.onDestroyView();
+    }
 
     @Override
     public void onResume() {

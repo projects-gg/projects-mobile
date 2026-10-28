@@ -44,6 +44,9 @@ public final class PlusActivityFragment extends CloudScreen implements CloudServ
 
     private int mTab = AUDIT;
     private int mGroup = 0;
+    /** Rows drawn at once (the phone keeps up to 3.000 entries; each live batch draws the log again). */
+    private static final int AUDIT_PAGE = 100;
+    private int mDrawLimit = AUDIT_PAGE;
     /** The log as shown: what the phone kept and what the machine sent, newest first, each entry once. */
     private final List<PlusModel.AuditEntry> mAudit = new ArrayList<>();
     private boolean mKeptRead;
@@ -264,6 +267,7 @@ public final class PlusActivityFragment extends CloudScreen implements CloudServ
                 getString(R.string.projects_audit_filter_deals), getString(R.string.projects_audit_filter_messages),
                 getString(R.string.projects_audit_filter_warnings)}, mGroup, i -> {
             mGroup = i;
+            mDrawLimit = AUDIT_PAGE;
             draw();
         }));
         if ("feature_off".equals(mAuditProblem)) {
@@ -291,7 +295,9 @@ public final class PlusActivityFragment extends CloudScreen implements CloudServ
             long now = mService.nowMs();
             String day = null;
             LinearLayout group = null;
-            for (PlusModel.AuditEntry e : shown) {
+            int drawn = Math.min(shown.size(), mDrawLimit);
+            for (int i = 0; i < drawn; i++) {
+                PlusModel.AuditEntry e = shown.get(i);
                 String heading = dayHeading(c, e.t, now);
                 if (!heading.equals(day)) {
                     day = heading;
@@ -304,7 +310,18 @@ public final class PlusActivityFragment extends CloudScreen implements CloudServ
                 if (group != null) group.addView(entryRow(c, e));
             }
         }
-        if (mAuditMore && !away) content.addView(more(c, R.string.projects_audit_older, v -> load(true)));
+        // Older entries: first the ones the phone holds, then the service's next page.
+        if (shown.size() > mDrawLimit) {
+            content.addView(more(c, R.string.projects_audit_older, v -> {
+                mDrawLimit += AUDIT_PAGE;
+                draw();
+            }));
+        } else if (mAuditMore && !away) {
+            content.addView(more(c, R.string.projects_audit_older, v -> {
+                mDrawLimit = shown.size() + AUDIT_PAGE;
+                load(true);
+            }));
+        }
         content.addView(CloudUi.note(c, getString(R.string.projects_audit_kept)));
         content.addView(CloudUi.note(c, getString(R.string.projects_ai_note)));
     }
