@@ -305,6 +305,23 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
         boolean on = a.ai != null && ("on".equals(a.ai.state) || "paused".equals(a.ai.state));
         boolean lockedOff = ai == PlusFormat.Ai.OFF_STAFF || ai == PlusFormat.Ai.OFF_RESTRICTED || ai == PlusFormat.Ai.OFF_SERVICE
                 || ai == PlusFormat.Ai.OFF_SERVER || ai == PlusFormat.Ai.OFF_MODERATION || ai == PlusFormat.Ai.UNKNOWN;
+        if (a.ai != null && a.ai.waitsForStart()) {
+            // A first grant waits for the player (TRADE-ANY decision 26): one line and the start, through the setup's
+            // questions (SETUP-UX); nothing runs before "Başlat".
+            TextView ready = CloudUi.text(c, getString(R.string.projects_plus_ai_ready), 15, R.color.projects_bone_100, false);
+            ready.setPadding(CloudUi.dp(c, 16), CloudUi.dp(c, 14), CloudUi.dp(c, 16), CloudUi.dp(c, 4));
+            assistant.addView(ready);
+            TextView foot = CloudUi.text(c, getString(R.string.projects_setup_rail_foot), 13, R.color.projects_ash_400, false);
+            foot.setPadding(CloudUi.dp(c, 16), 0, CloudUi.dp(c, 16), CloudUi.dp(c, 10));
+            assistant.addView(foot);
+            LinearLayout.LayoutParams beginLp = CloudUi.matchWrap();
+            beginLp.setMargins(CloudUi.dp(c, 12), 0, CloudUi.dp(c, 12), CloudUi.dp(c, 12));
+            assistant.addView(CloudUi.button(c, getString(R.string.projects_plus_begin), true,
+                    v -> openFor(PlusSetupFragment.class, a.id)), beginLp);
+            content.addView(assistant);
+            plusScreens(content, a);
+            return;
+        }
         final SwitchCompat toggle = CloudUi.toggle(c, getString(R.string.projects_plus_assistant_switch), on, now -> setAssistant(now));
         toggle.setEnabled(!lockedOff && !mBusy);
         assistant.addView(toggle);
@@ -315,10 +332,30 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
             aiLine.setPadding(CloudUi.dp(c, 16), 0, CloudUi.dp(c, 16), CloudUi.dp(c, 12));
             aiLine.setLineSpacing(0, 1.15f);
             assistant.addView(aiLine);
+            if (ai == PlusFormat.Ai.ON_NOTIFY_ONLY) {
+                // No spending limits: "Sınırlara git" to the first one buying needs (the site's strip, the launcher's).
+                CloudModel.PlusDoc known = mService.lastPlus(a.id);
+                final String field = known != null && new gg.projects.mobile.cloud.PlusConfig(known.config).limit("perDealMax") != null
+                        ? "limits.totalBudget" : "limits.perDealMax";
+                LinearLayout.LayoutParams limitsLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT);
+                limitsLp.setMarginStart(CloudUi.dp(c, 8));
+                limitsLp.bottomMargin = CloudUi.dp(c, 6);
+                assistant.addView(CloudUi.textButton(c, getString(R.string.projects_to_limits),
+                        v -> PlusQuestionFragment.openLimit(this, a.id, field)), limitsLp);
+            }
         }
         content.addView(assistant);
+        plusScreens(content, a);
+    }
 
-        // What asks something of the player (an approval, a message) comes right under the switch; the allowance after.
+    /**
+     * The AFK+ screens under the switch: what asks something of the player (approvals, messages), the orders, the feed
+     * and the history; then the settings as the site's questions with their answers (SETUP-UX); the credits and the
+     * account type after.
+     */
+    private void plusScreens(LinearLayout content, final CloudModel.Account a) {
+        final Context c = ctx();
         content.addView(CloudUi.gap(c, 12));
         LinearLayout screens = CloudUi.group(c);
         List<View> rows = new ArrayList<>();
@@ -334,14 +371,6 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
         }
         rows.add(CloudUi.row(c, R.drawable.projects_ic_arrows_left_right, getString(R.string.projects_plus_rules),
                 v -> openFor(PlusOrdersFragment.class, a.id)).view);
-        rows.add(CloudUi.row(c, R.drawable.projects_ic_user_circle, getString(R.string.projects_plus_chat_settings),
-                v -> openFor(PlusAssistantFragment.class, a.id)).view);
-        if (mService.plusFeature("schedule")) {
-            rows.add(CloudUi.row(c, R.drawable.projects_ic_moon, getString(R.string.projects_plus_schedule),
-                    v -> openFor(PlusScheduleFragment.class, a.id)).view);
-        }
-        rows.add(CloudUi.row(c, R.drawable.projects_ic_wallet, getString(R.string.projects_fine_title),
-                v -> openFor(PlusSafetyFragment.class, a.id)).view);
         rows.add(CloudUi.row(c, R.drawable.projects_ic_pulse, getString(R.string.projects_plus_activity),
                 v -> openFor(PlusActivityFragment.class, a.id)).view);
         if (mService.plusFeature("history")) {
@@ -350,6 +379,25 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
         }
         CloudUi.fill(screens, rows);
         content.addView(screens);
+
+        // The settings as questions, each with its answer in plain words (the site's summary); the answers once the
+        // settings are read (ensureItemNames reads them once a visit).
+        content.addView(CloudUi.section(c, getString(R.string.projects_cloud_settings)));
+        LinearLayout questions = CloudUi.group(c);
+        List<View> qs = new ArrayList<>();
+        CloudModel.PlusDoc doc = mService.lastPlus(a.id);
+        gg.projects.mobile.cloud.PlusConfig config = doc == null ? null : new gg.projects.mobile.cloud.PlusConfig(doc.config);
+        for (final String q : PlusEditors.QUESTIONS) {
+            if (PlusEditors.TIME.equals(q) && !mService.plusFeature("schedule")) continue;
+            CloudUi.Row row = CloudUi.row(c, PlusEditors.icon(q), getString(PlusEditors.title(q)), v -> {
+                if (PlusEditors.TIME.equals(q)) openFor(PlusScheduleFragment.class, a.id);
+                else open(PlusQuestionFragment.class, PlusQuestionFragment.args(a.id, q, null));
+            });
+            if (config != null) row.setLine(PlusEditors.answer(c, q, config, doc, mService), R.color.projects_ash_400);
+            qs.add(row.view);
+        }
+        CloudUi.fill(questions, qs);
+        content.addView(questions);
 
         if (a.ai != null && a.ai.quota != null) {
             // The unit's one name on every surface ("Kontör" / "AI credits", the owner's decision of 25 October) as the

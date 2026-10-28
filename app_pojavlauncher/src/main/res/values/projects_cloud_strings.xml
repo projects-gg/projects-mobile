@@ -538,7 +538,6 @@
     <string name="projects_plus_sell_line">Target %1$s, at least %2$s</string>
     <string name="projects_plus_each_line">Each: %1$s</string>
     <string name="projects_plus_qty_line">%1$d pcs: %2$s</string>
-    <string name="projects_plus_notify_only_note">Without a spending authority and a per-deal limit it buys nothing, it only reports finds.</string>
     <string name="projects_plus_row_buy_title">Buying</string>
     <string name="projects_plus_row_sell_title">Selling</string>
     <string name="projects_plus_row_item">Item</string>
@@ -606,7 +605,6 @@
     <string name="projects_plus_saver_80" formatted="false">80%</string>
     <string name="projects_plus_saver_50" formatted="false">50%</string>
     <string name="projects_plus_saver_off">Off</string>
-    <string name="projects_plus_scan">Scan chat for items for sale</string>
     <string name="projects_plus_proactive">Message the seller once when found</string>
     <string name="projects_plus_summary_at">Daily summary at</string>
     <string name="projects_plus_blocked">Blocked players</string>
@@ -651,14 +649,11 @@
     <string name="projects_plus_limit_approvalTimeoutMin">If you don\'t answer an approval</string>
     <string name="projects_plus_limit_minutes">min</string>
     <string name="projects_plus_limit_timeout_help">After this many minutes it counts as a no.</string>
-    <string name="projects_plus_limits_money">Amounts are in-game money.</string>
     <string name="projects_plus_limit_none">No limit</string>
     <string name="projects_plus_limit_order">The approval limit can\'t be above the per-deal maximum.</string>
     <string name="projects_plus_reset_spent">Reset spending</string>
     <string name="projects_plus_reset_spent_body">What was used of the total limit goes back to zero. Today\'s spending stays.</string>
     <string name="projects_plus_reset_spent_done">Spending reset.</string>
-    <string name="projects_plus_spent_today">Spent today</string>
-    <string name="projects_plus_spent_total">Total limit used</string>
 
     <!-- Activity (feed, trade history, weekly report; QoL Q4) -->
     <string name="projects_plus_feed">Live</string>

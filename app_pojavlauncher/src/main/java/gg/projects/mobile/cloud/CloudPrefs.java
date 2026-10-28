@@ -146,6 +146,20 @@ public final class CloudPrefs {
         return bare.isEmpty() ? id : Character.toUpperCase(bare.charAt(0)) + bare.substring(1);
     }
 
+    /**
+     * The first setup's choices kept on this device ("Daha sonra", SETUP-UX): {@code {step, config}}, or null. Nothing is
+     * sent before "Başlat".
+     */
+    @androidx.annotation.Nullable
+    public JsonObject setupDraft(String acct) {
+        return Json.parseObject(mPrefs.getString("setup|" + acct, null));
+    }
+
+    public void setSetupDraft(String acct, @androidx.annotation.Nullable JsonObject draft) {
+        if (draft == null) mPrefs.edit().remove("setup|" + acct).apply();
+        else mPrefs.edit().putString("setup|" + acct, draft.toString()).apply();
+    }
+
     /** Signed out: the player's summary goes (item names are not the player's). */
     public void clearAccount() {
         setSummary(null);

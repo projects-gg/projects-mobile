@@ -108,6 +108,12 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
     private final Runnable mUndoEnd = this::undoEnded;
     /** Whether "Kontrol et" is the gold action now (not while a card's "Kaydet" is). */
     private boolean mCheckLoud = true;
+    /** The player said the typed text's money is the game's ("Bu oyun parası"); goes with a change of the text. */
+    private boolean mInGame;
+    /** The service asked whether the money is real ({@code question:rmt}): "Bu oyun parası" checks again at once. */
+    private boolean mServerAsked;
+    @Nullable
+    private Button mInGameButton;
 
     @Override
     protected void created(View view) {
@@ -322,6 +328,8 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
             @Override
             public void afterTextChanged(Editable s) {
                 mIntakeProblem = null;
+                mInGame = false;
+                mServerAsked = false;
                 refreshIntake();
             }
         });
@@ -331,6 +339,19 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
         hint.setPadding(CloudUi.dp(c, 8), CloudUi.dp(c, 2), CloudUi.dp(c, 8), CloudUi.dp(c, 2));
         hint.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
         box.addView(hint);
+        // "Bu oyun parası" (TRADE-ANY decision 31): money that may be the game's is a question, never a refusal.
+        Button inGame = CloudUi.textButton(c, getString(R.string.projects_money_in_game), v -> {
+            mInGame = true;
+            boolean again = mServerAsked;
+            mServerAsked = false;
+            mIntakeProblem = null;
+            Haptics.tick(v);
+            refreshIntake();
+            if (again) check(v);
+        });
+        inGame.setVisibility(View.GONE);
+        box.addView(inGame, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        mInGameButton = inGame;
         // The one loud thing of the section; a fixed width so "Okunuyor" never moves it.
         Button check = CloudUi.button(c, getString(R.string.projects_order_check), true, this::check);
         check.setMinWidth(CloudUi.dp(c, 150));
@@ -386,6 +407,7 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
         String text = field.value().trim();
         String line = null;
         boolean warning = false;
+        boolean asks = false;
         if (blocked) {
             line = getString(maintenance() ? R.string.projects_order_maintenance : R.string.projects_order_offline);
         } else if (!typed) {
@@ -395,15 +417,21 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
         } else if (mIntakeProblem != null) {
             line = mIntakeProblem;
             warning = true;
+        } else if (mServerAsked) {
+            line = getString(R.string.projects_money_question);
+            asks = true;
         } else if (text.codePointCount(0, text.length()) >= 3) {
-            OrderRules.Hint rule = OrderRules.ruleHint(OrderRules.checkOrderText(text, new OrderRules.RuleContext()
-                    .maxDeal(mDoc == null ? PlusModel.GENERIC_MAX_DEAL : mDoc.server.maxDeal).active(activeCount())
-                    .orderMax(mDoc == null ? 10 : mDoc.rules.orderMax)));
+            OrderRules.RuleCheck rc = OrderRules.checkOrderText(text, ruleContext());
+            OrderRules.Hint rule = OrderRules.ruleHint(rc);
             if (rule != null) {
                 line = rejectWords(rule.reason, rule.rule);
                 warning = true;
+            } else if (rc.asksMoney()) {
+                line = getString(R.string.projects_money_question);
+                asks = true;
             }
         }
+        if (mInGameButton != null) mInGameButton.setVisibility(asks ? View.VISIBLE : View.GONE);
         hint.setText(line == null ? "" : line);
         hint.setVisibility(line == null ? View.GONE : View.VISIBLE);
         // The colour of a problem only in its mark; the sentence stays plain.
@@ -469,10 +497,16 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
         if (a == null || field == null || mChecking || mDoc == null) return;
         String text = field.value().trim();
         if (text.codePointCount(0, text.length()) < 3) return;
-        OrderRules.Hint rule = OrderRules.ruleHint(OrderRules.checkOrderText(text, new OrderRules.RuleContext()
-                .maxDeal(mDoc.server.maxDeal).active(activeCount()).orderMax(mDoc.rules.orderMax)));
+        OrderRules.RuleCheck rc = OrderRules.checkOrderText(text, ruleContext());
+        OrderRules.Hint rule = OrderRules.ruleHint(rc);
         if (rule != null) {
             mIntakeProblem = rejectWords(rule.reason, rule.rule);
+            Haptics.reject(from);
+            refreshIntake();
+            return;
+        }
+        if (rc.asksMoney()) {
+            // Asked under the field; "Bu oyun parası" lets it through.
             Haptics.reject(from);
             refreshIntake();
             return;
@@ -480,7 +514,7 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
         mChecking = true;
         mIntakeProblem = null;
         refreshIntake();
-        mService.checkOrder(a.id, text, lang(), new CloudService.Result<PlusModel.Check>() {
+        mService.checkOrder(a.id, text, lang(), mInGame, new CloudService.Result<PlusModel.Check>() {
             @Override
             public void ok(PlusModel.Check answer) {
                 mChecking = false;
@@ -499,11 +533,25 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
             public void failed(CloudProblem problem) {
                 mChecking = false;
                 if (!alive()) return;
-                mIntakeProblem = checkProblem(problem);
+                if (problem.asksMoney()) {
+                    mServerAsked = true;
+                    mIntakeProblem = null;
+                } else {
+                    mIntakeProblem = checkProblem(problem);
+                }
                 Haptics.reject(from);
                 refreshIntake();
             }
         });
+    }
+
+    /** The rule check's context: the profile's cap, the counters, the server's money name and the player's answer. */
+    private OrderRules.RuleContext ruleContext() {
+        CloudModel.PlusDoc doc = mDoc;
+        String currency = doc == null || doc.server.moneyLabel == null ? null : doc.server.moneyLabel.in(lang());
+        return new OrderRules.RuleContext()
+                .maxDeal(doc == null ? PlusModel.GENERIC_MAX_DEAL : doc.server.maxDeal).active(activeCount())
+                .orderMax(doc == null ? 10 : doc.rules.orderMax).currency(currency).inGame(mInGame);
     }
 
     private String checkProblem(CloudProblem p) {
@@ -573,7 +621,8 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
         Long target = Json.numOrNull(draft, "target");
         Long limit = Json.numOrNull(draft, "limit");
         figures.addView(figure(c, getString(R.string.projects_card_target), target == null || pay == null ? null : perPiece(price(target, pay), each), null));
-        String words = limit != null && "money".equals(pay) ? TrGrammar.words(limit, lang()) : null;
+        // The words under a figure only from 10.000 (the launcher's WORDS_FROM): below that they only repeat it.
+        String words = limit != null && limit >= 10_000 && "money".equals(pay) ? TrGrammar.words(limit, lang()) : null;
         figures.addView(figure(c, getString(sell ? R.string.projects_card_at_least : R.string.projects_card_at_most),
                 limit == null || pay == null ? null : perPiece(price(limit, pay), each), words));
         card.addView(figures);
@@ -624,6 +673,15 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
             androidx.core.widget.TextViewCompat.setCompoundDrawableTintList(t, ColorStateList.valueOf(CloudUi.color(c, R.color.projects_ash_400)));
             t.setPadding(0, CloudUi.dp(c, 8), 0, 0);
             card.addView(t);
+            if ("notify_only".equals(n)) {
+                // The site's and the launcher's quiet button beside a limit reason: the first limit buying lacks.
+                PlusConfig conf = config();
+                final String field = conf.limit("perDealMax") == null ? "limits.perDealMax" : "limits.totalBudget";
+                card.addView(CloudUi.textButton(c, getString(R.string.projects_to_limits), v -> {
+                    String id = accountId();
+                    if (id != null) PlusQuestionFragment.openLimit(this, id, field);
+                }), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            }
         }
 
         // At most two questions, with ready answers.
@@ -1145,7 +1203,7 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
         CloudModel.PlusDoc doc = mDoc;
         String id = accountId();
         if (doc == null || id == null) return;
-        mDoc = doc.with(w.config, w.aiRev, null);
+        mDoc = doc.with(w.config, w.aiRev, null, w.adPreview, null);
         mService.rememberDoc(id, mDoc);
     }
 

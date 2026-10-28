@@ -33,7 +33,7 @@ public final class PlusScheduleFragment extends PlusScreen {
 
     @Override
     protected int title() {
-        return R.string.projects_plus_schedule;
+        return R.string.projects_setup_q_time;
     }
 
 

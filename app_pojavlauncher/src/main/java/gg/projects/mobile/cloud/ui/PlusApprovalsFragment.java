@@ -200,6 +200,18 @@ public final class PlusApprovalsFragment extends CloudScreen implements CloudSer
         return buttons;
     }
 
+    /** The setting a limit reason names ({@code above}, {@code new_counterpart}, {@code daily}, {@code budget}), or null. */
+    @Nullable
+    private static String limitField(String why) {
+        switch (why) {
+            case "above": return "limits.approvalAbove";
+            case "new_counterpart": return "limits.newCounterpartApprovalAbove";
+            case "daily": return "limits.dailySpendMax";
+            case "budget": return "limits.totalBudget";
+            default: return null;
+        }
+    }
+
     /** The head of a card: the item's tile, its name and one line under it; the time left on the right. */
     private LinearLayout head(Context c, CloudModel.Approval ap, String tileRef, String name, String line) {
         LinearLayout head = new LinearLayout(c);
@@ -280,11 +292,22 @@ public final class PlusApprovalsFragment extends CloudScreen implements CloudSer
         TextView price = CloudUi.figure(c, price(ap), 24, R.color.projects_bone_100);
         price.setPadding(0, CloudUi.dp(c, 12), 0, CloudUi.dp(c, 2));
         card.addView(price);
+        boolean toLimits = false;
         for (String why : ap.why) {
             String words = "authority".equals(why) ? getString(R.string.projects_approval_why_authority) : CloudWords.why(c, why);
             TextView reason = CloudUi.text(c, words, 13.5f, R.color.projects_ash_300, false);
             reason.setPadding(0, CloudUi.dp(c, 2), 0, 0);
             card.addView(reason);
+            // "Sınırlara git" (TRADE-ANY decision 25): beside the first limit reason, quiet (the card's gold is none);
+            // the authority has its own question and no button, as on the site and in the launcher.
+            final String field = limitField(why);
+            if (!toLimits && field != null) {
+                toLimits = true;
+                card.addView(CloudUi.textButton(c, getString(R.string.projects_to_limits), v -> {
+                    String id = accountId();
+                    if (id != null) PlusQuestionFragment.openLimit(this, id, field);
+                }), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            }
         }
         card.addView(buttons(c, ap, R.string.projects_plus_approve, R.string.projects_cloud_reject), CloudUi.matchWrap());
         // "Fiyatı düşür" bargains again: a buy for money, while the assistant is running.

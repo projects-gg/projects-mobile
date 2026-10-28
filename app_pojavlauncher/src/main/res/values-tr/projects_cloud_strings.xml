@@ -541,7 +541,6 @@
     <string name="projects_plus_sell_line">Hedef %1$s, en az %2$s</string>
     <string name="projects_plus_each_line">Tanesi: %1$s</string>
     <string name="projects_plus_qty_line">%1$d adet: %2$s</string>
-    <string name="projects_plus_notify_only_note">Harcama yetkisi ve tek anlaşma sınırı girilmeden alım yapmaz, yalnız bulunca haber verir.</string>
     <string name="projects_plus_row_buy_title">Alım</string>
     <string name="projects_plus_row_sell_title">Satım</string>
     <string name="projects_plus_row_item">Eşya</string>
@@ -609,7 +608,6 @@
     <string name="projects_plus_saver_80" formatted="false">%80</string>
     <string name="projects_plus_saver_50" formatted="false">%50</string>
     <string name="projects_plus_saver_off">Kapalı</string>
-    <string name="projects_plus_scan">Sohbetteki satış ilanlarını tara</string>
     <string name="projects_plus_proactive">Bulunca satıcıya bir kez yazsın</string>
     <string name="projects_plus_summary_at">Günlük özet saati</string>
     <string name="projects_plus_blocked">Engellenen oyuncular</string>
@@ -654,14 +652,11 @@
     <string name="projects_plus_limit_approvalTimeoutMin">Onaya cevap vermezsen</string>
     <string name="projects_plus_limit_minutes">dk</string>
     <string name="projects_plus_limit_timeout_help">Bu kadar dakika sonra hayır sayılır.</string>
-    <string name="projects_plus_limits_money">Tutarlar oyundaki parayla.</string>
     <string name="projects_plus_limit_none">Sınır yok</string>
     <string name="projects_plus_limit_order">Onay sınırı, tek anlaşmadaki en fazla tutardan büyük olamaz.</string>
     <string name="projects_plus_reset_spent">Harcananı sıfırla</string>
     <string name="projects_plus_reset_spent_body">Toplam sınırdan kullanılan sıfırlanır. Bugün harcanan aynı kalır.</string>
     <string name="projects_plus_reset_spent_done">Harcanan sıfırlandı.</string>
-    <string name="projects_plus_spent_today">Bugün harcanan</string>
-    <string name="projects_plus_spent_total">Toplam sınırdan kullanılan</string>
 
     <!-- Etkinlik (akış, takas geçmişi, haftalık rapor; QoL Q4) -->
     <string name="projects_plus_feed">Canlı</string>

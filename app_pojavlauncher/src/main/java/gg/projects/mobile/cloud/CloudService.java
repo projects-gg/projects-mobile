@@ -841,6 +841,16 @@ public final class CloudService implements SocialService.Listener {
         run(token -> mApi.putPlus(token, id, aiRev, config), keepWritten(id, result));
     }
 
+    /** The first setup's choices kept on this device, or null ("Daha sonra"). */
+    @Nullable
+    public JsonObject setupDraft(String id) {
+        return mPrefs.setupDraft(id);
+    }
+
+    public void setSetupDraft(String id, @Nullable JsonObject draft) {
+        mPrefs.setSetupDraft(id, draft);
+    }
+
     /** The account's last AFK+ settings read on this phone (null: none yet). */
     @Nullable
     public CloudModel.PlusDoc lastPlus(String id) {
