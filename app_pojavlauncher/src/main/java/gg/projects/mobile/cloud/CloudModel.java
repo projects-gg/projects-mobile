@@ -1419,8 +1419,13 @@ public final class CloudModel {
         public final int allowancePct;
         @Nullable
         public final String currency;
+        /** The report's week, unix seconds: from its Monday 04:00 to the next (0 when the service sent none). */
+        public final long weekFrom;
+        public final long weekTo;
 
-        private WeeklyAccount(JsonObject o) {
+        private WeeklyAccount(JsonObject o, long from, long to) {
+            weekFrom = from;
+            weekTo = to;
             id = Json.str(o, "id", "");
             name = Json.str(o, "name", "");
             pms = Json.num(o, "pms", 0);
@@ -1438,7 +1443,9 @@ public final class CloudModel {
 
         public static List<WeeklyAccount> list(@Nullable JsonObject o) {
             List<WeeklyAccount> out = new ArrayList<>();
-            for (JsonObject a : Json.objects(o, "accounts")) out.add(new WeeklyAccount(a));
+            long from = Json.num(o, "from", 0);
+            long to = Json.num(o, "to", 0);
+            for (JsonObject a : Json.objects(o, "accounts")) out.add(new WeeklyAccount(a, from, to));
             return out;
         }
     }

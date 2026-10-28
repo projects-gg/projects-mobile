@@ -397,7 +397,9 @@ public final class CloudInventoryFragment extends CloudScreen implements Invento
             text = getString(R.string.projects_feat_inv_carry);
         } else if (status != null && status.tradeLock()) {
             text = getString(R.string.projects_feat_inv_trade);
-        } else if (!c.movesAllowed() && pickKey() == null) {
+        } else if (pickKey() != null) {
+            text = getString(R.string.projects_feat_inv_pick_hint);
+        } else if (!c.movesAllowed()) {
             text = getString(R.string.projects_feat_inv_view_only);
         }
         if (carrying) action = getString(R.string.projects_feat_inv_put_back);

@@ -85,14 +85,24 @@ public final class ItemAtlases {
         return ItemArt.standIns();
     }
 
-    /** {@code cache/items/<version>-r<revision>-b<block>-<jar time>/}; an older drawing of the same version is removed. */
+    /**
+     * {@code cache/items/<version>-r<revision>-b<block>-<jar time>/}; an older drawing of the same version (another
+     * revision or jar) is removed. The drawings of other sizes stay: a screen that shows two sizes (a card's tile and a
+     * row's) took the other one away while it was being read, and its items kept their stand-ins.
+     */
     static File cacheDir(Context app, File jar, int block) {
         File root = new File(app.getCacheDir(), "items");
         String version = GameJars.versionOf(jar);
-        String name = version + "-r" + PlItems.REVISION + "-b" + block + "-" + jar.lastModified();
+        String current = version + "-r" + PlItems.REVISION + "-b";
+        String jarTime = "-" + jar.lastModified();
+        String name = current + block + jarTime;
         File[] old = root.listFiles();
         if (old != null) {
-            for (File f : old) if (f.getName().startsWith(version + "-") && !f.getName().equals(name)) deleteTree(f);
+            for (File f : old) {
+                String n = f.getName();
+                boolean sameDrawing = n.startsWith(current) && n.endsWith(jarTime);
+                if (n.startsWith(version + "-") && !sameDrawing) deleteTree(f);
+            }
         }
         return new File(root, name);
     }

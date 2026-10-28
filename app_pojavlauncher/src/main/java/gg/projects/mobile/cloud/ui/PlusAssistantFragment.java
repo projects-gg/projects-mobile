@@ -40,7 +40,7 @@ public final class PlusAssistantFragment extends PlusScreen {
 
     @Override
     protected int title() {
-        return R.string.projects_plus_assistant;
+        return R.string.projects_plus_chat_settings;
     }
 
     private interface Typed {

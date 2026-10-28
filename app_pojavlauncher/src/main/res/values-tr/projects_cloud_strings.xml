@@ -129,7 +129,7 @@
     <string name="projects_cloud_time">Süre</string>
     <string name="projects_cloud_ends_on">%1$s bitiyor</string>
     <string name="projects_cloud_renew_opens">Süreyi %1$s itibaren uzatabilirsin.</string>
-    <string name="projects_cloud_site_more">Sipariş, iade ve hesap silme işleri afk.projects.gg\'de.</string>
+    <string name="projects_cloud_site_more">Satın alma, iade ve hesap silme işleri afk.projects.gg\'de.</string>
     <string name="projects_cloud_inventory">Envanter</string>
 
     <!-- Moderasyon (services/cloud-afk README "Moderation player API") -->
@@ -596,7 +596,7 @@
     <string name="projects_plus_status_own">Kendim yazacağım</string>
     <string name="projects_plus_status_hint">Akşam 8\'de dönerim</string>
     <string name="projects_plus_small_talk">Cevap verdiği konuşmalarda sohbet de etsin</string>
-    <string name="projects_plus_scope">Kime cevap versin</string>
+    <string name="projects_plus_scope">Hangi mesajlara cevap versin</string>
     <string name="projects_plus_scope_all">Her özel mesaja</string>
     <string name="projects_plus_scope_trade">Yalnız ticaret mesajlarına</string>
     <string name="projects_plus_scope_off">Yalnız hazır cevaplar</string>
@@ -702,8 +702,8 @@
     <string name="projects_plus_week_sold">Satılan</string>
     <string name="projects_plus_week_spent">Harcanan</string>
     <string name="projects_plus_week_earned">Kazanılan</string>
-    <string name="projects_plus_week_below">Alımlarda tasarruf</string>
-    <string name="projects_plus_week_above">Satışta fazladan</string>
+    <string name="projects_plus_week_below">Sınırından az ödenen</string>
+    <string name="projects_plus_week_above">En az fiyatından fazla alınan</string>
     <string name="projects_plus_week_blocked">Engellenen şüpheli mesaj</string>
     <string name="projects_plus_week_allowance">Kullanılan kontör</string>
     <string name="projects_plus_week_empty">Geçen hafta bu hesapta takas ya da cevap olmadı.</string>

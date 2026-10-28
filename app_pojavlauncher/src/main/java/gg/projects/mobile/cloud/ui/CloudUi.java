@@ -320,17 +320,24 @@ public final class CloudUi {
         Button button = new Button(c, null, android.R.attr.borderlessButtonStyle);
         button.setText(label);
         button.setAllCaps(false);
-        button.setTextSize(TypedValue.COMPLEX_UNIT_SP, primary ? 16 : 15);
         button.setMinHeight(dp(c, 48));
         button.setMinimumHeight(dp(c, 48));
         button.setPadding(dp(c, 18), 0, dp(c, 18), 0);
-        button.setTextColor(primary ? color(c, R.color.projects_on_gold) : color(c, R.color.projects_bone_100));
-        button.setBackground(primary ? ChamferDrawable.primary(c) : ChamferDrawable.outlined(c));
-        button.setTypeface(font(c, primary ? R.font.tektur_semibold : R.font.figtree_semibold));
-        if (primary && Build.VERSION.SDK_INT >= 21) button.setLetterSpacing(0.02f);
+        styleButton(c, button, primary);
         Press.attach(button, Press.Style.BUTTON);
         button.setOnClickListener(click);
         return button;
+    }
+
+    /** The gold or the outlined look of a {@link #button}; a disabled one keeps legible words. */
+    public static void styleButton(Context c, Button button, boolean primary) {
+        button.setTextSize(TypedValue.COMPLEX_UNIT_SP, primary ? 16 : 15);
+        button.setTextColor(new android.content.res.ColorStateList(
+                new int[][]{new int[]{-android.R.attr.state_enabled}, new int[]{}},
+                new int[]{color(c, R.color.projects_ash_500), primary ? color(c, R.color.projects_on_gold) : color(c, R.color.projects_bone_100)}));
+        button.setBackground(primary ? ChamferDrawable.primary(c) : ChamferDrawable.outlined(c));
+        button.setTypeface(font(c, primary ? R.font.tektur_semibold : R.font.figtree_semibold));
+        if (Build.VERSION.SDK_INT >= 21) button.setLetterSpacing(primary ? 0.02f : 0f);
     }
 
     /** A quiet text action (gold-300), 48 dp tall. */

@@ -334,7 +334,7 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
         }
         rows.add(CloudUi.row(c, R.drawable.projects_ic_arrows_left_right, getString(R.string.projects_plus_rules),
                 v -> openFor(PlusOrdersFragment.class, a.id)).view);
-        rows.add(CloudUi.row(c, R.drawable.projects_ic_user_circle, getString(R.string.projects_plus_assistant),
+        rows.add(CloudUi.row(c, R.drawable.projects_ic_user_circle, getString(R.string.projects_plus_chat_settings),
                 v -> openFor(PlusAssistantFragment.class, a.id)).view);
         if (mService.plusFeature("schedule")) {
             rows.add(CloudUi.row(c, R.drawable.projects_ic_moon, getString(R.string.projects_plus_schedule),

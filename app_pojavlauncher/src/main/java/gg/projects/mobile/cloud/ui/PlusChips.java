@@ -36,10 +36,12 @@ final class PlusChips extends ViewGroup {
         b.setTextColor(CloudUi.color(c, R.color.projects_bone_100));
         b.setMinHeight(CloudUi.dp(c, 44));
         b.setMinimumHeight(CloudUi.dp(c, 44));
-        b.setMinWidth(0);
-        b.setMinimumWidth(0);
-        b.setPadding(CloudUi.dp(c, 14), 0, CloudUi.dp(c, 14), 0);
+        b.setMinWidth(CloudUi.dp(c, 48));
+        b.setMinimumWidth(CloudUi.dp(c, 48));
+        b.setGravity(android.view.Gravity.CENTER);
         b.setBackground(ChamferDrawable.toggle(c));
+        // After the background, and as start/end: the button style's own start/end padding left the words on the edges.
+        b.setPaddingRelative(CloudUi.dp(c, 14), CloudUi.dp(c, 6), CloudUi.dp(c, 14), CloudUi.dp(c, 6));
         Press.attach(b, Press.Style.BUTTON);
         b.setOnClickListener(v -> {
             Haptics.tick(v);

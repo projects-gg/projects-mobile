@@ -10,7 +10,7 @@
 
     <!-- Siparişler -->
     <string name="projects_order_intake_label">Ne almak ya da satmak istiyorsun?</string>
-    <string name="projects_order_intake_hint">Örnek: Elytra alırım, en fazla 40 bin</string>
+    <string name="projects_order_intake_hint">Örnek: Elitra alırım, en fazla 40 bin</string>
     <string name="projects_order_check">Kontrol et</string>
     <string name="projects_order_reading">Okunuyor</string>
     <string name="projects_order_form">Formla ekle</string>
@@ -105,7 +105,7 @@
     <string name="projects_card_target">Hedef</string>
     <string name="projects_card_at_most">En fazla</string>
     <string name="projects_card_at_least">En az</string>
-    <string name="projects_card_each">adet başına</string>
+    <string name="projects_card_each_price">tanesi %1$s</string>
     <string name="projects_card_for_item">Karşılığında %1$s</string>
     <string name="projects_card_for_money">Karşılığında para</string>
     <string name="projects_card_for_money_bare">Oyundaki parayla</string>
@@ -159,7 +159,7 @@
     <string name="projects_q_far">En fazla %1$s doğru mu? Hedefin %2$s.</string>
     <string name="projects_q_yes_right">Evet, doğru</string>
     <string name="projects_q_fix">Düzelt</string>
-    <string name="projects_q_over_cap">Bu fiyat tek alım sınırını (%1$s) aşıyor.</string>
+    <string name="projects_q_over_cap">Bu fiyat tek anlaşma sınırını (%1$s) aşıyor.</string>
     <string name="projects_q_raise">Sınırı %1$s yap</string>
     <string name="projects_q_use_cap">Fiyatı %1$s yap</string>
 
@@ -243,7 +243,6 @@
     <string name="projects_items_unnamed">Adsız eşya</string>
 
     <!-- Onaylar: Takas sende, İlk görüş -->
-    <string name="projects_handoff_title">Takas sende</string>
     <string name="projects_handoff_body">%1$s ile anlaştın: %2$s. Takası oyunda yap, sonra burada işaretle.</string>
     <string name="projects_handoff_yes">Takas oldu</string>
     <string name="projects_handoff_no">Olmadı</string>
@@ -252,7 +251,6 @@
     <plurals name="projects_handoff_hours_left">
         <item quantity="other">%d saat kaldı</item>
     </plurals>
-    <string name="projects_firstsight_title">İlk görüş</string>
     <string name="projects_firstsight_question">Aradığın %1$s bu mu?</string>
     <string name="projects_firstsight_yes">Evet, bu</string>
     <string name="projects_firstsight_no">Hayır</string>
@@ -267,7 +265,7 @@
     <string name="projects_approval_sent_no">Reddin iletildi</string>
 
     <!-- Akış: the audit log -->
-    <string name="projects_audit_tab">Akış</string>
+    <string name="projects_audit_tab">Kayıtlar</string>
     <string name="projects_audit_filter_all">Tümü</string>
     <string name="projects_audit_filter_deals">Anlaşmalar</string>
     <string name="projects_audit_filter_messages">Mesajlar</string>
@@ -431,4 +429,9 @@
     <string name="projects_notice_first_sight">%1$s: %2$s için onayın gerekiyor.</string>
     <string name="projects_order_busy">Önceki değişiklik kaydediliyor, biraz bekle.</string>
     <string name="projects_form_pay_forced">Eşyayla takas şu an kapalı. Fiyatı para olarak yeniden yaz.</string>
+    <string name="projects_order_meta_buy_done">Alım</string>
+    <string name="projects_order_meta_sell_done">Satış</string>
+    <string name="projects_feat_inv_pick_hint">Siparişe eklemek için bir eşyaya dokun.</string>
+    <string name="projects_plus_chat_settings">Sohbet ayarları</string>
+    <string name="projects_plus_week_range">%1$s ile %2$s arası</string>
 </resources>

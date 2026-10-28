@@ -352,16 +352,16 @@ public final class PlusActivityFragment extends CloudScreen implements CloudServ
         first.setOrientation(LinearLayout.HORIZONTAL);
         first.setGravity(Gravity.TOP);
         int[] icon = PlusWords.auditIcon(e.k);
+        ImageView glyph = new ImageView(c);
         if (icon[0] != 0) {
-            ImageView glyph = new ImageView(c);
             glyph.setImageResource(icon[0]);
             glyph.setImageTintList(ColorStateList.valueOf(CloudUi.color(c, icon[1])));
-            glyph.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-            LinearLayout.LayoutParams glyphLp = new LinearLayout.LayoutParams(CloudUi.dp(c, 16), CloudUi.dp(c, 16));
-            glyphLp.topMargin = CloudUi.dp(c, 2);
-            glyphLp.setMarginEnd(CloudUi.dp(c, 8));
-            first.addView(glyph, glyphLp);
         }
+        glyph.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        LinearLayout.LayoutParams glyphLp = new LinearLayout.LayoutParams(CloudUi.dp(c, 16), CloudUi.dp(c, 16));
+        glyphLp.topMargin = CloudUi.dp(c, 2);
+        glyphLp.setMarginEnd(CloudUi.dp(c, 8));
+        first.addView(glyph, glyphLp);
         String line = PlusWords.auditLine(c, e, server(), this::itemName);
         TextView words = CloudUi.text(c, line, 14.5f, R.color.projects_bone_100, false);
         words.setLineSpacing(0, 1.12f);
@@ -428,7 +428,9 @@ public final class PlusActivityFragment extends CloudScreen implements CloudServ
                 LinearLayout texts = new LinearLayout(c);
                 texts.setOrientation(LinearLayout.VERTICAL);
                 texts.addView(CloudUi.text(c, itemName(s.item), 15, R.color.projects_bone_100, true));
-                String line = getString(R.string.projects_plus_summary_avg) + " " + CloudWords.money(c, s.avgUnit) + ", "
+                // One price (a single trade, or all the same): said once.
+                String line = s.minUnit == s.maxUnit ? CloudWords.money(c, s.avgUnit)
+                        : getString(R.string.projects_plus_summary_avg) + " " + CloudWords.money(c, s.avgUnit) + ", "
                         + getString(R.string.projects_plus_summary_min).toLowerCase(CloudWords.locale(c)) + " " + CloudWords.money(c, s.minUnit) + ", "
                         + getString(R.string.projects_plus_summary_max).toLowerCase(CloudWords.locale(c)) + " " + CloudWords.money(c, s.maxUnit);
                 texts.addView(CloudUi.text(c, line, 13, R.color.projects_ash_300, false));
@@ -514,7 +516,14 @@ public final class PlusActivityFragment extends CloudScreen implements CloudServ
             content.addView(CloudUi.empty(c, gg.projects.mobile.ui.PixelSprites.Sprite.LOGS, getString(R.string.projects_plus_week_empty)));
             return;
         }
-        content.addView(CloudUi.gap(c, 6));
+        if (mine.weekFrom > 0 && mine.weekTo > mine.weekFrom) {
+            long nowMs = mService.nowMs();
+            // The window ends the next Monday 04:00: its last day is the Sunday before.
+            content.addView(CloudUi.note(c, getString(R.string.projects_plus_week_range, AppDates.day(c, mine.weekFrom * 1000L, nowMs),
+                    AppDates.day(c, (mine.weekTo - 86_400L) * 1000L, nowMs))));
+        } else {
+            content.addView(CloudUi.gap(c, 6));
+        }
         LinearLayout group = CloudUi.group(c);
         List<View> rows = new ArrayList<>();
         rows.add(figure(c, getString(R.string.projects_plus_week_pms), String.valueOf(mine.pms)));

@@ -31,7 +31,7 @@
       "order": "a1",
       "custom": { "k": "c1yk", "field": "item" },
       "deal": { "side": "buy", "item": "custom:c1yk", "qty": 1, "price": 1900, "pay": "money" },
-      "counterpart": "ruzgar_tr",
+      "counterpart": "kasirga_tr",
       "why": [],
       "seen": { "id": "minecraft:red_dye", "cmd": 1001, "name": "Yakut", "lore": ["Nadir taş"] },
       "createdAt": 1792846600,

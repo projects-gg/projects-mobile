@@ -248,7 +248,6 @@ public final class PlusApprovalsFragment extends CloudScreen implements CloudSer
         String party = getString(buy ? R.string.projects_approval_party_buy : R.string.projects_approval_party_sell, ap.counterpart);
 
         if (ap.handoff()) {
-            card.addView(kindTitle(c, R.string.projects_handoff_title));
             card.addView(head(c, ap, ap.item, title(ap), party));
             String deal = PlusWords.deal(c, ap.qty, ap.item, ap.price, ap.pay, server(), this::itemName);
             TextView body = CloudUi.text(c, getString(R.string.projects_handoff_body, ap.counterpart, deal), 14.5f, R.color.projects_bone_100, false);
@@ -260,7 +259,6 @@ public final class PlusApprovalsFragment extends CloudScreen implements CloudSer
         }
 
         if (ap.confirmItem()) {
-            card.addView(kindTitle(c, R.string.projects_firstsight_title));
             String wanted = ap.customKey == null ? itemName(ap.item) : itemName("custom:" + ap.customKey);
             String seenRef = ap.seenId == null ? ap.item : ap.seenId;
             String seenName = ap.seenName != null && !ap.seenName.isEmpty() ? ap.seenName : itemName(seenRef);
@@ -299,13 +297,6 @@ public final class PlusApprovalsFragment extends CloudScreen implements CloudSer
         }
         card.setContentDescription(null);
         return card;
-    }
-
-    private static TextView kindTitle(Context c, int words) {
-        TextView title = CloudUi.text(c, c.getString(words), 13, R.color.projects_ash_300, true);
-        title.setPadding(0, 0, 0, CloudUi.dp(c, 10));
-        if (android.os.Build.VERSION.SDK_INT >= 28) title.setAccessibilityHeading(true);
-        return title;
     }
 
     private View closedRow(Context c, CloudModel.Approval ap) {

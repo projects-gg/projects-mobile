@@ -106,6 +106,8 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
     private JsonObject mUndo;
     private long mUndoUntil;
     private final Runnable mUndoEnd = this::undoEnded;
+    /** Whether "Kontrol et" is the gold action now (not while a card's "Kaydet" is). */
+    private boolean mCheckLoud = true;
 
     @Override
     protected void created(View view) {
@@ -299,7 +301,8 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
         box.setOrientation(LinearLayout.VERTICAL);
         box.setLayoutParams(CloudUi.matchWrap());
         final CloudUi.Field field = CloudUi.field(c, getString(R.string.projects_order_intake_label), null,
-                getString(R.string.projects_order_intake_hint), InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
+                getString(R.string.projects_order_intake_hint),
+                InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
         field.input.setFilters(new InputFilter[]{new InputFilter.LengthFilter(220)});
         field.input.setImeOptions(EditorInfo.IME_ACTION_DONE);
         field.input.setOnEditorActionListener((v, actionId, event) -> {
@@ -351,6 +354,7 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
         mIntake = box;
         mField = field;
         mCheck = check;
+        mCheckLoud = true;
         mHint = hint;
         mLeft = left;
     }
@@ -371,6 +375,11 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
         if (field == null || check == null || hint == null || mIntake == null) return;
         boolean typed = typedOn();
         boolean blocked = maintenance() || serverOff();
+        boolean loud = mDraft == null;
+        if (loud != mCheckLoud) {
+            mCheckLoud = loud;
+            CloudUi.styleButton(c, check, loud);
+        }
         field.view.setVisibility(typed ? View.VISIBLE : View.GONE);
         check.setVisibility(typed ? View.VISIBLE : View.GONE);
         field.input.setEnabled(!blocked && !mChecking);
@@ -563,11 +572,10 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
         boolean each = "each".equals(Json.str(draft, "unit")) && qty != null && qty > 1;
         Long target = Json.numOrNull(draft, "target");
         Long limit = Json.numOrNull(draft, "limit");
-        String eachWord = each ? " " + getString(R.string.projects_card_each) : "";
-        figures.addView(figure(c, getString(R.string.projects_card_target), target == null || pay == null ? null : price(target, pay) + eachWord, null));
+        figures.addView(figure(c, getString(R.string.projects_card_target), target == null || pay == null ? null : perPiece(price(target, pay), each), null));
         String words = limit != null && "money".equals(pay) ? TrGrammar.words(limit, lang()) : null;
         figures.addView(figure(c, getString(sell ? R.string.projects_card_at_least : R.string.projects_card_at_most),
-                limit == null || pay == null ? null : price(limit, pay) + eachWord, words));
+                limit == null || pay == null ? null : perPiece(price(limit, pay), each), words));
         card.addView(figures);
 
         // The terms in plain lines.
@@ -581,7 +589,7 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
         }
         lines.add(getString(R.string.projects_card_style, styleName(Json.str(draft, "style", "balanced"))));
         long until = Json.num(draft, "until", now() + 14 * 86_400L);
-        int days = (int) Math.max(1, (until - now() + 86_399) / 86_400);
+        int days = (int) Math.max(1, Math.round((until - now()) / 86_400.0));
         lines.add(getResources().getQuantityString(R.plurals.projects_card_valid, days, days));
         boolean bot = doc != null && doc.server.tradesItself(Json.str(draft, "trade", "auto"));
         lines.add(getString(bot ? R.string.projects_card_bot : R.string.projects_card_owner));
@@ -785,7 +793,7 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
                 chips.add(getString(R.string.projects_q_other), v -> {
                     mOtherOpen = kind;
                     draw();
-                });
+                }).setActivated(kind.equals(mOtherOpen));
                 break;
             }
             case "pay": {
@@ -818,7 +826,7 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
                 chips.add(getString(R.string.projects_q_other), v -> {
                     mOtherOpen = kind;
                     draw();
-                });
+                }).setActivated(kind.equals(mOtherOpen));
                 break;
             }
             case "far": {
@@ -906,6 +914,11 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
             }
         }
         return out;
+    }
+
+    /** A price as the lists say it: "tanesi 1.800" for one piece, else as it is. */
+    private String perPiece(String price, boolean each) {
+        return each ? getString(R.string.projects_card_each_price, price) : price;
     }
 
     /** A custom item key in neither the account's items nor the card's. */
@@ -1304,12 +1317,17 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
         if (qty > 1) {
             terms = getString("each".equals(Json.str(order, "unit")) ? R.string.projects_order_per_piece : R.string.projects_order_in_total, terms);
         }
-        StringBuilder out = new StringBuilder(getString(sell ? R.string.projects_card_to_sell : R.string.projects_card_to_buy)).append(", ").append(terms);
-        if (!PlusWords.finished(status)) {
+        boolean finished = PlusWords.finished(status);
+        int side = finished ? (sell ? R.string.projects_order_meta_sell_done : R.string.projects_order_meta_buy_done)
+                : (sell ? R.string.projects_card_to_sell : R.string.projects_card_to_buy);
+        StringBuilder out = new StringBuilder(getString(side)).append(", ").append(terms);
+        if (!finished) {
             long left = Json.num(order, "until", 0) - now();
             int days = (int) (left / 86_400);
-            out.append(", ").append(days < 1 ? getString(R.string.projects_order_ends_today)
-                    : getResources().getQuantityString(R.plurals.projects_order_days_left, days, days));
+            // One piece when the line wraps (big text, 360 dp): "9 gün kaldı" never breaks after its number.
+            String time = days < 1 ? getString(R.string.projects_order_ends_today)
+                    : getResources().getQuantityString(R.plurals.projects_order_days_left, days, days);
+            out.append(", ").append(time.replace(' ', '\u00A0'));
         }
         return out.toString();
     }
