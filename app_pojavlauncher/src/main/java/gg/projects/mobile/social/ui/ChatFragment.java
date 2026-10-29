@@ -148,6 +148,18 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
     private EditText mInput;
     private ImageButton mSend;
     private ImageButton mEmoji;
+    /** 0.4.5: the emoji and sticker panel's place under the field (the keyboard's), or null without a view. */
+    @Nullable
+    private FrameLayout mPickerSlot;
+    /** 0.4.5: the panel is open (or being built). */
+    private boolean mPickerOpen;
+    /** 0.4.5: "Geri" closes the open panel first. */
+    private final androidx.activity.OnBackPressedCallback mPickerBack = new androidx.activity.OnBackPressedCallback(false) {
+        @Override
+        public void handleOnBackPressed() {
+            closePicker(false);
+        }
+    };
     private Button mDiscord;
     private View mReplyBar;
     private TextView mReplyName;
@@ -268,6 +280,14 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
         mSend.setOnClickListener(v -> submit());
         Press.attach(mEmoji, Press.Style.ICON);
         mEmoji.setOnClickListener(v -> openPicker());
+        // 0.4.5: the panel sits in the keyboard's place; a touch on the field brings the keyboard back instead.
+        mPickerSlot = view.findViewById(R.id.projects_chat_picker_slot);
+        mPickerOpen = false;
+        mInput.setOnTouchListener((v, event) -> {
+            if (event.getActionMasked() == android.view.MotionEvent.ACTION_DOWN && mPickerOpen) closePicker(false);
+            return false;
+        });
+        requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), mPickerBack);
         View cancel = view.findViewById(R.id.projects_chat_edit_cancel);
         Press.attach(cancel, Press.Style.ICON);
         cancel.setOnClickListener(v -> stopEditing(true));
@@ -390,6 +410,9 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
         // A new view starts without the edit and reply bars: their states go with this one.
         mEditing = null;
         mReplyTo = null;
+        mPickerOpen = false;
+        mPickerBack.setEnabled(false);
+        mPickerSlot = null;
         mTypingShown = false;
         mPendingGoTo = 0;
         super.onDestroyView();
@@ -528,6 +551,7 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
         if (!open && mEditing != null) stopEditing(false);
         if (!open && mReplyTo != null) stopReply();
         mComposer.setVisibility(open ? View.VISIBLE : View.GONE);
+        if (!open) closePicker(false);
         mClosed.setVisibility(open ? View.GONE : View.VISIBLE);
         if (!open) mClosed.setText(closed);
         if (!open) mProblemRow.setVisibility(View.GONE);
@@ -843,14 +867,23 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
         }
     }
 
-    /** CHAT2: the emoji and sticker sheet (the keyboard goes down; emoji go into the field, a sticker goes at once). */
+    /**
+     * CHAT2: the emoji and sticker picker (the keyboard goes down; emoji go into the field, a sticker goes at once).
+     * 0.4.5: in the keyboard's place under the field, so the field and what went in stay in view (it was a sheet over
+     * them); the button again, a touch on the field or "Geri" closes it, the first two with the keyboard back.
+     */
     private void openPicker() {
+        if (mPickerOpen) {
+            closePicker(true);
+            return;
+        }
         final FragmentActivity activity = requireActivity();
         InputMethodManager imm = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
         if (imm != null) imm.hideSoftInputFromWindow(mInput.getWindowToken(), 0);
         SocialChat chat = SocialService.get(activity).chat();
         boolean stickers = mEditing == null && chat.stickerSets().contains("pl1");
-        EmojiSheet.pick(activity, stickers, new EmojiSheet.Pick() {
+        mPickerOpen = true;
+        EmojiSheet.inline(activity, stickers, new EmojiSheet.Pick() {
             @Override
             public void emoji(String emoji) {
                 insert(emoji);
@@ -860,7 +893,47 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
             public void sticker(String ref, View cell) {
                 sendSticker(ref, cell);
             }
+        }, new EmojiSheet.Inline() {
+            @Override
+            public void ready(View panel) {
+                FrameLayout slot = mPickerSlot;
+                if (!mPickerOpen || slot == null || !isAdded()) return;
+                slot.removeAllViews();
+                slot.addView(panel);
+                slot.setVisibility(View.VISIBLE);
+                mPickerBack.setEnabled(true);
+                if (Motion.enabled(slot.getContext())) {
+                    slot.setAlpha(0f);
+                    slot.setTranslationY(12 * slot.getResources().getDisplayMetrics().density);
+                    slot.animate().alpha(1f).translationY(0f).setDuration(Motion.ENTER_MS).setInterpolator(Motion.EASE_OUT).start();
+                }
+            }
+
+            @Override
+            public void close() {
+                closePicker(false);
+            }
         });
+    }
+
+    /** 0.4.5: the picker's panel goes; {@code keyboard}: the field takes the focus with the keyboard up. */
+    private void closePicker(boolean keyboard) {
+        if (!mPickerOpen) return;
+        mPickerOpen = false;
+        mPickerBack.setEnabled(false);
+        FrameLayout slot = mPickerSlot;
+        if (slot != null) {
+            slot.animate().cancel();
+            slot.setAlpha(1f);
+            slot.setTranslationY(0f);
+            slot.removeAllViews();
+            slot.setVisibility(View.GONE);
+        }
+        if (keyboard && mInput != null && isAdded()) {
+            mInput.requestFocus();
+            InputMethodManager imm = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (imm != null) imm.showSoftInput(mInput, InputMethodManager.SHOW_IMPLICIT);
+        }
     }
 
     /** An emoji goes in where the cursor is (a selection is replaced). */
@@ -945,6 +1018,8 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
      * again (at once when it has it), through the insets controller, with the old call as a fallback.
      */
     private void showKeyboard(final EditText field) {
+        // 0.4.5: the keyboard takes the picker's place ("Düzenle", "Yanıtla").
+        closePicker(false);
         field.requestFocus();
         if (field.hasWindowFocus()) {
             field.post(() -> raiseKeyboard(field));

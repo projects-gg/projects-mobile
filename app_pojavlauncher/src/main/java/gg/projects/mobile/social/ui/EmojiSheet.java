@@ -53,6 +53,10 @@ import gg.projects.mobile.ui.Press;
  * "+" it is the reaction picker: emoji only, and the first tap reacts and closes it. Every cell answers
  * a press with a give and a tick. Emoji the phone cannot draw are left out (unless the downloadable
  * emoji font draws them).
+ *
+ * <p>0.4.5 (MOB-POLISH's open note "the emoji sheet covers the field"): the composer's picker is no longer a
+ * sheet over the screen but its own panel in the keyboard's place, under the field ({@link #inline}), so what
+ * goes in stays in view; the reaction picker stays a sheet.
  */
 final class EmojiSheet {
     private EmojiSheet() {}
@@ -62,6 +66,15 @@ final class EmojiSheet {
         void emoji(String emoji);
 
         void sticker(String ref, View cell);
+    }
+
+    /** 0.4.5: the composer's panel under the field. */
+    interface Inline {
+        /** The panel is built: the composer puts it in the keyboard's place. */
+        void ready(View panel);
+
+        /** The panel closes itself (a sticker went). */
+        void close();
     }
 
     interface Reaction {
@@ -91,12 +104,18 @@ final class EmojiSheet {
     /** Emoji the phone can draw (checked once per process; warmed off the main thread when the data is read). */
     private static final Map<String, Boolean> DRAWABLE = new java.util.concurrent.ConcurrentHashMap<>();
 
-    static void pick(FragmentActivity activity, boolean stickers, Pick pick) {
-        open(activity, stickers, pick, null);
-    }
-
     static void pickReaction(FragmentActivity activity, Reaction reaction) {
         open(activity, false, null, reaction);
+    }
+
+    /** 0.4.5: the composer's picker as a panel for the keyboard's place; {@code host} gets it once the emoji data is read. */
+    static void inline(final FragmentActivity activity, final boolean stickers, final Pick pick, final Inline host) {
+        EmojiStore.whenLoaded(activity, () -> {
+            if (activity.isFinishing() || activity.getSupportFragmentManager().isStateSaved()) return;
+            EmojiData data = EmojiStore.data();
+            if (data == null) return;
+            host.ready(new Sheet(activity, data, stickers, pick, null, host).content);
+        });
     }
 
     private static void open(final FragmentActivity activity, final boolean stickers, @Nullable final Pick pick,
@@ -105,7 +124,7 @@ final class EmojiSheet {
             if (activity.isFinishing() || activity.getSupportFragmentManager().isStateSaved()) return;
             EmojiData data = EmojiStore.data();
             if (data == null) return;
-            new Sheet(activity, data, stickers, pick, reaction).show();
+            new Sheet(activity, data, stickers, pick, reaction, null).show();
         });
     }
 
@@ -118,9 +137,16 @@ final class EmojiSheet {
         final Pick pick;
         @Nullable
         final Reaction reaction;
+        /** 0.4.5: the composer's panel (no sheet: {@link #panel} is null). */
+        @Nullable
+        final Inline inline;
+        /** The composer's panel is still in place (a sticker closes it once). */
+        boolean inlineOpen = true;
         final List<String> recentSnapshot;
         final List<String> recentStickers;
         final float dp;
+        final LinearLayout content;
+        @Nullable
         final BottomPanel panel;
         final RecyclerView grid;
         final GridLayoutManager layout;
@@ -143,20 +169,29 @@ final class EmojiSheet {
         /** Where each group's header is in the grid (to jump there from the rail). */
         final int[] groupAt = new int[9];
 
-        Sheet(FragmentActivity activity, EmojiData data, boolean stickers, @Nullable Pick pick, @Nullable Reaction reaction) {
+        Sheet(FragmentActivity activity, EmojiData data, boolean stickers, @Nullable Pick pick, @Nullable Reaction reaction,
+              @Nullable Inline inline) {
             this.activity = activity;
             this.data = data;
             this.stickers = stickers;
             this.pick = pick;
             this.reaction = reaction;
+            this.inline = inline;
             this.recentSnapshot = new ArrayList<>(EmojiStore.recentEmoji(activity));
             this.recentStickers = new ArrayList<>(EmojiStore.recentStickers(activity));
             Context context = activity;
             dp = context.getResources().getDisplayMetrics().density;
-            LinearLayout content = new LinearLayout(context);
+            content = new LinearLayout(context);
             content.setOrientation(LinearLayout.VERTICAL);
-            int height = Math.round(context.getResources().getDisplayMetrics().heightPixels * 0.5f);
+            int screen = context.getResources().getDisplayMetrics().heightPixels;
+            // The composer's panel takes the keyboard's room (two fifths of the screen, at least 240 dp); the sheet half.
+            final int height = inline != null ? Math.min(Math.round(screen * 0.5f), Math.max(Math.round(240 * dp), Math.round(screen * 0.4f)))
+                    : Math.round(screen * 0.5f);
             content.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, height));
+            if (inline != null) {
+                content.setBackgroundColor(ContextCompat.getColor(context, R.color.projects_obsidian_850));
+                content.setPadding(0, Math.round(10 * dp), 0, 0);
+            }
             // The tabs: "Emoji | Çıkartmalar" (the reaction picker has emoji only).
             if (stickers && reaction == null) {
                 LinearLayout tabs = new LinearLayout(context);
@@ -321,12 +356,36 @@ final class EmojiSheet {
                     refill();
                 }
             });
-            panel = BottomPanel.of(context, content, 0.62f);
+            if (inline != null) {
+                // The keyboard comes up under the panel for "Emoji ara": the panel gives it room (the field stays in view).
+                final int compact = Math.min(height, Math.round(200 * dp));
+                search.setOnFocusChangeListener((v, focused) -> {
+                    ViewGroup.LayoutParams lp = content.getLayoutParams();
+                    if (lp == null) return;
+                    lp.height = focused ? compact : height;
+                    content.setLayoutParams(lp);
+                });
+            }
+            panel = inline == null ? BottomPanel.of(context, content, 0.62f) : null;
             refill();
         }
 
         void show() {
-            panel.show();
+            if (panel != null) panel.show();
+        }
+
+        /** Still open: the sheet shows, or the composer's panel is in place. */
+        private boolean showing() {
+            return panel != null ? panel.showing() : inlineOpen;
+        }
+
+        private void close() {
+            if (panel != null) {
+                panel.dismiss();
+            } else if (inlineOpen) {
+                inlineOpen = false;
+                if (inline != null) inline.close();
+            }
         }
 
         /** The rail's mark of the group the grid shows now (-1 while searching or on the stickers). */
@@ -479,10 +538,10 @@ final class EmojiSheet {
 
         private void picked(String emoji, View cell) {
             // A second tap while the sheet leaves would give a second reaction (CR1-F).
-            if (reaction != null && !panel.showing()) return;
+            if (reaction != null && !showing()) return;
             Haptics.press(cell);
             if (reaction != null) {
-                panel.dismiss();
+                close();
                 reaction.picked(emoji);
                 return;
             }
@@ -499,8 +558,8 @@ final class EmojiSheet {
 
         private void pickedSticker(StickerSet.Sticker sticker, View cell) {
             // One sticker per open sheet: a double tap during its exit sends nothing more (CR1-F).
-            if (!panel.showing()) return;
-            panel.dismiss();
+            if (!showing()) return;
+            close();
             if (pick != null) pick.sticker(sticker.ref, cell);
         }
 
