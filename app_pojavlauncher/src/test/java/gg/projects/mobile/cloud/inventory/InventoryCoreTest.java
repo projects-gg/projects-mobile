@@ -440,4 +440,30 @@ public class InventoryCoreTest {
         assertEquals(0x00ff00, InvText.durabilityColor(1561, 1561) & 0x00ff00);
         assertEquals(0x3f3f3f, InvText.shadowOf(0xffffff));
     }
+
+    private static InvItem shulker(String stacks) {
+        String json = "{\"id\":\"minecraft:shulker_box\",\"count\":1,\"inside\":{\"count\":130,\"top\":["
+                + "{\"id\":\"minecraft:stone\",\"count\":64},{\"id\":\"minecraft:dirt\",\"count\":2}]"
+                + (stacks == null ? "" : ",\"stacks\":" + stacks) + "}}";
+        return InvItem.read(com.google.gson.JsonParser.parseString(json).getAsJsonObject(), false);
+    }
+
+    /** CAFK-SVC: {@code inside.stacks} (afk-host 0.3.3) makes the shulker hint's "ve N tane daha" exact. */
+    @Test
+    public void aShulkersStacksMakeTheHintExact() {
+        assertEquals(Integer.valueOf(16), shulker("16").inside.stacks);
+        assertEquals(Integer.valueOf(256), shulker("256").inside.stacks);
+        assertNull("an older machine sends none", shulker(null).inside.stacks);
+        assertNull(shulker("257").inside.stacks);
+        assertNull(shulker("-1").inside.stacks);
+        assertNull("not cut to 12", shulker("12.5").inside.stacks);
+        assertNull("fewer than the listed stacks", shulker("1").inside.stacks);
+        assertNull(shulker("\"16\"").inside.stacks);
+
+        List<InvText.Line> exact = InvText.tooltip(shulker("16"), "tr", WORDS);
+        assertEquals("ve 14 tane daha...", exact.get(3).text);
+        assertTrue(exact.get(3).italic);
+        assertEquals("nothing more to say", 3, InvText.tooltip(shulker("2"), "tr", WORDS).size());
+        assertEquals("an older machine keeps today's hint", "ve daha fazlası...", InvText.tooltip(shulker(null), "tr", WORDS).get(3).text);
+    }
 }

@@ -55,10 +55,22 @@ public final class InvItem {
     public static final class Inside {
         public final int count;
         public final List<InvItem> top;
+        /**
+         * CAFK-SVC: how many stacks it holds in all ({@code inside.stacks}, afk-host 0.3.3+), so the hint can say an exact
+         * "ve N tane daha"; null from older machines (the hint stays as it was) or when it is not a whole number from the
+         * listed stacks to 256.
+         */
+        @Nullable
+        public final Integer stacks;
 
         public Inside(int count, List<InvItem> top) {
+            this(count, top, null);
+        }
+
+        public Inside(int count, List<InvItem> top, @Nullable Integer stacks) {
             this.count = count;
             this.top = Collections.unmodifiableList(new ArrayList<>(top));
+            this.stacks = stacks;
         }
     }
 
@@ -219,13 +231,25 @@ public final class InvItem {
                     if (top.size() >= 9) break;
                 }
             }
-            inside = new Inside((int) Math.max(0, Json.num(in, "count", 0)), top);
+            inside = new Inside((int) Math.max(0, Json.num(in, "count", 0)), top, stacksOf(in.get("stacks"), top.size()));
         }
         Long colorValue = Json.numOrNull(o, "color");
         return new InvItem(slot, id, count, Label.read(Json.obj(o, "label")), Json.str(o, "name"),
                 Collections.unmodifiableList(lore), left, max, cmdValue == null ? null : cmdValue.intValue(), Json.str(o, "model"),
                 Collections.unmodifiableList(ench), Json.bool(o, "enchanted", false), inside, Json.str(o, "potion"),
                 colorValue == null ? null : (int) (colorValue & 0xFFFFFF), Json.bool(o, "partial", false));
+    }
+
+    /**
+     * CAFK-SVC {@code inside.stacks}: a whole number from the listed stacks to 256, else null (a fraction too: reading it
+     * as a long would cut 12.5 to 12, so the double decides).
+     */
+    @Nullable
+    static Integer stacksOf(@Nullable JsonElement value, int listed) {
+        if (value == null || !value.isJsonPrimitive() || !value.getAsJsonPrimitive().isNumber()) return null;
+        double n = value.getAsDouble();
+        if (n != Math.rint(n) || n < listed || n > 256) return null;
+        return (int) n;
     }
 
     /** The items of a frame's array (entries that do not read are left out). */

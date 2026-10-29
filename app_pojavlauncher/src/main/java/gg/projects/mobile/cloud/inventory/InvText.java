@@ -192,8 +192,15 @@ public final class InvText {
                 lines.add(new Line(words.insideStack(labelOf(stack.label, lang).isEmpty() ? itemName(stack, lang) : labelOf(stack.label, lang),
                         stack.count), WHITE, false));
             }
-            if (listed < inside.count) lines.add(new Line(words.insideMoreUnknown(), WHITE, true));
-            else if (inside.top.size() > shown) lines.add(new Line(words.insideMore(inside.top.size() - shown), WHITE, true));
+            if (inside.stacks != null) {
+                // CAFK-SVC: the machine says how many stacks it holds: "ve N tane daha" is exact.
+                int more = inside.stacks - shown;
+                if (more > 0) lines.add(new Line(words.insideMore(more), WHITE, true));
+            } else if (listed < inside.count) {
+                lines.add(new Line(words.insideMoreUnknown(), WHITE, true));
+            } else if (inside.top.size() > shown) {
+                lines.add(new Line(words.insideMore(inside.top.size() - shown), WHITE, true));
+            }
         }
         for (InvItem.Ench e : item.ench) {
             String text = labelOf(e.label, lang);
