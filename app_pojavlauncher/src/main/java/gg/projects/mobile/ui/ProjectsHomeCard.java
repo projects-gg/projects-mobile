@@ -358,6 +358,14 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         if (ProjectsJoin.isBusy()) setJoining(true);
     };
 
+    /** A join runs (its "Hazırlanıyor" shows on the join button, or on OYNA while the Projects profile is chosen). */
+    private boolean mJoining;
+
+    /** Decision 26 (0.4.5): another profile chosen brings "Projects'e katıl" back; Projects itself hides it. */
+    private final android.content.SharedPreferences.OnSharedPreferenceChangeListener mProfileChanged = (prefs, key) -> {
+        if (LauncherPreferences.PREF_KEY_CURRENT_PROFILE.equals(key)) applyJoinState();
+    };
+
     private static final class PendingBell {
         final ReminderBellView bell;
         final HomeContent.Event event;
@@ -503,6 +511,7 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         NewsSeenStore.addListener(mSeenChanged);
         ProjectsContent.addListener(this);
         ProjectsContent.refresh(mFragment.requireContext(), false);
+        LauncherPreferences.DEFAULT_PREF.registerOnSharedPreferenceChangeListener(mProfileChanged);
         setJoining(ProjectsJoin.isBusy());
         // A reminder whose moment came while notifications were off is told now.
         Reminders.tellInApp(mFragment.requireContext());
@@ -538,6 +547,7 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         mResumed = false;
         if (sResumedCard == this) sResumedCard = null;
         JoinOutcome.homePaused(this);
+        LauncherPreferences.DEFAULT_PREF.unregisterOnSharedPreferenceChangeListener(mProfileChanged);
         NewsSeenStore.removeListener(mSeenChanged);
         ProjectsContent.removeListener(this);
         mJoinButton.removeCallbacks(mBusyWatcher);
@@ -550,9 +560,8 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
     private void setJoining(boolean joining) {
         mJoinButton.removeCallbacks(mShowJoining);
         mJoinButton.removeCallbacks(mBusyWatcher);
-        mJoinButton.setEnabled(!joining);
-        mJoinButton.setText(joining ? R.string.projects_join_preparing : R.string.projects_join);
-        hugStartMark(mJoinButton);
+        mJoining = joining;
+        applyJoinState();
         // M17: "Katıl" waits too, and its disabled look fades (150 ms) instead of snapping.
         if (mEventJoin.isEnabled() == joining) {
             mEventJoin.setEnabled(!joining);
@@ -565,6 +574,25 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
             }
         }
         if (joining) mJoinButton.postDelayed(mBusyWatcher, 400);
+    }
+
+    /**
+     * Decision 26 (MOB-POLISH, 0.4.5): on the Projects profile OYNA already is the join (the same checks, the same start),
+     * so "Projects'e katıl" shows only while another profile is chosen, as the way back to Projects. A running join says
+     * "Hazırlanıyor" where the player pressed it: on that button, or on OYNA (which waits, disabled) on Projects itself.
+     */
+    private void applyJoinState() {
+        boolean projects = ProjectsProfile.KEY.equals(
+                LauncherPreferences.DEFAULT_PREF.getString(LauncherPreferences.PREF_KEY_CURRENT_PROFILE, ""));
+        mJoinButton.setVisibility(projects ? View.GONE : View.VISIBLE);
+        mJoinButton.setEnabled(!mJoining);
+        mJoinButton.setText(mJoining && !projects ? R.string.projects_join_preparing : R.string.projects_join);
+        hugStartMark(mJoinButton);
+        if (mPlayButton instanceof TextView) {
+            boolean onPlay = mJoining && projects;
+            ((TextView) mPlayButton).setText(onPlay ? R.string.projects_join_preparing : R.string.main_play);
+            mPlayButton.setEnabled(!onPlay);
+        }
     }
 
     /** The Discord invite from the signed config, else {@code fallback}. */
@@ -1444,7 +1472,8 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
             // A second tap meanwhile meets the busy check above. A press on OYNA sheens OYNA, and the
             // card's button shows the join at once.
             boolean sheen = PlayButtons.confirm(pressed);
-            if (sheen && pressed == mJoinButton) mJoinButton.postDelayed(mShowJoining, PlayButtonDrawable.SHEEN_MS);
+            // Decision 26: on the Projects profile OYNA turns to "Hazırlanıyor" itself, after its sheen as well.
+            if (sheen && (pressed == mJoinButton || pressed == mPlayButton)) mJoinButton.postDelayed(mShowJoining, PlayButtonDrawable.SHEEN_MS);
             else setJoining(true);
         }
     }
