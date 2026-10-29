@@ -200,6 +200,13 @@ public final class PlusApprovalsFragment extends CloudScreen implements CloudSer
         return buttons;
     }
 
+    /** Whether the account bargains and closes deals itself ("Pazarlık et ve tamamla"), as last read on this phone. */
+    private boolean dealMode() {
+        String id = accountId();
+        CloudModel.PlusDoc doc = id == null ? null : mService.lastPlus(id);
+        return doc != null && "deal".equals(new gg.projects.mobile.cloud.PlusConfig(doc.config).authority());
+    }
+
     /** The setting a limit reason names ({@code above}, {@code new_counterpart}, {@code daily}, {@code budget}), or null. */
     @Nullable
     private static String limitField(String why) {
@@ -293,17 +300,30 @@ public final class PlusApprovalsFragment extends CloudScreen implements CloudSer
         price.setPadding(0, CloudUi.dp(c, 12), 0, CloudUi.dp(c, 2));
         card.addView(price);
         boolean toLimits = false;
+        boolean saidAsk = false;
+        boolean dealMode = dealMode();
         for (String why : ap.why) {
-            String words = "authority".equals(why) ? getString(R.string.projects_approval_why_authority) : CloudWords.why(c, why);
+            boolean approvalLimit = "above".equals(why) || "new_counterpart".equals(why);
+            String words;
+            if ("authority".equals(why)) {
+                words = getString(R.string.projects_approval_why_authority);
+            } else if (approvalLimit && !dealMode) {
+                // Not "Pazarlık et ve tamamla": there is no approval limit to raise, every deal waits for the player.
+                if (saidAsk) continue;
+                saidAsk = true;
+                words = getString(R.string.projects_approval_why_ask);
+            } else {
+                words = CloudWords.why(c, why);
+            }
             TextView reason = CloudUi.text(c, words, 13.5f, R.color.projects_ash_300, false);
             reason.setPadding(0, CloudUi.dp(c, 2), 0, 0);
             card.addView(reason);
-            // "Sınırlara git" (TRADE-ANY decision 25): beside the first limit reason, quiet (the card's gold is none);
-            // the authority has its own question and no button, as on the site and in the launcher.
-            final String field = limitField(why);
+            // Beside the first limit reason, quiet (the card's gold is none): "Onay sınırına git" for an approval limit,
+            // "Sınırlara git" for a spending one; the authority has its own question and no button.
+            final String field = approvalLimit && !dealMode ? null : limitField(why);
             if (!toLimits && field != null) {
                 toLimits = true;
-                card.addView(CloudUi.textButton(c, getString(R.string.projects_to_limits), v -> {
+                card.addView(CloudUi.textButton(c, getString(approvalLimit ? R.string.projects_to_approval_limit : R.string.projects_to_limits), v -> {
                     String id = accountId();
                     if (id != null) PlusQuestionFragment.openLimit(this, id, field);
                 }), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));

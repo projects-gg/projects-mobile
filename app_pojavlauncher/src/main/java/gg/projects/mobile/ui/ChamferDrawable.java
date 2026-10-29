@@ -149,7 +149,8 @@ public final class ChamferDrawable extends Drawable {
         float d = context.getResources().getDisplayMetrics().density;
         float cut = 7 * d;
         StateListDrawable states = new StateListDrawable();
-        states.addState(new int[]{android.R.attr.state_activated}, new ChamferDrawable(0x1FF6D58E, 0x5CF6D58E, d, cut, null));
+        // The chosen one: a quiet bone plate, not gold (the 28 Oct shared decision; gold is the screen's one action).
+        states.addState(new int[]{android.R.attr.state_activated}, new ChamferDrawable(0x1FF3EBDD, 0x80F3EBDD, d, cut, null));
         states.addState(new int[]{android.R.attr.state_selected}, new ChamferDrawable(0x0AF3EBDD, 0, 0f, cut, null));
         states.addState(new int[]{android.R.attr.state_pressed}, new ChamferDrawable(0x1AF3EBDD, 0x66F3EBDD, d, cut, null));
         states.addState(new int[]{android.R.attr.state_focused},

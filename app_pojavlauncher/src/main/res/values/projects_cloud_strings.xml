@@ -462,7 +462,7 @@
     <string name="projects_plus_quota_gift">Gift AI credits until %1$s</string>
     <string name="projects_plus_quota_gift_open">You have gift AI credits</string>
     <string name="projects_plus_quota_frozen">Staff froze your AI credits.</string>
-    <string name="projects_plus_approvals">Approvals</string>
+    <string name="projects_plus_approvals">Waiting for you</string>
     <string name="projects_plus_messages">Messages</string>
     <string name="projects_plus_rules">Orders</string>
     <string name="projects_plus_assistant">ProBot AI</string>
@@ -471,10 +471,10 @@
     <string name="projects_plus_activity">Feed</string>
     <string name="projects_plus_history">Settings history</string>
     <string name="projects_plus_upgrade">Upgrade to AFK+</string>
-    <string name="projects_plus_downgrade">Switch to 24/7 Cloud</string>
-    <string name="projects_plus_downgrade_note">If you switch to 24/7 Cloud, AFK+ ends. The time left converts to 24/7 Cloud time.</string>
-    <string name="projects_plus_downgrade_title">Switch to 24/7 Cloud?</string>
-    <string name="projects_plus_downgrade_body">Your AFK+ time left becomes %1$s of 24/7 Cloud. ProBot AI stops at once.</string>
+    <string name="projects_plus_downgrade">Leave AFK+</string>
+    <string name="projects_plus_downgrade_note">AFK+ ends, and your time left becomes 24/7 Cloud time.</string>
+    <string name="projects_plus_downgrade_title">Leave AFK+?</string>
+    <string name="projects_plus_downgrade_body">AFK+ ends, and your time left becomes %1$s of 24/7 Cloud. ProBot AI stops at once.</string>
     <string name="projects_plus_downgrade_done">The account is on 24/7 Cloud now.</string>
     <string name="projects_plus_load_failed">Couldn\'t load the AFK+ settings.</string>
 
@@ -585,13 +585,13 @@
     <!-- ProBot AI -->
     <string name="projects_plus_persona">Tone</string>
     <string name="projects_plus_preset_friendly">Friendly</string>
-    <string name="projects_plus_preset_brief">Brief</string>
+    <string name="projects_plus_preset_brief">Short and clear</string>
     <string name="projects_plus_preset_polite">Polite</string>
     <string name="projects_plus_preset_playful">Playful</string>
     <string name="projects_plus_intro">Introduction</string>
     <string name="projects_plus_intro_hint">KaraKartal\'s ProBot AI</string>
     <string name="projects_plus_intro_help">How it introduces itself in its first message.</string>
-    <string name="projects_plus_status">Your status</string>
+    <string name="projects_plus_status">What should it say while you\'re away?</string>
     <string name="projects_plus_status_back_soon">Back soon</string>
     <string name="projects_plus_status_back_evening">Back this evening</string>
     <string name="projects_plus_status_back_tomorrow">Back tomorrow</string>
@@ -600,19 +600,19 @@
     <string name="projects_plus_status_own">Write my own</string>
     <string name="projects_plus_status_hint">Back at 8 tonight</string>
     <string name="projects_plus_small_talk">Chat a little in the conversations it answers</string>
-    <string name="projects_plus_scope">Which messages it answers</string>
+    <string name="projects_plus_scope">Which messages should it answer?</string>
     <string name="projects_plus_scope_all">Every private message</string>
     <string name="projects_plus_scope_trade">Trade messages only</string>
-    <string name="projects_plus_scope_off">Ready replies only</string>
+    <string name="projects_plus_scope_off">Answer every message with ready replies only</string>
     <string name="projects_plus_away">Tell others you\'re away</string>
     <string name="projects_plus_lang">Language</string>
     <string name="projects_plus_lang_auto">Reply in their language</string>
     <string name="projects_plus_lang_tr">Turkish</string>
     <string name="projects_plus_lang_en">English</string>
-    <string name="projects_plus_saver">Cut small talk once this much of your AI credits is used</string>
-    <string name="projects_plus_saver_80" formatted="false">80%</string>
-    <string name="projects_plus_saver_50" formatted="false">50%</string>
-    <string name="projects_plus_saver_off">Off</string>
+    <string name="projects_plus_saver">When should it save credits?</string>
+    <string name="projects_plus_saver_80" formatted="false">At 80% used</string>
+    <string name="projects_plus_saver_50" formatted="false">At 50% used</string>
+    <string name="projects_plus_saver_off">Never</string>
     <string name="projects_plus_proactive">Message the seller once when found</string>
     <string name="projects_plus_summary_at">Daily summary at</string>
     <string name="projects_plus_blocked">Blocked players</string>

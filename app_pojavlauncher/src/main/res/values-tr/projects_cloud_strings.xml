@@ -465,7 +465,7 @@
     <string name="projects_plus_quota_gift">%1$s tarihine kadar hediye kontör</string>
     <string name="projects_plus_quota_gift_open">Hediye kontörün var</string>
     <string name="projects_plus_quota_frozen">Kontörün yetkililerce donduruldu.</string>
-    <string name="projects_plus_approvals">Onaylar</string>
+    <string name="projects_plus_approvals">Seni bekleyenler</string>
     <string name="projects_plus_messages">Mesajlar</string>
     <string name="projects_plus_rules">Siparişler</string>
     <string name="projects_plus_assistant">ProBot AI</string>
@@ -474,10 +474,10 @@
     <string name="projects_plus_activity">Akış</string>
     <string name="projects_plus_history">Ayar geçmişi</string>
     <string name="projects_plus_upgrade">AFK+\'ya yükselt</string>
-    <string name="projects_plus_downgrade">7/24 Bulut\'a geç</string>
-    <string name="projects_plus_downgrade_note">7/24 Bulut\'a geçersen AFK+ biter. Kalan süre 7/24 Bulut süresine çevrilir.</string>
-    <string name="projects_plus_downgrade_title">7/24 Bulut\'a geçilsin mi?</string>
-    <string name="projects_plus_downgrade_body">Kalan AFK+ süren 7/24 Bulut\'ta %1$s olur. ProBot AI hemen durur.</string>
+    <string name="projects_plus_downgrade">AFK+\'yı bırak</string>
+    <string name="projects_plus_downgrade_note">AFK+ biter, kalan süren 7/24 Bulut süresine çevrilir.</string>
+    <string name="projects_plus_downgrade_title">AFK+ bırakılsın mı?</string>
+    <string name="projects_plus_downgrade_body">AFK+ biter, kalan süren 7/24 Bulut\'ta %1$s olur. ProBot AI hemen durur.</string>
     <string name="projects_plus_downgrade_done">Hesap 7/24 Bulut\'a geçti.</string>
     <string name="projects_plus_load_failed">AFK+ ayarları yüklenemedi.</string>
 
@@ -588,13 +588,13 @@
     <!-- ProBot AI -->
     <string name="projects_plus_persona">Konuşma tarzı</string>
     <string name="projects_plus_preset_friendly">Samimi</string>
-    <string name="projects_plus_preset_brief">Kısa</string>
+    <string name="projects_plus_preset_brief">Kısa ve net</string>
     <string name="projects_plus_preset_polite">Kibar</string>
     <string name="projects_plus_preset_playful">Esprili</string>
     <string name="projects_plus_intro">Tanıtım</string>
     <string name="projects_plus_intro_hint">KaraKartal\'ın ProBot AI\'ı</string>
     <string name="projects_plus_intro_help">İlk mesajında kendini böyle tanıtır.</string>
-    <string name="projects_plus_status">Durumun</string>
+    <string name="projects_plus_status">Uzaktayken ne desin?</string>
     <string name="projects_plus_status_back_soon">Biraz sonra dönerim</string>
     <string name="projects_plus_status_back_evening">Akşam dönerim</string>
     <string name="projects_plus_status_back_tomorrow">Yarın dönerim</string>
@@ -603,19 +603,19 @@
     <string name="projects_plus_status_own">Kendim yazacağım</string>
     <string name="projects_plus_status_hint">Akşam 8\'de dönerim</string>
     <string name="projects_plus_small_talk">Cevap verdiği konuşmalarda sohbet de etsin</string>
-    <string name="projects_plus_scope">Hangi mesajlara cevap versin</string>
+    <string name="projects_plus_scope">Hangi mesajlara cevap versin?</string>
     <string name="projects_plus_scope_all">Her özel mesaja</string>
-    <string name="projects_plus_scope_trade">Yalnız ticaret mesajlarına</string>
-    <string name="projects_plus_scope_off">Yalnız hazır cevaplar</string>
+    <string name="projects_plus_scope_trade">Yalnız takas mesajlarına</string>
+    <string name="projects_plus_scope_off">Her mesaja yalnız hazır cevapla</string>
     <string name="projects_plus_away">Diğer mesajlara uzakta olduğunu söylesin</string>
     <string name="projects_plus_lang">Dil</string>
     <string name="projects_plus_lang_auto">Yazana göre</string>
     <string name="projects_plus_lang_tr">Türkçe</string>
     <string name="projects_plus_lang_en">İngilizce</string>
-    <string name="projects_plus_saver">Kontörün bu kadarı kullanılınca sohbeti kıs</string>
-    <string name="projects_plus_saver_80" formatted="false">%80</string>
-    <string name="projects_plus_saver_50" formatted="false">%50</string>
-    <string name="projects_plus_saver_off">Kapalı</string>
+    <string name="projects_plus_saver">Ne zaman tasarrufa geçsin?</string>
+    <string name="projects_plus_saver_80" formatted="false">%80 kullanılınca</string>
+    <string name="projects_plus_saver_50" formatted="false">%50 kullanılınca</string>
+    <string name="projects_plus_saver_off">Hiç</string>
     <string name="projects_plus_proactive">Bulunca satıcıya bir kez yazsın</string>
     <string name="projects_plus_summary_at">Günlük özet saati</string>
     <string name="projects_plus_blocked">Engellenen oyuncular</string>

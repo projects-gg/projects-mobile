@@ -8,6 +8,8 @@ import android.widget.LinearLayout;
 
 import androidx.annotation.Nullable;
 
+import net.kdt.pojavlaunch.R;
+
 import gg.projects.mobile.cloud.CloudModel;
 import gg.projects.mobile.cloud.CloudProblem;
 import gg.projects.mobile.cloud.CloudService;
@@ -80,9 +82,37 @@ public final class PlusQuestionFragment extends PlusScreen implements PlusEditor
                     }
                     if (!gg.projects.mobile.mods.Motion.enabled(c)) mScroll.scrollTo(0, y);
                     else mScroll.smoothScrollTo(0, y);
+                    light(target);
                 });
             }
         }
+    }
+
+    /** Lights the field it was opened for once: a bone ring that fades out (opacity only; with motion off it just goes). */
+    private void light(final View target) {
+        if (target.getWidth() == 0 || target.getHeight() == 0) return;
+        Context c = target.getContext();
+        final android.graphics.drawable.GradientDrawable ring = new android.graphics.drawable.GradientDrawable();
+        ring.setColor(0x14F3EBDD);
+        ring.setStroke(CloudUi.dp(c, 2), CloudUi.color(c, R.color.projects_bone_100));
+        ring.setCornerRadius(CloudUi.dp(c, 8));
+        ring.setBounds(0, 0, target.getWidth(), target.getHeight());
+        target.getOverlay().add(ring);
+        if (gg.projects.mobile.mods.Motion.enabled(c)) {
+            android.animation.ObjectAnimator fade = android.animation.ObjectAnimator.ofInt(ring, "alpha", 255, 0);
+            fade.setStartDelay(900);
+            fade.setDuration(700);
+            fade.addListener(new android.animation.AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(android.animation.Animator animation) {
+                    target.getOverlay().remove(ring);
+                }
+            });
+            fade.start();
+        } else {
+            target.postDelayed(() -> target.getOverlay().remove(ring), 1600);
+        }
+        target.announceForAccessibility(c.getString(R.string.projects_limit_here));
     }
 
     // ---- PlusEditors.Host ----

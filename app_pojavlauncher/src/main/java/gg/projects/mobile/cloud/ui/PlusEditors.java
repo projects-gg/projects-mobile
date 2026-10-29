@@ -201,7 +201,8 @@ final class PlusEditors {
                 else if (preview == null) ads = c.getString(R.string.projects_setup_a_ads_plain);
                 else if (preview.stoppedToday) ads = c.getString(R.string.projects_setup_a_ads_stopped);
                 else ads = capitalize(c, c.getString(R.string.projects_setup_a_ads, everyWords(c, preview.everyMin)));
-                return ads + c.getString(e.scanChat() ? R.string.projects_setup_a_scans : R.string.projects_setup_a_no_scan);
+                return ads + c.getString(e.proactivePm() ? R.string.projects_setup_a_writes
+                        : e.scanChat() ? R.string.projects_setup_a_scans : R.string.projects_setup_a_no_scan);
             }
             case TALK: {
                 String preset = presetName(c, e.preset());
@@ -295,25 +296,39 @@ final class PlusEditors {
         Context c = h.ctx();
         final LinearLayout box = new LinearLayout(c);
         box.setOrientation(LinearLayout.VERTICAL);
+        box.setPadding(CloudUi.dp(c, 8), 0, CloudUi.dp(c, 8), CloudUi.dp(c, 12));
         box.setVisibility(open ? View.VISIBLE : View.GONE);
-        String words = advancedWords(c, question, h.doc());
-        final CloudUi.Row row = CloudUi.row(c, R.drawable.projects_ic_sliders, c.getString(R.string.projects_setup_advanced), null);
-        row.setLine(words, R.color.projects_ash_400);
+        final String words = advancedWords(c, question, h.doc());
+        final CloudUi.Row row = CloudUi.row(c, R.drawable.projects_ic_sliders, c.getString(open ? R.string.projects_setup_hide
+                : R.string.projects_setup_advanced), null);
+        row.setLine(open ? null : words, R.color.projects_ash_400);
+        final android.widget.ImageView caret = new android.widget.ImageView(c);
+        caret.setImageResource(R.drawable.projects_ic_caret_down_bold);
+        caret.setImageTintList(android.content.res.ColorStateList.valueOf(CloudUi.color(c, R.color.projects_ash_400)));
+        caret.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        caret.setRotation(open ? 180f : 0f);
+        row.view.addView(caret, new LinearLayout.LayoutParams(CloudUi.dp(c, 18), CloudUi.dp(c, 18)));
         row.view.setBackgroundResource(R.drawable.projects_row_ripple);
         row.view.setClickable(true);
         row.view.setFocusable(true);
         row.view.setOnClickListener(v -> {
             boolean show = box.getVisibility() != View.VISIBLE;
             box.setVisibility(show ? View.VISIBLE : View.GONE);
+            row.title.setText(show ? R.string.projects_setup_hide : R.string.projects_setup_advanced);
+            row.setLine(show ? null : words, R.color.projects_ash_400);
+            // The caret turns on a transform; with motion off it simply is the other way round.
+            if (gg.projects.mobile.mods.Motion.enabled(c)) caret.animate().rotation(show ? 180f : 0f).setDuration(180).start();
+            else caret.setRotation(show ? 180f : 0f);
             Haptics.tick(v);
         });
         gg.projects.mobile.ui.Press.attach(row.view, gg.projects.mobile.ui.Press.Style.ROW);
         LinearLayout group = CloudUi.group(c);
         group.addView(row.view);
+        // The folded fields open inside the card (they opened below it, outside).
+        group.addView(box, CloudUi.matchWrap());
         LinearLayout.LayoutParams lp = CloudUi.matchWrap();
         lp.topMargin = CloudUi.dp(c, 16);
         content.addView(group, lp);
-        content.addView(box, CloudUi.matchWrap());
         drawn.advanced.put(question, box);
         return box;
     }
@@ -386,6 +401,8 @@ final class PlusEditors {
         Long value = e.limit(key);
         final PlusAmount amount = new PlusAmount(c, CloudWords.limitLabel(c, key), value == null ? 0 : value);
         if (hint != null) amount.field.input.setHint(hint);
+        String unit = moneyName(h);
+        if (unit != null) amount.field.unit(unit);
         String problem = h.problemAt("limits." + key);
         if (problem != null) amount.field.setError(problem);
         else if (help != null && value == null) amount.field.setHelp(help);
@@ -454,13 +471,21 @@ final class PlusEditors {
             content.addView(limitField(h, drawn, "perDealMax", c.getString(R.string.projects_limit_no_buy), null).field.view);
             content.addView(limitField(h, drawn, "totalBudget", c.getString(R.string.projects_limit_no_buy), null).field.view);
         }
+        // What the total is (the site's line under it).
+        content.addView(CloudUi.note(c, c.getString(R.string.projects_setup_total_help)));
         if (setup) {
             String required = h.problemAt("setup.money");
             if (required != null) content.addView(errorLine(c, required));
         }
         CloudModel.Spent spent = doc == null ? null : doc.spent;
         if (spent != null && (e.canSpend() || spent.total > 0)) {
-            content.addView(CloudUi.note(c, c.getString(R.string.projects_setup_spent_of_total, CloudWords.money(c, spent.total))));
+            content.addView(CloudUi.note(c, c.getString(R.string.projects_setup_spent_of_total,
+                    PlusWords.money(c, spent.total, doc.server))));
+            // "Harcananı sıfırla" beside what it resets (it sat at the end of "Gelişmiş").
+            if (!setup && spent.total > 0) {
+                content.addView(CloudUi.textButton(c, c.getString(R.string.projects_plus_reset_spent), v -> askReset(h, v)),
+                        new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            }
         }
         // The limits' one quiet line (afkplus-free.md §3.5): never said to the other player.
         content.addView(CloudUi.note(c, c.getString(R.string.projects_fine_secret)));
@@ -469,6 +494,8 @@ final class PlusEditors {
         box.addView(limitField(h, drawn, "dailySpendMax", null, c.getString(R.string.projects_plus_limit_none)).field.view);
         final PlusAmount floor = new PlusAmount(c, CloudWords.limitLabel(c, "balanceFloor"), e.balanceFloor());
         floor.field.input.setHint("0");
+        String floorUnit = moneyName(h);
+        if (floorUnit != null) floor.field.unit(floorUnit);
         String floorProblem = h.problemAt("limits.balanceFloor");
         if (floorProblem != null) floor.field.setError(floorProblem);
         floor.onChange(() -> {
@@ -479,9 +506,14 @@ final class PlusEditors {
         drawn.fields.put("limits.balanceFloor", floor.field.view);
         box.addView(floor.field.view);
         if (currencyShown(doc)) currency(box, h, drawn);
-        box.addView(CloudUi.gap(c, 12));
-        box.addView(CloudUi.textButton(c, c.getString(R.string.projects_plus_reset_spent), v -> askReset(h, v)),
-                new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+    }
+
+    /** The money's name as amounts carry it ("ripple"), or null for bare amounts. */
+    @Nullable
+    static String moneyName(Host h) {
+        CloudModel.PlusDoc doc = h.doc();
+        if (doc == null || doc.server.moneyLabel == null) return null;
+        return doc.server.moneyLabel.in(CloudWords.lang(h.ctx()));
     }
 
     /** "Para birimi": the player's name for the money, or the profile's, read-only (TRADE-ANY decision 23). */
@@ -640,11 +672,19 @@ final class PlusEditors {
         CloudModel.PlusDoc doc = h.doc();
         final PlusModel.AdPreview preview = doc == null ? null : doc.adPreview;
         LinearLayout group = CloudUi.group(c);
-        group.addView(CloudUi.toggle(c, c.getString(R.string.projects_ads_switch), e.ads(), on -> {
+        androidx.appcompat.widget.SwitchCompat ads = CloudUi.toggle(c, c.getString(R.string.projects_ads_switch), e.ads(), on -> {
             e.setAds(on);
             h.changed();
             h.rebuild();
-        }));
+        });
+        group.addView(ads);
+        if (doc != null && preview == null) {
+            // An older service without the ads' preview: the switch and its title dimmed, one line why (design.md's rule
+            // for a setting that cannot work here; the lead, 29 Oct).
+            ads.setEnabled(false);
+            ads.setAlpha(0.45f);
+            group.addView(help(c, R.string.projects_ads_old_service));
+        }
         content.addView(group);
         if (e.ads() && preview != null) {
             long now = h.service().nowSeconds();
@@ -687,6 +727,7 @@ final class PlusEditors {
             if (preview.namesPending) {
                 content.addView(CloudUi.note(c, c.getString(R.string.projects_ads_names_pending)));
             } else if (preview.lines.isEmpty()) {
+                // No active order: it says it posts nothing for now, with the way to one (no spam note: nothing goes out).
                 content.addView(CloudUi.note(c, c.getString(R.string.projects_ads_empty)));
                 content.addView(CloudUi.textButton(c, c.getString(R.string.projects_ads_add_order), v -> h.openOrders()),
                         new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -709,17 +750,22 @@ final class PlusEditors {
                     }), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
                 }
             }
-            if (!preview.stoppedToday && preview.warningAt == null) content.addView(CloudUi.note(c, c.getString(R.string.projects_ads_note)));
+            boolean quiet = preview.stoppedToday || preview.warningAt != null || (!preview.namesPending && preview.lines.isEmpty());
+            if (!quiet) content.addView(CloudUi.note(c, c.getString(R.string.projects_ads_note)));
         }
+        // Writing to a seller is in plain sight (the site's r7 switch): ProBot AI writes to strangers by itself here.
+        LinearLayout sellers = CloudUi.group(c);
+        sellers.addView(CloudUi.toggle(c, c.getString(R.string.projects_ads_write_sellers), e.proactivePm(), on -> {
+            e.setProactivePm(on);
+            h.changed();
+        }));
+        LinearLayout.LayoutParams sellersLp = CloudUi.matchWrap();
+        sellersLp.topMargin = CloudUi.dp(c, 12);
+        content.addView(sellers, sellersLp);
         LinearLayout box = advanced(content, h, drawn, CHAT, openAdvanced);
         LinearLayout look = CloudUi.group(c);
         look.addView(CloudUi.toggle(c, c.getString(R.string.projects_ads_scan), e.scanChat(), on -> {
             e.setScanChat(on);
-            h.changed();
-        }));
-        look.addView(CloudUi.textDivider(c));
-        look.addView(CloudUi.toggle(c, c.getString(R.string.projects_plus_proactive), e.proactivePm(), on -> {
-            e.setProactivePm(on);
             h.changed();
         }));
         box.addView(look);
@@ -736,7 +782,8 @@ final class PlusEditors {
     /** A line as the game's chat shows it: light words on the chat's dark strip. */
     private static TextView chatLine(Context c, String text) {
         TextView line = CloudUi.text(c, text, 14.5f, R.color.projects_bone_100, false);
-        line.setTypeface(android.graphics.Typeface.MONOSPACE);
+        // Figtree, not the system's monospace (a "technical" costume; the site draws its pixel font, which the app lacks).
+        line.setTypeface(CloudUi.font(c, R.font.figtree_regular));
         line.setPadding(CloudUi.dp(c, 12), CloudUi.dp(c, 8), CloudUi.dp(c, 12), CloudUi.dp(c, 8));
         line.setBackgroundColor(0x6B000000);
         return line;
@@ -776,7 +823,6 @@ final class PlusEditors {
         caption.setPadding(CloudUi.dp(c, 8), CloudUi.dp(c, 4), CloudUi.dp(c, 8), 0);
         content.addView(caption);
         sample(c, e, line);
-        content.addView(CloudUi.note(c, c.getString(R.string.projects_order_rule_hide_ai)));
 
         LinearLayout box = advanced(content, h, drawn, TALK, openAdvanced);
         CloudUi.Field intro = CloudUi.field(c, c.getString(R.string.projects_plus_intro), e.intro(), c.getString(R.string.projects_plus_intro_hint),
@@ -1075,6 +1121,13 @@ final class PlusEditors {
                         summary[0].count.setText(time);
                         h.changed();
                     }));
+            android.widget.ImageView caret = new android.widget.ImageView(c);
+            caret.setImageResource(R.drawable.projects_ic_caret_right);
+            caret.setImageTintList(android.content.res.ColorStateList.valueOf(CloudUi.color(c, R.color.projects_ash_400)));
+            caret.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+            LinearLayout.LayoutParams caretLp = new LinearLayout.LayoutParams(CloudUi.dp(c, 20), CloudUi.dp(c, 20));
+            caretLp.setMarginStart(CloudUi.dp(c, 6));
+            summary[0].view.addView(caret, caretLp);
             look.addView(summary[0].view);
             LinearLayout.LayoutParams lp = CloudUi.matchWrap();
             lp.topMargin = CloudUi.dp(c, 16);

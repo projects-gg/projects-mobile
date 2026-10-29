@@ -61,8 +61,16 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
     }
 
     @Override
+    protected void namesArrived() {
+        // The AFK+ settings arrived: the questions' one-line answers can be drawn.
+        mShape = "";
+        render();
+    }
+
+    @Override
     protected void started() {
         CloudModel.Account a = account();
+        if (a != null && a.plus() && mService.plusOn()) ensureItemNames();
         if (a != null && mLive == null) mLive = mService.watch(a.id, a.plus() && mService.plusOn(), this);
         if (a != null && a.plus() && mService.plusOn() && !mQuotaAsked) {
             // Once a visit: the replies left and the bought credits are the machine's live figures, not the list's brief.
@@ -286,6 +294,7 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
         content.addView(CloudUi.note(c, getString(R.string.projects_cloud_site_more)));
         content.addView(CloudUi.siteLink(c, getString(R.string.projects_cloud_open_site),
                 v -> mService.openSite(requireActivity(), "/hesap/" + a.id)), wrap());
+        if (a.plus() && !a.expired && mService.plusOn()) leavePlus(content, a);
     }
 
     private boolean plusSales() {
@@ -430,16 +439,17 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
             }
         }
 
-        if (!a.expired) {
-            content.addView(CloudUi.gap(c, 16));
-            // An outlined secondary action (a quiet text line read as a heading); it asks before anything changes.
-            LinearLayout.LayoutParams downLp = CloudUi.matchWrap();
-            downLp.setMarginStart(CloudUi.dp(c, 4));
-            downLp.setMarginEnd(CloudUi.dp(c, 4));
-            content.addView(CloudUi.button(c, getString(R.string.projects_plus_downgrade), false, this::askDowngrade), downLp);
-            // What it does, in the site's sentence: the name alone read as if the account were not 7/24 Bulut already.
-            content.addView(CloudUi.note(c, getString(R.string.projects_plus_downgrade_note)));
-        }
+    }
+
+    /** "AFK+'yı bırak": the page's last row, quiet; it asks first, with what happens to the time left. */
+    private void leavePlus(LinearLayout content, final CloudModel.Account a) {
+        final Context c = ctx();
+        content.addView(CloudUi.gap(c, 16));
+        LinearLayout group = CloudUi.group(c);
+        CloudUi.Row leave = CloudUi.actionRow(c, R.drawable.projects_ic_sign_out, getString(R.string.projects_plus_downgrade), this::askDowngrade);
+        leave.setLine(getString(R.string.projects_plus_downgrade_note), R.color.projects_ash_400);
+        group.addView(leave.view);
+        content.addView(group);
     }
 
     /**

@@ -92,7 +92,7 @@ public final class ConsoleViews {
                 Button b = mButtons.get(i);
                 boolean on = i == index;
                 b.setActivated(on);
-                b.setTextColor(CloudUi.color(b.getContext(), on ? R.color.projects_gold_300 : R.color.projects_ash_300));
+                b.setTextColor(CloudUi.color(b.getContext(), on ? R.color.projects_bone_100 : R.color.projects_ash_300));
                 if (android.os.Build.VERSION.SDK_INT >= 30) {
                     b.setStateDescription(on ? b.getContext().getString(R.string.projects_cloud_selected) : null);
                 }

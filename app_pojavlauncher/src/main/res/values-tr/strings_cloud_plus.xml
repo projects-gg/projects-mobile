@@ -13,7 +13,7 @@
     <string name="projects_order_intake_hint">Örnek: Elitra alırım, en fazla 40 bin</string>
     <string name="projects_order_check">Kontrol et</string>
     <string name="projects_order_reading">Okunuyor</string>
-    <string name="projects_order_form">Formla ekle</string>
+    <string name="projects_order_form">Elle ekle</string>
     <string name="projects_order_pick">Envanterden seç</string>
     <plurals name="projects_order_left">
         <item quantity="other">Bugün %d kez daha kontrol edebilirsin.</item>
@@ -84,7 +84,7 @@
     <string name="projects_order_writes_daily">Bugün daha fazla sipariş değişikliği yapılamaz.</string>
     <string name="projects_order_undo_failed">Sipariş geri alınamadı.</string>
     <string name="projects_order_status_waiting_ok">Onayın bekleniyor</string>
-    <string name="projects_order_status_your_trade">Takas sende</string>
+    <string name="projects_order_status_your_trade">Takası sen yap</string>
     <string name="projects_order_status_trading">Takasta</string>
     <string name="projects_order_status_done">Tamamlandı</string>
     <string name="projects_order_status_expired">Süresi doldu</string>
@@ -102,7 +102,7 @@
     <string name="projects_card_to_buy">Alınacak</string>
     <string name="projects_card_to_sell">Satılacak</string>
     <string name="projects_card_qty">Adet</string>
-    <string name="projects_card_target">Hedef</string>
+    <string name="projects_card_target">Hedef fiyat</string>
     <string name="projects_card_at_most">En fazla</string>
     <string name="projects_card_at_least">En az</string>
     <string name="projects_card_each_price">tanesi %1$s</string>
@@ -496,7 +496,7 @@
     <string name="projects_setup_adv_money_currency">Günlük sınır, en az kalacak bakiye, para birimi</string>
     <string name="projects_setup_adv_act">Ödeme, onay bekleme süresi</string>
     <string name="projects_setup_adv_act_no_pay">Onay bekleme süresi</string>
-    <string name="projects_setup_adv_chat">Satış ilanlarını taramak, satıcıya yazmak</string>
+    <string name="projects_setup_adv_chat">Satış ilanlarını taramak</string>
     <string name="projects_setup_adv_talk">Tanıtım yazısı, mesaj etiketi, dil, konu sınırı</string>
     <string name="projects_setup_chat_caption">Sohbette böyle görünür</string>
     <string name="projects_setup_pm_caption">Özel mesajda böyle görünür</string>
@@ -512,10 +512,10 @@
     <string name="projects_ads_tomorrow">yarın</string>
     <string name="projects_ads_other">Başka örnek</string>
     <string name="projects_ads_note">Sunucu spam saymasın diye her ilanı biraz farklı yazar, uyarı gelirse daha seyrek ilan verir.</string>
-    <string name="projects_ads_empty">İlan, etkin siparişlerinden yazılır.</string>
+    <string name="projects_ads_empty">Etkin siparişin yok, şimdilik ilan vermez.</string>
     <string name="projects_ads_add_order">Sipariş ekle</string>
     <string name="projects_ads_warned">Sunucu %1$s spam uyarısı verdi. Şimdilik %2$s bir ilan verir.</string>
-    <string name="projects_ads_stopped">Sunucunun uyarısından sonra yarına kadar ilan vermez.</string>
+    <string name="projects_ads_stopped">Sunucu uyardığı için yarına kadar ilan vermez.</string>
     <string name="projects_ads_today">bugün %1$s</string>
     <string name="projects_ads_yesterday">dün %1$s</string>
     <string name="projects_ads_names_pending">Örnek ilan, ProBot AI oyuna girince görünür.</string>
@@ -529,7 +529,15 @@
     <string name="projects_limit_new_counterpart">İlk anlaşmada onay sınırı</string>
     <string name="projects_limit_new_counterpart_help">İlk kez anlaştığı oyuncudan bunun üstündeki alımları önce sana sorar.</string>
     <string name="projects_to_limits">Sınırlara git</string>
-    <string name="projects_money_question">Bu, gerçek para gibi görünüyor.</string>
+    <string name="projects_to_approval_limit">Onay sınırına git</string>
+    <string name="projects_approval_why_ask">Anlaşınca onayını bekler.</string>
+    <string name="projects_limit_here">Aradığın ayar burada.</string>
+    <string name="projects_ads_old_service">Sohbete ilan, 7/24 Bulut güncellenince açılır.</string>
+    <string name="projects_ads_write_sellers">Aradığın eşya satılığa çıkınca satıcıya bir kez yazsın</string>
+    <string name="projects_setup_a_writes">, aradığın eşya satılığa çıkınca satıcıya bir kez yazar.</string>
+    <string name="projects_setup_total_help">Bütün alımların toplamı. Dolunca alım durur, Ayarlar\'dan sıfırlarsın.</string>
+    <string name="projects_setup_hide">Gizle</string>
+    <string name="projects_money_question">Bu, gerçek para gibi görünüyor. ProBot AI gerçek parayla alım satım yapmaz.</string>
     <string name="projects_money_in_game">Bu oyun parası</string>
     <string name="projects_plus_ai_ready">ProBot AI henüz başlatılmadı.</string>
     <string name="projects_plus_begin">ProBot AI\'ı başlat</string>

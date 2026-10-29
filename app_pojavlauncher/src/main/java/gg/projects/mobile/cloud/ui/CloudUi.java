@@ -315,7 +315,7 @@ public final class CloudUi {
         return new Row(row, name, line, count);
     }
 
-    /** The gold action (Tektur, text on gold) or the outlined one (Figtree, bone), 48 dp tall. */
+    /** The gold action (Figtree, text on gold) or the outlined one (Figtree, bone), 48 dp tall. */
     public static Button button(Context c, CharSequence label, boolean primary, View.OnClickListener click) {
         Button button = new Button(c, null, android.R.attr.borderlessButtonStyle);
         button.setText(label);
@@ -336,8 +336,9 @@ public final class CloudUi {
                 new int[][]{new int[]{-android.R.attr.state_enabled}, new int[]{}},
                 new int[]{color(c, R.color.projects_ash_500), primary ? color(c, R.color.projects_on_gold) : color(c, R.color.projects_bone_100)}));
         button.setBackground(primary ? ChamferDrawable.primary(c) : ChamferDrawable.outlined(c));
-        button.setTypeface(font(c, primary ? R.font.tektur_semibold : R.font.figtree_semibold));
-        if (Build.VERSION.SDK_INT >= 21) button.setLetterSpacing(primary ? 0.02f : 0f);
+        // Figtree on both (design.md: of the buttons only OYNA is Tektur; the lead, 29 Oct).
+        button.setTypeface(font(c, R.font.figtree_semibold));
+        if (Build.VERSION.SDK_INT >= 21) button.setLetterSpacing(0f);
     }
 
     /** A quiet text action (gold-300), 48 dp tall. */
@@ -391,7 +392,7 @@ public final class CloudUi {
         Button button = textButton(c, label, click);
         button.setCompoundDrawablesRelativeWithIntrinsicBounds(0, 0, R.drawable.projects_ic_arrow_square_out_small, 0);
         button.setCompoundDrawablePadding(dp(c, 6));
-        androidx.core.widget.TextViewCompat.setCompoundDrawableTintList(button, ColorStateList.valueOf(color(c, R.color.projects_gold_300)));
+        androidx.core.widget.TextViewCompat.setCompoundDrawableTintList(button, ColorStateList.valueOf(color(c, R.color.projects_bone_100)));
         return button;
     }
 
@@ -405,7 +406,9 @@ public final class CloudUi {
         button.setMinWidth(0);
         button.setMinimumWidth(0);
         button.setPadding(dp(c, 12), 0, dp(c, 12), 0);
-        button.setTextColor(color(c, R.color.projects_gold_300));
+        // Bone and underlined: a quiet action, never a second gold beside the screen's one (TASTE-SWEEP, 29 Oct).
+        button.setTextColor(color(c, R.color.projects_bone_100));
+        button.setPaintFlags(button.getPaintFlags() | android.graphics.Paint.UNDERLINE_TEXT_FLAG);
         button.setTypeface(font(c, R.font.figtree_semibold));
         button.setBackgroundResource(R.drawable.projects_row_ripple);
         Press.attach(button, Press.Style.BUTTON);
@@ -417,7 +420,7 @@ public final class CloudUi {
         void changed(boolean on);
     }
 
-    /** A switch row (the app's switches: obsidian track, gold when on), 56 dp. */
+    /** A switch row (obsidian track; bone when on, the lead's 29 Oct rule for every surface), 56 dp. */
     public static SwitchCompat toggle(Context c, CharSequence label, boolean checked, final Toggle toggle) {
         SwitchCompat row = new SwitchCompat(c);
         row.setText(label);
@@ -427,6 +430,11 @@ public final class CloudUi {
         row.setMinHeight(dp(c, 56));
         row.setMinimumHeight(dp(c, 56));
         row.setPadding(dp(c, 16), 0, dp(c, 14), 0);
+        int[][] states = {new int[]{-android.R.attr.state_enabled}, new int[]{android.R.attr.state_checked}, new int[]{}};
+        row.setThumbTintList(new ColorStateList(states, new int[]{color(c, R.color.projects_ash_500),
+                color(c, R.color.projects_bone_100), color(c, R.color.projects_ash_300)}));
+        row.setTrackTintList(new ColorStateList(states, new int[]{color(c, R.color.projects_obsidian_700),
+                color(c, R.color.projects_ash_500), color(c, R.color.projects_obsidian_700)}));
         row.setChecked(checked);
         row.setOnCheckedChangeListener((button, on) -> {
             Haptics.toggle(button, on);
@@ -523,7 +531,7 @@ public final class CloudUi {
         return new Field(box, name, input, error, help);
     }
 
-    /** One choice of several on the chamfer (the selected one faint gold); equal widths, 48 dp targets. */
+    /** One choice of several on the chamfer (the selected one a quiet plate, bone words); equal widths, 48 dp targets. */
     public interface Choice {
         void picked(int index);
     }
@@ -642,7 +650,7 @@ public final class CloudUi {
             row.addView(label, weight(1f));
             ImageView check = new ImageView(c);
             check.setImageResource(R.drawable.projects_ic_check);
-            check.setImageTintList(ColorStateList.valueOf(color(c, R.color.projects_gold_300)));
+            check.setImageTintList(ColorStateList.valueOf(color(c, R.color.projects_bone_100)));
             check.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
             row.addView(check, new LinearLayout.LayoutParams(dp(c, 20), dp(c, 20)));
             checks.add(check);
@@ -677,7 +685,7 @@ public final class CloudUi {
             Button b = buttons.get(i);
             boolean on = i == selected;
             b.setActivated(on);
-            b.setTextColor(color(b.getContext(), on ? R.color.projects_gold_300 : R.color.projects_ash_300));
+            b.setTextColor(color(b.getContext(), on ? R.color.projects_bone_100 : R.color.projects_ash_300));
             b.setContentDescription(b.getText());
             if (Build.VERSION.SDK_INT >= 30) b.setStateDescription(on ? b.getContext().getString(R.string.projects_cloud_selected) : null);
             b.setSelected(false);

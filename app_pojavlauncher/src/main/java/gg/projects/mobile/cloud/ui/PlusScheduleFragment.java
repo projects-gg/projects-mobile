@@ -172,7 +172,7 @@ public final class PlusScheduleFragment extends PlusScreen {
             b.setPadding(0, 0, 0, 0);
             b.setBackground(ChamferDrawable.toggle(c));
             b.setActivated(on);
-            b.setTextColor(CloudUi.color(c, on ? R.color.projects_gold_300 : R.color.projects_ash_300));
+            b.setTextColor(CloudUi.color(c, on ? R.color.projects_bone_100 : R.color.projects_ash_300));
             if (android.os.Build.VERSION.SDK_INT >= 30) b.setStateDescription(on ? getString(R.string.projects_cloud_selected) : null);
             Press.attach(b, Press.Style.BUTTON);
             b.setOnClickListener(v -> {

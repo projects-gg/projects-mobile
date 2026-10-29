@@ -12,7 +12,7 @@
     <string name="projects_order_intake_hint">e.g. Buying an Elytra, 40k max</string>
     <string name="projects_order_check">Check</string>
     <string name="projects_order_reading">Reading</string>
-    <string name="projects_order_form">Add with the form</string>
+    <string name="projects_order_form">Add by hand</string>
     <string name="projects_order_pick">Pick from inventory</string>
     <plurals name="projects_order_left">
         <item quantity="one">%d check left today.</item>
@@ -87,7 +87,7 @@
     <string name="projects_order_writes_daily">No more order changes today.</string>
     <string name="projects_order_undo_failed">Couldn\'t bring the order back.</string>
     <string name="projects_order_status_waiting_ok">Waiting for your OK</string>
-    <string name="projects_order_status_your_trade">Your turn to trade</string>
+    <string name="projects_order_status_your_trade">Your trade</string>
     <string name="projects_order_status_trading">Trading</string>
     <string name="projects_order_status_done">Done</string>
     <string name="projects_order_status_expired">Expired</string>
@@ -105,7 +105,7 @@
     <string name="projects_card_to_buy">To buy</string>
     <string name="projects_card_to_sell">To sell</string>
     <string name="projects_card_qty">Quantity</string>
-    <string name="projects_card_target">Target</string>
+    <string name="projects_card_target">Target price</string>
     <string name="projects_card_at_most">At most</string>
     <string name="projects_card_at_least">At least</string>
     <string name="projects_card_each_price">%1$s each</string>
@@ -506,7 +506,7 @@
     <string name="projects_setup_adv_money_currency">Daily limit, lowest balance to keep, currency</string>
     <string name="projects_setup_adv_act">Payment, time to answer an approval</string>
     <string name="projects_setup_adv_act_no_pay">Time to answer an approval</string>
-    <string name="projects_setup_adv_chat">Scanning chat, writing to sellers</string>
+    <string name="projects_setup_adv_chat">Scanning chat for sale posts</string>
     <string name="projects_setup_adv_talk">Introduction, tag, language, staying on topic</string>
     <string name="projects_setup_chat_caption">How it looks in chat</string>
     <string name="projects_setup_pm_caption">How it looks in a private message</string>
@@ -522,10 +522,10 @@
     <string name="projects_ads_tomorrow">tomorrow</string>
     <string name="projects_ads_other">Another example</string>
     <string name="projects_ads_note">It words each ad a little differently so the server doesn\'t see spam, and posts less often after a warning.</string>
-    <string name="projects_ads_empty">Ads are written from your active orders.</string>
+    <string name="projects_ads_empty">You have no active orders, so no ads for now.</string>
     <string name="projects_ads_add_order">Add an order</string>
     <string name="projects_ads_warned">The server warned about spam %1$s. For now it posts an ad %2$s.</string>
-    <string name="projects_ads_stopped">After the server\'s warning it posts no ads until tomorrow.</string>
+    <string name="projects_ads_stopped">The server warned it, so no ads until tomorrow.</string>
     <string name="projects_ads_today">today at %1$s</string>
     <string name="projects_ads_yesterday">yesterday at %1$s</string>
     <string name="projects_ads_names_pending">A sample ad shows once ProBot AI is in the game.</string>
@@ -539,7 +539,15 @@
     <string name="projects_limit_new_counterpart">Approval limit on a first deal</string>
     <string name="projects_limit_new_counterpart_help">Buys above this from a player it has never dealt with wait for your OK.</string>
     <string name="projects_to_limits">Go to limits</string>
-    <string name="projects_money_question">This looks like real money.</string>
+    <string name="projects_to_approval_limit">Go to the approval limit</string>
+    <string name="projects_approval_why_ask">Asks you before closing a deal.</string>
+    <string name="projects_limit_here">Here is that setting.</string>
+    <string name="projects_ads_old_service">Chat ads turn on once 24/7 Cloud is updated.</string>
+    <string name="projects_ads_write_sellers">Write to the seller once when an item you want is for sale</string>
+    <string name="projects_setup_a_writes">, writes once to the seller when an item you want is for sale.</string>
+    <string name="projects_setup_total_help">All buys together. When it\'s reached, buying stops, and you reset it in Settings.</string>
+    <string name="projects_setup_hide">Hide</string>
+    <string name="projects_money_question">This looks like real money. ProBot AI doesn\'t trade for real money.</string>
     <string name="projects_money_in_game">This is in-game money</string>
     <string name="projects_plus_ai_ready">ProBot AI hasn\'t been started yet.</string>
     <string name="projects_plus_begin">Start ProBot AI</string>
