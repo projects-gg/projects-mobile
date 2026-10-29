@@ -61,6 +61,17 @@ public class AppDatesTest {
     }
 
     @Test
+    public void sinceDatesTakeTheAblativeAfterTheYearInTurkish() {
+        assertEquals("12 Eylül 2026'dan", AppDates.sinceDate(true, at(2026, 9, 12, 10, 0), ISTANBUL));
+        assertEquals("3 Ocak 2027'den", AppDates.sinceDate(true, at(2027, 1, 3, 10, 0), ISTANBUL));
+        assertEquals("1 Mayıs 2025'ten", AppDates.sinceDate(true, at(2025, 5, 1, 10, 0), ISTANBUL));
+        assertEquals("12 September 2026", AppDates.sinceDate(false, at(2026, 9, 12, 10, 0), ISTANBUL));
+        Long day = AppDates.isoDay("2026-09-12");
+        assertNotNull(day);
+        assertEquals("a calendar day stays that day in UTC", "12 Eylül 2026'dan", AppDates.sinceDate(true, day, AppDates.UTC));
+    }
+
+    @Test
     public void isoDaysAreCalendarDaysInAnyZone() {
         Long day = AppDates.isoDay("2026-10-24");
         assertNotNull(day);

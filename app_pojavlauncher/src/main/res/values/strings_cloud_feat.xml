@@ -22,7 +22,7 @@
     <string name="projects_feat_inv_service">The inventory isn\'t available right now.</string>
     <string name="projects_feat_inv_trade">The inventory is locked during a trade.</string>
     <string name="projects_feat_inv_view_only">You can\'t make changes to this inventory.</string>
-    <string name="projects_feat_inv_slow">Slow down a little; that move didn\'t count.</string>
+    <string name="projects_feat_inv_slow">Slow down a little. That move didn\'t count.</string>
     <string name="projects_feat_inv_refused">The server didn\'t allow that move.</string>
     <string name="projects_feat_inv_unreachable">Can\'t reach the account right now.</string>
     <string name="projects_feat_inv_carry">Tap a slot to put it down.</string>
@@ -208,7 +208,7 @@
     <string name="projects_feat_copy_pick_targets">Choose another account to copy to.</string>
 
     <!-- Movement (phase 3) -->
-    <string name="projects_feat_move_setting_line">When on, the account can walk; it may fall or die.</string>
+    <string name="projects_feat_move_setting_line">When on, the account can walk. It may fall or die.</string>
     <string name="projects_feat_move_forward">Forward</string>
     <string name="projects_feat_move_back">Back</string>
     <string name="projects_feat_move_left">Left</string>
@@ -252,10 +252,10 @@
     <string name="projects_feat_move_arrived">It arrived.</string>
     <string name="projects_feat_move_no_path">It found no way there.</string>
     <string name="projects_feat_move_timeout">It didn\'t get there in 2 minutes and stopped.</string>
-    <string name="projects_feat_move_limit">30 minutes passed; following stopped.</string>
-    <string name="projects_feat_move_reset">The account was teleported or respawned; it stopped.</string>
+    <string name="projects_feat_move_limit">30 minutes passed, so following stopped.</string>
+    <string name="projects_feat_move_reset">The account was teleported or respawned, so it stopped.</string>
     <string name="projects_feat_move_service_off">Movement is off right now.</string>
-    <string name="projects_feat_move_trade_started">A trade started; it stopped.</string>
+    <string name="projects_feat_move_trade_started">A trade started, so it stopped.</string>
     <!-- Movement's last words shared with the launcher (FEAT-L, design.md §6 "Cloud movement") -->
     <string name="projects_feat_move_stepping">Walking.</string>
     <string name="projects_feat_move_idle">Standing still.</string>

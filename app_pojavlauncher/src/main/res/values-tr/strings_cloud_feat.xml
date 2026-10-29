@@ -24,7 +24,7 @@
     <string name="projects_feat_inv_service">Envanter şu an kullanılamıyor.</string>
     <string name="projects_feat_inv_trade">Takas sürerken envanter kilitli.</string>
     <string name="projects_feat_inv_view_only">Bu envanterde değişiklik yapamazsın.</string>
-    <string name="projects_feat_inv_slow">Biraz yavaşla; son hamle sayılmadı.</string>
+    <string name="projects_feat_inv_slow">Biraz yavaşla. Son hamle sayılmadı.</string>
     <string name="projects_feat_inv_refused">Sunucu bu hamleye izin vermedi.</string>
     <string name="projects_feat_inv_unreachable">Hesaba şu an ulaşılamıyor.</string>
     <string name="projects_feat_inv_carry">Bırakmak için bir yuvaya dokun.</string>
@@ -204,13 +204,13 @@
     <string name="projects_feat_copy_secret_for">%1$s: %2$s</string>
     <string name="projects_feat_copy_secret_field">%1$s için şifre</string>
     <string name="projects_feat_copy_secrets">Gizli satırlar</string>
-    <string name="projects_feat_copy_confirm">Seçtiğin hesapların bu ayarları değişir; hesaplar yeniden bağlanır.</string>
+    <string name="projects_feat_copy_confirm">Seçtiğin hesapların bu ayarları değişir. Hesaplar yeniden bağlanır.</string>
     <string name="projects_feat_copy_go">Kopyala</string>
     <string name="projects_feat_copy_secret_missing">Şifreyi yaz.</string>
     <string name="projects_feat_copy_pick_targets">Kopyalamak için başka bir hesap da seç.</string>
 
     <!-- Movement (phase 3) -->
-    <string name="projects_feat_move_setting_line">Açıkken hesap yürüyebilir; düşebilir ya da ölebilir.</string>
+    <string name="projects_feat_move_setting_line">Açıkken hesap yürüyebilir. Düşebilir ya da ölebilir.</string>
     <string name="projects_feat_move_forward">İleri</string>
     <string name="projects_feat_move_back">Geri</string>
     <string name="projects_feat_move_left">Sola</string>

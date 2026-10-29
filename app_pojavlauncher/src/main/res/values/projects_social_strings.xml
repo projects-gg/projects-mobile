@@ -45,7 +45,7 @@
 
     <!-- Sign-in -->
     <string name="projects_social_consent_title">Play with your friends</string>
-    <string name="projects_social_consent_body">You sign in with your Discord account. Your friends see your name, profile picture and what you\'re playing; your email and password never reach us.</string>
+    <string name="projects_social_consent_body">You sign in with your Discord account. Your friends see your name, profile picture and what you\'re playing. Your email and password never reach us.</string>
     <string name="projects_social_privacy">Privacy</string>
     <string name="projects_social_privacy_url">https://projects.gg/gizlilik/#friends</string>
     <string name="projects_social_sign_in">Sign in with Discord</string>
@@ -803,7 +803,7 @@
     <string name="projects_badge_locked_why">The tag can\'t be worn until %1$s.</string>
     <string name="projects_badge_locked_now">The tag can\'t be worn right now.</string>
     <string name="projects_badge_locked_until">Locked until %1$s</string>
-    <string name="projects_badge_error_name_rejected">This tag can\'t be worn; the leader needs to change the crew\'s name or tag.</string>
+    <string name="projects_badge_error_name_rejected">This tag can\'t be worn. The leader needs to change the crew\'s name or tag.</string>
     <string name="projects_badge_error_gone">You\'re no longer in this crew.</string>
     <string name="projects_badge_error_off">Crew tags are off right now.</string>
     <string name="projects_badge_member">You\'re in this crew</string>

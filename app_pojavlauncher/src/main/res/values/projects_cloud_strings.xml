@@ -166,7 +166,7 @@
     <!-- Console -->
     <string name="projects_cloud_console_input">Command or chat message</string>
     <string name="projects_cloud_console_send">Send</string>
-    <string name="projects_cloud_console_offline">The account isn\'t in the game; start it to type here.</string>
+    <string name="projects_cloud_console_offline">The account isn\'t in the game. Start it to type here.</string>
     <string name="projects_cloud_console_empty">No messages yet.</string>
     <string name="projects_cloud_console_earlier">Earlier lines</string>
     <string name="projects_cloud_console_sealed">This line is encrypted before it\'s sent.</string>
@@ -267,9 +267,9 @@
     <string name="projects_cloud_secret_show">Show</string>
     <string name="projects_cloud_secret_hide">Hide</string>
     <string name="projects_cloud_secret_change">Change</string>
-    <string name="projects_cloud_secret_offline">The AFK server isn\'t connected; it can\'t be shown right now.</string>
+    <string name="projects_cloud_secret_offline">Can\'t reach 24/7 Cloud right now. This line can\'t be shown.</string>
     <string name="projects_cloud_secret_limited">Shown too often. Try again in a bit.</string>
-    <string name="projects_cloud_secret_unreadable">This line can\'t be shown; type it again.</string>
+    <string name="projects_cloud_secret_unreadable">This line can\'t be shown. Type it again.</string>
     <string name="projects_cloud_secret_reseal">Type it again for the new server.</string>
     <string name="projects_cloud_settings_restart_note">Saving reconnects the account with the new settings.</string>
     <string name="projects_cloud_settings_dirty">You have unsaved changes.</string>
@@ -297,13 +297,13 @@
     <string name="projects_cloud_issue_order">At most can\'t be less than at least.</string>
     <string name="projects_cloud_issue_delay">Enter 0 to 60 seconds.</string>
     <string name="projects_cloud_issue_every">At least %1$d seconds, at most a day.</string>
-    <string name="projects_cloud_issue_anti_afk">Enter 10 to 3600 seconds; at most can\'t be less than at least.</string>
+    <string name="projects_cloud_issue_anti_afk">Enter 10 to 3600 seconds. The second number can\'t be smaller than the first.</string>
     <string name="projects_cloud_issue_times_format">Write the time as HH:MM.</string>
     <string name="projects_cloud_issue_times_duplicate">This time is already there.</string>
     <string name="projects_cloud_issue_times_empty">Add at least one time.</string>
     <string name="projects_cloud_issue_times_many">Up to 6 times.</string>
     <string name="projects_cloud_issue_invalid">Invalid regular expression.</string>
-    <string name="projects_cloud_issue_too_complex">This expression is too complex; keep it simpler.</string>
+    <string name="projects_cloud_issue_too_complex">This expression is too complex. Keep it simpler.</string>
     <string name="projects_cloud_issue_owner">First write the name you play with above.</string>
     <string name="projects_cloud_issue_owner_server">Server messages don\'t come from a player, so this rule can\'t use it.</string>
     <string name="projects_cloud_issue_name">A player name has 3-16 letters, numbers or underscores.</string>
@@ -340,7 +340,7 @@
     <string name="projects_cloud_notify_paused">ProBot AI paused</string>
     <string name="projects_cloud_notify_incident">Suspicious message blocked</string>
     <string name="projects_cloud_notify_quiet">Quiet hours</string>
-    <string name="projects_cloud_notify_quiet_help">No phone notifications in quiet hours; what you missed comes in one notification when they end.</string>
+    <string name="projects_cloud_notify_quiet_help">No phone notifications in quiet hours. What you missed comes in one notification when they end.</string>
     <string name="projects_cloud_notify_from">From</string>
     <string name="projects_cloud_notify_to">To</string>
     <string name="projects_cloud_notify_load_failed">Couldn\'t load your notification settings.</string>
@@ -362,15 +362,15 @@
     <string name="projects_cloud_notice_bought">%1$s: bought %2$s %3$s for %4$s.</string>
     <string name="projects_cloud_notice_sold">%1$s: sold %2$s %3$s for %4$s.</string>
     <string name="projects_cloud_notice_deal_failed">%1$s: the %2$s trade fell through.</string>
-    <string name="projects_cloud_notice_quota_full">You\'re out of AI credits; they reset at %1$s.</string>
+    <string name="projects_cloud_notice_quota_full">You\'re out of AI credits. They reset at %1$s.</string>
     <string name="projects_cloud_notice_quota_full_plain">You\'re out of AI credits.</string>
     <string name="projects_cloud_notice_quota_80">%1$s: most of your AI credits are used.</string>
     <string name="projects_cloud_notice_gift_ending">Your gift AI credits end %1$s.</string>
     <string name="projects_cloud_notice_summary">%1$s: %2$d messages, %3$d deals today.</string>
     <string name="projects_cloud_notice_paused_staff">%1$s: AFK+ was paused by staff.</string>
-    <string name="projects_cloud_notice_paused_service">AFK+ is under maintenance; your accounts stay AFK.</string>
+    <string name="projects_cloud_notice_paused_service">AFK+ is under maintenance. Your accounts stay AFK.</string>
     <string name="projects_cloud_notice_paused_outage">%1$s: AFK+ can\'t answer right now. The account stays AFK.</string>
-    <string name="projects_cloud_notice_incident">%1$s got inappropriate messages; that player gets no replies now.</string>
+    <string name="projects_cloud_notice_incident">%1$s got inappropriate messages. That player gets no replies now.</string>
     <string name="projects_cloud_notice_message">%1$s: new message.</string>
     <plurals name="projects_cloud_notice_messages">
         <item quantity="one">%1$s: %2$d new message.</item>

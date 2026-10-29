@@ -24,7 +24,7 @@
     <string name="projects_join_downloading">Projects paketi indiriliyor (%1$.1f MB / %2$.1f MB)</string>
     <string name="projects_join_failed_title">Projects hazırlanamadı</string>
     <string name="projects_join_failed_network">Projects paketi indirilemedi. İnternet bağlantını kontrol edip tekrar dene.</string>
-    <string name="projects_join_failed_generic">Projects paketi hazırlanamadı. Tekrar dene; sürerse ayrıntıları destek ekibine gönder.</string>
+    <string name="projects_join_failed_generic">Projects paketi hazırlanamadı. Tekrar dene. Sorun sürerse ayrıntıları destek ekibine gönder.</string>
     <string name="projects_join_finish_loader_title">Bir adım kaldı</string>
     <string name="projects_join_finish_loader">Mod yükleyicinin kurulumunu bildirimden tamamla, ardından Projects\'e katıl düğmesine yeniden dokun.</string>
     <string name="projects_copy_details">Ayrıntıları kopyala</string>
@@ -53,11 +53,11 @@
     <string name="projects_mods_required_by">%1$s için gerekli.</string>
     <string name="projects_mods_brings_along">Birlikte kurulur: %1$s.</string>
     <string name="projects_mods_removed">Mod klasöründen silindi.</string>
-    <string name="projects_mods_removed_back">Silinmişti; %1$s için geri kuruldu.</string>
+    <string name="projects_mods_removed_back">Silinmişti, %1$s için geri kuruldu.</string>
     <string name="projects_mods_disabled">Mod klasöründe devre dışı bırakıldı.</string>
-    <string name="projects_mods_disabled_back">Devre dışıydı; %1$s için yeniden açıldı.</string>
+    <string name="projects_mods_disabled_back">Devre dışıydı, %1$s için yeniden açıldı.</string>
     <string name="projects_mods_enabled">Mod klasöründe yeniden açıldı.</string>
-    <string name="projects_mods_modified">Dosyayı değiştirdin; üzerine yazılmaz.</string>
+    <string name="projects_mods_modified">Dosyayı değiştirdin, üzerine yazılmaz.</string>
     <string name="projects_mods_revert">Önerilene döndür</string>
     <string name="projects_mods_keep_mine">Vazgeç</string>
     <string name="projects_mods_page">Mod sayfası</string>
@@ -75,7 +75,7 @@
         <item quantity="other">%1$d mod için güncelleme var; oyunu açınca kurulur.</item>
     </plurals>
     <string name="projects_mods_update_now">Şimdi güncelle</string>
-    <string name="projects_mods_reset">Mod klasörü boş; seçtiğin modlar oyunu açınca yeniden kurulacak.</string>
+    <string name="projects_mods_reset">Mod klasörü boş. Seçtiğin modlar oyunu açınca yeniden kurulacak.</string>
     <plurals name="projects_mods_issues_title">
         <item quantity="one">%1$d dosya okunamadı</item>
         <item quantity="other">%1$d dosya okunamadı</item>
@@ -122,22 +122,22 @@
     <string name="projects_mods_stage_finishing">Yerleştiriliyor</string>
     <string name="projects_mods_percent">%1$s %%%2$d</string>
     <string name="projects_mods_applied">Modlar güncellendi</string>
-    <string name="projects_mods_applied_issues">Bazı dosyalar değiştirilemedi; sonra yeniden denenecek.</string>
+    <string name="projects_mods_applied_issues">Bazı dosyalar değiştirilemedi. Sonra yeniden denenecek.</string>
     <string name="projects_mods_apply_failed_title">Modlar güncellenemedi</string>
     <string name="projects_mods_apply_failed_network">Modlar indirilemedi. İnternet bağlantını kontrol edip tekrar dene.</string>
-    <string name="projects_mods_apply_failed_generic">Modlar güncellenemedi. Tekrar dene; sürerse ayrıntıları destek ekibine gönder.</string>
+    <string name="projects_mods_apply_failed_generic">Modlar güncellenemedi. Tekrar dene. Sorun sürerse ayrıntıları destek ekibine gönder.</string>
     <string name="projects_mods_leave_title">Değişiklikler uygulansın mı?</string>
     <string name="projects_mods_downloading">Modlar indiriliyor (%1$.1f MB / %2$.1f MB)</string>
     <string name="projects_notice_removed">%1$s silindiği için kapalı sayıldı.</string>
     <string name="projects_notice_disabled">%1$s devre dışı bırakıldığı için kapalı sayıldı.</string>
     <string name="projects_notice_enabled">%1$s yeniden açıldı.</string>
-    <string name="projects_notice_replaced">%1$s dosyasını değiştirdin; üzerine yazılmayacak.</string>
+    <string name="projects_notice_replaced">%1$s dosyasını değiştirdin, üzerine yazılmayacak.</string>
     <string name="projects_notice_required">%1$s, %2$s için geri kuruldu.</string>
     <plurals name="projects_notice_many">
         <item quantity="one">Mod klasöründeki %1$d değişikliğin kaydedildi.</item>
         <item quantity="other">Mod klasöründeki %1$d değişikliğin kaydedildi.</item>
     </plurals>
-    <string name="projects_notice_reset">Mod klasörü boştu; seçtiğin modlar yeniden kuruldu.</string>
+    <string name="projects_notice_reset">Mod klasörü boştu. Seçtiğin modlar yeniden kuruldu.</string>
     <string name="projects_notice_issues">Bazı mod dosyaları okunamadı.</string>
     <string name="projects_notice_dropped">Projects paketi Minecraft %1$s sürümünü artık güncellemiyor.</string>
 
@@ -303,7 +303,7 @@
     <string name="projects_ready_title">Projects hazır</string>
     <string name="projects_ready_body">Kurulum bitti. Başlatmak için Oyna\'ya bas.</string>
     <string name="projects_files_failed_network">Oyun dosyaları indirilemedi. İnternet bağlantını kontrol edip tekrar dene.</string>
-    <string name="projects_files_failed_generic">Oyun dosyaları hazırlanamadı. Tekrar dene; sürerse ayrıntıları destek ekibine gönder.</string>
+    <string name="projects_files_failed_generic">Oyun dosyaları hazırlanamadı. Tekrar dene. Sorun sürerse ayrıntıları destek ekibine gönder.</string>
     <!-- M17: Minecraft's own updates and the event card's "Join". -->
     <string name="projects_minecraft_read">minecraft.net\'te oku</string>
     <string name="projects_event_join">Katıl</string>

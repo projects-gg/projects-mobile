@@ -48,6 +48,18 @@ public final class AppDates {
         return format("d MMMM yyyy", turkish, millis, zone);
     }
 
+    /**
+     * 0.4.5: the long date for "… beri" / "since …": in Turkish with its ablative ending after the year as it is read
+     * ("12 Eylül 2026'dan", "3 Ocak 2027'den"), in English the plain long date ("12 September 2026").
+     */
+    public static String sinceDate(boolean turkish, long millis, TimeZone zone) {
+        if (!turkish) return longDate(false, millis, zone);
+        Calendar calendar = Calendar.getInstance(zone);
+        calendar.setTimeInMillis(millis);
+        return gg.projects.mobile.cloud.TrGrammar.ablativeDate(calendar.get(Calendar.DAY_OF_MONTH),
+                calendar.get(Calendar.MONTH) + 1, calendar.get(Calendar.YEAR));
+    }
+
     /** "24 Eki 2026" / "24 Oct 2026". */
     public static String mediumDate(Context context, long millis) {
         return mediumDate(turkish(context), millis, TimeZone.getDefault());

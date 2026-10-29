@@ -26,7 +26,7 @@
     <string name="projects_join_downloading">Downloading the Projects pack (%1$.1f MB / %2$.1f MB)</string>
     <string name="projects_join_failed_title">Projects could not be prepared</string>
     <string name="projects_join_failed_network">The Projects pack could not be downloaded. Check your internet connection and try again.</string>
-    <string name="projects_join_failed_generic">The Projects pack could not be prepared. Try again; if it keeps happening, send the details to the support team.</string>
+    <string name="projects_join_failed_generic">The Projects pack could not be prepared. Try again. If it keeps happening, send the details to the support team.</string>
     <string name="projects_join_finish_loader_title">One more step</string>
     <string name="projects_join_finish_loader">Finish the mod loader installation from the notification, then tap Join Projects again.</string>
     <string name="projects_copy_details">Copy details</string>
@@ -55,11 +55,11 @@
     <string name="projects_mods_required_by">Needed by %1$s.</string>
     <string name="projects_mods_brings_along">Also installs %1$s.</string>
     <string name="projects_mods_removed">Deleted from the mods folder.</string>
-    <string name="projects_mods_removed_back">It was deleted; reinstalled for %1$s.</string>
+    <string name="projects_mods_removed_back">It was deleted, so it was reinstalled for %1$s.</string>
     <string name="projects_mods_disabled">Disabled in the mods folder.</string>
-    <string name="projects_mods_disabled_back">It was disabled; turned back on for %1$s.</string>
+    <string name="projects_mods_disabled_back">It was disabled, so it was turned back on for %1$s.</string>
     <string name="projects_mods_enabled">Turned back on in the mods folder.</string>
-    <string name="projects_mods_modified">You changed this file; it will not be overwritten.</string>
+    <string name="projects_mods_modified">You changed this file, so it will not be overwritten.</string>
     <string name="projects_mods_revert">Restore recommended</string>
     <string name="projects_mods_keep_mine">Keep mine</string>
     <string name="projects_mods_page">Mod page</string>
@@ -77,7 +77,7 @@
         <item quantity="other">%1$d mods have updates; they install when you play.</item>
     </plurals>
     <string name="projects_mods_update_now">Update now</string>
-    <string name="projects_mods_reset">The mods folder is empty; your mods will be reinstalled when you play.</string>
+    <string name="projects_mods_reset">The mods folder is empty. Your mods will be reinstalled when you play.</string>
     <plurals name="projects_mods_issues_title">
         <item quantity="one">%1$d file could not be read</item>
         <item quantity="other">%1$d files could not be read</item>
@@ -124,22 +124,22 @@
     <string name="projects_mods_stage_finishing">Finishing</string>
     <string name="projects_mods_percent">%1$s %2$d%%</string>
     <string name="projects_mods_applied">Mods updated</string>
-    <string name="projects_mods_applied_issues">Some files could not be changed; they will be retried later.</string>
+    <string name="projects_mods_applied_issues">Some files could not be changed. They will be retried later.</string>
     <string name="projects_mods_apply_failed_title">Mods could not be updated</string>
     <string name="projects_mods_apply_failed_network">The mods could not be downloaded. Check your internet connection and try again.</string>
-    <string name="projects_mods_apply_failed_generic">The mods could not be updated. Try again; if it keeps happening, send the details to the support team.</string>
+    <string name="projects_mods_apply_failed_generic">The mods could not be updated. Try again. If it keeps happening, send the details to the support team.</string>
     <string name="projects_mods_leave_title">Apply your changes?</string>
     <string name="projects_mods_downloading">Downloading mods (%1$.1f MB / %2$.1f MB)</string>
     <string name="projects_notice_removed">%1$s was deleted, so it is now off.</string>
     <string name="projects_notice_disabled">%1$s was disabled, so it is now off.</string>
     <string name="projects_notice_enabled">%1$s was turned back on.</string>
-    <string name="projects_notice_replaced">You changed %1$s; it will not be overwritten.</string>
+    <string name="projects_notice_replaced">You changed %1$s, so it will not be overwritten.</string>
     <string name="projects_notice_required">%1$s was reinstalled for %2$s.</string>
     <plurals name="projects_notice_many">
         <item quantity="one">%1$d change in the mods folder was saved.</item>
         <item quantity="other">%1$d changes in the mods folder were saved.</item>
     </plurals>
-    <string name="projects_notice_reset">The mods folder was empty; your mods were reinstalled.</string>
+    <string name="projects_notice_reset">The mods folder was empty. Your mods were reinstalled.</string>
     <string name="projects_notice_issues">Some mod files could not be read.</string>
     <string name="projects_notice_dropped">The Projects pack no longer updates Minecraft %1$s.</string>
 
@@ -319,7 +319,7 @@
     <string name="projects_ready_title">Projects is ready</string>
     <string name="projects_ready_body">Setup is done. Press Play to start.</string>
     <string name="projects_files_failed_network">The game files couldn\'t be downloaded. Check your internet connection and try again.</string>
-    <string name="projects_files_failed_generic">The game files couldn\'t be prepared. Try again; if it keeps happening, send the details to the support team.</string>
+    <string name="projects_files_failed_generic">The game files couldn\'t be prepared. Try again. If it keeps happening, send the details to the support team.</string>
     <!-- M17: Minecraft's own updates from the Discord bot's feed, and the event card's "Join". -->
     <string name="projects_minecraft" translatable="false">Minecraft</string>
     <string name="projects_minecraft_source" translatable="false">minecraft.net</string>

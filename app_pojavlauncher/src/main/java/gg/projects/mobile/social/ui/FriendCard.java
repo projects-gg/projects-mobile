@@ -60,7 +60,7 @@ public final class FriendCard {
         where.setText(SocialUi.presenceText(activity, presence));
         if (presence.onProjects()) where.setTextColor(ContextCompat.getColor(activity, R.color.projects_jade_400));
         TextView since = view.findViewById(R.id.projects_card_since);
-        String day = CrewViews.day(activity, friend.since);
+        String day = CrewViews.sinceDay(activity, friend.since);
         since.setText(day == null ? "" : activity.getString(R.string.projects_social_friends_since, day));
         since.setVisibility(day == null ? View.GONE : View.VISIBLE);
 

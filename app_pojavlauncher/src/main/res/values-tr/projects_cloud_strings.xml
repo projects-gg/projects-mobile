@@ -167,7 +167,7 @@
     <!-- Konsol -->
     <string name="projects_cloud_console_input">Komut ya da sohbet mesajı</string>
     <string name="projects_cloud_console_send">Gönder</string>
-    <string name="projects_cloud_console_offline">Hesap oyunda değil; başlatınca yazabilirsin.</string>
+    <string name="projects_cloud_console_offline">Hesap oyunda değil. Başlatınca yazabilirsin.</string>
     <string name="projects_cloud_console_empty">Henüz mesaj yok.</string>
     <string name="projects_cloud_console_earlier">Önceki satırlar</string>
     <string name="projects_cloud_console_sealed">Bu satır şifrelenip gönderilir.</string>
@@ -270,9 +270,9 @@
     <string name="projects_cloud_secret_show">Göster</string>
     <string name="projects_cloud_secret_hide">Gizle</string>
     <string name="projects_cloud_secret_change">Değiştir</string>
-    <string name="projects_cloud_secret_offline">AFK sunucusu bağlı değil; şu an gösterilemiyor.</string>
+    <string name="projects_cloud_secret_offline">7/24 Bulut\'a şu an ulaşılamıyor. Bu satır gösterilemiyor.</string>
     <string name="projects_cloud_secret_limited">Çok sık gösterildi. Biraz sonra tekrar dene.</string>
-    <string name="projects_cloud_secret_unreadable">Bu satır gösterilemiyor; yeniden yaz.</string>
+    <string name="projects_cloud_secret_unreadable">Bu satır gösterilemiyor. Yeniden yaz.</string>
     <string name="projects_cloud_secret_reseal">Yeni sunucu için yeniden yaz.</string>
     <string name="projects_cloud_settings_restart_note">Kaydedince hesap yeni ayarlarla yeniden bağlanır.</string>
     <string name="projects_cloud_settings_dirty">Kaydedilmemiş değişikliklerin var.</string>
@@ -300,15 +300,15 @@
     <string name="projects_cloud_issue_order">En çok, en azdan küçük olamaz.</string>
     <string name="projects_cloud_issue_delay">0 ile 60 saniye arasında gir.</string>
     <string name="projects_cloud_issue_every">En az %1$d saniye, en çok bir gün.</string>
-    <string name="projects_cloud_issue_anti_afk">10 ile 3600 saniye arasında gir; en çok, en azdan küçük olamaz.</string>
+    <string name="projects_cloud_issue_anti_afk">10 ile 3600 saniye arasında gir. En çok, en azdan küçük olamaz.</string>
     <string name="projects_cloud_issue_times_format">Saati SS:DD biçiminde yaz.</string>
     <string name="projects_cloud_issue_times_duplicate">Bu saat zaten var.</string>
     <string name="projects_cloud_issue_times_empty">En az bir saat ekle.</string>
     <string name="projects_cloud_issue_times_many">En çok 6 saat eklenebilir.</string>
     <string name="projects_cloud_issue_invalid">Geçersiz düzenli ifade.</string>
-    <string name="projects_cloud_issue_too_complex">Bu ifade fazla karmaşık; daha sade yaz.</string>
+    <string name="projects_cloud_issue_too_complex">Bu ifade fazla karmaşık. Daha sade yaz.</string>
     <string name="projects_cloud_issue_owner">Önce yukarıda oynadığın hesabın adını yaz.</string>
-    <string name="projects_cloud_issue_owner_server">Sunucu mesajları bir oyuncudan gelmez; bu kuralda kullanılamaz.</string>
+    <string name="projects_cloud_issue_owner_server">Sunucu mesajları bir oyuncudan gelmez. Bu kuralda kullanılamaz.</string>
     <string name="projects_cloud_issue_name">Oyuncu adı 3-16 karakter olmalı: harf, rakam ya da alt çizgi.</string>
     <string name="projects_cloud_issue_name_duplicate">Aynı ad ve sunucuyla başka bir bulut hesabın var.</string>
     <string name="projects_cloud_issue_name_protected">Bu ad sunucuda yetkililer için korunuyor.\nBaşka bir ad seç.</string>
@@ -343,7 +343,7 @@
     <string name="projects_cloud_notify_paused">ProBot AI duraklatıldı</string>
     <string name="projects_cloud_notify_incident">Şüpheli mesaj engellendi</string>
     <string name="projects_cloud_notify_quiet">Sessiz saatler</string>
-    <string name="projects_cloud_notify_quiet_help">Sessiz saatlerde telefona bildirim gelmez; kaçırdıkların sessiz saat bitince tek bildirimde gelir.</string>
+    <string name="projects_cloud_notify_quiet_help">Sessiz saatlerde telefona bildirim gelmez. Kaçırdıkların sessiz saat bitince tek bildirimde gelir.</string>
     <string name="projects_cloud_notify_from">Başlangıç</string>
     <string name="projects_cloud_notify_to">Bitiş</string>
     <string name="projects_cloud_notify_load_failed">Bildirim ayarların yüklenemedi.</string>
@@ -365,15 +365,15 @@
     <string name="projects_cloud_notice_bought">%1$s: %2$s %3$s %4$s alındı.</string>
     <string name="projects_cloud_notice_sold">%1$s: %2$s %3$s %4$s satıldı.</string>
     <string name="projects_cloud_notice_deal_failed">%1$s: %2$s takası olmadı.</string>
-    <string name="projects_cloud_notice_quota_full">Kontörün bitti; %1$s yenilenir.</string>
+    <string name="projects_cloud_notice_quota_full">Kontörün bitti, %1$s yenilenir.</string>
     <string name="projects_cloud_notice_quota_full_plain">Kontörün bitti.</string>
     <string name="projects_cloud_notice_quota_80">%1$s: Kontörün çoğu kullanıldı.</string>
     <string name="projects_cloud_notice_gift_ending">Hediye kontörün %1$s bitiyor.</string>
     <string name="projects_cloud_notice_summary">%1$s: bugün %2$d mesaj, %3$d anlaşma.</string>
     <string name="projects_cloud_notice_paused_staff">%1$s: AFK+ yetkililerce duraklatıldı.</string>
-    <string name="projects_cloud_notice_paused_service">AFK+ bakımda; hesapların AFK\'da kalıyor.</string>
+    <string name="projects_cloud_notice_paused_service">AFK+ bakımda. Hesapların AFK\'da kalıyor.</string>
     <string name="projects_cloud_notice_paused_outage">%1$s: AFK+ şu an cevap veremiyor. Hesap AFK\'da kalıyor.</string>
-    <string name="projects_cloud_notice_incident">%1$s: uygunsuz mesajlar geldi; o oyuncuya artık cevap verilmiyor.</string>
+    <string name="projects_cloud_notice_incident">%1$s: uygunsuz mesajlar geldi. O oyuncuya artık cevap verilmiyor.</string>
     <string name="projects_cloud_notice_message">%1$s: yeni mesaj.</string>
     <plurals name="projects_cloud_notice_messages">
         <item quantity="one">%1$s: %2$d yeni mesaj.</item>

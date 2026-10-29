@@ -106,7 +106,7 @@
     <string name="import_control_label">Kontrolleri içeri aktar</string>
     <string name="import_control_invalid_file">Geçersiz veya bozuk dosya</string>
     <string name="import_control_import_button">Kontrolleri içe aktar</string>
-    <string name="import_control_verifying_file">Dosya doğrulanıyor; biraz bekleyip tekrar dene.</string>
+    <string name="import_control_verifying_file">Dosya doğrulanıyor. Biraz bekleyip tekrar dene.</string>
     <string name="import_control_invalid_name">Geçersiz isim ya da dosya zaten var</string>
     <string name="import_control_done">İçeri aktarma tamamlandı</string>
     <!--
@@ -178,7 +178,7 @@
     <string name="preference_java_description">Java sürümleri, bellek ve başlatma seçenekleri</string>
     <string name="preference_misc_title">Çeşitli ayarlar</string>
     <string name="preference_misc_description">Sürüm listesi ve oyun dosyası denetimi</string>
-    <string name="preference_experimental_description">Dikkatli kullan; bunlar için destek verilmez.</string>
+    <string name="preference_experimental_description">Dikkatli kullan. Bunlar için destek verilmez.</string>
     <string name="preference_sustained_performance_title">Kısıtlı performans modunu aç</string>
     <string name="preference_sustained_performance_description">En yüksek performansı sınırlayarak ısınmayı azaltır.</string>
     <string name="preference_force_vsync_title">VSync\'i zorla</string>
@@ -429,7 +429,7 @@
     <string name="mcl_gamepad_forcedSDL">SDL kontrolcü desteğini zorla</string>
     <string name="mcl_gamepad_forcedSDL_subtitle">26.3-snapshot-4 ve sonrasında ya da kontrolcü modları düzgün çalışmıyorsa bunu dene.</string>
     <string name="mg_renderer_title_dsaExt">Deneysel Direct State Access uzantısını bildir</string>
-    <string name="mg_renderer_summary_dsaExt">Iris shader paketlerine yardımcı olabilir; AcceleratedRendering modu için gerekir.</string>
+    <string name="mg_renderer_summary_dsaExt">Iris shader paketlerine yardımcı olabilir. AcceleratedRendering modu için gerekir.</string>
     <string name="error_invalid_value">Geçersiz değer.</string>
     <string name="minecraft_no_username_set">Minecraft oyuncu adın henüz yok. Giriş yapmadan önce Minecraft sitesinde bir ad belirle.</string>
     <string name="use_angle_checkbox">Daha hızlı çizim (deneysel)</string>

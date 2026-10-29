@@ -90,6 +90,13 @@ public final class CrewViews {
         return at == null ? null : AppDates.longDate(AppDates.turkish(context), at, AppDates.UTC);
     }
 
+    /** 0.4.5: {@link #day} for "… beri" / "since …" ("12 Eylül 2026'dan", "12 September 2026"), or null. */
+    @Nullable
+    public static String sinceDay(Context context, @Nullable String isoDay) {
+        Long at = AppDates.isoDay(isoDay);
+        return at == null ? null : AppDates.sinceDate(AppDates.turkish(context), at, AppDates.UTC);
+    }
+
     /** A clock time, on 24 hours in both languages ("21:30"; MOB-POLISH: not the phone's 12-hour setting). */
     public static String time(Context context, long seconds) {
         return AppDates.time(seconds * 1000L);

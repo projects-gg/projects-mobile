@@ -42,7 +42,7 @@
     <string name="projects_crew_home_invite">Ekip daveti</string>
 
     <string name="projects_social_consent_title">Arkadaşlarınla birlikte oyna</string>
-    <string name="projects_social_consent_body">Discord hesabınla giriş yaparsın. Arkadaşların adını, profil fotoğrafını ve ne oynadığını görür; e-postan ve şifren bize gelmez.</string>
+    <string name="projects_social_consent_body">Discord hesabınla giriş yaparsın. Arkadaşların adını, profil fotoğrafını ve ne oynadığını görür. E-postan ve şifren bize gelmez.</string>
     <string name="projects_social_privacy">Gizlilik</string>
     <string name="projects_social_privacy_url">https://projects.gg/gizlilik/#arkadaslar</string>
     <string name="projects_social_sign_in">Discord ile giriş yap</string>
@@ -113,7 +113,7 @@
     <string name="projects_social_cancel_request">İsteği geri al</string>
     <string name="projects_social_dismiss">Kapat</string>
     <string name="projects_social_friend_added">%1$s ile artık arkadaşsınız</string>
-    <string name="projects_social_friends_since">%1$s tarihinden beri arkadaşsınız</string>
+    <string name="projects_social_friends_since">%1$s beri arkadaşsınız</string>
 
     <string name="projects_social_add">Arkadaş ekle</string>
     <string name="projects_social_your_code">Kodun</string>
@@ -167,7 +167,7 @@
     <string name="projects_crew_leader">Lider</string>
     <string name="projects_crew_moderator">Moderatör</string>
     <string name="projects_crew_you">Sen</string>
-    <string name="projects_crew_privacy">Ekibindekiler adını, fotoğrafını ve ne oynadığını görür; başka sunucuların adresini görmez.</string>
+    <string name="projects_crew_privacy">Ekibindekiler adını, fotoğrafını ve ne oynadığını görür. Başka sunucuların adresini görmez.</string>
     <string name="projects_crew_row_none">Ekip kur ya da katıl</string>
     <string name="projects_crew_invite_to">Ekibe davet et</string>
 
@@ -786,11 +786,11 @@
     <string name="projects_badge_row_label">%1$s, etiket %2$s</string>
     <string name="projects_badge_hidden_chip">Gizli ekip</string>
     <string name="projects_badge_hidden_why">Lider ekibi gizledi.</string>
-    <string name="projects_badge_hidden_toast">Lider ekibi gizledi; etiketin çıkarıldı.</string>
+    <string name="projects_badge_hidden_toast">Lider ekibi gizledi, etiketin çıkarıldı.</string>
     <string name="projects_badge_locked_why">Etiket %1$s tarihine kadar takılamaz.</string>
     <string name="projects_badge_locked_now">Etiket şu an takılamaz.</string>
     <string name="projects_badge_locked_until">%1$s tarihine kadar kilitli</string>
-    <string name="projects_badge_error_name_rejected">Bu etiket takılamaz; lider ekibin adını ya da etiketini değiştirmeli.</string>
+    <string name="projects_badge_error_name_rejected">Bu etiket takılamaz. Lider ekibin adını ya da etiketini değiştirmeli.</string>
     <string name="projects_badge_error_gone">Artık bu ekipte değilsin.</string>
     <string name="projects_badge_error_off">Ekip etiketleri şu an kapalı.</string>
     <string name="projects_badge_member">Sen de bu ekiptesin</string>
