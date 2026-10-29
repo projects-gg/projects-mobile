@@ -1192,7 +1192,11 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
                     if (!foreground || notice.plan == null || !gate().plans || surfaceShown(Surface.CREW)) break;
                     String who = notice.who == null ? context.getString(R.string.projects_crew_someone) : notice.who.name();
                     String text = context.getString(R.string.projects_plans_made, who, PlanViews.when(context, notice.plan.at, now, true));
-                    if (mState.crews().size() > 1 && notice.teamName != null) text = text + " · " + notice.teamName;
+                    // Several crews: the sentence names which one (no middle dot in UI text).
+                    if (mState.crews().size() > 1 && notice.teamName != null) {
+                        text = context.getString(R.string.projects_plans_made_crew, who, PlanViews.when(context, notice.plan.at, now, true),
+                                notice.teamName);
+                    }
                     SocialUi.toastLong(context, text);
                     break;
                 }

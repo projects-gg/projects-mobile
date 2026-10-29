@@ -60,7 +60,7 @@ final class AnswerList {
      * call's id; {@code labels}: each answer's group name, in {@code order}; {@code summary}: the folded
      * line (the tally).
      */
-    static void bind(final View card, final String key, Map<String, String> answers, String[] order, int[] labels, String summary,
+    static void bind(final View card, final String key, Map<String, String> answers, String[] order, int[] labels, CharSequence summary,
                      final Host host) {
         final View block = card.findViewById(R.id.projects_answers);
         final Context context = card.getContext();
@@ -94,7 +94,7 @@ final class AnswerList {
         toggle.setOnClickListener(v -> flip(block, key, summary, host));
     }
 
-    private static void flip(View block, String key, String summary, Host host) {
+    private static void flip(View block, String key, CharSequence summary, Host host) {
         Context context = block.getContext();
         boolean open = !host.isOpen(key);
         host.setOpen(key, open);
@@ -119,7 +119,7 @@ final class AnswerList {
         toggle.announceForAccessibility(context.getString(open ? R.string.projects_answers_expanded : R.string.projects_answers_collapsed));
     }
 
-    private static void showSummary(Context context, TextView line, boolean open, String summary) {
+    private static void showSummary(Context context, TextView line, boolean open, CharSequence summary) {
         line.setText(open ? context.getString(R.string.projects_answers_toggle) : summary);
         line.setTextColor(ContextCompat.getColor(context, open ? R.color.projects_bone_100 : R.color.projects_ash_300));
         try {
@@ -209,7 +209,7 @@ final class AnswerList {
             int label = 0;
             for (int i = 0; i < order.length; i++) if (order[i].equals(group.answer)) label = labels[i];
             TextView heading = new TextView(context);
-            heading.setText(context.getString(R.string.projects_answers_group, context.getString(label), group.count()));
+            heading.setText(gg.projects.mobile.ui.Apart.of(context, context.getString(label), String.valueOf(group.count()), R.color.projects_ash_400));
             heading.setTextSize(12);
             heading.setTextColor(ContextCompat.getColor(context, R.color.projects_ash_300));
             heading.setPadding(Math.round(4 * dp), Math.round(10 * dp), 0, Math.round(2 * dp));

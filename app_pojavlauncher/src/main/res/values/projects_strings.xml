@@ -149,7 +149,6 @@
     <!-- MOB-POLISH: the desktop news column's words (HOME-TASTE): the patch notes' one link, the event's
          heading while it runs ("Live" read like a stream), its time as one sentence. -->
     <string name="projects_patch_read">Read in full</string>
-    <string name="projects_meta_separator" translatable="false">·</string>
     <string name="projects_event_live">Ongoing event</string>
     <string name="projects_event_next">Next event</string>
     <string name="projects_event_started">Started %1$s</string>

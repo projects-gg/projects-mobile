@@ -718,7 +718,7 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
                 if (problem != null) row.setLine(problem, R.color.projects_flare_400);
                 else if (cmd.paused) row.setLine(getString(R.string.projects_cloud_mod_paused_row), R.color.projects_flare_400);
                 // MOB-POLISH: an unused row says so in words too, not only dimmed (the account's "Kapalı").
-                else if (!cmd.enabled) row.setLine(getString(R.string.projects_cloud_row_off, trigger(cmd)), R.color.projects_ash_400);
+                else if (!cmd.enabled) row.setLine(offLine(trigger(cmd)), R.color.projects_ash_400);
                 else row.setLine(trigger(cmd), R.color.projects_ash_400);
                 if (!cmd.enabled) row.view.setAlpha(0.55f);
                 rows.add(contentIssue("commands", i) != null && !cmd.words.secretKind() ? withReport(row, cmd.words.text) : row.view);
@@ -801,8 +801,8 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
                     row.setLine(getString(R.string.projects_feat_rule_not_sent), R.color.projects_ash_300);
                     lineMark(row, R.drawable.projects_ic_info, R.color.projects_ash_400);
                 }
-                else if (!rule.enabled) row.setLine(getString(R.string.projects_cloud_row_off,
-                        getString(R.string.projects_cloud_rule_line, rule.pattern, CloudWords.span(c, rule.cooldown))), R.color.projects_ash_400);
+                else if (!rule.enabled) row.setLine(offLine(getString(R.string.projects_cloud_rule_line, rule.pattern,
+                        CloudWords.span(c, rule.cooldown))), R.color.projects_ash_400);
                 else row.setLine(getString(R.string.projects_cloud_rule_line, rule.pattern, CloudWords.span(c, rule.cooldown)), R.color.projects_ash_400);
                 if (!rule.enabled) row.view.setAlpha(0.55f);
                 CloudEdit.Issue refused = contentIssue("rules", i);
@@ -821,6 +821,14 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
             case SECRET: return CloudText.preview(w.text);
             default: return w.text;
         }
+    }
+
+    /**
+     * MOB-POLISH: a command or rule turned off says so before its usual line ('Kapalı' then 'Her girişte, 2 sn sonra'),
+     * the word a step brighter, apart by a gap (no middle dot in UI text).
+     */
+    private CharSequence offLine(CharSequence usual) {
+        return gg.projects.mobile.ui.Apart.of(ctx(), getString(R.string.projects_cloud_row_off), R.color.projects_ash_300, usual, gg.projects.mobile.ui.Apart.OWN);
     }
 
     private String trigger(CloudEdit.Command cmd) {

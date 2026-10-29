@@ -99,7 +99,7 @@ public final class SocialPush {
         });
     }
 
-    /** "Ayşe, Gece Kartalları ekibini çağırıyor · mc.example.com sunucusunda", from the crews' names as last known. */
+    /** A crew call: "Ayşe, Gece Kartalları ekibini çağırıyor" over its place, from the crews' names as last known. */
     private static void showCall(Context app, SocialPrefs prefs, PushMessage message, long timeoutMs) {
         Context c = LanguageManager.wrap(app);
         Map<String, String> names = prefs.crewNames();

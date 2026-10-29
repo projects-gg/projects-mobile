@@ -319,7 +319,9 @@ public final class ChatLinkViews {
         mark.setImageTintList(ContextCompat.getColorStateList(context, R.color.projects_ash_400));
         mark.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         line.addView(mark, new LinearLayout.LayoutParams(Math.round(14 * dp), Math.round(14 * dp)));
-        TextView name = text(context, author == null ? site : site + " · " + author, 12f, R.color.projects_ash_400, false, 1);
+        TextView name = text(context, site, 12f, R.color.projects_ash_400, false, 1);
+        // The site a step brighter than its author, apart by a gap (no middle dot in UI text).
+        if (author != null) name.setText(gg.projects.mobile.ui.Apart.of(context, site, R.color.projects_ash_300, author, gg.projects.mobile.ui.Apart.OWN));
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         lp.setMarginStart(Math.round(6 * dp));
         line.addView(name, lp);

@@ -1067,7 +1067,7 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
         if (book.mutedAt(mConv, now)) {
             long until = book.mutedUntil(mConv);
             state = until == ChatBook.MUTED_FOREVER ? getString(R.string.projects_crew_muted)
-                    : getString(R.string.projects_crew_muted_until, CrewViews.moment(activity, until, now));
+                    : getString(R.string.projects_crew_muted_until, gg.projects.mobile.cloud.CloudWords.until(activity, until, now));
         }
         MuteSheet.show(activity, getString(R.string.projects_chat_notifications), mHeader.getTitleText(), state, now, null, null,
                 new MuteSheet.Choice() {
@@ -1750,7 +1750,7 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
         // MOB1b: "Görüldü" stands where the check stood; the time and "düzenlendi" stay, as on the desktop (it used to
         // replace them, so a seen message lost its time and its edit mark).
         time.setText(waiting ? getString(R.string.projects_chat_waiting)
-                : edited ? clock + " · " + getString(R.string.projects_chat_edited) : clock);
+                : edited ? clock + gg.projects.mobile.ui.Apart.GAP + getString(R.string.projects_chat_edited) : clock);
         TextView seenMark = view.findViewById(R.id.projects_msg_seen);
         seenMark.setVisibility(seen && !e.deleted() && !e.failed() ? View.VISIBLE : View.GONE);
         String stateKey;
@@ -1771,7 +1771,7 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
             failed.setVisibility(View.VISIBLE);
             final boolean retriable = retriable(e.outbox.failure);
             String reason = failureText(e.outbox.failure, e.outbox.rule, e.text());
-            failed.setText(retriable ? reason + " · " + getString(R.string.projects_retry) : reason);
+            failed.setText(retriable ? gg.projects.mobile.ui.Apart.of(context, reason, getString(R.string.projects_retry), R.color.projects_bone_100) : reason);
             Drawable warn = ContextCompat.getDrawable(context, R.drawable.projects_ic_warning_circle);
             if (warn != null) {
                 warn = warn.mutate();

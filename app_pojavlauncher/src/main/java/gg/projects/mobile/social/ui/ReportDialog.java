@@ -161,7 +161,7 @@ public final class ReportDialog {
                     PlanViews.when(activity, plan.at, SocialService.nowSeconds()));
             String said = message == null ? "" : message.isSticker() ? activity.getString(R.string.projects_stickers_unknown) : message.text;
             quote.setText(reaction != null ? activity.getString(R.string.projects_report_reaction, (String) reaction[2])
-                    : message != null ? said : plan.note == null ? subject : subject + " · " + plan.note);
+                    : message != null ? said : plan.note == null ? subject : subject + "\n" + plan.note);
             quote.setTextSize(13);
             quote.setMaxLines(3);
             quote.setEllipsize(android.text.TextUtils.TruncateAt.END);

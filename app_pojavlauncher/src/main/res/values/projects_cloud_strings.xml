@@ -751,8 +751,8 @@
     <string name="projects_plus_row_none">No item matches this search.</string>
     <string name="projects_cloud_today_at">Today %1$s</string>
     <string name="projects_cloud_yesterday_at">Yesterday %1$s</string>
-    <!-- MOB-POLISH: a command or rule turned off, before its usual line ("Kapalı · Her girişte, 2 sn sonra"). -->
-    <string name="projects_cloud_row_off">Off · %1$s</string>
+    <!-- MOB-POLISH: a command or rule turned off, before its usual line, apart by a gap (CloudSettingsFragment.offLine). -->
+    <string name="projects_cloud_row_off">Off</string>
     <!-- QA-TASTE / AFK-CLEAR: a refused login password: one way on, the settings on the login line, "save and start". -->
     <string name="projects_cloud_fix_password">Fix password</string>
     <string name="projects_cloud_settings_save_start">Save and start</string>

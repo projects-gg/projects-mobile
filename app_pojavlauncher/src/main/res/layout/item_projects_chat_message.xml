@@ -219,7 +219,7 @@
                 android:fontFamily="@font/figtree_regular"
                 android:textColor="@color/projects_ash_400"
                 android:textSize="11sp"
-                tools:text="21:30 · düzenlendi" />
+                tools:text="21:30 düzenlendi" />
 
             <ImageView
                 android:id="@+id/projects_msg_status"
@@ -260,7 +260,7 @@
             android:textColor="@color/projects_flare_400"
             android:textSize="12sp"
             android:visibility="gone"
-            tools:text="Gönderilemedi · Tekrar dene"
+            tools:text="Gönderilemedi Tekrar dene"
             tools:visibility="visible" />
     </LinearLayout>
 </LinearLayout>

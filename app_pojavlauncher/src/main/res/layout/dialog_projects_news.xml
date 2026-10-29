@@ -51,20 +51,10 @@
                 tools:text="Yama notları" />
 
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
-                android:fontFamily="@font/figtree_regular"
-                android:importantForAccessibility="no"
-                android:text="@string/projects_meta_separator"
-                android:textColor="@color/projects_ash_400"
-                android:textSize="12.5sp" />
-
-            <TextView
                 android:id="@+id/projects_article_date"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
+                android:layout_marginStart="10dp"
                 android:layout_weight="1"
                 android:ellipsize="end"
                 android:fontFamily="@font/figtree_regular"

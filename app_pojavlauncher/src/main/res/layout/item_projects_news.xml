@@ -49,16 +49,6 @@
             android:textSize="12.5sp"
             tools:text="Etkinlik" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
-            android:fontFamily="@font/figtree_regular"
-            android:importantForAccessibility="no"
-            android:text="@string/projects_meta_separator"
-            android:textColor="@color/projects_ash_400"
-            android:textSize="12.5sp" />
-
         <!-- New to the player since the last visit; fades out when read and keeps its room. -->
         <View
             android:id="@+id/projects_item_dot"

@@ -160,6 +160,7 @@
         <item quantity="other">%d üye</item>
     </plurals>
     <string name="projects_crew_founded">Kuruluş %1$s</string>
+    <string name="projects_crew_founded_after">kuruluş %1$s</string>
     <plurals name="projects_crew_online">
         <item quantity="one">%d çevrimiçi</item>
         <item quantity="other">%d çevrimiçi</item>
@@ -202,6 +203,10 @@
     <string name="projects_crew_count">%1$d/%2$d</string>
 
     <string name="projects_crew_invites">Ekip davetleri</string>
+    <plurals name="projects_crew_invites_count">
+        <item quantity="one">%d ekip daveti</item>
+        <item quantity="other">%d ekip daveti</item>
+    </plurals>
     <string name="projects_crew_invited_by">%1$s davet etti</string>
     <string name="projects_crew_invited_you">%1$s seni %2$s ekibine davet etti</string>
     <string name="projects_crew_kicked">%1$s ekibinden çıkarıldın</string>
@@ -238,7 +243,7 @@
     <string name="projects_crew_call_mine">Çağrın sürüyor</string>
     <string name="projects_crew_call_theirs">%1$s ekibi çağırıyor</string>
     <string name="projects_crew_call_ready">Hazır mısın?</string>
-    <string name="projects_crew_call_left">%d dk</string>
+    <string name="projects_crew_call_left">%d dk kaldı</string>
     <string name="projects_crew_call_end">Bitir</string>
     <string name="projects_crew_call_yes">Geliyorum</string>
     <string name="projects_crew_call_soon">Birazdan</string>
@@ -252,7 +257,8 @@
     <string name="projects_crew_mute">Sessize al</string>
     <string name="projects_crew_unmute">Sesi aç</string>
     <string name="projects_crew_muted">Sessizde</string>
-    <string name="projects_crew_muted_until">Sessizde · %1$s</string>
+    <string name="projects_crew_muted_after">sessizde</string>
+    <string name="projects_crew_muted_until">%1$s kadar sessizde</string>
     <string name="projects_crew_mute_hour">1 saat</string>
     <string name="projects_crew_mute_eight">8 saat</string>
     <string name="projects_crew_mute_morning">Yarın sabaha kadar</string>
@@ -359,6 +365,7 @@
         <item quantity="other">En çok %d ekipte olabilirsin.</item>
     </plurals>
     <string name="projects_crews_main">Ana ekip</string>
+    <string name="projects_crews_main_after">ana ekip</string>
     <string name="projects_crews_make_main">Ana ekip yap</string>
     <string name="projects_crews_made_main">%1$s artık ana ekibin</string>
     <string name="projects_crews_move_left">Sola taşı</string>
@@ -377,8 +384,7 @@
     <string name="projects_crews_full">Dolu</string>
     <string name="projects_crews_in_crew">Ekipte</string>
     <string name="projects_crews_mute_all">Hepsini sessize al</string>
-    <string name="projects_crews_all_muted">Bütün ekipler sessizde</string>
-    <string name="projects_crews_all_muted_until">Bütün ekipler sessizde · %1$s</string>
+    <string name="projects_crews_unmute_all">Hepsinin sesini aç</string>
     <string name="projects_crews_this_crew">Bu ekip</string>
     <string name="projects_crews_changed">Ekiplerin değişti. Liste yenilendi.</string>
 
@@ -506,6 +512,7 @@
     <string name="projects_requests_withdrawn">İsteğin geri çekildi</string>
     <string name="projects_requests_sent">İsteğin gönderildi. Liderler onaylayınca katılırsın.</string>
     <string name="projects_requests_asked">%1$s istedi</string>
+    <string name="projects_requests_asked_via">%1$s aracılığıyla, %2$s istedi</string>
     <string name="projects_requests_accepted">%1$s ekibe katıldı</string>
     <string name="projects_requests_notice">%1$s ekibine katılmak istiyor</string>
     <string name="projects_requests_notice_crew">%1$s, %2$s ekibine katılmak istiyor</string>
@@ -562,6 +569,7 @@
     <string name="projects_plans_tomorrow_inline">yarın</string>
     <string name="projects_plans_when">%1$s %2$s</string>
     <string name="projects_plans_made">%1$s, %2$s için plan yaptı</string>
+    <string name="projects_plans_made_crew">%1$s, %3$s ekibi için plan yaptı: %2$s</string>
     <string name="projects_plans_more">Plan seçenekleri</string>
     <string name="projects_plans_cancel">Planı sil</string>
     <string name="projects_plans_cancel_ask">Plan herkesten silinir.</string>
@@ -582,7 +590,7 @@
         <item quantity="one">%d geliyor</item>
         <item quantity="other">%d geliyor</item>
     </plurals>
-    <string name="projects_plans_row">Plan · %1$s</string>
+    <string name="projects_plans_row">Plan</string>
     <plurals name="projects_limited_no_link">
         <item quantity="one">Discord hesabın yeni olduğu için davet bağlantısı oluşturamazsın. %d gün sonra açılır.</item>
         <item quantity="other">Discord hesabın yeni olduğu için davet bağlantısı oluşturamazsın. %d gün sonra açılır.</item>
@@ -636,7 +644,6 @@
     <string name="projects_answers_collapse">Yanıtları gizle</string>
     <string name="projects_answers_expanded">Açık</string>
     <string name="projects_answers_collapsed">Kapalı</string>
-    <string name="projects_answers_group">%1$s · %2$d</string>
     <string name="projects_social_pill_connect">Bağlan</string>
     <string name="projects_social_pill_connect_label">Arkadaşlar: Discord ile bağlan</string>
     <string name="projects_connect">Bağlan</string>

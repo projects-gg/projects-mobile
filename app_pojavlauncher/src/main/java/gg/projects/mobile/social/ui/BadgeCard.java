@@ -43,7 +43,7 @@ import gg.projects.mobile.ui.Press;
 /**
  * TEAM6 (team6.md §4; Android: a sheet): the card of a crew tag, opened from a tag that stands alone
  * (a friend's card, a direct conversation's title, the player's own card). The crew's mark, name and
- * tag, its motto (two lines at most), "Kuruluş Eylül 2026 · 12 üye"; never its members, leader, code or
+ * tag, its motto (two lines at most), "Kuruluş Eylül 2026, 12 üye"; never its members, leader, code or
  * link. One row at its bottom, or none: the player's own tag ("Etiketi çıkar", "Ekibi aç"), a crew the
  * player is in ("Sen de bu ekiptesin", "Ekibi aç"), invited to ("Kabul et"), waiting for ("İsteğin
  * bekliyor", "Geri çek"), or "Katılma isteği gönder" when the request may go (a friend's tag, the crew
@@ -343,7 +343,7 @@ final class BadgeCard {
         return in;
     }
 
-    /** "Kuruluş Eylül 2026 · 12 üye" ("12/30 üye" for a member); a hidden crew says so to its members. */
+    /** "Kuruluş Eylül 2026, 12 üye" ("12/30 üye" for a member); a hidden crew says so to its members. */
     private static String metaLine(Context context, SocialService service, Badge badge, BadgeRules.Row row) {
         StringBuilder out = new StringBuilder();
         String founded = foundedOn(context, badge.createdOn);
@@ -352,7 +352,7 @@ final class BadgeCard {
         boolean member = row == BadgeRules.Row.OWN || row == BadgeRules.Row.MEMBER;
         String members = member && limit > 0 ? context.getString(R.string.projects_crew_members, badge.members, limit)
                 : context.getResources().getQuantityString(R.plurals.projects_crew_member_count, badge.members, badge.members);
-        if (out.length() > 0) out.append(" · ");
+        if (out.length() > 0) out.append(", ");
         out.append(members);
         return out.toString();
     }

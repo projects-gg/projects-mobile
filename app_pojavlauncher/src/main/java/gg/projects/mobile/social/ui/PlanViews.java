@@ -66,9 +66,9 @@ public final class PlanViews {
         return context.getResources().getQuantityString(R.plurals.projects_time_days_ago, days, days);
     }
 
-    /** "Geliyor: Ece, Kaan · Belki: Deniz · Gelemiyor: Can" (the call card's tally, for plans). */
-    public static String tally(Context context, SocialState state, Plan plan) {
-        StringBuilder out = new StringBuilder();
+    /** "Geliyor: Ece, Kaan  Belki: Deniz  Gelemiyor: Can" (the call card's tally, for plans; {@link #appendTally}). */
+    public static CharSequence tally(Context context, SocialState state, Plan plan) {
+        android.text.SpannableStringBuilder out = new android.text.SpannableStringBuilder();
         String[] answers = {Plan.YES, Plan.MAYBE, Plan.NO};
         int[] labels = {R.string.projects_plans_said_yes, R.string.projects_plans_said_maybe, R.string.projects_plans_said_no};
         for (int i = 0; i < answers.length; i++) {
@@ -82,10 +82,19 @@ public final class PlanViews {
                 names.append(name);
             }
             if (names.length() == 0) continue;
-            if (out.length() > 0) out.append(" · ");
-            out.append(context.getString(labels[i])).append(": ").append(names);
+            appendTally(context, out, context.getString(labels[i]), names);
         }
-        return out.toString();
+        return out;
+    }
+
+    /**
+     * One answer's group of a tally ("Geliyor: Ece, Kaan"): apart from the group before it by a gap, its label quieter
+     * than the names (no middle dot in UI text, the lead 29 Oct 2026).
+     */
+    static void appendTally(Context context, android.text.SpannableStringBuilder out, String label, CharSequence names) {
+        if (out.length() > 0) out.append(gg.projects.mobile.ui.Apart.GAP);
+        gg.projects.mobile.ui.Apart.tone(context, out, label + ": ", R.color.projects_ash_400);
+        out.append(names);
     }
 
     /** "Ayşe planladı" / "Sen planladın". */

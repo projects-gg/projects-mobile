@@ -192,10 +192,11 @@ final class CrewSheets {
         content.addView(row, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
     }
 
-    /** "Sessizde · Yarın 08:00", or "Sessizde" until unmuted. */
+    /** "08:00'e kadar sessizde" ("Muted until 08:00"; a later day by its date), or "Sessizde" until unmuted. */
     static String mutedText(Context context, TeamNotifications notifications, long nowSeconds) {
         if (notifications.muteUntil == null) return context.getString(R.string.projects_crew_muted);
-        return context.getString(R.string.projects_crew_muted_until, CrewViews.moment(context, notifications.muteUntil, nowSeconds));
+        return context.getString(R.string.projects_crew_muted_until,
+                gg.projects.mobile.cloud.CloudWords.until(context, notifications.muteUntil, nowSeconds));
     }
 
     static SocialService.Result<TeamNotifications> result(final FragmentActivity activity, final View feedback) {

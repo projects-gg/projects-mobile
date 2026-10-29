@@ -1015,7 +1015,7 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
 
     private void bindNews(final FragmentActivity activity, final Snapshot snapshot, final NewsFeed.NewsItem item) {
         ProjectsUi.bindCategory(mNewsCategory, item);
-        // The desktop rows' "Etkinlik · 3 gün önce" (a date once it is older than a week).
+        // The desktop rows' "Etkinlik" then "3 gün önce", apart by a gap (a date once it is older than a week).
         setText(mNewsDate, ProjectsUi.relative(activity, item.publishedAtMillis(), System.currentTimeMillis()));
         setText(mNewsTitle, item.title);
         setText(mNewsSummary, item.summary);

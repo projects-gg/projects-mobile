@@ -877,8 +877,8 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         if (gate.requests) {
             List<JoinRequest> requests = state.requests(team.id, now);
             if (!requests.isEmpty()) {
-                String text = getString(R.string.projects_requests_title) + " · " + requests.size();
-                rows.add(new Row(T_HEADER, "h-requests", text, text));
+                String text = getString(R.string.projects_requests_title) + " " + requests.size();
+                rows.add(new Row(T_HEADER, "h-requests", text, counted(getString(R.string.projects_requests_title), requests.size())));
                 for (JoinRequest r : requests) {
                     rows.add(new Row(T_REQUEST, "r-" + team.id + "-" + r.from.id, r.from.name() + r.from.faceKey() + "|" + viaName(team, r) + "|"
                             + PlanViews.ago(requireContext(), r.sentAt, now) + "|" + mRequestBusy.contains(team.id + "|" + r.from.id),
@@ -892,8 +892,9 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
             boolean may = state.mayPlan(team.id);
             if (!plans.isEmpty() || may) {
                 String text = plans.isEmpty() ? getString(R.string.projects_plans_title)
-                        : getString(R.string.projects_plans_title) + " · " + plans.size();
-                rows.add(new Row(T_HEADER, "h-plans", text, text));
+                        : getString(R.string.projects_plans_title) + " " + plans.size();
+                rows.add(new Row(T_HEADER, "h-plans", text,
+                        plans.isEmpty() ? text : counted(getString(R.string.projects_plans_title), plans.size())));
                 for (Plan p : plans) {
                     String mineAnswer = me == null ? null : p.answers.get(me);
                     rows.add(new Row(T_PLAN, "p-" + p.id, p.at + "|" + p.by + "|" + p.answers + "|" + mineAnswer + "|" + p.underWay(hub)
@@ -913,8 +914,8 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         for (Map.Entry<SocialState.Place, List<Member>> group : roster.entrySet()) {
             int title = titles[i++];
             if (group.getValue().isEmpty()) continue;
-            String text = getString(title) + " · " + group.getValue().size();
-            rows.add(new Row(T_HEADER, "h-" + group.getKey(), text, text));
+            String text = getString(title) + " " + group.getValue().size();
+            rows.add(new Row(T_HEADER, "h-" + group.getKey(), text, counted(getString(title), group.getValue().size())));
             for (Member m : group.getValue()) {
                 SocialModel.Presence p = state.presence(m.profile.id);
                 // The player's own row shows their status (their presence is not sent to themselves).
@@ -1169,7 +1170,7 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
                     bindChat(view, (ChatBook.Summary) row.data);
                     break;
                 case T_HEADER:
-                    ((TextView) view).setText((String) row.data);
+                    ((TextView) view).setText((CharSequence) row.data);
                     break;
                 case T_CODE:
                     bindCode(view, (String) row.data);
@@ -1238,9 +1239,10 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         String members = limit > 0 ? getString(R.string.projects_crew_members, team.members.size(), limit)
                 : context.getResources().getQuantityString(R.plurals.projects_crew_member_count, team.members.size(), team.members.size());
         String founded = CrewViews.day(context, team.createdOn);
-        String meta = founded == null ? members : members + " · " + getString(R.string.projects_crew_founded, founded);
+        // Facts in a list, with commas (no middle dot in UI text): "7/30 üye, kuruluş 20 Eylül 2026, ana ekip".
+        String meta = founded == null ? members : members + ", " + getString(R.string.projects_crew_founded_after, founded);
         if (service.gate().multi && service.state().crews().size() > 1 && service.state().crewIds().get(0).equals(team.id)) {
-            meta = meta + " · " + getString(R.string.projects_crews_main);
+            meta = meta + ", " + getString(R.string.projects_crews_main_after);
         }
         ((TextView) view.findViewById(R.id.projects_crew_card_meta)).setText(meta);
         bindWear(view.findViewById(R.id.projects_crew_card_wear), team);
@@ -1384,7 +1386,7 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         String place = SocialNotifications.callPlace(context, call.place(), call.serverHost);
         if (mine) {
             title.setText(R.string.projects_crew_call_mine);
-            line.setText(place + " · " + left);
+            line.setText(place + ", " + left);
             end.setVisibility(View.VISIBLE);
             answers.setVisibility(View.GONE);
             end.setOnClickListener(v -> service.endCall(call.id, new SocialService.Result<Void>() {
@@ -1404,7 +1406,7 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
             avatar.setDot(SocialUi.dot(state.presence(call.from)));
             // On the crew's own page the short sentence; the other crews it names come after it.
             title.setText(getString(R.string.projects_crew_call_theirs, caller == null ? getString(R.string.projects_crew_someone) : caller.name()));
-            line.setText(place + " · " + left);
+            line.setText(place + ", " + left);
             end.setVisibility(View.GONE);
             answers.setVisibility(View.VISIBLE);
             String mineAnswer = me == null ? null : call.answers.get(me);
@@ -1430,9 +1432,14 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         }
     }
 
-    /** "Geliyor: Ece, Kaan · Birazdan: Deniz · Gelemiyor: Can". */
-    private static String tally(Context context, SocialState state, Call call) {
-        StringBuilder out = new StringBuilder();
+    /** A heading with its count after it, the count quieter (no middle dot in UI text, the lead 29 Oct 2026). */
+    private CharSequence counted(String title, int count) {
+        return gg.projects.mobile.ui.Apart.of(requireContext(), title, String.valueOf(count), R.color.projects_ash_400);
+    }
+
+    /** "Geliyor: Ece, Kaan  Birazdan: Deniz  Gelemiyor: Can" ({@link PlanViews#appendTally}). */
+    private static CharSequence tally(Context context, SocialState state, Call call) {
+        android.text.SpannableStringBuilder out = new android.text.SpannableStringBuilder();
         String[] answers = {"yes", "soon", "no"};
         int[] labels = {R.string.projects_crew_call_said_yes, R.string.projects_crew_call_said_soon, R.string.projects_crew_call_said_no};
         for (int i = 0; i < answers.length; i++) {
@@ -1446,10 +1453,9 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
                 names.append(name);
             }
             if (names.length() == 0) continue;
-            if (out.length() > 0) out.append(" · ");
-            out.append(context.getString(labels[i])).append(": ").append(names);
+            PlanViews.appendTally(context, out, context.getString(labels[i]), names);
         }
-        return out.toString();
+        return out;
     }
 
     private void bindAnswer(final Button button, final Call call, final String answer, @Nullable String current) {
@@ -1572,11 +1578,12 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         view.findViewById(R.id.projects_person_badge).setVisibility(View.GONE);
         view.findViewById(R.id.projects_person_star).setVisibility(View.GONE);
         TextView line = view.findViewById(R.id.projects_person_line);
-        String asked = getString(R.string.projects_requests_asked, PlanViews.ago(context, request.sentAt, SocialService.nowSeconds()));
-        // TEAM6: a request from a tag's card says whose tag it came through ("Ayşe aracılığıyla · 12 dk önce istedi").
+        String agoText = PlanViews.ago(context, request.sentAt, SocialService.nowSeconds());
+        // TEAM6: a request from a tag's card says whose tag it came through ("Ayşe aracılığıyla, 12 dk önce istedi").
         Crew asking = SocialService.get(context).state().crew(row.crew);
         String via = asking == null ? null : viaName(asking.team, request);
-        if (via != null) asked = getString(R.string.projects_badge_via, via) + " · " + asked;
+        String asked = via != null ? getString(R.string.projects_requests_asked_via, via, agoText)
+                : getString(R.string.projects_requests_asked, agoText);
         line.setText(asked);
         line.setTextColor(ContextCompat.getColor(context, R.color.projects_ash_400));
         final Button accept = view.findViewById(R.id.projects_person_action);
@@ -1682,8 +1689,9 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         when.setText(PlanViews.when(context, plan.at, now));
         TextView line = view.findViewById(R.id.projects_plan_line);
         String by = PlanViews.by(context, state, plan);
-        line.setText(under ? by + " · " + getString(R.string.projects_plans_started_line) : by);
-        line.setTextColor(ContextCompat.getColor(context, under ? R.color.projects_jade_400 : R.color.projects_ash_400));
+        // While it runs, "Başladı" after who planned it, in jade; the line stays quiet (no middle dot in UI text).
+        line.setText(under ? gg.projects.mobile.ui.Apart.of(context, by, getString(R.string.projects_plans_started_line), R.color.projects_jade_400) : by);
+        line.setTextColor(ContextCompat.getColor(context, R.color.projects_ash_400));
         ((ImageView) view.findViewById(R.id.projects_plan_icon)).setImageTintList(
                 ContextCompat.getColorStateList(context, under ? R.color.projects_jade_400 : R.color.projects_gold_300));
         View top = view.findViewById(R.id.projects_plan_top);
@@ -2232,7 +2240,7 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
 
     /**
      * With several crews the bell mutes the crew shown (its own "Sessize al"), and its last line every
-     * crew together ("Hepsini sessize al" / "Bütün ekipler sessizde · …"); without, M19's sheet.
+     * crew together ("Hepsini sessize al" / "Hepsinin sesini aç"); without, M19's sheet.
      */
     private void openNotifications() {
         final FragmentActivity activity = requireActivity();
@@ -2249,9 +2257,8 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         final AlertDialog[] dialog = new AlertDialog[1];
         View bottom;
         if (all.mutedAt(hub)) {
-            String text = all.muteUntil == null ? getString(R.string.projects_crews_all_muted)
-                    : getString(R.string.projects_crews_all_muted_until, CrewViews.moment(activity, all.muteUntil, hub));
-            bottom = MuteSheet.line(activity, text + " · " + getString(R.string.projects_crew_unmute), v -> {
+            // The action in words, as "Hepsini sessize al" is (the crews' own sheet says until when).
+            bottom = MuteSheet.line(activity, getString(R.string.projects_crews_unmute_all), v -> {
                 if (dialog[0] != null) dialog[0].dismiss();
                 service.unmute(CrewSheets.result(activity, v));
             });
@@ -2339,7 +2346,7 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         return header;
     }
 
-    /** M21: one of the player's own join requests: the crew's mark, "İsteğin bekliyor · 2 sa önce", "Geri çek". */
+    /** M21: one of the player's own join requests: the crew's mark, "İsteğin bekliyor, 2 sa önce", "Geri çek". */
     private View myRequestRow(final MyRequest request) {
         Context context = requireContext();
         View row = LayoutInflater.from(context).inflate(R.layout.item_projects_social_person, mInvites, false);
@@ -2351,7 +2358,7 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         mark.setVisibility(View.VISIBLE);
         mark.setLook(request.team.emblem, request.team.color, request.team.frame);
         ((TextView) row.findViewById(R.id.projects_person_name)).setText(request.team.name);
-        ((TextView) row.findViewById(R.id.projects_person_line)).setText(getString(R.string.projects_requests_pending) + " · "
+        ((TextView) row.findViewById(R.id.projects_person_line)).setText(getString(R.string.projects_requests_pending) + ", "
                 + PlanViews.ago(context, request.sentAt, SocialService.nowSeconds()));
         final Button withdraw = row.findViewById(R.id.projects_person_action);
         withdraw.setVisibility(View.VISIBLE);
@@ -2598,7 +2605,7 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         if (view == null) return;
         SocialService service = SocialService.get(requireContext());
         SocialState state = service.state();
-        String line;
+        CharSequence line;
         boolean canAct = false;
         int label = R.string.projects_crew_join;
         switch (relation) {
@@ -2614,13 +2621,17 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
             default: {
                 String members = getResources().getQuantityString(R.plurals.projects_crew_member_count, team.memberCount, team.memberCount);
                 if (sentAt >= 0) {
-                    line = getString(R.string.projects_requests_pending) + " · " + PlanViews.ago(requireContext(), sentAt, SocialService.nowSeconds());
+                    line = getString(R.string.projects_requests_pending) + ", "
+                            + PlanViews.ago(requireContext(), sentAt, SocialService.nowSeconds());
                     label = R.string.projects_requests_withdraw;
                 } else if (team.approval() && service.gate().requests) {
-                    line = members + " · " + getString(R.string.projects_requests_approval);
+                    // The count a step brighter than the sentence after it (no middle dot in UI text).
+                    line = gg.projects.mobile.ui.Apart.of(requireContext(), members, R.color.projects_ash_300, getString(R.string.projects_requests_approval),
+                            gg.projects.mobile.ui.Apart.OWN);
                     label = R.string.projects_requests_send;
                 } else {
-                    line = members + (team.motto == null ? "" : " · " + team.motto);
+                    line = team.motto == null ? members
+                            : gg.projects.mobile.ui.Apart.of(requireContext(), members, team.motto, R.color.projects_ash_300);
                 }
                 canAct = true;
                 break;

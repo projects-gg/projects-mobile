@@ -171,6 +171,7 @@
         <item quantity="other">%d members</item>
     </plurals>
     <string name="projects_crew_founded">Founded %1$s</string>
+    <string name="projects_crew_founded_after">founded %1$s</string>
     <plurals name="projects_crew_online">
         <item quantity="one">%d online</item>
         <item quantity="other">%d online</item>
@@ -213,6 +214,10 @@
     <string name="projects_crew_count">%1$d/%2$d</string>
 
     <string name="projects_crew_invites">Crew invites</string>
+    <plurals name="projects_crew_invites_count">
+        <item quantity="one">%d crew invite</item>
+        <item quantity="other">%d crew invites</item>
+    </plurals>
     <string name="projects_crew_invited_by">%1$s invited you</string>
     <string name="projects_crew_invited_you">%1$s invited you to %2$s</string>
     <string name="projects_crew_kicked">You were removed from %1$s</string>
@@ -249,7 +254,7 @@
     <string name="projects_crew_call_mine">Your call is on</string>
     <string name="projects_crew_call_theirs">%1$s is calling the crew</string>
     <string name="projects_crew_call_ready">Ready to play?</string>
-    <string name="projects_crew_call_left">%d min</string>
+    <string name="projects_crew_call_left">%d min left</string>
     <string name="projects_crew_call_end">End</string>
     <string name="projects_crew_call_yes">Coming</string>
     <string name="projects_crew_call_soon">Soon</string>
@@ -263,7 +268,8 @@
     <string name="projects_crew_mute">Mute</string>
     <string name="projects_crew_unmute">Unmute</string>
     <string name="projects_crew_muted">Muted</string>
-    <string name="projects_crew_muted_until">Muted · %1$s</string>
+    <string name="projects_crew_muted_after">muted</string>
+    <string name="projects_crew_muted_until">Muted until %1$s</string>
     <string name="projects_crew_mute_hour">1 hour</string>
     <string name="projects_crew_mute_eight">8 hours</string>
     <string name="projects_crew_mute_morning">Until tomorrow morning</string>
@@ -372,6 +378,7 @@
         <item quantity="other">You can be in up to %d crews.</item>
     </plurals>
     <string name="projects_crews_main">Main crew</string>
+    <string name="projects_crews_main_after">main crew</string>
     <string name="projects_crews_make_main">Make main crew</string>
     <string name="projects_crews_made_main">%1$s is your main crew now</string>
     <string name="projects_crews_move_left">Move left</string>
@@ -390,8 +397,7 @@
     <string name="projects_crews_full">Full</string>
     <string name="projects_crews_in_crew">In the crew</string>
     <string name="projects_crews_mute_all">Mute all</string>
-    <string name="projects_crews_all_muted">All crews muted</string>
-    <string name="projects_crews_all_muted_until">All crews muted · %1$s</string>
+    <string name="projects_crews_unmute_all">Unmute all</string>
     <string name="projects_crews_this_crew">This crew</string>
     <string name="projects_crews_changed">Your crews changed. The list was updated.</string>
 
@@ -519,6 +525,7 @@
     <string name="projects_requests_withdrawn">Request withdrawn</string>
     <string name="projects_requests_sent">Request sent. You\'ll join once its leaders approve.</string>
     <string name="projects_requests_asked">Asked %1$s</string>
+    <string name="projects_requests_asked_via">Asked %2$s, via %1$s</string>
     <string name="projects_requests_accepted">%1$s joined the crew</string>
     <string name="projects_requests_notice">%1$s wants to join your crew</string>
     <string name="projects_requests_notice_crew">%1$s wants to join %2$s</string>
@@ -575,6 +582,7 @@
     <string name="projects_plans_tomorrow_inline">tomorrow</string>
     <string name="projects_plans_when">%1$s %2$s</string>
     <string name="projects_plans_made">%1$s made a plan: %2$s</string>
+    <string name="projects_plans_made_crew">%1$s made a plan for %3$s: %2$s</string>
     <string name="projects_plans_more">Plan options</string>
     <string name="projects_plans_cancel">Delete plan</string>
     <string name="projects_plans_cancel_ask">The plan is deleted for everyone.</string>
@@ -595,7 +603,7 @@
         <item quantity="one">%d coming</item>
         <item quantity="other">%d coming</item>
     </plurals>
-    <string name="projects_plans_row">Plan · %1$s</string>
+    <string name="projects_plans_row">Plan</string>
     <plurals name="projects_limited_no_link">
         <item quantity="one">Because your Discord account is new, you can\'t make invite links yet. It opens in %d day.</item>
         <item quantity="other">Because your Discord account is new, you can\'t make invite links yet. It opens in %d days.</item>
@@ -649,7 +657,6 @@
     <string name="projects_answers_collapse">Hide answers</string>
     <string name="projects_answers_expanded">Expanded</string>
     <string name="projects_answers_collapsed">Collapsed</string>
-    <string name="projects_answers_group">%1$s · %2$d</string>
     <string name="projects_social_pill_connect">Connect</string>
     <string name="projects_social_pill_connect_label">Friends: connect with Discord</string>
     <string name="projects_connect">Connect</string>

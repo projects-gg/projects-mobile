@@ -34,7 +34,7 @@ import gg.projects.mobile.ui.Haptics;
 import gg.projects.mobile.ui.Press;
 
 /**
- * MOB1 (CHAT2 §7, Android): a message's reactions, opened from a chip: tabs "Tümü 5 · 👍 3 · 😂 2"
+ * MOB1 (CHAT2 §7, Android): a message's reactions, opened from a chip: tabs "Tümü 5", "👍 3", "😂 2"
  * (the chip's own selected), who gave each (the player first as "Sen", then in the order they
  * reacted; holding a person opens their menu, "Rapor et" included) and one button for the selected
  * emoji: "Ben de 👍", or "Tepkimi kaldır" when it is the player's; with five of theirs already, a

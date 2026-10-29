@@ -279,7 +279,7 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
         long next = Long.MAX_VALUE;
         for (Invite invite : service.state().invites(now)) next = Math.min(next, invite.expires - now);
         for (Call call : service.state().calls(now)) next = Math.min(next, service.state().secondsLeft(call, now));
-        // M21: a plan starts or ends with no message (the crew rows say "Plan · Başladı").
+        // M21: a plan starts or ends with no message (the crew rows say "Plan Başladı").
         long hub = service.state().hubNow(now);
         for (SocialModel.Plan plan : service.state().plans(now)) next = Math.min(next, plan.at > hub ? plan.at - hub : plan.until - hub);
         if (next != Long.MAX_VALUE && next > 0) mList.postDelayed(mTick, Math.min(next, 3600) * 1000L + 500);
@@ -493,9 +493,15 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
         return new Row(T_HEADER, id, title, title);
     }
 
+    /** A heading with its count after it, the count quieter (no middle dot in UI text, the lead 29 Oct 2026). */
+    private Row header(String id, String title, int count) {
+        return new Row(T_HEADER, id, title + " " + count,
+                gg.projects.mobile.ui.Apart.of(requireContext(), title, String.valueOf(count), R.color.projects_ash_400));
+    }
+
     private void addFriends(List<Row> rows, String id, int title, List<Friend> friends, SocialState state, Set<String> favourites) {
         if (friends.isEmpty()) return;
-        rows.add(header("h-" + id, getString(title) + " · " + friends.size()));
+        rows.add(header("h-" + id, getString(title), friends.size()));
         boolean tags = SocialService.get(requireContext()).gate().badges;
         for (Friend f : friends) {
             Presence p = state.presence(f.profile.id);
@@ -894,7 +900,7 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
                     bindMessages(view, (ChatBook.Summary) row.data);
                     break;
                 case T_HEADER:
-                    ((TextView) view).setText((String) row.data);
+                    ((TextView) view).setText((CharSequence) row.data);
                     break;
                 case T_EMPTY:
                     View add = view.findViewById(R.id.projects_social_empty_add);
@@ -1005,7 +1011,7 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
             tag.setVisibility(View.GONE);
             int invites = service.state().teamInvites().size();
             line.setVisibility(invites > 0 ? View.VISIBLE : View.GONE);
-            line.setText(invites > 0 ? getString(R.string.projects_crew_invites) + " · " + invites : "");
+            line.setText(invites > 0 ? getResources().getQuantityString(R.plurals.projects_crew_invites_count, invites, invites) : "");
         } else {
             mark.setVisibility(View.VISIBLE);
             icon.setVisibility(View.GONE);
@@ -1019,8 +1025,9 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
             Call own = own(service.state(), crew, now);
             if (call != null) {
                 Profile caller = service.state().profile(call.from);
-                line.setText(getString(R.string.projects_crew_call_theirs, caller == null ? getString(R.string.projects_crew_someone) : caller.name())
-                        + " · " + gg.projects.mobile.social.SocialNotifications.callPlace(context, call.place(), call.serverHost));
+                line.setText(gg.projects.mobile.ui.Apart.of(context,
+                        getString(R.string.projects_crew_call_theirs, caller == null ? getString(R.string.projects_crew_someone) : caller.name()),
+                        gg.projects.mobile.social.SocialNotifications.callPlace(context, call.place(), call.serverHost), R.color.projects_ash_300));
                 line.setTextColor(ContextCompat.getColor(context, R.color.projects_gold_300));
             } else if (own != null) {
                 line.setText(R.string.projects_crew_call_mine);
@@ -1031,18 +1038,19 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
                 line.setText(context.getResources().getQuantityString(R.plurals.projects_requests_count, n, n));
                 line.setTextColor(ContextCompat.getColor(context, R.color.projects_gold_300));
             } else if (service.gate().plans && nextPlan(service.state(), crew, now) != null) {
-                // M21: the crew's next plan today or tomorrow ("Plan · Bugün 22:00"; "Plan · Başladı" while it runs).
+                // M21: the crew's next plan today or tomorrow ("Plan Bugün 22:00"; "Plan Başladı" while it runs), "Plan"
+                // quieter than its day (no middle dot in UI text).
                 SocialModel.Plan plan = nextPlan(service.state(), crew, now);
                 boolean under = plan.underWay(service.state().hubNow(now));
-                line.setText(getString(R.string.projects_plans_row, under ? getString(R.string.projects_plans_started_line)
-                        : PlanViews.when(context, plan.at, now)));
+                line.setText(gg.projects.mobile.ui.Apart.of(context, getString(R.string.projects_plans_row), R.color.projects_ash_400,
+                        under ? getString(R.string.projects_plans_started_line) : PlanViews.when(context, plan.at, now), gg.projects.mobile.ui.Apart.OWN));
                 line.setTextColor(ContextCompat.getColor(context, under ? R.color.projects_jade_400 : R.color.projects_ash_300));
             } else {
                 int online = service.state().onlineInCrew(team.id);
                 String text = context.getResources().getQuantityString(R.plurals.projects_crew_online, online, online);
                 // TEAM4: a crew the player silenced says so here too (the rail shows it with a bell).
-                if (crew != null && crew.mute.mutedAt(service.state().hubNow(now))) text += " · " + getString(R.string.projects_crew_muted);
-                line.setText(text);
+                boolean silenced = crew != null && crew.mute.mutedAt(service.state().hubNow(now));
+                line.setText(silenced ? text + ", " + getString(R.string.projects_crew_muted_after) : text);
                 line.setTextColor(ContextCompat.getColor(context, R.color.projects_ash_400));
             }
             line.setVisibility(View.VISIBLE);
@@ -1135,7 +1143,7 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
                 String where = invite.onProjects() ? getString(R.string.projects_social_server_projects)
                         : invite.host != null ? invite.host : null;
                 line.setText(where == null ? getString(R.string.projects_social_invited_you)
-                        : getString(R.string.projects_social_invited_you) + " · " + where);
+                        : gg.projects.mobile.ui.Apart.of(context, getString(R.string.projects_social_invited_you), where, R.color.projects_ash_300));
                 line.setTextColor(ContextCompat.getColor(context, R.color.projects_gold_300));
                 avatar.setDot(person.profile == null ? AvatarView.Dot.NONE : SocialUi.dot(state.presence(person.profile.id)));
                 if (invite.onProjects()) {

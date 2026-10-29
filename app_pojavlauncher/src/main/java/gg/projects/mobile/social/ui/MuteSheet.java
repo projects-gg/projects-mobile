@@ -26,7 +26,7 @@ import gg.projects.mobile.ui.Press;
 /**
  * M20: the owner's "Sessize al" presets as one sheet, for a crew, for every crew together and for a
  * conversation on this phone: "1 saat", "8 saat", "Yarın sabaha kadar" ("Sabaha kadar" after
- * midnight) and "Ben açana kadar"; while muted, "Sessizde · …" and "Sesi aç" above them.
+ * midnight) and "Ben açana kadar"; while muted, "08:00'e kadar sessizde" and "Sesi aç" above them.
  */
 final class MuteSheet {
     private MuteSheet() {}
@@ -38,7 +38,7 @@ final class MuteSheet {
     }
 
     /**
-     * @param state "Sessizde · Yarın 08:00" while muted, else null
+     * @param state "08:00'e kadar sessizde" while muted, else null
      * @param top extra views above the presets (a switch), or null
      * @param bottom extra views under them (the all-crews line), or null
      */

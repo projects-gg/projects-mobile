@@ -86,7 +86,7 @@ public final class TrGrammar {
     private static final String[] EN_TENS = {"", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"};
 
     /**
-     * An amount in words, so a typed price is read twice ("40.000 · kırk bin", afkplus.md §1.4): Turkish
+     * An amount in words, so a typed price is read twice ("kırk bin" under "40.000", afkplus.md §1.4): Turkish
      * ("otuz yedi bin beş yüz") or British English ("thirty-seven thousand five hundred"). Up to 999 billion.
      */
     public static String words(long n, String lang) {

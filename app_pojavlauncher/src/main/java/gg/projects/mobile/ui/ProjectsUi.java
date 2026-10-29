@@ -51,7 +51,7 @@ public final class ProjectsUi {
     }
 
     /**
-     * What a story is, in its quiet meta line beside the time ("Yama notları · 3 gün önce"; MOB-POLISH,
+     * What a story is, in its quiet meta line beside the time ("Yama notları" then "3 gün önce", apart by a gap; MOB-POLISH,
      * the desktop's HOME-TASTE: no coloured category pill). Minecraft's own updates say "Minecraft"
      * with the cube mark (M17), so the server's own news reads first by its place, not by colour.
      */

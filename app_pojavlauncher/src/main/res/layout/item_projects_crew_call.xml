@@ -64,7 +64,7 @@
                 android:fontFamily="@font/figtree_semibold"
                 android:textColor="@color/projects_gold_300"
                 android:textSize="13sp"
-                tools:text="Projects'te · 17 dk" />
+                tools:text="Projects'te, 17 dk kaldı" />
         </LinearLayout>
 
         <Button

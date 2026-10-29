@@ -224,14 +224,14 @@ public final class SocialHomeRow implements SocialService.Listener {
                 break;
             }
             case PLAN: {
-                // M21: "Gece Kartalları planı" over "Bugün 22:00 · 3 geliyor" ("Başladı · 3 geliyor" with "Katıl").
+                // M21: "Gece Kartalları planı" over "Bugün 22:00, 3 geliyor" ("Başladı, 3 geliyor" with "Katıl").
                 SocialModel.Plan plan = line.plan;
                 String crewName = line.crew != null ? line.crew.team.name : "";
                 title = context.getString(R.string.projects_plans_home_title, crewName);
                 boolean under = plan != null && plan.underWay(hub);
                 String when = plan == null ? "" : under ? context.getString(R.string.projects_plans_started_line)
                         : PlanViews.when(context, plan.at, now);
-                text = line.count > 0 ? when + " · " + context.getResources().getQuantityString(R.plurals.projects_plans_coming,
+                text = line.count > 0 ? when + ", " + context.getResources().getQuantityString(R.plurals.projects_plans_coming,
                         line.count, line.count) : when;
                 gold = true;
                 join = under;
