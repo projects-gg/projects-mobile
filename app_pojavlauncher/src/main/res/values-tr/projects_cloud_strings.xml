@@ -729,7 +729,11 @@
     <string name="projects_plus_change_off">%1$s kapatıldı</string>
     <string name="projects_plus_change_row">%1$s değişti</string>
     <string name="projects_plus_change_limit">%1$s: %2$s yerine %3$s</string>
-    <string name="projects_plus_change_unlimited">sınırsız</string>
+    <string name="projects_plus_change_limit_set">%1$s: %2$s oldu</string>
+    <string name="projects_plus_change_cleared">%1$s boşaltıldı</string>
+    <string name="projects_plus_change_cleared_no_buying">%1$s boşaltıldı, alım yok</string>
+    <string name="projects_plus_change_cleared_no_ask">%1$s boşaltıldı, sormaz</string>
+    <string name="projects_plus_change_cleared_no_ask_more">%1$s boşaltıldı, ayrıca sormaz</string>
     <string name="projects_plus_change_ai_on">ProBot AI başlatıldı</string>
     <string name="projects_plus_change_ai_off">ProBot AI durduruldu</string>
     <string name="projects_plus_change_schedule_on">Çalışma saatleri açıldı</string>

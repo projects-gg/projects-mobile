@@ -559,9 +559,8 @@ public final class CloudWords {
         return server == null || server.moneyLabel == null ? written : written + "\u00A0" + server.moneyLabel.in(lang(c));
     }
 
-    /** A limit's value in a change: "sınırsız" when there was none, minutes for the approval's wait, else money. */
-    private static String limitValue(Context c, @Nullable Long value, boolean minutes, @Nullable PlusModel.Server server) {
-        if (value == null) return c.getString(R.string.projects_plus_change_unlimited);
+    /** A limit's value in a change: minutes for the approval's wait, else money with its name. */
+    private static String limitValue(Context c, long value, boolean minutes, @Nullable PlusModel.Server server) {
         return minutes ? value + " " + c.getString(R.string.projects_plus_limit_minutes) : amount(c, value, server);
     }
 
@@ -591,11 +590,24 @@ public final class CloudWords {
             case ROW_OFF: return c.getString(R.string.projects_plus_change_off, item);
             case ROW_OTHER: return c.getString(R.string.projects_plus_change_row, item);
             case LIMIT: {
-                // One form, the site's: "Tek anlaşmada en fazla: sınırsız yerine 50.000 ripple" (no limit is "sınırsız").
-                String label = limitLabel(c, change.field == null ? "" : change.field);
-                boolean minutes = "approvalTimeoutMin".equals(change.field);
-                return c.getString(R.string.projects_plus_change_limit, label, limitValue(c, change.before, minutes, server),
-                        limitValue(c, change.after, minutes, server));
+                // The site's forms (SETUP-UX r2): a value to a value, set from empty, and emptied with what empty means
+                // there (no buying for the deal and total limits, no asking for the approval limits).
+                String field = change.field == null ? "" : change.field;
+                String label = limitLabel(c, field);
+                boolean minutes = "approvalTimeoutMin".equals(field);
+                if (change.after == null) {
+                    switch (field) {
+                        case "perDealMax":
+                        case "totalBudget":
+                            return c.getString(R.string.projects_plus_change_cleared_no_buying, label);
+                        case "approvalAbove": return c.getString(R.string.projects_plus_change_cleared_no_ask, label);
+                        case "newCounterpartApprovalAbove": return c.getString(R.string.projects_plus_change_cleared_no_ask_more, label);
+                        default: return c.getString(R.string.projects_plus_change_cleared, label);
+                    }
+                }
+                String after = limitValue(c, change.after, minutes, server);
+                if (change.before == null) return c.getString(R.string.projects_plus_change_limit_set, label, after);
+                return c.getString(R.string.projects_plus_change_limit, label, limitValue(c, change.before, minutes, server), after);
             }
             case SCHEDULE_ON: return c.getString(R.string.projects_plus_change_schedule_on);
             case SCHEDULE_OFF: return c.getString(R.string.projects_plus_change_schedule_off);
