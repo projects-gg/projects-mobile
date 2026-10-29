@@ -157,9 +157,35 @@ public final class SocialApi {
 
     // ---- friends ----
 
+    /**
+     * SOC9 (TEAM4-B): the light list ({@code crews=lite}: each crew's team in short, with its {@code rev}); an older
+     * service ignores it and answers in full. {@link CrewDetails#resolve} puts the full crews in.
+     */
     @WorkerThread
     public JsonObject friends() throws SocialProblem {
-        return require(send("GET", "v1/friends", null, true, false));
+        return require(send("GET", "v1/friends?crews=lite", null, true, false));
+    }
+
+    /**
+     * SOC9 (TEAM4-B): one crew's detail, {@code GET /v1/teams/:id} ({@code {team}}, ETag {@code "<rev>-<day>"}, kept as
+     * it came): {@code etag} goes as {@code If-None-Match} (304: not modified); {@code team_not_found} (404: not a
+     * member any more, or no such crew) is {@link CrewDetails.Detail.Status#GONE}.
+     */
+    @WorkerThread
+    public CrewDetails.Detail teamDetail(String crewId, @Nullable String etag) throws SocialProblem {
+        Answer answer;
+        try {
+            answer = exchange("GET", "v1/teams/" + segment(crewId), null, true, false, etag);
+        } catch (SocialProblem problem) {
+            if (problem.status == 404) return new CrewDetails.Detail(CrewDetails.Detail.Status.GONE, null, null);
+            throw problem;
+        }
+        if (answer.status == 304) {
+            return new CrewDetails.Detail(CrewDetails.Detail.Status.NOT_MODIFIED, answer.etag != null ? answer.etag : etag, null);
+        }
+        JsonObject team = Json.obj(answer.json, "team");
+        if (team == null) throw SocialProblem.unavailable("no team");
+        return new CrewDetails.Detail(CrewDetails.Detail.Status.OK, answer.etag, team);
     }
 
     @WorkerThread
@@ -472,6 +498,28 @@ public final class SocialApi {
     @WorkerThread
     JsonObject send(String method, String path, @Nullable JsonObject body, boolean authorized, boolean teamText)
             throws SocialProblem {
+        return exchange(method, path, body, authorized, teamText, null).json;
+    }
+
+    /** An answer: its status, its ETag and its JSON (null for 204 and 304). */
+    static final class Answer {
+        final int status;
+        @Nullable
+        final String etag;
+        @Nullable
+        final JsonObject json;
+
+        Answer(int status, @Nullable String etag, @Nullable JsonObject json) {
+            this.status = status;
+            this.etag = etag;
+            this.json = json;
+        }
+    }
+
+    /** {@link #send}, with {@code If-None-Match} when {@code ifNoneMatch} is set (a 304 is then an answer too). */
+    @WorkerThread
+    Answer exchange(String method, String path, @Nullable JsonObject body, boolean authorized, boolean teamText,
+                    @Nullable String ifNoneMatch) throws SocialProblem {
         boolean idempotent = method.equals("GET") || method.equals("DELETE");
         int tries = idempotent ? 2 : 1;
         SocialProblem last = null;
@@ -488,17 +536,20 @@ public final class SocialApi {
                 if (token == null) throw new SocialProblem(SocialProblem.Kind.SIGNED_OUT, 401, "no session", 0);
                 request.header("Authorization", "Bearer " + token);
             }
+            if (ifNoneMatch != null) request.header("If-None-Match", ifNoneMatch);
             RequestBody requestBody = body != null ? RequestBody.create(body.toString(), JSON)
                     : (method.equals("POST") || method.equals("PUT") || method.equals("PATCH")) ? RequestBody.create(new byte[0], null) : null;
             request.method(method, requestBody);
             try (Response response = mClient.newCall(request.build()).execute()) {
                 int status = response.code();
                 String text = readBody(response.body());
-                if (status == 204) return null;
+                String etag = response.header("ETag");
+                if (status == 204) return new Answer(status, etag, null);
+                if (status == 304 && ifNoneMatch != null) return new Answer(status, etag, null);
                 if (status >= 200 && status < 300) {
                     JsonObject o = Json.parseObject(text);
                     if (o == null) throw SocialProblem.unavailable("not JSON");
-                    return o;
+                    return new Answer(status, etag, o);
                 }
                 SocialProblem problem = SocialProblem.of(status, text, response.header("Retry-After"), teamText);
                 Log.i(TAG, method + " " + route(path) + " -> " + status + (problem.code == null ? "" : " " + problem.code));

@@ -176,12 +176,15 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     /** A crew order on its way (TEAM4): the list read meanwhile keeps it. */
     @Nullable
     private List<String> mOrderSent;
+    /** SOC9 (TEAM4-B): the crews' details kept on the phone, a folder per account ({@link CrewCache}). */
+    private final java.io.File mCrewRoot;
 
     private SocialService(Context app) {
         mApp = app;
         mDebug = SocialDebug.read(app);
         mApi = new SocialApi(mDebug.url, ProjectsContent.userAgent());
         mStore = new SessionStore(app, mDebug.override ? "session-debug.json" : "session.json");
+        mCrewRoot = new java.io.File(app.getNoBackupFilesDir(), mDebug.override ? "projects-social/crews-debug" : "projects-social/crews");
         mPrefs = new SocialPrefs(app);
         // M19's socket that kept the player's own call in the game is not used any more (see the class doc).
         mPrefs.setOwnCallUntil(0);
@@ -572,6 +575,13 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         List<SocialState.Notice> notices = mState.apply(message, now);
         if (type.equals("team_notifications") || type.equals("hello")) mPrefs.setCrewSettings(mState.teamNotifications());
         if (type.equals("team") || type.equals("crew_order")) rememberCrewNames();
+        if (type.equals("team")) {
+            // SOC9 (TEAM4-B): a team frame is the crew's newest copy (or its end): the phone's copy follows it.
+            final String me = mState.myId();
+            final JsonObject frame = message.deepCopy();
+            final long day = CrewDetails.turkeyDay(now);
+            if (me != null) mIo.execute(() -> CrewDetails.onTeamFrame(frame, new CrewCache(mCrewRoot, me), day));
+        }
         handleNotices(notices);
         if (type.equals("hello")) mChat.connected();
         switch (type) {
@@ -648,6 +658,12 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
             try {
                 final JsonObject me = mApi.me();
                 final JsonObject friends = mApi.friends();
+                // SOC9 (TEAM4-B): the light list's crews in full, from the phone's copies or their details.
+                Me who = Me.read(me);
+                if (who != null) {
+                    CrewDetails.resolve(friends, new CrewCache(mCrewRoot, who.profile.id), mApi::teamDetail,
+                            CrewDetails.turkeyDay(nowSeconds()));
+                }
                 mMain.post(() -> {
                     mFetching = false;
                     // An answer for a session that is gone (signed out, or signed in again meanwhile) is dropped.
@@ -991,6 +1007,9 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         // AFKPLUS-M: 7/24 Bulut's notices and what the phone kept about the player's accounts go too.
         gg.projects.mobile.cloud.CloudNotifications.cancelAll(mApp);
         if (gg.projects.mobile.cloud.CloudService.exists()) gg.projects.mobile.cloud.CloudService.get(mApp).forget();
+        // SOC9 (TEAM4-B): and the crews' details kept on the phone.
+        final java.io.File crews = mCrewRoot;
+        mIo.execute(() -> CrewCache.clear(crews));
     }
 
     // ---- phone notifications ----
