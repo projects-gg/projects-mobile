@@ -692,7 +692,7 @@ public final class CloudUi {
         }
     }
 
-    /** A thin quota bar: obsidian track, gold fill; its fill moves on a transform (scaleX from the start). */
+    /** A thin quota bar: obsidian track, bone fill; its fill moves on a transform (scaleX from the start). */
     public static final class Bar extends View {
         private final Paint mTrack = new Paint(Paint.ANTI_ALIAS_FLAG);
         private final Paint mFill = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -702,14 +702,23 @@ public final class CloudUi {
         public Bar(Context c) {
             super(c);
             mTrack.setColor(color(c, R.color.projects_obsidian_700));
-            mFill.setColor(color(c, R.color.projects_gold_500));
+            tint(c, false);
             setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
         }
 
-        /** 0-100; full turns the fill flare-free gold-600 (no red: a used allowance is not an error). */
+        /**
+         * AFK-COPY: bone, as the site's and the launcher's (gold is the screen's one action); used up, a dimmer ash
+         * beside the word "Bitti" (a bright full bar read as a goal reached; no red: a used allowance is not an error).
+         */
+        private void tint(Context c, boolean full) {
+            mFill.setColor(color(c, full ? R.color.projects_ash_400 : R.color.projects_bone_100));
+            mFill.setAlpha(full ? 153 : 191);
+        }
+
+        /** 0-100; full turns the fill the dimmer ash ({@link #tint}). */
         public void set(int pct, boolean animate) {
             final float target = Math.max(0, Math.min(100, pct)) / 100f;
-            mFill.setColor(color(getContext(), target >= 1f ? R.color.projects_gold_600 : R.color.projects_gold_500));
+            tint(getContext(), target >= 1f);
             if (!animate || !Motion.enabled(getContext()) || getWidth() == 0) {
                 mShown = target;
                 invalidate();
@@ -758,10 +767,23 @@ public final class CloudUi {
                 // QA-TASTE: as the launcher, the words bone and the colour in the bars; colour in words only for trouble.
                 case OK: tone = R.color.projects_bone_100; break;
                 case ERROR: tone = R.color.projects_flare_400; break;
-                case WARN: tone = R.color.projects_gold_300; break;
+                // design.md section 2: a real-state warning is a small gold mark before bone words, never gold words.
+                case WARN: tone = R.color.projects_bone_100; break;
                 default: tone = R.color.projects_ash_300; break;
             }
             text.setTextColor(CloudUi.color(view.getContext(), tone));
+            android.graphics.drawable.Drawable mark = null;
+            if (line.tone == CloudStatus.Tone.WARN) {
+                mark = androidx.core.content.ContextCompat.getDrawable(view.getContext(), R.drawable.projects_ic_warning);
+                if (mark != null) {
+                    mark = mark.mutate();
+                    mark.setTint(CloudUi.color(view.getContext(), R.color.projects_gold_300));
+                    int size = dp(view.getContext(), 15);
+                    mark.setBounds(0, 0, size, size);
+                }
+            }
+            text.setCompoundDrawablesRelative(mark, null, null, null);
+            text.setCompoundDrawablePadding(dp(view.getContext(), 6));
             glyph.setSignal(line.signal);
         }
     }

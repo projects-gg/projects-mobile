@@ -507,6 +507,17 @@ public final class CloudWords {
                         : c.getString(R.string.projects_plus_ai_schedule, at(c, until, nowSeconds));
             case PAUSED_QUOTA: {
                 Long back = until != null ? until : view != null && view.quota != null ? view.quota.exhaustedUntil : null;
+                // The window that ran out by name, in kontör (AFK-COPY: "sınır" is the spending limits' word; the
+                // launcher's and the site's lines).
+                CloudModel.QuotaBrief q = view == null ? null : view.quota;
+                if (q != null && q.pct5 >= 100) {
+                    return back == null ? c.getString(R.string.projects_plus_ai_quota_5h_plain)
+                            : c.getString(R.string.projects_plus_ai_quota_5h, at(c, back, nowSeconds));
+                }
+                if (q != null && q.pctWeek >= 100) {
+                    return back == null ? c.getString(R.string.projects_plus_ai_quota_week_plain)
+                            : c.getString(R.string.projects_plus_ai_quota_week, relativeDay(c, back, nowSeconds));
+                }
                 return back == null ? c.getString(R.string.projects_plus_ai_quota_plain)
                         : c.getString(R.string.projects_plus_ai_quota, at(c, back, nowSeconds));
             }

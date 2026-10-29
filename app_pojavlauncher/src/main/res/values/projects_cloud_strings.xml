@@ -436,6 +436,10 @@
     <string name="projects_plus_ai_schedule_plain">Outside working hours</string>
     <string name="projects_plus_ai_quota">Out of AI credits. They reset at %1$s</string>
     <string name="projects_plus_ai_quota_plain">Out of AI credits</string>
+    <string name="projects_plus_ai_quota_5h">Your 5-hour AI credits ran out. They reset at %1$s</string>
+    <string name="projects_plus_ai_quota_5h_plain">Your 5-hour AI credits ran out</string>
+    <string name="projects_plus_ai_quota_week">Your weekly AI credits ran out. They reset %1$s</string>
+    <string name="projects_plus_ai_quota_week_plain">Your weekly AI credits ran out</string>
     <string name="projects_plus_ai_budget">Paused for today. Back by itself tomorrow</string>
     <string name="projects_plus_ai_outage">ProBot AI can\'t answer right now. Your account stays AFK.</string>
     <string name="projects_plus_ai_host">Paused for a short while</string>
@@ -456,6 +460,7 @@
     <string name="projects_plus_quota_week">Weekly</string>
     <string name="projects_plus_quota_title">AI credits</string>
     <string name="projects_plus_quota_used">%1$s used</string>
+    <string name="projects_plus_quota_used_up">Used up</string>
     <string name="projects_plus_quota_resets">Resets at %1$s</string>
     <string name="projects_plus_quota_resets_day">Resets %1$s</string>
     <string name="projects_plus_quota_unused">Unused</string>

@@ -348,8 +348,11 @@ public final class PlusThreadFragment extends CloudScreen {
                 String hidden = c.getString(R.string.projects_plus_inbox_hidden);
                 String show = c.getString(R.string.projects_plus_inbox_show);
                 android.text.SpannableString words = new android.text.SpannableString(hidden + "  " + show);
-                words.setSpan(new android.text.style.ForegroundColorSpan(CloudUi.color(c, R.color.projects_gold_300)),
+                // A text link bone and underlined, never gold (design.md section 2).
+                words.setSpan(new android.text.style.ForegroundColorSpan(CloudUi.color(c, R.color.projects_bone_100)),
                         hidden.length() + 2, words.length(), android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                words.setSpan(new android.text.style.UnderlineSpan(), hidden.length() + 2, words.length(),
+                        android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                 bubble.setText(words);
                 bubble.setTextColor(CloudUi.color(c, R.color.projects_ash_400));
                 bubble.setOnClickListener(v -> {

@@ -439,6 +439,10 @@
     <string name="projects_plus_ai_schedule_plain">Çalışma saatleri dışında</string>
     <string name="projects_plus_ai_quota">Kontörün bitti. %1$s yenilenir</string>
     <string name="projects_plus_ai_quota_plain">Kontörün bitti</string>
+    <string name="projects_plus_ai_quota_5h">5 saatlik kontörün bitti, %1$s yenilenir</string>
+    <string name="projects_plus_ai_quota_5h_plain">5 saatlik kontörün bitti</string>
+    <string name="projects_plus_ai_quota_week">Haftalık kontörün bitti, %1$s yenilenir</string>
+    <string name="projects_plus_ai_quota_week_plain">Haftalık kontörün bitti</string>
     <string name="projects_plus_ai_budget">Bugün için duraklatıldı. Yarın kendiliğinden döner</string>
     <string name="projects_plus_ai_outage">ProBot AI şu an cevap veremiyor. Hesabın AFK\'da kalıyor.</string>
     <string name="projects_plus_ai_host">Kısa süreliğine duraklatıldı</string>
@@ -459,6 +463,7 @@
     <string name="projects_plus_quota_week">Haftalık</string>
     <string name="projects_plus_quota_title">Kontör</string>
     <string name="projects_plus_quota_used">%1$s kullanıldı</string>
+    <string name="projects_plus_quota_used_up">Bitti</string>
     <string name="projects_plus_quota_resets">%1$s yenilenir</string>
     <string name="projects_plus_quota_resets_day">%1$s yenilenir</string>
     <string name="projects_plus_quota_unused">Kullanılmadı</string>

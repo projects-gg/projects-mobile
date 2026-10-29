@@ -422,7 +422,7 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
                     q.pctWeek == 0 ? getString(R.string.projects_plus_quota_unused)
                             : getString(R.string.projects_plus_quota_resets_day, CloudWords.relativeDay(c, q.weekResetAt, now))));
             if (q.giftsLeft > 0) {
-                TextView gift = CloudUi.text(c, getString(R.string.projects_plus_quota_gift_open), 13, R.color.projects_gold_300, false);
+                TextView gift = CloudUi.text(c, getString(R.string.projects_plus_quota_gift_open), 13, R.color.projects_bone_100, false);
                 gift.setPadding(CloudUi.dp(c, 16), 0, CloudUi.dp(c, 16), CloudUi.dp(c, 12));
                 credits.addView(gift);
             }
@@ -494,9 +494,11 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
         line.setOrientation(LinearLayout.HORIZONTAL);
         TextView name = CloudUi.text(c, label, 14, R.color.projects_bone_100, false);
         line.addView(name, CloudUi.weight(1f));
-        // "%34 kullanıldı" / "34% used": a bare percentage read as what was left as often as what was used (the site's words).
+        // "%34 kullanıldı" / "34% used": a bare percentage read as what was left as often as what was used (the site's words);
+        // used up, "Bitti" / "Used up" over the dimmer bar (AFK-COPY: "%100 kullanıldı" read as a goal reached).
         String figure = CloudWords.turkish(c) ? String.format(Locale.ROOT, "%%%d", pct) : String.format(Locale.ROOT, "%d%%", pct);
-        TextView percent = CloudUi.text(c, c.getString(R.string.projects_plus_quota_used, figure), 13.5f, R.color.projects_ash_300, true);
+        TextView percent = CloudUi.text(c, pct >= 100 ? c.getString(R.string.projects_plus_quota_used_up)
+                : c.getString(R.string.projects_plus_quota_used, figure), 13.5f, R.color.projects_ash_300, true);
         line.addView(percent);
         box.addView(line);
         CloudUi.Bar bar = new CloudUi.Bar(c);
