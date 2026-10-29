@@ -8,6 +8,14 @@ pluginManagement {
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
     repositories {
+        // Projects fork (M8): bytehook 1.0.10 rebuilt for 16 KB pages (scripts/projects/build_bytehook_16kb.py) comes
+        // only from this folder in the tree.
+        exclusiveContent {
+            forRepository {
+                maven { url = new File(settingsDir, "app_pojavlauncher/libs/maven").toURI() }
+            }
+            filter { includeModule("com.bytedance", "bytehook") }
+        }
         google()
         mavenCentral()
         maven { url "https://jitpack.io" }

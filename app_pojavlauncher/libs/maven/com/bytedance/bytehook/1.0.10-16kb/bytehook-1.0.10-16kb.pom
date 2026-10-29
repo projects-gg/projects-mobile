@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <!-- bytehook 1.0.10 (bytedance/bhook v1.0.10, MIT) rebuilt with 16 KB page alignment and the device's page size in
+       bh_util.c: scripts/projects/build_bytehook_16kb.py. -->
+  <groupId>com.bytedance</groupId>
+  <artifactId>bytehook</artifactId>
+  <version>1.0.10-16kb</version>
+  <packaging>aar</packaging>
+  <licenses>
+    <license>
+      <name>The MIT License</name>
+      <url>https://opensource.org/licenses/MIT</url>
+    </license>
+  </licenses>
+</project>
