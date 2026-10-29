@@ -609,10 +609,10 @@
     <string name="projects_plus_lang_auto">Reply in their language</string>
     <string name="projects_plus_lang_tr">Turkish</string>
     <string name="projects_plus_lang_en">English</string>
-    <string name="projects_plus_saver">When should it save credits?</string>
+    <string name="projects_plus_saver">Keep chats short when AI credits run low</string>
     <string name="projects_plus_saver_80" formatted="false">At 80% used</string>
     <string name="projects_plus_saver_50" formatted="false">At 50% used</string>
-    <string name="projects_plus_saver_off">Never</string>
+    <string name="projects_plus_saver_off">Off</string>
     <string name="projects_plus_proactive">Message the seller once when found</string>
     <string name="projects_plus_summary_at">Daily summary at</string>
     <string name="projects_plus_blocked">Blocked players</string>

@@ -612,10 +612,10 @@
     <string name="projects_plus_lang_auto">Yazana göre</string>
     <string name="projects_plus_lang_tr">Türkçe</string>
     <string name="projects_plus_lang_en">İngilizce</string>
-    <string name="projects_plus_saver">Ne zaman tasarrufa geçsin?</string>
+    <string name="projects_plus_saver">Kontörün azalınca sohbeti kısa tutsun</string>
     <string name="projects_plus_saver_80" formatted="false">%80 kullanılınca</string>
     <string name="projects_plus_saver_50" formatted="false">%50 kullanılınca</string>
-    <string name="projects_plus_saver_off">Hiç</string>
+    <string name="projects_plus_saver_off">Kapalı</string>
     <string name="projects_plus_proactive">Bulunca satıcıya bir kez yazsın</string>
     <string name="projects_plus_summary_at">Günlük özet saati</string>
     <string name="projects_plus_blocked">Engellenen oyuncular</string>
