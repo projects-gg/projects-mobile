@@ -367,7 +367,11 @@ public final class PlusActivityFragment extends CloudScreen implements CloudServ
             return;
         }
         if (mAudit.isEmpty()) {
-            if (!away && !limited) part.addView(CloudUi.empty(c, gg.projects.mobile.ui.PixelSprites.Sprite.AFK, getString(R.string.projects_audit_empty)));
+            // ProBot AI waits for its first "Başlat": nothing has happened yet (the site's line).
+            CloudModel.Account a = account();
+            boolean notStarted = a != null && a.ai != null && a.ai.waitsForStart();
+            if (!away && !limited) part.addView(CloudUi.empty(c, gg.projects.mobile.ui.PixelSprites.Sprite.AFK,
+                    getString(notStarted ? R.string.projects_audit_not_started : R.string.projects_audit_empty)));
             return;
         }
         List<PlusModel.AuditEntry> shown = new ArrayList<>();
@@ -488,6 +492,10 @@ public final class PlusActivityFragment extends CloudScreen implements CloudServ
         LinearLayout.LayoutParams timeLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         timeLp.setMarginStart(CloudUi.dp(c, 8));
         head.addView(time, timeLp);
+        // One step says all in the row itself: it opens only to "Cevap yaz", and without it the row stays still (the
+        // site's r2: no step that repeats the row).
+        boolean single = g.entries.size() == 1;
+        boolean answerable = g.who != null && keepsConversation(g.who);
         final ImageView caret = new ImageView(c);
         caret.setImageResource(R.drawable.projects_ic_caret_down_bold);
         caret.setImageTintList(ColorStateList.valueOf(CloudUi.color(c, R.color.projects_ash_400)));
@@ -496,6 +504,13 @@ public final class PlusActivityFragment extends CloudScreen implements CloudServ
         caretLp.setMarginStart(CloudUi.dp(c, 8));
         head.addView(caret, caretLp);
         box.addView(head);
+        if (single && !answerable) {
+            caret.setVisibility(View.INVISIBLE);
+            head.setBackground(null);
+            head.setContentDescription(g.who + ", " + line + ", " + time.getText());
+            head.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_YES);
+            return box;
+        }
         boolean open = mOpen.contains(key);
         caret.setRotation(open ? 180f : 0f);
         if (open) box.addView(body(c, g));
@@ -539,9 +554,11 @@ public final class PlusActivityFragment extends CloudScreen implements CloudServ
         LinearLayout body = new LinearLayout(c);
         body.setOrientation(LinearLayout.VERTICAL);
         body.setPaddingRelative(CloudUi.dp(c, 36), 0, 0, CloudUi.dp(c, 6));
-        List<PlusModel.AuditEntry> steps = new ArrayList<>(g.entries);
-        Collections.reverse(steps);
-        for (PlusModel.AuditEntry e : steps) body.addView(entryRow(c, e));
+        if (g.entries.size() > 1) {
+            List<PlusModel.AuditEntry> steps = new ArrayList<>(g.entries);
+            Collections.reverse(steps);
+            for (PlusModel.AuditEntry e : steps) body.addView(entryRow(c, e));
+        }
         if (g.who != null && keepsConversation(g.who)) {
             android.widget.Button reply = CloudUi.textButton(c, getString(R.string.projects_audit_answer), v -> openThread(g.who));
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);

@@ -125,7 +125,7 @@
     <string name="projects_card_answer_first">Kaydetmeden önce soruyu cevapla.</string>
     <string name="projects_card_answer_first_many">Kaydetmeden önce soruları cevapla.</string>
     <string name="projects_card_fix_first">Kaydetmeden önce Düzenle ile eksikleri tamamla.</string>
-    <string name="projects_card_note_approval_pref">Sormadan tamamlaması için ince ayardan yetkiyi değiştir.</string>
+    <string name="projects_card_note_approval_pref">Sormadan tamamlaması için Ayarlar\'dan yetkisini değiştir.</string>
     <string name="projects_card_note_named_player">Sipariş herkese açık olur, yalnız bir oyuncuyla takas edemezsin.</string>
     <string name="projects_card_note_notify_only">Harcama sınırı koymadığın için almaz. Bulunca haber verir.</string>
     <string name="projects_card_note_item_pay_off">Eşyayla takas ayarlarında kapalı. Takas parayla yapılır.</string>
@@ -272,6 +272,7 @@
     <string name="projects_audit_yesterday">Dün</string>
     <string name="projects_audit_older">Önceki günler</string>
     <string name="projects_audit_empty">Henüz bir şey yok. ProBot AI bir mesaj aldığında burada görürsün.</string>
+    <string name="projects_audit_not_started">ProBot AI\'ı başlatınca yaptıkları burada görünür.</string>
     <string name="projects_audit_none_here">Bu türde bir şey yok.</string>
     <string name="projects_audit_off">Etkinlik şu an kapalı.</string>
     <string name="projects_audit_offline">Daha önce gördüklerin aşağıda. Yenileri bağlantı dönünce görünür.</string>
@@ -290,13 +291,15 @@
     <string name="projects_audit_spent_of">Harcanan: %1$s / %2$s</string>
     <string name="projects_audit_hidden">Uygunsuz mesaj gizlendi.</string>
     <string name="projects_audit_show">Göster</string>
-    <string name="projects_audit_someone">Bir oyuncu</string>
-    <string name="projects_audit_pm_in">%1$s yazdı:</string>
+    <string name="projects_audit_pm_in">Yazdı:</string>
     <string name="projects_audit_reply">ProBot AI cevap verdi:</string>
     <string name="projects_audit_owner_msg">Sen yazdın:</string>
-    <string name="projects_audit_offer">%1$s ile pazarlıkta %2$s teklif edildi</string>
-    <string name="projects_audit_counter">%1$s, %2$s istedi</string>
-    <string name="projects_audit_agree">ProBot AI %1$s ile anlaştı: %2$s</string>
+    <string name="projects_audit_offer">ProBot AI, %2$s için %1$s teklif etti</string>
+    <string name="projects_audit_offer_bare">ProBot AI %1$s teklif etti</string>
+    <string name="projects_audit_counter">%2$s için %1$s istedi</string>
+    <string name="projects_audit_counter_bare">%1$s istedi</string>
+    <string name="projects_audit_agree">ProBot AI anlaştı: %1$s</string>
+    <string name="projects_audit_with_deal">%1$s: %2$s</string>
     <string name="projects_audit_ask_owner">Onayın istendi</string>
     <string name="projects_audit_ask_owner_of">%1$s için onayın istendi</string>
     <string name="projects_audit_owner_ok">Onayladın</string>
@@ -311,13 +314,24 @@
     <string name="projects_audit_handoff_no">Takas olmadı</string>
     <string name="projects_audit_cancel">Pazarlık bırakıldı: %1$s</string>
     <string name="projects_audit_refuse">Cevap verilmedi: %1$s</string>
-    <string name="projects_audit_refuse_who">%1$s yazdı, cevap verilmedi: %2$s</string>
+    <string name="projects_audit_refuse_who">Yazdı, cevap verilmedi: %1$s</string>
     <string name="projects_audit_found">Sohbette satılık bulundu: %1$s, %2$s</string>
     <string name="projects_audit_found_bare">Sohbette satılık bulundu: %1$s</string>
+    <string name="projects_audit_found_menu">Sipariş menüsünde buldu: %1$s, tanesi %2$s</string>
+    <string name="projects_audit_found_menu_bare">Sipariş menüsünde buldu: %1$s</string>
+    <string name="projects_audit_found_chat">Sohbette buldu: %1$s</string>
+    <string name="projects_audit_found_pm">Mesajda buldu: %1$s</string>
+    <string name="projects_audit_menu_done">Sipariş menüsünde teslim etti: %1$s</string>
+    <string name="projects_audit_menu_fail">Sipariş menüsünde teslim etmedi: %1$s (%2$s)</string>
+    <string name="projects_audit_menu_fail_bare">Sipariş menüsünde teslim etmedi: %1$s</string>
+    <string name="projects_audit_ads_stopped">Sohbet ilanları durdu: sunucu spam uyarısı verdi</string>
+    <string name="projects_audit_ads_stopped_bare">Sohbet ilanları durdu</string>
     <string name="projects_audit_confirm_item">Eşya için onayın istendi</string>
     <string name="projects_audit_confirm_item_of">%1$s için onayın istendi</string>
     <string name="projects_audit_order_done">Sipariş tamamlandı</string>
+    <string name="projects_audit_order_done_of">%1$s siparişi tamamlandı</string>
     <string name="projects_audit_order_expired">Siparişin süresi doldu</string>
+    <string name="projects_audit_order_expired_of">%1$s siparişinin süresi doldu</string>
     <string name="projects_audit_paused">ProBot AI durdu: %1$s</string>
     <string name="projects_audit_paused_bare">ProBot AI durdu</string>
     <string name="projects_audit_resumed">ProBot AI yeniden çalışıyor</string>
@@ -348,6 +362,12 @@
     <string name="projects_audit_r_gate">güvenlik kuralı</string>
     <string name="projects_audit_r_not_looking">sipariş bitti</string>
     <string name="projects_audit_r_other">başka bir neden</string>
+    <string name="projects_audit_mr_mismatch">pencere teslimatı göstermedi</string>
+    <string name="projects_audit_mr_window">pencere tanınmadı</string>
+    <string name="projects_audit_mr_timeout">zaman aşımı</string>
+    <string name="projects_audit_mr_unclear">teslim görülmedi</string>
+    <string name="projects_audit_mr_inventory">eşyalar konamadı</string>
+    <string name="projects_audit_mr_gate">izin verilmedi</string>
 
     <!-- Takas geçmişi: receipts -->
     <string name="projects_receipt_tab">Takas geçmişi</string>
@@ -364,7 +384,7 @@
     <string name="projects_receipt_paid_with">%1$s ile ödendi</string>
     <string name="projects_receipt_party_buy">Satıcı: %1$s</string>
     <string name="projects_receipt_party_sell">Alıcı: %1$s</string>
-    <string name="projects_receipt_auto">Sormadan (ince ayarına göre)</string>
+    <string name="projects_receipt_auto">Sana sormadan, ayarına göre</string>
     <string name="projects_receipt_approved">Sen onayladın</string>
     <string name="projects_receipt_owner">Takası sen yaptın, sen bildirdin</string>
     <string name="projects_receipt_review">İncelemede</string>
@@ -373,7 +393,7 @@
     <string name="projects_receipt_failed">Takas geçmişi yüklenemedi.</string>
 
     <!-- İnce ayar -->
-    <string name="projects_plus_change_fine">İnce ayar değişti</string>
+    <string name="projects_plus_change_fine">Takas izinleri değişti</string>
     <string name="projects_fine_reply">Yalnız cevap ver</string>
     <string name="projects_fine_ask">Pazarlık et, bana sor</string>
     <string name="projects_fine_deal">Pazarlık et ve tamamla</string>
@@ -443,7 +463,6 @@
     <string name="projects_order_meta_buy_done">Alım</string>
     <string name="projects_order_meta_sell_done">Satış</string>
     <string name="projects_feat_inv_pick_hint">Siparişe eklemek için bir eşyaya dokun.</string>
-    <string name="projects_plus_week_range">%1$s ile %2$s arası</string>
     <!-- FREE-M 0.4.4: the settings as questions, the first setup, the chat ads, the money name (the site's words) -->
     <string name="projects_setup_change">Değiştir</string>
     <string name="projects_setup_advanced">Gelişmiş</string>
@@ -493,6 +512,7 @@
     <string name="projects_setup_a_ads_stopped">Bugün ilan vermez</string>
     <string name="projects_setup_a_scans">, satış ilanlarını tarar.</string>
     <string name="projects_setup_a_no_scan">.</string>
+    <string name="projects_setup_a_order_menu">Sipariş menüsünü de kontrol eder.</string>
     <string name="projects_setup_a_tone_player">%1$s, oyuncu gibi</string>
     <string name="projects_setup_a_who_all_friends">Arkadaşlarının her özel mesajına cevap verir</string>
     <string name="projects_setup_a_who_all">Herkesin her özel mesajına cevap verir</string>

@@ -5,6 +5,7 @@ import androidx.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -32,15 +33,20 @@ public final class ActivityRows {
     private static final Set<String> MESSAGE_KINDS = set("pm_in", "reply", "owner_msg");
     private static final Set<String> DEAL_KINDS = set("offer", "counter", "agree", "ask_owner", "owner_ok", "owner_no",
             "owner_timeout", "trade_start", "trade_done", "trade_fail", "handoff", "handoff_done", "handoff_no", "cancel",
-            "found", "confirm_item", "order_done", "order_expired");
+            "found", "confirm_item", "order_done", "order_expired", "menu_done", "menu_fail");
     /** "Retler": what was turned down, by a rule, the other player, the trade or the player. */
     private static final Set<String> REFUSAL_KINDS = set("refuse", "gate", "cancel", "trade_fail", "owner_no",
-            "owner_timeout", "handoff_no");
+            "owner_timeout", "handoff_no", "menu_fail");
 
-    /** The kinds that say how a player's day went, the most telling first. */
-    private static final List<String> OUTCOME = Arrays.asList("trade_done", "trade_fail", "handoff_done", "handoff_no",
-            "owner_ok", "owner_no", "owner_timeout", "handoff", "ask_owner", "confirm_item", "agree", "gate", "refuse", "cancel",
-            "found", "counter", "offer", "order_done", "order_expired");
+    /** The kinds that say how a player's day went, the most telling first; kinds in one rank tie (the newest wins). */
+    private static final Map<String, Integer> OUTCOME = new HashMap<>();
+
+    static {
+        String[][] ranks = {{"trade_done", "menu_done"}, {"trade_fail", "menu_fail"}, {"handoff_done"}, {"handoff_no"},
+                {"owner_ok"}, {"owner_no"}, {"owner_timeout"}, {"handoff"}, {"ask_owner"}, {"confirm_item"}, {"agree"}, {"gate"},
+                {"refuse"}, {"cancel"}, {"found"}, {"counter", "offer"}, {"order_done"}, {"order_expired"}};
+        for (int i = 0; i < ranks.length; i++) for (String k : ranks[i]) OUTCOME.put(k, i);
+    }
 
     private static Set<String> set(String... kinds) {
         return Collections.unmodifiableSet(new HashSet<>(Arrays.asList(kinds)));
@@ -110,10 +116,11 @@ public final class ActivityRows {
     /** What a row says: the most telling entry of its day (the newest of those), else its newest. */
     public static PlusModel.AuditEntry outcome(Group group) {
         PlusModel.AuditEntry best = null;
-        int rank = OUTCOME.size();
+        int rank = Integer.MAX_VALUE;
+        // Newest first: a later entry of the same rank never takes the place of a newer one.
         for (PlusModel.AuditEntry entry : group.entries) {
-            int at = OUTCOME.indexOf(entry.k);
-            if (at != -1 && at < rank) {
+            Integer at = OUTCOME.get(entry.k);
+            if (at != null && at < rank) {
                 best = entry;
                 rank = at;
             }

@@ -279,6 +279,7 @@
     <string name="projects_audit_yesterday">Yesterday</string>
     <string name="projects_audit_older">Earlier days</string>
     <string name="projects_audit_empty">Nothing yet. You\'ll see it here when ProBot AI gets a message.</string>
+    <string name="projects_audit_not_started">Once you start ProBot AI, what it does shows here.</string>
     <string name="projects_audit_none_here">Nothing of this kind.</string>
     <string name="projects_audit_off">Activity is off right now.</string>
     <string name="projects_audit_offline">What you saw before is below. New entries show once the connection is back.</string>
@@ -297,13 +298,15 @@
     <string name="projects_audit_spent_of">Spent: %1$s / %2$s</string>
     <string name="projects_audit_hidden">Inappropriate message hidden.</string>
     <string name="projects_audit_show">Show</string>
-    <string name="projects_audit_someone">A player</string>
-    <string name="projects_audit_pm_in">%1$s wrote:</string>
+    <string name="projects_audit_pm_in">Wrote:</string>
     <string name="projects_audit_reply">ProBot AI replied:</string>
     <string name="projects_audit_owner_msg">You wrote:</string>
-    <string name="projects_audit_offer">Offered %1$s %2$s</string>
-    <string name="projects_audit_counter">%1$s asked for %2$s</string>
-    <string name="projects_audit_agree">Agreed with %1$s: %2$s</string>
+    <string name="projects_audit_offer">ProBot AI offered %1$s for %2$s</string>
+    <string name="projects_audit_offer_bare">ProBot AI offered %1$s</string>
+    <string name="projects_audit_counter">Asked %1$s for %2$s</string>
+    <string name="projects_audit_counter_bare">Asked %1$s</string>
+    <string name="projects_audit_agree">ProBot AI agreed: %1$s</string>
+    <string name="projects_audit_with_deal">%1$s: %2$s</string>
     <string name="projects_audit_ask_owner">Asked for your OK</string>
     <string name="projects_audit_ask_owner_of">Asked for your OK on %1$s</string>
     <string name="projects_audit_owner_ok">You approved</string>
@@ -318,20 +321,31 @@
     <string name="projects_audit_handoff_no">The trade didn\'t happen</string>
     <string name="projects_audit_cancel">Stopped haggling: %1$s</string>
     <string name="projects_audit_refuse">No reply: %1$s</string>
-    <string name="projects_audit_refuse_who">No reply to %1$s: %2$s</string>
+    <string name="projects_audit_refuse_who">Wrote, no reply: %1$s</string>
     <string name="projects_audit_found">Spotted for sale in chat: %1$s, %2$s</string>
     <string name="projects_audit_found_bare">Spotted for sale in chat: %1$s</string>
+    <string name="projects_audit_found_menu">Found in the order menu: %1$s, %2$s each</string>
+    <string name="projects_audit_found_menu_bare">Found in the order menu: %1$s</string>
+    <string name="projects_audit_found_chat">Found in chat: %1$s</string>
+    <string name="projects_audit_found_pm">Found in a message: %1$s</string>
+    <string name="projects_audit_menu_done">Delivered in the order menu: %1$s</string>
+    <string name="projects_audit_menu_fail">Did not deliver in the order menu: %1$s (%2$s)</string>
+    <string name="projects_audit_menu_fail_bare">Did not deliver in the order menu: %1$s</string>
+    <string name="projects_audit_ads_stopped">Chat ads stopped: the server warned about spam</string>
+    <string name="projects_audit_ads_stopped_bare">Chat ads stopped</string>
     <string name="projects_audit_confirm_item">Asked you about an item</string>
     <string name="projects_audit_confirm_item_of">Asked you about %1$s</string>
     <string name="projects_audit_order_done">Order done</string>
+    <string name="projects_audit_order_done_of">%1$s order done</string>
     <string name="projects_audit_order_expired">Order expired</string>
+    <string name="projects_audit_order_expired_of">%1$s order expired</string>
     <string name="projects_audit_paused">ProBot AI stopped: %1$s</string>
     <string name="projects_audit_paused_bare">ProBot AI stopped</string>
     <string name="projects_audit_resumed">ProBot AI is running again</string>
     <string name="projects_audit_quota">You\'re out of AI credits</string>
     <string name="projects_audit_gate">A safety rule stopped an action</string>
     <string name="projects_audit_gate_why">A safety rule stopped an action: %1$s</string>
-    <string name="projects_audit_other">A step was logged</string>
+    <string name="projects_audit_other">An action was logged</string>
     <string name="projects_audit_r_blocked">blocked</string>
     <string name="projects_audit_r_friends_only">not on your friends list</string>
     <string name="projects_audit_r_side_off">buying or selling is off</string>
@@ -355,6 +369,12 @@
     <string name="projects_audit_r_gate">safety rule</string>
     <string name="projects_audit_r_not_looking">the order is done</string>
     <string name="projects_audit_r_other">another reason</string>
+    <string name="projects_audit_mr_mismatch">the window did not show the delivery</string>
+    <string name="projects_audit_mr_window">an unknown window</string>
+    <string name="projects_audit_mr_timeout">timed out</string>
+    <string name="projects_audit_mr_unclear">no delivery seen</string>
+    <string name="projects_audit_mr_inventory">the items did not go in</string>
+    <string name="projects_audit_mr_gate">not allowed</string>
 
     <!-- Trade history: receipts -->
     <string name="projects_receipt_tab">Trade history</string>
@@ -371,7 +391,7 @@
     <string name="projects_receipt_paid_with">Paid with %1$s</string>
     <string name="projects_receipt_party_buy">Bought from %1$s</string>
     <string name="projects_receipt_party_sell">Sold to %1$s</string>
-    <string name="projects_receipt_auto">Without asking (by its permissions)</string>
+    <string name="projects_receipt_auto">Without asking you, as you set it</string>
     <string name="projects_receipt_approved">You approved</string>
     <string name="projects_receipt_owner">You made the trade and reported it</string>
     <string name="projects_receipt_review">Under review</string>
@@ -380,7 +400,7 @@
     <string name="projects_receipt_failed">Couldn\'t load the trade history.</string>
 
     <!-- Fine-tuning -->
-    <string name="projects_plus_change_fine">Fine-tuning changed</string>
+    <string name="projects_plus_change_fine">Trade permissions changed</string>
     <string name="projects_fine_reply">Only reply</string>
     <string name="projects_fine_ask">Haggle, then ask me</string>
     <string name="projects_fine_deal">Haggle and close the deal</string>
@@ -453,7 +473,6 @@
     <string name="projects_order_meta_buy_done">Buy order</string>
     <string name="projects_order_meta_sell_done">Sell order</string>
     <string name="projects_feat_inv_pick_hint">Tap an item to use it in an order.</string>
-    <string name="projects_plus_week_range">%1$s to %2$s</string>
     <!-- FREE-M 0.4.4: the settings as questions, the first setup, the chat ads, the money name (the site's words) -->
     <string name="projects_setup_change">Change</string>
     <string name="projects_setup_advanced">Advanced</string>
@@ -503,6 +522,7 @@
     <string name="projects_setup_a_ads_stopped">Posts no ads today</string>
     <string name="projects_setup_a_scans">, watches chat for sale posts.</string>
     <string name="projects_setup_a_no_scan">.</string>
+    <string name="projects_setup_a_order_menu">Checks the order menu too.</string>
     <string name="projects_setup_a_tone_player">%1$s, like a player</string>
     <string name="projects_setup_a_who_all_friends">Answers every private message from your friends</string>
     <string name="projects_setup_a_who_all">Answers every private message</string>

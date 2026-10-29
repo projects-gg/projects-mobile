@@ -134,26 +134,40 @@ final class PlusWords {
         }
     }
 
-    /** An audit log entry's line ("Kaan_07 ile anlaşıldı: 1 Elytra = 37.500"); a message's own text goes under it. */
+    /**
+     * An audit log entry's line, as the site's (PLUS-ACTIVITY r2): a player's steps sit under their name, so no line
+     * repeats it ("Yazdı:", "ProBot AI anlaştı: 1 Elitra = 37.500"); an approval's steps say their deal ("Onayın istendi:
+     * 2 Netherit Külçesi = 9 Elmas"); the order menu's finds and deliveries (DONUT-ORDER) with their counts. A message's
+     * own text goes under it.
+     */
     static String auditLine(Context c, PlusModel.AuditEntry e, @Nullable PlusModel.Server server, Namer namer) {
-        String who = e.w == null || e.w.isEmpty() ? c.getString(R.string.projects_audit_someone) : e.w;
         String item = e.i == null ? null : namer.name(e.i);
-        String price = e.p == null ? null : price(c, e.p, e.u == null ? "money" : e.u, server, namer);
-        String deal = e.i == null || e.p == null ? null
-                : deal(c, e.q == null ? 1 : e.q, e.i, e.p, e.u == null ? "money" : e.u, server, namer);
+        String pay = e.u == null ? "money" : e.u;
+        String price = e.p == null ? null : price(c, e.p, pay, server, namer);
+        boolean both = item != null && price != null;
+        String deal = both ? deal(c, e.q == null ? 1 : e.q, e.i, e.p, pay, server, namer) : item != null ? item : price != null ? price : "";
+        // "64 Elmas": the item with its count where the entry has one (the order menu's lines).
+        String counted = item == null ? null : e.q == null ? item : CloudWords.money(c, e.q) + " " + CloudWords.counted(c, e.q, item);
+        String bare = price == null ? "" : price;
         switch (e.k) {
-            case "pm_in": return c.getString(R.string.projects_audit_pm_in, who);
+            case "pm_in": return c.getString(R.string.projects_audit_pm_in);
             case "reply": return c.getString(R.string.projects_audit_reply);
             case "owner_msg": return c.getString(R.string.projects_audit_owner_msg);
-            case "offer": return price == null ? c.getString(R.string.projects_audit_other) : c.getString(R.string.projects_audit_offer, who, price);
-            case "counter": return price == null ? c.getString(R.string.projects_audit_other) : c.getString(R.string.projects_audit_counter, who, price);
-            case "agree": return deal == null ? c.getString(R.string.projects_audit_other) : c.getString(R.string.projects_audit_agree, who, deal);
-            case "ask_owner": return item == null ? c.getString(R.string.projects_audit_ask_owner) : c.getString(R.string.projects_audit_ask_owner_of, item);
-            case "owner_ok": return c.getString(R.string.projects_audit_owner_ok);
-            case "owner_no": return c.getString(R.string.projects_audit_owner_no);
-            case "owner_timeout": return c.getString(R.string.projects_audit_owner_timeout);
+            case "offer":
+                return item != null ? c.getString(R.string.projects_audit_offer, bare, item) : c.getString(R.string.projects_audit_offer_bare, bare);
+            case "counter":
+                return item != null ? c.getString(R.string.projects_audit_counter, bare, item) : c.getString(R.string.projects_audit_counter_bare, bare);
+            case "agree": return c.getString(R.string.projects_audit_agree, deal);
+            case "ask_owner":
+                return both ? withDeal(c, R.string.projects_audit_ask_owner, deal)
+                        : item != null ? c.getString(R.string.projects_audit_ask_owner_of, item) : c.getString(R.string.projects_audit_ask_owner);
+            case "owner_ok": return both ? withDeal(c, R.string.projects_audit_owner_ok, deal) : c.getString(R.string.projects_audit_owner_ok);
+            case "owner_no": return both ? withDeal(c, R.string.projects_audit_owner_no, deal) : c.getString(R.string.projects_audit_owner_no);
+            case "owner_timeout":
+                return both ? withDeal(c, R.string.projects_audit_owner_timeout, deal) : c.getString(R.string.projects_audit_owner_timeout);
             case "trade_start": return c.getString(R.string.projects_audit_trade_start);
-            case "trade_done": return deal == null ? c.getString(R.string.projects_audit_trade_done_bare) : c.getString(R.string.projects_audit_trade_done, deal);
+            case "trade_done":
+                return deal.isEmpty() ? c.getString(R.string.projects_audit_trade_done_bare) : c.getString(R.string.projects_audit_trade_done, deal);
             case "trade_fail": return c.getString(R.string.projects_audit_trade_fail, reason(c, e.r));
             case "handoff": return c.getString(R.string.projects_audit_handoff);
             case "handoff_done": return c.getString(R.string.projects_audit_handoff_done);
@@ -161,18 +175,59 @@ final class PlusWords {
             case "cancel": return c.getString(R.string.projects_audit_cancel, reason(c, e.r));
             case "refuse":
                 return e.w == null || e.w.isEmpty() ? c.getString(R.string.projects_audit_refuse, reason(c, e.r))
-                        : c.getString(R.string.projects_audit_refuse_who, e.w, reason(c, e.r));
-            case "found":
+                        : c.getString(R.string.projects_audit_refuse_who, reason(c, e.r));
+            case "found": {
+                // Where it was seen (DONUT-ORDER: r is menu, chat or pm): the order menu says a piece's price (p is the
+                // whole for q), chat and a message the whole; an older agent's entry has no r and keeps the old line.
+                String what = counted == null ? "" : counted;
+                String whole = price != null ? what + ", " + price : what;
+                if ("menu".equals(e.r)) {
+                    String each = e.p != null && e.q != null && e.q > 0 ? money(c, Math.round((double) e.p / e.q), server) : null;
+                    return each != null ? c.getString(R.string.projects_audit_found_menu, what, each) : c.getString(R.string.projects_audit_found_menu_bare, what);
+                }
+                if ("chat".equals(e.r)) return c.getString(R.string.projects_audit_found_chat, whole);
+                if ("pm".equals(e.r)) return c.getString(R.string.projects_audit_found_pm, whole);
                 if (item == null) return c.getString(R.string.projects_audit_other);
                 return price == null ? c.getString(R.string.projects_audit_found_bare, item) : c.getString(R.string.projects_audit_found, item, price);
+            }
+            case "menu_done": return c.getString(R.string.projects_audit_menu_done, deal);
+            case "menu_fail":
+                return counted != null ? c.getString(R.string.projects_audit_menu_fail, counted, menuReason(c, e.r))
+                        : c.getString(R.string.projects_audit_menu_fail_bare, menuReason(c, e.r));
+            case "ads_stopped":
+                return "spam".equals(e.r) ? c.getString(R.string.projects_audit_ads_stopped) : c.getString(R.string.projects_audit_ads_stopped_bare);
             case "confirm_item": return item == null ? c.getString(R.string.projects_audit_confirm_item) : c.getString(R.string.projects_audit_confirm_item_of, item);
-            case "order_done": return c.getString(R.string.projects_audit_order_done);
-            case "order_expired": return c.getString(R.string.projects_audit_order_expired);
+            case "order_done": return item == null ? c.getString(R.string.projects_audit_order_done) : c.getString(R.string.projects_audit_order_done_of, item);
+            case "order_expired":
+                return item == null ? c.getString(R.string.projects_audit_order_expired) : c.getString(R.string.projects_audit_order_expired_of, item);
             case "paused": return e.r == null ? c.getString(R.string.projects_audit_paused_bare) : c.getString(R.string.projects_audit_paused, reason(c, e.r));
             case "resumed": return c.getString(R.string.projects_audit_resumed);
             case "quota": return c.getString(R.string.projects_audit_quota);
-            case "gate": return e.r == null ? c.getString(R.string.projects_audit_gate) : c.getString(R.string.projects_audit_gate_why, reason(c, e.r));
+            case "gate":
+                // The rule's reason when it says more than "güvenlik kuralı".
+                return e.r != null && !"gate".equals(e.r) ? c.getString(R.string.projects_audit_gate_why, reason(c, e.r)) : c.getString(R.string.projects_audit_gate);
             default: return c.getString(R.string.projects_audit_other);
+        }
+    }
+
+    /** An approval's step with its deal ("Onayladın: 1 Elitra = 37.500"). */
+    private static String withDeal(Context c, int line, String deal) {
+        return c.getString(R.string.projects_audit_with_deal, c.getString(line), deal);
+    }
+
+    /** Why the order menu's delivery did not happen (DONUT-ORDER, the site's words). */
+    static String menuReason(Context c, @Nullable String r) {
+        if (r == null) return c.getString(R.string.projects_audit_r_other);
+        switch (r) {
+            case "mismatch": return c.getString(R.string.projects_audit_mr_mismatch);
+            case "window": return c.getString(R.string.projects_audit_mr_window);
+            case "timeout": return c.getString(R.string.projects_audit_mr_timeout);
+            case "unclear": return c.getString(R.string.projects_audit_mr_unclear);
+            case "inventory": return c.getString(R.string.projects_audit_mr_inventory);
+            case "gate":
+            case "item":
+                return c.getString(R.string.projects_audit_mr_gate);
+            default: return c.getString(R.string.projects_audit_r_other);
         }
     }
 
@@ -190,13 +245,16 @@ final class PlusWords {
             case "trade_done":
             case "handoff_done":
             case "order_done":
+            case "menu_done":
                 return new int[]{R.drawable.projects_ic_check_circle, R.color.projects_jade_400};
             case "trade_fail":
             case "gate":
             case "refuse":
+            case "menu_fail":
                 return new int[]{R.drawable.projects_ic_warning_circle, R.color.projects_ash_300};
             case "paused":
             case "quota":
+            case "ads_stopped":
                 return new int[]{R.drawable.projects_ic_hand_palm, R.color.projects_ash_300};
             default:
                 return new int[]{0, 0};

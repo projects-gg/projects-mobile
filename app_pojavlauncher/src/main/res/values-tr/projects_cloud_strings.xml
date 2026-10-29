@@ -706,8 +706,8 @@
     <string name="projects_plus_week_pms">Cevaplanan mesaj</string>
     <string name="projects_plus_week_spent">Harcanan</string>
     <string name="projects_plus_week_earned">Kazanılan</string>
-    <string name="projects_plus_week_below">Sınırından az ödenen</string>
-    <string name="projects_plus_week_above">En az fiyatından fazla alınan</string>
+    <string name="projects_plus_week_below">Pazarlıkla cebinde kalan</string>
+    <string name="projects_plus_week_above">Pazarlıkla fazladan kazandığın</string>
     <string name="projects_plus_week_blocked">Engellenen şüpheli mesaj</string>
     <string name="projects_plus_week_allowance">Kullanılan kontör</string>
     <string name="projects_plus_week_empty">Geçen hafta bu hesapta takas ya da cevap olmadı.</string>

@@ -703,8 +703,8 @@
     <string name="projects_plus_week_pms">Messages answered</string>
     <string name="projects_plus_week_spent">Spent</string>
     <string name="projects_plus_week_earned">Earned</string>
-    <string name="projects_plus_week_below">Paid under your limit</string>
-    <string name="projects_plus_week_above">Got over your minimum</string>
+    <string name="projects_plus_week_below">Saved by haggling</string>
+    <string name="projects_plus_week_above">Earned extra by haggling</string>
     <string name="projects_plus_week_blocked">Suspicious messages blocked</string>
     <string name="projects_plus_week_allowance">AI credits used</string>
     <string name="projects_plus_week_empty">No trades or replies on this account last week.</string>

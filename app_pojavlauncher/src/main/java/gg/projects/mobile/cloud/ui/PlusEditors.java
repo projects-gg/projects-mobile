@@ -201,8 +201,10 @@ final class PlusEditors {
                 else if (preview == null) ads = c.getString(R.string.projects_setup_a_ads_plain);
                 else if (preview.stoppedToday) ads = c.getString(R.string.projects_setup_a_ads_stopped);
                 else ads = capitalize(c, c.getString(R.string.projects_setup_a_ads, everyWords(c, preview.everyMin)));
-                return ads + c.getString(e.proactivePm() ? R.string.projects_setup_a_writes
+                String chat = ads + c.getString(e.proactivePm() ? R.string.projects_setup_a_writes
                         : e.scanChat() ? R.string.projects_setup_a_scans : R.string.projects_setup_a_no_scan);
+                // DONUT-ORDER: the order menu too, while Studio has it on and the player switched it on.
+                return doc != null && doc.rules.orderMenu && e.orderMenu() ? chat + " " + c.getString(R.string.projects_setup_a_order_menu) : chat;
             }
             case TALK: {
                 String preset = presetName(c, e.preset());

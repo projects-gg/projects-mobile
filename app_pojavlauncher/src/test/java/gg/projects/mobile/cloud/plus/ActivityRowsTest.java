@@ -70,6 +70,11 @@ public class ActivityRowsTest {
         List<ActivityRows.Group> deal = ActivityRows.groups(Arrays.asList(newer, entry("agree", "gecekurdu_", 20, null),
                 entry("trade_done", "gecekurdu_", 10, null)));
         assertSame(newer, ActivityRows.outcome(deal.get(0)));
+        // An ask and an offer tie: the newest says it; the order menu's delivery is as telling as a done trade.
+        PlusModel.AuditEntry ask = entry("counter", "lavci_42", 50, null);
+        assertSame(ask, ActivityRows.outcome(ActivityRows.groups(Arrays.asList(ask, entry("offer", "lavci_42", 40, null))).get(0)));
+        PlusModel.AuditEntry menu = entry("menu_done", "lavci_42", 60, null);
+        assertSame(menu, ActivityRows.outcome(ActivityRows.groups(Arrays.asList(menu, entry("trade_done", "lavci_42", 55, null))).get(0)));
     }
 
     @Test
@@ -86,6 +91,11 @@ public class ActivityRowsTest {
         assertFalse(ActivityRows.in(ActivityRows.REFUSALS, entry("paused", null)));
         assertFalse(ActivityRows.in(ActivityRows.REFUSALS, entry("quota", null)));
         assertFalse(ActivityRows.in(ActivityRows.REFUSALS, entry("trade_done", "lavci_42")));
+        // The order menu (DONUT-ORDER): a delivery is a deal, one that did not happen a deal and a refusal.
+        assertTrue(ActivityRows.in(ActivityRows.DEALS, entry("menu_done", null)));
+        assertTrue(ActivityRows.in(ActivityRows.DEALS, entry("menu_fail", null)));
+        assertTrue(ActivityRows.in(ActivityRows.REFUSALS, entry("menu_fail", null)));
+        assertFalse(ActivityRows.in(ActivityRows.REFUSALS, entry("menu_done", null)));
     }
 
     @Test

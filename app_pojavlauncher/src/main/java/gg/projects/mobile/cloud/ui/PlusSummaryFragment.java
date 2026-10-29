@@ -147,24 +147,23 @@ public final class PlusSummaryFragment extends CloudScreen {
 
     private void week(LinearLayout content) {
         Context c = ctx();
-        content.addView(CloudUi.section(c, getString(R.string.projects_plus_week)));
+        CloudModel.WeeklyAccount mine = null;
+        String id = accountId();
+        if (mWeek != null) for (CloudModel.WeeklyAccount w : mWeek) if (w.id.equals(id)) mine = w;
+        // "Geçen hafta" and its days, short ("19-25 Ekim"), apart by a gap and tone; the window ends the next Monday
+        // 04:00, so its last day is the Sunday before.
+        content.addView(CloudUi.section(c, mine != null && mine.weekFrom > 0 && mine.weekTo > mine.weekFrom
+                ? gg.projects.mobile.ui.Apart.of(c, getString(R.string.projects_plus_week),
+                        weekRange(CloudWords.turkish(c), mine.weekFrom * 1000L, (mine.weekTo - 86_400L) * 1000L), R.color.projects_ash_400)
+                : getString(R.string.projects_plus_week)));
         if (mWeek == null) {
             if (mWeekFailed) content.addView(CloudUi.note(c, getString(R.string.projects_cloud_error_unavailable)));
             else content.addView(CloudUi.loading(c));
             return;
         }
-        CloudModel.WeeklyAccount mine = null;
-        String id = accountId();
-        for (CloudModel.WeeklyAccount w : mWeek) if (w.id.equals(id)) mine = w;
         if (mine == null) {
             content.addView(CloudUi.note(c, getString(R.string.projects_plus_week_empty)));
             return;
-        }
-        if (mine.weekFrom > 0 && mine.weekTo > mine.weekFrom) {
-            long nowMs = mService.nowMs();
-            // The window ends the next Monday 04:00: its last day is the Sunday before.
-            content.addView(CloudUi.note(c, getString(R.string.projects_plus_week_range, AppDates.day(c, mine.weekFrom * 1000L, nowMs),
-                    AppDates.day(c, (mine.weekTo - 86_400L) * 1000L, nowMs))));
         }
         PlusModel.Server server = server();
         // Three groups (the site's): one long list paired a buy's figure with a sale's.
@@ -186,6 +185,23 @@ public final class PlusSummaryFragment extends CloudScreen {
         content.addView(weekGroup(c, R.string.projects_plus_assistant, ai));
         // The week is what the assistant did (27 Oct 2026: it can make mistakes).
         content.addView(CloudUi.note(c, getString(R.string.projects_ai_note)));
+    }
+
+    /** A week's days, short: "19-25 Ekim", "29 Eylül - 5 Ekim" (the site's: no year, a plain hyphen). */
+    static String weekRange(boolean turkish, long fromMs, long toMs) {
+        java.util.Calendar a = java.util.Calendar.getInstance();
+        a.setTimeInMillis(fromMs);
+        java.util.Calendar b = java.util.Calendar.getInstance();
+        b.setTimeInMillis(toMs);
+        String to = b.get(java.util.Calendar.DAY_OF_MONTH) + " " + monthName(turkish, b.get(java.util.Calendar.MONTH));
+        if (a.get(java.util.Calendar.MONTH) == b.get(java.util.Calendar.MONTH) && a.get(java.util.Calendar.YEAR) == b.get(java.util.Calendar.YEAR)) {
+            return a.get(java.util.Calendar.DAY_OF_MONTH) + "-" + to;
+        }
+        return a.get(java.util.Calendar.DAY_OF_MONTH) + " " + monthName(turkish, a.get(java.util.Calendar.MONTH)) + " - " + to;
+    }
+
+    private static String monthName(boolean turkish, int month) {
+        return turkish ? gg.projects.mobile.cloud.TrGrammar.monthName(month + 1) : new java.text.DateFormatSymbols(Locale.UK).getMonths()[month];
     }
 
     private View figure(Context c, int label, String value) {
