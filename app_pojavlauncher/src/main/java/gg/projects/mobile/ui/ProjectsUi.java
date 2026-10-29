@@ -174,13 +174,13 @@ public final class ProjectsUi {
      */
     public static String startMoment(Context context, long millis, long now) {
         boolean turkish = gg.projects.mobile.language.LanguageManager.isTurkish(context);
-        Locale locale = turkish ? locale(context) : Locale.UK;
-        String clock = new SimpleDateFormat("HH:mm", Locale.ROOT).format(new Date(millis));
+        String clock = AppDates.time(millis);
         String time = turkish ? gg.projects.mobile.cloud.TrGrammar.locativeTime(clock) : clock;
         long days = Math.round((startOfDay(millis) - startOfDay(now)) / (double) DateUtils.DAY_IN_MILLIS);
         if (days == 0) return context.getString(R.string.projects_event_starts_today, time);
         if (days == 1) return context.getString(R.string.projects_event_starts_tomorrow, time);
-        String day = new SimpleDateFormat(days > 1 && days < 7 ? "EEEE" : "d MMMM", locale).format(new Date(millis));
+        // 0.4.5: the dates through AppDates, the launcher's form ("25 Ekim", "25 October").
+        String day = days > 1 && days < 7 ? AppDates.weekday(context, millis) : AppDates.dayMonth(context, millis);
         return context.getString(R.string.projects_event_starts_on, day, time);
     }
 

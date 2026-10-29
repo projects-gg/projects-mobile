@@ -17,7 +17,8 @@ import gg.projects.mobile.language.LanguageManager;
  * MOB-POLISH: dates and times in the app's language. Turkish as the phone has always written them ("24 Ekim 2026"),
  * English in British English whatever the phone's region ("24 October 2026", never "October 24, 2026": design.md §7
  * Copy), and a clock time always on 24 hours ("21:30"), never the phone's 12-hour setting. The words around them
- * ("Bugün", "Yarın", "2 dk önce") stay with the callers.
+ * ("Bugün", "Yarın", "2 dk önce") stay with the callers. 0.4.5: the one formatter for every date the app writes,
+ * always the launcher's form (day, the month's whole name, the year; no comma): the short "24 Eki 2026" went.
  *
  * <p>Every format has a pure form (the language and the time zone given) for the JVM tests; the {@link Context} forms
  * ask {@link LanguageManager#isTurkish} and use the phone's time zone.
@@ -58,15 +59,6 @@ public final class AppDates {
         calendar.setTimeInMillis(millis);
         return gg.projects.mobile.cloud.TrGrammar.ablativeDate(calendar.get(Calendar.DAY_OF_MONTH),
                 calendar.get(Calendar.MONTH) + 1, calendar.get(Calendar.YEAR));
-    }
-
-    /** "24 Eki 2026" / "24 Oct 2026". */
-    public static String mediumDate(Context context, long millis) {
-        return mediumDate(turkish(context), millis, TimeZone.getDefault());
-    }
-
-    public static String mediumDate(boolean turkish, long millis, TimeZone zone) {
-        return format("d MMM yyyy", turkish, millis, zone);
     }
 
     /** "24 Ekim" / "24 October". */

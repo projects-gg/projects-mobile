@@ -6,14 +6,13 @@ import androidx.annotation.Nullable;
 
 import net.kdt.pojavlaunch.R;
 
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
 import gg.projects.mobile.language.LanguageManager;
+import gg.projects.mobile.ui.AppDates;
 import gg.projects.mobile.ui.ProjectsUi;
 
 /**
@@ -125,9 +124,11 @@ public final class CloudWords {
 
     // ---- dates and times ----
 
+    // 0.4.5: every date through AppDates, the launcher's form in both languages ("26 Ekim 2026", "26 October 2026").
+
     /** "26 Ekim 2026" / "26 October 2026". */
     public static String day(Context c, long seconds) {
-        return new SimpleDateFormat(turkish(c) ? "d MMMM yyyy" : "d MMMM yyyy", locale(c)).format(new Date(seconds * 1000L));
+        return AppDates.longDate(turkish(c), seconds * 1000L, TimeZone.getDefault());
     }
 
     /**
@@ -143,7 +144,7 @@ public final class CloudWords {
             int month = when.get(Calendar.MONTH) + 1;
             return thisYear ? TrGrammar.locativeDate(day, month) : TrGrammar.locativeDate(day, month, when.get(Calendar.YEAR));
         }
-        return new SimpleDateFormat(thisYear ? "d MMMM" : "d MMMM yyyy", Locale.UK).format(new Date(seconds * 1000L));
+        return AppDates.day(false, seconds * 1000L, nowSeconds * 1000L, TimeZone.getDefault());
     }
 
     /** "12 Kasım'dan" ("… itibaren"), "3 Ocak 2027'den" / "12 November", "3 January 2027" ("from …"). */
@@ -156,7 +157,7 @@ public final class CloudWords {
             int month = when.get(Calendar.MONTH) + 1;
             return thisYear ? TrGrammar.ablativeDate(day, month) : TrGrammar.ablativeDate(day, month, when.get(Calendar.YEAR));
         }
-        return new SimpleDateFormat(thisYear ? "d MMMM" : "d MMMM yyyy", Locale.UK).format(new Date(seconds * 1000L));
+        return AppDates.day(false, seconds * 1000L, nowSeconds * 1000L, TimeZone.getDefault());
     }
 
     private static boolean sameYear(long seconds, long nowSeconds) {
@@ -169,7 +170,7 @@ public final class CloudWords {
 
     /** "14:35" on the phone's clock, 24 hours (the design guide: en-GB). */
     public static String clock(long seconds) {
-        return new SimpleDateFormat("HH:mm", Locale.ROOT).format(new Date(seconds * 1000L));
+        return AppDates.time(seconds * 1000L);
     }
 
     /** "14:35'te" / "at 14:35" when it is within the day ahead, else "26 Ekim'de" / "on 26 October" (resets, returns). */
@@ -180,7 +181,7 @@ public final class CloudWords {
         if (turkish(c)) {
             return soon ? TrGrammar.locativeTime(clock(seconds)) : TrGrammar.locativeDate(when.get(Calendar.DAY_OF_MONTH), when.get(Calendar.MONTH) + 1);
         }
-        return soon ? clock(seconds) : new SimpleDateFormat("d MMMM", Locale.UK).format(new Date(seconds * 1000L));
+        return soon ? clock(seconds) : AppDates.dayMonth(false, seconds * 1000L, TimeZone.getDefault());
     }
 
     /** "30 Ekim'e" (TR, for "… kadar") / "30 October" (EN, after "until"). */
@@ -191,7 +192,7 @@ public final class CloudWords {
         if (turkish(c)) {
             return soon ? TrGrammar.dativeTime(clock(seconds)) : TrGrammar.dativeDate(when.get(Calendar.DAY_OF_MONTH), when.get(Calendar.MONTH) + 1);
         }
-        return soon ? clock(seconds) : new SimpleDateFormat("d MMMM", Locale.UK).format(new Date(seconds * 1000L));
+        return soon ? clock(seconds) : AppDates.dayMonth(false, seconds * 1000L, TimeZone.getDefault());
     }
 
     /** An item with its count, as the site writes it: "64 Elmas" / "Diamond ×64"; one alone is just its name. */
@@ -219,7 +220,7 @@ public final class CloudWords {
         Calendar when = Calendar.getInstance();
         when.setTimeInMillis(seconds * 1000L);
         String date = turkish(c) ? TrGrammar.locativeDate(when.get(Calendar.DAY_OF_MONTH), when.get(Calendar.MONTH) + 1)
-                : new SimpleDateFormat("d MMMM", Locale.UK).format(new Date(seconds * 1000L));
+                : AppDates.dayMonth(false, seconds * 1000L, TimeZone.getDefault());
         return c.getString(R.string.projects_cloud_on_day, date);
     }
 
@@ -229,7 +230,7 @@ public final class CloudWords {
         String time = clock(seconds);
         if (days <= 0) return withDay ? c.getString(R.string.projects_cloud_today_at, time) : time;
         if (days == 1) return c.getString(R.string.projects_cloud_yesterday_at, time);
-        return new SimpleDateFormat("d MMMM", locale(c)).format(new Date(seconds * 1000L)) + " " + time;
+        return AppDates.dayMonth(turkish(c), seconds * 1000L, TimeZone.getDefault()) + " " + time;
     }
 
     private static long dayIndex(long seconds) {

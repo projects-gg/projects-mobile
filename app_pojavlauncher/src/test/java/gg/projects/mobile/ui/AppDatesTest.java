@@ -24,7 +24,6 @@ public class AppDatesTest {
     public void englishIsBritishWhateverThePhoneUses() {
         long t = at(2026, 10, 24, 21, 30);
         assertEquals("24 October 2026", AppDates.longDate(false, t, ISTANBUL));
-        assertEquals("24 Oct 2026", AppDates.mediumDate(false, t, ISTANBUL));
         assertEquals("24 October", AppDates.dayMonth(false, t, ISTANBUL));
         assertEquals("October 2026", AppDates.monthYear(false, t, ISTANBUL));
         assertEquals("Saturday", AppDates.weekday(false, t, ISTANBUL));
@@ -35,12 +34,30 @@ public class AppDatesTest {
     public void turkishStaysAsThePhoneWroteIt() {
         long t = at(2026, 10, 24, 21, 30);
         assertEquals("24 Ekim 2026", AppDates.longDate(true, t, ISTANBUL));
-        assertEquals("24 Eki 2026", AppDates.mediumDate(true, t, ISTANBUL));
         assertEquals("24 Ekim", AppDates.dayMonth(true, t, ISTANBUL));
         assertEquals("Ekim 2026", AppDates.monthYear(true, t, ISTANBUL));
         assertEquals("Cumartesi", AppDates.weekday(true, t, ISTANBUL));
         assertEquals("Çarşamba", AppDates.weekday(true, at(2026, 10, 28, 12, 0), ISTANBUL));
         assertEquals("24 Ekim 2026 21:30", AppDates.dateTime(true, t, ISTANBUL));
+    }
+
+    /** 0.4.5: the launcher's form in every month: the day, the month's whole name, the year, no comma ("18 November 2026"). */
+    @Test
+    public void everyMonthIsWrittenTheLaunchersWay() {
+        String[] en = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
+                "November", "December"};
+        String[] tr = {"Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım",
+                "Aralık"};
+        for (int month = 1; month <= 12; month++) {
+            long t = at(2026, month, 18, 21, 30);
+            assertEquals("18 " + en[month - 1] + " 2026", AppDates.longDate(false, t, ISTANBUL));
+            assertEquals("18 " + tr[month - 1] + " 2026", AppDates.longDate(true, t, ISTANBUL));
+            assertEquals("18 " + en[month - 1], AppDates.dayMonth(false, t, ISTANBUL));
+            assertEquals("18 " + tr[month - 1], AppDates.dayMonth(true, t, ISTANBUL));
+            assertEquals("18 " + en[month - 1] + " 2026 21:30", AppDates.dateTime(false, t, ISTANBUL));
+            assertEquals("18 " + tr[month - 1] + " 2026 21:30", AppDates.dateTime(true, t, ISTANBUL));
+        }
+        assertEquals("a single-digit day stays one digit", "3 January 2027", AppDates.longDate(false, at(2027, 1, 3, 9, 0), ISTANBUL));
     }
 
     @Test

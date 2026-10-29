@@ -102,7 +102,7 @@ public final class CrewViews {
         return AppDates.time(seconds * 1000L);
     }
 
-    /** "Bugün 21:30" / "Yarın 08:00", or the date for later days ("24 Eki 2026 21:30", "24 Oct 2026 21:30"). */
+    /** "Bugün 21:30" / "Yarın 08:00", or the date for later days ("24 Ekim 2026 21:30", "24 October 2026 21:30"). */
     public static String moment(Context context, long seconds, long nowSeconds) {
         java.util.Calendar day = java.util.Calendar.getInstance();
         day.setTimeInMillis(nowSeconds * 1000L);
@@ -119,7 +119,7 @@ public final class CrewViews {
         String time = time(context, seconds);
         if (at >= today && at < tomorrow) return context.getString(R.string.projects_crew_today_at, time);
         if (at >= tomorrow && at < after) return context.getString(R.string.projects_crew_tomorrow_at, time);
-        return AppDates.mediumDate(context, at) + " " + time;
+        return AppDates.longDate(context, at) + " " + time;
     }
 
     /**

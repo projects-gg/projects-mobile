@@ -37,7 +37,7 @@ public final class PlanViews {
         } else if (days > 1 && days < PlanTimes.DAYS) {
             day = AppDates.weekday(context, at * 1000L);
         } else {
-            day = AppDates.mediumDate(context, at * 1000L);
+            day = AppDates.longDate(context, at * 1000L);
         }
         return context.getString(R.string.projects_plans_when, day, time);
     }
