@@ -553,6 +553,18 @@ public final class CloudWords {
     }
 
     /** A history change in words ("Elytra en fazla 40.000 yerine 45.000"). */
+    /** An amount with the server's money name after it ("45.000 ripple"), bare where the profile names none. */
+    private static String amount(Context c, @Nullable Long value, @Nullable PlusModel.Server server) {
+        String written = money(c, value == null ? 0 : value);
+        return server == null || server.moneyLabel == null ? written : written + "\u00A0" + server.moneyLabel.in(lang(c));
+    }
+
+    /** A limit's value in a change: "sınırsız" when there was none, minutes for the approval's wait, else money. */
+    private static String limitValue(Context c, @Nullable Long value, boolean minutes, @Nullable PlusModel.Server server) {
+        if (value == null) return c.getString(R.string.projects_plus_change_unlimited);
+        return minutes ? value + " " + c.getString(R.string.projects_plus_limit_minutes) : amount(c, value, server);
+    }
+
     public static String change(Context c, PlusFormat.Change change, CloudService service) {
         return change(c, change, service, null);
     }
@@ -561,6 +573,8 @@ public final class CloudWords {
     public static String change(Context c, PlusFormat.Change change, CloudService service, @Nullable String acct) {
         String lang = lang(c);
         String item = change.item == null ? "" : service.itemName(acct, change.item, lang);
+        CloudModel.PlusDoc doc = acct == null ? null : service.lastPlus(acct);
+        PlusModel.Server server = doc == null ? null : doc.server;
         switch (change.kind) {
             case AI_ON: return c.getString(R.string.projects_plus_change_ai_on);
             case AI_OFF: return c.getString(R.string.projects_plus_change_ai_off);
@@ -568,24 +582,20 @@ public final class CloudWords {
             case ROW_REMOVED: return c.getString(R.string.projects_plus_change_removed, item);
             case ROW_BOUND:
                 return c.getString(change.buy ? R.string.projects_plus_change_bound_buy : R.string.projects_plus_change_bound_sell, item,
-                        money(c, change.before == null ? 0 : change.before), money(c, change.after == null ? 0 : change.after));
+                        amount(c, change.before, server), amount(c, change.after, server));
             case ROW_TARGET:
-                return c.getString(R.string.projects_plus_change_target, item, money(c, change.before == null ? 0 : change.before),
-                        money(c, change.after == null ? 0 : change.after));
+                return c.getString(R.string.projects_plus_change_target, item, amount(c, change.before, server), amount(c, change.after, server));
             case ROW_QTY:
                 return c.getString(R.string.projects_plus_change_qty, item, String.valueOf(change.before), String.valueOf(change.after));
             case ROW_ON: return c.getString(R.string.projects_plus_change_on, item);
             case ROW_OFF: return c.getString(R.string.projects_plus_change_off, item);
             case ROW_OTHER: return c.getString(R.string.projects_plus_change_row, item);
             case LIMIT: {
+                // One form, the site's: "Tek anlaşmada en fazla: sınırsız yerine 50.000 ripple" (no limit is "sınırsız").
                 String label = limitLabel(c, change.field == null ? "" : change.field);
-                if (change.after == null) return c.getString(R.string.projects_plus_change_limit_removed, label);
-                String after = "approvalTimeoutMin".equals(change.field) ? change.after + " " + c.getString(R.string.projects_plus_limit_minutes)
-                        : money(c, change.after);
-                if (change.before == null) return c.getString(R.string.projects_plus_change_limit_set, label, after);
-                String before = "approvalTimeoutMin".equals(change.field) ? change.before + " " + c.getString(R.string.projects_plus_limit_minutes)
-                        : money(c, change.before);
-                return c.getString(R.string.projects_plus_change_limit, label, before, after);
+                boolean minutes = "approvalTimeoutMin".equals(change.field);
+                return c.getString(R.string.projects_plus_change_limit, label, limitValue(c, change.before, minutes, server),
+                        limitValue(c, change.after, minutes, server));
             }
             case SCHEDULE_ON: return c.getString(R.string.projects_plus_change_schedule_on);
             case SCHEDULE_OFF: return c.getString(R.string.projects_plus_change_schedule_off);
