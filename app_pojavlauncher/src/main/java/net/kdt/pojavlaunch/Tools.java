@@ -1134,14 +1134,16 @@ public final class Tools {
             String[] libraryVersionArray = libraryVersion.split("\\.");
             if (libItem.name.startsWith("net.java.dev.jna:jna:")) {
                 // Special handling for LabyMod 1.8.9, Forge 1.12.2(?) and oshi
-                // we have libjnidispatch 5.13.0 in jniLibs directory
-                if (Integer.parseInt(libraryVersionArray[0]) >= 5 && Integer.parseInt(libraryVersionArray[1]) >= 13) continue;
-                Log.d(APP_NAME, "Library " + libItem.name + " has been changed to version 5.13.0");
+                // Projects fork (M8): below 5.13 as upstream (5.13.0); 5.14 to 5.16 run as 5.17.0, whose Android
+                // natives (the JNA AAR the downloader takes per version) are 16 KB page ready (JnaVersions).
+                String target = gg.projects.mobile.launch.JnaVersions.replacement(libraryVersion);
+                if (target == null) continue;
+                Log.d(APP_NAME, "Library " + libItem.name + " has been changed to version " + target);
                 createLibraryInfo(libItem);
-                libItem.name = "net.java.dev.jna:jna:5.13.0";
-                libItem.downloads.artifact.path = "net/java/dev/jna/jna/5.13.0/jna-5.13.0.jar";
-                libItem.downloads.artifact.sha1 = "1200e7ebeedbe0d10062093f32925a912020e747";
-                libItem.downloads.artifact.url = "https://repo1.maven.org/maven2/net/java/dev/jna/jna/5.13.0/jna-5.13.0.jar";
+                libItem.name = "net.java.dev.jna:jna:" + target;
+                libItem.downloads.artifact.path = gg.projects.mobile.launch.JnaVersions.path(target);
+                libItem.downloads.artifact.sha1 = gg.projects.mobile.launch.JnaVersions.sha1(target);
+                libItem.downloads.artifact.url = gg.projects.mobile.launch.JnaVersions.url(target);
             } else if (libItem.name.startsWith("com.github.oshi:oshi-core:")) {
                 //if (Integer.parseInt(version[0]) >= 6 && Integer.parseInt(version[1]) >= 3) return;
                 // FIXME: ensure compatibility
