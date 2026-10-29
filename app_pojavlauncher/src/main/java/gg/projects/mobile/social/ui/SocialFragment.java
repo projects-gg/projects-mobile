@@ -1107,7 +1107,7 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
                 SocialModel.Badge worn = gg.projects.mobile.social.BadgeRules.shown(service.gate(), friend.profile.badge);
                 tagChip.setBadgeOf(friend.profile.id, worn, CrewTagChip.Size.MD);
                 CrewTagChip.labelName(name, worn);
-                line.setText(SocialUi.presenceText(context, presence));
+                line.setText(SocialUi.presenceLine(context, presence));
                 if (presence.onProjects()) line.setTextColor(ContextCompat.getColor(context, R.color.projects_jade_400));
                 avatar.setDot(SocialUi.dot(presence));
                 avatar.setDimmed(!presence.online());

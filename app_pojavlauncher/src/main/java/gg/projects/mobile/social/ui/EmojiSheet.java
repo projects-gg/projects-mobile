@@ -452,7 +452,7 @@ final class EmojiSheet {
         }
 
         private void styleTab(TextView tab, boolean on) {
-            tab.setTextColor(ContextCompat.getColor(tab.getContext(), on ? R.color.projects_gold_300 : R.color.projects_ash_300));
+            tab.setTextColor(ContextCompat.getColor(tab.getContext(), on ? R.color.projects_bone_100 : R.color.projects_ash_300));
             tab.setSelected(on);
         }
 

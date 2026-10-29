@@ -358,7 +358,7 @@ public class CrewCreateFragment extends Fragment {
             boolean selected = frame.equals(mFrame);
             ((CrewMarkView) cell.getChildAt(0)).setLook(mEmblem, selected ? mColor : "obsidian", frame);
             TextView label = (TextView) cell.getChildAt(1);
-            label.setTextColor(ContextCompat.getColor(context, selected ? R.color.projects_gold_300 : R.color.projects_ash_400));
+            label.setTextColor(ContextCompat.getColor(context, selected ? R.color.projects_bone_100 : R.color.projects_ash_400));
             cell.setSelected(selected);
         }
     }
@@ -422,7 +422,8 @@ public class CrewCreateFragment extends Fragment {
             mPaint.setColor(mColors.edge);
             canvas.drawCircle(cx, cy, r - dp, mPaint);
             if (isSelected()) {
-                mPaint.setColor(ContextCompat.getColor(getContext(), R.color.projects_gold_300));
+                // 0.4.5: the chosen colour's ring in bone, the one selected look (it was gold).
+                mPaint.setColor(ContextCompat.getColor(getContext(), R.color.projects_bone_100));
                 canvas.drawCircle(cx, cy, r + 4 * dp, mPaint);
             }
         }

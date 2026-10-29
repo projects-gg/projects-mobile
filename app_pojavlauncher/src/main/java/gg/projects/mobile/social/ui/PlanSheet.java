@@ -443,8 +443,8 @@ final class PlanSheet {
         chip.setTextSize(14);
         chip.setGravity(Gravity.CENTER);
         chip.setPadding(Math.round(16 * dp), 0, Math.round(16 * dp), 0);
-        // MOB-POLISH: chamfered and quiet, the day picked faint gold with a gold line (it was a solid gold pill among
-        // gold-edged pills).
+        // MOB-POLISH: chamfered and quiet (it was a solid gold pill among gold-edged pills); 0.4.5: the day picked on the
+        // quiet bone plate, the one selected look of every surface.
         chip.setBackground(SocialChips.choice(context, 7));
         chip.setClickable(true);
         chip.setFocusable(true);
@@ -459,7 +459,7 @@ final class PlanSheet {
 
     private static void select(Context context, TextView chip, boolean selected) {
         chip.setSelected(selected);
-        chip.setTextColor(ContextCompat.getColor(context, selected ? R.color.projects_gold_300 : R.color.projects_bone_100));
+        chip.setTextColor(ContextCompat.getColor(context, selected ? R.color.projects_bone_100 : R.color.projects_ash_300));
     }
 
     /** The wheel shows {@code day}'s quarter hours, on {@code wanted} (or the nearest, or the first). */

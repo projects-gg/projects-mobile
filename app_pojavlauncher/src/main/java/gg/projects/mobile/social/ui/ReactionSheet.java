@@ -246,7 +246,7 @@ final class ReactionSheet {
         tab.setMinHeight(Math.round(36 * dp));
         tab.setMinWidth(Math.round(48 * dp));
         tab.setPadding(Math.round(12 * dp), 0, Math.round(12 * dp), 0);
-        tab.setTextColor(ContextCompat.getColor(context, on ? R.color.projects_gold_300 : R.color.projects_ash_300));
+        tab.setTextColor(ContextCompat.getColor(context, on ? R.color.projects_bone_100 : R.color.projects_ash_300));
         // MOB-POLISH: chamfered like every action (it was a pill); the tab shown is the chosen one.
         tab.setBackground(SocialChips.choice(context, 7));
         tab.setClickable(true);

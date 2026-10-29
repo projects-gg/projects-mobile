@@ -15,8 +15,9 @@ import gg.projects.mobile.ui.ChamferDrawable;
  * MOB-POLISH: the friends screens' chips in the desktop's two-shape rule (design.md §1): an action (a chip, a tab, a
  * quick reply, a reaction) is chamfered, its top-left and bottom-right corners cut, never a pill; containers keep their
  * 10 dp radius, and message bubbles, the field, faces and crew tags keep their own shapes. Quiet by default: a faint
- * fill and hairline, as the desktop's quick replies. Gold only where it carries meaning: what is chosen among several
- * (a tab, a day), the player's own reaction, or the one action a place offers now ("Selam ver").
+ * fill and hairline, as the desktop's quick replies. Gold only where it carries meaning: the player's own reaction, or
+ * the one action a place offers now ("Selam ver"). 0.4.5: what is chosen among several (a tab, a day) sits on the quiet
+ * bone plate, the one selected look of the launcher, the site and Studio (it was a faint gold plate with a gold line).
  */
 final class SocialChips {
     private SocialChips() {}
@@ -30,9 +31,10 @@ final class SocialChips {
     private static final int QUIET_LINE = 0x14FFFFFF;
     private static final int QUIET_PRESSED_FILL = 0x1AFFFFFF;
     private static final int QUIET_PRESSED_LINE = 0x29FFFFFF;
-    private static final int CHOSEN_FILL = 0x1FF6D58E;
-    private static final int CHOSEN_LINE = 0x5CF6D58E;
-    private static final int CHOSEN_PRESSED_FILL = 0x2EF6D58E;
+    /** The quiet bone plate of a chosen option (ChamferDrawable.toggle's chosen look). */
+    private static final int CHOSEN_FILL = 0x1FF3EBDD;
+    private static final int CHOSEN_LINE = 0x80F3EBDD;
+    private static final int CHOSEN_PRESSED_FILL = 0x2EF3EBDD;
     private static final int GOLD_FILL = 0x1FE89A2C;
     private static final int GOLD_PRESSED_FILL = 0x33E89A2C;
 
@@ -54,7 +56,7 @@ final class SocialChips {
 
     /**
      * A chip among several of which one is chosen (the picker's and the reactions' tabs, the plan's days): quiet, the
-     * chosen one ({@code setSelected(true)}) faint gold with a gold hairline; its text goes gold-300 with it.
+     * chosen one ({@code setSelected(true)}) on the quiet bone plate; its text goes bone-100 with it (ash-300 otherwise).
      */
     static Drawable choice(Context context, float cutDp) {
         float d = dp(context);

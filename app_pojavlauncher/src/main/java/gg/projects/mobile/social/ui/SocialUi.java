@@ -50,7 +50,26 @@ public final class SocialUi {
         Tools.swapFragment(from.requireActivity(), screen, tag, args);
     }
 
-    /** Where a friend or crewmate is, in a few words; SOC9: in the game with the version after it ("Projects'te · 1.21.4"). */
+    /**
+     * SOC9: {@link #presenceText} for a line on screen, as the launcher draws it. In the game the place is bone, then a
+     * plain space, then the version in ash, so colour does the separating (no middle dot, the house rule); on Projects
+     * the line is jade ("Katıl" leads there) and the place stays jade. A reader hears "Projects'te 1.21.4".
+     */
+    public static CharSequence presenceLine(Context context, Presence presence) {
+        String text = presenceText(context, presence);
+        if (!presence.playing() || presence.ver == null || !text.endsWith(" " + presence.ver)) return text;
+        android.text.SpannableString line = new android.text.SpannableString(text);
+        int place = text.length() - presence.ver.length() - 1;
+        if (!presence.onProjects()) {
+            line.setSpan(new android.text.style.ForegroundColorSpan(androidx.core.content.ContextCompat.getColor(context,
+                    R.color.projects_bone_100)), 0, place, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+        line.setSpan(new android.text.style.ForegroundColorSpan(androidx.core.content.ContextCompat.getColor(context,
+                R.color.projects_ash_400)), place + 1, text.length(), android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        return line;
+    }
+
+    /** Where a friend or crewmate is, in a few words; SOC9: in the game with the version after it ("Projects'te 1.21.4"). */
     public static String presenceText(Context context, Presence presence) {
         if (presence.playing()) return presence.withVersion(playingPlace(context, presence));
         if (presence.online()) {

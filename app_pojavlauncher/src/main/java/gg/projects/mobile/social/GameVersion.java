@@ -7,7 +7,7 @@ import java.util.regex.Pattern;
 /**
  * SOC9 (soc9.md §1): the Minecraft version a friend plays, as the friends service carries it ({@code ver} in the game's
  * {@code status}, {@code game.ver} in a presence): the vanilla version id ("1.21.4", "26.2"), never a loader's name, at
- * most 24 characters of {@code [0-9A-Za-z._+-]}. Friends see it as it is, after the place ("Projects'te · 1.21.4"). Pure,
+ * most 24 characters of {@code [0-9A-Za-z._+-]}. Friends see it as it is, after the place ("Projects'te 1.21.4"). Pure,
  * with tests.
  */
 public final class GameVersion {

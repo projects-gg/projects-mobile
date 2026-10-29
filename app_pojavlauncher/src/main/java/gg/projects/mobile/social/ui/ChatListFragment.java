@@ -236,7 +236,7 @@ public class ChatListFragment extends Fragment implements SocialService.Listener
             avatar.setSurfaceColor(ContextCompat.getColor(activity, R.color.projects_obsidian_800));
             avatar.setDot(SocialUi.dot(service.state().presence(friend.profile.id)));
             ((TextView) row.findViewById(R.id.projects_person_name)).setText(friend.profile.name());
-            ((TextView) row.findViewById(R.id.projects_person_line)).setText(SocialUi.presenceText(activity, service.state().presence(friend.profile.id)));
+            ((TextView) row.findViewById(R.id.projects_person_line)).setText(SocialUi.presenceLine(activity, service.state().presence(friend.profile.id)));
             Press.attach(row, Press.Style.ROW);
             row.setOnClickListener(v -> {
                 dialog.dismiss();

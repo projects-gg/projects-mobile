@@ -20,7 +20,7 @@ import java.util.Set;
 import gg.projects.mobile.cloud.CloudNotice;
 
 /**
- * SOC9 (soc9.md §1-2): the Minecraft version friends see ("Projects'te · 1.21.4"), sent by the game only while playing
+ * SOC9 (soc9.md §1-2): the Minecraft version friends see ("Projects'te 1.21.4"), sent by the game only while playing
  * and never while invisible; the push tag that a push's {@code to} carries instead of the Discord id, kept per session.
  */
 public class Soc9Test {
@@ -68,13 +68,13 @@ public class Soc9Test {
         SocialModel.Presence presence = state.presence(FRIEND);
         assertTrue(presence.onProjects());
         assertEquals("1.21.4", presence.ver);
-        assertEquals("Projects'te · 1.21.4", presence.withVersion("Projects'te"));
+        assertEquals("a plain space, no middle dot", "Projects'te 1.21.4", presence.withVersion("Projects'te"));
 
         state.apply(SocialStateTest.json("{\"t\":\"presence\",\"presence\":{\"id\":\"" + FRIEND + "\",\"state\":\"playing\""
                 + ",\"status\":\"online\",\"game\":{\"where\":\"other\",\"host\":\"mc.example.net\",\"ver\":\"26.2\"}}}"), NOW);
         presence = state.presence(FRIEND);
         assertEquals("mc.example.net", presence.host);
-        assertEquals("mc.example.net sunucusunda · 26.2", presence.withVersion("mc.example.net sunucusunda"));
+        assertEquals("mc.example.net sunucusunda 26.2", presence.withVersion("mc.example.net sunucusunda"));
 
         state.apply(SocialStateTest.json("{\"t\":\"presence\",\"presence\":{\"id\":\"" + FRIEND + "\",\"state\":\"playing\""
                 + ",\"status\":\"online\",\"game\":{\"where\":\"singleplayer\"}}}"), NOW);

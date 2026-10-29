@@ -721,7 +721,8 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         TextView tag = view.findViewById(R.id.projects_rail_tag);
         boolean selected = id.equals(mSelected);
         view.setSelected(selected);
-        tag.setTextColor(ContextCompat.getColor(context, selected ? R.color.projects_gold_300 : R.color.projects_ash_300));
+        // 0.4.5: the chosen crew's tag in bone, the one selected look (it was gold).
+        tag.setTextColor(ContextCompat.getColor(context, selected ? R.color.projects_bone_100 : R.color.projects_ash_300));
         if (ADD.equals(id)) {
             mark.setVisibility(View.GONE);
             plus.setVisibility(View.VISIBLE);
@@ -2209,7 +2210,7 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         SocialModel.Presence presence = state.presence(member.profile.id);
         avatar.setDot(SocialUi.dot(presence));
         avatar.setDimmed(!presence.online());
-        line.setText(SocialUi.presenceText(context, presence));
+        line.setText(SocialUi.presenceLine(context, presence));
         line.setTextColor(ContextCompat.getColor(context, presence.onProjects() ? R.color.projects_jade_400 : R.color.projects_ash_400));
         join.setVisibility(presence.onProjects() ? View.VISIBLE : View.GONE);
         join.setText(R.string.projects_social_join);

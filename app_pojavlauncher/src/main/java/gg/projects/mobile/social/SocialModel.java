@@ -466,9 +466,13 @@ public final class SocialModel {
                     Json.str(o, "avatar"), Json.str(o, "avatarHash"), playing ? Json.str(game, "ver") : null);
         }
 
-        /** SOC9: a playing line with the version after it ("Projects'te · 1.21.4"), as it is: no "sürüm", no translation. */
+        /**
+         * SOC9: a playing line with the version after a plain space ("Projects'te 1.21.4"), as it is: no "sürüm", no
+         * translation, no middle dot (the house rule); on screen the version is the quieter colour
+         * ({@code SocialUi.presenceLine}), in plain text (accessibility, menus) it is just this.
+         */
         public String withVersion(String place) {
-            return ver == null ? place : place + " · " + ver;
+            return ver == null ? place : place + " " + ver;
         }
 
         public boolean online() {
