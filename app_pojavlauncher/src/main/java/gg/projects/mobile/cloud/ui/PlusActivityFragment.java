@@ -2,9 +2,17 @@ package gg.projects.mobile.cloud.ui;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
+import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextUtils;
+import android.text.TextWatcher;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
+import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -18,58 +26,65 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 
-import gg.projects.mobile.cloud.CloudApi;
 import gg.projects.mobile.cloud.CloudModel;
 import gg.projects.mobile.cloud.CloudProblem;
 import gg.projects.mobile.cloud.CloudService;
 import gg.projects.mobile.cloud.CloudWords;
+import gg.projects.mobile.cloud.PlusConfig;
 import gg.projects.mobile.cloud.PlusModel;
+import gg.projects.mobile.cloud.plus.ActivityRows;
+import gg.projects.mobile.mods.Motion;
 import gg.projects.mobile.ui.AppDates;
+import gg.projects.mobile.ui.Press;
 
 /**
- * "Akış": what the assistant did, in three tabs. Akış: the audit log (every step and how it ended, live from the
- * machine; what this phone saw stays 7 days and shows while the machine is away), filtered by kind, under day headings.
- * Takas geçmişi: the receipts, with each item's average, lowest and highest price. Geçen hafta: the weekly report's
- * numbers for this account. Counterparts' texts are masked by the service; an unsuitable one stays folded until "Göster".
+ * "Etkinlik" (PLUS-ACTIVITY: the site's and the launcher's one place for what ProBot AI did; it was Akış, Kayıtlar and
+ * Mesajlar). Over the list, while something waits for the player, "Seni bekleyenler" with its count (that screen holds
+ * the decisions and the messages to answer); the filters (Tümü, Anlaşmalar, Yazışmalar, Retler), a search by player or
+ * item, and today's two figures. Under day headings a player's day is one row (how it went, its time); a tap opens it in
+ * place, its steps fading in under it (nothing grows by animation), with "Cevap yaz" while the machine keeps a
+ * conversation with them. An event without a player is the log's own line. Live from the machine; what this phone saw
+ * stays 7 days and shows while the machine is away; older trades are in Özet. Counterparts' texts are masked by the
+ * service; an unsuitable one stays folded until "Göster". Each part draws on its own, so the search keeps its focus.
  */
 public final class PlusActivityFragment extends CloudScreen implements CloudService.LiveListener {
     public static final String TAG = "ProjectsPlusActivityFragment";
-    private static final int AUDIT = 0;
-    private static final int RECEIPTS = 1;
-    private static final int WEEK = 2;
-    private static final String[] GROUPS = {null, "deals", "messages", "warnings"};
-
-    private int mTab = AUDIT;
-    private int mGroup = 0;
-    /** Rows drawn at once (the phone keeps up to 3.000 entries; each live batch draws the log again). */
+    private static final String[] FILTERS = {null, ActivityRows.DEALS, ActivityRows.MESSAGES, ActivityRows.REFUSALS};
+    /** Entries drawn at once (the phone keeps up to 3.000; each live batch draws the list again). */
     private static final int AUDIT_PAGE = 100;
+
+    private int mFilter;
+    private String mQuery = "";
     private int mDrawLimit = AUDIT_PAGE;
     /** The log as shown: what the phone kept and what the machine sent, newest first, each entry once. */
     private final List<PlusModel.AuditEntry> mAudit = new ArrayList<>();
+    private final Set<Long> mSeen = new HashSet<>();
     private boolean mKeptRead;
     private boolean mAuditLoaded;
-    /** {@code host_offline}, {@code feature_off} or another failure of the last page; null when it came. */
+    /** {@code feature_off}, {@code host_offline}, {@code rate_limited} or another failure of the last page; null when it came. */
     @Nullable
     private String mAuditProblem;
     private boolean mAuditMore;
     private boolean mAuditLoading;
-    private final Set<Long> mShown = new HashSet<>();
-    private final List<PlusModel.Receipt> mReceipts = new ArrayList<>();
-    @Nullable
-    private String mReceiptsNext;
-    private boolean mReceiptsLoaded;
-    private boolean mReceiptsFailed;
-    @Nullable
-    private CloudApi.DealSummary mSummary;
-    @Nullable
-    private List<CloudModel.WeeklyAccount> mWeek;
-    private boolean mWeekFailed;
+    /** Rows opened in place, by day and player; they stay open while the screen is up. */
+    private final Set<String> mOpen = new HashSet<>();
+    /** Folded entries the player opened ("Göster"), by sequence. */
+    private final Set<Long> mShownHidden = new HashSet<>();
+    /** The conversations the machine keeps (who wrote in the last 24 hours): where "Cevap yaz" goes. */
+    private final List<CloudModel.InboxThread> mThreads = new ArrayList<>();
     @Nullable
     private CloudService.LiveHandle mLive;
-    private boolean mTabsShown;
+
+    @Nullable
+    private LinearLayout mWaitingPart;
+    @Nullable
+    private LinearLayout mControls;
+    @Nullable
+    private LinearLayout mSummaryPart;
+    @Nullable
+    private LinearLayout mListPart;
 
     @Override
     protected void created(View view) {
@@ -81,14 +96,14 @@ public final class PlusActivityFragment extends CloudScreen implements CloudServ
         CloudModel.Account a = account();
         if (a == null) return;
         if (mLive == null) mLive = mService.watch(a.id, true, this);
-        tabs();
         load(false);
+        loadThreads();
         ensureItemNames();
     }
 
     @Override
     protected void namesArrived() {
-        draw();
+        drawList();
     }
 
     @Override
@@ -98,24 +113,6 @@ public final class PlusActivityFragment extends CloudScreen implements CloudServ
             mLive.close();
             mLive = null;
         }
-    }
-
-    private void tabs() {
-        if (mTop == null || mTabsShown) return;
-        mTabsShown = true;
-        List<CharSequence> names = new ArrayList<>();
-        names.add(getString(R.string.projects_audit_tab));
-        names.add(getString(R.string.projects_receipt_tab));
-        if (mService.plusFeature("report")) names.add(getString(R.string.projects_plus_week));
-        LinearLayout tabs = CloudUi.segmented(ctx(), names.toArray(new CharSequence[0]), mTab, i -> {
-            mTab = i;
-            load(false);
-            draw();
-            if (mScroll != null) mScroll.scrollTo(0, 0);
-        });
-        tabs.setPadding(0, CloudUi.dp(ctx(), 2), 0, CloudUi.dp(ctx(), 6));
-        mTop.addView(tabs);
-        mTop.setVisibility(View.VISIBLE);
     }
 
     @Nullable
@@ -128,126 +125,211 @@ public final class PlusActivityFragment extends CloudScreen implements CloudServ
     private void load(final boolean more) {
         final CloudModel.Account a = account();
         if (a == null) return;
-        switch (mTab) {
-            case RECEIPTS:
-                if (mReceiptsLoaded && !more) return;
-                mService.receipts(a.id, more ? mReceiptsNext : null, new CloudService.Result<PlusModel.ReceiptPage>() {
-                    @Override
-                    public void ok(PlusModel.ReceiptPage page) {
-                        if (!more) mReceipts.clear();
-                        mReceipts.addAll(page.receipts);
-                        mReceiptsNext = page.next;
-                        mReceiptsLoaded = true;
-                        mReceiptsFailed = false;
-                        if (alive() && mTab == RECEIPTS) draw();
-                    }
-
-                    @Override
-                    public void failed(CloudProblem problem) {
-                        mReceiptsFailed = !mReceiptsLoaded;
-                        mReceiptsLoaded = true;
-                        if (alive() && mTab == RECEIPTS) draw();
-                    }
-                });
-                if (!more && mService.plusFeature("report")) {
-                    mService.dealSummary(a.id, new CloudService.Result<CloudApi.DealSummary>() {
-                        @Override
-                        public void ok(CloudApi.DealSummary value) {
-                            mSummary = value;
-                            if (alive() && mTab == RECEIPTS) draw();
-                        }
-
-                        @Override
-                        public void failed(CloudProblem problem) {}
-                    });
+        if (!mKeptRead) {
+            mKeptRead = true;
+            mService.keptAudit(a.id, new CloudService.Result<List<PlusModel.AuditEntry>>() {
+                @Override
+                public void ok(List<PlusModel.AuditEntry> value) {
+                    if (merge(value) && alive()) drawList();
                 }
-                break;
-            case WEEK:
-                if (mWeek != null) return;
-                mService.weekly(new CloudService.Result<List<CloudModel.WeeklyAccount>>() {
-                    @Override
-                    public void ok(List<CloudModel.WeeklyAccount> value) {
-                        mWeek = value;
-                        mWeekFailed = false;
-                        if (alive() && mTab == WEEK) draw();
-                    }
 
-                    @Override
-                    public void failed(CloudProblem problem) {
-                        mWeekFailed = true;
-                        if (alive() && mTab == WEEK) draw();
-                    }
-                });
-                break;
-            default:
-                if (!mKeptRead) {
-                    mKeptRead = true;
-                    mService.keptAudit(a.id, new CloudService.Result<List<PlusModel.AuditEntry>>() {
-                        @Override
-                        public void ok(List<PlusModel.AuditEntry> value) {
-                            merge(value);
-                            if (alive() && mTab == AUDIT) draw();
-                        }
-
-                        @Override
-                        public void failed(CloudProblem problem) {}
-                    });
-                }
-                if ((mAuditLoaded && !more) || mAuditLoading) return;
-                mAuditLoading = true;
-                Long before = more && !mAudit.isEmpty() ? mAudit.get(mAudit.size() - 1).s : null;
-                mService.audit(a.id, before, GROUPS[mGroup], new CloudService.Result<PlusModel.AuditPage>() {
-                    @Override
-                    public void ok(PlusModel.AuditPage page) {
-                        mAuditLoading = false;
-                        merge(page.items);
-                        mAuditMore = page.more;
-                        mAuditLoaded = true;
-                        mAuditProblem = null;
-                        if (alive() && mTab == AUDIT) draw();
-                    }
-
-                    @Override
-                    public void failed(CloudProblem problem) {
-                        mAuditLoading = false;
-                        mAuditLoaded = true;
-                        mAuditMore = false;
-                        mAuditProblem = problem.is("feature_off") ? "feature_off"
-                                : problem.kind == CloudProblem.Kind.HOST_OFFLINE ? "host_offline" : "failed";
-                        if (alive() && mTab == AUDIT) draw();
-                    }
-                });
-                break;
+                @Override
+                public void failed(CloudProblem problem) {}
+            });
         }
+        if ((mAuditLoaded && !more) || mAuditLoading) return;
+        mAuditLoading = true;
+        Long before = more && !mAudit.isEmpty() ? mAudit.get(mAudit.size() - 1).s : null;
+        // The filters work on what is here (the site's rule): the page is the whole log's.
+        mService.audit(a.id, before, null, new CloudService.Result<PlusModel.AuditPage>() {
+            @Override
+            public void ok(PlusModel.AuditPage page) {
+                mAuditLoading = false;
+                merge(page.items);
+                mAuditMore = page.more;
+                mAuditLoaded = true;
+                mAuditProblem = null;
+                if (alive()) drawList();
+            }
+
+            @Override
+            public void failed(CloudProblem problem) {
+                mAuditLoading = false;
+                mAuditLoaded = true;
+                mAuditMore = false;
+                mAuditProblem = problem.is("feature_off") ? "feature_off" : problem.is("rate_limited") ? "rate_limited"
+                        : problem.kind == CloudProblem.Kind.HOST_OFFLINE ? "host_offline" : "failed";
+                if (alive()) drawList();
+            }
+        });
     }
 
-    /** Adds entries to the log once each (by their sequence), newest first. */
-    private void merge(List<PlusModel.AuditEntry> entries) {
+    /** The conversations (for "Cevap yaz"); the service counts what waits from the same read. */
+    private void loadThreads() {
+        CloudModel.Account a = account();
+        if (a == null || !mService.plusFeature("inbox")) return;
+        mService.inbox(a.id, new CloudService.Result<gg.projects.mobile.cloud.CloudApi.InboxList>() {
+            @Override
+            public void ok(gg.projects.mobile.cloud.CloudApi.InboxList value) {
+                mThreads.clear();
+                mThreads.addAll(value.threads);
+                if (alive()) drawList();
+            }
+
+            @Override
+            public void failed(CloudProblem problem) {}
+        });
+    }
+
+    /** Adds entries once each (by their sequence), newest first; true when something was new. */
+    private boolean merge(List<PlusModel.AuditEntry> entries) {
         boolean changed = false;
         for (PlusModel.AuditEntry e : entries) {
-            if (mShown.add(e.s)) {
+            if (mSeen.add(e.s)) {
                 mAudit.add(e);
                 changed = true;
             }
         }
         if (changed) Collections.sort(mAudit, (x, y) -> Long.compare(y.s, x.s));
+        return changed;
     }
 
     @Override
     protected void render() {
         CloudModel.Account a = account();
         if (a != null) mHeader.setCaption(a.name);
-        if (getView() != null && mContent != null && mContent.getChildCount() == 0) draw();
+        if (getView() == null || mContent == null) return;
+        if (mListPart == null || mListPart.getParent() != mContent) build();
+        drawWaiting();
     }
 
-    private void draw() {
+    private static LinearLayout column(Context c) {
+        LinearLayout part = new LinearLayout(c);
+        part.setOrientation(LinearLayout.VERTICAL);
+        part.setLayoutParams(CloudUi.matchWrap());
+        return part;
+    }
+
+    /** The screen's parts, once a view: what waits, the filters and the search, today's figures, the list. */
+    private void build() {
         LinearLayout content = clear();
         if (content == null) return;
-        switch (mTab) {
-            case RECEIPTS: receipts(content); break;
-            case WEEK: week(content); break;
-            default: audit(content); break;
+        Context c = ctx();
+        mWaitingPart = column(c);
+        mControls = column(c);
+        mSummaryPart = column(c);
+        mListPart = column(c);
+        content.addView(mWaitingPart);
+        content.addView(mControls);
+        content.addView(mSummaryPart);
+        content.addView(mListPart);
+        mControls.addView(CloudUi.segmented(c, new CharSequence[]{getString(R.string.projects_audit_filter_all),
+                getString(R.string.projects_audit_filter_deals), getString(R.string.projects_audit_filter_messages),
+                getString(R.string.projects_audit_filter_warnings)}, mFilter, i -> {
+            mFilter = i;
+            mDrawLimit = AUDIT_PAGE;
+            drawList();
+        }));
+        LinearLayout.LayoutParams searchLp = CloudUi.matchWrap();
+        searchLp.topMargin = CloudUi.dp(c, 10);
+        mControls.addView(search(c), searchLp);
+        mControls.setVisibility(View.GONE);
+        mSummaryPart.setPadding(CloudUi.dp(c, 4), CloudUi.dp(c, 12), 0, 0);
+        drawWaiting();
+        drawList();
+    }
+
+    /** "Oyuncu ya da eşya ara": the list follows each letter; the field itself is never drawn again. */
+    private EditText search(Context c) {
+        EditText search = new EditText(c);
+        search.setBackgroundResource(R.drawable.projects_input);
+        search.setHint(getString(R.string.projects_audit_search));
+        search.setHintTextColor(CloudUi.color(c, R.color.projects_ash_400));
+        search.setTextColor(CloudUi.color(c, R.color.projects_bone_100));
+        search.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+        search.setSingleLine(true);
+        search.setMinHeight(CloudUi.dp(c, 48));
+        search.setPadding(CloudUi.dp(c, 14), 0, CloudUi.dp(c, 14), 0);
+        search.setImeOptions(EditorInfo.IME_ACTION_SEARCH);
+        search.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+        search.setCompoundDrawablesRelative(CloudUi.tinted(c, R.drawable.projects_ic_magnifying_glass, R.color.projects_ash_400, 18), null, null, null);
+        search.setCompoundDrawablePadding(CloudUi.dp(c, 8));
+        search.setText(mQuery);
+        search.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                if (s.toString().equals(mQuery)) return;
+                mQuery = s.toString();
+                drawList();
+            }
+        });
+        return search;
+    }
+
+    /** "Seni bekleyenler" over the list while a decision or a message waits for the player (its count, no gold). */
+    private void drawWaiting() {
+        LinearLayout part = mWaitingPart;
+        final CloudModel.Account a = account();
+        if (part == null || a == null) return;
+        int waiting = (a.ai == null ? 0 : a.ai.pendingApprovals) + mService.waiting(a.id);
+        String shape = String.valueOf(waiting);
+        if (shape.equals(part.getTag())) return;
+        part.setTag(shape);
+        part.removeAllViews();
+        if (waiting <= 0) return;
+        Context c = ctx();
+        LinearLayout group = CloudUi.group(c);
+        CloudUi.Row row = CloudUi.row(c, R.drawable.projects_ic_check_circle, getString(R.string.projects_plus_approvals),
+                v -> openFor(PlusApprovalsFragment.class, a.id));
+        row.setCount(waiting);
+        group.addView(row.view);
+        part.addView(group);
+        part.addView(CloudUi.gap(c, 14));
+    }
+
+    /** Today's figures (the site's slim line): trades done today, and what was spent against the total limit. */
+    private void drawSummary(boolean show) {
+        LinearLayout part = mSummaryPart;
+        if (part == null) return;
+        part.removeAllViews();
+        if (!show) return;
+        Context c = ctx();
+        int trades = ActivityRows.tradesSince(mAudit, startOfDay(mService.nowMs()));
+        part.addView(figure(c, R.drawable.projects_ic_hand_coins, trades > 0
+                ? getResources().getQuantityString(R.plurals.projects_audit_trades_today, trades, trades)
+                : getString(R.string.projects_audit_no_trades_today)));
+        String id = accountId();
+        CloudModel.PlusDoc doc = id == null ? null : mService.lastPlus(id);
+        Long total = doc == null ? null : new PlusConfig(doc.config).limit("totalBudget");
+        if (doc != null && doc.spent != null && total != null && total > 0) {
+            part.addView(figure(c, R.drawable.projects_ic_coins, getString(R.string.projects_audit_spent_of,
+                    CloudWords.money(c, doc.spent.total), PlusWords.money(c, total, doc.server))));
         }
+    }
+
+    private static TextView figure(Context c, int icon, CharSequence words) {
+        TextView line = CloudUi.text(c, words, 13.5f, R.color.projects_ash_300, false);
+        line.setCompoundDrawablesRelative(CloudUi.tinted(c, icon, R.color.projects_ash_400, 16), null, null, null);
+        line.setCompoundDrawablePadding(CloudUi.dp(c, 8));
+        line.setGravity(Gravity.CENTER_VERTICAL);
+        line.setPadding(0, CloudUi.dp(c, 2), 0, CloudUi.dp(c, 2));
+        return line;
+    }
+
+    private static long startOfDay(long nowMs) {
+        Calendar day = Calendar.getInstance();
+        day.setTimeInMillis(nowMs);
+        day.set(Calendar.HOUR_OF_DAY, 0);
+        day.set(Calendar.MINUTE, 0);
+        day.set(Calendar.SECOND, 0);
+        day.set(Calendar.MILLISECOND, 0);
+        return day.getTimeInMillis();
     }
 
     private View more(Context c, int words, View.OnClickListener click) {
@@ -259,71 +341,74 @@ public final class PlusActivityFragment extends CloudScreen implements CloudServ
         return box;
     }
 
-    // ---- the audit log ----
-
-    private void audit(LinearLayout content) {
-        final Context c = ctx();
-        content.addView(CloudUi.segmented(c, new CharSequence[]{getString(R.string.projects_audit_filter_all),
-                getString(R.string.projects_audit_filter_deals), getString(R.string.projects_audit_filter_messages),
-                getString(R.string.projects_audit_filter_warnings)}, mGroup, i -> {
-            mGroup = i;
-            mDrawLimit = AUDIT_PAGE;
-            draw();
-        }));
+    private void drawList() {
+        LinearLayout part = mListPart;
+        LinearLayout controls = mControls;
+        if (part == null || controls == null || !alive()) return;
+        part.removeAllViews();
+        Context c = ctx();
         if ("feature_off".equals(mAuditProblem)) {
-            content.addView(CloudUi.empty(c, gg.projects.mobile.ui.PixelSprites.Sprite.LOGS, getString(R.string.projects_audit_off)));
+            controls.setVisibility(View.GONE);
+            drawSummary(false);
+            part.addView(CloudUi.empty(c, gg.projects.mobile.ui.PixelSprites.Sprite.LOGS, getString(R.string.projects_audit_off)));
             return;
         }
         boolean away = "host_offline".equals(mAuditProblem) || "failed".equals(mAuditProblem);
-        List<PlusModel.AuditEntry> shown = new ArrayList<>();
-        for (PlusModel.AuditEntry e : mAudit) if (e.in(GROUPS[mGroup])) shown.add(e);
-        if (away) {
-            content.addView(CloudUi.notice(c, R.drawable.projects_ic_warning_circle, R.color.projects_ash_300,
-                    getString(mAudit.isEmpty() ? R.string.projects_audit_offline_empty : R.string.projects_audit_offline)));
+        boolean limited = "rate_limited".equals(mAuditProblem);
+        // The filters and the search only once there is something to filter (the site's rule).
+        controls.setVisibility(mAudit.isEmpty() ? View.GONE : View.VISIBLE);
+        drawSummary(!mAudit.isEmpty());
+        if (away || limited) {
+            part.addView(CloudUi.notice(c, R.drawable.projects_ic_warning_circle, R.color.projects_ash_300, getString(limited
+                    ? R.string.projects_audit_limited : mAudit.isEmpty() ? R.string.projects_audit_offline_empty : R.string.projects_audit_offline)));
         }
         if (!mAuditLoaded && mAudit.isEmpty()) {
-            content.addView(CloudUi.loading(c));
+            part.addView(CloudUi.loading(c));
             return;
         }
         if (mAudit.isEmpty()) {
-            if (!away) content.addView(CloudUi.empty(c, gg.projects.mobile.ui.PixelSprites.Sprite.AFK, getString(R.string.projects_audit_empty)));
+            if (!away && !limited) part.addView(CloudUi.empty(c, gg.projects.mobile.ui.PixelSprites.Sprite.AFK, getString(R.string.projects_audit_empty)));
             return;
         }
+        List<PlusModel.AuditEntry> shown = new ArrayList<>();
+        for (PlusModel.AuditEntry e : mAudit) if (ActivityRows.in(FILTERS[mFilter], e)) shown.add(e);
         if (shown.isEmpty()) {
-            content.addView(CloudUi.note(c, getString(R.string.projects_audit_none_here)));
+            part.addView(CloudUi.note(c, getString(R.string.projects_audit_none_here)));
         } else {
+            // By day ("Bugün", "Dün", a date), then a player's day in one row.
             long now = mService.nowMs();
-            String day = null;
-            LinearLayout group = null;
             int drawn = Math.min(shown.size(), mDrawLimit);
+            int rows = 0;
+            String heading = null;
+            List<PlusModel.AuditEntry> day = new ArrayList<>();
             for (int i = 0; i < drawn; i++) {
                 PlusModel.AuditEntry e = shown.get(i);
-                String heading = dayHeading(c, e.t, now);
-                if (!heading.equals(day)) {
-                    day = heading;
-                    content.addView(CloudUi.section(c, heading));
-                    group = CloudUi.group(c);
-                    content.addView(group);
-                } else if (group != null) {
-                    group.addView(CloudUi.textDivider(c));
+                String h = dayHeading(c, e.t, now);
+                if (heading != null && !h.equals(heading)) {
+                    rows += drawDay(c, part, heading, day);
+                    day = new ArrayList<>();
                 }
-                if (group != null) group.addView(entryRow(c, e));
+                heading = h;
+                day.add(e);
             }
+            if (heading != null) rows += drawDay(c, part, heading, day);
+            if (rows == 0) part.addView(CloudUi.note(c, getString(R.string.projects_audit_no_match)));
         }
-        // Older entries: first the ones the phone holds, then the service's next page.
+        // Earlier days: first the ones the phone holds, then the service's next page.
         if (shown.size() > mDrawLimit) {
-            content.addView(more(c, R.string.projects_audit_older, v -> {
+            part.addView(more(c, R.string.projects_audit_older, v -> {
                 mDrawLimit += AUDIT_PAGE;
-                draw();
+                drawList();
             }));
-        } else if (mAuditMore && !away) {
-            content.addView(more(c, R.string.projects_audit_older, v -> {
-                mDrawLimit = shown.size() + AUDIT_PAGE;
+        } else if (mAuditMore && !away && !limited) {
+            final int have = shown.size();
+            part.addView(more(c, R.string.projects_audit_older, v -> {
+                mDrawLimit = have + AUDIT_PAGE;
                 load(true);
             }));
         }
-        content.addView(CloudUi.note(c, getString(R.string.projects_audit_kept)));
-        content.addView(CloudUi.note(c, getString(R.string.projects_ai_note)));
+        part.addView(CloudUi.note(c, getString(R.string.projects_audit_kept)));
+        part.addView(CloudUi.note(c, getString(R.string.projects_ai_note)));
     }
 
     private static String dayHeading(Context c, long ms, long nowMs) {
@@ -336,6 +421,149 @@ public final class PlusActivityFragment extends CloudScreen implements CloudServ
         if (a == b) return c.getString(R.string.projects_audit_today);
         if (b - a == 1) return c.getString(R.string.projects_audit_yesterday);
         return AppDates.day(c, ms, nowMs);
+    }
+
+    /** One day: its heading over its rows (a player's day together) that the search finds; how many it drew. */
+    private int drawDay(Context c, LinearLayout part, String heading, List<PlusModel.AuditEntry> entries) {
+        List<ActivityRows.Group> rows = new ArrayList<>();
+        for (ActivityRows.Group g : ActivityRows.groups(entries)) {
+            if (ActivityRows.found(g, mQuery, this::itemName, CloudWords.locale(c))) rows.add(g);
+        }
+        if (rows.isEmpty()) return 0;
+        part.addView(CloudUi.section(c, heading));
+        LinearLayout group = CloudUi.group(c);
+        for (int i = 0; i < rows.size(); i++) {
+            ActivityRows.Group g = rows.get(i);
+            if (i > 0) group.addView(CloudUi.textDivider(c));
+            group.addView(g.who == null ? entryRow(c, g.newest()) : playerRow(c, heading + "|" + g.key, g));
+        }
+        part.addView(group);
+        return rows.size();
+    }
+
+    /** The row's tile: the day's item, else the mark of how it went (a quiet person when nothing marks it). */
+    private View tile(Context c, @Nullable String item, String kind) {
+        if (item != null) return CloudItemArt.tile(c, item, 36);
+        int[] icon = PlusWords.auditIcon(kind);
+        FrameLayout box = new FrameLayout(c);
+        box.setBackgroundResource(R.drawable.projects_menu_group);
+        ImageView glyph = new ImageView(c);
+        glyph.setImageResource(icon[0] != 0 ? icon[0] : R.drawable.projects_ic_user_circle);
+        glyph.setImageTintList(ColorStateList.valueOf(CloudUi.color(c, icon[0] != 0 ? icon[1] : R.color.projects_ash_400)));
+        glyph.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        box.addView(glyph, new FrameLayout.LayoutParams(CloudUi.dp(c, 18), CloudUi.dp(c, 18), Gravity.CENTER));
+        return box;
+    }
+
+    /** A player's day: the tile, who, how it went (a message's own words after it) and when; opens in place. */
+    private View playerRow(final Context c, final String key, final ActivityRows.Group g) {
+        final LinearLayout box = new LinearLayout(c);
+        box.setOrientation(LinearLayout.VERTICAL);
+        final LinearLayout head = new LinearLayout(c);
+        head.setOrientation(LinearLayout.HORIZONTAL);
+        head.setGravity(Gravity.CENTER_VERTICAL);
+        head.setMinimumHeight(CloudUi.dp(c, 64));
+        head.setPaddingRelative(CloudUi.dp(c, 12), CloudUi.dp(c, 10), CloudUi.dp(c, 12), CloudUi.dp(c, 10));
+        head.setBackgroundResource(R.drawable.projects_row_ripple);
+        PlusModel.AuditEntry outcome = ActivityRows.outcome(g);
+        head.addView(tile(c, g.item(), outcome.k), new LinearLayout.LayoutParams(CloudUi.dp(c, 36), CloudUi.dp(c, 36)));
+        LinearLayout texts = new LinearLayout(c);
+        texts.setOrientation(LinearLayout.VERTICAL);
+        TextView who = CloudUi.text(c, g.who, 15, R.color.projects_bone_100, true);
+        who.setSingleLine(true);
+        who.setEllipsize(TextUtils.TruncateAt.END);
+        texts.addView(who);
+        String said = outcome.x != null && !outcome.x.isEmpty() && !outcome.h ? " \"" + outcome.x + "\"" : "";
+        final String line = PlusWords.auditLine(c, outcome, server(), this::itemName) + said;
+        TextView words = CloudUi.text(c, line, 13.5f, R.color.projects_ash_300, false);
+        words.setMaxLines(2);
+        words.setEllipsize(TextUtils.TruncateAt.END);
+        words.setLineSpacing(0, 1.1f);
+        texts.addView(words);
+        LinearLayout.LayoutParams textsLp = CloudUi.weight(1f);
+        textsLp.setMarginStart(CloudUi.dp(c, 12));
+        head.addView(texts, textsLp);
+        final TextView time = CloudUi.time(c, 13, R.color.projects_ash_400);
+        time.setText(AppDates.time(g.newest().t));
+        LinearLayout.LayoutParams timeLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        timeLp.setMarginStart(CloudUi.dp(c, 8));
+        head.addView(time, timeLp);
+        final ImageView caret = new ImageView(c);
+        caret.setImageResource(R.drawable.projects_ic_caret_down_bold);
+        caret.setImageTintList(ColorStateList.valueOf(CloudUi.color(c, R.color.projects_ash_400)));
+        caret.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        LinearLayout.LayoutParams caretLp = new LinearLayout.LayoutParams(CloudUi.dp(c, 16), CloudUi.dp(c, 16));
+        caretLp.setMarginStart(CloudUi.dp(c, 8));
+        head.addView(caret, caretLp);
+        box.addView(head);
+        boolean open = mOpen.contains(key);
+        caret.setRotation(open ? 180f : 0f);
+        if (open) box.addView(body(c, g));
+        final String spoken = g.who + ", " + line + ", " + time.getText();
+        head.setContentDescription(spoken + ", " + getString(open ? R.string.projects_answers_expanded : R.string.projects_answers_collapsed));
+        head.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_YES);
+        head.setOnClickListener(v -> {
+            boolean now = toggle(key, box, caret, g);
+            head.setContentDescription(spoken + ", " + getString(now ? R.string.projects_answers_expanded : R.string.projects_answers_collapsed));
+        });
+        Press.attach(head, Press.Style.ROW);
+        return box;
+    }
+
+    /**
+     * Opens or folds a player's day in place: the steps fade in under the row (also under reduced motion: a fade only),
+     * the caret turns (at once under reduced motion); folding is at once. Returns whether it is open now.
+     */
+    private boolean toggle(String key, LinearLayout box, ImageView caret, ActivityRows.Group g) {
+        Context c = ctx();
+        boolean motion = Motion.enabled(c);
+        caret.animate().cancel();
+        if (mOpen.remove(key)) {
+            while (box.getChildCount() > 1) box.removeViewAt(1);
+            if (motion) caret.animate().rotation(0f).setDuration(180).setInterpolator(Motion.EASE_OUT).start();
+            else caret.setRotation(0f);
+            return false;
+        }
+        mOpen.add(key);
+        View body = body(c, g);
+        body.setAlpha(0f);
+        box.addView(body);
+        body.animate().alpha(1f).setDuration(motion ? 200 : 120).setInterpolator(Motion.EASE_OUT).start();
+        if (motion) caret.animate().rotation(180f).setDuration(180).setInterpolator(Motion.EASE_OUT).start();
+        else caret.setRotation(180f);
+        return true;
+    }
+
+    /** A player's day opened: every step in order (oldest first), then "Cevap yaz" when the machine keeps the conversation. */
+    private View body(Context c, final ActivityRows.Group g) {
+        LinearLayout body = new LinearLayout(c);
+        body.setOrientation(LinearLayout.VERTICAL);
+        body.setPaddingRelative(CloudUi.dp(c, 36), 0, 0, CloudUi.dp(c, 6));
+        List<PlusModel.AuditEntry> steps = new ArrayList<>(g.entries);
+        Collections.reverse(steps);
+        for (PlusModel.AuditEntry e : steps) body.addView(entryRow(c, e));
+        if (g.who != null && keepsConversation(g.who)) {
+            android.widget.Button reply = CloudUi.textButton(c, getString(R.string.projects_audit_answer), v -> openThread(g.who));
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            lp.setMarginStart(CloudUi.dp(c, 4));
+            body.addView(reply, lp);
+        }
+        return body;
+    }
+
+    /** The machine keeps a conversation with who wrote in the last 24 hours, and only while it can be reached. */
+    private boolean keepsConversation(String name) {
+        if (!mService.plusFeature("inbox") || mAuditProblem != null) return false;
+        for (CloudModel.InboxThread t : mThreads) if (t.name.equalsIgnoreCase(name)) return true;
+        return false;
+    }
+
+    private void openThread(String name) {
+        String id = accountId();
+        if (id == null) return;
+        Bundle args = args(id);
+        args.putString(PlusThreadFragment.ARG_NAME, name);
+        open(PlusThreadFragment.class, args);
     }
 
     /** One entry: the time in its column, the line (an icon only where the kind means something), a message's text under it. */
@@ -367,16 +595,17 @@ public final class PlusActivityFragment extends CloudScreen implements CloudServ
         words.setLineSpacing(0, 1.12f);
         first.addView(words, CloudUi.weight(1f));
         texts.addView(first);
+        boolean folded = e.h && !mShownHidden.contains(e.s);
         if (e.x != null && !e.x.isEmpty()) {
-            final TextView said = CloudUi.text(c, e.h && !mShownHidden.contains(e.s) ? getString(R.string.projects_audit_hidden) : e.x, 14,
+            final TextView said = CloudUi.text(c, folded ? getString(R.string.projects_audit_hidden) : e.x, 14,
                     R.color.projects_ash_300, false);
             said.setLineSpacing(0, 1.12f);
             said.setPadding(0, CloudUi.dp(c, 4), 0, 0);
             texts.addView(said);
-            if (e.h && !mShownHidden.contains(e.s)) {
+            if (folded) {
                 android.widget.Button show = CloudUi.textButton(c, getString(R.string.projects_audit_show), v -> {
                     mShownHidden.add(e.s);
-                    draw();
+                    drawList();
                 });
                 show.setPadding(0, 0, CloudUi.dp(c, 12), 0);
                 texts.addView(show, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -385,164 +614,10 @@ public final class PlusActivityFragment extends CloudScreen implements CloudServ
         LinearLayout.LayoutParams textsLp = CloudUi.weight(1f);
         textsLp.setMarginStart(CloudUi.dp(c, 12));
         row.addView(texts, textsLp);
-        row.setContentDescription(time.getText() + ", " + line + (e.x != null && !(e.h && !mShownHidden.contains(e.s)) ? ", " + e.x : ""));
+        row.setContentDescription(time.getText() + ", " + line + (e.x != null && !folded ? ", " + e.x : ""));
         row.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_YES);
         row.setLayoutParams(CloudUi.matchWrap());
         return row;
-    }
-
-    /** Folded entries the player opened ("Göster"), by sequence: they stay open while the screen is up. */
-    private final Set<Long> mShownHidden = new HashSet<>();
-
-    // ---- receipts ----
-
-    private void receipts(LinearLayout content) {
-        Context c = ctx();
-        if (!mReceiptsLoaded) {
-            content.addView(CloudUi.loading(c));
-            return;
-        }
-        if (mReceiptsFailed) {
-            content.addView(CloudUi.empty(c, gg.projects.mobile.ui.PixelSprites.Sprite.FAILED, getString(R.string.projects_receipt_failed)));
-            content.addView(CloudUi.textButton(c, getString(R.string.projects_cloud_retry), v -> {
-                mReceiptsLoaded = false;
-                load(false);
-                draw();
-            }), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-            return;
-        }
-        if (mReceipts.isEmpty()) {
-            content.addView(CloudUi.empty(c, gg.projects.mobile.ui.PixelSprites.Sprite.PACK, getString(R.string.projects_receipt_empty)));
-            return;
-        }
-        CloudApi.DealSummary summary = mSummary;
-        if (summary != null && !summary.items.isEmpty()) {
-            LinearLayout group = CloudUi.group(c);
-            List<View> rows = new ArrayList<>();
-            for (CloudModel.ItemSummary s : summary.items) {
-                LinearLayout row = new LinearLayout(c);
-                row.setOrientation(LinearLayout.HORIZONTAL);
-                row.setGravity(Gravity.CENTER_VERTICAL);
-                row.setPadding(CloudUi.dp(c, 12), CloudUi.dp(c, 10), CloudUi.dp(c, 16), CloudUi.dp(c, 10));
-                row.addView(CloudItemArt.tile(c, s.item, 36), new LinearLayout.LayoutParams(CloudUi.dp(c, 36), CloudUi.dp(c, 36)));
-                LinearLayout texts = new LinearLayout(c);
-                texts.setOrientation(LinearLayout.VERTICAL);
-                texts.addView(CloudUi.text(c, itemName(s.item), 15, R.color.projects_bone_100, true));
-                // One price (a single trade, or all the same): said once.
-                String line = s.minUnit == s.maxUnit ? CloudWords.money(c, s.avgUnit)
-                        : getString(R.string.projects_plus_summary_avg) + " " + CloudWords.money(c, s.avgUnit) + ", "
-                        + getString(R.string.projects_plus_summary_min).toLowerCase(CloudWords.locale(c)) + " " + CloudWords.money(c, s.minUnit) + ", "
-                        + getString(R.string.projects_plus_summary_max).toLowerCase(CloudWords.locale(c)) + " " + CloudWords.money(c, s.maxUnit);
-                texts.addView(CloudUi.text(c, line, 13, R.color.projects_ash_300, false));
-                LinearLayout.LayoutParams lp = CloudUi.weight(1f);
-                lp.setMarginStart(CloudUi.dp(c, 12));
-                row.addView(texts, lp);
-                rows.add(row);
-            }
-            content.addView(CloudUi.gap(c, 6));
-            CloudUi.fill(group, rows);
-            content.addView(group);
-            content.addView(CloudUi.gap(c, 12));
-        } else {
-            content.addView(CloudUi.gap(c, 6));
-        }
-        LinearLayout group = CloudUi.group(c);
-        List<View> rows = new ArrayList<>();
-        long now = mService.nowSeconds();
-        boolean money = false;
-        for (PlusModel.Receipt r : mReceipts) {
-            rows.add(receiptRow(c, r, now));
-            money |= r.money();
-        }
-        CloudUi.fill(group, rows);
-        content.addView(group);
-        if (mReceiptsNext != null) content.addView(more(c, R.string.projects_receipt_more, v -> load(true)));
-        // A receipt with a bare figure could read as real money.
-        if (money) content.addView(CloudUi.note(c, getString(R.string.projects_receipt_money_note)));
-    }
-
-    private View receiptRow(Context c, PlusModel.Receipt r, long now) {
-        LinearLayout row = new LinearLayout(c);
-        row.setOrientation(LinearLayout.HORIZONTAL);
-        row.setGravity(Gravity.CENTER_VERTICAL);
-        row.setMinimumHeight(CloudUi.dp(c, 64));
-        row.setPadding(CloudUi.dp(c, 12), CloudUi.dp(c, 10), CloudUi.dp(c, 16), CloudUi.dp(c, 10));
-        row.addView(CloudItemArt.tile(c, r.item, 40), new LinearLayout.LayoutParams(CloudUi.dp(c, 40), CloudUi.dp(c, 40)));
-        LinearLayout texts = new LinearLayout(c);
-        texts.setOrientation(LinearLayout.VERTICAL);
-        boolean sell = "sell".equals(r.side);
-        String what = CloudWords.qtyName(c, r.qty, itemName(r.item));
-        texts.addView(CloudUi.text(c, getString(sell ? R.string.projects_receipt_sold : R.string.projects_receipt_bought, what), 15,
-                R.color.projects_bone_100, true));
-        String party = getString(sell ? R.string.projects_receipt_party_sell : R.string.projects_receipt_party_buy, r.counterpart);
-        String how;
-        switch (r.approval) {
-            case "approved": how = getString(R.string.projects_receipt_approved); break;
-            case "owner": how = getString(R.string.projects_receipt_owner); break;
-            default: how = getString(R.string.projects_receipt_auto); break;
-        }
-        texts.addView(CloudUi.text(c, party, 13, R.color.projects_ash_300, false));
-        texts.addView(CloudUi.text(c, r.review ? getString(R.string.projects_receipt_review_note) : how, 12.5f, R.color.projects_ash_400, false));
-        if (!r.money()) texts.addView(CloudUi.text(c, getString(R.string.projects_receipt_paid_with, itemName(r.pay)), 12.5f, R.color.projects_ash_400, false));
-        texts.addView(CloudUi.text(c, CloudWords.past(c, r.at / 1000L, now, true), 12, R.color.projects_ash_400, false));
-        LinearLayout.LayoutParams lp = CloudUi.weight(1f);
-        lp.setMarginStart(CloudUi.dp(c, 12));
-        row.addView(texts, lp);
-        LinearLayout right = new LinearLayout(c);
-        right.setOrientation(LinearLayout.VERTICAL);
-        right.setGravity(Gravity.END);
-        String priceText = PlusWords.price(c, r.price, r.pay, server(), this::itemName);
-        right.addView(CloudUi.figure(c, priceText, 15, r.review ? R.color.projects_ash_400 : R.color.projects_bone_100));
-        if (r.review) right.addView(CloudUi.text(c, getString(R.string.projects_receipt_review), 12.5f, R.color.projects_ash_300, false));
-        row.addView(right);
-        row.setContentDescription(what + ", " + party + ", " + priceText);
-        row.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_YES);
-        return row;
-    }
-
-    // ---- the weekly report ----
-
-    private void week(LinearLayout content) {
-        Context c = ctx();
-        if (mWeek == null) {
-            if (mWeekFailed) content.addView(CloudUi.empty(c, gg.projects.mobile.ui.PixelSprites.Sprite.FAILED, getString(R.string.projects_cloud_error_unavailable)));
-            else content.addView(CloudUi.loading(c));
-            return;
-        }
-        CloudModel.WeeklyAccount mine = null;
-        String id = accountId();
-        for (CloudModel.WeeklyAccount w : mWeek) if (w.id.equals(id)) mine = w;
-        if (mine == null) {
-            content.addView(CloudUi.empty(c, gg.projects.mobile.ui.PixelSprites.Sprite.LOGS, getString(R.string.projects_plus_week_empty)));
-            return;
-        }
-        if (mine.weekFrom > 0 && mine.weekTo > mine.weekFrom) {
-            long nowMs = mService.nowMs();
-            // The window ends the next Monday 04:00: its last day is the Sunday before.
-            content.addView(CloudUi.note(c, getString(R.string.projects_plus_week_range, AppDates.day(c, mine.weekFrom * 1000L, nowMs),
-                    AppDates.day(c, (mine.weekTo - 86_400L) * 1000L, nowMs))));
-        } else {
-            content.addView(CloudUi.gap(c, 6));
-        }
-        LinearLayout group = CloudUi.group(c);
-        List<View> rows = new ArrayList<>();
-        rows.add(figure(c, getString(R.string.projects_plus_week_pms), String.valueOf(mine.pms)));
-        rows.add(figure(c, getString(R.string.projects_plus_week_bought), String.valueOf(mine.bought)));
-        rows.add(figure(c, getString(R.string.projects_plus_week_sold), String.valueOf(mine.sold)));
-        rows.add(figure(c, getString(R.string.projects_plus_week_spent), CloudWords.money(c, mine.spent)));
-        rows.add(figure(c, getString(R.string.projects_plus_week_earned), CloudWords.money(c, mine.earned)));
-        rows.add(figure(c, getString(R.string.projects_plus_week_below), CloudWords.money(c, mine.belowLimit)));
-        rows.add(figure(c, getString(R.string.projects_plus_week_above), CloudWords.money(c, mine.aboveFloor)));
-        rows.add(figure(c, getString(R.string.projects_plus_week_blocked), String.valueOf(mine.blocked)));
-        String pct = CloudWords.turkish(c) ? String.format(Locale.ROOT, "%%%d", mine.allowancePct) : String.format(Locale.ROOT, "%d%%", mine.allowancePct);
-        rows.add(figure(c, getString(R.string.projects_plus_week_allowance), pct));
-        CloudUi.fillFigures(group, rows);
-        content.addView(group);
-        content.addView(CloudUi.note(c, getString(R.string.projects_ai_note)));
-    }
-
-    private static View figure(Context c, String label, String value) {
-        return CloudUi.figureRow(c, label, value).view;
     }
 
     // ---- the live socket ----
@@ -555,9 +630,7 @@ public final class PlusActivityFragment extends CloudScreen implements CloudServ
 
     @Override
     public void audit(List<PlusModel.AuditEntry> items) {
-        int before = mAudit.size();
-        merge(items);
-        if (mAudit.size() != before && alive() && mTab == AUDIT) draw();
+        if (merge(items) && alive()) drawList();
     }
 
     @Override
@@ -565,10 +638,11 @@ public final class PlusActivityFragment extends CloudScreen implements CloudServ
 
     @Override
     public void hostOnline(boolean online) {
-        // The machine is back: the page the phone could not read comes now.
+        // The machine is back: the page the phone could not read comes now, and the conversations.
         if (online && "host_offline".equals(mAuditProblem)) {
             mAuditLoaded = false;
-            if (mTab == AUDIT) load(false);
+            load(false);
+            loadThreads();
         }
     }
 }

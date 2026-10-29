@@ -242,6 +242,23 @@ public final class PlusConfig {
         obj("discovery").addProperty("proactivePm", on);
     }
 
+    /** DONUT-ORDER: the server's order menu checked now and then ({@code discovery.orderMenu}; stored only while on). */
+    public boolean orderMenu() {
+        return Json.bool(Json.obj(mDoc, "discovery"), "orderMenu", false);
+    }
+
+    /**
+     * On writes true; off writes false only over a stored true, else the key stays out (a PUT without it keeps what the
+     * Worker has, README discovery.orderMenu).
+     */
+    public void setOrderMenu(boolean on, boolean storedOn) {
+        if (on || storedOn) {
+            obj("discovery").addProperty("orderMenu", on);
+        } else if (mDoc.has("discovery") && mDoc.get("discovery").isJsonObject()) {
+            mDoc.getAsJsonObject("discovery").remove("orderMenu");
+        }
+    }
+
     /** "Sohbete ilan versin": the active orders announced in public chat (off by default). */
     public boolean ads() {
         return Json.bool(Json.obj(mDoc, "discovery"), "ads", false);

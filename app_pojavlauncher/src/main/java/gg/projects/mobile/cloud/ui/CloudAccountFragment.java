@@ -140,7 +140,7 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
                     .append(a.ai.quota.weekResetAt).append(a.ai.quota.giftsLeft).append(a.ai.quota.boughtLeft);
         }
         if (mQuota != null) key.append('|').append(mQuota.estReplies).append(mQuota.boughtRemaining).append(mQuota.frozen);
-        key.append('|').append(mService.unread(a.id));
+        key.append('|').append(mService.waiting(a.id));
         key.append('|').append(a.features.inventoryMode).append(a.features.inventoryOn).append(gg.projects.mobile.cloud.movement.Movement.shows(a));
         CloudModel.Offer offer = mService.offer();
         if (offer != null && offer.plus != null) {
@@ -368,24 +368,18 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
         content.addView(CloudUi.gap(c, 12));
         LinearLayout screens = CloudUi.group(c);
         List<View> rows = new ArrayList<>();
+        // PLUS-ACTIVITY: what waits for the player (decisions and messages to answer), then the site's sections in its
+        // order and icons: Etkinlik, Siparişler, Özet; "Ayarlar" is the questions under them, "Ayar geçmişi" last.
         CloudUi.Row approvals = CloudUi.row(c, R.drawable.projects_ic_check_circle, getString(R.string.projects_plus_approvals),
                 v -> openFor(PlusApprovalsFragment.class, a.id));
-        approvals.setCount(a.ai == null ? 0 : a.ai.pendingApprovals);
+        approvals.setCount((a.ai == null ? 0 : a.ai.pendingApprovals) + mService.waiting(a.id));
         rows.add(approvals.view);
-        if (mService.plusFeature("inbox")) {
-            CloudUi.Row messages = CloudUi.row(c, R.drawable.projects_ic_chats, getString(R.string.projects_plus_messages),
-                    v -> openFor(PlusInboxFragment.class, a.id));
-            messages.setCount(mService.unread(a.id));
-            rows.add(messages.view);
-        }
-        rows.add(CloudUi.row(c, R.drawable.projects_ic_arrows_left_right, getString(R.string.projects_plus_rules),
-                v -> openFor(PlusOrdersFragment.class, a.id)).view);
         rows.add(CloudUi.row(c, R.drawable.projects_ic_pulse, getString(R.string.projects_plus_activity),
                 v -> openFor(PlusActivityFragment.class, a.id)).view);
-        if (mService.plusFeature("history")) {
-            rows.add(CloudUi.row(c, R.drawable.projects_ic_history, getString(R.string.projects_plus_history),
-                    v -> openFor(PlusHistoryFragment.class, a.id)).view);
-        }
+        rows.add(CloudUi.row(c, R.drawable.projects_ic_package, getString(R.string.projects_plus_rules),
+                v -> openFor(PlusOrdersFragment.class, a.id)).view);
+        rows.add(CloudUi.row(c, R.drawable.projects_ic_chart_bar, getString(R.string.projects_plus_report),
+                v -> openFor(PlusSummaryFragment.class, a.id)).view);
         CloudUi.fill(screens, rows);
         content.addView(screens);
 
@@ -404,6 +398,10 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
             });
             if (config != null) row.setLine(PlusEditors.answer(c, q, config, doc, mService), R.color.projects_ash_400);
             qs.add(row.view);
+        }
+        if (mService.plusFeature("history")) {
+            qs.add(CloudUi.row(c, R.drawable.projects_ic_history, getString(R.string.projects_plus_history),
+                    v -> openFor(PlusHistoryFragment.class, a.id)).view);
         }
         CloudUi.fill(questions, qs);
         content.addView(questions);

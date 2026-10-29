@@ -468,12 +468,12 @@
     <string name="projects_plus_quota_gift_open">You have gift AI credits</string>
     <string name="projects_plus_quota_frozen">Staff froze your AI credits.</string>
     <string name="projects_plus_approvals">Waiting for you</string>
-    <string name="projects_plus_messages">Messages</string>
     <string name="projects_plus_rules">Orders</string>
     <string name="projects_plus_assistant">ProBot AI</string>
     <string name="projects_plus_schedule">Working hours</string>
     <string name="projects_plus_safety">Spending limits</string>
-    <string name="projects_plus_activity">Feed</string>
+    <string name="projects_plus_activity">Activity</string>
+    <string name="projects_plus_report">Summary</string>
     <string name="projects_plus_history">Settings history</string>
     <string name="projects_plus_upgrade">Upgrade to AFK+</string>
     <string name="projects_plus_downgrade">Leave AFK+</string>
@@ -484,8 +484,8 @@
     <string name="projects_plus_load_failed">Couldn\'t load the AFK+ settings.</string>
 
     <!-- Approvals -->
-    <string name="projects_plus_approvals_empty">No approval is waiting.</string>
-    <string name="projects_plus_approvals_recent">Last 24 hours</string>
+    <string name="projects_plus_approvals_empty">Nothing is waiting for you.</string>
+    <string name="projects_plus_approvals_recent">Closed</string>
     <string name="projects_plus_buying_from">Buying from %1$s</string>
     <string name="projects_plus_selling_to">Selling to %1$s</string>
     <string name="projects_plus_left">%1$s left</string>
@@ -512,7 +512,6 @@
     <string name="projects_plus_approval_with">With %1$s for %2$s</string>
 
     <!-- Messages (QoL Q1) -->
-    <string name="projects_plus_inbox_empty">No messages yet.</string>
     <string name="projects_plus_inbox_reply">Write a reply</string>
     <string name="projects_plus_inbox_send">Send</string>
     <string name="projects_plus_inbox_first">When you write, ProBot AI stays quiet in this chat for 30 minutes.</string>
@@ -526,7 +525,6 @@
     <string name="projects_plus_inbox_show">Show</string>
     <string name="projects_plus_inbox_you">You</string>
     <string name="projects_plus_inbox_assistant">ProBot AI</string>
-    <string name="projects_plus_inbox_blocked">Blocked</string>
 
     <!-- Buying and selling (QoL Q2) -->
     <string name="projects_plus_parse_field">What do you want to buy or sell?</string>
@@ -672,6 +670,9 @@
     <string name="projects_plus_feed">Live</string>
     <string name="projects_plus_trades">Trades</string>
     <string name="projects_plus_week">Last week</string>
+    <string name="projects_plus_week_buys">Buys</string>
+    <string name="projects_plus_week_sales">Sales</string>
+    <string name="projects_plus_week_trades">Trades</string>
     <string name="projects_plus_feed_empty">Nothing yet.</string>
     <string name="projects_plus_trades_empty">No trades yet.</string>
     <string name="projects_plus_feed_pm_in">%1$s wrote</string>
@@ -699,12 +700,7 @@
     <string name="projects_plus_trade_review">Under review</string>
     <string name="projects_plus_trade_auto">Automatic</string>
     <string name="projects_plus_trade_approved">You approved</string>
-    <string name="projects_plus_summary_avg">Average</string>
-    <string name="projects_plus_summary_min">Lowest</string>
-    <string name="projects_plus_summary_max">Highest</string>
     <string name="projects_plus_week_pms">Messages answered</string>
-    <string name="projects_plus_week_bought">Bought</string>
-    <string name="projects_plus_week_sold">Sold</string>
     <string name="projects_plus_week_spent">Spent</string>
     <string name="projects_plus_week_earned">Earned</string>
     <string name="projects_plus_week_below">Paid under your limit</string>

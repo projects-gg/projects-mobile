@@ -271,20 +271,30 @@
     <string name="projects_approval_sent_no">Your no went through</string>
 
     <!-- The audit log -->
-    <string name="projects_audit_tab">Log</string>
     <string name="projects_audit_filter_all">All</string>
     <string name="projects_audit_filter_deals">Deals</string>
-    <string name="projects_audit_filter_messages">Messages</string>
-    <string name="projects_audit_filter_warnings">Warnings</string>
+    <string name="projects_audit_filter_messages">Chats</string>
+    <string name="projects_audit_filter_warnings">Refusals</string>
     <string name="projects_audit_today">Today</string>
     <string name="projects_audit_yesterday">Yesterday</string>
-    <string name="projects_audit_older">Older entries</string>
-    <string name="projects_audit_empty">Nothing logged yet. You\'ll see it here when ProBot AI gets a message.</string>
+    <string name="projects_audit_older">Earlier days</string>
+    <string name="projects_audit_empty">Nothing yet. You\'ll see it here when ProBot AI gets a message.</string>
     <string name="projects_audit_none_here">Nothing of this kind.</string>
-    <string name="projects_audit_off">The log is off right now.</string>
+    <string name="projects_audit_off">Activity is off right now.</string>
     <string name="projects_audit_offline">What you saw before is below. New entries show once the connection is back.</string>
-    <string name="projects_audit_offline_empty">The log shows once the connection is back.</string>
-    <string name="projects_audit_kept">The log is kept for 7 days.</string>
+    <string name="projects_audit_offline_empty">Activity shows once the connection is back.</string>
+    <string name="projects_audit_kept">Details are kept for 7 days. Older trades are in Summary\'s trade list.</string>
+    <string name="projects_audit_search">Search a player or an item</string>
+    <string name="projects_audit_no_match">Nothing matches this search.</string>
+    <string name="projects_audit_limited">Activity was refreshed too often. Try again in a moment.</string>
+    <string name="projects_audit_answer">Reply</string>
+    <string name="projects_audit_wrote">%1$s wrote to you</string>
+    <plurals name="projects_audit_trades_today">
+        <item quantity="one">%d trade today</item>
+        <item quantity="other">%d trades today</item>
+    </plurals>
+    <string name="projects_audit_no_trades_today">No trades today</string>
+    <string name="projects_audit_spent_of">Spent: %1$s / %2$s</string>
     <string name="projects_audit_hidden">Inappropriate message hidden.</string>
     <string name="projects_audit_show">Show</string>
     <string name="projects_audit_someone">A player</string>
@@ -348,7 +358,13 @@
 
     <!-- Trade history: receipts -->
     <string name="projects_receipt_tab">Trade history</string>
-    <string name="projects_receipt_empty">No trades yet.</string>
+    <string name="projects_receipt_period">Last 30 days</string>
+    <string name="projects_receipt_trades">Trades</string>
+    <string name="projects_receipt_per_item">Prices are per item.</string>
+    <string name="projects_receipt_range">%1$s to %2$s</string>
+    <string name="projects_receipt_side_bought">Bought</string>
+    <string name="projects_receipt_side_sold">Sold</string>
+    <string name="projects_receipt_empty">No trades in the last 30 days.</string>
     <string name="projects_receipt_more">Older trades</string>
     <string name="projects_receipt_bought">%1$s bought</string>
     <string name="projects_receipt_sold">%1$s sold</string>
@@ -508,6 +524,8 @@
     <string name="projects_setup_chat_caption">How it looks in chat</string>
     <string name="projects_setup_pm_caption">How it looks in a private message</string>
     <string name="projects_ads_switch">Post ads in chat</string>
+    <string name="projects_order_menu_switch">Check the order menu</string>
+    <string name="projects_order_menu_help">If the server has an order menu, it checks the orders now and then by itself.</string>
     <string name="projects_ads_how">How often?</string>
     <string name="projects_ads_every_30">30 min</string>
     <string name="projects_ads_every_45">45 min</string>

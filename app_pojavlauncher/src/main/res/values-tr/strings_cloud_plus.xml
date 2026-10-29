@@ -264,20 +264,30 @@
     <string name="projects_approval_sent_no">Reddin iletildi</string>
 
     <!-- Akış: the audit log -->
-    <string name="projects_audit_tab">Kayıtlar</string>
     <string name="projects_audit_filter_all">Tümü</string>
     <string name="projects_audit_filter_deals">Anlaşmalar</string>
-    <string name="projects_audit_filter_messages">Mesajlar</string>
-    <string name="projects_audit_filter_warnings">Uyarılar</string>
+    <string name="projects_audit_filter_messages">Yazışmalar</string>
+    <string name="projects_audit_filter_warnings">Retler</string>
     <string name="projects_audit_today">Bugün</string>
     <string name="projects_audit_yesterday">Dün</string>
-    <string name="projects_audit_older">Daha eski kayıtlar</string>
-    <string name="projects_audit_empty">Henüz kayıt yok. ProBot AI bir mesaj aldığında burada görürsün.</string>
-    <string name="projects_audit_none_here">Bu türde kayıt yok.</string>
-    <string name="projects_audit_off">Kayıtlar şu an kapalı.</string>
+    <string name="projects_audit_older">Önceki günler</string>
+    <string name="projects_audit_empty">Henüz bir şey yok. ProBot AI bir mesaj aldığında burada görürsün.</string>
+    <string name="projects_audit_none_here">Bu türde bir şey yok.</string>
+    <string name="projects_audit_off">Etkinlik şu an kapalı.</string>
     <string name="projects_audit_offline">Daha önce gördüklerin aşağıda. Yenileri bağlantı dönünce görünür.</string>
-    <string name="projects_audit_offline_empty">Kayıtlar bağlantı dönünce görünür.</string>
-    <string name="projects_audit_kept">Kayıt 7 gün tutulur.</string>
+    <string name="projects_audit_offline_empty">Etkinlik bağlantı dönünce görünür.</string>
+    <string name="projects_audit_kept">Ayrıntı 7 gün saklanır, daha eskisi Özet\'teki takas listesinde.</string>
+    <string name="projects_audit_search">Oyuncu ya da eşya ara</string>
+    <string name="projects_audit_no_match">Bu aramayla eşleşen bir şey yok.</string>
+    <string name="projects_audit_limited">Etkinlik çok sık yenilendi. Biraz sonra tekrar dene.</string>
+    <string name="projects_audit_answer">Cevap yaz</string>
+    <string name="projects_audit_wrote">%1$s sana yazdı</string>
+    <plurals name="projects_audit_trades_today">
+        <item quantity="one">Bugün %d takas</item>
+        <item quantity="other">Bugün %d takas</item>
+    </plurals>
+    <string name="projects_audit_no_trades_today">Bugün takas yok</string>
+    <string name="projects_audit_spent_of">Harcanan: %1$s / %2$s</string>
     <string name="projects_audit_hidden">Uygunsuz mesaj gizlendi.</string>
     <string name="projects_audit_show">Göster</string>
     <string name="projects_audit_someone">Bir oyuncu</string>
@@ -286,7 +296,7 @@
     <string name="projects_audit_owner_msg">Sen yazdın:</string>
     <string name="projects_audit_offer">%1$s ile pazarlıkta %2$s teklif edildi</string>
     <string name="projects_audit_counter">%1$s, %2$s istedi</string>
-    <string name="projects_audit_agree">%1$s ile anlaşıldı: %2$s</string>
+    <string name="projects_audit_agree">ProBot AI %1$s ile anlaştı: %2$s</string>
     <string name="projects_audit_ask_owner">Onayın istendi</string>
     <string name="projects_audit_ask_owner_of">%1$s için onayın istendi</string>
     <string name="projects_audit_owner_ok">Onayladın</string>
@@ -341,7 +351,13 @@
 
     <!-- Takas geçmişi: receipts -->
     <string name="projects_receipt_tab">Takas geçmişi</string>
-    <string name="projects_receipt_empty">Henüz takas yok.</string>
+    <string name="projects_receipt_period">Son 30 gün</string>
+    <string name="projects_receipt_trades">Takaslar</string>
+    <string name="projects_receipt_per_item">Fiyatlar adet başına.</string>
+    <string name="projects_receipt_range">%1$s ile %2$s arası</string>
+    <string name="projects_receipt_side_bought">Alındı</string>
+    <string name="projects_receipt_side_sold">Satıldı</string>
+    <string name="projects_receipt_empty">Son 30 günde takas yok.</string>
     <string name="projects_receipt_more">Daha eski takaslar</string>
     <string name="projects_receipt_bought">%1$s alındı</string>
     <string name="projects_receipt_sold">%1$s satıldı</string>
@@ -498,6 +514,8 @@
     <string name="projects_setup_chat_caption">Sohbette böyle görünür</string>
     <string name="projects_setup_pm_caption">Özel mesajda böyle görünür</string>
     <string name="projects_ads_switch">Sohbete ilan versin</string>
+    <string name="projects_order_menu_switch">Sipariş menüsünü kontrol etsin</string>
+    <string name="projects_order_menu_help">Sunucuda menülü sipariş sistemi varsa siparişleri arada kendisi kontrol eder.</string>
     <string name="projects_ads_how">Ne sıklıkla?</string>
     <string name="projects_ads_every_30">30 dk</string>
     <string name="projects_ads_every_45">45 dk</string>

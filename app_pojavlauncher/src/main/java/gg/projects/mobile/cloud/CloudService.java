@@ -133,6 +133,8 @@ public final class CloudService implements SocialService.Listener {
     private final Map<String, CloudModel.PlusDoc> mPlusDocs = new HashMap<>();
     /** The newest unread counts of "Mesajlar" by account (from the last inbox read). */
     private final Map<String, Integer> mUnread = new HashMap<>();
+    /** PLUS-ACTIVITY: conversations whose last message waits for the owner's answer, by account (the last inbox read). */
+    private final Map<String, Integer> mWaiting = new HashMap<>();
 
     private CloudService(Context app) {
         mApp = app;
@@ -229,6 +231,17 @@ public final class CloudService implements SocialService.Listener {
         return n == null ? 0 : n;
     }
 
+    /** Conversations that wait for the player's answer ("Seni bekleyenler" counts them beside the decisions). */
+    public int waiting(String acct) {
+        Integer n = mWaiting.get(acct);
+        return n == null ? 0 : n;
+    }
+
+    private void setWaiting(String acct, int count) {
+        Integer before = mWaiting.put(acct, Math.max(0, count));
+        if (before == null || before != count) changed();
+    }
+
     public void setUnread(String acct, int count) {
         Integer before = mUnread.put(acct, Math.max(0, count));
         if (before == null || before != count) {
@@ -320,6 +333,7 @@ public final class CloudService implements SocialService.Listener {
         mFetchedAt = 0;
         mFetchedFor = null;
         mUnread.clear();
+        mWaiting.clear();
         mPlusDocs.clear();
         mPrefs.clearAccount();
         // The audit log is the player's: it goes with the session (README "Deleting data": the devices drop their caches).
@@ -1138,8 +1152,13 @@ public final class CloudService implements SocialService.Listener {
             @Override
             public void ok(CloudApi.InboxList value) {
                 int unread = 0;
-                for (CloudModel.InboxThread t : value.threads) unread += t.unread;
+                int waiting = 0;
+                for (CloudModel.InboxThread t : value.threads) {
+                    unread += t.unread;
+                    if (t.unread > 0 && !"blocked".equals(t.state) && "them".equals(t.lastFrom)) waiting++;
+                }
                 setUnread(id, unread);
+                setWaiting(id, waiting);
                 result.ok(value);
             }
 
@@ -1466,7 +1485,11 @@ public final class CloudService implements SocialService.Listener {
 
         @Override
         public void message(String acct, int count, long at) {
-            if (count > unread(acct)) setUnread(acct, count);
+            if (count > unread(acct)) {
+                setUnread(acct, count);
+                // Someone wrote: at least one conversation waits until the next read says how many.
+                if (waiting(acct) == 0) setWaiting(acct, 1);
+            }
         }
 
         @Override

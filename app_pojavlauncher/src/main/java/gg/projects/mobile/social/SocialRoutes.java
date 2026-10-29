@@ -42,6 +42,8 @@ public final class SocialRoutes {
     public static final String CLOUD_ACCOUNT = "cloud_account";
     public static final String CLOUD_APPROVALS = "cloud_approvals";
     public static final String CLOUD_INBOX = "cloud_inbox";
+    /** PLUS-ACTIVITY: "Özet" (the daily and weekly summary notices open it). */
+    public static final String CLOUD_SUMMARY = "cloud_summary";
 
     @Nullable
     private static String sTarget;
@@ -116,7 +118,11 @@ public final class SocialRoutes {
             Tools.swapFragment(activity, gg.projects.mobile.cloud.ui.PlusApprovalsFragment.class, gg.projects.mobile.cloud.ui.PlusApprovalsFragment.TAG,
                     gg.projects.mobile.cloud.ui.CloudScreen.args(account));
         } else if (CLOUD_INBOX.equals(target)) {
-            Tools.swapFragment(activity, gg.projects.mobile.cloud.ui.PlusInboxFragment.class, gg.projects.mobile.cloud.ui.PlusInboxFragment.TAG,
+            // PLUS-ACTIVITY: the messages that wait are in "Seni bekleyenler" (there is no list of conversations).
+            Tools.swapFragment(activity, gg.projects.mobile.cloud.ui.PlusApprovalsFragment.class, gg.projects.mobile.cloud.ui.PlusApprovalsFragment.TAG,
+                    gg.projects.mobile.cloud.ui.CloudScreen.args(account));
+        } else if (CLOUD_SUMMARY.equals(target)) {
+            Tools.swapFragment(activity, gg.projects.mobile.cloud.ui.PlusSummaryFragment.class, gg.projects.mobile.cloud.ui.PlusSummaryFragment.TAG,
                     gg.projects.mobile.cloud.ui.CloudScreen.args(account));
         }
     }

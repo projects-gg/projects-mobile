@@ -762,6 +762,20 @@ final class PlusEditors {
             boolean quiet = preview.stoppedToday || preview.warningAt != null || (!preview.namesPending && preview.lines.isEmpty());
             if (!quiet) content.addView(CloudUi.note(c, c.getString(R.string.projects_ads_note)));
         }
+        // DONUT-ORDER: the server's order menu, beside the chat's switches, only while Studio has it on (the launcher's
+        // and the site's words); on writes true, off writes false only over a stored true.
+        if (doc != null && doc.rules.orderMenu) {
+            final boolean stored = new PlusConfig(doc.config).orderMenu();
+            LinearLayout menu = CloudUi.group(c);
+            menu.addView(CloudUi.toggle(c, c.getString(R.string.projects_order_menu_switch), e.orderMenu(), on -> {
+                e.setOrderMenu(on, stored);
+                h.changed();
+            }));
+            menu.addView(help(c, R.string.projects_order_menu_help));
+            LinearLayout.LayoutParams menuLp = CloudUi.matchWrap();
+            menuLp.topMargin = CloudUi.dp(c, 12);
+            content.addView(menu, menuLp);
+        }
         // Writing to a seller is in plain sight (the site's r7 switch): ProBot AI writes to strangers by itself here.
         LinearLayout sellers = CloudUi.group(c);
         sellers.addView(CloudUi.toggle(c, c.getString(R.string.projects_ads_write_sellers), e.proactivePm(), on -> {

@@ -27,12 +27,14 @@ import gg.projects.mobile.social.ui.BottomPanel;
 import gg.projects.mobile.ui.Haptics;
 
 /**
- * "Onaylar" ("Seni bekleyenler"): what waits for the player's answer. A deal the assistant asks about (the item, who it
+ * "Seni bekleyenler" (PLUS-ACTIVITY; it was "Onaylar"): what waits for the player's answer. A deal the assistant asks about (the item, who it
  * is with, the price, why it asks, how long it waits: no answer counts as no; "Onayla", "Reddet", and for a buy paid with
  * money "Fiyatı düşür"); "Takas sende", a deal agreed where the player makes the trade ("Takas oldu" / "Olmadı", 24 hours);
  * "İlk görüş", a typed custom item met in a trade window ("Evet, bu" / "Hayır"). Money decisions happen only here, never
  * from a notification; no gold on them (the launcher's and the site's rule). New ones arrive live; the last day's answered
- * ones stay below; the AI note once under the waiting ones.
+ * ones stay below ("Kapananlar"). After the decisions, a message ProBot AI's owner should answer ("Kaan_07 sana yazdı",
+ * its words, "Cevap yaz"), from the conversations the machine keeps (the site's same part); the AI note once under
+ * what waits.
  */
 public final class PlusApprovalsFragment extends CloudScreen implements CloudService.LiveListener {
     public static final String TAG = "ProjectsPlusApprovalsFragment";
@@ -48,6 +50,8 @@ public final class PlusApprovalsFragment extends CloudScreen implements CloudSer
     private final List<CloudModel.Approval> mCounting = new ArrayList<>();
     private final Runnable mTick = this::tick;
     private String mShape = "";
+    /** The conversations the machine keeps: who wrote last and waits for the player's answer. */
+    private final List<CloudModel.InboxThread> mThreads = new ArrayList<>();
 
     @Override
     protected void created(View view) {
@@ -66,6 +70,7 @@ public final class PlusApprovalsFragment extends CloudScreen implements CloudSer
         if (a == null) return;
         if (mLive == null) mLive = mService.watch(a.id, true, this);
         load();
+        loadThreads();
         ensureItemNames();
     }
 
@@ -107,6 +112,32 @@ public final class PlusApprovalsFragment extends CloudScreen implements CloudSer
         });
     }
 
+    /** The conversations, for the messages that wait (the service counts them from the same read). */
+    private void loadThreads() {
+        CloudModel.Account a = account();
+        if (a == null || !mService.plusFeature("inbox")) return;
+        mService.inbox(a.id, new CloudService.Result<gg.projects.mobile.cloud.CloudApi.InboxList>() {
+            @Override
+            public void ok(gg.projects.mobile.cloud.CloudApi.InboxList value) {
+                mThreads.clear();
+                mThreads.addAll(value.threads);
+                if (alive()) render();
+            }
+
+            @Override
+            public void failed(CloudProblem problem) {}
+        });
+    }
+
+    /** Who wrote last and was not read yet, unblocked: their answer waits for the player (the site's rule). */
+    private List<CloudModel.InboxThread> toAnswer() {
+        List<CloudModel.InboxThread> out = new ArrayList<>();
+        for (CloudModel.InboxThread t : mThreads) {
+            if (t.unread > 0 && !"blocked".equals(t.state) && "them".equals(t.lastFrom)) out.add(t);
+        }
+        return out;
+    }
+
     @Override
     protected void render() {
         CloudModel.Account a = account();
@@ -115,6 +146,7 @@ public final class PlusApprovalsFragment extends CloudScreen implements CloudSer
         StringBuilder key = new StringBuilder().append(mLoaded).append(mFailed).append(mDeciding).append('|');
         if (a != null && a.ai != null) key.append(a.ai.state).append('|');
         for (CloudModel.Approval ap : mApprovals) key.append(ap.id).append(ap.state).append(ap.pending(now)).append(',');
+        for (CloudModel.InboxThread t : toAnswer()) key.append(t.name).append(t.lastAt).append(t.unread).append(';');
         if (key.toString().equals(mShape)) return;
         mShape = key.toString();
         build(now);
@@ -141,10 +173,12 @@ public final class PlusApprovalsFragment extends CloudScreen implements CloudSer
         for (CloudModel.Approval ap : mApprovals) (ap.pending(now) ? open : closed).add(ap);
         Collections.sort(open, (x, y) -> Long.compare(x.expiresAt, y.expiresAt));
         Collections.sort(closed, (x, y) -> Long.compare(y.createdAt, x.createdAt));
-        if (open.isEmpty()) {
+        List<CloudModel.InboxThread> answer = toAnswer();
+        if (open.isEmpty() && answer.isEmpty()) {
             content.addView(CloudUi.empty(c, gg.projects.mobile.ui.PixelSprites.Sprite.DONE, getString(R.string.projects_plus_approvals_empty)));
         } else {
             for (CloudModel.Approval ap : open) content.addView(card(c, ap));
+            for (CloudModel.InboxThread t : answer) content.addView(messageCard(c, t));
             // The one AI note of this surface: under what the assistant made and asks about (AFKPLUS-TONE 16).
             content.addView(CloudUi.note(c, getString(R.string.projects_ai_note)));
         }
@@ -252,6 +286,34 @@ public final class PlusApprovalsFragment extends CloudScreen implements CloudSer
             if (k.equals(gg.projects.mobile.social.Json.str(custom, "k"))) return gg.projects.mobile.social.Json.str(custom, "base");
         }
         return null;
+    }
+
+    /** A message that waits for the player's answer: who wrote, their last words, "Cevap yaz" (the conversation). */
+    private View messageCard(final Context c, final CloudModel.InboxThread t) {
+        LinearLayout card = new LinearLayout(c);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setBackground(cardBackground(c));
+        card.setPadding(CloudUi.dp(c, 14), CloudUi.dp(c, 14), CloudUi.dp(c, 14), CloudUi.dp(c, 6));
+        LinearLayout.LayoutParams cardLp = CloudUi.matchWrap();
+        cardLp.topMargin = CloudUi.dp(c, 10);
+        card.setLayoutParams(cardLp);
+        card.addView(CloudUi.text(c, getString(R.string.projects_audit_wrote, t.name), 15, R.color.projects_bone_100, true));
+        // A stranger's words: plain text only, quoted as the site quotes them.
+        TextView said = CloudUi.text(c, "\"" + t.lastText + "\"", 14, R.color.projects_bone_100, false);
+        said.setPadding(0, CloudUi.dp(c, 4), 0, 0);
+        said.setMaxLines(4);
+        said.setEllipsize(TextUtils.TruncateAt.END);
+        said.setLineSpacing(0, 1.12f);
+        card.addView(said);
+        Button reply = CloudUi.textButton(c, getString(R.string.projects_audit_answer), v -> {
+            String id = accountId();
+            if (id == null) return;
+            android.os.Bundle args = args(id);
+            args.putString(PlusThreadFragment.ARG_NAME, t.name);
+            open(PlusThreadFragment.class, args);
+        });
+        card.addView(reply, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        return card;
     }
 
     /** An open approval, by its kind. */

@@ -694,7 +694,7 @@ public final class CloudWords {
                 int count = (int) n.number("count", 1);
                 String text = count > 1 ? c.getResources().getQuantityString(R.plurals.projects_cloud_notice_messages, count, name, count)
                         : c.getString(R.string.projects_cloud_notice_message, name);
-                return new String[]{c.getString(R.string.projects_plus_messages), text};
+                return new String[]{c.getString(R.string.projects_plus_title), text};
             }
             case "weekly": {
                 int deals = (int) n.number("deals", 0);

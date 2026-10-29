@@ -471,12 +471,12 @@
     <string name="projects_plus_quota_gift_open">Hediye kontörün var</string>
     <string name="projects_plus_quota_frozen">Kontörün yetkililerce donduruldu.</string>
     <string name="projects_plus_approvals">Seni bekleyenler</string>
-    <string name="projects_plus_messages">Mesajlar</string>
     <string name="projects_plus_rules">Siparişler</string>
     <string name="projects_plus_assistant">ProBot AI</string>
     <string name="projects_plus_schedule">Çalışma saatleri</string>
     <string name="projects_plus_safety">Harcama sınırları</string>
-    <string name="projects_plus_activity">Akış</string>
+    <string name="projects_plus_activity">Etkinlik</string>
+    <string name="projects_plus_report">Özet</string>
     <string name="projects_plus_history">Ayar geçmişi</string>
     <string name="projects_plus_upgrade">AFK+\'ya yükselt</string>
     <string name="projects_plus_downgrade">AFK+\'yı bırak</string>
@@ -487,8 +487,8 @@
     <string name="projects_plus_load_failed">AFK+ ayarları yüklenemedi.</string>
 
     <!-- Onaylar -->
-    <string name="projects_plus_approvals_empty">Bekleyen onay yok.</string>
-    <string name="projects_plus_approvals_recent">Son 24 saat</string>
+    <string name="projects_plus_approvals_empty">Şu an seni bekleyen bir şey yok.</string>
+    <string name="projects_plus_approvals_recent">Kapananlar</string>
     <string name="projects_plus_buying_from">%1$s ile alım</string>
     <string name="projects_plus_selling_to">%1$s ile satış</string>
     <string name="projects_plus_left">%1$s kaldı</string>
@@ -515,7 +515,6 @@
     <string name="projects_plus_approval_with">%1$s ile %2$s</string>
 
     <!-- Mesajlar (QoL Q1) -->
-    <string name="projects_plus_inbox_empty">Henüz mesaj yok.</string>
     <string name="projects_plus_inbox_reply">Cevap yaz</string>
     <string name="projects_plus_inbox_send">Gönder</string>
     <string name="projects_plus_inbox_first">Sen yazınca ProBot AI bu konuşmada 30 dakika susar.</string>
@@ -529,7 +528,6 @@
     <string name="projects_plus_inbox_show">Göster</string>
     <string name="projects_plus_inbox_you">Sen</string>
     <string name="projects_plus_inbox_assistant">ProBot AI</string>
-    <string name="projects_plus_inbox_blocked">Engellendi</string>
 
     <!-- Alım ve satım (QoL Q2) -->
     <string name="projects_plus_parse_field">Ne almak ya da satmak istiyorsun?</string>
@@ -675,6 +673,9 @@
     <string name="projects_plus_feed">Canlı</string>
     <string name="projects_plus_trades">Takaslar</string>
     <string name="projects_plus_week">Geçen hafta</string>
+    <string name="projects_plus_week_buys">Alımlar</string>
+    <string name="projects_plus_week_sales">Satışlar</string>
+    <string name="projects_plus_week_trades">Takas</string>
     <string name="projects_plus_feed_empty">Henüz bir şey yok.</string>
     <string name="projects_plus_trades_empty">Henüz takas yok.</string>
     <string name="projects_plus_feed_pm_in">%1$s yazdı</string>
@@ -702,12 +703,7 @@
     <string name="projects_plus_trade_review">İncelemede</string>
     <string name="projects_plus_trade_auto">Kendiliğinden</string>
     <string name="projects_plus_trade_approved">Sen onayladın</string>
-    <string name="projects_plus_summary_avg">Ortalama</string>
-    <string name="projects_plus_summary_min">En düşük</string>
-    <string name="projects_plus_summary_max">En yüksek</string>
     <string name="projects_plus_week_pms">Cevaplanan mesaj</string>
-    <string name="projects_plus_week_bought">Alınan</string>
-    <string name="projects_plus_week_sold">Satılan</string>
     <string name="projects_plus_week_spent">Harcanan</string>
     <string name="projects_plus_week_earned">Kazanılan</string>
     <string name="projects_plus_week_below">Sınırından az ödenen</string>

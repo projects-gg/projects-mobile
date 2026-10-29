@@ -127,6 +127,8 @@ public final class CloudNotifications {
         switch (n.event) {
             case "approval": return SocialOpenActivity.open(c, SocialRoutes.CLOUD_APPROVALS, acct);
             case "message": return SocialOpenActivity.open(c, SocialRoutes.CLOUD_INBOX, acct);
+            case "summary":
+            case "weekly": return SocialOpenActivity.open(c, SocialRoutes.CLOUD_SUMMARY, acct);
             default: return SocialOpenActivity.open(c, SocialRoutes.CLOUD_ACCOUNT, acct);
         }
     }
@@ -188,7 +190,8 @@ public final class CloudNotifications {
         final String acct = n.account();
         Runnable open = () -> {
             String target = acct == null ? SocialRoutes.CLOUD : "approval".equals(n.event) ? SocialRoutes.CLOUD_APPROVALS
-                    : "message".equals(n.event) ? SocialRoutes.CLOUD_INBOX : SocialRoutes.CLOUD_ACCOUNT;
+                    : "message".equals(n.event) ? SocialRoutes.CLOUD_INBOX
+                    : "summary".equals(n.event) || "weekly".equals(n.event) ? SocialRoutes.CLOUD_SUMMARY : SocialRoutes.CLOUD_ACCOUNT;
             SocialRoutes.set(target, acct);
             if (activity instanceof androidx.fragment.app.FragmentActivity) SocialRoutes.consume((androidx.fragment.app.FragmentActivity) activity);
         };

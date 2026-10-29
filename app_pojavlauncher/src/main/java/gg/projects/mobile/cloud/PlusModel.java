@@ -112,6 +112,8 @@ public final class PlusModel {
         public final boolean itemPay;
         /** Studio's {@code features.currency}: the player may name the money ({@code trade.currency}); off by default. */
         public final boolean currency;
+        /** Studio's {@code features.orderMenu} (DONUT-ORDER): "Sipariş menüsünü kontrol etsin" shows only while on. */
+        public final boolean orderMenu;
 
         private Rules(JsonObject o) {
             orderMax = (int) Json.num(o, "orderMax", 10);
@@ -141,6 +143,7 @@ public final class PlusModel {
             customItems = Json.bool(f, "customItems", true);
             itemPay = Json.bool(f, "itemPay", false);
             currency = Json.bool(f, "currency", false);
+            orderMenu = Json.bool(f, "orderMenu", false);
         }
 
         public static Rules read(@Nullable JsonObject o) {
