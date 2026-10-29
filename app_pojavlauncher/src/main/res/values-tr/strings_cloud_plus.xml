@@ -126,7 +126,7 @@
     <string name="projects_card_answer_first_many">Kaydetmeden önce soruları cevapla.</string>
     <string name="projects_card_fix_first">Kaydetmeden önce Düzenle ile eksikleri tamamla.</string>
     <string name="projects_card_note_approval_pref">Sormadan tamamlaması için ince ayardan yetkiyi değiştir.</string>
-    <string name="projects_card_note_named_player">Siparişler herkese açıktır. Bir oyuncuya bağlanmaz.</string>
+    <string name="projects_card_note_named_player">Sipariş herkese açık olur, yalnız bir oyuncuyla takas edemezsin.</string>
     <string name="projects_card_note_notify_only">Harcama sınırı koymadığın için almaz. Bulunca haber verir.</string>
     <string name="projects_card_note_item_pay_off">Eşyayla takas ayarlarında kapalı. Takas parayla yapılır.</string>
 
@@ -143,7 +143,6 @@
     <string name="projects_q_limit_sell">En az kaça satarsın?</string>
     <string name="projects_q_other">Başka</string>
     <string name="projects_q_other_label">Başka bir tutar</string>
-    <string name="projects_q_use">Bunu kullan</string>
     <string name="projects_q_pay_buy">Karşılığında ne vereceksin?</string>
     <string name="projects_q_pay_sell">Karşılığında ne istiyorsun?</string>
     <string name="projects_q_pay_money">Para</string>
@@ -160,7 +159,7 @@
     <string name="projects_q_yes_right">Evet, doğru</string>
     <string name="projects_q_fix">Düzelt</string>
     <string name="projects_q_over_cap">Bu fiyat tek anlaşma sınırını (%1$s) aşıyor.</string>
-    <string name="projects_q_raise">Sınırı %1$s yap</string>
+    <string name="projects_q_raise">Tek anlaşma sınırını %1$s yap</string>
     <string name="projects_q_use_cap">Fiyatı %1$s yap</string>
 
     <!-- The order form -->
@@ -454,9 +453,7 @@
     <string name="projects_setup_lede_money">Yalnız oyundaki parayla harcar, bu sınırları asla aşmaz.</string>
     <string name="projects_setup_lede_chat">İstersen etkin siparişlerini genel sohbette duyurur.</string>
     <string name="projects_setup_lede_talk">Özel mesajlara bu tarzda cevap verir. Sorulursa yapay zekâ olduğunu söyler.</string>
-    <string name="projects_setup_not_now">Şimdilik alım yapmasın</string>
-    <string name="projects_setup_not_now_help">Aradığını bulunca yalnız haber verir.</string>
-    <string name="projects_setup_required">İki tutarı da yaz ya da \"Şimdilik alım yapmasın\"ı aç.</string>
+    <string name="projects_setup_required">İki tutarı da yaz ya da \"Alım yapsın\"ı kapat.</string>
     <string name="projects_setup_spent_of_total">Toplam sınırdan %1$s harcandı</string>
     <string name="projects_setup_sell_only">Satış için harcama gerekmez</string>
     <string name="projects_setup_no_orders">Sipariş yok</string>
@@ -529,6 +526,13 @@
     <string name="projects_limit_new_counterpart">İlk anlaşmada onay sınırı</string>
     <string name="projects_limit_new_counterpart_help">İlk kez anlaştığı oyuncudan bunun üstündeki alımları önce sana sorar.</string>
     <string name="projects_to_limits">Sınırlara git</string>
+    <string name="projects_setup_buy">Alım yapsın</string>
+    <string name="projects_setup_buy_help">Kapalıyken aradığını bulunca yalnız haber verir.</string>
+    <string name="projects_setup_total_help_settings">Bütün alımların toplamı. Dolunca alım durur.</string>
+    <string name="projects_card_raised">Kaydedince tek anlaşma sınırın %1$s olur.</string>
+    <string name="projects_card_first_which">Önce hangisi olduğunu seç.</string>
+    <string name="projects_card_first_min">Önce en az fiyatı seç.</string>
+    <string name="projects_card_first_max">Önce en fazla fiyatı seç.</string>
     <string name="projects_to_approval_limit">Onay sınırına git</string>
     <string name="projects_approval_why_ask">Anlaşınca onayını bekler.</string>
     <string name="projects_limit_here">Aradığın ayar burada.</string>

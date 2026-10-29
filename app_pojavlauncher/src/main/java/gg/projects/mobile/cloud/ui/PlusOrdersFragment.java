@@ -59,6 +59,14 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
     public static final String TAG = "ProjectsPlusOrdersFragment";
     private static final String PICK_KEY = "gg.projects.mobile.plus.ORDER_PICK";
     private static final long UNDO_MS = 8000;
+    /** The text the setup's first step typed, checked at once here (TASTE-SWEEP 0.4.4 r2). */
+    static final String ARG_TEXT = "gg.projects.mobile.plus.ORDER_TEXT";
+
+    static Bundle args(String account, @Nullable String text) {
+        Bundle args = CloudScreen.args(account);
+        if (text != null) args.putString(ARG_TEXT, text);
+        return args;
+    }
 
     @Nullable
     private CloudModel.PlusDoc mDoc;
@@ -96,6 +104,25 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
     /** The "Başka" amount field of a question, while it is open (by the question's kind). */
     @Nullable
     private String mOtherOpen;
+    /** The open "Başka" field and its question: "Kaydet" takes what is typed there. */
+    @Nullable
+    private PlusAmount mOtherAmount;
+    @Nullable
+    private JsonObject mOtherQuestion;
+    /** The card's "Kaydet" and the line under it that says what it waits for. */
+    @Nullable
+    private Button mSaveButton;
+    @Nullable
+    private TextView mSaveWhy;
+    private List<JsonObject> mOpenQuestions = new ArrayList<>();
+    /** The card before "Tek anlaşma sınırını … yap", for its "Geri al". */
+    @Nullable
+    private JsonObject mRaiseDraft;
+    @Nullable
+    private JsonObject mRaiseSettings;
+    private boolean mRaised;
+    /** The setup's text waits for the settings, then is checked once. */
+    private boolean mPendingCheck;
     private boolean mSaving;
     /** The card's question a pick answers ({@code item} or {@code pay}), while the inventory is open for it. */
     @Nullable
@@ -380,6 +407,13 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
         box.addView(ways);
         mIntake = box;
         mField = field;
+        android.os.Bundle given = getArguments();
+        String handed = given == null ? null : given.getString(ARG_TEXT);
+        if (handed != null) {
+            given.remove(ARG_TEXT);
+            field.input.setText(handed);
+            mPendingCheck = true;
+        }
         mCheck = check;
         mCheckLoud = true;
         mHint = hint;
@@ -442,6 +476,7 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
         hint.setVisibility(line == null ? View.GONE : View.VISIBLE);
         // The colour of a problem only in its mark; the sentence stays plain.
         hint.setCompoundDrawablesRelativeWithIntrinsicBounds(warning ? R.drawable.projects_ic_warning_circle : 0, 0, 0, 0);
+        if (mField != null) mField.input.setActivated(warning);
         androidx.core.widget.TextViewCompat.setCompoundDrawableTintList(hint, ColorStateList.valueOf(CloudUi.color(c, R.color.projects_flare_400)));
         check.setText(getString(mChecking ? R.string.projects_order_reading : R.string.projects_order_check));
         boolean ready = !mChecking && !blocked && !machineAway() && text.codePointCount(0, text.length()) >= 3;
@@ -717,6 +752,24 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
             for (int i = 0; i < shown; i++) card.addView(question(c, draft, questions.get(i)));
         }
 
+        // "Tek anlaşma sınırını … yap" changes a setting of every order: said, and it can be taken back.
+        Long raised = mCardSettings == null ? null : Json.numOrNull(Json.obj(mCardSettings, "limits"), "perDealMax");
+        if (raised != null && mRaised) {
+            TextView raisedLine = CloudUi.text(c, getString(R.string.projects_card_raised, price(raised, "money")), 13.5f,
+                    R.color.projects_bone_100, false);
+            raisedLine.setPadding(0, CloudUi.dp(c, 10), 0, 0);
+            card.addView(raisedLine);
+            card.addView(CloudUi.textButton(c, getString(R.string.projects_order_undo), v -> {
+                mDraft = mRaiseDraft;
+                mCardSettings = mRaiseSettings;
+                mRaised = false;
+                mRaiseDraft = null;
+                mRaiseSettings = null;
+                Haptics.tick(v);
+                draw();
+            }), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        }
+
         // The one AI note of the order surface: where the assistant's reading is shown.
         TextView ai = CloudUi.text(c, getString(R.string.projects_ai_note), 12.5f, R.color.projects_ash_400, false);
         ai.setPadding(0, CloudUi.dp(c, 12), 0, 0);
@@ -733,12 +786,21 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
         LinearLayout.LayoutParams editLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         editLp.setMarginStart(CloudUi.dp(c, 6));
         buttons.addView(edit, editLp);
-        Button save = CloudUi.button(c, getString(R.string.projects_card_save), true, v -> saveCard(v, questions.size()));
-        save.setEnabled(!mSaving);
+        Button save = CloudUi.button(c, getString(R.string.projects_card_save), true, this::saveCard);
         LinearLayout.LayoutParams saveLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         saveLp.setMarginStart(CloudUi.dp(c, 8));
         buttons.addView(save, saveLp);
         card.addView(buttons, CloudUi.matchWrap());
+        // While a question waits, "Kaydet" is dimmed and this line says what for (it looked ready: TASTE-SWEEP r2).
+        TextView why = CloudUi.text(c, "", 13, R.color.projects_ash_300, false);
+        why.setGravity(Gravity.END);
+        why.setPadding(0, CloudUi.dp(c, 2), 0, 0);
+        why.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
+        card.addView(why, CloudUi.matchWrap());
+        mSaveButton = save;
+        mSaveWhy = why;
+        mOpenQuestions = questions;
+        refreshSave();
         return card;
     }
 
@@ -944,21 +1006,15 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
         row.setGravity(Gravity.BOTTOM);
         final PlusAmount amount = new PlusAmount(c, getString(R.string.projects_q_other_label), 0);
         amount.field.view.setPadding(0, CloudUi.dp(c, 6), CloudUi.dp(c, 4), 0);
+        CloudModel.PlusDoc doc = mDoc;
+        if (!"qty".equals(kind) && "money".equals(Json.str(mDraft, "pay", "money")) && doc != null && doc.server.moneyLabel != null) {
+            amount.field.unit(doc.server.moneyLabel.in(lang()));
+        }
+        // "Kaydet" takes what is typed here (one confirm, TASTE-SWEEP r2): it wakes as an amount appears.
+        amount.onChange(this::refreshSave);
         row.addView(amount.field.view, CloudUi.weight(1f));
-        Button use = CloudUi.button(c, getString(R.string.projects_q_use), false, v -> {
-            Long value = amount.value();
-            long max = "qty".equals(kind) ? PlusConfig.QTY_MAX : mDoc == null ? PlusModel.GENERIC_MAX_DEAL : mDoc.server.maxDeal;
-            if (value == null || value < 1 || value > max) {
-                amount.field.setError(getString(R.string.projects_form_error_amount));
-                Haptics.reject(v);
-                return;
-            }
-            mOtherOpen = null;
-            answer(q, OrderDraft.Choice.amount(value));
-        });
-        LinearLayout.LayoutParams useLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        useLp.bottomMargin = CloudUi.dp(c, 2);
-        row.addView(use, useLp);
+        mOtherAmount = amount;
+        mOtherQuestion = q;
         amount.field.input.requestFocus();
         return row;
     }
@@ -976,6 +1032,12 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
                 startPick(a.field == null ? "item" : a.field);
                 return;
             default:
+                boolean raise = a.settings != null && Json.numOrNull(Json.obj(a.settings, "limits"), "perDealMax") != null;
+                if (raise) {
+                    mRaiseDraft = draft.deepCopy();
+                    mRaiseSettings = mCardSettings == null ? null : mCardSettings.deepCopy();
+                    mRaised = true;
+                }
                 if (a.draft != null) mDraft = a.draft;
                 if (a.settings != null) mCardSettings = merge(mCardSettings, a.settings);
                 draw();
@@ -1012,13 +1074,64 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
         mNotes.clear();
         mCardSettings = null;
         mOtherOpen = null;
+        mRaised = false;
+        mRaiseDraft = null;
+        mRaiseSettings = null;
         draw();
     }
 
-    private void saveCard(View from, int open) {
+    /** "Kaydet" ready only when nothing waits (a typed "Başka bir tutar" answers its question); else dimmed, with why. */
+    private void refreshSave() {
+        Button save = mSaveButton;
+        TextView why = mSaveWhy;
+        if (save == null || why == null) return;
+        String reason = saveBlocker();
+        boolean can = reason == null && !mSaving;
+        save.setEnabled(can);
+        save.setAlpha(can || mSaving ? 1f : 0.45f);
+        why.setText(reason == null ? "" : reason);
+        why.setVisibility(reason == null ? View.GONE : View.VISIBLE);
+    }
+
+    @Nullable
+    private String saveBlocker() {
+        List<JsonObject> open = mOpenQuestions;
+        if (open.isEmpty()) return null;
+        if (open.size() == 1 && mOtherOpen != null && mOtherAmount != null && mOtherAmount.value() != null) return null;
+        JsonObject first = open.get(0);
+        switch (Json.str(first, "kind", "")) {
+            case "which": return getString(R.string.projects_card_first_which);
+            case "limit": return getString("sell".equals(Json.str(first, "side")) ? R.string.projects_card_first_min : R.string.projects_card_first_max);
+            default: return getString(open.size() > 1 ? R.string.projects_card_answer_first_many : R.string.projects_card_answer_first);
+        }
+    }
+
+    private void saveCard(View from) {
         JsonObject draft = mDraft;
         if (draft == null || mSaving) return;
+        // "Başka bir tutar" typed: "Kaydet" takes it ("Bunu kullan" went).
+        if (mOtherOpen != null && mOtherAmount != null && mOtherQuestion != null) {
+            Long value = mOtherAmount.value();
+            long max = "qty".equals(mOtherOpen) ? PlusConfig.QTY_MAX : mDoc == null ? PlusModel.GENERIC_MAX_DEAL : mDoc.server.maxDeal;
+            if (value == null || value < 1 || value > max) {
+                mOtherAmount.field.setError(getString(R.string.projects_form_error_amount));
+                Haptics.reject(from);
+                return;
+            }
+            JsonObject q = mOtherQuestion;
+            mOtherOpen = null;
+            mOtherAmount = null;
+            mOtherQuestion = null;
+            OrderDraft.Answer a = OrderDraft.answer(draft, q, OrderDraft.Choice.amount(value), draftCtx(), newKey(draft));
+            if (a.draft != null) {
+                mDraft = a.draft;
+                draft = a.draft;
+            }
+            if (a.settings != null) mCardSettings = merge(mCardSettings, a.settings);
+        }
+        int open = OrderDraft.questionsOf(draft, draftCtx()).size();
         if (open > 0) {
+            draw();
             Haptics.reject(from);
             toast(getString(open > 1 ? R.string.projects_card_answer_first_many : R.string.projects_card_answer_first));
             return;
@@ -1040,6 +1153,9 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
         mNotes.clear();
         mCardSettings = null;
         mOtherOpen = null;
+        mRaised = false;
+        mRaiseDraft = null;
+        mRaiseSettings = null;
         if (mField != null) mField.input.setText("");
     }
 
@@ -1255,6 +1371,14 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
     private void takeDoc(CloudModel.PlusDoc doc) {
         CloudModel.PlusDoc known = mDoc;
         if (known == null || doc.aiRev >= known.aiRev) mDoc = doc;
+        if (mPendingCheck) {
+            View root = getView();
+            if (root != null) root.post(() -> {
+                if (!alive() || !mPendingCheck || mCheck == null) return;
+                mPendingCheck = false;
+                check(mCheck);
+            });
+        }
     }
 
     private void writeProblem(CloudProblem p, @Nullable View from) {

@@ -195,6 +195,17 @@ public final class CloudWords {
     }
 
     /** An item with its count, as the site writes it: "64 Elmas" / "Diamond ×64"; one alone is just its name. */
+    /** An item's name after its count: English plural for more than one ("2 Emeralds"), Turkish as it is ("2 Zümrüt"). */
+    public static String counted(Context c, long qty, String name) {
+        if (qty == 1 || turkish(c) || name.isEmpty()) return name;
+        int of = name.indexOf(" of ");
+        if (of > 0) return counted(c, qty, name.substring(0, of)) + name.substring(of);
+        String lower = name.toLowerCase(java.util.Locale.ROOT);
+        // Names that are their own plural or read wrong with an s (Elytra, Glass, a few game words).
+        if (lower.endsWith("s") || lower.endsWith("a") || lower.endsWith("x") || lower.endsWith("sh") || lower.endsWith("ch")) return name;
+        return name + "s";
+    }
+
     public static String qtyName(Context c, long qty, String name) {
         if (qty <= 1) return name;
         return turkish(c) ? qty + " " + name : name + " ×" + qty;

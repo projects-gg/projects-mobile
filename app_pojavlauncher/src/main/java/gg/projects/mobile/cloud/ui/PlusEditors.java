@@ -424,36 +424,38 @@ final class PlusEditors {
         final PlusConfig e = h.edit();
         CloudModel.PlusDoc doc = h.doc();
         if (setup) {
-            // The setup's one choice (the site's rule, SETUP-UX 29 Oct): two amounts, or "Şimdilik alım yapmasın". With
-            // the switch on nothing is bought (both limits null) and the typed amounts stay, dimmed, for a change of
-            // mind; off, or an amount typed (which turns it off), they count again.
+            // The setup's one choice (the site's rule, SETUP-UX 29 Oct, worded plainly after TASTE-SWEEP r2): "Alım yapsın"
+            // with two amounts, or off. Off, both limits are written as null and the typed amounts and the total's line
+            // stay, dimmed, for a change of mind; typing an amount turns it on.
             final boolean[] quiet = {false};
             final PlusAmount[] amounts = new PlusAmount[2];
             final String[] keys = {"perDealMax", "totalBudget"};
+            final TextView[] total = new TextView[1];
             LinearLayout group = CloudUi.group(c);
-            final androidx.appcompat.widget.SwitchCompat notNow = CloudUi.toggle(c, c.getString(R.string.projects_setup_not_now),
-                    h.notNow(), on -> {
+            final androidx.appcompat.widget.SwitchCompat buy = CloudUi.toggle(c, c.getString(R.string.projects_setup_buy),
+                    !h.notNow(), on -> {
                         if (quiet[0]) return;
-                        h.setNotNow(on);
+                        h.setNotNow(!on);
                         for (int i = 0; i < amounts.length; i++) {
                             if (amounts[i] == null) continue;
-                            e.setLimit(keys[i], on ? null : amounts[i].value());
-                            amounts[i].field.view.setAlpha(on ? 0.45f : 1f);
+                            e.setLimit(keys[i], on ? amounts[i].value() : null);
+                            amounts[i].field.view.setAlpha(on ? 1f : 0.45f);
                         }
+                        if (total[0] != null) total[0].setAlpha(on ? 1f : 0.45f);
                         h.changed();
                     });
-            group.addView(notNow);
-            TextView help = CloudUi.text(c, c.getString(R.string.projects_setup_not_now_help), 13, R.color.projects_ash_400, false);
+            group.addView(buy);
+            TextView help = CloudUi.text(c, c.getString(R.string.projects_setup_buy_help), 13, R.color.projects_ash_400, false);
             help.setPadding(CloudUi.dp(c, 16), 0, CloudUi.dp(c, 16), CloudUi.dp(c, 12));
             group.addView(help);
             content.addView(group);
             Runnable typed = () -> {
-                if (quiet[0] || !notNow.isChecked()) return;
+                if (quiet[0] || buy.isChecked()) return;
                 boolean any = false;
                 for (PlusAmount a : amounts) if (a != null && a.value() != null) any = true;
                 if (!any) return;
                 quiet[0] = true;
-                notNow.setChecked(false);
+                buy.setChecked(true);
                 quiet[0] = false;
                 h.setNotNow(false);
                 for (int i = 0; i < amounts.length; i++) {
@@ -461,18 +463,25 @@ final class PlusEditors {
                     e.setLimit(keys[i], amounts[i].value());
                     amounts[i].field.view.setAlpha(1f);
                 }
+                if (total[0] != null) total[0].setAlpha(1f);
             };
-            amounts[0] = limitField(h, drawn, keys[0], c.getString(R.string.projects_limit_no_buy), null, typed);
-            amounts[1] = limitField(h, drawn, keys[1], c.getString(R.string.projects_limit_no_buy), null, typed);
-            if (notNow.isChecked()) for (PlusAmount a : amounts) a.field.view.setAlpha(0.45f);
+            // No "Boş bırakırsan …" under each: the step asks for both amounts or the switch off, said once by its rule.
+            amounts[0] = limitField(h, drawn, keys[0], null, null, typed);
+            amounts[1] = limitField(h, drawn, keys[1], null, null, typed);
             content.addView(amounts[0].field.view);
             content.addView(amounts[1].field.view);
+            total[0] = CloudUi.note(c, c.getString(R.string.projects_setup_total_help));
+            content.addView(total[0]);
+            if (!buy.isChecked()) {
+                for (PlusAmount a : amounts) a.field.view.setAlpha(0.45f);
+                total[0].setAlpha(0.45f);
+            }
         } else {
             content.addView(limitField(h, drawn, "perDealMax", c.getString(R.string.projects_limit_no_buy), null).field.view);
             content.addView(limitField(h, drawn, "totalBudget", c.getString(R.string.projects_limit_no_buy), null).field.view);
         }
-        // What the total is (the site's line under it).
-        content.addView(CloudUi.note(c, c.getString(R.string.projects_setup_total_help)));
+        // What the total is (the site's line under it); on the Ayarlar page without "Ayarlar'dan sıfırlarsın".
+        if (!setup) content.addView(CloudUi.note(c, c.getString(R.string.projects_setup_total_help_settings)));
         if (setup) {
             String required = h.problemAt("setup.money");
             if (required != null) content.addView(errorLine(c, required));

@@ -490,7 +490,7 @@ public final class OrderDraft {
         List<Long> seen = new ArrayList<>();
         for (double factor : factors) {
             double scaled = target * factor;
-            long value = counts ? Math.round(scaled) : chipRound(scaled);
+            long value = counts ? Math.round(scaled) : scaled < 100 ? Math.max(5, Math.round(scaled / 5) * 5) : chipRound(scaled);
             boolean fits = buy ? value > target : value < target;
             if (fits && value >= 1 && value <= top && !seen.contains(value)) {
                 seen.add(value);

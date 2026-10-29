@@ -87,7 +87,7 @@
     <string name="projects_order_writes_daily">No more order changes today.</string>
     <string name="projects_order_undo_failed">Couldn\'t bring the order back.</string>
     <string name="projects_order_status_waiting_ok">Waiting for your OK</string>
-    <string name="projects_order_status_your_trade">Your trade</string>
+    <string name="projects_order_status_your_trade">Your turn to trade</string>
     <string name="projects_order_status_trading">Trading</string>
     <string name="projects_order_status_done">Done</string>
     <string name="projects_order_status_expired">Expired</string>
@@ -130,7 +130,7 @@
     <string name="projects_card_answer_first_many">Answer the questions before saving.</string>
     <string name="projects_card_fix_first">Fill in what\'s missing with Edit before saving.</string>
     <string name="projects_card_note_approval_pref">To close deals without asking, change its permissions.</string>
-    <string name="projects_card_note_named_player">Orders are open to everyone. They can\'t be tied to one player.</string>
+    <string name="projects_card_note_named_player">The order is open to everyone. You can\'t keep it to one player.</string>
     <string name="projects_card_note_notify_only">You set no spending limit, so it doesn\'t buy. It tells you what it finds.</string>
     <string name="projects_card_note_item_pay_off">Item swaps are off in your settings. It trades for money.</string>
 
@@ -147,7 +147,6 @@
     <string name="projects_q_limit_sell">What\'s the least you\'ll take?</string>
     <string name="projects_q_other">Other</string>
     <string name="projects_q_other_label">Another amount</string>
-    <string name="projects_q_use">Use this</string>
     <string name="projects_q_pay_buy">What will you give for it?</string>
     <string name="projects_q_pay_sell">What do you want for it?</string>
     <string name="projects_q_pay_money">Money</string>
@@ -164,7 +163,7 @@
     <string name="projects_q_yes_right">Yes, that\'s right</string>
     <string name="projects_q_fix">Fix it</string>
     <string name="projects_q_over_cap">This is over your per-deal limit (%1$s).</string>
-    <string name="projects_q_raise">Raise the limit to %1$s</string>
+    <string name="projects_q_raise">Raise the per-deal limit to %1$s</string>
     <string name="projects_q_use_cap">Use %1$s</string>
 
     <!-- The order form -->
@@ -464,9 +463,7 @@
     <string name="projects_setup_lede_money">It only spends in-game money and never goes past these limits.</string>
     <string name="projects_setup_lede_chat">If you like, it posts your active orders in public chat.</string>
     <string name="projects_setup_lede_talk">It answers private messages in this tone. If asked, it says it\'s an AI.</string>
-    <string name="projects_setup_not_now">Don\'t buy for now</string>
-    <string name="projects_setup_not_now_help">It only tells you when it finds what you want.</string>
-    <string name="projects_setup_required">Enter both amounts or turn on \"Don\'t buy for now\".</string>
+    <string name="projects_setup_required">Enter both amounts or turn off \"Let it buy\".</string>
     <string name="projects_setup_spent_of_total">%1$s spent of the total limit</string>
     <string name="projects_setup_sell_only">Selling needs no spending</string>
     <string name="projects_setup_no_orders">No orders</string>
@@ -539,13 +536,20 @@
     <string name="projects_limit_new_counterpart">Approval limit on a first deal</string>
     <string name="projects_limit_new_counterpart_help">Buys above this from a player it has never dealt with wait for your OK.</string>
     <string name="projects_to_limits">Go to limits</string>
+    <string name="projects_setup_buy">Let it buy</string>
+    <string name="projects_setup_buy_help">While it\'s off, it only tells you when it finds what you want.</string>
+    <string name="projects_setup_total_help_settings">All purchases added up. When it\'s reached, buying stops.</string>
+    <string name="projects_card_raised">Once saved, your per-deal limit becomes %1$s.</string>
+    <string name="projects_card_first_which">First pick which one it is.</string>
+    <string name="projects_card_first_min">First pick the lowest price.</string>
+    <string name="projects_card_first_max">First pick the highest price.</string>
     <string name="projects_to_approval_limit">Go to the approval limit</string>
     <string name="projects_approval_why_ask">Asks you before closing a deal.</string>
     <string name="projects_limit_here">Here is that setting.</string>
     <string name="projects_ads_old_service">Chat ads turn on once 24/7 Cloud is updated.</string>
     <string name="projects_ads_write_sellers">Write to the seller once when an item you want is for sale</string>
     <string name="projects_setup_a_writes">, writes once to the seller when an item you want is for sale.</string>
-    <string name="projects_setup_total_help">All buys together. When it\'s reached, buying stops, and you reset it in Settings.</string>
+    <string name="projects_setup_total_help">All purchases added up. When it\'s reached, buying stops, and you reset it in Settings.</string>
     <string name="projects_setup_hide">Hide</string>
     <string name="projects_money_question">This looks like real money. ProBot AI doesn\'t trade for real money.</string>
     <string name="projects_money_in_game">This is in-game money</string>

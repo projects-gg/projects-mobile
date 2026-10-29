@@ -67,7 +67,7 @@ final class PlusWords {
     static String money(Context c, long value, @Nullable PlusModel.Server server) {
         String written = CloudWords.money(c, value);
         if (server == null || server.moneyLabel == null) return written;
-        return written + " " + server.moneyLabel.in(CloudWords.lang(c));
+        return written + "\u00A0" + server.moneyLabel.in(CloudWords.lang(c));
     }
 
     /** A price: money, or the paying item's count ("3 Elmas") when {@code pay} is an item. */
@@ -78,7 +78,8 @@ final class PlusWords {
 
     /** A deal as the launcher and the site write it: "1 Elytra = 37.500", "64 Elmas = 3 Netherit külçesi". */
     static String deal(Context c, long qty, String item, long price, String pay, @Nullable PlusModel.Server server, Namer namer) {
-        return c.getString(R.string.projects_cloud_notice_deal_line, String.valueOf(qty), namer.name(item), price(c, price, pay, server, namer));
+        return c.getString(R.string.projects_cloud_notice_deal_line, String.valueOf(qty), CloudWords.counted(c, qty, namer.name(item)),
+                price(c, price, pay, server, namer));
     }
 
     /** The tag rule's problem ({@code PlusText.checkPrefix}'s or the service's {@code problem}) in one sentence. */

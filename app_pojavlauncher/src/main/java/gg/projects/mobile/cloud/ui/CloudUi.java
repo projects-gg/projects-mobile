@@ -260,7 +260,7 @@ public final class CloudUi {
         LinearLayout.LayoutParams textsLp = weight(1f);
         textsLp.setMarginStart(dp(c, 16));
         row.addView(texts, textsLp);
-        TextView count = text(c, "", 14, R.color.projects_gold_300, true);
+        TextView count = text(c, "", 14, R.color.projects_bone_100, true);
         count.setVisibility(View.GONE);
         LinearLayout.LayoutParams countLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         countLp.setMarginStart(dp(c, 8));
@@ -555,8 +555,8 @@ public final class CloudUi {
             b.setMinimumWidth(0);
             b.setPadding(dp(c, 6), 0, dp(c, 6), 0);
             b.setBackground(ChamferDrawable.toggle(c));
-            b.setMaxLines(1);
-            b.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            b.setMaxLines(2);
+            b.setGravity(Gravity.CENTER);
             Press.attach(b, Press.Style.BUTTON);
             buttons.add(b);
             LinearLayout.LayoutParams lp = weight(1f);

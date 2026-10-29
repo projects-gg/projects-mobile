@@ -192,10 +192,38 @@ public final class PlusSetupFragment extends CloudScreen implements PlusEditors.
         return row;
     }
 
-    /** Step 1: the orders as they are (they save on their own screen), and "Sipariş ekle". */
+    /**
+     * Step 1: the place to write an order ("Ne almak ya da satmak istiyorsun?" and "Kontrol et", the site's s1; the text
+     * goes to the orders' screen, which checks it at once and saves it there), then the orders as they are.
+     */
     private void orders(LinearLayout content) {
         final Context c = ctx();
         if (mEdit == null) return;
+        final CloudUi.Field intake = CloudUi.field(c, getString(R.string.projects_order_intake_label), null,
+                getString(R.string.projects_order_intake_hint),
+                android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+                        | android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+        intake.input.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(220)});
+        content.addView(intake.view);
+        final Button check = CloudUi.button(c, getString(R.string.projects_order_check), false, v -> {
+            String text = intake.value().trim();
+            if (text.codePointCount(0, text.length()) < 3) {
+                Haptics.reject(v);
+                intake.input.requestFocus();
+                return;
+            }
+            String id = accountId();
+            if (id == null) return;
+            keep();
+            open(PlusOrdersFragment.class, PlusOrdersFragment.args(id, text));
+        });
+        LinearLayout.LayoutParams checkLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        checkLp.topMargin = CloudUi.dp(c, 10);
+        checkLp.setMarginStart(CloudUi.dp(c, 8));
+        content.addView(check, checkLp);
+        LinearLayout.LayoutParams gapLp = CloudUi.matchWrap();
+        gapLp.topMargin = CloudUi.dp(c, 6);
+        content.addView(CloudUi.gap(c, 10), gapLp);
         List<JsonObject> orders = currentOrders();
         if (orders.isEmpty()) {
             content.addView(CloudUi.note(c, getString(R.string.projects_setup_no_orders)));

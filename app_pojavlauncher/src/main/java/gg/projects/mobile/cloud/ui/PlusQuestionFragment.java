@@ -72,8 +72,19 @@ public final class PlusQuestionFragment extends PlusScreen implements PlusEditor
             final View target = mDrawn.fields.get(focus);
             if (target != null && mScroll != null) {
                 // Once laid out: the field near the top, a jump while motion is reduced (design.md: no motion then).
-                target.post(() -> {
-                    if (mScroll == null) return;
+                focusOn(target, 0);
+            }
+        }
+    }
+
+    private void focusOn(final View target, final int tries) {
+        final Context c = target.getContext();
+        target.post(() -> {
+                    if (mScroll == null || !alive()) return;
+                    if (target.getHeight() == 0 && tries < 10) {
+                        target.postDelayed(() -> focusOn(target, tries + 1), 60);
+                        return;
+                    }
                     int y = Math.max(0, target.getTop() - CloudUi.dp(c, 24));
                     View parent = (View) target.getParent();
                     while (parent != null && parent != mContent) {
@@ -84,8 +95,6 @@ public final class PlusQuestionFragment extends PlusScreen implements PlusEditor
                     else mScroll.smoothScrollTo(0, y);
                     light(target);
                 });
-            }
-        }
     }
 
     /** Lights the field it was opened for once: a bone ring that fades out (opacity only; with motion off it just goes). */
@@ -100,8 +109,8 @@ public final class PlusQuestionFragment extends PlusScreen implements PlusEditor
         target.getOverlay().add(ring);
         if (gg.projects.mobile.mods.Motion.enabled(c)) {
             android.animation.ObjectAnimator fade = android.animation.ObjectAnimator.ofInt(ring, "alpha", 255, 0);
-            fade.setStartDelay(900);
-            fade.setDuration(700);
+            fade.setStartDelay(3200);
+            fade.setDuration(800);
             fade.addListener(new android.animation.AnimatorListenerAdapter() {
                 @Override
                 public void onAnimationEnd(android.animation.Animator animation) {
@@ -110,7 +119,7 @@ public final class PlusQuestionFragment extends PlusScreen implements PlusEditor
             });
             fade.start();
         } else {
-            target.postDelayed(() -> target.getOverlay().remove(ring), 1600);
+            target.postDelayed(() -> target.getOverlay().remove(ring), 4000);
         }
         target.announceForAccessibility(c.getString(R.string.projects_limit_here));
     }
