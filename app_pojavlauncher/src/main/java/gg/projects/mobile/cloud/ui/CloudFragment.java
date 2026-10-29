@@ -487,10 +487,12 @@ public final class CloudFragment extends CloudScreen {
                 // QA-TASTE: as the launcher, the words bone and the colour in the bars; colour in words only for trouble.
                 case OK: tone = R.color.projects_bone_100; break;
                 case ERROR: tone = R.color.projects_flare_400; break;
-                case WARN: tone = R.color.projects_gold_300; break;
+                // design.md section 2: a warning's words are bone after a small gold triangle, never gold.
+                case WARN: tone = R.color.projects_bone_100; break;
                 default: tone = R.color.projects_ash_300; break;
             }
             state.setTextColor(CloudUi.color(c, tone));
+            CloudUi.warnMark(state, line.tone == CloudStatus.Tone.WARN);
             glyph.setSignal(line.signal);
             String more = null;
             boolean timeLine = false;

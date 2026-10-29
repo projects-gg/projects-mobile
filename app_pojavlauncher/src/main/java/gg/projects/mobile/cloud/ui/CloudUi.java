@@ -772,20 +772,16 @@ public final class CloudUi {
                 default: tone = R.color.projects_ash_300; break;
             }
             text.setTextColor(CloudUi.color(view.getContext(), tone));
-            android.graphics.drawable.Drawable mark = null;
-            if (line.tone == CloudStatus.Tone.WARN) {
-                mark = androidx.core.content.ContextCompat.getDrawable(view.getContext(), R.drawable.projects_ic_warning);
-                if (mark != null) {
-                    mark = mark.mutate();
-                    mark.setTint(CloudUi.color(view.getContext(), R.color.projects_gold_300));
-                    int size = dp(view.getContext(), 15);
-                    mark.setBounds(0, 0, size, size);
-                }
-            }
-            text.setCompoundDrawablesRelative(mark, null, null, null);
-            text.setCompoundDrawablePadding(dp(view.getContext(), 6));
+            warnMark(text, line.tone == CloudStatus.Tone.WARN);
             glyph.setSignal(line.signal);
         }
+    }
+
+    /** A real-state warning's mark: a small gold triangle before the (bone) words, design.md section 2; off clears it. */
+    public static void warnMark(TextView words, boolean on) {
+        Drawable mark = on ? tinted(words.getContext(), R.drawable.projects_ic_warning, R.color.projects_gold_300, 15) : null;
+        words.setCompoundDrawablesRelative(mark, null, null, null);
+        words.setCompoundDrawablePadding(dp(words.getContext(), 6));
     }
 
     public static StateLine stateLine(Context c, float sp) {
