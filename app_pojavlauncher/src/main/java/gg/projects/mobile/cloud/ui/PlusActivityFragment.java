@@ -85,6 +85,8 @@ public final class PlusActivityFragment extends CloudScreen implements CloudServ
     private LinearLayout mSummaryPart;
     @Nullable
     private LinearLayout mListPart;
+    /** The list after the search's letters stop for a moment (a redraw per letter stuttered the typing). */
+    private final Runnable mSearchDraw = this::drawList;
 
     @Override
     protected void created(View view) {
@@ -266,7 +268,10 @@ public final class PlusActivityFragment extends CloudScreen implements CloudServ
             public void afterTextChanged(Editable s) {
                 if (s.toString().equals(mQuery)) return;
                 mQuery = s.toString();
-                drawList();
+                LinearLayout part = mListPart;
+                if (part == null) return;
+                part.removeCallbacks(mSearchDraw);
+                part.postDelayed(mSearchDraw, 150);
             }
         });
         return search;
