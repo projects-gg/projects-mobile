@@ -311,7 +311,7 @@
     <string name="projects_cloud_issue_owner_server">Sunucu mesajları bir oyuncudan gelmez; bu kuralda kullanılamaz.</string>
     <string name="projects_cloud_issue_name">Oyuncu adı 3-16 karakter olmalı: harf, rakam ya da alt çizgi.</string>
     <string name="projects_cloud_issue_name_duplicate">Aynı ad ve sunucuyla başka bir bulut hesabın var.</string>
-    <string name="projects_cloud_issue_name_protected">Bu ad sunucuda yetkililer için korunuyor. 7/24 Bulut bu adla giriş yapamaz.</string>
+    <string name="projects_cloud_issue_name_protected">Bu ad sunucuda yetkililer için korunuyor.\nBaşka bir ad seç.</string>
     <string name="projects_cloud_issue_host">Adres yalnız harf, rakam, nokta, tire ve alt çizgi içerebilir.</string>
     <string name="projects_cloud_issue_host_dot">Tam adresi yaz. Örnek: play.projects.gg</string>
     <string name="projects_cloud_issue_host_private">Bu adrese bağlanılamaz.</string>
