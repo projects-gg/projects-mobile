@@ -421,6 +421,9 @@ public final class SocialModel {
         public final String avatar;
         @Nullable
         public final String avatarHash;
+        /** SOC9: the Minecraft version they play ({@code game.ver}, {@link GameVersion}); null when not playing or not said. */
+        @Nullable
+        public final String ver;
 
         public Presence(String id, String state, boolean dnd, @Nullable String where, @Nullable String host,
                         @Nullable String lastSeen) {
@@ -429,6 +432,11 @@ public final class SocialModel {
 
         public Presence(String id, String state, boolean dnd, @Nullable String where, @Nullable String host,
                         @Nullable String lastSeen, @Nullable String avatar, @Nullable String avatarHash) {
+            this(id, state, dnd, where, host, lastSeen, avatar, avatarHash, null);
+        }
+
+        public Presence(String id, String state, boolean dnd, @Nullable String where, @Nullable String host,
+                        @Nullable String lastSeen, @Nullable String avatar, @Nullable String avatarHash, @Nullable String ver) {
             this.id = id;
             this.state = state;
             this.dnd = dnd;
@@ -437,6 +445,7 @@ public final class SocialModel {
             this.lastSeen = lastSeen;
             this.avatar = avatar;
             this.avatarHash = avatarHash;
+            this.ver = PLAYING.equals(state) ? GameVersion.wire(ver) : null;
         }
 
         public static Presence offline(String id, @Nullable String lastSeen) {
@@ -454,7 +463,12 @@ public final class SocialModel {
             boolean playing = PLAYING.equals(state);
             return new Presence(id, state, "dnd".equals(Json.str(o, "status")), playing ? where : null,
                     playing ? Json.str(game, "host") : null, Json.str(o, "lastSeen"),
-                    Json.str(o, "avatar"), Json.str(o, "avatarHash"));
+                    Json.str(o, "avatar"), Json.str(o, "avatarHash"), playing ? Json.str(game, "ver") : null);
+        }
+
+        /** SOC9: a playing line with the version after it ("Projects'te · 1.21.4"), as it is: no "sürüm", no translation. */
+        public String withVersion(String place) {
+            return ver == null ? place : place + " · " + ver;
         }
 
         public boolean online() {
@@ -473,7 +487,7 @@ public final class SocialModel {
         /** The same presence keeping {@code lastSeen} from {@code before} when this one has none. */
         public Presence keepingLastSeen(@Nullable Presence before) {
             if (lastSeen != null || before == null || before.lastSeen == null) return this;
-            return new Presence(id, state, dnd, where, host, before.lastSeen, avatar, avatarHash);
+            return new Presence(id, state, dnd, where, host, before.lastSeen, avatar, avatarHash, ver);
         }
     }
 

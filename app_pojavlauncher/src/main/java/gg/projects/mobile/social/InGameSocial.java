@@ -65,6 +65,10 @@ public final class InGameSocial implements PresenceConnection.Listener, GameWher
     private PresenceConnection mConnection;
     private boolean mLive;
     private boolean mDnd;
+    /** SOC9: the player's own status is invisible: the game's version is not sent. */
+    private boolean mInvisible;
+    /** Whether the last status sent was sent while invisible (a change sends it again, with or without the version). */
+    private boolean mSentInvisible;
     private boolean mStopped;
     /** The hub's clock minus the phone's (seconds). */
     private long mClockOffset;
@@ -138,15 +142,13 @@ public final class InGameSocial implements PresenceConnection.Listener, GameWher
     @MainThread
     private void sendStatus(GameActivity.Status status) {
         PresenceConnection connection = mConnection;
-        if (connection == null || !mLive || status.equals(mSent)) return;
-        JsonObject message = new JsonObject();
-        message.addProperty("t", "status");
-        message.addProperty("state", "playing");
-        if (status.where == GameActivity.Status.Where.SERVER && status.host != null) message.addProperty("host", status.host);
-        else if (status.where == GameActivity.Status.Where.SINGLEPLAYER) message.addProperty("singleplayer", true);
+        if (connection == null || !mLive || (status.equals(mSent) && mInvisible == mSentInvisible)) return;
+        // SOC9: the game's Minecraft version goes with it, never while the player is invisible.
+        JsonObject message = InGameRules.statusMessage(status, GameWhere.version(), mInvisible);
         if (connection.send(message)) {
             mSent = status;
-            Log.i(TAG, "game status sent: " + status);
+            mSentInvisible = mInvisible;
+            Log.i(TAG, "game status sent: " + status + (message.has("ver") ? " with the version" : ""));
         }
     }
 
@@ -169,6 +171,7 @@ public final class InGameSocial implements PresenceConnection.Listener, GameWher
                 mSent = null;
                 if (Json.has(message, "now")) mClockOffset = Json.num(message, "now", now) - now;
                 mDnd = "dnd".equals(Json.str(message, "status"));
+                mInvisible = SocialModel.Status.INVISIBLE.equals(Json.str(message, "status"));
                 // Calls already open are not news (shown quietly): only later ones are announced.
                 for (JsonObject wire : Json.objects(message, "calls")) {
                     SocialModel.Call call = SocialModel.Call.read(wire);
@@ -179,7 +182,12 @@ public final class InGameSocial implements PresenceConnection.Listener, GameWher
             }
             case "status": {
                 String status = Json.str(message, "status");
-                if (status != null) mDnd = "dnd".equals(status);
+                if (status != null) {
+                    mDnd = "dnd".equals(status);
+                    mInvisible = SocialModel.Status.INVISIBLE.equals(status);
+                    // SOC9: out of invisible the version goes again; into it, the status goes without one.
+                    sendStatus(GameWhere.status());
+                }
                 break;
             }
             case "request":

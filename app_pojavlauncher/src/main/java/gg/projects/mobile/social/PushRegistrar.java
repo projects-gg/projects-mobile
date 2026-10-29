@@ -63,6 +63,7 @@ public final class PushRegistrar {
                         service.api().deletePushDevice();
                         service.main().post(() -> {
                             prefs.setPushRegistered("");
+                            prefs.setPushTag(session, null);
                             done.run();
                         });
                     } catch (SocialProblem problem) {
@@ -100,13 +101,18 @@ public final class PushRegistrar {
         });
     }
 
-    /** {@code PUT /v1/push/device} unless the same registration was made today. */
+    /**
+     * {@code PUT /v1/push/device} unless the same registration was made today. SOC9: it always asks for the push tag
+     * ({@code "to": "tag"}) and keeps the answer's tag for this session ({@link PushTag}); the session's fingerprint and
+     * the closing {@code |tag} are in the record, so a new sign-in and the first start of this version register again.
+     */
     private static void register(final Context context, final SocialService service, final String session, final String user,
                                  final List<String> kinds, final String token, final Runnable done) {
         final SocialPrefs prefs = service.prefs();
         StringBuilder joined = new StringBuilder();
         for (String kind : kinds) joined.append(joined.length() == 0 ? "" : ",").append(kind);
-        final String record = user + "|" + sha256(token) + "|" + joined + "|" + (SocialService.nowSeconds() / 86400);
+        final String record = user + "|" + (session == null ? "" : PushTag.fingerprint(session)) + "|" + sha256(token) + "|"
+                + joined + "|" + (SocialService.nowSeconds() / 86400) + "|tag";
         if (record.equals(prefs.pushRegistered()) || !user.equals(service.signedInId())) {
             done.run();
             return;
@@ -114,10 +120,22 @@ public final class PushRegistrar {
         service.io().execute(() -> {
             service.api().bind(session);
             try {
-                service.api().putPushDevice(token, context.getPackageName(), kinds);
+                String answered = null;
+                try {
+                    answered = Json.str(service.api().putPushDevice(token, context.getPackageName(), kinds, true), "to");
+                } catch (SocialProblem problem) {
+                    // SOC9: a service from before the tag refuses the unknown "to" (400): once more without it, and no tag.
+                    if (problem.status != 400) throw problem;
+                    Log.i(TAG, "push tag refused: registering without it");
+                    service.api().putPushDevice(token, context.getPackageName(), kinds, false);
+                }
+                final String tag = PushTag.valid(answered) ? answered : null;
                 service.main().post(() -> {
-                    if (user.equals(service.signedInId())) prefs.setPushRegistered(record);
-                    Log.i(TAG, "push registered: " + kinds);
+                    if (user.equals(service.signedInId()) && session != null && session.equals(service.token())) {
+                        prefs.setPushRegistered(record);
+                        prefs.setPushTag(session, tag);
+                    }
+                    Log.i(TAG, "push registered: " + kinds + (tag != null ? " (tag)" : " (id)"));
                     done.run();
                 });
             } catch (SocialProblem problem) {

@@ -22,6 +22,8 @@ public final class SocialPrefs {
     private static final String KEY_OFFER_DONE = "notify_offer_done";
     private static final String KEY_ENDED_CALLS = "ended_calls";
     private static final String KEY_PUSH_REGISTERED = "push_registered";
+    /** SOC9: the push tag of the last registration's answer, with its session's fingerprint ({@link PushTag#record}). */
+    private static final String KEY_PUSH_TAG = "push_tag";
     private static final String KEY_CREW_AUDIBLE = "crew_audible";
     private static final String KEY_CALLED_AT = "called_at";
     /** M19: the player's own crew call runs until then (seconds, this phone's clock); the game's process keeps it. */
@@ -217,13 +219,26 @@ public final class SocialPrefs {
         mPrefs.edit().putStringSet(KEY_ENDED_CALLS, next).apply();
     }
 
-    /** The last push registration this phone made: "<user>|<token hash>|<kinds>|<day>", or "". */
+    /** The last push registration this phone made: "<user>|<session fingerprint>|<token hash>|<kinds>|<day>|tag", or "". */
     public String pushRegistered() {
         return mPrefs.getString(KEY_PUSH_REGISTERED, "");
     }
 
     public void setPushRegistered(String value) {
         mPrefs.edit().putString(KEY_PUSH_REGISTERED, value).apply();
+    }
+
+    /** SOC9: the push tag this session's registration got back, or null (none yet, or another session's). */
+    @androidx.annotation.Nullable
+    public String pushTag(@androidx.annotation.Nullable String session) {
+        return PushTag.tagFor(mPrefs.getString(KEY_PUSH_TAG, ""), session);
+    }
+
+    /** SOC9: a registration's answer: its tag kept for this session, or none (an answer without one clears it). */
+    public void setPushTag(@androidx.annotation.Nullable String session, @androidx.annotation.Nullable String tag) {
+        String record = PushTag.record(session, tag);
+        if (record.isEmpty()) mPrefs.edit().remove(KEY_PUSH_TAG).apply();
+        else mPrefs.edit().putString(KEY_PUSH_TAG, record).apply();
     }
 
     /** When the player last called the crew from this phone (Unix seconds), for the 5-minute wait. */
@@ -264,7 +279,7 @@ public final class SocialPrefs {
 
     /** Signed out: the choices about other players go; the notification switches stay. */
     public void clearAccount() {
-        mPrefs.edit().remove(KEY_FAVOURITES).remove(KEY_ENDED_CALLS).remove(KEY_PUSH_REGISTERED)
+        mPrefs.edit().remove(KEY_FAVOURITES).remove(KEY_ENDED_CALLS).remove(KEY_PUSH_REGISTERED).remove(KEY_PUSH_TAG)
                 .remove(KEY_CREW_AUDIBLE).remove(KEY_CALLED_AT).remove(KEY_OWN_CALL_UNTIL)
                 .remove(KEY_MUTED_CONVERSATIONS).remove(KEY_CREW_NAMES).remove(KEY_PEOPLE_NAMES).apply();
     }

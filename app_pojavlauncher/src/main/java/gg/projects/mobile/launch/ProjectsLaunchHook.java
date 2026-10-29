@@ -192,6 +192,13 @@ public final class ProjectsLaunchHook {
      */
     public static void recordLaunch(Context context, MinecraftProfile profile, String versionId) {
         try {
+            // SOC9: friends see the Minecraft version this game runs: a loader version's vanilla id, never its name.
+            gg.projects.mobile.social.GameWhere.setVersion(
+                    gg.projects.mobile.social.GameVersion.vanilla(versionId, versionId == null ? null : inheritsFrom(versionId)));
+        } catch (RuntimeException e) {
+            Log.w(TAG, "game version not noted", e);
+        }
+        try {
             String profileKey = LauncherPreferences.DEFAULT_PREF.getString(LauncherPreferences.PREF_KEY_CURRENT_PROFILE, "");
             File gameDir = Tools.getGameDirPath(profile);
             List<String> sodium = SodiumFallback.sodiumJarNames(new File(gameDir, "mods"));

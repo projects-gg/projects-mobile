@@ -218,6 +218,16 @@ public final class SocialApi {
 
     @WorkerThread
     public JsonObject putPushDevice(String token, String app, List<String> kinds) throws SocialProblem {
+        return putPushDevice(token, app, kinds, false);
+    }
+
+    /**
+     * SOC9: {@code tag} asks for the push tag ({@code "to": "tag"}): the answer's {@code to} is then this session's tag,
+     * which the service's pushes carry instead of the Discord id ({@link PushTag}). Every registration states the whole
+     * of it: one without {@code to} ends the opt-in.
+     */
+    @WorkerThread
+    public JsonObject putPushDevice(String token, String app, List<String> kinds, boolean tag) throws SocialProblem {
         JsonObject body = new JsonObject();
         body.addProperty("token", token);
         body.addProperty("platform", "android");
@@ -225,6 +235,7 @@ public final class SocialApi {
         JsonArray list = new JsonArray();
         for (String kind : kinds) list.add(kind);
         body.add("kinds", list);
+        if (tag) body.addProperty("to", "tag");
         return require(send("PUT", "v1/push/device", body, true, false));
     }
 

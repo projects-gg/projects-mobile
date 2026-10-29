@@ -9,6 +9,7 @@ import java.util.Map;
 
 import gg.projects.mobile.social.SessionStore;
 import gg.projects.mobile.social.SocialDebug;
+import gg.projects.mobile.social.SocialPrefs;
 import gg.projects.mobile.social.SocialRoutes;
 
 /**
@@ -37,7 +38,9 @@ public final class CloudPush {
         SocialDebug debug = SocialDebug.read(app);
         SessionStore.Saved saved = new SessionStore(app, debug.override ? "session-debug.json" : "session.json").load();
         String signedIn = saved.token == null ? null : saved.userId;
-        CloudNotice.Decision decision = notice.decide(signedIn, System.currentTimeMillis() / 1000L);
+        // SOC9: "to" is this session's push tag, or the account's id.
+        String ownTag = saved.token == null ? null : new SocialPrefs(app).pushTag(saved.token);
+        CloudNotice.Decision decision = notice.decide(signedIn, ownTag, System.currentTimeMillis() / 1000L);
         switch (decision.action) {
             case SHOW:
                 Log.i(TAG, "cloud push shown: " + notice.event);

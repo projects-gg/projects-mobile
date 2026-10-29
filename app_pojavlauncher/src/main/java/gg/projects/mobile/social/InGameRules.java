@@ -2,6 +2,8 @@ package gg.projects.mobile.social;
 
 import androidx.annotation.Nullable;
 
+import com.google.gson.JsonObject;
+
 import java.util.Locale;
 
 /**
@@ -32,6 +34,21 @@ final class InGameRules {
                                 boolean wanted, boolean ended, long secondsLeft) {
         boolean news = seenWhere == null || !seenWhere.equals(where);
         return news && !quiet && !own && !dnd && wanted && !ended && secondsLeft > 0;
+    }
+
+    /**
+     * The game's {@code status} message: playing, where (a server's address, or a singleplayer world) and, SOC9, the
+     * Minecraft version ({@code ver}; {@link GameVersion}), which never goes while the player is invisible.
+     */
+    static JsonObject statusMessage(GameActivity.Status status, @Nullable String ver, boolean invisible) {
+        JsonObject message = new JsonObject();
+        message.addProperty("t", "status");
+        message.addProperty("state", "playing");
+        if (status.where == GameActivity.Status.Where.SERVER && status.host != null) message.addProperty("host", status.host);
+        else if (status.where == GameActivity.Status.Where.SINGLEPLAYER) message.addProperty("singleplayer", true);
+        String version = invisible ? null : GameVersion.wire(ver);
+        if (version != null) message.addProperty("ver", version);
+        return message;
     }
 
     /** Where a call is, as one word for "it moved": {@code projects|}, {@code other|mc.example.net}, an old kind. */

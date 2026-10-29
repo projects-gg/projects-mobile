@@ -30,7 +30,7 @@ public final class CloudNotice {
     public final long at;
     @Nullable
     public final String tag;
-    /** The recipient's Discord id (pushes only). */
+    /** The recipient (pushes only): the Discord id, or (SOC9) the push tag of the session the phone registered with. */
     @Nullable
     public final String to;
     /**
@@ -159,7 +159,17 @@ public final class CloudNotice {
      * takes the approval's notification away.
      */
     public Decision decide(@Nullable String signedIn, long now) {
-        if (to != null && (signedIn == null || !to.equals(signedIn))) return new Decision(Action.DROP, "another account");
+        return decide(signedIn, null, now);
+    }
+
+    /**
+     * SOC9: {@code ownTag} is the push tag this session's registration got back (null: none); a push's {@code to} may be
+     * that tag or the account's id ({@link gg.projects.mobile.social.PushTag#addressedTo}).
+     */
+    public Decision decide(@Nullable String signedIn, @Nullable String ownTag, long now) {
+        if (to != null && !gg.projects.mobile.social.PushTag.addressedTo(to, signedIn, ownTag)) {
+            return new Decision(Action.DROP, "another account");
+        }
         if ("approval_closed".equals(event)) return new Decision(Action.CANCEL, "closed");
         if ("approval".equals(event)) {
             long expires = number("expires", 0);

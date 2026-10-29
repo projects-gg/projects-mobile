@@ -50,23 +50,25 @@ public final class SocialUi {
         Tools.swapFragment(from.requireActivity(), screen, tag, args);
     }
 
-    /** Where a friend or crewmate is, in a few words. */
+    /** Where a friend or crewmate is, in a few words; SOC9: in the game with the version after it ("Projects'te · 1.21.4"). */
     public static String presenceText(Context context, Presence presence) {
-        if (presence.playing()) {
-            if (presence.onProjects()) return context.getString(R.string.projects_social_on_projects);
-            if ("singleplayer".equals(presence.where)) return context.getString(R.string.projects_social_presence_singleplayer);
-            if ("other".equals(presence.where)) {
-                return presence.host != null && !presence.host.isEmpty()
-                        ? context.getString(R.string.projects_social_presence_other_host, presence.host)
-                        : context.getString(R.string.projects_social_presence_other);
-            }
-            return context.getString(R.string.projects_social_presence_playing);
-        }
+        if (presence.playing()) return presence.withVersion(playingPlace(context, presence));
         if (presence.online()) {
             return context.getString(presence.dnd ? R.string.projects_social_presence_dnd : R.string.projects_social_presence_launcher);
         }
         String seen = lastSeenText(context, presence.lastSeen);
         return seen != null ? seen : context.getString(R.string.projects_social_presence_offline);
+    }
+
+    private static String playingPlace(Context context, Presence presence) {
+        if (presence.onProjects()) return context.getString(R.string.projects_social_on_projects);
+        if ("singleplayer".equals(presence.where)) return context.getString(R.string.projects_social_presence_singleplayer);
+        if ("other".equals(presence.where)) {
+            return presence.host != null && !presence.host.isEmpty()
+                    ? context.getString(R.string.projects_social_presence_other_host, presence.host)
+                    : context.getString(R.string.projects_social_presence_other);
+        }
+        return context.getString(R.string.projects_social_presence_playing);
     }
 
     @Nullable

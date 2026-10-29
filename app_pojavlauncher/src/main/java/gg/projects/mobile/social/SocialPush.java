@@ -61,7 +61,10 @@ public final class SocialPush {
         if (prefs.wantsCallsLocally()) wanted.add(PushMessage.CALL);
         if (prefs.wantsMessages()) wanted.add(PushMessage.MESSAGE);
         Set<String> muted = prefs.mutedConversations(now);
-        PushMessage.Decision decision = message.decide(signedIn, now, prefs.endedCalls(now), wanted, prefs.crewAudible(now), muted);
+        // SOC9: "to" is this session's push tag, or the account's id.
+        String ownTag = saved.token == null ? null : prefs.pushTag(saved.token);
+        PushMessage.Decision decision = message.decide(signedIn, ownTag, now, prefs.endedCalls(now), wanted, prefs.crewAudible(now),
+                muted);
         switch (decision.action) {
             case SHOW:
                 Log.i(TAG, "push shown: " + message.type);
@@ -75,7 +78,7 @@ public final class SocialPush {
                 } else if (PushMessage.MESSAGE.equals(message.type)) {
                     // Over the game it stays in the shade, without a heads-up.
                     boolean silent = SocialRoutes.gameRunning(app);
-                    SocialNotifications.showMessage(app, message.conv, message.name, silent);
+                    SocialNotifications.showMessage(app, message.conversation(signedIn), message.name, silent);
                 }
                 break;
             case CANCEL:

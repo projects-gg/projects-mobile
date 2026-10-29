@@ -17,6 +17,9 @@ import java.util.Set;
  *
  * <p>M20: {@code message} (a direct message; never its text: "Ayşe sana mesaj gönderdi"), and a
  * call's {@code where}, {@code host} and {@code crews}.
+ *
+ * <p>SOC9: {@code to} is this session's push tag once the phone asked for one ({@link PushTag}), or the
+ * Discord id (an older service, or one without its key); {@link #decide} takes either.
  */
 public final class PushMessage {
     public static final String REQUEST = "request";
@@ -26,6 +29,7 @@ public final class PushMessage {
     public static final String MESSAGE = "message";
 
     public final String type;
+    /** The recipient: the Discord id, or (SOC9) the push tag of the session the phone registered with. */
     public final String to;
     /** The other player: the sender of a request, invite or message, the caller. */
     public final String sender;
@@ -45,7 +49,7 @@ public final class PushMessage {
     public final String where;
     @Nullable
     public final String host;
-    /** Message: its conversation ({@code d:<id>:<id>}). */
+    /** Message: its conversation ({@code d:<id>:<id>}); null when a tagged push left it out ({@link #conversation}). */
     @Nullable
     public final String conv;
     /** Call: the crews it names (the player keeps those they are in). */
@@ -74,7 +78,7 @@ public final class PushMessage {
         if (data == null || !"1".equals(data.get("v"))) return null;
         String type = data.get("type");
         String to = data.get("to");
-        if (type == null || !SocialModel.isUserId(to)) return null;
+        if (type == null || (!SocialModel.isUserId(to) && !PushTag.valid(to))) return null;
         String name = clean(data.get("name"));
         List<String> none = Collections.emptyList();
         switch (type) {
@@ -121,10 +125,18 @@ public final class PushMessage {
             case MESSAGE: {
                 String sender = data.get("sender");
                 String conv = data.get("conv");
-                // Only direct messages push, and only between the two players of the conversation.
-                if (!SocialModel.isUserId(sender) || !ChatConv.isDirect(conv) || !sender.equals(ChatConv.other(conv, to))) {
-                    return null;
+                if (!SocialModel.isUserId(sender)) return null;
+                if (conv != null) {
+                    // Only direct messages push, and only between the two players of the conversation (with a tag in
+                    // "to", decide checks the signed-in player's side; the sender must be in it here already).
+                    if (!ChatConv.isDirect(conv) || ChatConv.other(conv, sender) == null) return null;
+                    if (SocialModel.isUserId(to) && !sender.equals(ChatConv.other(conv, to))) return null;
+                } else if (SocialModel.isUserId(to)) {
+                    if (sender.equals(to)) return null;
+                    conv = ChatConv.direct(to, sender);
                 }
+                // SOC9: a tagged push may leave conv out (it would name the recipient's id): conversation() makes it from
+                // the signed-in id and the sender.
                 return new PushMessage(type, to, sender, name, null, number(data.get("at")), 0, null, null, null, conv, none);
             }
             default:
@@ -170,6 +182,17 @@ public final class PushMessage {
             out.appendCodePoint(cp);
         }
         return out.toString().trim();
+    }
+
+    /**
+     * A message's conversation: as the push names it, or (SOC9: a tagged push may leave it out, since it would name the
+     * recipient's id) the signed-in player's direct conversation with the sender; null when there is none.
+     */
+    @Nullable
+    public String conversation(@Nullable String signedIn) {
+        if (conv != null) return conv;
+        if (!MESSAGE.equals(type) || signedIn == null || signedIn.equals(sender) || !SocialModel.isUserId(signedIn)) return null;
+        return ChatConv.direct(signedIn, sender);
     }
 
     /** The notification tag: a newer message of the same tag takes the older one's place. */
@@ -226,7 +249,16 @@ public final class PushMessage {
     /** @param mutedConversations conversations muted on this phone now: their messages notify nothing (the desktop's rule) */
     public Decision decide(@Nullable String signedIn, long nowSeconds, Set<String> endedCalls, Set<String> wanted,
                            boolean crewAudible, Set<String> mutedConversations) {
-        if (signedIn == null || !signedIn.equals(to)) return Decision.drop("not for the signed-in account");
+        return decide(signedIn, null, nowSeconds, endedCalls, wanted, crewAudible, mutedConversations);
+    }
+
+    /**
+     * SOC9: {@code ownTag} is the push tag this session's registration got back (null: none); a push is this phone's when
+     * its {@code to} is that tag or the signed-in account's id ({@link PushTag#addressedTo}).
+     */
+    public Decision decide(@Nullable String signedIn, @Nullable String ownTag, long nowSeconds, Set<String> endedCalls,
+                           Set<String> wanted, boolean crewAudible, Set<String> mutedConversations) {
+        if (!PushTag.addressedTo(to, signedIn, ownTag)) return Decision.drop("not for the signed-in account");
         switch (type) {
             case REQUEST:
                 if (!wanted.contains(REQUEST)) return Decision.drop("requests off");
@@ -242,12 +274,18 @@ public final class PushMessage {
                 return Decision.show((until - nowSeconds) * 1000L);
             case CALL_END:
                 return Decision.cancel();
-            case MESSAGE:
+            case MESSAGE: {
+                String conversation = conversation(signedIn);
+                // The conversation's other player sent it to the signed-in one (an extra check: "to" may be a tag).
+                if (conversation == null || !sender.equals(ChatConv.other(conversation, signedIn))) {
+                    return Decision.drop("not this account's conversation");
+                }
                 if (!wanted.contains(MESSAGE)) return Decision.drop("messages off");
                 // A message push lives a day at FCM: one far older than that is not news.
                 if (at > 0 && nowSeconds - at > 86_400) return Decision.drop("expired");
                 // "Sessize al" on a conversation: no notification at all; the unread count shows it in the app.
-                return mutedConversations.contains(conv) ? Decision.drop("conversation muted") : Decision.show(0);
+                return mutedConversations.contains(conversation) ? Decision.drop("conversation muted") : Decision.show(0);
+            }
             default:
                 return Decision.drop("unknown");
         }

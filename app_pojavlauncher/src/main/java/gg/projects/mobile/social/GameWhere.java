@@ -30,9 +30,22 @@ public final class GameWhere {
     @Nullable
     private static GameActivity sGame;
     private static volatile GameActivity.Status sStatus = GameActivity.Status.PLAYING;
+    /** SOC9: the Minecraft version this process's game runs (the vanilla id; {@link GameVersion}), or null. */
+    @Nullable
+    private static volatile String sVersion;
     @Nullable
     private static Listener sListener;
     private static boolean sStarted;
+
+    /** SOC9: the game about to start runs that Minecraft version (a loader version's vanilla id; null: not known). */
+    public static void setVersion(@Nullable String version) {
+        sVersion = GameVersion.wire(version);
+    }
+
+    @Nullable
+    public static String version() {
+        return sVersion;
+    }
 
     /** The game starts in this process: its log is followed from now on. */
     public static synchronized void start() {
