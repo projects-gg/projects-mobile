@@ -372,7 +372,7 @@
     <string name="projects_cloud_notice_summary">%1$s: bugün %2$d mesaj, %3$d anlaşma.</string>
     <string name="projects_cloud_notice_paused_staff">%1$s: AFK+ yetkililerce duraklatıldı.</string>
     <string name="projects_cloud_notice_paused_service">AFK+ bakımda; hesapların AFK\'da kalıyor.</string>
-    <string name="projects_cloud_notice_paused_outage">%1$s: AFK+ şu an yanıt veremiyor; hesap AFK\'da kalıyor.</string>
+    <string name="projects_cloud_notice_paused_outage">%1$s: AFK+ şu an cevap veremiyor. Hesap AFK\'da kalıyor.</string>
     <string name="projects_cloud_notice_incident">%1$s: uygunsuz mesajlar geldi; o oyuncuya artık cevap verilmiyor.</string>
     <string name="projects_cloud_notice_message">%1$s: yeni mesaj.</string>
     <plurals name="projects_cloud_notice_messages">
