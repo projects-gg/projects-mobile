@@ -108,10 +108,14 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
     private final Runnable mUndoEnd = this::undoEnded;
     /** Whether "Kontrol et" is the gold action now (not while a card's "Kaydet" is). */
     private boolean mCheckLoud = true;
-    /** The player said the typed text's money is the game's ("Bu oyun parası"); goes with a change of the text. */
-    private boolean mInGame;
-    /** The service asked whether the money is real ({@code question:rmt}): "Bu oyun parası" checks again at once. */
-    private boolean mServerAsked;
+    /** The text the player said is in-game money for ("Bu oyun parası"); another text asks again. */
+    @Nullable
+    private String mInGameText;
+    /** The text the service asked about ({@code question:rmt}): "Bu oyun parası" checks it again at once. */
+    @Nullable
+    private String mAskedText;
+    /** The field's text as last seen: an IME's commit reports a change that changes nothing. */
+    private String mLastTyped = "";
     @Nullable
     private Button mInGameButton;
 
@@ -327,9 +331,10 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
 
             @Override
             public void afterTextChanged(Editable s) {
+                String now = s.toString().trim();
+                if (now.equals(mLastTyped)) return;
+                mLastTyped = now;
                 mIntakeProblem = null;
-                mInGame = false;
-                mServerAsked = false;
                 refreshIntake();
             }
         });
@@ -341,9 +346,10 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
         box.addView(hint);
         // "Bu oyun parası" (TRADE-ANY decision 31): money that may be the game's is a question, never a refusal.
         Button inGame = CloudUi.textButton(c, getString(R.string.projects_money_in_game), v -> {
-            mInGame = true;
-            boolean again = mServerAsked;
-            mServerAsked = false;
+            String now = typedNow();
+            mInGameText = now;
+            boolean again = now.equals(mAskedText);
+            mAskedText = null;
             mIntakeProblem = null;
             Haptics.tick(v);
             refreshIntake();
@@ -417,7 +423,7 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
         } else if (mIntakeProblem != null) {
             line = mIntakeProblem;
             warning = true;
-        } else if (mServerAsked) {
+        } else if (serverAsked()) {
             line = getString(R.string.projects_money_question);
             asks = true;
         } else if (text.codePointCount(0, text.length()) >= 3) {
@@ -514,7 +520,7 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
         mChecking = true;
         mIntakeProblem = null;
         refreshIntake();
-        mService.checkOrder(a.id, text, lang(), mInGame, new CloudService.Result<PlusModel.Check>() {
+        mService.checkOrder(a.id, text, lang(), inGame(), new CloudService.Result<PlusModel.Check>() {
             @Override
             public void ok(PlusModel.Check answer) {
                 mChecking = false;
@@ -534,7 +540,7 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
                 mChecking = false;
                 if (!alive()) return;
                 if (problem.asksMoney()) {
-                    mServerAsked = true;
+                    mAskedText = text;
                     mIntakeProblem = null;
                 } else {
                     mIntakeProblem = checkProblem(problem);
@@ -551,7 +557,22 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
         String currency = doc == null || doc.server.moneyLabel == null ? null : doc.server.moneyLabel.in(lang());
         return new OrderRules.RuleContext()
                 .maxDeal(doc == null ? PlusModel.GENERIC_MAX_DEAL : doc.server.maxDeal).active(activeCount())
-                .orderMax(doc == null ? 10 : doc.rules.orderMax).currency(currency).inGame(mInGame);
+                .orderMax(doc == null ? 10 : doc.rules.orderMax).currency(currency).inGame(inGame());
+    }
+
+    private String typedNow() {
+        CloudUi.Field field = mField;
+        return field == null ? "" : field.value().trim();
+    }
+
+    /** "Bu oyun parası" was said for the text as it is now. */
+    private boolean inGame() {
+        return mInGameText != null && mInGameText.equals(typedNow());
+    }
+
+    /** The service asked about the text as it is now. */
+    private boolean serverAsked() {
+        return mAskedText != null && mAskedText.equals(typedNow());
     }
 
     private String checkProblem(CloudProblem p) {

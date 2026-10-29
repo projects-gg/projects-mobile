@@ -518,6 +518,8 @@
     <string name="projects_ads_every_120">2 hours</string>
     <string name="projects_ads_floor">On this server ads can go out %1$s at most.</string>
     <string name="projects_ads_next">Next ad</string>
+    <string name="projects_ads_next_at">Next ad at %1$s</string>
+    <string name="projects_ads_tomorrow">tomorrow</string>
     <string name="projects_ads_other">Another example</string>
     <string name="projects_ads_note">It words each ad a little differently so the server doesn\'t see spam, and posts less often after a warning.</string>
     <string name="projects_ads_empty">Ads are written from your active orders.</string>

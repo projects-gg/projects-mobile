@@ -508,6 +508,8 @@
     <string name="projects_ads_every_120">2 saat</string>
     <string name="projects_ads_floor">Bu sunucuda en sık %1$s bir ilan verilebilir.</string>
     <string name="projects_ads_next">Sıradaki ilan</string>
+    <string name="projects_ads_next_at">Sıradaki ilan %1$s</string>
+    <string name="projects_ads_tomorrow">yarın</string>
     <string name="projects_ads_other">Başka örnek</string>
     <string name="projects_ads_note">Sunucu spam saymasın diye her ilanı biraz farklı yazar, uyarı gelirse daha seyrek ilan verir.</string>
     <string name="projects_ads_empty">İlan, etkin siparişlerinden yazılır.</string>

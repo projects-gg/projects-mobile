@@ -300,6 +300,18 @@ public final class PlusConfig {
         else trade.addProperty("currency", name);
     }
 
+    /** Whether the document has {@code trade.currency} at all (null counts: it clears a name). */
+    public boolean currencySet() {
+        JsonObject trade = Json.obj(mDoc, "trade");
+        return trade != null && trade.has("currency");
+    }
+
+    /** No {@code trade.currency} key (a document that never had one stays as it was read). */
+    public void removeCurrency() {
+        JsonObject trade = Json.obj(mDoc, "trade");
+        if (trade != null) trade.remove("currency");
+    }
+
     // ---- fine-tuning ("İnce ayar") ----
 
     /** "Asistan ne yapsın?": {@code reply}, {@code ask} (default) or {@code deal}. */

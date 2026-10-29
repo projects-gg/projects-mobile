@@ -241,7 +241,8 @@ public final class PlusSetupFragment extends CloudScreen implements PlusEditors.
         later.setEnabled(!mStarting);
         later.setTextColor(CloudUi.color(c, R.color.projects_ash_300));
         bar.addView(later);
-        bar.addView(new View(c), CloudUi.weight(1f));
+        // A spacer with no height of its own (a bare View with WRAP_CONTENT takes all the height it is offered).
+        bar.addView(new View(c), new LinearLayout.LayoutParams(0, 0, 1f));
         boolean last = mStep == STEPS.length - 1;
         Button go = CloudUi.button(c, getString(last ? (mStarting ? R.string.projects_setup_starting : R.string.projects_setup_start)
                 : R.string.projects_setup_next), true, v -> {

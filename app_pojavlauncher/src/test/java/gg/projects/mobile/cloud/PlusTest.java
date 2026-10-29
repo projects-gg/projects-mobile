@@ -91,6 +91,7 @@ public class PlusTest {
         assertEquals("polite", fresh.preset());
         assertTrue(fresh.playerTalk());
         assertNull(fresh.currency());
+        assertFalse(fresh.currencySet());
         assertNull(fresh.adEveryMin());
         JsonObject untouched = fresh.settingsJson();
         // Read, never made: no currency, no interval; the Worker's ready goes back as it came.
@@ -110,6 +111,11 @@ public class PlusTest {
         fresh.setCurrency(null);
         assertTrue(fresh.settingsJson().getAsJsonObject("trade").get("currency").isJsonNull());
         assertNull(fresh.currency());
+        assertTrue(fresh.currencySet());
+        // A name typed and emptied again over a document without one: no key, as it was read.
+        fresh.removeCurrency();
+        assertFalse(fresh.currencySet());
+        assertFalse(fresh.settingsJson().getAsJsonObject("trade").has("currency"));
         fresh.setCurrency("coin2");
         fresh.setAdEveryMin(50);
         assertEquals("[trade.currency:text, discovery.adEveryMin:range]", problems(check(fresh)));

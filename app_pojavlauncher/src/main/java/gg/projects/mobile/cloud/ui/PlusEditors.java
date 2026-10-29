@@ -490,7 +490,6 @@ final class PlusEditors {
         final PlusConfig e = h.edit();
         CloudModel.PlusDoc doc = h.doc();
         if (doc != null && doc.server.moneyFixed && doc.server.moneyLabel != null) {
-            box.addView(CloudRowSheet.label(c, c.getString(R.string.projects_currency_label)));
             LinearLayout group = CloudUi.group(c);
             group.addView(CloudUi.figureRow(c, c.getString(R.string.projects_currency_label), doc.server.moneyLabel.in(CloudWords.lang(c))).view);
             box.addView(group);
@@ -509,7 +508,7 @@ final class PlusEditors {
             String typed = s.trim();
             if (typed.isEmpty()) {
                 // Empty clears a stored name (null); a document without one stays without the key.
-                if (original != null && original.currency() == null) e.setCurrency(null);
+                if (original != null && !original.currencySet()) e.removeCurrency();
                 else e.setCurrency(null);
                 field.setError(null);
                 field.setHelp(c.getString(R.string.projects_currency_help));
@@ -693,7 +692,8 @@ final class PlusEditors {
                         new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
             } else {
                 String next = c.getString(R.string.projects_ads_next);
-                if (preview.nextAt != null) next = next + " " + CloudWords.at(c, preview.nextAt, now);
+                if (preview.stoppedToday) next = next + " " + c.getString(R.string.projects_ads_tomorrow);
+                else if (preview.nextAt != null) next = c.getString(R.string.projects_ads_next_at, CloudWords.at(c, preview.nextAt, now));
                 content.addView(CloudRowSheet.label(c, next));
                 final TextView line = chatLine(c, preview.lines.get(0));
                 content.addView(line, CloudUi.matchWrap());
@@ -709,7 +709,7 @@ final class PlusEditors {
                     }), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
                 }
             }
-            content.addView(CloudUi.note(c, c.getString(R.string.projects_ads_note)));
+            if (!preview.stoppedToday && preview.warningAt == null) content.addView(CloudUi.note(c, c.getString(R.string.projects_ads_note)));
         }
         LinearLayout box = advanced(content, h, drawn, CHAT, openAdvanced);
         LinearLayout look = CloudUi.group(c);
