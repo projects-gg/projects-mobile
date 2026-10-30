@@ -75,6 +75,20 @@
         android:icon="@drawable/projects_pref_vibrate"
         />
 
+    <!-- APK-UPD: the app's own updates (gg.projects.mobile.update.AppUpdates): the day's check when the home screen
+         opens, and a check now (its summary is the version). Hidden in builds without the updater (Play). -->
+    <androidx.preference.SwitchPreferenceCompat
+        android:key="projects_update_check"
+        android:title="@string/projects_update_auto_title"
+        android:defaultValue="true"
+        android:icon="@drawable/projects_pref_update"
+        />
+    <Preference
+        android:key="projects_update_now"
+        android:title="@string/projects_update_now_title"
+        android:icon="@drawable/projects_pref_update_now"
+        />
+
     <Preference
         android:title="@string/preference_ask_for_notification_title"
         android:summary="@string/preference_ask_for_notification_description"

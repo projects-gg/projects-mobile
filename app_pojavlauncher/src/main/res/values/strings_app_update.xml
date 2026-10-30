@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- APK-UPD: the app's own updates (gg.projects.mobile.update): the home card's update block, its sentences when a
+     try stops, the two settings rows and the notification after an update. Short, sentence case, one thing per
+     sentence. The card's three buttons are the owner's words (30 October 2026). -->
+<resources>
+    <string name="projects_update_title">Update available</string>
+    <!-- %1$s the version ("0.4.6"), %2$d the download in MB. -->
+    <string name="projects_update_meta">Version %1$s, %2$d MB</string>
+    <string name="projects_update_action">Update</string>
+    <!-- Hides the card for 2 hours. -->
+    <string name="projects_update_close">Close</string>
+    <!-- Hides the card for 7 days. -->
+    <string name="projects_update_remind">Remind me in 7 days</string>
+    <string name="projects_update_stop">Stop</string>
+    <string name="projects_update_downloading">Downloading the update</string>
+    <string name="projects_update_percent">%1$d%%</string>
+    <string name="projects_update_checking">Checking the update</string>
+    <string name="projects_update_installing">Installing the update</string>
+    <string name="projects_update_installing_body">The app closes when it is installed. Then open it again.</string>
+    <string name="projects_update_error_network">The update could not be downloaded. Check your internet connection and try again.</string>
+    <string name="projects_update_error_space">Your phone is out of space. Free some up and try again.</string>
+    <string name="projects_update_error_corrupt">The download was damaged. Try again.</string>
+    <string name="projects_update_error_foreign">This file is not from Projects, so it was not installed.</string>
+    <string name="projects_update_error_game">Close the game first, then update.</string>
+    <string name="projects_update_error_blocked">Your phone blocked this install.</string>
+    <string name="projects_update_error_incompatible">This version does not work on your phone.</string>
+    <string name="projects_update_error_failed">Android could not install the update. Try again.</string>
+    <string name="projects_update_error_later">The update cannot be downloaded right now. Try again later.</string>
+    <string name="projects_update_auto_title">Check for updates automatically</string>
+    <string name="projects_update_now_title">Check for updates</string>
+    <string name="projects_update_now_summary">Version %1$s</string>
+    <string name="projects_update_now_checking">Checking</string>
+    <string name="projects_update_now_latest">You are on the latest version.</string>
+    <string name="projects_update_now_found">Version %1$s is out. Update it from the home screen.</string>
+    <!-- %1$s the app's name. -->
+    <string name="projects_update_done_title">%1$s was updated</string>
+    <string name="projects_update_done_body">Tap to open.</string>
+</resources>

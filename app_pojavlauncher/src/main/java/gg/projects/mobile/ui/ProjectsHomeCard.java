@@ -301,6 +301,8 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
     private final Button mEventJoin;
     @Nullable
     private final UndoBar mUndoBar;
+    /** APK-UPD: the app's own update. */
+    private final UpdateCard mUpdateCard;
     /** M17: what the key fix would change now, while the card offers it (null: no offer). */
     @Nullable
     private List<KeyFix.Change> mKeyFixPlan;
@@ -485,6 +487,7 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         mEventMore.setOnClickListener(v -> showOtherEvents());
         // The small "+N etkinlik" pill gets a full-size touch area without growing the card.
         mEvent.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> updateMoreTouchArea());
+        mUpdateCard = new UpdateCard(fragment, root, mSceneRoot);
     }
 
     /** Extends the "+N etkinlik" pill's touch area to the 48 dp minimum within the event block. */
@@ -511,6 +514,8 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         NewsSeenStore.addListener(mSeenChanged);
         ProjectsContent.addListener(this);
         ProjectsContent.refresh(mFragment.requireContext(), false);
+        // APK-UPD: the update block from the kept channel file, and the day's check when it is due.
+        mUpdateCard.onResume();
         LauncherPreferences.DEFAULT_PREF.registerOnSharedPreferenceChangeListener(mProfileChanged);
         setJoining(ProjectsJoin.isBusy());
         // A reminder whose moment came while notifications were off is told now.
@@ -550,6 +555,7 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         LauncherPreferences.DEFAULT_PREF.unregisterOnSharedPreferenceChangeListener(mProfileChanged);
         NewsSeenStore.removeListener(mSeenChanged);
         ProjectsContent.removeListener(this);
+        mUpdateCard.onPause();
         mJoinButton.removeCallbacks(mBusyWatcher);
         mJoinButton.removeCallbacks(mShowJoining);
         mEvent.removeCallbacks(mTick);

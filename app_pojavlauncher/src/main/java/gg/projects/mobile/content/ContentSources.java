@@ -24,24 +24,31 @@ public final class ContentSources {
     public final String feedTestKey;
     /** True when a debug override is in use (the caches then live in their own folders). */
     public final boolean override;
+    /** APK-UPD: mirror bases for the Android release channel (debug only); empty: the content mirrors. */
+    public final List<String> updateMirrors;
+    /** APK-UPD: one minisign public key trusted for the Android channel (debug only), or null. */
+    public final String updateTestKey;
 
     private ContentSources(List<String> mirrors, List<String> trustedKeys, List<String> feedMirrors,
-                           String feedTestKey, boolean override) {
+                           String feedTestKey, boolean override, List<String> updateMirrors, String updateTestKey) {
         this.mirrors = Collections.unmodifiableList(mirrors);
         this.trustedKeys = Collections.unmodifiableList(trustedKeys);
         this.feedMirrors = Collections.unmodifiableList(feedMirrors);
         this.feedTestKey = feedTestKey;
         this.override = override;
+        this.updateMirrors = Collections.unmodifiableList(updateMirrors);
+        this.updateTestKey = updateTestKey;
     }
 
     public static ContentSources production() {
         return new ContentSources(new ArrayList<>(ContentConfig.MIRRORS), new ArrayList<>(ContentConfig.TRUSTED_KEYS),
-                new ArrayList<String>(), null, false);
+                new ArrayList<String>(), null, false, new ArrayList<String>(), null);
     }
 
     /**
      * {@code projects-debug.json}: {@code {"mirrors": ["http://10.0.2.2:8789/v1/"], "testKey": "<base64>",
-     * "feedMirrors": ["http://10.0.2.2:8790/v1/"], "feedTestKey": "<base64>"}}; every field optional.
+     * "feedMirrors": ["http://10.0.2.2:8790/v1/"], "feedTestKey": "<base64>",
+     * "updateMirrors": ["http://10.0.2.2:8791/v1/"], "updateTestKey": "<minisign key line>"}}; every field optional.
      */
     @Keep
     static final class DebugFile {
@@ -49,6 +56,8 @@ public final class ContentSources {
         String testKey;
         List<String> feedMirrors;
         String feedTestKey;
+        List<String> updateMirrors;
+        String updateTestKey;
     }
 
     /** Production sources with a debug override applied; fails on a malformed override. */
@@ -66,7 +75,16 @@ public final class ContentSources {
             IndexVerifier.decodePublicKey(file.feedTestKey.trim());
             feedKey = file.feedTestKey.trim();
         }
-        return new ContentSources(mirrors, keys, bases(file.feedMirrors), feedKey, true);
+        String updateKey = null;
+        if (file.updateTestKey != null && !file.updateTestKey.trim().isEmpty()) {
+            try {
+                gg.projects.mobile.update.Minisign.publicKey(file.updateTestKey.trim());
+            } catch (gg.projects.mobile.update.UpdateException e) {
+                throw new ContentException(ContentException.Kind.INVALID, "updateTestKey is not a minisign public key");
+            }
+            updateKey = file.updateTestKey.trim();
+        }
+        return new ContentSources(mirrors, keys, bases(file.feedMirrors), feedKey, true, bases(file.updateMirrors), updateKey);
     }
 
     /** {@code http://} or {@code https://} bases, each ending in {@code /}. */

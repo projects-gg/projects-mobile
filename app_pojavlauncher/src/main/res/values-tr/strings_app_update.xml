@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- APK-UPD: uygulamanın kendi güncellemeleri. Kartın üç düğmesi sahibinin sözleri (30 Ekim 2026). -->
+<resources>
+    <string name="projects_update_title">Güncelleme var</string>
+    <string name="projects_update_meta">Sürüm %1$s, %2$d MB</string>
+    <string name="projects_update_action">Güncelle</string>
+    <string name="projects_update_close">Kapat</string>
+    <string name="projects_update_remind">7 gün sonra hatırlat</string>
+    <string name="projects_update_stop">Durdur</string>
+    <string name="projects_update_downloading">Güncelleme indiriliyor</string>
+    <string name="projects_update_percent">%%%1$d</string>
+    <string name="projects_update_checking">Güncelleme denetleniyor</string>
+    <string name="projects_update_installing">Güncelleme kuruluyor</string>
+    <string name="projects_update_installing_body">Kurulunca uygulama kapanır, sonra yeniden aç.</string>
+    <string name="projects_update_error_network">Güncelleme indirilemedi. İnternet bağlantını kontrol edip tekrar dene.</string>
+    <string name="projects_update_error_space">Telefonda yer kalmadı. Biraz yer açıp tekrar dene.</string>
+    <string name="projects_update_error_corrupt">İndirilen dosya bozuk çıktı. Tekrar dene.</string>
+    <string name="projects_update_error_foreign">Bu dosya Projects\'ten gelmiyor, kurulmadı.</string>
+    <string name="projects_update_error_game">Güncellemek için önce oyunu kapat.</string>
+    <string name="projects_update_error_blocked">Telefonun bu kurulumu engelledi.</string>
+    <string name="projects_update_error_incompatible">Bu sürüm telefonunla uyumlu değil.</string>
+    <string name="projects_update_error_failed">Android güncellemeyi kuramadı. Tekrar dene.</string>
+    <string name="projects_update_error_later">Güncelleme şu an indirilemiyor. Sonra tekrar dene.</string>
+    <string name="projects_update_auto_title">Güncellemeleri otomatik denetle</string>
+    <string name="projects_update_now_title">Güncellemeleri denetle</string>
+    <string name="projects_update_now_summary">Sürüm %1$s</string>
+    <string name="projects_update_now_checking">Denetleniyor</string>
+    <string name="projects_update_now_latest">En yeni sürümü kullanıyorsun.</string>
+    <string name="projects_update_now_found">%1$s sürümü çıktı. Ana ekrandan güncelleyebilirsin.</string>
+    <string name="projects_update_done_title">%1$s güncellendi</string>
+    <string name="projects_update_done_body">Açmak için dokun.</string>
+</resources>

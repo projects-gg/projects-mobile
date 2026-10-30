@@ -123,6 +123,12 @@ public final class ProjectsContent {
         return sFeedRepository;
     }
 
+    /** APK-UPD: the mirrors and keys this build uses, with the debug override (the Android channel reads them too). */
+    public static synchronized ContentSources contentSources(Context context) {
+        repository(context);
+        return sSources;
+    }
+
     /** The feed settings of {@code snapshot}'s config (with the debug override), or null while the feed is off. */
     @Nullable
     private static FeedSettings feedSettings(Snapshot snapshot) {

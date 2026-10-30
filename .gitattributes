@@ -9,3 +9,5 @@ app_pojavlauncher/src/test/resources/social/text-vectors.json -text
 app_pojavlauncher/src/test/resources/cloud/** -text
 # FEAT-M: the item-picture library's build script runs in bash (Git Bash on Windows too): LF on every checkout
 app_pojavlauncher/src/main/rust/plitems/build.sh text eol=lf
+# APK-UPD: the Android channel fixtures were signed by the real tauri signer with a throwaway key: exact bytes
+app_pojavlauncher/src/test/resources/update/** -text

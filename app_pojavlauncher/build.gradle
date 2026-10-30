@@ -143,6 +143,8 @@ android {
         targetSdkVersion 34
         versionCode projectsVersionCode
         versionName getProjectsVersionName()
+        // APK-UPD: the app's own updater (gg.projects.mobile.update); off in the Play build.
+        buildConfigField 'boolean', 'PROJECTS_UPDATER', 'true'
         multiDexEnabled true //important
         resValue 'string', 'curseforge_api_key', getCFApiKey()
         externalNativeBuild {
@@ -210,6 +212,9 @@ android {
             // Google Play: sign the bundle with the upload key (same PROJECTS_* variables).
             initWith release
             matchingFallbacks = [ 'release' ]
+            // APK-UPD: Play forbids an app updating itself any other way: no updater, no install permissions
+            // (src/gplay/AndroidManifest.xml removes them).
+            buildConfigField 'boolean', 'PROJECTS_UPDATER', 'false'
         }
     }
 
@@ -256,6 +261,20 @@ android {
 
     lint {
         abortOnError false
+    }
+}
+
+// APK-UPD: a debug build may carry another version (-PprojectsDebugVersionCode=23 -PprojectsDebugVersionName=0.4.7)
+// so the in-app updater can be tried end to end with a second APK on an emulator. Release and Play builds always
+// take projectsVersionCode and projectsVersionName.
+androidComponents {
+    onVariants(selector().withBuildType('debug')) { variant ->
+        def code = project.findProperty('projectsDebugVersionCode')
+        def name = project.findProperty('projectsDebugVersionName')
+        variant.outputs.each { output ->
+            if (code != null) output.versionCode.set((code as String).toInteger())
+            if (name != null) output.versionName.set(name as String)
+        }
     }
 }
 

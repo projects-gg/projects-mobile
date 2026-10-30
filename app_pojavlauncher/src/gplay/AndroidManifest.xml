@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- APK-UPD: the Play build has no updater of its own (Play forbids an app updating itself another way and
+     allows REQUEST_INSTALL_PACKAGES only to apps whose job is installing): the permissions and the receiver go. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission
+        android:name="android.permission.REQUEST_INSTALL_PACKAGES"
+        tools:node="remove" />
+    <uses-permission
+        android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION"
+        tools:node="remove" />
+
+    <application>
+        <receiver
+            android:name="gg.projects.mobile.update.UpdateReceiver"
+            tools:node="remove" />
+    </application>
+</manifest>

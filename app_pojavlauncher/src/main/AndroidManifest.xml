@@ -29,6 +29,10 @@
     <!-- Projects fork: event reminders set their alarm again after a restart, exact where Android allows it. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <!-- APK-UPD: the app installs its own updates (gg.projects.mobile.update); Android 12+ may let it update itself
+         without asking. The Play build removes both (src/gplay/AndroidManifest.xml). -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
     <meta-data android:name="android.game_mode_config"
         android:resource="@xml/game_mode_config" />
     <application
@@ -220,6 +224,15 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
                 <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- APK-UPD: the install session's answers (an explicit intent Android fills in) and the app's replacement. -->
+        <receiver
+            android:name="gg.projects.mobile.update.UpdateReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
     </application>

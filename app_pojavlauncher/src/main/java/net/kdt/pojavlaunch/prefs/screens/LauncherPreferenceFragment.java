@@ -95,6 +95,38 @@ public class LauncherPreferenceFragment extends PreferenceFragmentCompat impleme
         setupNotificationRequestPreference();
         setupLanguagePreference();
         setupTools();
+        setupUpdates();
+    }
+
+    /**
+     * APK-UPD: "Güncellemeleri otomatik denetle" (a plain switch, read when the home screen opens) and
+     * "Güncellemeleri denetle": the channel asked now; it says the result in a toast (an update shows on the home
+     * screen). Both only in builds with the updater.
+     */
+    private void setupUpdates() {
+        Preference auto = requirePreference(gg.projects.mobile.update.AppUpdates.KEY_AUTO_CHECK);
+        final Preference now = requirePreference("projects_update_now");
+        boolean available = gg.projects.mobile.update.AppUpdates.available(requireContext());
+        auto.setVisible(available);
+        now.setVisible(available);
+        now.setSummary(getString(R.string.projects_update_now_summary, net.kdt.pojavlaunch.BuildConfig.VERSION_NAME));
+        now.setOnPreferenceClickListener(preference -> {
+            now.setEnabled(false);
+            now.setSummary(R.string.projects_update_now_checking);
+            gg.projects.mobile.update.AppUpdates.checkNow(requireContext(), (update, error) -> {
+                now.setEnabled(true);
+                now.setSummary(getContext() == null ? "" : getString(R.string.projects_update_now_summary,
+                        net.kdt.pojavlaunch.BuildConfig.VERSION_NAME));
+                if (!isAdded()) return;
+                int failure = error == null ? 0 : gg.projects.mobile.ui.UpdateCard.errorText(error);
+                String text;
+                if (update != null) text = getString(R.string.projects_update_now_found, update.versionName);
+                else if (failure != 0) text = getString(failure);
+                else text = getString(R.string.projects_update_now_latest);
+                android.widget.Toast.makeText(requireContext(), text, android.widget.Toast.LENGTH_LONG).show();
+            });
+            return true;
+        });
     }
 
     /**
