@@ -210,6 +210,21 @@ public class CloudModelTest {
         List<CloudModel.InboxThread> threads = CloudModel.InboxThread.list(Vectors.json(Vectors.resource("cloud/fixtures/inbox.json")), "threads");
         assertEquals(3, threads.size());
         assertEquals("handoff", threads.get(1).state);
+        // "Seni bekleyenler": the last word theirs and unread waits; the player's own, the bot's or a read one does not.
+        assertTrue(threads.get(0).waitsForAnswer());
+        assertFalse(threads.get(1).waitsForAnswer());
+        assertFalse(threads.get(2).waitsForAnswer());
+        assertEquals(1, CloudModel.InboxThread.waiting(threads));
+        List<CloudModel.InboxThread> others = CloudModel.InboxThread.list(Vectors.json("{\"threads\":["
+                + "{\"name\":\"spamci_99\",\"last\":{\"from\":\"them\",\"text\":\"a\"},\"unread\":3,\"state\":\"blocked\"},"
+                + "{\"name\":\"buzdag_x\",\"last\":{\"from\":\"them\",\"text\":\"b\"},\"unread\":0,\"state\":\"active\"},"
+                + "{\"name\":\"lavci_42\",\"last\":{\"from\":\"them\",\"text\":\"c\"},\"unread\":1,\"state\":\"handoff\"}]}"), "threads");
+        assertFalse(others.get(0).waitsForAnswer());
+        assertFalse(others.get(1).waitsForAnswer());
+        // A conversation the player took over still waits for their answer.
+        assertTrue(others.get(2).waitsForAnswer());
+        assertEquals(1, CloudModel.InboxThread.waiting(others));
+        assertEquals(0, CloudModel.InboxThread.waiting(new java.util.ArrayList<>()));
         CloudModel.InboxPage page = CloudModel.InboxPage.read(Vectors.json(Vectors.resource("cloud/fixtures/thread.json")));
         assertTrue(page.canReply);
         assertTrue(page.lines.get(4).hidden);

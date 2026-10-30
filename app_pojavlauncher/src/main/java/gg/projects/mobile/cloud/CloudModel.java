@@ -1336,6 +1336,18 @@ public final class CloudModel {
             handoffUntil = Json.numOrNull(o, "handoffUntil");
         }
 
+        /** Who wrote last and was not read yet, unblocked: their answer waits for the player (the site's rule). */
+        public boolean waitsForAnswer() {
+            return unread > 0 && !"blocked".equals(state) && "them".equals(lastFrom);
+        }
+
+        /** The conversations whose answer waits ("Seni bekleyenler" counts them beside the decisions, as it lists them). */
+        public static int waiting(List<InboxThread> threads) {
+            int n = 0;
+            for (InboxThread t : threads) if (t.waitsForAnswer()) n++;
+            return n;
+        }
+
         public static List<InboxThread> list(@Nullable JsonObject o, String key) {
             List<InboxThread> out = new ArrayList<>();
             for (JsonObject t : Json.objects(o, key)) if (Json.str(t, "name") != null) out.add(new InboxThread(t));

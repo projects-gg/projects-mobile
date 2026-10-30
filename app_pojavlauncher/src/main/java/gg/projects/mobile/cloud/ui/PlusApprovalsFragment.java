@@ -129,12 +129,10 @@ public final class PlusApprovalsFragment extends CloudScreen implements CloudSer
         });
     }
 
-    /** Who wrote last and was not read yet, unblocked: their answer waits for the player (the site's rule). */
+    /** The conversations whose answer waits for the player, by the rule the counts use ({@code waitsForAnswer}). */
     private List<CloudModel.InboxThread> toAnswer() {
         List<CloudModel.InboxThread> out = new ArrayList<>();
-        for (CloudModel.InboxThread t : mThreads) {
-            if (t.unread > 0 && !"blocked".equals(t.state) && "them".equals(t.lastFrom)) out.add(t);
-        }
+        for (CloudModel.InboxThread t : mThreads) if (t.waitsForAnswer()) out.add(t);
         return out;
     }
 
