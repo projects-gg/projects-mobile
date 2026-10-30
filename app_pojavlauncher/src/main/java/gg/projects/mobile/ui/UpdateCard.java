@@ -68,6 +68,10 @@ public final class UpdateCard implements AppUpdates.Listener {
         mLater = root.findViewById(R.id.projects_update_later);
         Context context = root.getContext();
         CloudUi.warnMark(mError, true);
+        // The quiet words carry no start padding: the gap is the room after the frame and between the rows.
+        if (mActions instanceof gg.projects.mobile.social.ui.WrapLayout) {
+            ((gg.projects.mobile.social.ui.WrapLayout) mActions).setGap(Math.round(12 * context.getResources().getDisplayMetrics().density));
+        }
         mGo.setBackground(ChamferDrawable.outlined(context));
         Press.attach(mGo, Press.Style.BUTTON);
         Press.attach(mClose, Press.Style.BUTTON);

@@ -220,13 +220,15 @@
             tools:text="İnternete bağlanamadı. Sonra tekrar dene."
             tools:visibility="visible" />
 
+        <!-- The frame starts on the title's line; the quiet words have no start padding, so a row that wraps
+             ("7 gün sonra hatırlat" at 360 dp or big text) starts on that line too (UpdateCard sets the 12 dp gap). -->
         <gg.projects.mobile.social.ui.WrapLayout
             android:id="@+id/projects_update_actions"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="24dp"
-            android:layout_marginTop="6dp"
-            android:layout_marginEnd="8dp">
+            android:layout_marginStart="30dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="12dp">
 
             <Button
                 android:id="@+id/projects_update_go"
@@ -250,7 +252,7 @@
                 android:fontFamily="@font/figtree_semibold"
                 android:minWidth="0dp"
                 android:minHeight="44dp"
-                android:paddingStart="12dp"
+                android:paddingStart="0dp"
                 android:paddingEnd="12dp"
                 android:text="@string/projects_update_close"
                 android:textAllCaps="false"
@@ -265,7 +267,7 @@
                 android:fontFamily="@font/figtree_semibold"
                 android:minWidth="0dp"
                 android:minHeight="44dp"
-                android:paddingStart="12dp"
+                android:paddingStart="0dp"
                 android:paddingEnd="12dp"
                 android:text="@string/projects_update_remind"
                 android:textAllCaps="false"

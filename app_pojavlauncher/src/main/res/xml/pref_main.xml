@@ -79,12 +79,14 @@
          opens, and a check now (its summary is the version). Hidden in builds without the updater (Play). -->
     <androidx.preference.SwitchPreferenceCompat
         android:key="projects_update_check"
+        app:singleLineTitle="false"
         android:title="@string/projects_update_auto_title"
         android:defaultValue="true"
         android:icon="@drawable/projects_pref_update"
         />
     <Preference
         android:key="projects_update_now"
+        app:singleLineTitle="false"
         android:title="@string/projects_update_now_title"
         android:icon="@drawable/projects_pref_update_now"
         />
