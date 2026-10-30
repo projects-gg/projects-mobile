@@ -61,7 +61,8 @@ public final class AvatarView extends View {
         mRing.setStyle(Paint.Style.STROKE);
         mRing.setStrokeWidth(Math.max(1f, mDp));
         mRing.setColor(0x1AFFFFFF);
-        mLetter.setColor(ContextCompat.getColor(context, R.color.projects_gold_300));
+        // The letter in bone on the quiet plate, as the desktop's face without a picture (SMALLS-L: no gold tile).
+        mLetter.setColor(ContextCompat.getColor(context, R.color.projects_bone_100));
         mLetter.setTextAlign(Paint.Align.CENTER);
         Typeface figtree = null;
         try {

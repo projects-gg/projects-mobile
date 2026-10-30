@@ -99,6 +99,11 @@ public final class SocialFaces {
     @MainThread
     public static void load(Context context, final Profile profile, final Callback callback) {
         final Source source = source(profile);
+        // No picture to fetch (a Discord account without one): the letter, at once and without a failure noted.
+        if (source.asset == null && source.url == null) {
+            callback.onFace(null, source.pixelArt);
+            return;
+        }
         Bitmap memory = MEMORY.get(source.key);
         if (memory != null) {
             callback.onFace(memory, source.pixelArt);

@@ -53,7 +53,7 @@ import gg.projects.mobile.ui.TopBarLine;
 
 /**
  * The account picker. Projects fork (M14): drawn as the top bar's account chip (the desktop's
- * account switcher: crisp head, name, small caret; "Hesap ekle" in gold without an account) with
+ * account switcher: crisp head, name, small caret; a quiet "Hesap ekle" without an account) with
  * a branded drop-down list; the sign-in progress moved to the bar's line ({@link TopBarLine}).
  */
 public class mcAccountSpinner extends AppCompatSpinner implements AdapterView.OnItemSelectedListener {
@@ -351,10 +351,13 @@ public class mcAccountSpinner extends AppCompatSpinner implements AdapterView.On
         if (getAdapter() instanceof android.widget.BaseAdapter) ((android.widget.BaseAdapter) getAdapter()).notifyDataSetChanged();
     }
 
-    /** Projects fork: the gold "Hesap ekle" pill while there is no account (on the home screen), else the quiet one. */
+    /**
+     * Projects fork: the quiet pill, with or without an account. FREE-M 0.4.5 (TASTE-2): a gold "Hesap ekle" on the
+     * home screen was a second gold beside OYNA, with the home rows' gold words a third; OYNA stays the one gold there.
+     */
     private void updateChipBackground() {
         boolean empty = mAccountList.size() <= 1;
-        setBackgroundResource(empty && mOnHome ? R.drawable.projects_account_chip_add : R.drawable.projects_account_chip);
+        setBackgroundResource(R.drawable.projects_account_chip);
         // A held chip opens the list by drag-to-open, which skips performClick; with no account that
         // list holds only "Hesap ekle", whose tap selects nothing new. A long-clickable view gets no
         // drag-to-open: the hold opens the account screen like a tap.
@@ -511,9 +514,9 @@ public class mcAccountSpinner extends AppCompatSpinner implements AdapterView.On
             Context context = parent.getContext();
             if (position == 0) {
                 headView.setImageResource(R.drawable.projects_ic_user_plus);
-                headView.setImageTintList(ContextCompat.getColorStateList(context, mOnHome ? R.color.projects_gold_300 : R.color.projects_ash_300));
+                headView.setImageTintList(ContextCompat.getColorStateList(context, R.color.projects_bone_100));
                 name.setText(R.string.main_add_account);
-                name.setTextColor(ContextCompat.getColor(context, mOnHome ? R.color.projects_gold_200 : R.color.projects_bone_100));
+                name.setTextColor(ContextCompat.getColor(context, R.color.projects_bone_100));
                 caret.setVisibility(View.GONE);
             } else {
                 String username = super.getItem(position);

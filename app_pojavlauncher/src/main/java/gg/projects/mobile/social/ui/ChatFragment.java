@@ -1499,7 +1499,9 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
         boolean plan = row.type == T_PLAN;
         TextView text = view.findViewById(R.id.projects_day_text);
         text.setText(row.label);
-        text.setTextColor(ContextCompat.getColor(view.getContext(), unread || plan ? R.color.projects_gold_300 : R.color.projects_ash_400));
+        // "Yeni mesajlar": bone words between quiet ash lines, as the launcher's chat (gold is never a sentence; TASTE-2).
+        text.setTextColor(ContextCompat.getColor(view.getContext(), unread ? R.color.projects_bone_100
+                : plan ? R.color.projects_gold_300 : R.color.projects_ash_400));
         // M21: a plan's line carries the calendar glyph.
         android.graphics.drawable.Drawable glyph = null;
         if (plan) {
@@ -1516,7 +1518,8 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
         text.setBackgroundResource(unread ? 0 : R.drawable.projects_pill_background);
         view.findViewById(R.id.projects_day_line_start).setVisibility(unread ? View.VISIBLE : View.GONE);
         view.findViewById(R.id.projects_day_line_end).setVisibility(unread ? View.VISIBLE : View.GONE);
-        int line = ContextCompat.getColor(view.getContext(), unread ? R.color.projects_gold_700 : R.color.projects_obsidian_700);
+        int line = unread ? androidx.core.graphics.ColorUtils.setAlphaComponent(ContextCompat.getColor(view.getContext(), R.color.projects_ash_500), 115)
+                : ContextCompat.getColor(view.getContext(), R.color.projects_obsidian_700);
         view.findViewById(R.id.projects_day_line_start).setBackgroundColor(line);
         view.findViewById(R.id.projects_day_line_end).setBackgroundColor(line);
     }

@@ -76,13 +76,14 @@ public final class CloudHomeRow implements CloudService.Listener {
             line = c.getString(R.string.projects_cloud_home_maintenance);
         } else if (s.approvals > 0) {
             line = c.getResources().getQuantityString(R.plurals.projects_cloud_home_approvals, s.approvals, s.approvals);
-            color = R.color.projects_gold_300;
+            // A step brighter, never gold (FREE-M 0.4.5, TASTE-2: words are never gold; OYNA is the home's one gold).
+            color = R.color.projects_ash_300;
         } else if (s.stopped != null && !s.stopped.isEmpty()) {
             line = c.getString(R.string.projects_cloud_home_stopped, s.stopped);
             color = R.color.projects_flare_400;
         } else if (s.unread > 0) {
             line = c.getResources().getQuantityString(R.plurals.projects_cloud_home_messages, s.unread, s.unread);
-            color = R.color.projects_gold_300;
+            color = R.color.projects_ash_300;
         } else if (s.count == 1) {
             line = c.getString(s.inGame == 1 ? R.string.projects_cloud_home_one_in_game : R.string.projects_cloud_home_none_in_game);
         } else if (s.inGame == s.count) {
