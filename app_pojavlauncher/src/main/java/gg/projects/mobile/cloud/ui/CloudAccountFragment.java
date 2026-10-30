@@ -53,6 +53,8 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
     @Nullable
     private CloudModel.QuotaView mQuota;
     private boolean mQuotaAsked;
+    /** The conversations read once a visit: "Seni bekleyenler" counts the waiting ones here as Etkinlik does. */
+    private boolean mInboxAsked;
 
     @Override
     public void onResume() {
@@ -88,6 +90,20 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
                 @Override
                 public void failed(gg.projects.mobile.cloud.CloudProblem problem) {
                     mQuotaAsked = false;
+                }
+            });
+        }
+        if (a != null && a.plus() && mService.plusOn() && mService.plusFeature("inbox") && !mInboxAsked) {
+            // Once a visit: without it the count held only the decisions until Etkinlik or Seni bekleyenler read the
+            // conversations (3 here, 4 there). The service keeps the count; its change draws this screen again.
+            mInboxAsked = true;
+            mService.inbox(a.id, new CloudService.Result<gg.projects.mobile.cloud.CloudApi.InboxList>() {
+                @Override
+                public void ok(gg.projects.mobile.cloud.CloudApi.InboxList value) {}
+
+                @Override
+                public void failed(gg.projects.mobile.cloud.CloudProblem problem) {
+                    mInboxAsked = false;
                 }
             });
         }

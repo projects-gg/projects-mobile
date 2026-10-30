@@ -1152,13 +1152,9 @@ public final class CloudService implements SocialService.Listener {
             @Override
             public void ok(CloudApi.InboxList value) {
                 int unread = 0;
-                int waiting = 0;
-                for (CloudModel.InboxThread t : value.threads) {
-                    unread += t.unread;
-                    if (t.unread > 0 && !"blocked".equals(t.state) && "them".equals(t.lastFrom)) waiting++;
-                }
+                for (CloudModel.InboxThread t : value.threads) unread += t.unread;
                 setUnread(id, unread);
-                setWaiting(id, waiting);
+                setWaiting(id, CloudModel.InboxThread.waiting(value.threads));
                 result.ok(value);
             }
 

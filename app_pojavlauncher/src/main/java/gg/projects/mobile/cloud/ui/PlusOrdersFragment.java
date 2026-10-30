@@ -331,6 +331,7 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
         if (intake.getParent() instanceof ViewGroup) ((ViewGroup) intake.getParent()).removeView(intake);
         content.addView(intake);
         refreshIntake();
+        if (mPendingCheck) postHandedCheck();
     }
 
     private void buildIntake(final Context c) {
@@ -1371,14 +1372,21 @@ public final class PlusOrdersFragment extends CloudScreen implements CloudServic
     private void takeDoc(CloudModel.PlusDoc doc) {
         CloudModel.PlusDoc known = mDoc;
         if (known == null || doc.aiRev >= known.aiRev) mDoc = doc;
-        if (mPendingCheck) {
-            View root = getView();
-            if (root != null) root.post(() -> {
-                if (!alive() || !mPendingCheck || mCheck == null) return;
-                mPendingCheck = false;
-                check(mCheck);
-            });
-        }
+        if (mPendingCheck) postHandedCheck();
+    }
+
+    /**
+     * The setup's text is checked once both the settings and the field are there, by whichever comes last: the first
+     * read's settings arrive before the field is drawn, so the field's drawing asks too (the 0.4.5 window's shot 71b: the
+     * text sat unchecked until the next read).
+     */
+    private void postHandedCheck() {
+        View root = getView();
+        if (root != null) root.post(() -> {
+            if (!alive() || !mPendingCheck || mCheck == null || mDoc == null) return;
+            mPendingCheck = false;
+            check(mCheck);
+        });
     }
 
     private void writeProblem(CloudProblem p, @Nullable View from) {
