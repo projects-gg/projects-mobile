@@ -1086,7 +1086,7 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
         badge.setVisibility(View.GONE);
         if (badge instanceof TextView) {
             badge.setBackgroundResource(R.drawable.projects_social_badge);
-            ((TextView) badge).setTextColor(ContextCompat.getColor(context, R.color.projects_gold_300));
+            ((TextView) badge).setTextColor(ContextCompat.getColor(context, R.color.projects_bone_100));
         }
         star.setVisibility(View.GONE);
         primary.setVisibility(View.GONE);

@@ -902,8 +902,9 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
                             + "|" + p.note + "|" + answersState(p.id), p));
                 }
                 if (may) {
+                    // Bone as its sibling actions ("Bağlantı oluştur", "Ekibe davet et"): the crew page has no gold action.
                     rows.add(new Row(T_ACTION, "plan-make", "plan-make", new Action("plan", R.drawable.projects_ic_calendar_plus,
-                            R.string.projects_plans_make, R.color.projects_gold_300)));
+                            R.string.projects_plans_make, R.color.projects_bone_100)));
                 }
             }
         }
@@ -1270,7 +1271,8 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         final String why;
         switch (wear) {
             case WORN:
-                color = R.color.projects_gold_300;
+                // FREE-M 0.4.6 (TASTE-2): a state, not the page's action: bone words and icon, never gold (design.md section 2).
+                color = R.color.projects_bone_100;
                 text = getString(R.string.projects_badge_worn);
                 why = null;
                 break;
@@ -2187,8 +2189,9 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         ((CrewTagChip) view.findViewById(R.id.projects_person_tag)).setBadgeOf(member.profile.id, worn, CrewTagChip.Size.MD);
         CrewTagChip.labelName(name, worn);
         TextView badge = view.findViewById(R.id.projects_person_badge);
+        // "Lider", "Moderatör": bone on the quiet plate (a role is a fact, not an action; TASTE-2).
         badge.setBackgroundResource(R.drawable.projects_social_badge);
-        badge.setTextColor(ContextCompat.getColor(context, R.color.projects_gold_300));
+        badge.setTextColor(ContextCompat.getColor(context, R.color.projects_bone_100));
         boolean roles = service.gate().roles || member.founder;
         if (member.founder || (member.moderator && roles)) {
             badge.setText(member.founder ? R.string.projects_crew_leader : R.string.projects_crew_moderator);

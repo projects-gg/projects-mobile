@@ -392,6 +392,8 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         mNoticeTitle = root.findViewById(R.id.projects_maintenance_title);
         mNoticeMessage = root.findViewById(R.id.projects_maintenance_message);
         mNoticeLink = root.findViewById(R.id.projects_maintenance_link);
+        // A text link in bone with its underline, never gold (TASTE-2: gold stays on OYNA).
+        mNoticeLink.setPaintFlags(mNoticeLink.getPaintFlags() | android.graphics.Paint.UNDERLINE_TEXT_FLAG);
         mSkeleton = root.findViewById(R.id.projects_skeleton);
         mNews = root.findViewById(R.id.projects_news);
         mNewsCover = root.findViewById(R.id.projects_news_cover);
