@@ -73,12 +73,12 @@ final class PlusWords {
     /** A price: money, or the paying item's count ("3 Elmas") when {@code pay} is an item. */
     static String price(Context c, long price, String pay, @Nullable PlusModel.Server server, Namer namer) {
         if (pay == null || "money".equals(pay)) return money(c, price, server);
-        return CloudWords.qtyName(c, price, namer.name(pay));
+        return CloudWords.qtyItem(c, price, namer.name(pay));
     }
 
     /** A deal as the launcher and the site write it: "1 Elytra = 37.500", "64 Elmas = 3 Netherit külçesi". */
     static String deal(Context c, long qty, String item, long price, String pay, @Nullable PlusModel.Server server, Namer namer) {
-        return c.getString(R.string.projects_cloud_notice_deal_line, String.valueOf(qty), CloudWords.counted(c, qty, namer.name(item)),
+        return c.getString(R.string.projects_cloud_notice_deal_line, CloudWords.goods(c, qty, namer.name(item)),
                 price(c, price, pay, server, namer));
     }
 
@@ -147,7 +147,7 @@ final class PlusWords {
         boolean both = item != null && price != null;
         String deal = both ? deal(c, e.q == null ? 1 : e.q, e.i, e.p, pay, server, namer) : item != null ? item : price != null ? price : "";
         // "64 Elmas": the item with its count where the entry has one (the order menu's lines).
-        String counted = item == null ? null : e.q == null ? item : CloudWords.money(c, e.q) + " " + CloudWords.counted(c, e.q, item);
+        String counted = item == null ? null : e.q == null ? item : CloudWords.qtyItem(c, e.q, item);
         String bare = price == null ? "" : price;
         switch (e.k) {
             case "pm_in": return c.getString(R.string.projects_audit_pm_in);

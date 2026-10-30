@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Switch knob (M14, the desktop's Switch): an 18dp circle in a 26dp box; bone when off, gold ink on
-     the gold track when on. While pressed it stretches to a 22dp pill (the desktop's scale-x 1.18).
+<!-- Switch knob (M14, the desktop's Switch): an 18dp circle in a 26dp box; bone when off, obsidian on
+     the bone track when on (0.4.6: the launcher's bone switch, one gold per screen). While pressed it stretches to a 22dp pill (the desktop's scale-x 1.18).
      Layer insets (not an InsetDrawable) keep SwitchCompat from treating the gap as padding. The
      colours are part of the drawable, so the platform Switch matches on every Android version. -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android"
@@ -12,7 +12,7 @@
                 <shape android:shape="rectangle">
                     <corners android:radius="9dp" />
                     <size android:width="22dp" android:height="18dp" />
-                    <solid android:color="@color/projects_on_gold" />
+                    <solid android:color="@color/projects_obsidian_900" />
                 </shape>
             </item>
         </layer-list>
@@ -33,7 +33,7 @@
             <item android:bottom="4dp" android:left="4dp" android:right="4dp" android:top="4dp">
                 <shape android:shape="oval">
                     <size android:width="18dp" android:height="18dp" />
-                    <solid android:color="#991A0F05" />
+                    <solid android:color="#99121016" />
                 </shape>
             </item>
         </layer-list>
@@ -43,7 +43,7 @@
             <item android:bottom="4dp" android:left="4dp" android:right="4dp" android:top="4dp">
                 <shape android:shape="oval">
                     <size android:width="18dp" android:height="18dp" />
-                    <solid android:color="@color/projects_on_gold" />
+                    <solid android:color="@color/projects_obsidian_900" />
                 </shape>
             </item>
         </layer-list>

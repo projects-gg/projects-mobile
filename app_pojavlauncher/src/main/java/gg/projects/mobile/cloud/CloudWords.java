@@ -195,21 +195,21 @@ public final class CloudWords {
         return soon ? clock(seconds) : AppDates.dayMonth(false, seconds * 1000L, TimeZone.getDefault());
     }
 
-    /** An item with its count, as the site writes it: "64 Elmas" / "Diamond ×64"; one alone is just its name. */
-    /** An item's name after its count: English plural for more than one ("2 Emeralds"), Turkish as it is ("2 Zümrüt"). */
-    public static String counted(Context c, long qty, String name) {
-        if (qty == 1 || turkish(c) || name.isEmpty()) return name;
-        int of = name.indexOf(" of ");
-        if (of > 0) return counted(c, qty, name.substring(0, of)) + name.substring(of);
-        String lower = name.toLowerCase(java.util.Locale.ROOT);
-        // Names that are their own plural or read wrong with an s (Elytra, Glass, a few game words).
-        if (lower.endsWith("s") || lower.endsWith("a") || lower.endsWith("x") || lower.endsWith("sh") || lower.endsWith("ch")) return name;
-        return name + "s";
+    // 0.4.6 (TASTE-2): item counts in the launcher's one form, never a guessed English plural (PlusFormat).
+
+    /** A title's item: one alone is its name, more "2 Zümrüt" / "2 x Emerald" (PlusFormat.titleItem). */
+    public static String qtyName(Context c, long qty, String name) {
+        return PlusFormat.titleItem(qty, name, lang(c));
     }
 
-    public static String qtyName(Context c, long qty, String name) {
-        if (qty <= 1) return name;
-        return turkish(c) ? qty + " " + name : name + " ×" + qty;
+    /** So many of an item, always with the count: "1 Elmas" / "1 x Diamond" (a price paid in items). */
+    public static String qtyItem(Context c, long qty, String name) {
+        return PlusFormat.qtyItem(qty, name, lang(c));
+    }
+
+    /** A deal's subject: "1 Elytra" / "Elytra", "2 Zümrüt" / "2 x Emerald" (PlusFormat.goods). */
+    public static String goods(Context c, long qty, String name) {
+        return PlusFormat.goods(qty, name, lang(c));
     }
 
     /** "bugün", "yarın", "26 Ekim'de" / "today", "tomorrow", "on 26 October". */
@@ -677,13 +677,13 @@ public final class CloudWords {
                 if ("confirm_item".equals(kind)) {
                     return new String[]{c.getString(R.string.projects_plus_title), c.getString(R.string.projects_notice_first_sight, name, item)};
                 }
-                String priceText = payItem ? qtyName(c, price, noticeItem(c, prefs, n.get("acct"), pay, lang)) : money(c, price);
+                String priceText = payItem ? qtyItem(c, price, noticeItem(c, prefs, n.get("acct"), pay, lang)) : money(c, price);
                 return new String[]{c.getString(R.string.projects_cloud_notice_approval, name),
-                        c.getString(R.string.projects_cloud_notice_deal_line, String.valueOf(qty), item, priceText)};
+                        c.getString(R.string.projects_cloud_notice_deal_line, goods(c, qty, item), priceText)};
             }
             case "deal_done":
                 return new String[]{c.getString(R.string.projects_plus_title), c.getString("sell".equals(n.get("side"))
-                        ? R.string.projects_cloud_notice_sold : R.string.projects_cloud_notice_bought, name, String.valueOf(qty), item, moneyDative(c, price))};
+                        ? R.string.projects_cloud_notice_sold : R.string.projects_cloud_notice_bought, name, goods(c, qty, item), moneyDative(c, price))};
             case "deal_failed":
                 return new String[]{c.getString(R.string.projects_plus_title), c.getString(R.string.projects_cloud_notice_deal_failed, name, item)};
             case "quota": {
