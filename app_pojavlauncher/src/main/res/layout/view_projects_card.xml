@@ -115,7 +115,7 @@
                 android:fontFamily="@font/figtree_semibold"
                 android:gravity="center_vertical"
                 android:text="@string/projects_status_page"
-                android:textColor="@color/projects_gold_300"
+                android:textColor="@color/projects_bone_100"
                 android:textSize="13sp"
                 android:visibility="gone"
                 tools:visibility="visible" />

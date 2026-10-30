@@ -72,7 +72,7 @@
                 android:fontFamily="@font/figtree_semibold"
                 android:paddingHorizontal="6dp"
                 android:paddingVertical="1dp"
-                android:textColor="@color/projects_gold_300"
+                android:textColor="@color/projects_bone_100"
                 android:textSize="11sp"
                 android:visibility="gone"
                 tools:text="Lider"

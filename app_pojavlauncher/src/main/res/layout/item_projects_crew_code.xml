@@ -37,7 +37,7 @@
             android:layout_marginTop="2dp"
             android:fontFamily="@font/tektur_semibold"
             android:letterSpacing="0.06"
-            android:textColor="@color/projects_gold_200"
+            android:textColor="@color/projects_bone_100"
             android:textIsSelectable="true"
             android:textSize="18sp"
             tools:text="EKP-ABCD-EFGH" />
