@@ -418,6 +418,15 @@ final class MessageActions {
         menu.setBackground(card);
         menu.setElevation(12 * dp);
         menu.setClickable(true);
+        // CHAT-UX: the message's whole time first ("28 Ekim 2026 Carsamba 14:05"), quiet, not a row to tap.
+        if (!entry.failed() && entry.time() > 0) {
+            TextView when = new TextView(context);
+            when.setText(gg.projects.mobile.ui.AppDates.fullTime(context, entry.time()));
+            when.setTextColor(ContextCompat.getColor(context, R.color.projects_ash_400));
+            when.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 12.5f);
+            when.setPadding(Math.round(16 * dp), Math.round(8 * dp), Math.round(16 * dp), Math.round(6 * dp));
+            menu.addView(when);
+        }
         if (entry.failed()) {
             if (ChatFragment.retriable(entry.outbox.failure)) {
                 menu.addView(row(activity, R.drawable.projects_ic_arrows_clockwise, R.string.projects_retry, R.color.projects_bone_100, close,

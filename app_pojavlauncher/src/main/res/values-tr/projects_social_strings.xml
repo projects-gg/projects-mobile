@@ -411,6 +411,7 @@
     <string name="projects_chat_jump">Yeni mesaj</string>
     <string name="projects_chat_today">Bugün</string>
     <string name="projects_chat_yesterday">Dün</string>
+    <string name="projects_chat_days_ago">%1$d gün önce</string>
     <string name="projects_chat_empty">Henüz mesaj yok</string>
     <string name="projects_chat_empty_body">Bir arkadaşının kartında “Mesaj”a bas.</string>
     <string name="projects_chat_you">Sen: %1$s</string>

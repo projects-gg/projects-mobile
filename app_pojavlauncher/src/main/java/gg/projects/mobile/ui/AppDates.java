@@ -110,6 +110,21 @@ public final class AppDates {
         return format.format(new Date(millis));
     }
 
+    /**
+     * A message's whole time at the top of its long-press menu (CHAT-UX): "28 Ekim 2026 Çarşamba 14:05" /
+     * "Wednesday, 28 October 2026 at 14:05" (the launcher and the overlay show the same on hover).
+     */
+    public static String fullTime(Context context, long millis) {
+        return fullTime(turkish(context), millis, TimeZone.getDefault());
+    }
+
+    public static String fullTime(boolean turkish, long millis, TimeZone zone) {
+        String date = longDate(turkish, millis, zone);
+        String day = weekday(turkish, millis, zone);
+        String clock = time(millis, zone);
+        return turkish ? date + " " + day + " " + clock : day + ", " + date + " at " + clock;
+    }
+
     /** "24 Ekim 2026 21:30" / "24 October 2026 21:30". */
     public static String dateTime(Context context, long millis) {
         return dateTime(turkish(context), millis, TimeZone.getDefault());
