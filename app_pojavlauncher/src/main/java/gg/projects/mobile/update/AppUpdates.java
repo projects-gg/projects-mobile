@@ -326,9 +326,22 @@ public final class AppUpdates {
         maybeCheck(app);
     }
 
+    /**
+     * The home screen left the front. The launcher stays known while it is visible (Settings is a screen of the
+     * same activity), so Android's question still opens there; it waits only when the app is not in front.
+     */
     @MainThread
     public static void onHomePaused(Activity activity) {
-        if (sHome != null && sHome.get() == activity) sHome = null;
+        // Nothing to forget: inFront() asks the activity's own lifecycle when Android's question comes.
+    }
+
+    private static boolean inFront(@Nullable Activity activity) {
+        if (activity == null || activity.isFinishing()) return false;
+        if (activity instanceof androidx.lifecycle.LifecycleOwner) {
+            return ((androidx.lifecycle.LifecycleOwner) activity).getLifecycle().getCurrentState()
+                    .isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED);
+        }
+        return true;
     }
 
     @MainThread
@@ -419,25 +432,31 @@ public final class AppUpdates {
         UpdateException last = null;
         int missing = 0;
         for (String mirror : s.mirrors) {
+            String url = mirror + path;
             try {
-                byte[][] files = fetchPair(fetcher, mirror + path, "");
-                UpdateManifest manifest;
+                byte[] json;
                 try {
-                    manifest = UpdateManifest.read(files[0], files[1], UpdateConfig.CHANNEL, s.keys, s.allowHttp);
-                } catch (UpdateException e) {
-                    if (e.kind != UpdateException.Kind.BAD_SIGNATURE) throw e;
-                    // An edge cache may hold the file and its signature from two publishes: once more past it.
-                    files = fetchPair(fetcher, mirror + path, "?t=" + System.currentTimeMillis());
-                    manifest = UpdateManifest.read(files[0], files[1], UpdateConfig.CHANNEL, s.keys, s.allowHttp);
-                }
-                keep(s, files[0], files[1]);
-                return manifest;
-            } catch (HttpStatusException e) {
-                if (e.status == 404) {
+                    json = fetcher.get(url, UpdateManifest.MAX_BYTES);
+                } catch (HttpStatusException e) {
+                    // Only a missing channel file means "no release here" (a missing signature is an error).
+                    if (e.status != 404) throw e;
                     missing++;
                     continue;
                 }
-                last = new UpdateException(UpdateException.Kind.NETWORK, String.valueOf(e), e);
+                byte[] sig = fetcher.get(url + ".sig", Minisign.MAX_SIGNATURE_FILE);
+                UpdateManifest manifest;
+                try {
+                    manifest = UpdateManifest.read(json, sig, UpdateConfig.CHANNEL, s.keys, s.allowHttp);
+                } catch (UpdateException e) {
+                    if (e.kind != UpdateException.Kind.BAD_SIGNATURE) throw e;
+                    // An edge cache may hold the file and its signature from two publishes: once more past it.
+                    String stamp = "?t=" + System.currentTimeMillis();
+                    json = fetcher.get(url + stamp, UpdateManifest.MAX_BYTES);
+                    sig = fetcher.get(url + ".sig" + stamp, Minisign.MAX_SIGNATURE_FILE);
+                    manifest = UpdateManifest.read(json, sig, UpdateConfig.CHANNEL, s.keys, s.allowHttp);
+                }
+                keep(s, json, sig);
+                return manifest;
             } catch (IOException e) {
                 last = new UpdateException(UpdateException.Kind.NETWORK, String.valueOf(e), e);
             } catch (UpdateException e) {
@@ -450,12 +469,6 @@ public final class AppUpdates {
             return null;
         }
         throw last != null ? last : new UpdateException(UpdateException.Kind.NETWORK, "no mirror");
-    }
-
-    private static byte[][] fetchPair(HttpFetcher fetcher, String url, String query) throws IOException {
-        byte[] json = fetcher.get(url + query, UpdateManifest.MAX_BYTES);
-        byte[] sig = fetcher.get(url + ".sig" + query, Minisign.MAX_SIGNATURE_FILE);
-        return new byte[][]{json, sig};
     }
 
     private static void keep(Sources s, byte[] json, byte[] sig) {
@@ -614,7 +627,7 @@ public final class AppUpdates {
                 Activity home = sHome == null ? null : sHome.get();
                 if (confirm == null) {
                     endInstall(app, UpdateException.Kind.INSTALL_FAILED);
-                } else if (home != null && !home.isFinishing()) {
+                } else if (inFront(home)) {
                     startConfirm(home, confirm);
                 } else {
                     // The player left: Android's question opens when the home screen is back.
