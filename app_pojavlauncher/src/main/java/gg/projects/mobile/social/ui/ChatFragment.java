@@ -1304,22 +1304,28 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
         return dayOf(ta) == dayOf(tb) && Math.abs(tb - ta) <= GROUP_MS;
     }
 
+    /** The local calendar day of a moment (ChatDays: the phone's zone, summer time counted, New Year safe). */
     private static long dayOf(long ms) {
-        Calendar c = Calendar.getInstance();
-        c.setTimeInMillis(ms);
-        return c.get(Calendar.YEAR) * 1000L + c.get(Calendar.DAY_OF_YEAR);
+        return gg.projects.mobile.social.ChatDays.localDay(ms, java.util.TimeZone.getDefault());
     }
 
+    /**
+     * The day line (CHAT-UX, the owner's 31 Oct ask, as Discord): "Bugün", "Dün", "3 gün önce" up to six days, then the
+     * date, the year only when it is another year ("24 Ekim", "31 Aralık 2025"). Worked out when the rows are built.
+     */
     private static String dayLabel(Context context, long ms) {
-        Calendar today = Calendar.getInstance();
-        long now = dayOf(today.getTimeInMillis());
-        today.add(Calendar.DAY_OF_YEAR, -1);
-        long yesterday = dayOf(today.getTimeInMillis());
-        long day = dayOf(ms);
-        if (day == now) return context.getString(R.string.projects_chat_today);
-        if (day == yesterday) return context.getString(R.string.projects_chat_yesterday);
-        // MOB-POLISH: "24 Ekim 2026" / "24 October 2026" (en-GB, not the phone's region).
-        return AppDates.longDate(context, ms);
+        long now = System.currentTimeMillis();
+        java.util.TimeZone zone = java.util.TimeZone.getDefault();
+        switch (gg.projects.mobile.social.ChatDays.kind(ms, now, zone)) {
+            case TODAY:
+                return context.getString(R.string.projects_chat_today);
+            case YESTERDAY:
+                return context.getString(R.string.projects_chat_yesterday);
+            case DAYS_AGO:
+                return context.getString(R.string.projects_chat_days_ago, (int) gg.projects.mobile.social.ChatDays.daysAgo(ms, now, zone));
+            default:
+                return AppDates.day(context, ms, now);
+        }
     }
 
     private void scrollToBottom(boolean smooth) {

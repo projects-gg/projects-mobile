@@ -424,6 +424,8 @@
     <string name="projects_chat_jump">New message</string>
     <string name="projects_chat_today">Today</string>
     <string name="projects_chat_yesterday">Yesterday</string>
+    <!-- CHAT-UX: the day line from two to six calendar days back. -->
+    <string name="projects_chat_days_ago">%1$d days ago</string>
     <string name="projects_chat_empty">No messages yet</string>
     <string name="projects_chat_empty_body">Press “Message” on a friend\'s card.</string>
     <string name="projects_chat_you">You: %1$s</string>
