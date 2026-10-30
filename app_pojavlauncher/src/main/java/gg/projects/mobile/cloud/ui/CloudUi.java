@@ -581,12 +581,15 @@ public final class CloudUi {
     private static final class SegmentRow extends LinearLayout {
         private final List<Button> mButtons;
         private final float mTextPx;
+        /** The room the widest label keeps beyond its padding for equal widths (12 dp). */
+        private final float mRoom;
         private final android.text.TextPaint mProbe = new android.text.TextPaint();
 
         SegmentRow(Context c, List<Button> buttons, float textPx) {
             super(c);
             mButtons = buttons;
             mTextPx = textPx;
+            mRoom = dp(c, 12);
         }
 
         @Override
@@ -614,7 +617,9 @@ public final class CloudUi {
                 widest = Math.max(widest, text + pad);
             }
             float scale = words <= 0f || words + sides <= space ? 1f : Math.max(0.8f, (space - sides) / words);
-            boolean equal = scale == 1f && widest <= space / mButtons.size();
+            // Equal only with room around the widest label (TASTE-2 r1: at 360 dp "Anlaşmalar" touched its chip's
+            // edges); else each takes its words' width plus a share of the rest, as with big text.
+            boolean equal = scale == 1f && widest + mRoom <= space / mButtons.size();
             float size = mTextPx * scale;
             for (Button b : mButtons) {
                 if (Math.abs(b.getTextSize() - size) > 0.5f) b.setTextSize(TypedValue.COMPLEX_UNIT_PX, size);

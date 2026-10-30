@@ -528,7 +528,7 @@
     <string name="projects_setup_adv_money_currency">Günlük sınır, en az kalacak bakiye, para birimi</string>
     <string name="projects_setup_adv_act">Ödeme, onay bekleme süresi</string>
     <string name="projects_setup_adv_act_no_pay">Onay bekleme süresi</string>
-    <string name="projects_setup_adv_chat">Satış ilanlarını taramak</string>
+    <string name="projects_setup_adv_chat">Satış ilanlarını tarama</string>
     <string name="projects_setup_adv_talk">Tanıtım yazısı, mesaj etiketi, dil, konu sınırı</string>
     <string name="projects_setup_chat_caption">Sohbette böyle görünür</string>
     <string name="projects_setup_pm_caption">Özel mesajda böyle görünür</string>

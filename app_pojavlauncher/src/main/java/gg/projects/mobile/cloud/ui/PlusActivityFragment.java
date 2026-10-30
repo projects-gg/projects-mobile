@@ -444,10 +444,45 @@ public final class PlusActivityFragment extends CloudScreen implements CloudServ
         for (int i = 0; i < rows.size(); i++) {
             ActivityRows.Group g = rows.get(i);
             if (i > 0) group.addView(CloudUi.textDivider(c));
-            group.addView(g.who == null ? entryRow(c, g.newest()) : playerRow(c, heading + "|" + g.key, g));
+            group.addView(g.who == null ? eventRow(c, g) : playerRow(c, heading + "|" + g.key, g));
         }
         part.addView(group);
         return rows.size();
+    }
+
+    /**
+     * An event without a player (the order menu, a chat sighting without its seller, the credits): a row of its own in
+     * the player rows' layout, as the site and the launcher draw it (one layout in one list): the tile (its item, else
+     * the kind's mark), its words in bone, not bold, the time at the right where the rows have theirs; it never opens.
+     * TASTE-2 r1: drawn as a step (time first, words indented) it read as a step of the player's row above it.
+     */
+    private View eventRow(Context c, ActivityRows.Group g) {
+        PlusModel.AuditEntry e = g.newest();
+        LinearLayout head = new LinearLayout(c);
+        head.setOrientation(LinearLayout.HORIZONTAL);
+        head.setGravity(Gravity.CENTER_VERTICAL);
+        head.setMinimumHeight(CloudUi.dp(c, 56));
+        head.setPaddingRelative(CloudUi.dp(c, 12), CloudUi.dp(c, 10), CloudUi.dp(c, 12), CloudUi.dp(c, 10));
+        head.addView(tile(c, g.item(), e.k), new LinearLayout.LayoutParams(CloudUi.dp(c, 36), CloudUi.dp(c, 36)));
+        String line = PlusWords.auditLine(c, e, server(), this::itemName);
+        TextView words = CloudUi.text(c, line, 14.5f, R.color.projects_bone_100, false);
+        words.setLineSpacing(0, 1.1f);
+        LinearLayout.LayoutParams wordsLp = CloudUi.weight(1f);
+        wordsLp.setMarginStart(CloudUi.dp(c, 12));
+        head.addView(words, wordsLp);
+        TextView time = CloudUi.time(c, 13, R.color.projects_ash_400);
+        time.setText(AppDates.time(e.t));
+        LinearLayout.LayoutParams timeLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        timeLp.setMarginStart(CloudUi.dp(c, 8));
+        head.addView(time, timeLp);
+        // The caret's room, so every row's time lines up.
+        LinearLayout.LayoutParams roomLp = new LinearLayout.LayoutParams(CloudUi.dp(c, 16), CloudUi.dp(c, 16));
+        roomLp.setMarginStart(CloudUi.dp(c, 8));
+        head.addView(new View(c), roomLp);
+        head.setContentDescription(line + ", " + time.getText());
+        head.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_YES);
+        head.setLayoutParams(CloudUi.matchWrap());
+        return head;
     }
 
     /** The row's tile: the day's item, else the mark of how it went (a quiet person when nothing marks it). */
