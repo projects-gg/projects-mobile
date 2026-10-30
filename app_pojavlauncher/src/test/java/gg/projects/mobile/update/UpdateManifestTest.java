@@ -179,6 +179,7 @@ public class UpdateManifestTest {
         assertEquals('\u2026', cut.charAt(cut.length() - 1));
         assertEquals(Collections.<String>emptyList(), UpdateManifest.noteLines(null));
         assertEquals(Collections.<String>emptyList(), UpdateManifest.noteLines("\n - \n"));
+        assertEquals(Collections.singletonList("-5 derece, *yeni* harita"), UpdateManifest.noteLines("-5 derece, *yeni* harita"));
     }
 
     @Test

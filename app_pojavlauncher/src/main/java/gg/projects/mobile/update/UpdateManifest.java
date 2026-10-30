@@ -190,8 +190,9 @@ public final class UpdateManifest {
     }
 
     /**
-     * Display lines: one per line of the text, a leading list mark ("- ", "* ", "• ") and control characters
-     * dropped, blank lines skipped, at most {@link #MAX_NOTE_LINES} lines of {@link #MAX_NOTE_LINE} characters.
+     * Display lines: one per line of the text, a leading list mark ("- ", "* ", "• ", or the mark alone) and
+     * control characters dropped, blank lines skipped, at most {@link #MAX_NOTE_LINES} lines of {@link #MAX_NOTE_LINE}
+     * characters. A line that only starts like a mark ("-5 derece") keeps it.
      */
     static List<String> noteLines(String text) {
         List<String> out = new ArrayList<>();
@@ -203,7 +204,10 @@ public final class UpdateManifest {
                 if (!Character.isISOControl(c)) clean.append(c);
             }
             String line = clean.toString().trim();
-            if (line.startsWith("- ") || line.startsWith("* ") || line.startsWith("\u2022 ")) line = line.substring(2).trim();
+            if (!line.isEmpty() && "-*\u2022".indexOf(line.charAt(0)) >= 0
+                    && (line.length() == 1 || Character.isWhitespace(line.charAt(1)))) {
+                line = line.substring(1).trim();
+            }
             if (line.isEmpty()) continue;
             if (line.length() > MAX_NOTE_LINE) line = line.substring(0, MAX_NOTE_LINE).trim() + "\u2026";
             out.add(line);
