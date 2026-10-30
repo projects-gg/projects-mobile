@@ -359,6 +359,11 @@ public final class PlusApprovalsFragment extends CloudScreen implements CloudSer
         TextView price = CloudUi.figure(c, price(ap), 24, R.color.projects_bone_100);
         price.setPadding(0, CloudUi.dp(c, 12), 0, CloudUi.dp(c, 2));
         card.addView(price);
+        // A money deal's amount in words under the figure, as the launcher's card (from 10.000, its WORDS_FROM): an
+        // approval is not misread as 3.750 or 375.000 (TASTE-2 r1).
+        if ((ap.pay == null || "money".equals(ap.pay)) && ap.price >= 10_000 && ap.price < 1_000_000_000_000L) {
+            card.addView(CloudUi.text(c, gg.projects.mobile.cloud.TrGrammar.words(ap.price, lang()), 12.5f, R.color.projects_ash_400, false));
+        }
         boolean toLimits = false;
         boolean saidAsk = false;
         boolean dealMode = dealMode();
