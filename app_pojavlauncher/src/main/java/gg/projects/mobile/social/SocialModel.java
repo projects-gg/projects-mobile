@@ -105,7 +105,11 @@ public final class SocialModel {
             return m.matches() ? m.group(1) : null;
         }
 
-        /** Discord's CDN address of the picture while {@code avatar} is {@code discord} (the desktop's rule). */
+        /**
+         * Discord's CDN address of the picture while {@code avatar} is {@code discord} and the player set one; null
+         * without one: the face is the name's letter on the quiet plate, never Discord's stand-in (its logo on a
+         * colour), as the desktop since SMALLS-L (TASTE-2: the pink and red logos were the loudest on the page).
+         */
         @Nullable
         public String discordAvatarUrl(int size) {
             if (presetSlug() != null || textureHash() != null) return null;
@@ -115,13 +119,7 @@ public final class SocialModel {
                 // Animated pictures are asked for as a still picture: the app draws one frame anyway.
                 return "https://cdn.discordapp.com/avatars/" + id + "/" + avatarHash + ".png?size=" + s;
             }
-            long index;
-            try {
-                index = (Long.parseLong(id) >>> 22) % 6;
-            } catch (NumberFormatException e) {
-                index = 0;
-            }
-            return "https://cdn.discordapp.com/embed/avatars/" + index + ".png";
+            return null;
         }
 
         /** The Discord profile ("Discord'dan mesaj at"). */

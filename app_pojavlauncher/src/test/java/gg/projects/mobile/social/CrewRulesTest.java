@@ -54,9 +54,10 @@ public class CrewRulesTest {
         Profile discord = new Profile("100000000000000002", "ayse", "Ayşe", "discord", "a_0123456789abcdef0123456789abcdef");
         assertEquals("https://cdn.discordapp.com/avatars/100000000000000002/a_0123456789abcdef0123456789abcdef.png?size=64",
                 discord.discordAvatarUrl(64));
+        // No picture of their own: no Discord stand-in either, the face is the name's letter (the desktop's SMALLS-L).
         Profile plain = new Profile("100000000000000002", "ayse", "Ayşe", "discord", null);
-        assertEquals("https://cdn.discordapp.com/embed/avatars/" + ((Long.parseLong("100000000000000002") >>> 22) % 6) + ".png",
-                plain.discordAvatarUrl(64));
+        assertNull(plain.discordAvatarUrl(64));
+        assertNull(new Profile("100000000000000002", "ayse", "Ayşe", "discord", "not-a-hash").discordAvatarUrl(64));
         assertEquals("https://discord.com/users/100000000000000002", plain.discordProfileUrl());
     }
 

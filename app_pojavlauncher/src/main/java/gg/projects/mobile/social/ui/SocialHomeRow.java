@@ -280,7 +280,9 @@ public final class SocialHomeRow implements SocialService.Listener {
         mTitle.setText(title);
         mLine.setText(text);
         mLine.setVisibility(text.isEmpty() ? View.GONE : View.VISIBLE);
-        mLine.setTextColor(ContextCompat.getColor(context, gold ? R.color.projects_gold_300 : R.color.projects_ash_400));
+        // What waits for the player reads a step brighter, never gold (FREE-M 0.4.5, TASTE-2: words are never gold; the
+        // friends pill's dot is the home's mark and OYNA its one gold).
+        mLine.setTextColor(ContextCompat.getColor(context, gold ? R.color.projects_ash_300 : R.color.projects_ash_400));
         mAction.setVisibility(join ? View.VISIBLE : View.GONE);
         if (join) mAction.setOnClickListener(v -> {
             FragmentActivity activity = mFragment.getActivity();
