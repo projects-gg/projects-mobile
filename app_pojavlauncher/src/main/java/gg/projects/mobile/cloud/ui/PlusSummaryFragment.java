@@ -295,15 +295,21 @@ public final class PlusSummaryFragment extends CloudScreen {
         LinearLayout right = new LinearLayout(c);
         right.setOrientation(LinearLayout.VERTICAL);
         right.setGravity(Gravity.END);
-        String avg = CloudWords.money(c, s.avgUnit);
+        String avg = PlusWords.money(c, s.avgUnit, server());
         right.addView(CloudUi.figure(c, avg, 15, R.color.projects_bone_100));
-        String range = s.minUnit == s.maxUnit ? null
-                : getString(R.string.projects_receipt_range, CloudWords.money(c, s.minUnit), CloudWords.money(c, s.maxUnit));
+        String range = s.minUnit == s.maxUnit ? null : range(c, s.minUnit, s.maxUnit);
         if (range != null) right.addView(CloudUi.text(c, range, 12.5f, R.color.projects_ash_400, false));
         row.addView(right);
         row.setContentDescription(itemName(s.item) + ", " + avg + (range == null ? "" : ", " + range));
         row.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_YES);
         return row;
+    }
+
+    /** A price range as the site writes it: "114-120 ripple", the unit once after the higher end (bare without one). */
+    private String range(Context c, long min, long max) {
+        PlusModel.Server server = server();
+        String unit = server == null || server.moneyLabel == null ? "" : "\u00A0" + server.moneyLabel.in(CloudWords.lang(c));
+        return CloudWords.money(c, min) + "-" + CloudWords.money(c, max) + unit;
     }
 
     private View receiptRow(Context c, PlusModel.Receipt r, long now) {

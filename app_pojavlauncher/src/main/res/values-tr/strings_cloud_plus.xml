@@ -374,7 +374,6 @@
     <string name="projects_receipt_period">Son 30 gün</string>
     <string name="projects_receipt_trades">Takaslar</string>
     <string name="projects_receipt_per_item">Fiyatlar adet başına.</string>
-    <string name="projects_receipt_range">%1$s ile %2$s arası</string>
     <string name="projects_receipt_side_bought">Alındı</string>
     <string name="projects_receipt_side_sold">Satıldı</string>
     <string name="projects_receipt_empty">Son 30 günde takas yok.</string>
@@ -535,7 +534,7 @@
     <string name="projects_setup_pm_caption">Özel mesajda böyle görünür</string>
     <string name="projects_ads_switch">Sohbete ilan versin</string>
     <string name="projects_order_menu_switch">Sipariş menüsünü kontrol etsin</string>
-    <string name="projects_order_menu_help">Sunucuda menülü sipariş sistemi varsa siparişleri arada kendisi kontrol eder.</string>
+    <string name="projects_order_menu_help">Sunucuda sipariş menüsü varsa arada bakar, satış siparişlerine uyan isteklere eşyanı teslim eder.</string>
     <string name="projects_ads_how">Ne sıklıkla?</string>
     <string name="projects_ads_every_30">30 dk</string>
     <string name="projects_ads_every_45">45 dk</string>

@@ -381,7 +381,6 @@
     <string name="projects_receipt_period">Last 30 days</string>
     <string name="projects_receipt_trades">Trades</string>
     <string name="projects_receipt_per_item">Prices are per item.</string>
-    <string name="projects_receipt_range">%1$s to %2$s</string>
     <string name="projects_receipt_side_bought">Bought</string>
     <string name="projects_receipt_side_sold">Sold</string>
     <string name="projects_receipt_empty">No trades in the last 30 days.</string>
@@ -545,7 +544,7 @@
     <string name="projects_setup_pm_caption">How it looks in a private message</string>
     <string name="projects_ads_switch">Post ads in chat</string>
     <string name="projects_order_menu_switch">Check the order menu</string>
-    <string name="projects_order_menu_help">If the server has an order menu, it checks the orders now and then by itself.</string>
+    <string name="projects_order_menu_help">If the server has an order menu, it checks it now and then and fills matching requests from your sell orders.</string>
     <string name="projects_ads_how">How often?</string>
     <string name="projects_ads_every_30">30 min</string>
     <string name="projects_ads_every_45">45 min</string>
