@@ -361,9 +361,9 @@
     <string name="projects_cloud_notice_expired">%1$s için süre bitti.</string>
     <string name="projects_cloud_notice_found">%1$s: %2$s bulundu (%3$s).</string>
     <string name="projects_cloud_notice_approval">%1$s onay bekliyor</string>
-    <string name="projects_cloud_notice_deal_line">%1$s %2$s = %3$s</string>
-    <string name="projects_cloud_notice_bought">%1$s: %2$s %3$s %4$s alındı.</string>
-    <string name="projects_cloud_notice_sold">%1$s: %2$s %3$s %4$s satıldı.</string>
+    <string name="projects_cloud_notice_deal_line">%1$s = %2$s</string>
+    <string name="projects_cloud_notice_bought">%1$s: %2$s %3$s alındı.</string>
+    <string name="projects_cloud_notice_sold">%1$s: %2$s %3$s satıldı.</string>
     <string name="projects_cloud_notice_deal_failed">%1$s: %2$s takası olmadı.</string>
     <string name="projects_cloud_notice_quota_full">Kontörün bitti, %1$s yenilenir.</string>
     <string name="projects_cloud_notice_quota_full_plain">Kontörün bitti.</string>

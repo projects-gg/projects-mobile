@@ -358,9 +358,9 @@
     <string name="projects_cloud_notice_expired">%1$s\'s time is up.</string>
     <string name="projects_cloud_notice_found">%1$s: found %2$s (%3$s).</string>
     <string name="projects_cloud_notice_approval">%1$s needs your OK</string>
-    <string name="projects_cloud_notice_deal_line">%1$s %2$s for %3$s</string>
-    <string name="projects_cloud_notice_bought">%1$s: bought %2$s %3$s for %4$s.</string>
-    <string name="projects_cloud_notice_sold">%1$s: sold %2$s %3$s for %4$s.</string>
+    <string name="projects_cloud_notice_deal_line">%1$s for %2$s</string>
+    <string name="projects_cloud_notice_bought">%1$s: bought %2$s for %3$s.</string>
+    <string name="projects_cloud_notice_sold">%1$s: sold %2$s for %3$s.</string>
     <string name="projects_cloud_notice_deal_failed">%1$s: the %2$s trade fell through.</string>
     <string name="projects_cloud_notice_quota_full">You\'re out of AI credits. They reset at %1$s.</string>
     <string name="projects_cloud_notice_quota_full_plain">You\'re out of AI credits.</string>

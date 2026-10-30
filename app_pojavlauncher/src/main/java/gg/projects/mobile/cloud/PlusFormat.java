@@ -31,6 +31,26 @@ public final class PlusFormat {
         return (value < 0 ? "-" : "") + out;
     }
 
+    /**
+     * So many of an item, as the launcher writes it (words.ts qtyItem): TR "64 Elmas", EN "64 x Diamond", the count
+     * grouped as an amount. No English plural is guessed (the game's names are singular, "Totem of Undying"); the count
+     * and its item stay together with no-break spaces. A price paid in items keeps its count ("1 x Diamond").
+     */
+    public static String qtyItem(long qty, String name, String lang) {
+        String count = money(qty, lang);
+        return "en".equals(lang) ? count + "\u00a0\u00d7\u00a0" + name : count + " " + name;
+    }
+
+    /** A deal's subject (words.ts goodsText): a single one is bare in English ("Elytra"), Turkish keeps its count ("1 Elytra"). */
+    public static String goods(long qty, String name, String lang) {
+        return "en".equals(lang) && qty == 1 ? name : qtyItem(qty, name, lang);
+    }
+
+    /** A card's or a row's title: a single one bare in both languages ("Elytra"), more with their count ("2 x Emerald"). */
+    public static String titleItem(long qty, String name, String lang) {
+        return qty <= 1 ? name : qtyItem(qty, name, lang);
+    }
+
     /** The assistant's state, as one short sentence's key. */
     public enum Ai {
         ON, ON_NOTIFY_ONLY, UNKNOWN,

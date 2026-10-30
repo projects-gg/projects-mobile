@@ -420,7 +420,7 @@ public final class CloudUi {
         void changed(boolean on);
     }
 
-    /** A switch row (obsidian track; bone when on, the lead's 29 Oct rule for every surface), 56 dp. */
+    /** A switch row, 56 dp: the app's one switch look (projects_switch_track/thumb: bone when on, as the launcher's). */
     public static SwitchCompat toggle(Context c, CharSequence label, boolean checked, final Toggle toggle) {
         SwitchCompat row = new SwitchCompat(c);
         row.setText(label);
@@ -430,11 +430,6 @@ public final class CloudUi {
         row.setMinHeight(dp(c, 56));
         row.setMinimumHeight(dp(c, 56));
         row.setPadding(dp(c, 16), 0, dp(c, 14), 0);
-        int[][] states = {new int[]{-android.R.attr.state_enabled}, new int[]{android.R.attr.state_checked}, new int[]{}};
-        row.setThumbTintList(new ColorStateList(states, new int[]{color(c, R.color.projects_ash_500),
-                color(c, R.color.projects_bone_100), color(c, R.color.projects_ash_300)}));
-        row.setTrackTintList(new ColorStateList(states, new int[]{color(c, R.color.projects_obsidian_700),
-                color(c, R.color.projects_ash_500), color(c, R.color.projects_obsidian_700)}));
         row.setChecked(checked);
         row.setOnCheckedChangeListener((button, on) -> {
             Haptics.toggle(button, on);

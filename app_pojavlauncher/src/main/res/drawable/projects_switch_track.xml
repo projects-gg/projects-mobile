@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Switch track (M14, the desktop's Switch): obsidian with a hairline ring when off, gold with a
-     lighter gold ring when on; dimmed while disabled. -->
+<!-- Switch track (M14, the desktop's Switch): obsidian with a hairline ring when off, bone with a
+     white ring when on (0.4.6: the launcher's bone switch, one gold per screen); dimmed while disabled. -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android"
     android:enterFadeDuration="150"
     android:exitFadeDuration="150">
@@ -8,15 +8,15 @@
         <shape android:shape="rectangle">
             <corners android:radius="13dp" />
             <size android:width="46dp" android:height="26dp" />
-            <solid android:color="#80E89A2C" />
+            <solid android:color="#80F3EBDD" />
         </shape>
     </item>
     <item android:state_checked="true">
         <shape android:shape="rectangle">
             <corners android:radius="13dp" />
             <size android:width="46dp" android:height="26dp" />
-            <solid android:color="@color/projects_gold_500" />
-            <stroke android:width="1dp" android:color="#99F0B849" />
+            <solid android:color="@color/projects_bone_100" />
+            <stroke android:width="1dp" android:color="#4DFFFFFF" />
         </shape>
     </item>
     <item android:state_enabled="false">
