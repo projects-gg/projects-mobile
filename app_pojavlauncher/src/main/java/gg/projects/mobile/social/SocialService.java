@@ -788,36 +788,42 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         final long today = CrewDetails.turkeyDay(nowSeconds());
         mKeptLoading = true;
         mIo.execute(() -> {
-            String rel = null;
-            Me me = null;
-            FriendsData data = null;
+            KeptStart found = null;
             try {
                 KeptLists.Copy copy = mKept.load(account, today);
                 JsonObject lists = copy == null ? null : KeptLists.listsWithCrews(copy, new CrewCache(mCrewRoot, account), today);
-                if (lists != null) {
-                    me = Me.read(copy.me);
-                    if (me != null && account.equals(me.profile.id)) {
-                        data = FriendsData.read(lists);
-                        rel = copy.rel;
-                    }
-                }
+                Me me = lists == null ? null : Me.read(copy.me);
+                if (me != null && account.equals(me.profile.id)) found = new KeptStart(copy.rel, me, FriendsData.read(lists));
             } catch (RuntimeException e) {
                 Log.w(TAG, "the friend list kept on the phone is not read", e);
-                data = null;
+                found = null;
+            } finally {
+                // Always back on the main thread: the connect and the reads wait for this.
+                final KeptStart shown = found;
+                mMain.post(() -> keptLoaded(token, since, shown));
             }
-            final String keptRel = data == null ? null : rel;
-            final Me keptMe = data == null ? null : me;
-            final FriendsData kept = data;
-            mMain.post(() -> keptLoaded(token, since, keptRel, keptMe, kept));
         });
     }
 
+    /** What a start shows from the copy kept on the phone. */
+    private static final class KeptStart {
+        final String rel;
+        final Me me;
+        final FriendsData data;
+
+        KeptStart(String rel, Me me, FriendsData data) {
+            this.rel = rel;
+            this.me = me;
+            this.data = data;
+        }
+    }
+
     @MainThread
-    private void keptLoaded(@Nullable String token, long since, @Nullable String rel, @Nullable Me me, @Nullable FriendsData data) {
+    private void keptLoaded(@Nullable String token, long since, @Nullable KeptStart kept) {
         mKeptLoading = false;
-        if (me != null && data != null && token != null && token.equals(mToken) && !mState.loaded() && mRel.keep(rel, since)) {
-            mState.setMe(me);
-            mState.applyFriends(data);
+        if (kept != null && token != null && token.equals(mToken) && !mState.loaded() && mRel.keep(kept.rel, since)) {
+            mState.setMe(kept.me);
+            mState.applyFriends(kept.data);
             mPrefs.setCrewSettings(mState.teamNotifications());
             rememberCrewNames();
             syncPlanReminders();
