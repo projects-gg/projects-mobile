@@ -75,6 +75,14 @@ public class mcVersionSpinner extends ExtendedTextView {
     private int mSelectedIndex;
     private int mUndoBarTries;
     private final Runnable mShowPendingUndo = this::showPendingUndo;
+    /** M048: the light scrim over the window while the list is open (in the window's overlay, no view of its own). */
+    private android.graphics.drawable.ColorDrawable mScrim;
+    @Nullable
+    private View mScrimHost;
+    @Nullable
+    private android.animation.ValueAnimator mScrimFade;
+    /** The list goes without its slide (to another screen): the scrim goes at once too. */
+    private boolean mHideQuietly;
 
     private final ProfileAdapter mProfileAdapter = new ProfileAdapter(new ProfileAdapterExtra[]{
             new ProfileAdapterExtra(VERSION_SPINNER_PROFILE_CREATE,
@@ -165,6 +173,7 @@ public class mcVersionSpinner extends ExtendedTextView {
                 }
                 mPopupWindow.setHeight(popupHeight()); // Projects fork (M14)
                 mPopupWindow.setWidth(popupWidth()); // TABLET-M
+                showScrim(); // M048
                 mPopupWindow.showAsDropDown(mcVersionSpinner.this, 0, offset);
                 turnCaret(true);
                 // Post() is required for the layout inflation phase
@@ -225,6 +234,9 @@ public class mcVersionSpinner extends ExtendedTextView {
     @Override
     protected void onDetachedFromWindow() {
         removeCallbacks(mShowPendingUndo);
+        // M048: a list still open goes with its screen, and its scrim with it.
+        if (mPopupWindow != null && mPopupWindow.isShowing()) hidePopup(false);
+        dropScrim();
         super.onDetachedFromWindow();
     }
 
@@ -290,7 +302,10 @@ public class mcVersionSpinner extends ExtendedTextView {
 
         mPopupWindow = new PopupWindow(mListView, MATCH_PARENT, getContext().getResources().getDimensionPixelOffset(R.dimen._184sdp));
         mPopupWindow.setElevation(5);
-        mPopupWindow.setOnDismissListener(() -> turnCaret(false)); // Projects fork (M14)
+        mPopupWindow.setOnDismissListener(() -> {
+            turnCaret(false); // Projects fork (M14)
+            hideScrim(); // M048
+        });
         mPopupWindow.setClippingEnabled(false);
 
         // Block clicking outside of the popup window
@@ -315,15 +330,84 @@ public class mcVersionSpinner extends ExtendedTextView {
 
     private void hidePopup(boolean animate) {
         if(mPopupWindow == null) return;
-        if(!animate && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            mPopupWindow.setEnterTransition(null);
-            mPopupWindow.setExitTransition(null);
-            mPopupWindow.dismiss();
-            mPopupWindow.setEnterTransition((Transition) mPopupAnimation);
-            mPopupWindow.setExitTransition((Transition) mPopupAnimation);
-        }else {
-            mPopupWindow.dismiss();
+        mHideQuietly = !animate; // M048: the scrim goes the way the list goes
+        try {
+            if(!animate && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                mPopupWindow.setEnterTransition(null);
+                mPopupWindow.setExitTransition(null);
+                mPopupWindow.dismiss();
+                mPopupWindow.setEnterTransition((Transition) mPopupAnimation);
+                mPopupWindow.setExitTransition((Transition) mPopupAnimation);
+            }else {
+                mPopupWindow.dismiss();
+            }
+        } finally {
+            mHideQuietly = false;
         }
+    }
+
+    /**
+     * M048 (TASTE-2's P3 of 0.4.7): while the list is open a light scrim lies over the rest of the window, so nothing
+     * behind it reads as part of the list (on a wide window the home card's close cross sat just right of the list, like
+     * its own close button). The list is modal anyway: a press outside only closes it. Opacity only, in step with the
+     * caret (220 ms in, 180 ms out); at once with animations off or when the list goes without its slide.
+     */
+    private void showScrim() {
+        View root = getRootView();
+        if (root == null) return;
+        if (mScrim == null) {
+            mScrim = new android.graphics.drawable.ColorDrawable(
+                    androidx.core.content.ContextCompat.getColor(getContext(), R.color.projects_scrim_light));
+            mScrim.setAlpha(0);
+        }
+        if (mScrimHost != root) {
+            dropScrim();
+            mScrim.setAlpha(0);
+            root.getOverlay().add(mScrim);
+            mScrimHost = root;
+        }
+        mScrim.setBounds(0, 0, root.getWidth(), root.getHeight());
+        fadeScrim(255, 220);
+    }
+
+    private void hideScrim() {
+        if (mScrimHost == null) return;
+        fadeScrim(0, mHideQuietly ? 0 : 180);
+    }
+
+    /** Fades the scrim to {@code to} (0-255) from where it is; it leaves the window's overlay at 0. */
+    private void fadeScrim(final int to, long ms) {
+        android.animation.ValueAnimator running = mScrimFade;
+        mScrimFade = null;
+        if (running != null) running.cancel();
+        if (ms == 0 || !gg.projects.mobile.mods.Motion.enabled(getContext()) || !isShown()) {
+            mScrim.setAlpha(to);
+            if (to == 0) dropScrim();
+            return;
+        }
+        final android.animation.ValueAnimator fade = android.animation.ValueAnimator.ofInt(mScrim.getAlpha(), to);
+        fade.setDuration(ms);
+        fade.setInterpolator(gg.projects.mobile.mods.Motion.EASE_OUT);
+        fade.addUpdateListener(animation -> mScrim.setAlpha((Integer) animation.getAnimatedValue()));
+        fade.addListener(new android.animation.AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(android.animation.Animator animation) {
+                // A fade cut short by the next one leaves the scrim to it.
+                if (mScrimFade != fade) return;
+                mScrimFade = null;
+                if (to == 0) dropScrim();
+            }
+        });
+        mScrimFade = fade;
+        fade.start();
+    }
+
+    private void dropScrim() {
+        android.animation.ValueAnimator running = mScrimFade;
+        mScrimFade = null;
+        if (running != null) running.cancel();
+        if (mScrimHost != null && mScrim != null) mScrimHost.getOverlay().remove(mScrim);
+        mScrimHost = null;
     }
 
     /**

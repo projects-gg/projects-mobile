@@ -27,6 +27,9 @@
     <color name="projects_ripple">#29F6D58E</color>
     <color name="projects_ripple_strong">#3DF6D58E</color>
     <color name="projects_hairline">#14FFFFFF</color>
+    <!-- M048: the light scrim behind the open profile list (obsidian-950 at 40 %; sheets and the message menu dim
+         harder, 55-60 %). -->
+    <color name="projects_scrim_light">#660A090C</color>
     <color name="projects_jade_400">#5FCB8E</color>
     <color name="projects_flare_400">#F0624D</color>
     <!-- Text on gold. -->
