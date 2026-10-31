@@ -1,10 +1,14 @@
-<androidx.constraintlayout.widget.ConstraintLayout
+<!-- TABLET-M: the root keeps every screen but the home (and the chats beside a conversation) in one centred
+     column on a wide window, and hands drags and wheels beside the column to it (WideRoot). It paints the
+     app's background itself (the window has none), so the strips beside the column are the app's. -->
+<gg.projects.mobile.ui.WideRoot
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/projects_launcher_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/transparent">
+    android:background="@color/background_app">
 
     <!-- Projects fork (M14): the top bar (landscape: 48dp tall). The account chip on the left, the settings/home button on
          the right (48dp targets, 24dp glyphs), and a hairline under it that carries the Microsoft
@@ -61,10 +65,11 @@
     <!-- Holding most of the dynamic content -->
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/container_fragment"
-
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintBottom_toTopOf="@+id/progress_layout"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/projects_top_bar" />
 
 
@@ -75,4 +80,4 @@
 
         app:layout_constraintBottom_toBottomOf="parent" />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+</gg.projects.mobile.ui.WideRoot>

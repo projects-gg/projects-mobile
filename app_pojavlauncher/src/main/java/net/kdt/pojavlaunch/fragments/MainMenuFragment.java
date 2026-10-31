@@ -34,7 +34,8 @@ import java.util.List;
 
 import gg.projects.mobile.ui.ProjectsHomeCard;
 
-public class MainMenuFragment extends Fragment {
+/** TABLET-M: the home lays a wide window out itself (layout-w600dp, layout-w840dp-h480dp), no centred column. */
+public class MainMenuFragment extends Fragment implements gg.projects.mobile.ui.FullWidth {
     public static final String TAG = "MainMenuFragment";
 
     private mcVersionSpinner mVersionSpinner;
@@ -50,6 +51,11 @@ public class MainMenuFragment extends Fragment {
 
     public MainMenuFragment(){
         super(R.layout.fragment_launcher);
+    }
+
+    @Override
+    public boolean fillsWindow() {
+        return true;
     }
 
     @Override

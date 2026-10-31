@@ -110,6 +110,56 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
     private CloudModel.Versions mVersions;
     @Nullable
     private SaveBar mBar;
+    /** TABLET-M: the edits came back from before a rotation or a resize: the new view draws them once. */
+    private boolean mRestored;
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        // TABLET-M: what was edited before a rotation or a resize (the launcher is made again) comes back.
+        Kept kept = Kept.of(this);
+        if (savedInstanceState != null && kept.has("base")) {
+            mBase = kept.take("base");
+            mOriginal = kept.take("original");
+            mConfig = kept.take("config");
+            mName = kept.take("name");
+            mHost = kept.take("host");
+            mPort = kept.take("port");
+            mVersion = kept.take("version");
+            mLang = kept.take("lang");
+            Integer tab = kept.take("tab");
+            mTab = tab == null ? GENERAL : tab;
+            List<CloudEdit.Issue> issues = kept.take("issues");
+            if (issues != null) mIssues.addAll(issues);
+            Map<String, String> reports = kept.take("reports");
+            if (reports != null) mReports.putAll(reports);
+            mConflict = kept.take("conflict");
+            mVersions = kept.take("versions");
+            mRestored = mBase != null && mOriginal != null && mConfig != null;
+        }
+        kept.clear();
+    }
+
+    @Override
+    public void onSaveInstanceState(@androidx.annotation.NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        // A save on its way answers this copy of the screen; the next one reads the account afresh.
+        if (mBase == null || mSaving) return;
+        Kept kept = Kept.of(this);
+        kept.put("base", mBase);
+        kept.put("original", mOriginal);
+        kept.put("config", mConfig);
+        kept.put("name", mName);
+        kept.put("host", mHost);
+        kept.put("port", mPort);
+        kept.put("version", mVersion);
+        kept.put("lang", mLang);
+        kept.put("tab", mTab);
+        kept.put("issues", new ArrayList<>(mIssues));
+        kept.put("reports", new HashMap<>(mReports));
+        kept.put("conflict", mConflict);
+        kept.put("versions", mVersions);
+    }
 
     @Override
     protected void created(View view) {
@@ -134,6 +184,12 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
         if (mBase == null) {
             begin(a);
             return;
+        }
+        if (mRestored) {
+            mRestored = false;
+            tabs();
+            draw();
+            bar();
         }
         // A change made elsewhere while nothing is edited here: the screen shows it.
         if (a.rev != mBase.rev && !dirty() && !mSaving) begin(a);

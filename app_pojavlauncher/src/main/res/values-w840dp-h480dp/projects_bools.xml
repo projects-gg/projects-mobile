@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- TABLET-M: a wide and tall window (a tablet in landscape): the chats beside a conversation. -->
+    <bool name="projects_chat_two_pane">true</bool>
+</resources>

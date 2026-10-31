@@ -10,7 +10,6 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import net.kdt.pojavlaunch.R;
-import net.kdt.pojavlaunch.Tools;
 
 import gg.projects.mobile.social.ChatConv;
 import gg.projects.mobile.social.SocialGate;
@@ -157,10 +156,9 @@ public final class FriendCard {
 
     /** Opens a conversation from wherever the card was (a screen on top of the friends list). */
     static void openChat(FragmentActivity activity, String conv) {
-        android.os.Bundle args = new android.os.Bundle();
-        args.putString(ChatFragment.ARG_CONV, conv);
         if (activity.getSupportFragmentManager().isStateSaved()) return;
-        Tools.swapFragment(activity, ChatFragment.class, ChatFragment.TAG, args);
+        // TABLET-M: beside the conversations' list on a wide and tall window.
+        ChatFragment.show(activity, conv);
     }
 
     static SocialService.Result<Void> done(final FragmentActivity activity, final String message) {

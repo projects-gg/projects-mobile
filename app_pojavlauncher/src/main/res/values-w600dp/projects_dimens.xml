@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- TABLET-M: a window at least 600 dp wide (tablets, landscape phones, a half of a split tablet screen). -->
+<resources>
+    <!-- News covers in a wide column or sheet: closer to their 16:9 than a phone's strips. -->
+    <dimen name="projects_home_cover_max">320dp</dimen>
+    <dimen name="projects_news_cover_max">280dp</dimen>
+    <dimen name="projects_article_cover_max">320dp</dimen>
+    <!-- Questions and menus at one comfortable width instead of AppCompat's 45-65 % of a tablet. -->
+    <dimen name="projects_dialog_fixed_width">448dp</dimen>
+</resources>

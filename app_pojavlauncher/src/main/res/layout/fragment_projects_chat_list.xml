@@ -42,4 +42,12 @@
             android:visibility="gone"
             tools:visibility="visible" />
     </FrameLayout>
+
+    <!-- TABLET-M: the conversation's place beside the list in two panes (layout-w840dp-h480dp). Here it is hidden: a
+         conversation open beside the list before a rotation or a resize lands in it, then opens on its own screen. -->
+    <FrameLayout
+        android:id="@+id/projects_chats_detail"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone" />
 </LinearLayout>

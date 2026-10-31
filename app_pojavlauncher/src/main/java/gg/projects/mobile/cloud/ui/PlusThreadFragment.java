@@ -311,7 +311,9 @@ public final class PlusThreadFragment extends CloudScreen {
             TextView bubble = CloudUi.text(c, "", 15, R.color.projects_bone_100, false);
             bubble.setLineSpacing(0, 1.12f);
             bubble.setPadding(CloudUi.dp(c, 12), CloudUi.dp(c, 8), CloudUi.dp(c, 12), CloudUi.dp(c, 8));
-            bubble.setMaxWidth(Math.round(c.getResources().getDisplayMetrics().widthPixels * 0.74f));
+            // TABLET-M: three quarters of the screen's column, not of a tablet's whole width.
+            bubble.setMaxWidth(Math.round(Math.min(c.getResources().getDisplayMetrics().widthPixels,
+                    c.getResources().getDimensionPixelSize(R.dimen.projects_column_max)) * 0.74f));
             box.addView(bubble, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
             TextView time = CloudUi.time(c, 11.5f, R.color.projects_ash_400);
             time.setPadding(CloudUi.dp(c, 6), CloudUi.dp(c, 2), CloudUi.dp(c, 6), 0);

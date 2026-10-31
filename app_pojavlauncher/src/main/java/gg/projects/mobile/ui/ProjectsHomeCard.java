@@ -440,7 +440,8 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
 
         Context context = root.getContext();
         float density = context.getResources().getDisplayMetrics().density;
-        mNewsCover.setMaxCoverHeight(Math.round(200 * density));
+        // TABLET-M: 200 dp on a phone, taller in a wide column (values-w600dp).
+        mNewsCover.setMaxCoverHeight(context.getResources().getDimensionPixelSize(R.dimen.projects_home_cover_max));
         // The bell's box ends 4 dp from the card's edge; its icon moves 7 dp toward it, under the
         // sections' carets (all centred 21 dp from the card's edge).
         mEventBell.setIconShift(7 * density);

@@ -338,7 +338,8 @@ public class ProjectsNewsFragment extends Fragment implements ProjectsContent.Li
         NewsHolder(View view) {
             super(view);
             mCover = view.findViewById(R.id.projects_item_cover);
-            mCover.setMaxCoverHeight(Math.round(180 * view.getResources().getDisplayMetrics().density));
+            // TABLET-M: 180 dp on a phone, taller in a wide column (values-w600dp).
+            mCover.setMaxCoverHeight(view.getResources().getDimensionPixelSize(R.dimen.projects_news_cover_max));
             mCategory = view.findViewById(R.id.projects_item_category);
             mDot = view.findViewById(R.id.projects_item_dot);
             mDate = view.findViewById(R.id.projects_item_date);

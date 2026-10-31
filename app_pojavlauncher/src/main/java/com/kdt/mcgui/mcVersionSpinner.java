@@ -164,6 +164,7 @@ public class mcVersionSpinner extends ExtendedTextView {
                     return;
                 }
                 mPopupWindow.setHeight(popupHeight()); // Projects fork (M14)
+                mPopupWindow.setWidth(popupWidth()); // TABLET-M
                 mPopupWindow.showAsDropDown(mcVersionSpinner.this, 0, offset);
                 turnCaret(true);
                 // Post() is required for the layout inflation phase
@@ -341,6 +342,16 @@ public class mcVersionSpinner extends ExtendedTextView {
         int room = location[1] - top - Math.round(16 * density);
         int cap = Math.min(Math.round(row * 4.5f) + padding, Math.max(row + padding, room));
         return Math.min(content, cap);
+    }
+
+    /**
+     * TABLET-M: on a phone the list spans the window (as before); on a wide window it is as wide as the profile row it
+     * opens from (at least 320 dp), not the whole tablet.
+     */
+    private int popupWidth() {
+        if (getResources().getConfiguration().screenWidthDp < 600) return MATCH_PARENT;
+        float density = getResources().getDisplayMetrics().density;
+        return Math.max(getWidth(), Math.round(320 * density));
     }
 
     public ProfileAdapter getProfileAdapter() {

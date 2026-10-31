@@ -428,6 +428,8 @@
     <string name="projects_chat_days_ago">%1$d days ago</string>
     <string name="projects_chat_empty">No messages yet</string>
     <string name="projects_chat_empty_body">Press “Message” on a friend\'s card.</string>
+    <!-- TABLET-M: the conversation pane beside the list before one is chosen (two panes). -->
+    <string name="projects_chat_pick">Pick a conversation</string>
     <string name="projects_chat_you">You: %1$s</string>
     <plurals name="projects_chat_unread">
         <item quantity="one">%d unread message</item>

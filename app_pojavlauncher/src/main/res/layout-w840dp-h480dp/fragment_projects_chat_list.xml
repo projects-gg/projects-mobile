@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- TABLET-M: "Mesajlar" on a wide and tall window (a tablet in landscape): the conversations on the left as on a
+     phone, the one chosen on the right (ChatFragment as a child, its header without a back button), a hairline
+     between them. Before a choice the right side says what to do. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_app"
+    android:baselineAligned="false"
+    android:orientation="horizontal">
+
+    <LinearLayout
+        android:layout_width="@dimen/projects_side_column"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <gg.projects.mobile.ui.ScreenHeader
+            android:id="@+id/projects_chats_header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="4dp"
+            android:text="@string/projects_chat_title" />
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <gg.projects.mobile.social.ui.FadingRecyclerView
+                android:id="@+id/projects_chats_list"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:paddingTop="4dp"
+                android:paddingBottom="24dp" />
+
+            <TextView
+                android:id="@+id/projects_chats_empty"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:drawablePadding="12dp"
+                android:fontFamily="@font/figtree_regular"
+                android:gravity="center"
+                android:paddingHorizontal="16dp"
+                android:text="@string/projects_chat_empty"
+                android:textColor="@color/projects_ash_400"
+                android:textSize="14sp"
+                android:visibility="gone"
+                tools:visibility="visible" />
+        </FrameLayout>
+    </LinearLayout>
+
+    <View
+        android:layout_width="1dp"
+        android:layout_height="match_parent"
+        android:background="@color/projects_hairline" />
+
+    <FrameLayout
+        android:id="@+id/projects_chats_detail"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1">
+
+        <TextView
+            android:id="@+id/projects_chats_pick"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:drawablePadding="12dp"
+            android:fontFamily="@font/figtree_semibold"
+            android:gravity="center"
+            android:text="@string/projects_chat_pick"
+            android:textColor="@color/projects_ash_300"
+            android:textSize="16sp" />
+    </FrameLayout>
+</LinearLayout>

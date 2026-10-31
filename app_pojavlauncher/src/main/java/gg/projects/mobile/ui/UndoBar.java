@@ -112,6 +112,8 @@ public final class UndoBar extends LinearLayout {
         params.bottomToTop = aboveId;
         params.setMarginStart(Math.round(12 * dp));
         params.setMarginEnd(Math.round(12 * dp));
+        // TABLET-M: on a wide window as wide as the home's column (its rows' 12 dp in), centred over the bar.
+        params.matchConstraintMaxWidth = root.getResources().getDimensionPixelSize(R.dimen.projects_column_max) - Math.round(24 * dp);
         params.bottomMargin = Math.round(10 * dp);
         root.addView(bar, params);
         root.setTag(R.id.projects_undo_bar, bar);

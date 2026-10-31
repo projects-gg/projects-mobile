@@ -52,20 +52,73 @@ import gg.projects.mobile.ui.ScreenHeader;
  * "Mesajlar" (M20): every conversation the player can open, the newest first, with what was said last
  * ("Sen: …" for the player's own) and the unread count in gold; the crews' chats are there even before
  * the first message. "+" starts a conversation with a friend.
+ * TABLET-M: on a wide and tall window (a tablet in landscape) the conversation opens beside the list (two panes,
+ * {@code projects_chat_two_pane}), its row on the quiet plate; elsewhere on its own screen, as on a phone. A
+ * conversation open beside the list when the window turns narrow (a rotation, a split) opens on its own screen.
  */
-public class ChatListFragment extends Fragment implements SocialService.Listener {
+public class ChatListFragment extends Fragment implements SocialService.Listener, gg.projects.mobile.ui.FullWidth {
     public static final String TAG = "ProjectsChatListFragment";
+    /** TABLET-M: the conversation to open beside the list when the screen comes (two panes). */
+    public static final String ARG_OPEN = "gg.projects.mobile.social.OPEN";
+    private static final String STATE_OPEN = "open";
 
     private RecyclerView mList;
     private TextView mEmpty;
     private final Adapter mAdapter = new Adapter();
+    /** TABLET-M: the list and a conversation side by side. */
+    private boolean mTwoPane;
+    /** TABLET-M: the conversation beside the list, or null. */
+    @Nullable
+    private String mOpen;
+    /** TABLET-M: a conversation that was beside the list before the window turned narrow: it opens on its own screen. */
+    @Nullable
+    private String mReopen;
+    @Nullable
+    private TextView mPick;
+    /** TABLET-M: {@link #ARG_OPEN}, opened once the screen is resumed. */
+    @Nullable
+    private String mInitial;
 
     public ChatListFragment() {
         super(R.layout.fragment_projects_chat_list);
     }
 
     @Override
+    public boolean fillsWindow() {
+        return getResources().getBoolean(R.bool.projects_chat_two_pane);
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if (savedInstanceState != null) mOpen = savedInstanceState.getString(STATE_OPEN);
+        else if (getArguments() != null) mInitial = getArguments().getString(ARG_OPEN);
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putString(STATE_OPEN, mOpen);
+    }
+
+    @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        mTwoPane = getResources().getBoolean(R.bool.projects_chat_two_pane);
+        mPick = view.findViewById(R.id.projects_chats_pick);
+        Fragment beside = getChildFragmentManager().findFragmentById(R.id.projects_chats_detail);
+        if (!mTwoPane) {
+            // The narrow layout has no room beside the list: the conversation that was there goes to its own screen.
+            if (beside != null) getChildFragmentManager().beginTransaction().remove(beside).commit();
+            if (mOpen != null) mReopen = mOpen;
+            mOpen = null;
+        } else if (beside == null) {
+            mOpen = null;
+        }
+        if (mPick != null) {
+            mPick.setVisibility(mOpen == null ? View.VISIBLE : View.GONE);
+            // ICON2's speech bubble sprite on its tile, as the empty list has it.
+            ContentTiles.onTileAbove(mPick, PixelSprites.Sprite.CHAT, 56, 14);
+        }
         ScreenHeader header = view.findViewById(R.id.projects_chats_header);
         header.addAction(R.drawable.projects_ic_plus, R.string.projects_chat_message, v -> pickFriend());
         mList = view.findViewById(R.id.projects_chats_list);
@@ -128,6 +181,44 @@ public class ChatListFragment extends Fragment implements SocialService.Listener
         service.addListener(this);
         service.refresh(false);
         render();
+        if (mReopen != null) {
+            String conv = mReopen;
+            mReopen = null;
+            ChatFragment.open(this, conv);
+        } else if (mInitial != null) {
+            String conv = mInitial;
+            mInitial = null;
+            openConversation(conv);
+        }
+    }
+
+    /** TABLET-M: a conversation opens beside the list in two panes, else on its own screen. */
+    private void openConversation(String conv) {
+        if (!mTwoPane) {
+            ChatFragment.open(this, conv);
+            return;
+        }
+        if (!isAdded() || getChildFragmentManager().isStateSaved()) return;
+        if (conv.equals(mOpen) && getChildFragmentManager().findFragmentById(R.id.projects_chats_detail) != null) return;
+        mOpen = conv;
+        Bundle args = new Bundle();
+        args.putString(ChatFragment.ARG_CONV, conv);
+        getChildFragmentManager().beginTransaction()
+                .setReorderingAllowed(true)
+                .replace(R.id.projects_chats_detail, ChatFragment.class, args, ChatFragment.TAG)
+                .commit();
+        if (mPick != null) mPick.setVisibility(View.GONE);
+        mAdapter.notifyItemRangeChanged(0, mAdapter.getItemCount());
+    }
+
+    /** TABLET-M: the conversation beside the list went away (it closed itself): the side says what to do again. */
+    void closeConversation(@Nullable String conv) {
+        if (!isAdded() || getChildFragmentManager().isStateSaved()) return;
+        Fragment beside = getChildFragmentManager().findFragmentById(R.id.projects_chats_detail);
+        if (beside != null) getChildFragmentManager().beginTransaction().remove(beside).commit();
+        if (conv == null || conv.equals(mOpen)) mOpen = null;
+        if (mPick != null) mPick.setVisibility(mOpen == null ? View.VISIBLE : View.GONE);
+        mAdapter.notifyItemRangeChanged(0, mAdapter.getItemCount());
     }
 
     @Override
@@ -241,7 +332,7 @@ public class ChatListFragment extends Fragment implements SocialService.Listener
             row.setOnClickListener(v -> {
                 dialog.dismiss();
                 String me = service.state().myId();
-                if (me != null) ChatFragment.open(ChatListFragment.this, ChatConv.direct(me, friend.profile.id));
+                if (me != null) openConversation(ChatConv.direct(me, friend.profile.id));
             });
             list.addView(row);
         }
@@ -376,7 +467,15 @@ public class ChatListFragment extends Fragment implements SocialService.Listener
         } else {
             name.setCompoundDrawablesRelative(null, null, null, null);
         }
-        view.setOnClickListener(v -> ChatFragment.open(ChatListFragment.this, row.conv));
+        // TABLET-M: in two panes the open conversation's row sits on the quiet plate (a background of its own: a selected
+        // state would reach the row's chips and faces too).
+        boolean chosen = mTwoPane && row.conv.equals(mOpen);
+        Object had = view.getTag(R.id.projects_row_chosen);
+        if (!Boolean.valueOf(chosen).equals(had)) {
+            view.setBackgroundResource(chosen ? R.drawable.projects_row_chosen : R.drawable.projects_row_ripple);
+            view.setTag(R.id.projects_row_chosen, chosen);
+        }
+        view.setOnClickListener(v -> openConversation(row.conv));
         // FIX2: a conversation's row holds the friend's or the crew's menu.
         final String other = crewId == null ? ChatConv.other(row.conv, me) : null;
         SocialMenuSheet.attach(view, name.getText(), v -> {

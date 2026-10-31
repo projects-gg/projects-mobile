@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- TABLET-M: the main menu on a window at least 600 dp wide (a tablet in portrait, a phone in landscape, half of a
+     split tablet screen). The portrait rows in one centred column of at most 720 dp, and the landscape play bar in
+     one row (the profile row, its edit button, OYNA at a fixed width) lined up with that column; the bar's
+     backing spans the window. Wider and taller windows take layout-w840dp-h480dp (two columns). -->
+<androidx.constraintlayout.widget.ConstraintLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:id="@+id/fragment_menu_main"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:background="@color/background_app">
+
+	<!-- MOB-POLISH: rows fade under the sticky bar above instead of being sliced mid-letter. -->
+	<gg.projects.mobile.social.ui.FadingScrollView
+		android:id="@+id/projects_menu_scroll"
+		android:layout_width="match_parent"
+		android:layout_height="0dp"
+		android:clipToPadding="false"
+		android:paddingBottom="12dp"
+		app:layout_constraintBottom_toTopOf="@id/_background_display_view"
+		app:layout_constraintTop_toTopOf="parent">
+
+		<gg.projects.mobile.ui.ColumnLayout
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_gravity="center_horizontal"
+			android:maxWidth="@dimen/projects_column_max"
+			android:orientation="vertical">
+
+			<!-- Projects: news card and the join action -->
+			<include
+				android:id="@+id/projects_card"
+				layout="@layout/view_projects_card"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:layout_marginStart="12dp"
+				android:layout_marginTop="12dp"
+				android:layout_marginEnd="12dp"
+				android:layout_marginBottom="6dp" />
+
+			<!-- M19: friends and the crew (shown while Friends are on) -->
+			<include
+				layout="@layout/view_projects_social_row"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:layout_marginStart="12dp"
+				android:layout_marginTop="6dp"
+				android:layout_marginEnd="12dp"
+				android:layout_marginBottom="6dp" />
+
+			<!-- AFKPLUS-M: 7/24 Bulut, for a player with cloud accounts (others find it in the menu below) -->
+			<include
+				layout="@layout/view_projects_cloud_row"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:layout_marginStart="12dp"
+				android:layout_marginTop="6dp"
+				android:layout_marginEnd="12dp"
+				android:layout_marginBottom="6dp" />
+
+			<LinearLayout
+				android:id="@+id/projects_menu_group"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:layout_marginStart="12dp"
+				android:layout_marginTop="6dp"
+				android:layout_marginEnd="12dp"
+				android:background="@drawable/projects_menu_group"
+				android:clipToOutline="true"
+				android:orientation="vertical"
+				tools:targetApi="31">
+
+				<!-- The 7/24 Bulut entry (players without cloud accounts) leads the tools, its divider after it. -->
+				<com.kdt.mcgui.LauncherMenuButton
+					android:id="@+id/cloud_button"
+					style="@style/LauncherMenuButton.Universal"
+					android:layout_width="match_parent"
+					android:drawableStart="@drawable/projects_menu_cloud"
+					android:text="@string/projects_cloud_title"
+					android:visibility="gone" />
+
+				<View
+					android:id="@+id/cloud_divider"
+					style="@style/ProjectsMenuDivider"
+					android:visibility="gone" />
+
+				<com.kdt.mcgui.LauncherMenuButton
+					android:id="@+id/custom_control_button"
+					style="@style/LauncherMenuButton.Universal"
+					android:layout_width="match_parent"
+					android:drawableStart="@drawable/ic_menu_custom_controls"
+					android:text="@string/mcl_option_customcontrol" />
+			</LinearLayout>
+		</gg.projects.mobile.ui.ColumnLayout>
+	</gg.projects.mobile.social.ui.FadingScrollView>
+
+	<!-- The play bar's backing (cosmetic): from 6dp above OYNA to the bottom, the window's width. -->
+	<Space
+		android:id="@+id/projects_play_bar_top"
+		android:layout_width="match_parent"
+		android:layout_height="6dp"
+		app:layout_constraintBottom_toTopOf="@id/play_button" />
+
+	<View
+		android:id="@+id/_background_display_view"
+		android:layout_width="match_parent"
+		android:layout_height="0dp"
+		android:background="@color/background_bottom_bar"
+		app:layout_constraintBottom_toBottomOf="parent"
+		app:layout_constraintTop_toTopOf="@id/projects_play_bar_top" />
+
+	<View
+		android:layout_width="match_parent"
+		android:layout_height="1dp"
+		android:background="@color/projects_hairline"
+		app:layout_constraintTop_toTopOf="@id/_background_display_view" />
+
+	<!-- The bar's row as wide as the column above, centred: the profile row starts and OYNA ends with it. -->
+	<View
+		android:id="@+id/projects_play_bar_frame"
+		android:layout_width="0dp"
+		android:layout_height="1dp"
+		android:visibility="invisible"
+		app:layout_constraintBottom_toBottomOf="parent"
+		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintWidth_max="@dimen/projects_column_max" />
+
+	<com.kdt.mcgui.mcVersionSpinner
+		android:id="@+id/mc_version_spinner"
+		android:layout_width="0dp"
+		android:layout_height="@dimen/projects_profile_row"
+		android:layout_marginStart="8dp"
+		android:background="@drawable/projects_profile_row"
+		android:drawableEnd="@drawable/projects_profile_caret"
+		app:drawableEndSize="@dimen/projects_icon_inline"
+		app:drawableStartSize="@dimen/projects_profile_icon"
+		app:drawableStartIntegerScaling="true"
+		app:layout_constraintBottom_toBottomOf="@id/play_button"
+		app:layout_constraintEnd_toStartOf="@+id/edit_profile_button"
+		app:layout_constraintStart_toStartOf="@id/projects_play_bar_frame"
+		app:layout_constraintTop_toTopOf="@id/play_button" />
+
+	<ImageButton
+		android:id="@+id/edit_profile_button"
+		android:layout_width="48dp"
+		android:layout_height="48dp"
+		android:layout_marginStart="4dp"
+		android:layout_marginEnd="8dp"
+		android:background="@drawable/projects_icon_button_ripple"
+		android:contentDescription="@string/projects_profile_edit"
+		android:padding="12dp"
+		android:scaleType="fitCenter"
+		android:src="@drawable/projects_ic_pencil"
+		android:tint="@color/projects_ash_300"
+		app:layout_constraintBottom_toBottomOf="@+id/play_button"
+		app:layout_constraintEnd_toStartOf="@+id/play_button"
+		app:layout_constraintTop_toTopOf="@+id/play_button" />
+
+	<!-- 56dp of gold face inside a 3dp socket (PlayButtonDrawable). -->
+	<com.kdt.mcgui.MineButton
+		android:id="@+id/play_button"
+		android:layout_width="220dp"
+		android:layout_height="62dp"
+		android:layout_marginEnd="13dp"
+		android:layout_marginBottom="8dp"
+		android:text="@string/main_play"
+		android:textAllCaps="true"
+		app:layout_constraintBottom_toBottomOf="parent"
+		app:layout_constraintEnd_toEndOf="@id/projects_play_bar_frame" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

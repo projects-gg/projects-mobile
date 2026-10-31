@@ -31,4 +31,6 @@
     <item name="projects_action_toast" type="id" />
     <!-- View tag (MOB1): which message a chat row's sticker belongs to, so a rebind of the same one keeps its motion. -->
     <item name="projects_chat_sticker_row" type="id" />
+    <!-- TABLET-M: whether a conversation row wears the chosen look (two panes). -->
+    <item name="projects_row_chosen" type="id" />
 </resources>

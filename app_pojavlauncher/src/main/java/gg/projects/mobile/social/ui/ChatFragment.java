@@ -110,6 +110,9 @@ import gg.projects.mobile.ui.ScreenHeader;
 public class ChatFragment extends Fragment implements SocialService.Listener {
     public static final String TAG = "ProjectsChatFragment";
     public static final String ARG_CONV = "conv";
+    /** TABLET-M: the message being edited or answered when the screen was made again (a rotation, a resize). */
+    private static final String STATE_EDITING = "editing";
+    private static final String STATE_REPLY = "reply";
 
     private static final int T_MESSAGE = 0;
     private static final int T_DAY = 1;
@@ -214,6 +217,8 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         Context context = view.getContext();
         mHeader = view.findViewById(R.id.projects_chat_header);
+        // TABLET-M: beside "Mesajlar" (two panes) back belongs to the list's screen: no back button of its own.
+        if (getParentFragment() instanceof ChatListFragment) mHeader.setBackVisible(false);
         mBell = mHeader.addAction(R.drawable.projects_ic_bell, R.string.projects_chat_notifications, v -> openMute());
         mHeader.addAction(R.drawable.projects_ic_dots, R.string.projects_chat_more, v -> openMore());
         mList = view.findViewById(R.id.projects_chat_list);
@@ -314,6 +319,14 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
                 typed();
             }
         });
+        // TABLET-M: a hardware keyboard (a tablet's keyboard cover, a Chromebook) sends with Enter and starts a new line
+        // with Shift+Enter, as the desktop launcher's chat; the screen keyboard's Enter keeps writing new lines.
+        mInput.setOnKeyListener((v, keyCode, event) -> {
+            if (keyCode != android.view.KeyEvent.KEYCODE_ENTER && keyCode != android.view.KeyEvent.KEYCODE_NUMPAD_ENTER) return false;
+            if ((event.getFlags() & android.view.KeyEvent.FLAG_SOFT_KEYBOARD) != 0 || event.isShiftPressed()) return false;
+            if (event.getAction() == android.view.KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0) submit();
+            return true;
+        });
         buildQuickReplies(context);
         if (ChatConv.isDirect(mConv)) {
             // MOB-POLISH: a Discord-branded action: Discord's own symbol in Blurple (it was grey) on a quiet chamfered
@@ -333,10 +346,59 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
             mHeader.setTitleLead(mHeaderTag);
         }
         updateComposer();
+        // TABLET-M: "Düzenle" or "Yanıtla" in progress before a rotation or a resize goes on (the field's own text comes
+        // back after this, so what was typed stays; an edit must not turn into a new message).
+        if (savedInstanceState != null) restoreComposer(savedInstanceState);
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if (mEditing != null) outState.putLong(STATE_EDITING, mEditing.id);
+        else if (mReplyTo != null) outState.putLong(STATE_REPLY, mReplyTo.id);
+    }
+
+    private void restoreComposer(Bundle state) {
+        ChatBook book = SocialService.get(requireContext()).chat().book();
+        if (book == null || mConv == null) return;
+        ChatMessage message;
+        if (state.containsKey(STATE_EDITING) && (message = book.message(mConv, state.getLong(STATE_EDITING))) != null) {
+            startEditing(message);
+        } else if (state.containsKey(STATE_REPLY) && (message = book.message(mConv, state.getLong(STATE_REPLY))) != null) {
+            startReply(message);
+        }
+    }
+
+    /**
+     * TABLET-M: opens {@code conv} as a new screen from outside a fragment (a notification, the home's line, a friend's
+     * card): beside the conversations' list on a wide and tall window, else on its own screen (a phone's way).
+     */
+    public static void show(androidx.fragment.app.FragmentActivity activity, String conv) {
+        Bundle args = new Bundle();
+        if (activity.getResources().getBoolean(R.bool.projects_chat_two_pane)) {
+            args.putString(ChatListFragment.ARG_OPEN, conv);
+            net.kdt.pojavlaunch.Tools.swapFragment(activity, ChatListFragment.class, ChatListFragment.TAG, args);
+            return;
+        }
+        args.putString(ARG_CONV, conv);
+        net.kdt.pojavlaunch.Tools.swapFragment(activity, ChatFragment.class, TAG, args);
+    }
+
+    /** TABLET-M: goes away: its own screen, or its place beside "Mesajlar" (the list's screen stays). */
+    private void leave() {
+        if (getParentFragment() instanceof ChatListFragment) ((ChatListFragment) getParentFragment()).closeConversation(mConv);
+        else SocialUi.leave(this);
     }
 
     /** Opens "Mesajlar" with {@code conv} (a crew's chat or a friend's). */
     public static void open(Fragment from, String conv) {
+        if (from.getResources().getBoolean(R.bool.projects_chat_two_pane)) {
+            // TABLET-M: a wide and tall window opens it beside the conversations' list.
+            Bundle list = new Bundle();
+            list.putString(ChatListFragment.ARG_OPEN, conv);
+            SocialUi.open(from, ChatListFragment.class, ChatListFragment.TAG, list);
+            return;
+        }
         Bundle args = new Bundle();
         args.putString(ARG_CONV, conv);
         SocialUi.open(from, ChatFragment.class, TAG, args);
@@ -366,7 +428,7 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
         super.onResume();
         SocialService service = SocialService.get(requireContext());
         if (!service.signedIn() || !ChatConv.valid(mConv)) {
-            SocialUi.leave(this);
+            leave();
             return;
         }
         ChatBook book = service.chat().book();
@@ -430,7 +492,7 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
         Context context = requireContext();
         SocialService service = SocialService.get(context);
         if (!service.enabled() || !service.signedIn()) {
-            SocialUi.leave(this);
+            leave();
             return;
         }
         // MOD1: a moderator's note shows on whichever friends screen is open when it comes.
@@ -1657,7 +1719,9 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
         TextView unknown = view.findViewById(R.id.projects_msg_sticker_unknown);
         FrameLayout card = view.findViewById(R.id.projects_msg_card);
         TextView refused = view.findViewById(R.id.projects_msg_link_refused);
-        int maxWidth = Math.round(Math.max(200 * dp, (mList.getWidth() > 0 ? mList.getWidth() : context.getResources().getDisplayMetrics().widthPixels) * 0.78f));
+        // TABLET-M: 78 % of the list, at most of a column's width (a tablet's pane would give lines of 120 characters).
+        int listWidth = mList.getWidth() > 0 ? mList.getWidth() : context.getResources().getDisplayMetrics().widthPixels;
+        int maxWidth = Math.round(Math.max(200 * dp, Math.min(listWidth, context.getResources().getDimensionPixelSize(R.dimen.projects_column_max)) * 0.78f));
         bubble.setMaxWidth(maxWidth - Math.round(28 * dp));
         String stickerRef = e.sticker();
         boolean isSticker = stickerRef != null && !e.deleted();

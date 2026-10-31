@@ -85,6 +85,7 @@ final class EmojiSheet {
     private static final int H_EMOJI = 1;
     private static final int H_STICKER = 2;
     private static final int H_EMPTY = 3;
+    /** A phone's grid: 8 emoji or 4 stickers a row (TABLET-M: a wider panel takes up to 12 and 6). */
     private static final int COLUMNS = 8;
     private static final int STICKER_COLUMNS = 4;
 
@@ -283,14 +284,20 @@ final class EmojiSheet {
             content.addView(tools);
             // The grid (MOB-POLISH: it fades out under the tabs and the search instead of being cut).
             grid = new FadingRecyclerView(context);
-            layout = new GridLayoutManager(context, COLUMNS * STICKER_COLUMNS);
+            // TABLET-M: about 50 dp an emoji and 100 dp a sticker, from a phone's 8 and 4 up to 12 and 6 on a tablet (the
+            // sheet is at most 640 dp wide, the composer's panel as wide as its column), instead of 90 dp cells.
+            int widthDp = Math.min(context.getResources().getConfiguration().screenWidthDp,
+                    Math.round(context.getResources().getDimension(inline != null ? R.dimen.projects_column_max : R.dimen.projects_sheet_max) / dp));
+            final int columns = Math.max(COLUMNS, Math.min(12, widthDp / 50));
+            final int stickerColumns = Math.max(STICKER_COLUMNS, Math.min(6, widthDp / 100));
+            layout = new GridLayoutManager(context, columns * stickerColumns);
             layout.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
                 @Override
                 public int getSpanSize(int position) {
                     int type = adapter.getItemViewType(position);
-                    if (type == H_EMOJI) return STICKER_COLUMNS;
-                    if (type == H_STICKER) return COLUMNS;
-                    return COLUMNS * STICKER_COLUMNS;
+                    if (type == H_EMOJI) return stickerColumns;
+                    if (type == H_STICKER) return columns;
+                    return columns * stickerColumns;
                 }
             });
             grid.setLayoutManager(layout);

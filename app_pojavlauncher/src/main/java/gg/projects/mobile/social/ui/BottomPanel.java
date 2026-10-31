@@ -29,6 +29,8 @@ import gg.projects.mobile.mods.Motion;
  * interruptible; a drag on its top (the handle) pulls it down and a fling or a long pull closes it. Its
  * top corners are round (16 dp), the surface opaque obsidian with a hairline; it is as wide as the
  * screen and at most {@code maxHeightFraction} of it. With animations off it just appears and goes.
+ * TABLET-M: on a wide window it rises in the middle, at most {@code projects_sheet_max} (640 dp) wide; the
+ * dimmed sides close it like the space above.
  */
 public final class BottomPanel {
     private final Dialog mDialog;
@@ -69,9 +71,10 @@ public final class BottomPanel {
         mContent = new ContentFrame(context);
         mSheet.addView(mContent, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         int maxHeight = Math.round(context.getResources().getDisplayMetrics().heightPixels * maxHeightFraction);
+        int maxWidth = context.getResources().getDimensionPixelSize(R.dimen.projects_sheet_max);
         FrameLayout.LayoutParams sheetLp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM);
-        root.addView(new MaxHeightFrame(context, maxHeight, mSheet), sheetLp);
+                ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
+        root.addView(new MaxHeightFrame(context, maxHeight, maxWidth, mSheet), sheetLp);
         attachDrag(grip, dp);
         mDialog.setContentView(root);
         mDialog.setCanceledOnTouchOutside(true);
@@ -247,13 +250,15 @@ public final class BottomPanel {
         }
     }
 
-    /** Holds the sheet at most {@code max} tall (a long list scrolls inside). */
+    /** Holds the sheet at most {@code max} tall (a long list scrolls inside) and {@code maxWidth} wide. */
     private static final class MaxHeightFrame extends FrameLayout {
         private final int mMax;
+        private final int mMaxWidth;
 
-        MaxHeightFrame(Context context, int max, View child) {
+        MaxHeightFrame(Context context, int max, int maxWidth, View child) {
             super(context);
             mMax = max;
+            mMaxWidth = maxWidth;
             addView(child, new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         }
 
@@ -261,6 +266,8 @@ public final class BottomPanel {
         protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
             int size = MeasureSpec.getSize(heightMeasureSpec);
             int limit = MeasureSpec.getMode(heightMeasureSpec) == MeasureSpec.UNSPECIFIED ? mMax : Math.min(mMax, size);
+            int width = MeasureSpec.getSize(widthMeasureSpec);
+            if (mMaxWidth > 0 && width > mMaxWidth) widthMeasureSpec = MeasureSpec.makeMeasureSpec(mMaxWidth, MeasureSpec.EXACTLY);
             super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(limit, MeasureSpec.AT_MOST));
         }
     }

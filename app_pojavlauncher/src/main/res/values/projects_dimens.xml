@@ -38,4 +38,19 @@
     <dimen name="projects_text_play">20sp</dimen>
     <!-- MOB-POLISH: the profile editor's field below the one above it (its label sits in the gap). -->
     <dimen name="projects_editor_field_gap">48dp</dimen>
+
+    <!-- TABLET-M: wide windows (tablets, landscape, split screen). A screen keeps to one centred column (WideRoot,
+         the mods screen's width since 0.1.x); sheets rise in the middle at most as wide as Material's; the home's
+         two columns: the Projects card beside a side column, the pair centred. -->
+    <dimen name="projects_column_max">720dp</dimen>
+    <dimen name="projects_sheet_max">640dp</dimen>
+    <dimen name="projects_side_column">360dp</dimen>
+    <dimen name="projects_wide_group_max">1104dp</dimen>
+    <!-- News covers at most this tall: the home card's, a news list row's, an article's (taller on a wide window,
+         values-w600dp). -->
+    <dimen name="projects_home_cover_max">200dp</dimen>
+    <dimen name="projects_news_cover_max">180dp</dimen>
+    <dimen name="projects_article_cover_max">220dp</dimen>
+    <!-- Dialogs on a phone keep AppCompat's widths (0: none fixed); a wide window fixes them (values-w600dp). -->
+    <dimen name="projects_dialog_fixed_width">0dp</dimen>
 </resources>

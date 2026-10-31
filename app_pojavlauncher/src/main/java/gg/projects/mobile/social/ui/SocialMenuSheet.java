@@ -80,6 +80,8 @@ public final class SocialMenuSheet {
             Haptics.perform(v, HapticMap.Kind.LONG_PRESS);
             return open.onLongClick(v);
         });
+        // TABLET-M: a mouse's or a touchpad's right click (a tablet's keyboard cover, a Chromebook) opens the same menu.
+        if (android.os.Build.VERSION.SDK_INT >= 23) row.setOnContextClickListener(open::onLongClick);
         Context context = row.getContext();
         String label = name == null || name.length() == 0 ? context.getString(R.string.projects_menu_options)
                 : context.getString(R.string.projects_menu_options_for, name);
@@ -93,6 +95,10 @@ public final class SocialMenuSheet {
     public static void detach(View row) {
         row.setOnLongClickListener(null);
         row.setLongClickable(false);
+        if (android.os.Build.VERSION.SDK_INT >= 23) {
+            row.setOnContextClickListener(null);
+            row.setContextClickable(false);
+        }
         Object previous = row.getTag(R.id.projects_menu_action);
         if (previous instanceof Integer) ViewCompat.removeAccessibilityAction(row, (Integer) previous);
         row.setTag(R.id.projects_menu_action, null);

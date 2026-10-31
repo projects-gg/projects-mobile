@@ -40,6 +40,39 @@ abstract class PlusScreen extends CloudScreen {
     private boolean mConflict;
     @Nullable
     private SaveBar mBar;
+    /** TABLET-M: the edits came back from before a rotation or a resize: the new view draws them once. */
+    private boolean mRestored;
+
+    @Override
+    public void onCreate(@Nullable android.os.Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        // TABLET-M: what was edited before a rotation or a resize (the launcher is made again) comes back.
+        Kept kept = Kept.of(this);
+        if (savedInstanceState != null && kept.has("doc")) {
+            mDoc = kept.take("doc");
+            mOriginal = kept.take("original");
+            mEdit = kept.take("edit");
+            List<String[]> problems = kept.take("problems");
+            if (problems != null) mProblems.addAll(problems);
+            Boolean conflict = kept.take("conflict");
+            mConflict = conflict != null && conflict;
+            mRestored = mDoc != null && mOriginal != null && mEdit != null;
+        }
+        kept.clear();
+    }
+
+    @Override
+    public void onSaveInstanceState(@androidx.annotation.NonNull android.os.Bundle outState) {
+        super.onSaveInstanceState(outState);
+        // A save on its way answers this copy of the screen; the next one reads the document afresh.
+        if (mDoc == null || mEdit == null || mSaving) return;
+        Kept kept = Kept.of(this);
+        kept.put("doc", mDoc);
+        kept.put("original", mOriginal);
+        kept.put("edit", mEdit);
+        kept.put("problems", new ArrayList<>(mProblems));
+        kept.put("conflict", mConflict);
+    }
 
     @Override
     protected final void created(View view) {
@@ -93,7 +126,14 @@ abstract class PlusScreen extends CloudScreen {
     protected void render() {
         CloudModel.Account a = account();
         if (a != null) mHeader.setCaption(a.name);
-        if (mEdit != null) return;
+        if (mEdit != null) {
+            if (mRestored) {
+                mRestored = false;
+                redraw();
+                bar();
+            }
+            return;
+        }
         LinearLayout content = clear();
         if (content == null) return;
         Context c = ctx();

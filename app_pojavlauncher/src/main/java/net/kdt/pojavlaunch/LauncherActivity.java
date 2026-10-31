@@ -126,6 +126,7 @@ public class LauncherActivity extends BaseActivity implements gg.projects.mobile
 
     private mcAccountSpinner mAccountSpinner;
     private FragmentContainerView mFragmentView;
+    private gg.projects.mobile.ui.WideRoot mRoot;
     private gg.projects.mobile.ui.TopBarButton mSettingsButton;
     private gg.projects.mobile.social.ui.FriendsPill mFriendsPill;
     private View mTopBar;
@@ -137,9 +138,17 @@ public class LauncherActivity extends BaseActivity implements gg.projects.mobile
     /* Allows to switch from one button "type" to another */
     private final FragmentManager.FragmentLifecycleCallbacks mFragmentCallbackListener = new FragmentManager.FragmentLifecycleCallbacks() {
         @Override
+        public void onFragmentViewCreated(@NonNull FragmentManager fm, @NonNull Fragment f, @NonNull View v,
+                                          @androidx.annotation.Nullable Bundle savedInstanceState) {
+            // TABLET-M: the screen's width is set before its first layout (no frame at the other width).
+            applyScreenWidth(f);
+        }
+
+        @Override
         public void onFragmentResumed(@NonNull FragmentManager fm, @NonNull Fragment f) {
             // Only the screen in the container decides (a child or a dialog fragment is not a screen).
             if (f.getParentFragment() != null || f.getId() != R.id.container_fragment) return;
+            applyScreenWidth(f);
             boolean home = f instanceof MainMenuFragment;
             // Projects fork (M14): the glyph turns from settings to home instead of being swapped.
             mSettingsButton.setHome(!home);
@@ -158,6 +167,16 @@ public class LauncherActivity extends BaseActivity implements gg.projects.mobile
                     bar ? R.color.background_status_bar : R.color.background_app));
         }
     };
+
+    /**
+     * TABLET-M: a wide window keeps the screen in the container to one centred column, unless the screen lays the
+     * window out itself (the home's columns, the chats beside a conversation).
+     */
+    private void applyScreenWidth(@NonNull Fragment f) {
+        if (mRoot == null || f.getParentFragment() != null || f.getId() != R.id.container_fragment) return;
+        boolean wide = f instanceof gg.projects.mobile.ui.FullWidth && ((gg.projects.mobile.ui.FullWidth) f).fillsWindow();
+        mRoot.setColumn(!wide);
+    }
 
     /** MOB-POLISH: the screen draws its own header: the settings' back row, a ScreenHeader, or a view tagged so. */
     private static boolean hasOwnHeader(@NonNull Fragment f) {
@@ -391,6 +410,9 @@ public class LauncherActivity extends BaseActivity implements gg.projects.mobile
         );
         getWindow().setBackgroundDrawable(null);
         bindViews();
+        // TABLET-M: registered here, not in onStart: a screen made again after a rotation or a resize creates its view
+        // during onStart, before a registration there (each onStart also added one more copy).
+        getSupportFragmentManager().registerFragmentLifecycleCallbacks(mFragmentCallbackListener, true);
         // Projects fork: no notification permission prompt at start. The event reminder's bell asks
         // for it when tapped, and Settings keeps upstream's "request notification permission" entry;
         // downloads keep running without it (Android lists the foreground service in its task manager).
@@ -464,7 +486,6 @@ public class LauncherActivity extends BaseActivity implements gg.projects.mobile
     @Override
     protected void onStart() {
         super.onStart();
-        getSupportFragmentManager().registerFragmentLifecycleCallbacks(mFragmentCallbackListener, true);
         registerReceiver(mTimeZoneReceiver, new android.content.IntentFilter(android.content.Intent.ACTION_TIMEZONE_CHANGED));
         // Projects fork (M19): the friends' presence socket is open while the launcher is on screen.
         gg.projects.mobile.social.SocialService.get(this).uiStarted(this);
@@ -594,6 +615,7 @@ public class LauncherActivity extends BaseActivity implements gg.projects.mobile
 
     /** Stuff all the view boilerplate here */
     private void bindViews(){
+        mRoot = findViewById(R.id.projects_launcher_root);
         mFragmentView = findViewById(R.id.container_fragment);
         mSettingsButton = findViewById(R.id.setting_button);
         mFriendsPill = findViewById(R.id.projects_friends_pill);

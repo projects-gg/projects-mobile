@@ -34,6 +34,9 @@ import gg.projects.mobile.mods.Motion;
 public final class CoverView extends ImageView {
     private static final float RATIO = 9f / 16f;
     private static final float SCREEN_FRACTION = 0.26f;
+    /** TABLET-M: a window at least 600 dp tall (a tablet) gives the cover more of its height. */
+    private static final float TALL_SCREEN_FRACTION = 0.40f;
+    private static final int TALL_WINDOW_DP = 600;
     private static final LruCache<String, Bitmap> PLACEHOLDERS = new LruCache<>(48);
 
     private int mMaxHeight = Integer.MAX_VALUE;
@@ -72,7 +75,9 @@ public final class CoverView extends ImageView {
         int width = MeasureSpec.getSize(widthMeasureSpec);
         // Never more than about a quarter of the screen's current height: in landscape the cover
         // becomes a strip instead of filling the view (portrait keeps the 16:9 box under its cap).
-        int screenCap = Math.round(getResources().getDisplayMetrics().heightPixels * SCREEN_FRACTION);
+        // TABLET-M: two fifths of a tall window (a tablet's wide column; a phone's 16:9 box stays under it).
+        float fraction = getResources().getConfiguration().screenHeightDp >= TALL_WINDOW_DP ? TALL_SCREEN_FRACTION : SCREEN_FRACTION;
+        int screenCap = Math.round(getResources().getDisplayMetrics().heightPixels * fraction);
         int height = Math.min(Math.round(width * RATIO), Math.min(mMaxHeight, screenCap));
         setMeasuredDimension(width, height);
     }
@@ -92,8 +97,10 @@ public final class CoverView extends ImageView {
         mHasImage = false;
         if (mFade != null) mFade.cancel();
         setBackground(placeholder(image.blurhash));
-        // Always decoded for the screen width, so every card, row and article shares one copy.
-        int width = getResources().getDisplayMetrics().widthPixels;
+        // Always decoded for one width, so every card, row and article shares one copy: the screen's, at most a
+        // column's (TABLET-M: no cover is drawn wider; a 2560 px tablet would hold 15 MB per picture).
+        int width = Math.min(getResources().getDisplayMetrics().widthPixels,
+                getResources().getDimensionPixelSize(R.dimen.projects_column_max));
         Bitmap ready = ProjectsContent.memoryCover(key, width);
         if (ready != null) {
             show(ready, false);

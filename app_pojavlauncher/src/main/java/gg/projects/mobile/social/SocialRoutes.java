@@ -166,8 +166,8 @@ public final class SocialRoutes {
                     Tools.swapFragment(activity, SocialFragment.class, SocialFragment.TAG, args);
                     break;
                 }
-                args.putString(ChatFragment.ARG_CONV, arg);
-                Tools.swapFragment(activity, ChatFragment.class, ChatFragment.TAG, args);
+                // TABLET-M: beside the conversations' list on a wide and tall window.
+                ChatFragment.show(activity, arg);
                 break;
             case ADD:
                 if (arg != null) args.putString(AddFriendFragment.ARG_CODE, arg);

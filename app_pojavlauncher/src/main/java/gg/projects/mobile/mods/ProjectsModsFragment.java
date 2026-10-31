@@ -74,6 +74,7 @@ public class ProjectsModsFragment extends Fragment implements ModsApply.Listener
     private static final ExecutorService WORKER = Executors.newSingleThreadExecutor();
     private static final long PREVIEW_DELAY_MS = 250;
     private static final int MAX_COLUMN_DP = 720;
+    private static final String STATE_CHOICES = "choices";
     private static final String[] CATEGORY_ORDER = {
             PackManifest.CATEGORY_PERFORMANCE, PackManifest.CATEGORY_VISUAL, PackManifest.CATEGORY_INTERFACE,
             PackManifest.CATEGORY_GAMEPLAY, PackManifest.CATEGORY_OTHER};
@@ -106,6 +107,11 @@ public class ProjectsModsFragment extends Fragment implements ModsApply.Listener
      */
     private boolean mHoldLifted;
     @Nullable private PackSelection mSelection;
+    /**
+     * TABLET-M: the switches the player changed before a rotation or a resize (the launcher is made again): put back
+     * over the pack's own choices when the list is read again, so a change waiting for "Uygula" is not lost.
+     */
+    @Nullable private Bundle mRestoredChoices;
     @Nullable private PackSyncPlanner.Summary mPreview;
     private int mPreviewToken;
     private boolean mBarShown;
@@ -167,6 +173,31 @@ public class ProjectsModsFragment extends Fragment implements ModsApply.Listener
         };
         requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), mBackCallback);
         load(false);
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if (savedInstanceState != null) mRestoredChoices = savedInstanceState.getBundle(STATE_CHOICES);
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if (mModel == null || mSelection == null) {
+            // Not read yet: what came back before is still waiting for the list.
+            if (mRestoredChoices != null) outState.putBundle(STATE_CHOICES, mRestoredChoices);
+            return;
+        }
+        Bundle choices = new Bundle();
+        ArrayList<String> on = new ArrayList<>();
+        ArrayList<String> off = new ArrayList<>();
+        for (Map.Entry<String, Boolean> e : mChoices.entrySet()) (Boolean.TRUE.equals(e.getValue()) ? on : off).add(e.getKey());
+        choices.putStringArrayList("on", on);
+        choices.putStringArrayList("off", off);
+        choices.putStringArrayList("revert", new ArrayList<>(mRevert));
+        choices.putBoolean("held", mHoldLifted);
+        outState.putBundle(STATE_CHOICES, choices);
     }
 
     @Override
@@ -240,6 +271,18 @@ public class ProjectsModsFragment extends Fragment implements ModsApply.Listener
         mPreviewToken++;
         mHoldLifted = false;
         if (model.plan != null) mChoices.putAll(ModsSelection.choicesOf(model.plan.items));
+        if (mRestoredChoices != null && model.plan != null) {
+            // TABLET-M: the player's changes from before the screen was made again, over the pack's choices.
+            Bundle kept = mRestoredChoices;
+            ArrayList<String> on = kept.getStringArrayList("on");
+            ArrayList<String> off = kept.getStringArrayList("off");
+            ArrayList<String> revert = kept.getStringArrayList("revert");
+            if (on != null) for (String id : on) mChoices.put(id, true);
+            if (off != null) for (String id : off) mChoices.put(id, false);
+            if (revert != null) mRevert.addAll(revert);
+            mHoldLifted = kept.getBoolean("held", false);
+        }
+        mRestoredChoices = null;
 
         if (model.status == ModsModel.Status.READY && model.manifest != null) {
             PackManifest manifest = model.manifest;

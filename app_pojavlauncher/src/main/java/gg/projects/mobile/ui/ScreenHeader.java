@@ -68,6 +68,20 @@ public final class ScreenHeader extends LinearLayout {
         row.addView(lead, row.indexOfChild(mTitle), lp);
     }
 
+    /**
+     * TABLET-M: without the back button (a conversation beside "Mesajlar" in two panes, where back is the list's): the
+     * title and its caption start where the screen's content does.
+     */
+    public void setBackVisible(boolean visible) {
+        float dp = getResources().getDisplayMetrics().density;
+        findViewById(R.id.projects_header_back).setVisibility(visible ? VISIBLE : GONE);
+        LinearLayout row = findViewById(R.id.projects_header_row);
+        row.setPaddingRelative(Math.round((visible ? 4 : 14) * dp), row.getPaddingTop(), row.getPaddingEnd(), row.getPaddingBottom());
+        android.view.ViewGroup.MarginLayoutParams caption = (android.view.ViewGroup.MarginLayoutParams) mCaption.getLayoutParams();
+        caption.setMarginStart(Math.round((visible ? 54 : 16) * dp));
+        mCaption.setLayoutParams(caption);
+    }
+
     /** A line under the title; null hides it. */
     public void setCaption(@Nullable CharSequence caption) {
         mCaption.setText(caption);

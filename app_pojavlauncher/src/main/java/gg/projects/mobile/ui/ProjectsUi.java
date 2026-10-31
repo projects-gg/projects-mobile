@@ -339,7 +339,8 @@ public final class ProjectsUi {
             author.setVisibility(View.VISIBLE);
         }
         CoverView cover = view.findViewById(R.id.projects_article_cover);
-        cover.setMaxCoverHeight(Math.round(220 * activity.getResources().getDisplayMetrics().density));
+        // TABLET-M: 220 dp on a phone, taller in a wide sheet (values-w600dp).
+        cover.setMaxCoverHeight(activity.getResources().getDimensionPixelSize(R.dimen.projects_article_cover_max));
         cover.bind(snapshot, item, true);
         final String source = item.sourceUrl();
         View discord = view.findViewById(R.id.projects_article_discord);

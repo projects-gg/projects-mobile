@@ -102,8 +102,8 @@ public final class SocialHomeRow implements SocialService.Listener {
             if (line.unread.conversations > 1) {
                 Tools.swapFragment(activity, ChatListFragment.class, ChatListFragment.TAG, null);
             } else {
-                args.putString(ChatFragment.ARG_CONV, line.unread.conv);
-                Tools.swapFragment(activity, ChatFragment.class, ChatFragment.TAG, args);
+                // TABLET-M: beside the conversations' list on a wide and tall window.
+                ChatFragment.show(activity, line.unread.conv);
             }
         } else {
             Tools.swapFragment(activity, SocialFragment.class, SocialFragment.TAG, null);

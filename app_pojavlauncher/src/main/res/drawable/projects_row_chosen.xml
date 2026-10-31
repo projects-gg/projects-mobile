@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- TABLET-M: the chosen row (the conversation open beside "Mesajlar" in two panes): the rows' gold ripple over the
+     quiet bone plate, the one selected look (design.md §1). The other rows keep projects_row_ripple. -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="#1FF6D58E">
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="10dp" />
+            <solid android:color="#1FF3EBDD" />
+        </shape>
+    </item>
+    <item android:id="@android:id/mask">
+        <shape android:shape="rectangle">
+            <corners android:radius="10dp" />
+            <solid android:color="#FFFFFFFF" />
+        </shape>
+    </item>
+</ripple>

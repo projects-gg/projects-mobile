@@ -30,6 +30,9 @@
         <item name="android:textAppearanceListItemSmall">@style/TextAppearance.Projects.ListItem</item>
         <item name="android:windowTitleStyle">@style/ProjectsDialogTitle</item>
         <item name="android:textViewStyle">@style/ProjectsDialogText</item>
+        <!-- TABLET-M: one width on a wide window (values-w600dp), AppCompat's own on a phone (0: none fixed). -->
+        <item name="windowFixedWidthMajor">@dimen/projects_dialog_fixed_width</item>
+        <item name="windowFixedWidthMinor">@dimen/projects_dialog_fixed_width</item>
     </style>
 
     <!-- M14: a question's last word never sits alone on a line ("…kaldırılsın / mı?"): dialog
