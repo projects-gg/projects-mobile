@@ -47,7 +47,7 @@ public final class ProfileRows {
         return text;
     }
 
-    /** A row of the profile list: the gold ripple, a gold tint on the profile in use. */
+    /** A row of the profile list: the gold ripple, the quiet bone plate on the profile in use (TASTE-2, TABLET-M r1). */
     public static void listRowBackground(View row, boolean selected) {
         int start = row.getPaddingStart();
         int top = row.getPaddingTop();

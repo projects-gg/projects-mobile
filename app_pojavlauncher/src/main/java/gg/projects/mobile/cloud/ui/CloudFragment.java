@@ -445,7 +445,8 @@ public final class CloudFragment extends CloudScreen {
             name.setEllipsize(TextUtils.TruncateAt.END);
             // A game name is at most 16 characters: the mark sits right after it, not pushed to the edge.
             titleLine.addView(name, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-            plus = CloudUi.figure(c, getString(R.string.projects_cloud_plus_mark), 12.5f, R.color.projects_gold_300);
+            // TASTE-2 (TABLET-M r1): the AFK+ mark in bone, as the launcher's; words are never gold (design.md section 2).
+            plus = CloudUi.figure(c, getString(R.string.projects_cloud_plus_mark), 12.5f, R.color.projects_bone_100);
             LinearLayout.LayoutParams plusLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
             plusLp.setMarginStart(CloudUi.dp(c, 8));
             titleLine.addView(plus, plusLp);
@@ -454,7 +455,7 @@ public final class CloudFragment extends CloudScreen {
             LinearLayout.LayoutParams stateLp = CloudUi.matchWrap();
             stateLp.topMargin = CloudUi.dp(c, 2);
             texts.addView(state, stateLp);
-            extra = CloudUi.text(c, "", 13, R.color.projects_gold_300, false);
+            extra = CloudUi.text(c, "", 13, R.color.projects_ash_300, false);
             extra.setVisibility(View.GONE);
             texts.addView(extra, stateLp);
             LinearLayout.LayoutParams textsLp = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
@@ -507,11 +508,12 @@ public final class CloudFragment extends CloudScreen {
                 more = CloudWords.timeLeft(c, CloudStatus.timeLeft(a, service.nowMs()));
                 timeLine = true;
             }
-            // MOB-POLISH (the launcher's SHEET-UX 31): the last week's time is bright and bold, not gold;
-            // gold stays with actions (here: something AFK+ waits on the player for).
+            // MOB-POLISH (the launcher's SHEET-UX 31): the last week's time is bright and bold, not gold. TASTE-2
+            // (TABLET-M r1): what AFK+ waits on the player for is ash-300, as the home card's same line (0.4.6); the one
+            // gold of the screen stays an action.
             if (!Boolean.valueOf(timeLine).equals(extra.getTag())) {
                 extra.setTag(timeLine);
-                extra.setTextColor(CloudUi.color(c, timeLine ? R.color.projects_bone_100 : R.color.projects_gold_300));
+                extra.setTextColor(CloudUi.color(c, timeLine ? R.color.projects_bone_100 : R.color.projects_ash_300));
                 extra.setTypeface(CloudUi.font(c, timeLine ? R.font.figtree_semibold : R.font.figtree_regular));
             }
             extra.setText(more);
@@ -525,7 +527,8 @@ public final class CloudFragment extends CloudScreen {
             caret.setVisibility(mChoosing ? View.GONE : View.VISIBLE);
             if (mChoosing) {
                 check.setImageResource(picked ? R.drawable.projects_ic_check_square_fill : R.drawable.projects_ic_square);
-                check.setImageTintList(ColorStateList.valueOf(CloudUi.color(c, picked ? R.color.projects_gold_300 : R.color.projects_ash_400)));
+                // A chosen check box is bone, never gold (design.md section 2).
+                check.setImageTintList(ColorStateList.valueOf(CloudUi.color(c, picked ? R.color.projects_bone_100 : R.color.projects_ash_400)));
                 said.append(", ").append(c.getString(picked ? R.string.projects_cloud_selected : R.string.projects_feat_bulk_select));
             }
             view.setActivated(mChoosing && picked);
