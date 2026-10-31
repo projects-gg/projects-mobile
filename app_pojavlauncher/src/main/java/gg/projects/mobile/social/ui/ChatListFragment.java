@@ -93,6 +93,20 @@ public class ChatListFragment extends Fragment implements SocialService.Listener
         super.onCreate(savedInstanceState);
         if (savedInstanceState != null) mOpen = savedInstanceState.getString(STATE_OPEN);
         else if (getArguments() != null) mInitial = getArguments().getString(ARG_OPEN);
+        // A conversation that was beside the list before the window turned too narrow for two panes goes before it is
+        // drawn (it would read the conversation as seen in a hidden pane); it opens on its own screen once resumed.
+        if (!getResources().getBoolean(R.bool.projects_chat_two_pane)) {
+            Fragment beside = getChildFragmentManager().findFragmentById(R.id.projects_chats_detail);
+            if (beside != null) {
+                try {
+                    getChildFragmentManager().beginTransaction().remove(beside).commitNow();
+                } catch (IllegalStateException e) {
+                    getChildFragmentManager().beginTransaction().remove(beside).commit();
+                }
+            }
+            if (mOpen != null) mReopen = mOpen;
+            mOpen = null;
+        }
     }
 
     @Override
@@ -107,7 +121,7 @@ public class ChatListFragment extends Fragment implements SocialService.Listener
         mPick = view.findViewById(R.id.projects_chats_pick);
         Fragment beside = getChildFragmentManager().findFragmentById(R.id.projects_chats_detail);
         if (!mTwoPane) {
-            // The narrow layout has no room beside the list: the conversation that was there goes to its own screen.
+            // The narrow layout has no room beside the list (onCreate let the conversation there go already).
             if (beside != null) getChildFragmentManager().beginTransaction().remove(beside).commit();
             if (mOpen != null) mReopen = mOpen;
             mOpen = null;

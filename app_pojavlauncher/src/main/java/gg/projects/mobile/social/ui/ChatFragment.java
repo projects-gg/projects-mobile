@@ -113,6 +113,12 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
     /** TABLET-M: the message being edited or answered when the screen was made again (a rotation, a resize). */
     private static final String STATE_EDITING = "editing";
     private static final String STATE_REPLY = "reply";
+    private static final String STATE_DRAFT = "draft";
+    /**
+     * TABLET-M: what a conversation beside "Mesajlar" was writing when the window turned too narrow for two panes (a
+     * rotation, a split): the conversation then opens on its own screen and takes it from here (process memory only).
+     */
+    private static final java.util.Map<String, Bundle> HANDOFF = new java.util.HashMap<>();
 
     private static final int T_MESSAGE = 0;
     private static final int T_DAY = 1;
@@ -348,7 +354,17 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
         updateComposer();
         // TABLET-M: "Düzenle" or "Yanıtla" in progress before a rotation or a resize goes on (the field's own text comes
         // back after this, so what was typed stays; an edit must not turn into a new message).
-        if (savedInstanceState != null) restoreComposer(savedInstanceState);
+        Bundle handoff = savedInstanceState == null && getParentFragment() == null && mConv != null ? HANDOFF.remove(mConv) : null;
+        if (handoff != null) {
+            restoreComposer(handoff);
+            CharSequence draft = handoff.getCharSequence(STATE_DRAFT);
+            if (draft != null && draft.length() > 0) {
+                mInput.setText(draft);
+                mInput.setSelection(mInput.getText().length());
+            }
+        } else if (savedInstanceState != null) {
+            restoreComposer(savedInstanceState);
+        }
     }
 
     @Override
@@ -356,6 +372,11 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
         super.onSaveInstanceState(outState);
         if (mEditing != null) outState.putLong(STATE_EDITING, mEditing.id);
         else if (mReplyTo != null) outState.putLong(STATE_REPLY, mReplyTo.id);
+        if (getParentFragment() instanceof ChatListFragment && mConv != null && mInput != null) {
+            Bundle handoff = new Bundle(outState);
+            handoff.putCharSequence(STATE_DRAFT, mInput.getText().toString());
+            HANDOFF.put(mConv, handoff);
+        }
     }
 
     private void restoreComposer(Bundle state) {
