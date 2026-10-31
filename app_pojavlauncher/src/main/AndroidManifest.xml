@@ -35,6 +35,11 @@
     <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
     <meta-data android:name="android.game_mode_config"
         android:resource="@xml/game_mode_config" />
+    <!-- Projects fork: on 16 KB page devices (Android 16+) keep the page size compat mode on.
+         The game loads native code that the install-time check never sees (Java runtimes
+         downloaded at launch, LWJGL natives from assets, JNA natives per game version), and
+         most of it is still 4 KB aligned. Without compat mode the linker refuses it once every
+         library in lib/ is 16 KB aligned. Switch to "disabled" when all of it is aligned. -->
     <application
         android:name=".PojavApplication"
         android:allowBackup="true"
@@ -46,6 +51,7 @@
         android:isGame="true"
         android:label="@string/app_name"
         android:localeConfig="@xml/locales_config"
+        android:pageSizeCompat="enabled"
         android:process=":launcher"
         android:resizeableActivity="true"
         android:theme="@style/AppTheme">

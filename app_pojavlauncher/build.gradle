@@ -322,7 +322,8 @@ dependencies {
     // Our version of exp4j can be built from source at
     // https://github.com/PojavLauncherTeam/exp4j
     implementation 'net.sourceforge.htmlcleaner:htmlcleaner:2.6.1'
-    implementation 'com.bytedance:bytehook:1.0.10'
+    // Projects fork (M8): 1.0.10 rebuilt for 16 KB pages, from libs/maven (scripts/projects/build_bytehook_16kb.py)
+    implementation 'com.bytedance:bytehook:1.0.10-16kb'
 
     // implementation 'net.sourceforge.streamsupport:streamsupport-cfuture:1.7.0'
 
@@ -330,7 +331,8 @@ dependencies {
 
     implementation fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
 
-    implementation "net.java.dev.jna:jna:5.14.0@aar"
+    // 5.17.0+ natives load on 16 KB page devices (same JNI interface 7.0.x as 5.14.0)
+    implementation "net.java.dev.jna:jna:5.18.1@aar"
 
     implementation project(":androidnsbypass")
 
