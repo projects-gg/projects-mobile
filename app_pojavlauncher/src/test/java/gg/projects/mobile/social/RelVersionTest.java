@@ -98,15 +98,17 @@ public class RelVersionTest {
     @Test
     public void anUnforcedReadWaitsForTheHelloWhileAVersionIsHeld() {
         RelVersion rel = new RelVersion();
-        assertFalse(rel.refreshSkips(false, true));
+        assertFalse(rel.refreshSkips(false, true, true));
         rel.keep(REL, rel.readStarts());
-        // A screen coming up or a setting changing reads nothing: each connection's hello decides.
-        assertTrue(rel.refreshSkips(false, true));
+        // A screen coming up or a setting changing reads nothing: the hello of the connection up or on its way decides.
+        assertTrue(rel.refreshSkips(false, true, true));
+        // No connection, so no hello will come (replaced elsewhere, failed and waiting to retry): the usual rule reads.
+        assertFalse(rel.refreshSkips(false, true, false));
         // "Tekrar dene" reads; lists not loaded are read.
-        assertFalse(rel.refreshSkips(true, true));
-        assertFalse(rel.refreshSkips(false, false));
+        assertFalse(rel.refreshSkips(true, true, true));
+        assertFalse(rel.refreshSkips(false, false, true));
         rel.forget();
-        assertFalse(rel.refreshSkips(false, true));
+        assertFalse(rel.refreshSkips(false, true, true));
     }
 
     @Test
@@ -151,7 +153,7 @@ public class RelVersionTest {
         assertTrue(rel.keep(copy.rel, rel.readStarts()));
         assertTrue(RelVersion.presencePath(CAPS, rel.held()).endsWith("&rel=" + REL));
         assertEquals(RelVersion.Hello.SAME, rel.hello(REL, true));
-        assertTrue(rel.refreshSkips(false, true));
+        assertTrue(rel.refreshSkips(false, true, true));
 
         // A friend request on the socket: the copy is no longer its version's; both go.
         assertTrue(RelVersion.changesRelations("request"));
@@ -173,7 +175,7 @@ public class RelVersionTest {
         assertNotNull(copy);
         rel.keep(copy.rel, rel.readStarts());
         assertEquals(RelVersion.Hello.CHANGED, rel.hello(REL, true));
-        assertFalse(rel.refreshSkips(false, true));
+        assertFalse(rel.refreshSkips(false, true, true));
 
         // The next day: yesterday's copy is no copy (the version holds the day).
         assertNull(new KeptLists(dir).load(me, day + 1));

@@ -65,9 +65,13 @@ final class RelVersion {
         return Hello.CHANGED;
     }
 
-    /** Spec 7: an unforced read waits for the hello while a version is held for loaded lists (each connection's decides). */
-    boolean refreshSkips(boolean force, boolean loaded) {
-        return !force && loaded && mRel != null;
+    /**
+     * Spec 7: an unforced read waits for the hello while a version is held for loaded lists and a connection is up or on its
+     * way ({@code helloComing}: its hello decides). Without one (replaced elsewhere, failed and waiting to retry) no hello
+     * comes, and the usual rule reads.
+     */
+    boolean refreshSkips(boolean force, boolean loaded, boolean helloComing) {
+        return !force && loaded && helloComing && mRel != null;
     }
 
     /** The presence socket's path: what the app understands ({@code ?caps=}) and the version held ({@code &rel=}). */

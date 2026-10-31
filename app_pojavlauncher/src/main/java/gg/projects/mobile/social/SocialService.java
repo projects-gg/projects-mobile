@@ -173,6 +173,10 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     private String mOpenConversation;
     private final Runnable mReconnect = this::ensureConnected;
     private final Runnable mBackgroundClose = this::closeIfIdle;
+    /** M048: a read a hello asked for, held back by the 60 s rule, goes when the rule allows it (screens up only). */
+    private final Runnable mStaleRead = () -> {
+        if (mUiStarted > 0) refresh(false);
+    };
     private boolean mPushSyncing;
     /** A push sync was asked for while one ran: it runs again after. */
     private boolean mPushAgain;
@@ -589,8 +593,17 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
             // relations version for the one the connect named; the same means nothing the lists or the profile show
             // changed meanwhile, and nothing is read.
             RelVersion.Hello hello = mRel.hello(Json.str(message, "rel"), mState.loaded());
-            if (hello == RelVersion.Hello.CHANGED) refresh(false);
-            else if (hello == RelVersion.Hello.UNSAID) refresh(false, true);
+            if (hello == RelVersion.Hello.CHANGED) {
+                // A read on its way may have been answered before the change this hello reports: it keeps no version
+                // and the lists are read once more when it ends.
+                if (mFetching) {
+                    mListChanges++;
+                    forgetRel();
+                }
+                readChanged();
+            } else if (hello == RelVersion.Hello.UNSAID) {
+                refresh(false, true);
+            }
         }
         if (RelVersion.changesRelations(type)) {
             // What GET /v1/friends answers changed: a list read meanwhile is read again, and (M048, spec 5) the copy is
@@ -631,6 +644,8 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     @Override
     public void onEnded(PresenceConnection connection, int code, boolean failed) {
         if (connection != mConnection) return;
+        // M048: whether this connection said hello (then the version it named was decided on).
+        boolean saidHello = mLiveSocket;
         mConnection = null;
         mLiveSocket = false;
         mState.setOffline();
@@ -662,6 +677,9 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         long retryAfter = connection.retryAfterSeconds();
         long delay = code == 4008 ? mBackoff.atLeastMs(60) : retryAfter > 0 ? mBackoff.atLeastMs(retryAfter) : mBackoff.nextDelayMs();
         mMain.postDelayed(mReconnect, delay);
+        // M048: a connection that ended before its hello decided nothing. When nothing was read in this run yet (a start
+        // that shows the copy kept on the phone), the lists are read now by the usual rule, as a start read them before.
+        if (!saidHello && mLastFetch == 0) refresh(false, true);
         changed();
     }
 
@@ -674,8 +692,9 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     }
 
     /**
-     * {@code anyVersion}: for a hello that named no version (M048, spec 4's "otherwise"): the usual rule, whatever version
-     * is held (a read that ended just before such a connect keeps its version, and is not read again at once).
+     * {@code anyVersion}: for a hello that named no version (M048, spec 4's "otherwise") or a connection that ended
+     * before its hello: the usual rule, whatever version is held (a read that ended just before such a connect keeps its
+     * version, and is not read again at once).
      */
     @MainThread
     private void refresh(boolean force, boolean anyVersion) {
@@ -686,8 +705,9 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
             mAfterKeptForce |= force;
             return;
         }
-        // M048 (SCALE-SOC, spec 7): while a version is held for loaded lists, each connection's hello decides.
-        if (!anyVersion && mRel.refreshSkips(force, mState.loaded())) return;
+        // M048 (SCALE-SOC, spec 7): while a version is held for loaded lists, the hello of the connection that is up or on
+        // its way decides. Without one (replaced elsewhere, failed and waiting to retry) no hello comes: the usual rule.
+        if (!anyVersion && mRel.refreshSkips(force, mState.loaded(), mConnection != null)) return;
         long now = System.currentTimeMillis();
         if (!force && now - mLastFetch < STALE_MS && mState.loaded()) return;
         if (force && now - mLastTry < RETRY_GAP_MS && mState.loaded()) return;
@@ -841,6 +861,21 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         mAfterKeptForce = false;
         if (connect) ensureConnected();
         if (read) refresh(force);
+    }
+
+    /**
+     * M048 (spec 4): the hello named another version, so the lists shown are older than the service's: read now, or (the
+     * 60 s rule, kept for another version) as soon as that rule allows it, not only at the next screen change.
+     */
+    @MainThread
+    private void readChanged() {
+        mMain.removeCallbacks(mStaleRead);
+        long wait = STALE_MS - (System.currentTimeMillis() - mLastFetch);
+        if (mFetching || wait <= 0 || !mState.loaded()) {
+            refresh(false);
+            return;
+        }
+        mMain.postDelayed(mStaleRead, wait);
     }
 
     /**
@@ -1143,6 +1178,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     }
 
     private void forgetSession() {
+        mMain.removeCallbacks(mStaleRead);
         closeConnection();
         mToken = null;
         mApi.setToken(null);
@@ -1544,6 +1580,8 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
                     if (parsed != null && token.equals(mToken)) {
                         mState.setMe(parsed);
                         mStore.save(mToken, parsed.profile.id, me, null);
+                        // M048: a profile read outside the lists' read: no version describes the copy shown now.
+                        forgetRel();
                         changed();
                     }
                 });
@@ -1840,6 +1878,8 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
                 mMain.post(() -> {
                     if (!token.equals(mToken)) return;
                     applyTeamAnswer(answer);
+                    // M048: the crew read outside the lists' read: no version describes the copy shown now.
+                    forgetRel();
                     changed();
                 });
             } catch (SocialProblem ignored) {
