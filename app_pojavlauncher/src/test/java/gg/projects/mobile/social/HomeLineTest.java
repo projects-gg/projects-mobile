@@ -69,5 +69,25 @@ public class HomeLineTest {
         SocialState state = new SocialState();
         state.applyFriends(SocialModel.FriendsData.read(SocialStateTest.json("{\"friends\":[],\"incoming\":[],\"outgoing\":[],\"blocked\":[],\"limits\":{}}")));
         assertEquals(HomeLine.Kind.NO_FRIENDS, HomeLine.of(true, false, state, NONE, true, NOW).kind);
+        assertEquals("no friends needs no presence", HomeLine.Kind.NO_FRIENDS, HomeLine.of(true, false, true, state, NONE, true, NOW, null).kind);
+    }
+
+    /**
+     * M048: the lists show before the socket's hello (kept on the phone), when nobody's presence is known yet: the row says
+     * "Bağlanıyor" rather than "nobody online", and what does not depend on presence still shows.
+     */
+    @Test
+    public void beforeTheHelloTheRowClaimsNothingAboutWhoIsOnline() {
+        SocialState state = SocialStateTest.signedIn(true);
+        assertEquals(HomeLine.Kind.LOADING, HomeLine.of(true, false, true, state, NONE, true, NOW, null).kind);
+        assertEquals("without a socket on its way, as before", HomeLine.Kind.NOBODY_ONLINE,
+                HomeLine.of(true, false, false, state, NONE, true, NOW, null).kind);
+        // A request does not depend on presence.
+        state.apply(SocialStateTest.json("{\"t\":\"request\",\"from\":" + SocialStateTest.profile("100000000000000005", "Can") + "}"), NOW);
+        assertEquals(HomeLine.Kind.REQUEST, HomeLine.of(true, false, true, state, NONE, true, NOW, null).kind);
+        // Once the hello came, presence is known whatever the flag says.
+        state.apply(SocialStateTest.json("{\"t\":\"hello\",\"friends\":[{\"id\":\"" + SocialStateTest.AYSE
+                + "\",\"state\":\"playing\",\"game\":{\"where\":\"projects\"}}],\"team\":[],\"invites\":[],\"calls\":[]}"), NOW);
+        assertEquals(HomeLine.Kind.FRIENDS_ON_PROJECTS, HomeLine.of(true, false, true, state, NONE, true, NOW, null).kind);
     }
 }

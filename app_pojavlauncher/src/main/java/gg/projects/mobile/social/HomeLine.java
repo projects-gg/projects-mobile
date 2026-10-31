@@ -136,6 +136,17 @@ public final class HomeLine {
 
     public static HomeLine of(boolean signedIn, boolean unavailable, SocialState state, Set<String> favourites,
                               boolean teams, long nowSeconds, @Nullable Unread unread) {
+        return of(signedIn, unavailable, false, state, favourites, teams, nowSeconds, unread);
+    }
+
+    /**
+     * {@code connecting}: the socket is on its way and has not said hello (M048): who is online is not known yet, so the
+     * row says "Bağlanıyor" instead of a count or "nobody" (the lists, kept on the phone since 0.4.8, show before it), and
+     * what does not depend on it (a call, an invite, a plan, a message, a request) still shows.
+     */
+    public static HomeLine of(boolean signedIn, boolean unavailable, boolean connecting, SocialState state, Set<String> favourites,
+                              boolean teams, long nowSeconds, @Nullable Unread unread) {
+        boolean presence = !connecting || state.live();
         List<Profile> none = new ArrayList<>();
         boolean several = teams && state.crews().size() > 1;
         if (!signedIn) return simple(Kind.SIGNED_OUT, none, 0, false, false);
@@ -184,7 +195,7 @@ public final class HomeLine {
             if (from != null) faces.add(from);
             return new HomeLine(Kind.MESSAGE, null, null, null, faces, unread.count, pending, null, unread, several);
         }
-        if (teams) {
+        if (teams && presence) {
             List<Member> crew = state.crewOnProjects();
             if (crew.size() >= 2) {
                 List<Profile> faces = new ArrayList<>();
@@ -193,7 +204,7 @@ public final class HomeLine {
                         state.busiestCrewOnProjects(), null, several);
             }
         }
-        List<Friend> onProjects = state.friendsOnProjects(favourites);
+        List<Friend> onProjects = presence ? state.friendsOnProjects(favourites) : new ArrayList<Friend>();
         if (!onProjects.isEmpty()) {
             List<Profile> faces = new ArrayList<>();
             for (Friend f : onProjects) if (faces.size() < 3) faces.add(f.profile);
@@ -222,6 +233,7 @@ public final class HomeLine {
                     null, several);
         }
         if (state.friends().isEmpty()) return simple(Kind.NO_FRIENDS, none, 0, pending, several);
+        if (!presence) return simple(Kind.LOADING, none, 0, pending, several);
         int online = state.onlineCount();
         if (online == 0) return simple(Kind.NOBODY_ONLINE, none, 0, pending, several);
         List<Profile> faces = new ArrayList<>();

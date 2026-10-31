@@ -351,7 +351,9 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     }
 
     public HomeLine homeLine() {
-        return HomeLine.of(signedIn(), mUnavailable, mState, mPrefs.favourites(), gate().teams, nowSeconds(), mChat.unreadDirect());
+        // M048: before the socket's hello nobody's presence is known (the kept lists show before it): "Bağlanıyor".
+        return HomeLine.of(signedIn(), mUnavailable, connection() == Connection.CONNECTING, mState, mPrefs.favourites(), gate().teams,
+                nowSeconds(), mChat.unreadDirect());
     }
 
     public static long nowSeconds() {
