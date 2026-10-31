@@ -381,6 +381,96 @@ public class ControlLayoutTest {
         }
     }
 
+    /**
+     * TABLET-M: windows taller than wide (a split screen, a free window, a tablet held upright once Android ignores
+     * the landscape lock), physical pixels and density.
+     */
+    private static final Object[][] PORTRAIT = {
+            {"phone 1080 x 2400", 1080, 2400, 2.625f},
+            {"phone 720 x 1600", 720, 1600, 2.0f},
+            {"phone 1440 x 3200", 1440, 3200, 3.5f},
+            {"tablet 1600 x 2560", 1600, 2560, 2.0f},
+            {"half a tablet 1280 x 1600", 1280, 1600, 2.0f},
+            {"a third of a tablet 840 x 1600", 840, 1600, 2.0f},
+            {"an unfolded foldable 1840 x 2208", 1840, 2208, 2.625f},
+            {"half a phone 1080 x 1400", 1080, 1400, 2.625f},
+    };
+
+    @Test
+    public void landscapeKeepsTheEarlierPlaces() throws IOException {
+        // TABLET-M: every key of 0.4.6's layout (0.1.7 to 0.4.6) stays where it was in every landscape window, a square
+        // one too, at every button size and with a cutout; only a window taller than wide moves keys.
+        File dir = new File("src/test/resources/controls");
+        File[][] pairs = {{TURKISH, new File(dir, "default-0.4.6.json")}, {ENGLISH, new File(dir, "default_en-0.4.6.json")}};
+        List<Object[]> screens = new ArrayList<>(java.util.Arrays.asList(SCREENS));
+        screens.add(new Object[]{"square 1600 x 1600", 1600, 1600, 2.0f});
+        for (File[] pair : pairs) {
+            JsonObject now = layout(pair[0]);
+            JsonObject before = layout(pair[1]);
+            for (Object[] s : screens) {
+                for (float scale : new float[]{100f, 110f, 125f}) {
+                    for (int inset : new int[]{0, 90}) {
+                        List<Box> a = resolve(before, (int) s[1], (int) s[2], (float) s[3], scale, inset);
+                        List<Box> b = resolve(now, (int) s[1], (int) s[2], (float) s[3], scale, inset);
+                        assertEquals(a.size(), b.size());
+                        for (int i = 0; i < a.size(); i++) {
+                            String what = s[0] + " " + scale + "% inset " + inset + ": " + a.get(i);
+                            assertEquals(what, a.get(i).name, b.get(i).name);
+                            assertEquals(what, a.get(i).x, b.get(i).x, 1e-6);
+                            assertEquals(what, a.get(i).y, b.get(i).y, 1e-6);
+                            assertEquals(what, a.get(i).w, b.get(i).w, 1e-6);
+                            assertEquals(what, a.get(i).h, b.get(i).h, 1e-6);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    public void aWindowTallerThanWideKeepsEveryKeyUsable() throws IOException {
+        // There Minecraft's GUI scale follows the width, a GUI pixel being at most width / 320: the hotbar and the
+        // vitals (60 GUI pixels) run under the bottom corners and the boss bars (38) over the top-left block. The
+        // bottom keys stand above the vitals, the block under the boss bars; the chat's lines (as wide as the window
+        // there) stay behind the bottom keys, as they stay behind the joystick in landscape.
+        for (Object[] s : PORTRAIT) {
+            int w = (int) s[1], h = (int) s[2];
+            float density = (float) s[3];
+            double unit = w / 320.0;
+            double gw = w / unit, gh = h / unit, cx = gw / 2;
+            String[] zones = {"hotbar", "vitals", "offhand", "boss bars"};
+            double[][] hud = {{cx - 91, gh - 22, 182, 22}, {cx - 91, gh - 60, 182, 38}, {cx - 91 - 29, gh - 23, 29, 23},
+                    {cx - 91, 0, 182, 38}};
+            for (float scale : new float[]{100f, 110f}) {
+                List<Box> boxes = resolve(layout(TURKISH), w, h, density, scale, 0);
+                for (Box b : boxes) {
+                    assertTrue(s[0] + " " + scale + "%: on screen " + b,
+                            b.x >= -0.5 && b.y >= -0.5 && b.x + b.w <= w + 0.5 && b.y + b.h <= h + 0.5);
+                }
+                for (boolean game : new boolean[]{true, false}) {
+                    List<Box> shown = new ArrayList<>();
+                    for (Box b : boxes) if (b.drawer == null && (game ? b.game : b.menu)) shown.add(b);
+                    apart(s[0] + " " + scale + "% " + (game ? "game" : "menus"), shown);
+                }
+                for (Box b : boxes) {
+                    if (b.drawer != null || !b.game) continue;
+                    for (int z = 0; z < hud.length; z++) {
+                        assertFalse(s[0] + " " + scale + "%: " + b + " over the " + zones[z],
+                                b.overlaps(hud[z][0] * unit, hud[z][1] * unit, hud[z][2] * unit, hud[z][3] * unit));
+                    }
+                }
+                // An open panel slides left to stay on a narrow window; from 600 dp it is clear of every key.
+                if (w / density < 600) continue;
+                for (Box key : boxes) {
+                    if (key.drawer == null) continue;
+                    for (Box b : boxes) {
+                        if (b.drawer == null && b.game) assertFalse(s[0] + " " + scale + "%: " + key + " over " + b, key.overlaps(b));
+                    }
+                }
+            }
+        }
+    }
+
     @Test
     public void earlierDefaultsAreReplacedOnlyWhenUntouched() throws IOException {
         File dir = new File("src/test/resources/controls");
@@ -394,6 +484,15 @@ public class ControlLayoutTest {
         assertTrue(ControlLabels.isOldDefault(english015));
         assertTrue(ControlLabels.isUntouchedDefault(english015, turkish, english));
         assertFalse(ControlLabels.sameLayout(turkish015, turkish));
+        // TABLET-M: so do the untouched defaults of 0.1.7 to 0.4.6 (CRLF as the Windows builds had them, too).
+        byte[] turkish046 = AtomicFiles.read(new File(dir, "default-0.4.6.json"), 4L << 20);
+        byte[] english046 = AtomicFiles.read(new File(dir, "default_en-0.4.6.json"), 4L << 20);
+        assertTrue(ControlLabels.isOldDefault(turkish046));
+        assertTrue(ControlLabels.isOldDefault(english046));
+        assertTrue(ControlLabels.isOldDefault(new String(turkish046, StandardCharsets.UTF_8).replace("\n", "\r\n")
+                .replace("\r\r\n", "\r\n").getBytes(StandardCharsets.UTF_8)));
+        assertTrue(ControlLabels.isUntouchedDefault(turkish046, turkish, english));
+        assertFalse(ControlLabels.sameLayout(turkish046, turkish));
         // ...while this version's own defaults are not "old" and an edited copy of an old one stays.
         assertFalse(ControlLabels.isOldDefault(turkish));
         assertFalse(ControlLabels.isOldDefault(english));

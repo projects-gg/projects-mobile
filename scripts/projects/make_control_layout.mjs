@@ -12,6 +12,12 @@
 // Positions are dp from a screen corner; offsets between buttons follow the button scale setting
 // (${preferred_scale}), the edge inset does not. ${inset} is the cutout inset (ControlData).
 // Both files share one geometry; only the labels differ (ControlLabels maps them).
+//
+// TABLET-M (0.4.7): a window taller than wide (a split screen, a free window, a tablet held upright once Android
+// ignores the landscape lock) keeps every key usable: the game's GUI scale then follows the width, the hotbar with the
+// vitals runs under the bottom corners and the boss bars over the top-left block, so the bottom keys rise above the
+// vitals and the top block goes under the boss bars; the drawer panels slide left to stay on a narrow window. In every
+// landscape window (and a square one) each key keeps exactly its place (ControlLayoutTest compares with 0.4.6's).
 import { writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -21,6 +27,13 @@ const ASSETS = join(ROOT, "app_pojavlauncher", "src", "main", "assets");
 
 export const EDGE = 12; // dp from the screen edges
 const k = "${preferred_scale} / 100"; // offsets between keys follow the button size setting
+
+// TABLET-M: 1 on a window taller than wide, 0 on every other (a step written with abs(), the one function exp4j gives a
+// layout for it). There Minecraft's GUI pixel is at most screen width / 320: the hotbar and the vitals take 60 of them
+// from the bottom, the boss bars 38 from the top.
+const PORTRAIT = "((abs((${screen_height} - ${screen_width}) * 1000) - abs((${screen_height} - ${screen_width}) * 1000 - 1) + 1) / 2)";
+const BOTTOM_LIFT = `(${PORTRAIT} * (\${screen_width} * 60 / 320 + px(8)))`;
+const TOP_DROP = `(${PORTRAIT} * \${screen_width} * 38 / 320)`;
 
 // GLFW key codes and upstream's special buttons (ControlData.SPECIALBTN_*).
 const K = {
@@ -51,8 +64,13 @@ const PANEL_X = 194;
 const TILE_W = 64;
 const TILE_H = 48;
 const TILE_GAP = 6;
+// TABLET-M: the panel starts PANEL_X in, or further left when the window is too narrow for it (min() with abs()).
+const PANEL_SPAN = 2 * (TILE_W + TILE_GAP) + TILE_W;
+const PANEL_A = `px(${PANEL_X}) * ${k}`;
+const PANEL_B = `(\${screen_width} - \${inset} - px(${2 * EDGE}) - px(${PANEL_SPAN}) * ${k})`;
+const PANEL_START = `((${PANEL_A} + ${PANEL_B} - abs(${PANEL_A} - ${PANEL_B})) / 2)`;
 const tile = (i) => ({
-  x: { edge: "left", off: PANEL_X + (i % 3) * (TILE_W + TILE_GAP) },
+  x: { expr: `\${inset} + px(${EDGE}) + ${PANEL_START}${scaledPlusOf((i % 3) * (TILE_W + TILE_GAP))}` },
   y: { edge: "top", off: Math.floor(i / 3) * (TILE_H + TILE_GAP) },
   w: TILE_W,
   h: TILE_H,
@@ -63,8 +81,8 @@ const STICK = 150;
 const PAIR = 52;
 const PAIR_X = STICK / 2 - (PAIR * 2 + 8) / 2;
 const BLOCK_H = ROW2_Y + ROW2_H;
-const PAIR_ABOVE = `(\${screen_height} - \${height} - px(${EDGE}) - px(${STICK + 8}) * ${k})`;
-const PAIR_MIDDLE = `((\${screen_height} - px(${STICK - BLOCK_H}) * ${k}) / 2 - \${height} / 2)`;
+const PAIR_ABOVE = `(\${screen_height} - \${height} - px(${EDGE}) - px(${STICK + 8}) * ${k} - ${BOTTOM_LIFT})`;
+const PAIR_MIDDLE = `((\${screen_height} - ${BOTTOM_LIFT} + ${TOP_DROP} - px(${STICK - BLOCK_H}) * ${k}) / 2 - \${height} / 2)`;
 const PAIR_Y = `(${PAIR_ABOVE} + ${PAIR_MIDDLE} + abs(${PAIR_ABOVE} - ${PAIR_MIDDLE})) / 2`;
 // Use, attack and jump bottom-right, centred on the jump button. Where the row is wider than the
 // room beside the hotbar (16:9 phones; the hotbar measured at its largest, a GUI pixel being
@@ -76,12 +94,16 @@ const ACT_Y = (JUMP - ACT) / 2;
 const HOTBAR_RIGHT = "(${screen_width} / 2 + 91 * ${screen_height} / 240)";
 const USE_ROW_X = `(\${screen_width} - \${width} - \${inset} - px(${EDGE}) - px(${JUMP + 8 + ACT + 8}) * ${k})`;
 const USE_STACK_X = `(\${screen_width} - \${width} - \${inset} - px(${EDGE}) - px(${JUMP + 8}) * ${k})`;
-const USE_ROW_Y = `(\${screen_height} - \${height} - px(${EDGE}) - px(${ACT_Y}) * ${k})`;
-const USE_STACK_Y = `(\${screen_height} - \${height} - px(${EDGE}) - px(${ACT_Y + ACT + 8}) * ${k})`;
+const USE_ROW_Y = `(\${screen_height} - \${height} - px(${EDGE}) - px(${ACT_Y}) * ${k} - ${BOTTOM_LIFT})`;
+const USE_STACK_Y = `(\${screen_height} - \${height} - px(${EDGE}) - px(${ACT_Y + ACT + 8}) * ${k} - ${BOTTOM_LIFT})`;
 const CROWDED = `((${HOTBAR_RIGHT} + px(6) - ${USE_ROW_X}) * 1000)`;
 const STACKED = `((abs(${CROWDED}) - abs(${CROWDED} - 1) + 1) / 2)`;
 const USE_X = `${USE_ROW_X} + ${STACKED} * (${USE_STACK_X} - ${USE_ROW_X})`;
 const USE_Y = `${USE_ROW_Y} + ${STACKED} * (${USE_STACK_Y} - ${USE_ROW_Y})`;
+
+function scaledPlusOf(off) {
+  return off ? ` + px(${off}) * \${preferred_scale} / 100` : "";
+}
 
 export const CONTROLS = [
   // Top-left, first row: what a player reaches for most.
@@ -166,12 +188,13 @@ function xExpr(c) {
     : `\${screen_width} - \${width} - \${inset} - px(${EDGE})${scaled(c.x.off)}`;
 }
 
-function yExpr(c) {
+function yExpr(c, inherited = {}) {
   if (c.center) return "${screen_height} / 2 - ${height} / 2";
   if (c.y.expr) return c.y.expr;
-  return c.y.edge === "top"
-    ? `px(${EDGE})${scaledPlus(c.y.off)}`
-    : `\${screen_height} - \${height} - px(${EDGE})${scaled(c.y.off)}`;
+  if (c.y.edge === "top") return `px(${EDGE})${scaledPlus(c.y.off)} + ${TOP_DROP}`;
+  // Only the game's keys meet the hotbar; the menus' bottom keys keep their corner.
+  const game = c.game ?? inherited.game;
+  return `\${screen_height} - \${height} - px(${EDGE})${scaled(c.y.off)}${game ? ` - ${BOTTOM_LIFT}` : ""}`;
 }
 
 function keycodes(keys) {
@@ -189,7 +212,7 @@ function data(c, lang, inherited = {}) {
     displayInGame: c.game ?? inherited.game,
     displayInMenu: c.menu ?? inherited.menu,
     dynamicX: xExpr(c),
-    dynamicY: yExpr(c),
+    dynamicY: yExpr(c, inherited),
     height: c.h,
     isSwipeable: false,
     isToggle: Boolean(c.toggle),

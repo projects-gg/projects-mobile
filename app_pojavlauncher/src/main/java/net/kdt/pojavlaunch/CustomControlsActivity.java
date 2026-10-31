@@ -81,6 +81,20 @@ public class CustomControlsActivity extends BaseActivity implements EditorExitab
 		mControlLayout.askToExit(this);
 	}
 
+	/**
+	 * TABLET-M: a resized window (a split screen, a free window) or a turn keeps the editor (configChanges): the keys
+	 * take their places on the new size, as in the game (MainActivity), once the new size is laid out.
+	 */
+	@Override
+	public void onConfigurationChanged(@androidx.annotation.NonNull android.content.res.Configuration newConfig) {
+		super.onConfigurationChanged(newConfig);
+		mControlLayout.requestLayout();
+		mControlLayout.post(() -> {
+			Tools.updateWindowSize(this);
+			mControlLayout.refreshControlButtonPositions();
+		});
+	}
+
 	@Override
 	public void exitEditor() {
 		super.onBackPressed();

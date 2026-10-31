@@ -106,12 +106,16 @@ public final class ControlLabels {
      * SHA-256 of the default layouts earlier versions installed, line endings normalized to LF (the
      * APKs built on Windows carry CRLF, upstream's CI builds LF): upstream's English one of 0.1.0 to
      * 0.1.3, the Turkish one of 0.1.4 and 0.1.5 and the English one of 0.1.5 (the layout before the
-     * M15 redesign). An untouched one of these is replaced by this version's layout.
+     * M15 redesign), and TABLET-M: the Turkish and English ones of 0.1.7 to 0.4.6 (the same places in
+     * every landscape window; 0.4.7 adds those of a window taller than wide). An untouched one of these is
+     * replaced by this version's layout.
      */
     private static final Set<String> OLD_DEFAULTS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
             "d92a182bde65a19c1c9edb1291f8dde2ff9efcbb95b9a7745c3e591b85f7516a",
             "bbc73ba76be9fd51e9cb938dc3373dea04458e119d10098f541f6264fbda700a",
-            "cb6c4bef9d985c1a3adf31c4b41674c0f51611ed874762eb2dbcadb492802341")));
+            "cb6c4bef9d985c1a3adf31c4b41674c0f51611ed874762eb2dbcadb492802341",
+            "53cbe0a1eeeba8cad3476b5d89a94de1a8fc06a56d57f03b557a1c86604b509c",
+            "92c31961324430ccde44c183c3eadefe49c4cbb3e7170bf8a368bfcf85e68423")));
 
     /**
      * True when {@code installed} is an earlier version's default layout, byte for byte apart from
