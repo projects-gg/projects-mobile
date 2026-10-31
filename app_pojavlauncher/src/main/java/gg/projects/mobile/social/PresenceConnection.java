@@ -65,15 +65,12 @@ public final class PresenceConnection {
     /** A refused upgrade's Retry-After (seconds; 0 when none). */
     private volatile long mRetryAfter;
 
-    private PresenceConnection(SocialApi api, String token, List<String> caps, Listener listener) {
+    private PresenceConnection(SocialApi api, String token, List<String> caps, @Nullable String rel, Listener listener) {
         mListener = listener;
-        StringBuilder url = new StringBuilder(api.base()).append("v1/presence");
-        if (!caps.isEmpty()) {
-            url.append("?caps=");
-            for (int i = 0; i < caps.size(); i++) url.append(i == 0 ? "" : ",").append(caps.get(i));
-        }
+        // M048 (SCALE-SOC): the relations version the phone's copy is, when it holds one; the hello names the service's.
+        String url = api.base() + RelVersion.presencePath(caps, rel);
         Request request = new Request.Builder()
-                .url(url.toString())
+                .url(url)
                 .header("Authorization", "Bearer " + token)
                 .header("User-Agent", api.userAgent())
                 .build();
@@ -122,9 +119,10 @@ public final class PresenceConnection {
         });
     }
 
+    /** {@code rel}: the relations version held ({@link RelVersion}), named only when it is one; null: none. */
     @MainThread
-    public static PresenceConnection open(SocialApi api, String token, List<String> caps, Listener listener) {
-        return new PresenceConnection(api, token, caps, listener);
+    public static PresenceConnection open(SocialApi api, String token, List<String> caps, @Nullable String rel, Listener listener) {
+        return new PresenceConnection(api, token, caps, rel, listener);
     }
 
     @MainThread

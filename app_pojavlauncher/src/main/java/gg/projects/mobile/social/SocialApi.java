@@ -159,11 +159,13 @@ public final class SocialApi {
 
     /**
      * SOC9 (TEAM4-B): the light list ({@code crews=lite}: each crew's team in short, with its {@code rev}); an older
-     * service ignores it and answers in full. {@link CrewDetails#resolve} puts the full crews in.
+     * service ignores it and answers in full. {@link CrewDetails#resolve} puts the full crews in. M048 (SCALE-SOC):
+     * {@code rel=1} also brings the profile ({@code me}, as {@code GET /v1/me}) and the relations version ({@code rel});
+     * an older service sends neither.
      */
     @WorkerThread
     public JsonObject friends() throws SocialProblem {
-        return require(send("GET", "v1/friends?crews=lite", null, true, false));
+        return require(send("GET", KeptLists.FROM, null, true, false));
     }
 
     /**

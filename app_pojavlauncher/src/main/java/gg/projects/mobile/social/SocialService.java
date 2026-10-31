@@ -77,6 +77,11 @@ import gg.projects.mobile.social.ui.SocialUi;
  * marks; links need none) and TEAM6's crew tags ({@code badges}): wearing a tag, a crew hidden or not
  * and taking requests from its tag or not (its leader's two settings), and a join request from a tag's
  * card. Older services ignore the names they do not know.
+ *
+ * <p>M048 (SCALE-SOC and SOC-DISK on the phone; scale-soc.md, the phone's spec): the list's answer brings the profile
+ * and the relations version ({@link RelVersion}); the socket names that version when it connects and its hello says
+ * whether the copy is still the service's, so a reconnect reads nothing when nothing changed. The answer is kept on the
+ * phone ({@link KeptLists}): a start the same day shows it at once and reads only when the hello names another version.
  */
 public final class SocialService implements ProjectsContent.Listener, PresenceConnection.Listener {
     private static final String TAG = "ProjectsSocial";
@@ -178,6 +183,18 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     private List<String> mOrderSent;
     /** SOC9 (TEAM4-B): the crews' details kept on the phone, a folder per account ({@link CrewCache}). */
     private final java.io.File mCrewRoot;
+    /** M048 (SCALE-SOC): the relations version of the profile and the lists shown. */
+    private final RelVersion mRel = new RelVersion();
+    /** M048 (SOC-DISK): the list's answer kept for the next start the same day. */
+    private final KeptLists mKept;
+    /**
+     * M048: a start reads the lists an earlier start kept today (a few milliseconds of disk, off the main thread); the
+     * socket and the reads wait for it, so the connect names its version and nothing is read twice.
+     */
+    private boolean mKeptLoading;
+    private boolean mAfterKeptConnect;
+    private boolean mAfterKeptRefresh;
+    private boolean mAfterKeptForce;
 
     private SocialService(Context app) {
         mApp = app;
@@ -185,6 +202,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         mApi = new SocialApi(mDebug.url, ProjectsContent.userAgent());
         mStore = new SessionStore(app, mDebug.override ? "session-debug.json" : "session.json");
         mCrewRoot = new java.io.File(app.getNoBackupFilesDir(), mDebug.override ? "projects-social/crews-debug" : "projects-social/crews");
+        mKept = new KeptLists(new java.io.File(app.getNoBackupFilesDir(), mDebug.override ? "projects-social/lists-debug" : "projects-social/lists"));
         mPrefs = new SocialPrefs(app);
         // M19's socket that kept the player's own call in the game is not used any more (see the class doc).
         mPrefs.setOwnCallUntil(0);
@@ -204,8 +222,11 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         if (mToken == null) {
             mSignIn.restore(saved.attempt, nowSeconds());
             if (mSignIn.phase() == SignInFlow.Phase.WAITING) mSignInStatus = SignInStatus.WAITING;
+            // M048 (SOC-DISK): nobody is signed in on this phone, so nothing of an account stays kept.
+            mKept.clear();
         } else if (saved.userId != null) {
             mChat.open(saved.userId);
+            loadKept(saved.userId);
         }
         ProjectsContent.addListener(this);
     }
@@ -313,7 +334,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         if (mReplaced) return Connection.REPLACED;
         if (mLiveSocket) return Connection.LIVE;
         if (mUnavailable) return Connection.UNAVAILABLE;
-        return mConnection != null || mFetching ? Connection.CONNECTING : Connection.OFF;
+        return mConnection != null || mFetching || mKeptLoading ? Connection.CONNECTING : Connection.OFF;
     }
 
     /** The session ended elsewhere since the player last looked (cleared by reading it). */
@@ -472,9 +493,13 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         }
     }
 
-    /** A push came while the app ran without a socket: the list is read again when its screens are up. */
+    /**
+     * A push came while the app ran without a socket: the list is read again when its screens are up. M048 (spec 7):
+     * something may have changed meanwhile, so the version held says nothing now and the copy kept for a start goes.
+     */
     @MainThread
     public void pushArrived() {
+        forgetRel();
         mLastFetch = 0;
         if (mUiStarted > 0) refresh(false);
     }
@@ -506,7 +531,12 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         mMain.removeCallbacks(mReconnect);
         if (mToken == null || !enabled() || mReplaced || mConnection != null) return;
         if (mUiStarted == 0) return;
-        mConnection = PresenceConnection.open(mApi, mToken, caps(), this);
+        if (mKeptLoading) {
+            // M048: the connect names the version of the copy this start kept, once that copy is read.
+            mAfterKeptConnect = true;
+            return;
+        }
+        mConnection = PresenceConnection.open(mApi, mToken, caps(), mRel.held(), this);
         changed();
     }
 
@@ -553,24 +583,18 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
             mLiveSocket = true;
             mUnavailable = false;
             mBackoff.healthy();
-            // After a reconnect the list may have moved on.
-            refresh(false);
+            // After a reconnect the list may have moved on. M048 (SCALE-SOC, spec 4): the hello names the service's
+            // relations version for the one the connect named; the same means nothing the lists or the profile show
+            // changed meanwhile, and nothing is read.
+            RelVersion.Hello hello = mRel.hello(Json.str(message, "rel"), mState.loaded());
+            if (hello == RelVersion.Hello.CHANGED) refresh(false);
+            else if (hello == RelVersion.Hello.UNSAID) refresh(false, true);
         }
-        switch (type) {
-            case "friend_added":
-            case "friend_removed":
-            case "request":
-            case "request_cancelled":
-            case "team":
-            case "team_invite":
-            case "team_notifications":
-            case "crew_notifications":
-            case "crew_order":
-            case "team_requests":
-                mListChanges++;
-                break;
-            default:
-                break;
+        if (RelVersion.changesRelations(type)) {
+            // What GET /v1/friends answers changed: a list read meanwhile is read again, and (M048, spec 5) the copy is
+            // no longer the one its version describes.
+            mListChanges++;
+            forgetRel();
         }
         List<SocialState.Notice> notices = mState.apply(message, now);
         if (type.equals("team_notifications") || type.equals("hello")) mPrefs.setCrewSettings(mState.teamNotifications());
@@ -641,10 +665,27 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
 
     // ---- reading the list ----
 
-    /** Reads {@code /v1/me} and {@code /v1/friends} unless they are fresh (force: "Tekrar dene"). */
+    /** Reads {@code /v1/friends} (with the profile in it) unless the lists are fresh (force: "Tekrar dene"). */
     @MainThread
     public void refresh(boolean force) {
+        refresh(force, false);
+    }
+
+    /**
+     * {@code anyVersion}: for a hello that named no version (M048, spec 4's "otherwise"): the usual rule, whatever version
+     * is held (a read that ended just before such a connect keeps its version, and is not read again at once).
+     */
+    @MainThread
+    private void refresh(boolean force, boolean anyVersion) {
         if (mToken == null || !enabled() || mFetching) return;
+        if (mKeptLoading) {
+            // M048: the copy kept for this start comes first; the read then decides with its version.
+            mAfterKeptRefresh = true;
+            mAfterKeptForce |= force;
+            return;
+        }
+        // M048 (SCALE-SOC, spec 7): while a version is held for loaded lists, each connection's hello decides.
+        if (!anyVersion && mRel.refreshSkips(force, mState.loaded())) return;
         long now = System.currentTimeMillis();
         if (!force && now - mLastFetch < STALE_MS && mState.loaded()) return;
         if (force && now - mLastTry < RETRY_GAP_MS && mState.loaded()) return;
@@ -653,16 +694,23 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         changed();
         final String token = mToken;
         final int changesBefore = mListChanges;
+        final long relSince = mRel.readStarts();
         mIo.execute(() -> {
             mApi.bind(token);
             try {
-                final JsonObject me = mApi.me();
                 final JsonObject friends = mApi.friends();
+                // M048 (spec 2): the answer brings the profile too, so one request; an older service's does not.
+                JsonObject answered = Json.obj(friends, "me");
+                final boolean withMe = Me.read(answered) != null;
+                final JsonObject me = withMe ? answered : mApi.me();
+                final long day = CrewDetails.turkeyDay(nowSeconds());
+                // M048 (SOC-DISK, spec 6): the answer as the service sent it (its crews still light), for the next start.
+                final String rel = withMe ? Json.str(friends, "rel") : null;
+                final JsonObject keep = KeptLists.isRel(rel) ? friends.deepCopy() : null;
                 // SOC9 (TEAM4-B): the light list's crews in full, from the phone's copies or their details.
                 Me who = Me.read(me);
                 if (who != null) {
-                    CrewDetails.resolve(friends, new CrewCache(mCrewRoot, who.profile.id), mApi::teamDetail,
-                            CrewDetails.turkeyDay(nowSeconds()));
+                    CrewDetails.resolve(friends, new CrewCache(mCrewRoot, who.profile.id), mApi::teamDetail, day);
                 }
                 mMain.post(() -> {
                     mFetching = false;
@@ -678,6 +726,16 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
                     mState.applyFriends(FriendsData.read(friends));
                     // An order the player just chose wins over a list read before it reached the service.
                     if (order != null) mState.setCrewOrder(order);
+                    // M048: the version is held only when the copy is exactly this answer (no change since the read
+                    // started, no order of the player's laid over it: spec 2), and the answer is kept with it (spec 6).
+                    // Otherwise a copy kept earlier is no longer current and goes.
+                    if (mRel.keep(parsed != null && order == null && keep != null ? rel : null, relSince)) {
+                        final long generation = mKept.generation();
+                        final String account = parsed.profile.id;
+                        mIo.execute(() -> mKept.save(generation, account, day, keep));
+                    } else {
+                        mKept.clear();
+                    }
                     mPrefs.setCrewSettings(mState.teamNotifications());
                     rememberCrewNames();
                     syncPlanReminders();
@@ -714,6 +772,88 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
             } finally {
                 mApi.bind(null);
             }
+        });
+    }
+
+    /**
+     * M048 (SOC-DISK, the phone's spec 6): a start shows the lists an earlier start kept today for this account, each crew
+     * from its own copy, and holds their version for the connect (whose hello says whether they are still the
+     * service's). Read off the main thread; the socket and any read wait for it. Without a usable copy the start reads as
+     * before.
+     */
+    @MainThread
+    private void loadKept(final String account) {
+        final String token = mToken;
+        final long since = mRel.readStarts();
+        final long today = CrewDetails.turkeyDay(nowSeconds());
+        mKeptLoading = true;
+        mIo.execute(() -> {
+            String rel = null;
+            Me me = null;
+            FriendsData data = null;
+            try {
+                KeptLists.Copy copy = mKept.load(account, today);
+                JsonObject lists = copy == null ? null : KeptLists.listsWithCrews(copy, new CrewCache(mCrewRoot, account), today);
+                if (lists != null) {
+                    me = Me.read(copy.me);
+                    if (me != null && account.equals(me.profile.id)) {
+                        data = FriendsData.read(lists);
+                        rel = copy.rel;
+                    }
+                }
+            } catch (RuntimeException e) {
+                Log.w(TAG, "the friend list kept on the phone is not read", e);
+                data = null;
+            }
+            final String keptRel = data == null ? null : rel;
+            final Me keptMe = data == null ? null : me;
+            final FriendsData kept = data;
+            mMain.post(() -> keptLoaded(token, since, keptRel, keptMe, kept));
+        });
+    }
+
+    @MainThread
+    private void keptLoaded(@Nullable String token, long since, @Nullable String rel, @Nullable Me me, @Nullable FriendsData data) {
+        mKeptLoading = false;
+        if (me != null && data != null && token != null && token.equals(mToken) && !mState.loaded() && mRel.keep(rel, since)) {
+            mState.setMe(me);
+            mState.applyFriends(data);
+            mPrefs.setCrewSettings(mState.teamNotifications());
+            rememberCrewNames();
+            syncPlanReminders();
+            changed();
+            syncPush();
+        }
+        // What waited for the copy goes now: the connect names its version, a read decides with it.
+        boolean connect = mAfterKeptConnect;
+        boolean read = mAfterKeptRefresh;
+        boolean force = mAfterKeptForce;
+        mAfterKeptConnect = false;
+        mAfterKeptRefresh = false;
+        mAfterKeptForce = false;
+        if (connect) ensureConnected();
+        if (read) refresh(force);
+    }
+
+    /**
+     * M048 (SCALE-SOC, spec 5 and 6): the copy changed here (a socket event, the player's own change, a push, the
+     * session's end): no version describes it any more, a read on its way keeps none, and the copy kept for a start goes.
+     */
+    @MainThread
+    private void forgetRel() {
+        mRel.forget();
+        mKept.clear();
+    }
+
+    /**
+     * M048 (spec 5): a change of the player's own ({@link #run}'s way): the version is forgotten when it is sent and again
+     * when its answer is applied (a read in between may have brought the copy before it).
+     */
+    private <T> void change(final Call0<T> call, final Result<T> result, @Nullable final OnOk<T> apply) {
+        forgetRel();
+        run(call, result, value -> {
+            forgetRel();
+            if (apply != null) apply.apply(value);
         });
     }
 
@@ -899,6 +1039,8 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         mToken = token;
         mApi.setToken(token);
         mState.clear();
+        // M048: nothing an earlier session read or kept describes this one.
+        forgetRel();
         mState.setMe(me);
         mStore.save(token, me.profile.id, Json.obj(answer, "me"), null);
         mSignInStatus = SignInStatus.IDLE;
@@ -961,12 +1103,17 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
             try {
                 mApi.deleteAccount();
                 mMain.post(() -> {
-                    if (token.equals(mToken)) {
+                    // What the phone kept of the account goes with it, also when the account's socket closed (4002)
+                    // before this answer and signed it out here first (the service's usual order; M048, as the
+                    // launcher's SOC-DISK found): its chat history and its lists. Not another session's meanwhile.
+                    boolean ours = token.equals(mToken);
+                    if (ours || mToken == null) {
                         if (userId != null) mChat.deleteLocal(userId);
-                        forgetSession();
+                        mKept.clear();
                         PushRegistrar.forget(mApp);
-                        changed();
                     }
+                    if (ours) forgetSession();
+                    changed();
                     result.ok(null);
                 });
             } catch (final SocialProblem problem) {
@@ -1000,6 +1147,8 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         mReplaced = false;
         mLastFetch = 0;
         mOrderSent = null;
+        // M048 (spec 6): the version held and the lists kept on the phone go with the session.
+        forgetRel();
         mChat.close();
         SocialNotifications.cancelAll(mApp);
         // M21: the plan reminders were this account's.
@@ -1267,7 +1416,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
 
     /** "İstek gönder": a request, or a friendship at once when they had asked first. */
     public void sendRequest(String code, Result<JsonObject> result) {
-        run(() -> mApi.request(code), result, this::applyRequestAnswer);
+        change(() -> mApi.request(code), result, this::applyRequestAnswer);
     }
 
     /**
@@ -1275,7 +1424,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
      * request without their code; the same answers.
      */
     public void sendRequestToCrewmate(final String userId, Result<JsonObject> result) {
-        run(() -> mApi.requestCrewmate(userId), result, this::applyRequestAnswer);
+        change(() -> mApi.requestCrewmate(userId), result, this::applyRequestAnswer);
     }
 
     private void applyRequestAnswer(JsonObject answer) {
@@ -1289,7 +1438,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     }
 
     public void accept(final String from, Result<JsonObject> result) {
-        run(() -> mApi.accept(from), result, answer -> {
+        change(() -> mApi.accept(from), result, answer -> {
             Friend friend = Friend.read(Json.obj(answer, "friend"));
             if (friend != null) mState.addFriend(friend);
             else mState.removeIncoming(from);
@@ -1297,21 +1446,21 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     }
 
     public void decline(final String from, Result<Void> result) {
-        run(() -> {
+        change(() -> {
             mApi.decline(from);
             return null;
         }, result, value -> mState.removeIncoming(from));
     }
 
     public void cancelRequest(final String to, Result<Void> result) {
-        run(() -> {
+        change(() -> {
             mApi.cancelRequest(to);
             return null;
         }, result, value -> mState.removeOutgoing(to));
     }
 
     public void removeFriend(final String id, Result<Void> result) {
-        run(() -> {
+        change(() -> {
             mApi.removeFriend(id);
             return null;
         }, result, value -> {
@@ -1321,7 +1470,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     }
 
     public void block(final Profile profile, Result<Void> result) {
-        run(() -> {
+        change(() -> {
             mApi.block(profile.id);
             return null;
         }, result, value -> {
@@ -1331,7 +1480,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     }
 
     public void unblock(final String id, Result<Void> result) {
-        run(() -> {
+        change(() -> {
             mApi.unblock(id);
             return null;
         }, result, value -> mState.unblock(id));
@@ -1350,7 +1499,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     }
 
     private void patchMe(final JsonObject body, Result<JsonObject> result) {
-        run(() -> mApi.patchMe(body), result, answer -> {
+        change(() -> mApi.patchMe(body), result, answer -> {
             Me me = Me.read(answer);
             if (me != null) {
                 mState.setMe(me);
@@ -1372,7 +1521,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     }
 
     public void rotateCode(Result<String> result) {
-        run(mApi::rotateFriendCode, result, code -> refreshMeOnly());
+        change(mApi::rotateFriendCode, result, code -> refreshMeOnly());
     }
 
     private void refreshMeOnly() {
@@ -1410,12 +1559,16 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
      * too (the service blocks with it, best effort).
      */
     public void report(final JsonObject body, @Nullable final Profile block, Result<JsonObject> result) {
-        run(() -> mApi.report(body), result, answer -> {
-            if (block != null && Json.bool(body, "block", false)) {
+        final boolean blocks = block != null && Json.bool(body, "block", false);
+        OnOk<JsonObject> apply = answer -> {
+            if (blocks) {
                 mState.block(block);
                 mPrefs.setFavourite(block.id, false);
             }
-        });
+        };
+        // M048: a report alone changes nothing the list shows; one with "Engelle" is the player's own change.
+        if (blocks) change(() -> mApi.report(body), result, apply);
+        else run(() -> mApi.report(body), result, apply);
     }
 
     /** The player saw these moderators' notes: they go here at once, from the service when it answers. */
@@ -1423,6 +1576,8 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     public void noticesSeen(final Set<String> ids) {
         if (ids.isEmpty()) return;
         mState.noticesSeen(ids);
+        // M048 (spec 5): the profile's notices changed here.
+        forgetRel();
         changed();
         final String token = mToken;
         if (token == null) return;
@@ -1483,7 +1638,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     public void joinOrAsk(@Nullable final String code, @Nullable final String link, Result<JsonObject> result) {
         final boolean multi = gate().multi;
         final boolean request = gate().requests;
-        run(() -> mApi.joinTeam(code, link, multi, request), result, answer -> {
+        change(() -> mApi.joinTeam(code, link, multi, request), result, answer -> {
             JsonObject asked = Json.obj(answer, "request");
             if (asked != null) {
                 MyRequest mine = MyRequest.read(asked);
@@ -1498,7 +1653,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
 
     /** TEAM5 "Geri çek": the player's waiting join request goes (one already gone counts as withdrawn). */
     public void withdrawJoinRequest(final String teamId, Result<Void> result) {
-        run(() -> {
+        change(() -> {
             try {
                 mApi.withdrawJoinRequest(teamId);
             } catch (SocialProblem problem) {
@@ -1510,7 +1665,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
 
     /** TEAM5 "Kabul et": the player comes into the crew; its card comes with the answer. */
     public void acceptJoinRequest(final String teamId, final String userId, Result<JsonObject> result) {
-        run(() -> mApi.acceptJoinRequest(teamId, userId), result, answer -> {
+        change(() -> mApi.acceptJoinRequest(teamId, userId), result, answer -> {
             mState.removeCrewRequest(teamId, userId);
             applyTeamAnswer(answer);
         });
@@ -1518,7 +1673,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
 
     /** TEAM5: a declined request goes silently (its sender is told nothing). */
     public void declineJoinRequest(final String teamId, final String userId, Result<Void> result) {
-        run(() -> {
+        change(() -> {
             mApi.declineJoinRequest(teamId, userId);
             return null;
         }, result, value -> mState.removeCrewRequest(teamId, userId));
@@ -1528,12 +1683,14 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     @MainThread
     public void forgetJoinRequest(String teamId, String userId) {
         mState.removeCrewRequest(teamId, userId);
+        // M048 (spec 5): the lists changed here.
+        forgetRel();
         changed();
     }
 
     /** TEAM5 "Engelle" on a request row: the usual block, which takes the request too. */
     public void blockRequester(final String teamId, final Profile profile, Result<Void> result) {
-        run(() -> {
+        change(() -> {
             mApi.block(profile.id);
             return null;
         }, result, value -> {
@@ -1545,7 +1702,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
 
     /** TEAM5: a new invite link for the crew ("Bağlantı oluştur", "Yeni bağlantı"); the old one stops at once. */
     public void createInviteLink(final String teamId, Result<String> result) {
-        run(() -> {
+        change(() -> {
             String link = SocialCodes.normalizeInviteLink(Json.str(mApi.createInviteLink(teamId), "link"));
             if (link == null) throw SocialProblem.unavailable("link");
             return link;
@@ -1554,7 +1711,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
 
     /** TEAM5 "Bağlantıyı kapat". */
     public void deleteInviteLink(final String teamId, Result<Void> result) {
-        run(() -> {
+        change(() -> {
             mApi.deleteInviteLink(teamId);
             return null;
         }, result, value -> mState.setCrewLink(teamId, null));
@@ -1564,14 +1721,14 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     public void setCrewHidden(final String teamId, boolean hidden, Result<JsonObject> result) {
         final JsonObject body = new JsonObject();
         body.addProperty("hidden", hidden);
-        run(() -> mApi.patchTeam(teamId, body), result, this::applyTeamAnswer);
+        change(() -> mApi.patchTeam(teamId, body), result, this::applyTeamAnswer);
     }
 
     /** TEAM6 "Etiketten istek" (the leader's): whether friends of its wearers may ask from the tag's card. */
     public void setCrewBadgeRequests(final String teamId, boolean on, Result<JsonObject> result) {
         final JsonObject body = new JsonObject();
         body.addProperty("badgeRequests", on);
-        run(() -> mApi.patchTeam(teamId, body), result, this::applyTeamAnswer);
+        change(() -> mApi.patchTeam(teamId, body), result, this::applyTeamAnswer);
     }
 
     /**
@@ -1579,7 +1736,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
      * ({@code 202 {request}}), whatever the crew's join setting.
      */
     public void requestFromBadge(final String teamId, final String via, Result<JsonObject> result) {
-        run(() -> mApi.requestFromBadge(teamId, via), result, answer -> {
+        change(() -> mApi.requestFromBadge(teamId, via), result, answer -> {
             MyRequest mine = MyRequest.read(Json.obj(answer, "request"));
             if (mine != null) mState.addMyRequest(mine);
         });
@@ -1589,12 +1746,12 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     public void setJoinApproval(final String teamId, boolean approval, Result<JsonObject> result) {
         final JsonObject body = new JsonObject();
         body.addProperty("join", approval ? SocialModel.TeamSummary.JOIN_APPROVAL : SocialModel.TeamSummary.JOIN_OPEN);
-        run(() -> mApi.patchTeam(teamId, body), result, this::applyTeamAnswer);
+        change(() -> mApi.patchTeam(teamId, body), result, this::applyTeamAnswer);
     }
 
     public void acceptTeamInvite(final String teamId, Result<JsonObject> result) {
         final boolean multi = gate().multi;
-        run(() -> mApi.acceptTeamInvite(teamId, multi), result, answer -> {
+        change(() -> mApi.acceptTeamInvite(teamId, multi), result, answer -> {
             mState.removeTeamInvite(teamId);
             applyTeamAnswer(answer);
             noteOwnJoin(teamId);
@@ -1608,7 +1765,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     }
 
     public void declineTeamInvite(final String teamId, Result<Void> result) {
-        run(() -> {
+        change(() -> {
             mApi.declineTeamInvite(teamId);
             return null;
         }, result, value -> mState.removeTeamInvite(teamId));
@@ -1617,18 +1774,18 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     public void createTeam(JsonObject body, Result<JsonObject> result) {
         // A second crew (and every one with several crews) needs "multi"; an older service refuses the field.
         if (gate().multi) body.addProperty("multi", true);
-        run(() -> mApi.createTeam(body), result, this::applyTeamAnswer);
+        change(() -> mApi.createTeam(body), result, this::applyTeamAnswer);
     }
 
     public void leaveTeam(final String teamId, Result<Void> result) {
-        run(() -> {
+        change(() -> {
             mApi.leaveTeam(teamId);
             return null;
         }, result, value -> leftCrew(teamId));
     }
 
     public void disbandTeam(final String teamId, Result<Void> result) {
-        run(() -> {
+        change(() -> {
             mApi.disbandTeam(teamId);
             return null;
         }, result, value -> leftCrew(teamId));
@@ -1642,21 +1799,21 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     }
 
     public void inviteToTeam(final String teamId, final String friendId, Result<Void> result) {
-        run(() -> {
+        change(() -> {
             mApi.inviteToTeam(teamId, friendId);
             return null;
         }, result, value -> mState.addCrewInvited(teamId, friendId));
     }
 
     public void removeMember(final String teamId, final String userId, Result<Void> result) {
-        run(() -> {
+        change(() -> {
             mApi.removeMember(teamId, userId);
             return null;
         }, result, value -> refreshTeam());
     }
 
     public void handOver(final String teamId, final String to, Result<JsonObject> result) {
-        run(() -> mApi.handOver(teamId, to), result, this::applyTeamAnswer);
+        change(() -> mApi.handOver(teamId, to), result, this::applyTeamAnswer);
     }
 
     private void refreshTeam() {
@@ -1699,7 +1856,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         mState.setCrewOrder(order);
         mOrderSent = new ArrayList<>(order);
         changed();
-        run(() -> {
+        change(() -> {
             mApi.crewOrder(order);
             return null;
         }, new Result<Void>() {
@@ -1750,7 +1907,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     }
 
     private void patchCrewNotifications(final String teamId, final JsonObject body, Result<TeamNotifications> result) {
-        run(() -> TeamNotifications.read(mApi.crewNotifications(teamId, body)), result, value -> {
+        change(() -> TeamNotifications.read(mApi.crewNotifications(teamId, body)), result, value -> {
             mState.setCrewMute(teamId, value);
             syncPlanReminders();
         });
@@ -1771,7 +1928,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     }
 
     private void patchNotifications(final JsonObject body, final Result<TeamNotifications> result) {
-        run(() -> TeamNotifications.read(mApi.teamNotifications(body)), result, value -> {
+        change(() -> TeamNotifications.read(mApi.teamNotifications(body)), result, value -> {
             mState.setTeamNotifications(value);
             mPrefs.setCrewSettings(value);
             syncPush();

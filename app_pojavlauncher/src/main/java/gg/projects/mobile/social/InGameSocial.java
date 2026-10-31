@@ -119,7 +119,8 @@ public final class InGameSocial implements PresenceConnection.Listener, GameWher
     private void connect() {
         if (mStopped || mConnection != null) return;
         Log.i(TAG, "game socket opening");
-        mConnection = PresenceConnection.open(mApi, mToken, CAPS, this);
+        // The game reads no list, so it names no relations version (M048): its hello says none either.
+        mConnection = PresenceConnection.open(mApi, mToken, CAPS, null, this);
     }
 
     @MainThread
