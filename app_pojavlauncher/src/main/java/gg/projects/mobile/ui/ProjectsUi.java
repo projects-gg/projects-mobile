@@ -91,15 +91,26 @@ public final class ProjectsUi {
     }
 
     /**
-     * "az önce", "2 saat önce", "3 gün önce"; from a week on (or a clock ahead of the post) the day
-     * itself in the app's dates ("17 Ekim" / "17 October", another year's with its year), never the
-     * phone's US "Oct 17, 2026" nor a "0 dakika önce".
+     * "az önce", "5 dakika önce", "2 saat önce" within the day; earlier days by the chat's day rule ({@link NewsAge}):
+     * "Dün", "3 gün önce" (never Android's dated "Evvelsi gün"), from a week on (or a clock ahead of the post) the day
+     * itself in the app's dates ("17 Ekim" / "17 October", another year's with its year), never the phone's US
+     * "Oct 17, 2026" nor a "0 dakika önce".
      */
     public static String relative(Context context, long millis, long now) {
-        long ago = now - millis;
-        if (ago >= DateUtils.WEEK_IN_MILLIS || ago < -DateUtils.MINUTE_IN_MILLIS) return AppDates.day(context, millis, now);
-        if (ago < DateUtils.MINUTE_IN_MILLIS) return context.getString(R.string.projects_time_just_now);
-        return DateUtils.getRelativeTimeSpanString(millis, now, DateUtils.MINUTE_IN_MILLIS).toString();
+        NewsAge age = NewsAge.of(millis, now, java.util.TimeZone.getDefault());
+        switch (age.kind) {
+            case JUST_NOW:
+                return context.getString(R.string.projects_time_just_now);
+            case MINUTES:
+            case HOURS:
+                return DateUtils.getRelativeTimeSpanString(millis, now, DateUtils.MINUTE_IN_MILLIS).toString();
+            case YESTERDAY:
+                return context.getString(R.string.projects_chat_yesterday);
+            case DAYS_AGO:
+                return context.getString(R.string.projects_chat_days_ago, (int) age.count);
+            default:
+                return AppDates.day(context, millis, now);
+        }
     }
 
     /**

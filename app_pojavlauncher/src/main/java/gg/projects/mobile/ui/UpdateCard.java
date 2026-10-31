@@ -163,7 +163,11 @@ public final class UpdateCard implements AppUpdates.Listener {
         LayoutInflater inflater = LayoutInflater.from(context);
         for (int i = 0; i < lines.size() && i < NOTE_LINES; i++) {
             View row = inflater.inflate(R.layout.item_projects_patch_line, mNotes, false);
-            ((TextView) row.findViewById(R.id.projects_patch_line_text)).setText(lines.get(i));
+            TextView text = row.findViewById(R.id.projects_patch_line_text);
+            // A release note wraps whole (TASTE-2: never cut mid-word at big text); the channel bounds its length.
+            text.setMaxLines(Integer.MAX_VALUE);
+            text.setEllipsize(null);
+            text.setText(lines.get(i));
             mNotes.addView(row);
         }
         show(mNotes, !lines.isEmpty());
