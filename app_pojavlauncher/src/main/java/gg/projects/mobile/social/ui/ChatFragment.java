@@ -114,9 +114,11 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
     private static final String STATE_EDITING = "editing";
     private static final String STATE_REPLY = "reply";
     private static final String STATE_DRAFT = "draft";
+    private static final String STATE_KEPT_AT = "keptAt";
     /**
-     * TABLET-M: what a conversation beside "Mesajlar" was writing when the window turned too narrow for two panes (a
-     * rotation, a split): the conversation then opens on its own screen and takes it from here (process memory only).
+     * TABLET-M: what a conversation was writing when it moved between its place beside "Mesajlar" and its own screen (a
+     * rotation, a split, a resize): the conversation's next copy takes it from here within {@link ChatPanes#HANDOFF_MS}
+     * (process memory only).
      */
     private static final java.util.Map<String, Bundle> HANDOFF = new java.util.HashMap<>();
 
@@ -354,7 +356,7 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
         updateComposer();
         // TABLET-M: "Düzenle" or "Yanıtla" in progress before a rotation or a resize goes on (the field's own text comes
         // back after this, so what was typed stays; an edit must not turn into a new message).
-        Bundle handoff = savedInstanceState == null && getParentFragment() == null && mConv != null ? HANDOFF.remove(mConv) : null;
+        Bundle handoff = savedInstanceState == null ? takeHandoff(mConv) : null;
         if (handoff != null) {
             restoreComposer(handoff);
             CharSequence draft = handoff.getCharSequence(STATE_DRAFT);
@@ -372,11 +374,57 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
         super.onSaveInstanceState(outState);
         if (mEditing != null) outState.putLong(STATE_EDITING, mEditing.id);
         else if (mReplyTo != null) outState.putLong(STATE_REPLY, mReplyTo.id);
-        if (getParentFragment() instanceof ChatListFragment && mConv != null && mInput != null) {
-            Bundle handoff = new Bundle(outState);
-            handoff.putCharSequence(STATE_DRAFT, mInput.getText().toString());
-            HANDOFF.put(mConv, handoff);
+        // Beside the list, a narrower window sends the conversation to its own screen: what is written goes along.
+        if (getParentFragment() instanceof ChatListFragment) keepHandoff();
+    }
+
+    /** TABLET-M: what is being written (and an edit or reply in progress) for the conversation's next copy. */
+    private void keepHandoff() {
+        if (mConv == null || mInput == null) return;
+        Bundle handoff = new Bundle();
+        if (mEditing != null) handoff.putLong(STATE_EDITING, mEditing.id);
+        else if (mReplyTo != null) handoff.putLong(STATE_REPLY, mReplyTo.id);
+        handoff.putCharSequence(STATE_DRAFT, mInput.getText().toString());
+        handoff.putLong(STATE_KEPT_AT, android.os.SystemClock.elapsedRealtime());
+        HANDOFF.put(mConv, handoff);
+    }
+
+    @Nullable
+    private static Bundle takeHandoff(@Nullable String conv) {
+        if (conv == null) return null;
+        Bundle handoff = HANDOFF.remove(conv);
+        if (handoff == null || !ChatPanes.fresh(handoff.getLong(STATE_KEPT_AT), android.os.SystemClock.elapsedRealtime())) return null;
+        return handoff;
+    }
+
+    /**
+     * TABLET-M (TASTE-2 r1): a conversation on its own screen in a window with room for two panes (turned back to
+     * landscape, a split made wider) goes back beside "Mesajlar", selected there, with what is being written. Returns
+     * true when it left.
+     */
+    private boolean toPanes() {
+        if (!isAdded() || getParentFragment() != null) return false;
+        androidx.fragment.app.FragmentManager fm = getParentFragmentManager();
+        if (fm.isStateSaved()) return false;
+        int entries = fm.getBackStackEntryCount();
+        // Only a conversation that came on its own screen (the top entry) leaves; nothing else is popped.
+        if (entries < 1 || !ChatFragment.class.getName().equals(fm.getBackStackEntryAt(entries - 1).getName())) return false;
+        String below = entries >= 2 ? fm.getBackStackEntryAt(entries - 2).getName() : null;
+        ChatPanes.Move move = ChatPanes.onWindow(getResources().getBoolean(R.bool.projects_chat_two_pane), true,
+                ChatListFragment.class.getName().equals(below));
+        if (move == ChatPanes.Move.STAY || mConv == null) return false;
+        keepHandoff();
+        FragmentActivity activity = requireActivity();
+        String conv = mConv;
+        fm.popBackStack();
+        if (move == ChatPanes.Move.BACK_TO_LIST) {
+            ChatListFragment.openOnResume(conv);
+        } else {
+            Bundle args = new Bundle();
+            args.putString(ChatListFragment.ARG_OPEN, conv);
+            net.kdt.pojavlaunch.Tools.swapFragment(activity, ChatListFragment.class, ChatListFragment.TAG, args);
         }
+        return true;
     }
 
     private void restoreComposer(Bundle state) {
@@ -452,6 +500,8 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
             leave();
             return;
         }
+        // TABLET-M: a wide window shows this conversation beside "Mesajlar" (before it is read as seen here).
+        if (toPanes()) return;
         ChatBook book = service.chat().book();
         if (mUnreadAt < 0 && book != null) mUnreadAt = book.firstUnread(mConv);
         service.addListener(this);

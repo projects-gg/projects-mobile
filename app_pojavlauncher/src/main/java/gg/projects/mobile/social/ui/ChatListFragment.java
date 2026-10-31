@@ -78,6 +78,16 @@ public class ChatListFragment extends Fragment implements SocialService.Listener
     /** TABLET-M: {@link #ARG_OPEN}, opened once the screen is resumed. */
     @Nullable
     private String mInitial;
+    /**
+     * TABLET-M (TASTE-2 r1): a conversation that left its own screen because the window has room for two panes again:
+     * the list under it opens it beside itself when it is resumed.
+     */
+    @Nullable
+    private static String sOpenOnResume;
+
+    static void openOnResume(String conv) {
+        sOpenOnResume = conv;
+    }
 
     public ChatListFragment() {
         super(R.layout.fragment_projects_chat_list);
@@ -202,6 +212,10 @@ public class ChatListFragment extends Fragment implements SocialService.Listener
         } else if (mInitial != null) {
             String conv = mInitial;
             mInitial = null;
+            openConversation(conv);
+        } else if (sOpenOnResume != null) {
+            String conv = sOpenOnResume;
+            sOpenOnResume = null;
             openConversation(conv);
         }
     }
