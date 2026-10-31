@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Projects fork (M14): the main menu in landscape. As in portrait, with the play bar in one row:
-     the profile row, its edit button and OYNA at a fixed width. -->
+     the profile row, its edit button and OYNA at a fixed width. TABLET-M: only a landscape window narrower than
+     600 dp takes this one (a phone's half of a split screen); wider ones take layout-w600dp. It has every row of
+     the portrait layout: 7/24 Bulut's row was missing here and its CloudHomeRow crashed the home in landscape. -->
 <androidx.constraintlayout.widget.ConstraintLayout
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -46,6 +48,16 @@
 				android:layout_marginEnd="12dp"
 				android:layout_marginBottom="6dp" />
 
+			<!-- AFKPLUS-M: 7/24 Bulut, for a player with cloud accounts (others find it in the menu below) -->
+			<include
+				layout="@layout/view_projects_cloud_row"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:layout_marginStart="12dp"
+				android:layout_marginTop="6dp"
+				android:layout_marginEnd="12dp"
+				android:layout_marginBottom="6dp" />
+
 			<LinearLayout
 				android:id="@+id/projects_menu_group"
 				android:layout_width="match_parent"
@@ -58,7 +70,21 @@
 				android:orientation="vertical"
 				tools:targetApi="31">
 
-				<!-- MOB-POLISH: the wiki and Discord moved to the Projects card's community row (HOME1). -->
+				<!-- MOB-POLISH: the wiki and Discord moved to the Projects card's community row (HOME1). The
+				     7/24 Bulut entry (players without cloud accounts) leads the tools, its divider after it. -->
+				<com.kdt.mcgui.LauncherMenuButton
+					android:id="@+id/cloud_button"
+					style="@style/LauncherMenuButton.Universal"
+					android:layout_width="match_parent"
+					android:drawableStart="@drawable/projects_menu_cloud"
+					android:text="@string/projects_cloud_title"
+					android:visibility="gone" />
+
+				<View
+					android:id="@+id/cloud_divider"
+					style="@style/ProjectsMenuDivider"
+					android:visibility="gone" />
+
 				<com.kdt.mcgui.LauncherMenuButton
 					android:id="@+id/custom_control_button"
 					style="@style/LauncherMenuButton.Universal"
