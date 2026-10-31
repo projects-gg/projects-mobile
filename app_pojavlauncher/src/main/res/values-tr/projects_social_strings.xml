@@ -524,6 +524,7 @@
         <item quantity="other">%d katılma isteği</item>
     </plurals>
     <string name="projects_time_just_now">az önce</string>
+    <string name="projects_time_yesterday">dün</string>
     <plurals name="projects_time_minutes_ago">
         <item quantity="one">%d dk önce</item>
         <item quantity="other">%d dk önce</item>

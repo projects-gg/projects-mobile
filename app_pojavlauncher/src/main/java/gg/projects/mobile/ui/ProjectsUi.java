@@ -105,7 +105,8 @@ public final class ProjectsUi {
             case HOURS:
                 return DateUtils.getRelativeTimeSpanString(millis, now, DateUtils.MINUTE_IN_MILLIS).toString();
             case YESTERDAY:
-                return context.getString(R.string.projects_chat_yesterday);
+                // Lowercase in this line, as its neighbours ('2 gün önce'); the chat's capital is its day line's.
+                return context.getString(R.string.projects_time_yesterday);
             case DAYS_AGO:
                 return context.getString(R.string.projects_chat_days_ago, (int) age.count);
             default:
