@@ -80,9 +80,12 @@ jobs:
 
       - name: Build Release .apk
         run: |
-          # Build the launcher
+          # Build the launcher. The release keystore (PROJECTS_KEYSTORE_*) never reaches this public
+          # repository, so here the release APK is unsigned and AGP names it *-release-unsigned.apk.
           gradle :app_pojavlauncher:assembleRelease
-          mv app_pojavlauncher/build/outputs/apk/release/app_pojavlauncher-release.apk out/app-release.apk
+          apk=app_pojavlauncher/build/outputs/apk/release/app_pojavlauncher-release.apk
+          [ -f "$apk" ] || apk=app_pojavlauncher/build/outputs/apk/release/app_pojavlauncher-release-unsigned.apk
+          mv "$apk" out/app-release.apk
 
       - name: Gen md5sums
         run: |
