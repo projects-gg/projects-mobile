@@ -310,6 +310,11 @@ public final class CloudFragment extends CloudScreen {
             content.addView(empty);
             return;
         }
+        if (load == CloudService.Load.DISCORD_REQUIRED) {
+            // SOC-ID: an account opened with Microsoft (or without its Discord now): one short line, nothing else.
+            content.addView(CloudUi.empty(c, gg.projects.mobile.ui.PixelSprites.Sprite.CLOUD, getString(R.string.projects_discord_only)));
+            return;
+        }
         if (accounts.isEmpty() && (load == CloudService.Load.LOADING || load == CloudService.Load.IDLE)) {
             content.addView(CloudUi.loading(c));
             return;

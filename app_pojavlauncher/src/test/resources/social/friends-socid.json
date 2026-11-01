@@ -1,0 +1,77 @@
+{
+ "friends": [
+  {
+   "id": "100000000000000022",
+   "username": "kestrel_77",
+   "displayName": "Kestrel_77",
+   "avatar": "discord",
+   "avatarHash": "0123456789abcdef0123456789abcdef",
+   "since": "2026-10-25",
+   "lastSeen": "today"
+  },
+  {
+   "id": "9000000000000000123",
+   "username": "NightOwl42",
+   "displayName": null,
+   "avatar": "preset:wolf",
+   "avatarHash": null,
+   "discordId": null,
+   "since": "2026-11-01",
+   "lastSeen": "today"
+  },
+  {
+   "id": "9100000000000000456",
+   "username": "pixelfox",
+   "displayName": "PixelFox",
+   "avatar": "discord",
+   "avatarHash": "fedcba9876543210fedcba9876543210",
+   "discordId": "100000000000000099",
+   "since": "2026-11-01",
+   "lastSeen": "today"
+  },
+  {
+   "id": "100000000000000023",
+   "username": "Ember_9",
+   "displayName": null,
+   "avatar": "discord",
+   "avatarHash": "00112233445566778899aabbccddeeff",
+   "discordId": null,
+   "since": "2026-10-28",
+   "lastSeen": "week"
+  }
+ ],
+ "incoming": [
+  {
+   "id": "9200000000000000789",
+   "username": "Oyuncu1234",
+   "displayName": "Oyuncu1234",
+   "avatar": "preset:knight",
+   "avatarHash": null,
+   "discordId": null,
+   "sentAt": 1793400000
+  }
+ ],
+ "outgoing": [],
+ "blocked": [
+  {
+   "id": "9300000000000000111",
+   "username": "Grief_Lord",
+   "displayName": null,
+   "avatar": "preset:lantern",
+   "avatarHash": null,
+   "discordId": "not-a-discord-id"
+  }
+ ],
+ "limits": {
+  "friends": 200,
+  "outgoingRequests": 50,
+  "teamMembers": 30,
+  "groups": 20
+ },
+ "features": [
+  "push",
+  "chat"
+ ],
+ "team": null,
+ "teamInvites": []
+}

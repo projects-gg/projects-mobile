@@ -38,7 +38,8 @@ public final class AccountNotes {
         content.setOrientation(LinearLayout.VERTICAL);
         content.setPadding(Math.round(22 * dp), Math.round(4 * dp), Math.round(22 * dp), 0);
         TextView lead = new TextView(activity);
-        lead.setText(activity.getString(R.string.projects_limited_body, SocialUi.day(activity, limited.until)));
+        lead.setText(activity.getString(limited.accountAge() ? R.string.projects_limited_body_account : R.string.projects_limited_body,
+                SocialUi.day(activity, limited.until)));
         lead.setTextSize(15);
         lead.setTextColor(ContextCompat.getColor(activity, R.color.projects_bone_100));
         content.addView(lead);
@@ -110,7 +111,18 @@ public final class AccountNotes {
         final SocialService service = SocialService.get(activity);
         Me me = service.state().me();
         if (me == null || me.notices.isEmpty() || !service.gate().reports) return false;
-        List<ModNotice> notices = me.notices;
+        // SOC-ID: kinds this app does not know stay hidden (and unseen, for a launcher that knows them); a note about
+        // a link or a removal made on this phone is no news here: seen without a word.
+        List<ModNotice> notices = new java.util.ArrayList<>();
+        List<ModNotice> identities = new java.util.ArrayList<>();
+        Set<String> own = new HashSet<>();
+        for (ModNotice notice : me.notices) {
+            if (notice.moderation()) notices.add(notice);
+            else if (notice.identity() && service.ownIdentityNote(notice)) own.add(notice.id);
+            else if (notice.identity()) identities.add(notice);
+        }
+        if (!own.isEmpty()) service.noticesSeen(own);
+        if (notices.isEmpty()) return !identities.isEmpty() && showIdentityNotes(activity, service, identities);
         final Set<String> ids = new HashSet<>();
         StringBuilder text = new StringBuilder();
         boolean warning = false;
@@ -137,6 +149,46 @@ public final class AccountNotes {
                 .setMessage(text.toString())
                 .setPositiveButton(R.string.projects_mod_ok, null)
                 .setNeutralButton(R.string.projects_mod_rules, (d, w) -> SocialUi.openRules(activity))
+                .create();
+        dialog.setOnDismissListener(d -> {
+            sShowing = false;
+            service.noticesSeen(ids);
+        });
+        dialog.show();
+        return true;
+    }
+
+    /**
+     * SOC-ID: "Hesabına Microsoft bağlandı." and "Hesabından Discord bağlantısı kaldırıldı.", made on another device,
+     * once, with "Bağlı hesapları aç" (where a link the player did not make goes) and "Anladım"; marked seen when it
+     * closes, as the moderators' notes.
+     */
+    private static boolean showIdentityNotes(final FragmentActivity activity, final SocialService service, List<ModNotice> notes) {
+        final Set<String> ids = new HashSet<>();
+        StringBuilder text = new StringBuilder();
+        boolean linked = false;
+        for (ModNotice notice : notes) {
+            ids.add(notice.id);
+            boolean link = ModNotice.IDENTITY_LINKED.equals(notice.kind);
+            linked |= link;
+            String name = SocialService.providerName(notice.provider);
+            String line = activity.getString(link ? R.string.projects_identity_note_linked : R.string.projects_identity_note_removed, name);
+            // The same note twice says it once.
+            if (text.indexOf(line) >= 0) continue;
+            if (text.length() > 0) text.append('\n');
+            text.append(line);
+        }
+        if (linked) text.append('\n').append(activity.getString(R.string.projects_identity_note_not_you));
+        sShowing = true;
+        AlertDialog dialog = new AlertDialog.Builder(activity)
+                .setTitle(R.string.projects_identity_title)
+                .setMessage(text.toString())
+                .setPositiveButton(R.string.projects_mod_ok, null)
+                .setNeutralButton(R.string.projects_identity_open, (d, w) -> {
+                    if (!activity.isFinishing() && !activity.getSupportFragmentManager().isStateSaved()) {
+                        net.kdt.pojavlaunch.Tools.swapFragment(activity, SocialSettingsFragment.class, SocialSettingsFragment.TAG, null);
+                    }
+                })
                 .create();
         dialog.setOnDismissListener(d -> {
             sShowing = false;

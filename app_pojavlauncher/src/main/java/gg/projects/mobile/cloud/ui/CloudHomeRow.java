@@ -64,7 +64,8 @@ public final class CloudHomeRow implements CloudService.Listener {
         Context c = mRow.getContext();
         CloudService service = CloudService.get(c);
         boolean on = service.available();
-        CloudPrefs.Summary s = on ? service.summary() : null;
+        // SOC-ID: an account without its own Discord has no 7/24 Bulut list now (its screen says why).
+        CloudPrefs.Summary s = on && !service.discordRequired() ? service.summary() : null;
         boolean row = s != null && s.count > 0;
         mRow.setVisibility(row ? View.VISIBLE : View.GONE);
         mMenuButton.setVisibility(on && !row ? View.VISIBLE : View.GONE);

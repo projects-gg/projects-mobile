@@ -630,6 +630,8 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
         } else {
             final Profile other = state.profile(ChatConv.other(mConv, state.myId()));
             mHeader.setTitle(other == null ? getString(R.string.projects_chat_title) : other.name());
+            // SOC-ID: "Discord'dan mesajlaş" only with a friend whose Discord is linked.
+            if (mDiscord != null) mDiscord.setVisibility(other != null && other.hasDiscord() ? View.VISIBLE : View.GONE);
             mHeader.setCaption(other == null || !state.isFriend(other.id) ? null
                     : SocialUi.presenceText(context, state.presence(other.id)));
             if (mHeaderTag != null) {
@@ -857,7 +859,7 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
     /** SPAM1's new account: "Discord hesabın yeni olduğu için bağlantı gönderemezsin. 3 gün sonra açılır." */
     private String limitedLinks(SocialModel.Limited limited) {
         int days = SocialModel.Limited.daysLeft(limited.until, SocialService.nowSeconds());
-        return getString(R.string.projects_links_limited) + " "
+        return getString(SocialUi.limitedRes(requireContext(), R.string.projects_links_limited, R.string.projects_links_limited_account)) + " "
                 + getResources().getQuantityString(R.plurals.projects_links_limited_opens, Math.max(1, days), Math.max(1, days));
     }
 
@@ -948,7 +950,8 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
             case WORDS: why = getString(R.string.projects_chat_words); break;
             case LIMITED_LINKS: {
                 SocialModel.Limited limited = service.chat().linksLimited();
-                why = limited == null ? getString(R.string.projects_links_limited) : limitedLinks(limited);
+                why = limited == null ? getString(SocialUi.limitedRes(requireContext(), R.string.projects_links_limited,
+                        R.string.projects_links_limited_account)) : limitedLinks(limited);
                 break;
             }
             case EMPTY: return;
@@ -2257,13 +2260,15 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
                 SocialModel.Me me = SocialService.get(requireContext()).state().me();
                 if (me != null && me.limited != null && me.limited.active(SocialService.nowSeconds())
                         && me.limited.has(SocialModel.Limited.CHAT_MESSAGES)) {
-                    return getString(R.string.projects_limited_chat_today, me.limited.perDay(SocialModel.Limited.CHAT_MESSAGES));
+                    return getString(me.limited.accountAge() ? R.string.projects_limited_chat_today_account : R.string.projects_limited_chat_today,
+                            me.limited.perDay(SocialModel.Limited.CHAT_MESSAGES));
                 }
                 return getString(R.string.projects_chat_daily);
             }
             case STICKERS: return getString(R.string.projects_chat2_failure_stickers);
             case LINKS: return getString(R.string.projects_chat2_failure_links);
-            case LIMITED_LINKS: return getString(R.string.projects_links_limited);
+            case LIMITED_LINKS: return getString(SocialUi.limitedRes(requireContext(), R.string.projects_links_limited,
+                    R.string.projects_links_limited_account));
             case FEATURE_OFF: return getString(R.string.projects_chat2_feature_off);
             case MUTED: return getString(R.string.projects_chat_failed);
             case OFF: return getString(R.string.projects_chat_off);

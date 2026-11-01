@@ -1,0 +1,16 @@
+{
+ "identity_not_linked": {"status": 403, "body": {"error": {"code": "identity_not_linked", "message": "This Microsoft account is not linked to an account"}}},
+ "provider_off": {"status": 403, "body": {"error": {"code": "provider_off", "message": "Signing in with microsoft is off"}}},
+ "identity_exists": {"status": 409, "body": {"error": {"code": "identity_exists", "message": "A microsoft account is linked already"}}},
+ "identity_not_found": {"status": 404, "body": {"error": {"code": "identity_not_found", "message": "No microsoft account is linked"}}},
+ "last_identity": {"status": 409, "body": {"error": {"code": "last_identity", "message": "The last way in cannot be removed"}}},
+ "identity_taken": {"status": 409, "body": {"error": {"code": "identity_taken", "message": "That account belongs to another account"}}},
+ "proof_failed": {"status": 403, "body": {"error": {"code": "proof_failed", "message": "Sign in with one of the account's ways in"}}},
+ "identity_unavailable": {"status": 403, "body": {"error": {"code": "identity_unavailable", "message": "That account cannot be linked now"}}},
+ "auth_pending_not_found": {"status": 404, "body": {"error": {"code": "auth_pending_not_found", "message": "No such sign-in"}}},
+ "invalid_name": {"status": 400, "body": {"error": {"code": "invalid_name", "message": "A name is 3-16 Latin or Turkish letters, digits, spaces and _"}}},
+ "name_rejected": {"status": 422, "body": {"error": {"code": "name_rejected", "message": "Choose another name"}}},
+ "name_changes": {"status": 429, "body": {"error": {"code": "rate_limited", "message": "Too many name changes today", "retryAfter": 3600, "item": "name_changes"}}},
+ "identity_changes": {"status": 429, "body": {"error": {"code": "rate_limited", "message": "Too many changes today", "retryAfter": 7200, "item": "identity_changes"}}},
+ "discord_required": {"status": 409, "body": {"error": {"code": "discord_required", "message": "This needs the account's own Discord"}}}
+}

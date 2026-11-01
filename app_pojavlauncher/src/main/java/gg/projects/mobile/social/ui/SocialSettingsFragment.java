@@ -2,6 +2,7 @@ package gg.projects.mobile.social.ui;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Build;
@@ -29,13 +30,17 @@ import com.google.gson.JsonObject;
 import net.kdt.pojavlaunch.R;
 import net.kdt.pojavlaunch.Tools;
 
+import gg.projects.mobile.social.IdentityDays;
 import gg.projects.mobile.social.PushMessage;
+import gg.projects.mobile.social.SignInFlow;
 import gg.projects.mobile.social.SocialGate;
+import gg.projects.mobile.social.SocialModel.Identity;
 import gg.projects.mobile.social.SocialModel.Me;
 import gg.projects.mobile.social.SocialModel.Profile;
 import gg.projects.mobile.social.SocialNotifications;
 import gg.projects.mobile.social.SocialProblem;
 import gg.projects.mobile.social.SocialService;
+import gg.projects.mobile.ui.AppDates;
 import gg.projects.mobile.ui.ChamferDrawable;
 import gg.projects.mobile.ui.Haptics;
 import gg.projects.mobile.ui.Press;
@@ -43,8 +48,9 @@ import gg.projects.mobile.ui.Press;
 /**
  * "Arkadaş ayarları" (M19): the desktop's privacy switches (the account's, the same on every
  * device), which notifications this phone gets ("Davetler", "Ekip çağrıları", "Arkadaşlık istekleri";
- * they also decide what the service sends it), the blocked players with "Engeli kaldır", and the
- * account: "Çıkış yap" and "Verilerimi sil" (the desktop's question and words).
+ * they also decide what the service sends it), the blocked players with "Engeli kaldır", SOC-ID's
+ * "Bağlı hesaplar" (the account's ways in: link one more, remove one), and the account: "Çıkış yap" and
+ * "Verilerimi sil" (the desktop's question and words).
  */
 public class SocialSettingsFragment extends Fragment implements SocialService.Listener {
     public static final String TAG = "ProjectsSocialSettingsFragment";
@@ -72,6 +78,8 @@ public class SocialSettingsFragment extends Fragment implements SocialService.Li
             return;
         }
         service.addListener(this);
+        // SOC-ID: whether Microsoft can be linked now ("Bağlı hesaplar").
+        service.readSignInOptions(false);
         mShown = "";
         render();
     }
@@ -107,6 +115,13 @@ public class SocialSettingsFragment extends Fragment implements SocialService.Li
                 .append(gate.chat).append(service.prefs().wantsMessages()).append(gate.plans)
                 .append(service.prefs().wantsPlanReminders()).append('|');
         for (Profile p : service.state().blocked()) key.append(p.id).append(',');
+        // SOC-ID: the linked accounts, a link or a removal on its way, and whether Microsoft is offered.
+        if (me != null) {
+            key.append('|').append(me.identitiesListed).append(me.signInVia).append(me.discordNumber());
+            for (Identity i : me.identities) key.append(i.provider).append(i.linkedOn).append(i.isNew).append(i.hint).append(',');
+        }
+        key.append('|').append(service.identityStatus()).append(service.identityProvider()).append(service.identityPurpose())
+                .append(service.signInOptions().encode());
         if (key.toString().equals(mShown)) return;
         mShown = key.toString();
         mList.removeAllViews();
@@ -173,6 +188,9 @@ public class SocialSettingsFragment extends Fragment implements SocialService.Li
             mList.addView(text(getString(R.string.projects_social_blocked_empty), R.color.projects_ash_400));
         }
         for (final Profile blocked : service.state().blocked()) mList.addView(blockedRow(blocked));
+
+        // SOC-ID: "Bağlı hesaplar", while the service lists them (it links and removes then).
+        if (me != null && me.identitiesListed) identities(context, service, me);
 
         section(R.string.projects_social_account);
         mList.addView(CrewViews.actionRow(context, R.drawable.projects_ic_sign_out, getString(R.string.projects_social_sign_out),
@@ -340,6 +358,231 @@ public class SocialSettingsFragment extends Fragment implements SocialService.Li
         });
         row.addView(unblock);
         return row;
+    }
+
+    // ---- SOC-ID: "Bağlı hesaplar" ----
+
+    /**
+     * The account's ways in: each with its mark, its name, "Bu cihaz" on the one this phone signed in with, "Yeni" for 7
+     * days after a link, the Discord username or the day it was linked, and "Kaldır" while another one stays; then a
+     * link or a removal on its way (the browser step), or "… hesabını bağla" for each way in the service offers that is
+     * not linked. One link or removal at a time.
+     */
+    private void identities(Context context, final SocialService service, Me me) {
+        section(R.string.projects_identity_title);
+        SocialService.IdentityStatus status = service.identityStatus();
+        boolean busy = status != SocialService.IdentityStatus.IDLE;
+        boolean removable = me.identities.size() > 1;
+        for (Identity identity : me.identities) mList.addView(identityRow(context, service, me, identity, removable, busy));
+        if (busy) {
+            mList.addView(identityWaiting(context, service, status));
+            return;
+        }
+        for (String provider : new String[]{SignInFlow.DISCORD, SignInFlow.MICROSOFT}) {
+            if (me.identity(provider) != null || !service.signInOptions().offers(provider)) continue;
+            final String way = provider;
+            TextView link = CrewViews.actionRow(context, R.drawable.projects_ic_user_plus,
+                    getString(SignInFlow.MICROSOFT.equals(provider) ? R.string.projects_identity_link_microsoft
+                            : R.string.projects_identity_link_discord), R.color.projects_bone_100,
+                    v -> SocialService.get(requireContext()).linkIdentity(requireActivity(), way));
+            // The way in's own mark, untinted, as wide as the other rows' icons.
+            Drawable mark = providerMark(context, provider, 22);
+            if (mark != null) link.setCompoundDrawablesRelative(mark, null, null, null);
+            mList.addView(link);
+        }
+    }
+
+    /** A way in's own mark: Microsoft's four squares, Discord's symbol in Blurple; {@code widthDp} wide. */
+    @Nullable
+    private static Drawable providerMark(Context context, String provider, int widthDp) {
+        if (SignInFlow.MICROSOFT.equals(provider)) return SocialFragment.microsoftMark(context, Math.round(widthDp * 0.82f));
+        return SocialChips.discordMark(context, widthDp / SocialChips.DISCORD_RATIO);
+    }
+
+    private View identityRow(Context context, final SocialService service, final Me me, final Identity identity,
+                             boolean removable, boolean busy) {
+        LinearLayout row = new LinearLayout(context);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setMinimumHeight(dp(60));
+        row.setPadding(dp(8), dp(6), dp(4), dp(6));
+        ImageView mark = new ImageView(context);
+        mark.setImageDrawable(providerMark(context, identity.provider, 22));
+        mark.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        mark.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        row.addView(mark, new LinearLayout.LayoutParams(dp(24), dp(24)));
+
+        LinearLayout words = new LinearLayout(context);
+        words.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout title = new LinearLayout(context);
+        title.setOrientation(LinearLayout.HORIZONTAL);
+        title.setGravity(Gravity.CENTER_VERTICAL);
+        TextView name = new TextView(context);
+        name.setText(SocialService.providerName(identity.provider));
+        name.setTextSize(15);
+        name.setTextColor(ContextCompat.getColor(context, R.color.projects_bone_100));
+        try {
+            name.setTypeface(ResourcesCompat.getFont(context, R.font.figtree_semibold));
+        } catch (RuntimeException ignored) {
+            // The theme's font.
+        }
+        title.addView(name);
+        // "Bu cihaz": the way this phone's session signed in with; "Yeni": linked in the last 7 days (a link the player
+        // did not make shows on every device).
+        if (identity.provider.equals(me.signInVia)) title.addView(chip(context, getString(R.string.projects_identity_this_device)));
+        if (identity.isNew) title.addView(chip(context, getString(R.string.projects_identity_new)));
+        words.addView(title);
+        String second = identity.hint != null && SignInFlow.DISCORD.equals(identity.provider) ? identity.hint : null;
+        if (second == null) {
+            String day = IdentityDays.linkedDay(AppDates.turkish(context), identity.linkedOn, System.currentTimeMillis());
+            second = day == null ? null : getString(R.string.projects_identity_linked_on, day);
+        }
+        if (second != null) {
+            TextView line = new TextView(context);
+            line.setText(second);
+            line.setTextSize(13);
+            line.setTextColor(ContextCompat.getColor(context, R.color.projects_ash_400));
+            words.addView(line);
+        }
+        LinearLayout.LayoutParams wordsLp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        wordsLp.setMarginStart(dp(14));
+        row.addView(words, wordsLp);
+
+        if (removable) {
+            final Button remove = new Button(context, null, android.R.attr.borderlessButtonStyle);
+            remove.setText(R.string.projects_identity_remove);
+            remove.setAllCaps(false);
+            remove.setTextColor(ContextCompat.getColor(context, R.color.projects_bone_100));
+            remove.setBackground(ChamferDrawable.outlined(context));
+            remove.setContentDescription(getString(R.string.projects_identity_remove_title, SocialService.providerName(identity.provider)));
+            remove.setEnabled(!busy);
+            remove.setAlpha(busy ? 0.5f : 1f);
+            Press.attach(remove, Press.Style.BUTTON);
+            remove.setOnClickListener(v -> askRemove(me, identity.provider));
+            row.addView(remove);
+        }
+        return row;
+    }
+
+    /** A quiet label beside the way in's name ("Bu cihaz", "Yeni"): words in ash on the quiet chip, never gold. */
+    private TextView chip(Context context, String text) {
+        TextView chip = new TextView(context);
+        chip.setText(text);
+        chip.setTextSize(12);
+        chip.setTextColor(ContextCompat.getColor(context, R.color.projects_ash_300));
+        chip.setBackground(SocialChips.quiet(context, 4));
+        chip.setPadding(dp(7), dp(1), dp(7), dp(2));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.setMarginStart(dp(8));
+        chip.setLayoutParams(lp);
+        return chip;
+    }
+
+    /** "Kaldır": "Microsoft bağlantısı kaldırılsın mı?" (Discord's says what goes with it), then the removal. */
+    private void askRemove(Me me, final String provider) {
+        final FragmentActivity activity = requireActivity();
+        String message = null;
+        if (SignInFlow.DISCORD.equals(provider)) {
+            // The account's 7/24 Bulut and Projects skin need its own Discord; the forum's crew tag and the Discord photo
+            // need a Discord.
+            message = getString(me.discordNumber() ? R.string.projects_identity_remove_discord_number
+                    : R.string.projects_identity_remove_discord);
+        }
+        SocialUi.confirmDanger(activity, getString(R.string.projects_identity_remove_title, SocialService.providerName(provider)),
+                message, getString(R.string.projects_identity_remove),
+                () -> SocialService.get(activity).unlinkIdentity(activity, provider));
+    }
+
+    /**
+     * A link or a removal on its way: what to do in the browser (a link signs in to the way in it adds; a removal
+     * proves a way in that stays: with two ways in, the other one), "Tarayıcıyı yeniden aç" and "Vazgeç"; while the
+     * service answers, only that it is on its way.
+     */
+    private View identityWaiting(Context context, final SocialService service, SocialService.IdentityStatus status) {
+        LinearLayout panel = new LinearLayout(context);
+        panel.setOrientation(LinearLayout.VERTICAL);
+        panel.setGravity(Gravity.CENTER_HORIZONTAL);
+        panel.setBackgroundResource(R.drawable.projects_social_section_background);
+        panel.setPadding(dp(16), dp(14), dp(16), dp(10));
+        android.widget.ProgressBar progress = new android.widget.ProgressBar(context);
+        progress.setIndeterminateTintList(ContextCompat.getColorStateList(context, R.color.projects_gold_400));
+        panel.addView(progress, new LinearLayout.LayoutParams(dp(26), dp(26)));
+        boolean link = service.identityPurpose() == SignInFlow.Purpose.LINK;
+        String provider = service.identityProvider();
+        String browser = link ? provider : SignInFlow.DISCORD.equals(provider) ? SignInFlow.MICROSOFT : SignInFlow.DISCORD;
+        boolean microsoft = SignInFlow.MICROSOFT.equals(browser);
+        boolean inBrowser = status == SocialService.IdentityStatus.WAITING;
+        TextView title = new TextView(context);
+        title.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
+        title.setGravity(Gravity.CENTER);
+        title.setTextSize(15);
+        title.setTextColor(ContextCompat.getColor(context, R.color.projects_bone_100));
+        try {
+            title.setTypeface(ResourcesCompat.getFont(context, R.font.figtree_semibold));
+        } catch (RuntimeException ignored) {
+            // The theme's font.
+        }
+        title.setText(inBrowser ? (microsoft ? R.string.projects_sign_in_waiting_microsoft : R.string.projects_social_waiting)
+                : link ? R.string.projects_identity_linking : R.string.projects_identity_removing);
+        LinearLayout.LayoutParams titleLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        titleLp.topMargin = dp(8);
+        panel.addView(title, titleLp);
+        if (inBrowser) {
+            TextView note = new TextView(context);
+            note.setGravity(Gravity.CENTER);
+            note.setTextSize(13);
+            note.setTextColor(ContextCompat.getColor(context, R.color.projects_ash_400));
+            note.setText(microsoft ? R.string.projects_sign_in_waiting_microsoft_note : R.string.projects_social_waiting_note);
+            panel.addView(note);
+            if (microsoft) {
+                TextView safety = new TextView(context);
+                safety.setGravity(Gravity.CENTER);
+                safety.setTextSize(13);
+                safety.setTextColor(ContextCompat.getColor(context, R.color.projects_ash_300));
+                safety.setText(R.string.projects_sign_in_microsoft_safety);
+                LinearLayout.LayoutParams safetyLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT);
+                safetyLp.topMargin = dp(6);
+                panel.addView(safety, safetyLp);
+            }
+        }
+        if (status != SocialService.IdentityStatus.CLAIMING) {
+            LinearLayout buttons = new LinearLayout(context);
+            buttons.setOrientation(LinearLayout.HORIZONTAL);
+            if (inBrowser) {
+                buttons.addView(panelButton(context, R.string.projects_social_reopen, R.color.projects_bone_100,
+                        v -> SocialService.get(requireContext()).reopenSignInPage(requireActivity())));
+            }
+            buttons.addView(panelButton(context, R.string.projects_social_cancel, R.color.projects_ash_300,
+                    v -> SocialService.get(requireContext()).cancelIdentity()));
+            LinearLayout.LayoutParams buttonsLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT);
+            buttonsLp.topMargin = dp(6);
+            panel.addView(buttons, buttonsLp);
+        }
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.topMargin = dp(6);
+        lp.bottomMargin = dp(4);
+        panel.setLayoutParams(lp);
+        return panel;
+    }
+
+    private Button panelButton(Context context, int text, int color, View.OnClickListener listener) {
+        Button button = new Button(context, null, android.R.attr.borderlessButtonStyle);
+        button.setText(text);
+        button.setAllCaps(false);
+        button.setTextSize(14);
+        button.setTextColor(ContextCompat.getColor(context, color));
+        try {
+            button.setTypeface(ResourcesCompat.getFont(context, R.font.figtree_semibold));
+        } catch (RuntimeException ignored) {
+            // The theme's font.
+        }
+        button.setMinHeight(dp(44));
+        button.setMinimumHeight(dp(44));
+        Press.attach(button, Press.Style.BUTTON);
+        button.setOnClickListener(listener);
+        return button;
     }
 
     private void deleteData() {

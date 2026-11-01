@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SOC-ID: Microsoft's four-square mark, as its "Sign in with Microsoft" buttons carry it (the launcher's
+     features/settings/microsoft-mark.tsx): four squares in Microsoft's colours with a one-unit gap. Never tinted. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="18dp"
+    android:height="18dp"
+    android:viewportWidth="21"
+    android:viewportHeight="21">
+    <path
+        android:fillColor="#FFF25022"
+        android:pathData="M0,0h10v10h-10z" />
+    <path
+        android:fillColor="#FF7FBA00"
+        android:pathData="M11,0h10v10h-10z" />
+    <path
+        android:fillColor="#FF00A4EF"
+        android:pathData="M0,11h10v10h-10z" />
+    <path
+        android:fillColor="#FFFFB900"
+        android:pathData="M11,11h10v10h-10z" />
+</vector>

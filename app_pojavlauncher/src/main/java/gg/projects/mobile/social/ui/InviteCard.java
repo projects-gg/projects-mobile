@@ -125,9 +125,11 @@ final class InviteCard {
         name.setTextSize(17);
         name.setTextColor(ContextCompat.getColor(activity, R.color.projects_bone_100));
         names.addView(name);
-        if (!request.profile.username.isEmpty() && !request.profile.username.equals(request.profile.name())) {
+        String handle = SocialUi.handle(request.profile);
+        if (handle != null) {
+            // SOC-ID: the Discord handle only while a Discord is linked.
             TextView user = new TextView(activity);
-            user.setText("@" + request.profile.username);
+            user.setText(handle);
             user.setTextSize(13);
             user.setTextColor(ContextCompat.getColor(activity, R.color.projects_ash_400));
             names.addView(user);

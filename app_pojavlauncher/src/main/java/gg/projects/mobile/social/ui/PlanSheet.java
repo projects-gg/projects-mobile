@@ -411,7 +411,8 @@ final class PlanSheet {
     static String limitedText(Context context, Long until) {
         long now = SocialService.nowSeconds();
         int days = Math.max(1, SocialModel.Limited.daysLeft(until == null ? now + 86_400 : until, now));
-        return context.getResources().getQuantityString(R.plurals.projects_limited_no_plans, days, days);
+        return context.getResources().getQuantityString(SocialUi.limitedRes(context, R.plurals.projects_limited_no_plans,
+                R.plurals.projects_limited_no_plans_account), days, days);
     }
 
     private static void showError(TextView error, String text, View feedback) {

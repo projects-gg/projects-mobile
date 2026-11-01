@@ -155,6 +155,8 @@ public final class SocialMenuSheet {
         for (Request r : state.outgoing()) if (r.profile.id.equals(id)) in.outgoing = true;
         in.pending = pending;
         in.onProjects = state.presence(id).onProjects();
+        // SOC-ID: "Discord'dan mesaj at" only for someone with a Discord linked.
+        in.discord = profile.hasDiscord();
         in.chat = service.chat().available();
         in.inTheirConversation = place == Place.DIRECT_CHAT;
         in.crewFriendRequests = gate.crewFriendRequests;

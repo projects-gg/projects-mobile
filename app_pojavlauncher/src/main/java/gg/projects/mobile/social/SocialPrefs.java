@@ -277,6 +277,18 @@ public final class SocialPrefs {
         mPrefs.edit().putString(KEY_CONFIG, (friends ? "1" : "0") + (teams ? "1" : "0") + (chat ? "1" : "0")).apply();
     }
 
+    /** SOC-ID: the ways in the service offered when it was last asked ({@link SignInOptions#encode}). */
+    private static final String KEY_SIGN_IN_OPTIONS = "sign_in_ways";
+
+    @androidx.annotation.Nullable
+    public String signInOptions() {
+        return mPrefs.getString(KEY_SIGN_IN_OPTIONS, null);
+    }
+
+    public void setSignInOptions(String encoded) {
+        mPrefs.edit().putString(KEY_SIGN_IN_OPTIONS, encoded).apply();
+    }
+
     /** Signed out: the choices about other players go; the notification switches stay. */
     public void clearAccount() {
         mPrefs.edit().remove(KEY_FAVOURITES).remove(KEY_ENDED_CALLS).remove(KEY_PUSH_REGISTERED).remove(KEY_PUSH_TAG)

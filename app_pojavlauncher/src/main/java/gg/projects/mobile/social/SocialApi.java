@@ -128,6 +128,60 @@ public final class SocialApi {
         return o;
     }
 
+    /**
+     * SOC-ID: {@code GET /v1/auth/providers} (no session): the ways in offered now. A service from before SOC-ID has no
+     * such route: Discord only.
+     */
+    @WorkerThread
+    public SignInOptions providers() throws SocialProblem {
+        try {
+            return SignInOptions.read(send("GET", "v1/auth/providers", null, false, false));
+        } catch (SocialProblem problem) {
+            if (problem.status == 404) return SignInOptions.DISCORD_ONLY;
+            throw problem;
+        }
+    }
+
+    /**
+     * SOC-ID: {@code POST /v1/me/identities/link {provider, challenge}} → {@code {url}}: the page that proves the
+     * account (when this session's sign-in is older than 10 minutes) and then signs in to {@code provider}.
+     */
+    @WorkerThread
+    public String linkIdentity(String provider, String challenge) throws SocialProblem {
+        String url = Json.str(require(send("POST", "v1/me/identities/link", identityBody(provider, challenge), true, false)), "url");
+        if (url == null) throw SocialProblem.unavailable("no url");
+        return url;
+    }
+
+    /**
+     * SOC-ID: {@code POST /v1/me/identities/unlink {provider, challenge}} → {@code {url}} (the browser proves a way in
+     * that stays first) or {@code {me}} (this session's sign-in is fresh: done).
+     */
+    @WorkerThread
+    public JsonObject unlinkIdentity(String provider, String challenge) throws SocialProblem {
+        JsonObject o = require(send("POST", "v1/me/identities/unlink", identityBody(provider, challenge), true, false));
+        if (Json.str(o, "url") == null && Json.obj(o, "me") == null) throw SocialProblem.unavailable("no url or me");
+        return o;
+    }
+
+    /** SOC-ID: {@code POST /v1/me/identities/claim {verifier, code}} → {@code {me}} (a link or a removal done). */
+    @WorkerThread
+    public JsonObject claimIdentity(String verifier, String code) throws SocialProblem {
+        JsonObject body = new JsonObject();
+        body.addProperty("verifier", verifier);
+        body.addProperty("code", code);
+        JsonObject me = Json.obj(require(send("POST", SignInFlow.CLAIM_IDENTITY, body, true, false)), "me");
+        if (me == null) throw SocialProblem.unavailable("claim without me");
+        return me;
+    }
+
+    private static JsonObject identityBody(String provider, String challenge) {
+        JsonObject body = new JsonObject();
+        body.addProperty("provider", provider);
+        body.addProperty("challenge", challenge);
+        return body;
+    }
+
     @WorkerThread
     public void logout() throws SocialProblem {
         send("POST", "v1/auth/logout", null, true, false);
