@@ -1014,6 +1014,11 @@ public final class SocialModel {
         public final boolean hidden;
         /** TEAM6 "Etiketten istek": friends of its wearers may ask to join from the tag's card (on by default). */
         public final boolean badgeRequests;
+        /**
+         * CHAT-CALM "Yavaş mod": seconds a member who neither leads nor moderates the crew waits between two new
+         * messages in its chat (0: off, and from a service before it); the leader and moderators set it.
+         */
+        public final int slow;
 
         public Team(TeamSummary summary, String code, @Nullable String createdOn, List<Member> members, Permissions permissions) {
             this(summary, code, createdOn, members, permissions, null);
@@ -1031,6 +1036,12 @@ public final class SocialModel {
 
         public Team(TeamSummary summary, String code, @Nullable String createdOn, List<Member> members, Permissions permissions,
                     @Nullable Long textLockedUntil, @Nullable String link, boolean hidden, boolean badgeRequests) {
+            this(summary, code, createdOn, members, permissions, textLockedUntil, link, hidden, badgeRequests, 0);
+        }
+
+        /** Every field (CHAT-CALM's {@code slow} last); the copies below use it. */
+        public Team(TeamSummary summary, String code, @Nullable String createdOn, List<Member> members, Permissions permissions,
+                    @Nullable Long textLockedUntil, @Nullable String link, boolean hidden, boolean badgeRequests, int slow) {
             super(summary.id, summary.name, summary.tag, summary.emblem, summary.color, summary.frame, summary.motto,
                     members.size(), summary.join);
             this.code = code;
@@ -1041,6 +1052,7 @@ public final class SocialModel {
             this.link = link;
             this.hidden = hidden;
             this.badgeRequests = badgeRequests;
+            this.slow = Math.max(0, slow);
         }
 
         @Nullable
@@ -1056,13 +1068,13 @@ public final class SocialModel {
             return new Team(summary, Json.str(o, "code", ""), Json.str(o, "createdOn"), members,
                     Permissions.read(Json.obj(o, "permissions")), Json.numOrNull(o, "textLockedUntil"),
                     SocialCodes.normalizeInviteLink(Json.str(o, "link")), Json.bool(o, "hidden", false),
-                    Json.bool(o, "badgeRequests", true));
+                    Json.bool(o, "badgeRequests", true), SlowMode.read(o));
         }
 
         /** The same crew with another invite link (null: switched off), as an answer of its own route says. */
         public Team withLink(@Nullable String newLink) {
             return new Team(this, code, createdOn, new ArrayList<>(members), permissions, textLockedUntil, newLink, hidden,
-                    badgeRequests);
+                    badgeRequests, slow);
         }
 
         /** TEAM6: the same crew with one member's tag changed (a {@code badge} message). */
@@ -1077,7 +1089,8 @@ public final class SocialModel {
                     next.add(m);
                 }
             }
-            return changed ? new Team(this, code, createdOn, next, permissions, textLockedUntil, link, hidden, badgeRequests) : this;
+            return changed ? new Team(this, code, createdOn, next, permissions, textLockedUntil, link, hidden, badgeRequests, slow)
+                    : this;
         }
 
         /** BADGES: the same crew with one member showing other badges ({@code this} when they are not in it). */
@@ -1092,7 +1105,8 @@ public final class SocialModel {
                     next.add(m);
                 }
             }
-            return changed ? new Team(this, code, createdOn, next, permissions, textLockedUntil, link, hidden, badgeRequests) : this;
+            return changed ? new Team(this, code, createdOn, next, permissions, textLockedUntil, link, hidden, badgeRequests, slow)
+                    : this;
         }
 
         /** TEAM6: members wearing this crew's own tag now. */

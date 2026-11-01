@@ -140,7 +140,12 @@ public final class SocialState {
             /** TEAM5: a plan was cancelled ({@link #planId}). */
             PLAN_REMOVED,
             /** TEAM6: the leader hid {@link #teamName}, so the player's tag of it came off. */
-            TAG_OFF
+            TAG_OFF,
+            /**
+             * CHAT-CALM: the player just came into {@link #crewId}, a crowded crew, which starts muted for them (said once,
+             * with "Sesi aç").
+             */
+            CROWDED
         }
 
         public final Kind kind;
@@ -256,6 +261,11 @@ public final class SocialState {
 
         static Notice tagOff(String crewId, String teamName) {
             return new Notice(Kind.TAG_OFF, null, null, null, null, null, teamName, false, null, false, false, null, 0,
+                    crewId, null, null);
+        }
+
+        static Notice crowded(String crewId, String teamName) {
+            return new Notice(Kind.CROWDED, null, null, null, null, null, teamName, false, null, false, false, null, 0,
                     crewId, null, null);
         }
 
@@ -1116,7 +1126,15 @@ public final class SocialState {
                 break;
             case "crew_notifications": {
                 String crew = Json.str(message, "crew");
-                if (crew != null) setCrewMute(crew, TeamNotifications.read(Json.obj(message, "notifications")));
+                if (crew == null) break;
+                TeamNotifications mute = TeamNotifications.read(Json.obj(message, "notifications"));
+                setCrewMute(crew, mute);
+                // CHAT-CALM: the service muted a crowded crew the player just came into (right after its team message):
+                // said once, with "Sesi aç"; a crew not in the list yet says nothing.
+                Crew joined = crew(crew);
+                if (Json.bool(message, "crowded", false) && mute.muted && joined != null) {
+                    notices.add(Notice.crowded(crew, joined.team.name));
+                }
                 break;
             }
             case "crew_order":

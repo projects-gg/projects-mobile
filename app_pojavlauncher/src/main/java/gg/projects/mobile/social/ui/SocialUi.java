@@ -348,10 +348,23 @@ public final class SocialUi {
 
     /** A notice that stays longer where Android's toast is used. */
     public static void toastLong(@Nullable Context context, String text) {
-        show(context, text, true);
+        show(context, text, true, null, null);
+    }
+
+    /**
+     * CHAT-CALM: a notice with one action ("Sesi aç") in the app's line; where only Android's toast can show (a sheet
+     * stays open, no screen is up) the words go without it.
+     */
+    public static void toastAction(@Nullable Context context, String text, String action, Runnable onAction) {
+        show(context, text, true, action, onAction);
     }
 
     private static void show(@Nullable Context context, String text, boolean longer) {
+        show(context, text, longer, null, null);
+    }
+
+    private static void show(@Nullable Context context, String text, boolean longer, @Nullable final String action,
+                             @Nullable final Runnable onAction) {
         if (context == null) return;
         final Activity activity = context instanceof Activity ? (Activity) context : SocialService.get(context).uiActivity();
         final int length = longer ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT;
@@ -360,7 +373,7 @@ public final class SocialUi {
             return;
         }
         if (activity.hasWindowFocus()) {
-            ActionToast.show(activity, text, null, null);
+            ActionToast.show(activity, text, action, onAction);
             return;
         }
         // A dialog or a sheet is up, or still closing (a notice after its button, "Mesaj silindi" after "Herkesten
@@ -368,7 +381,7 @@ public final class SocialUi {
         // sheet that stays open keeps Android's toast over it.
         final Context app = context.getApplicationContext();
         activity.getWindow().getDecorView().postDelayed(() -> {
-            if (!activity.isFinishing() && activity.hasWindowFocus()) ActionToast.show(activity, text, null, null);
+            if (!activity.isFinishing() && activity.hasWindowFocus()) ActionToast.show(activity, text, action, onAction);
             else Toast.makeText(app, text, length).show();
         }, 250);
     }

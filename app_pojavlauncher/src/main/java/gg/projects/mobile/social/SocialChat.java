@@ -76,8 +76,11 @@ public final class SocialChat {
         void failed(SocialProblem problem);
     }
 
-    /** Why a message was not even written down (the composer says it in place). */
-    public enum Refusal { NONE, EMPTY, TOO_LONG, LINK, PHONE, WORDS, MUTED, OFF, NOT_FRIENDS, NOT_IN_CREW, UNAVAILABLE, LIMITED_LINKS }
+    /**
+     * Why a message was not even written down (the composer says it in place). CHAT-CALM's {@code SLOW}: the crew's slow
+     * mode still waits after the player's newest message there (the text stays in the field).
+     */
+    public enum Refusal { NONE, EMPTY, TOO_LONG, LINK, PHONE, WORDS, MUTED, OFF, NOT_FRIENDS, NOT_IN_CREW, UNAVAILABLE, LIMITED_LINKS, SLOW }
 
     /** CHAT2: what a press on an emoji did ("Ben de", "Tepkimi kaldır") or why it did not. */
     public enum React { ADDED, REMOVED, FULL_MINE, FULL_KINDS, REFUSED, GONE, UNAVAILABLE }
@@ -112,6 +115,13 @@ public final class SocialChat {
     private final Map<String, Runnable> mReadLater = new HashMap<>();
     /** CHAT2: answered messages being looked up in the file. */
     private final Set<String> mLookingUp = new HashSet<>();
+    /**
+     * CHAT-CALM: per conversation, the hub's id of the player's message it took last from this phone and when its answer
+     * came (the phone's ms), and when an answer came without its message: the slow mode counts from there
+     * ({@link SlowMode#until}; a message not answered yet counts from now).
+     */
+    private final Map<String, long[]> mOwnAcks = new HashMap<>();
+    private final Map<String, Long> mSentAt = new HashMap<>();
 
     SocialChat(Host host) {
         mHost = host;
@@ -166,6 +176,8 @@ public final class SocialChat {
         mCards.clear();
         mCardsLoaded.clear();
         mLookingUp.clear();
+        mOwnAcks.clear();
+        mSentAt.clear();
     }
 
     /** "Verilerimi sil": the account's history leaves this phone too. */
@@ -371,6 +383,36 @@ public final class SocialChat {
         return me.limited.has("chat_links") ? me.limited : null;
     }
 
+    /**
+     * CHAT-CALM: the crew's slow mode for the player in {@code conv} (seconds): 0 outside a crew's chat, for its leader
+     * and moderators, and while it is off.
+     */
+    public int slow(String conv) {
+        String crewId = ChatConv.crewId(conv);
+        if (crewId == null) return 0;
+        SocialState state = mHost.state();
+        SocialModel.Crew crew = state.crew(crewId);
+        return crew == null ? 0 : SlowMode.forPlayer(crew.team, state.myId());
+    }
+
+    /** CHAT-CALM: when the player may send in {@code conv} again (the phone's ms), or 0: now. */
+    public long slowUntil(String conv) {
+        int slow = slow(conv);
+        if (slow <= 0 || mBook == null) return 0;
+        SocialState state = mHost.state();
+        long nowSeconds = SocialService.nowSeconds();
+        long offsetMs = (state.hubNow(nowSeconds) - nowSeconds) * 1000L;
+        long[] ack = mOwnAcks.get(conv);
+        Long sentAt = mSentAt.get(conv);
+        return SlowMode.until(mBook.entries(conv), state.myId(), slow, offsetMs, ack == null ? 0 : ack[0], ack == null ? 0 : ack[1],
+                sentAt == null ? 0 : sentAt, System.currentTimeMillis());
+    }
+
+    /** CHAT-CALM: the slow mode still waits in {@code conv} (a new message is not written down yet). */
+    private boolean slowWaits(String conv) {
+        return slowUntil(conv) > System.currentTimeMillis();
+    }
+
     /** "Gönder": checked, shown at once as waiting, sent when the socket is there. */
     @MainThread
     public Refusal send(String conv, String typed) {
@@ -393,6 +435,8 @@ public final class SocialChat {
         }
         String clean = ChatText.clean(typed);
         if (linksLimited() != null && !ChatLinks.find(clean).isEmpty()) return Refusal.LIMITED_LINKS;
+        // CHAT-CALM: the text's own problems say themselves first; then the crew's slow mode may still wait.
+        if (slowWaits(conv)) return Refusal.SLOW;
         ChatMessage reply = replyTo != null && offers(SocialModel.ChatState.REPLIES) ? replyTo : null;
         mBook.write(conv, clean, null, reply, nonce(), System.currentTimeMillis());
         mBook.markRead(conv);
@@ -410,6 +454,8 @@ public final class SocialChat {
         if (!ChatMessage.isSticker(sticker) || !stickerSets().contains(sticker.substring(0, sticker.indexOf('/')))) {
             return Refusal.UNAVAILABLE;
         }
+        // CHAT-CALM: a sticker is a new message too.
+        if (slowWaits(conv)) return Refusal.SLOW;
         ChatMessage reply = replyTo != null && offers(SocialModel.ChatState.REPLIES) ? replyTo : null;
         mBook.write(conv, "", sticker, reply, nonce(), System.currentTimeMillis());
         mBook.markRead(conv);
@@ -419,11 +465,14 @@ public final class SocialChat {
         return Refusal.NONE;
     }
 
-    /** "Tekrar dene". */
+    /** "Tekrar dene"; CHAT-CALM: while the crew's slow mode still waits, the message goes once it is over. */
     @MainThread
     public void retry(String nonce) {
         if (mBook == null) return;
-        mBook.retry(nonce, nonce(), System.currentTimeMillis());
+        long now = System.currentTimeMillis();
+        ChatBook.Outbox failed = mBook.outbox(nonce);
+        long wait = failed == null ? 0 : slowUntil(failed.conv);
+        mBook.retry(nonce, nonce(), now, wait > now ? wait : 0);
         mHost.changed();
         flush();
     }
@@ -466,7 +515,12 @@ public final class SocialChat {
             }
             if ("ack".equals(Json.str(answer, "t"))) {
                 mBook.setReactionsTaken(offers(SocialModel.ChatState.REACTIONS));
-                mBook.sent(o.nonce, Json.obj(answer, "msg"));
+                // CHAT-CALM: a crew's slow mode counts from the answer (never before the hub took the message).
+                JsonObject msg = Json.obj(answer, "msg");
+                long id = (long) Json.num(msg, "id", 0);
+                if (id > 0) mOwnAcks.put(o.conv, new long[]{id, at});
+                else mSentAt.put(o.conv, at);
+                mBook.sent(o.nonce, msg);
             } else {
                 String code = Json.str(answer, "code", "bad_request");
                 mBook.notSent(o.nonce, code, Json.str(answer, "reason"), Json.num(answer, "retryAfter", 0), at,

@@ -46,8 +46,11 @@ public final class CrewDetails {
         Detail fetch(String crewId, @Nullable String etag) throws SocialProblem;
     }
 
-    /** The list's look of a crew, laid over an older copy when it could not be read again. */
-    private static final String[] LOOK = {"name", "tag", "emblem", "color", "frame", "hidden"};
+    /**
+     * The list's look of a crew, laid over an older copy when it could not be read again; CHAT-CALM's {@code slow} (the
+     * chat's slow mode, read with the crew's row) too, so a copy from before a change does not count a wait it no longer has.
+     */
+    private static final String[] LOOK = {"name", "tag", "emblem", "color", "frame", "hidden", "slow"};
 
     /** Turkey's calendar day of {@code seconds} (Unix; UTC+3 all year): the day in the detail's ETag. */
     public static long turkeyDay(long seconds) {
