@@ -65,6 +65,7 @@
         <item quantity="one">%1$d day</item>
         <item quantity="other">%1$d days</item>
     </plurals>
+    <string name="projects_afk_ui_reconnect">Reconnect</string>
     <string name="projects_afk_ui_console">Console</string>
     <string name="projects_afk_ui_settings">Settings</string>
     <string name="projects_afk_ui_delete">Delete</string>
@@ -119,10 +120,12 @@
     <string name="projects_afk_ui_sneak_help">Sneaks now and then so the server doesn\'t mark you AFK.</string>
     <string name="projects_afk_ui_mobile_data">Keep going on mobile data</string>
     <string name="projects_afk_ui_mobile_data_help">When off, it stays connected only on Wi-Fi.</string>
-    <string name="projects_afk_ui_settings_changed">New settings apply after a reconnect.</string>
     <string name="projects_afk_ui_dirty">You have unsaved changes.</string>
     <string name="projects_afk_ui_discard">Discard</string>
     <string name="projects_afk_ui_save">Save</string>
+    <string name="projects_afk_ui_save_only">Save only</string>
+    <string name="projects_afk_ui_save_reconnect">Save and reconnect</string>
+    <string name="projects_afk_ui_reconnecting">%1$s is reconnecting</string>
     <string name="projects_afk_ui_fix_errors">Fix the marked fields first.</string>
     <string name="projects_afk_ui_saved">%1$s\'s settings saved</string>
     <string name="projects_afk_ui_added">%1$s added</string>

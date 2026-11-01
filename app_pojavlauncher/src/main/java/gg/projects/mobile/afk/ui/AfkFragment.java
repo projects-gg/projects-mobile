@@ -525,6 +525,17 @@ public final class AfkFragment extends AfkScreen {
         }
     }
 
+    /** "Yeniden bağlan": the engine drops the connection and connects again at once; the state line shows the rest. */
+    private void reconnect(String id, View from) {
+        AfkStartResult result = mAfk.reconnect(id);
+        if (result.ok()) {
+            Haptics.tick(from);
+        } else {
+            Haptics.reject(from);
+            toast(AfkTexts.start(ctx(), result));
+        }
+    }
+
     private void openConsole(String id) {
         open(AfkConsoleFragment.class, AfkConsoleFragment.args(id));
     }
@@ -549,6 +560,15 @@ public final class AfkFragment extends AfkScreen {
             AccountRow row = mRows.get(account.id);
             act(account, mAfk.status(account.id), row != null ? row.main : v);
         }));
+        if (status.state == AfkState.IN_GAME) {
+            // The desktop's "Yeniden bağlan" for a connected account (settings saved with "Yalnız kaydet", a stuck server).
+            list.addView(CrewViews.actionRow(c, R.drawable.projects_ic_arrows_clockwise, getString(R.string.projects_afk_ui_reconnect),
+                    R.color.projects_bone_100, v -> {
+                        dialog.dismiss();
+                        AccountRow row = mRows.get(account.id);
+                        reconnect(account.id, row != null ? row.main : v);
+                    }));
+        }
         list.addView(CrewViews.actionRow(c, R.drawable.projects_ic_terminal, getString(R.string.projects_afk_ui_console),
                 R.color.projects_bone_100, v -> {
                     dialog.dismiss();
@@ -591,8 +611,7 @@ public final class AfkFragment extends AfkScreen {
         mConfirm = ConfirmDialog.show(requireActivity(), getString(R.string.projects_afk_ui_remove_title, account.name),
                 getString(R.string.projects_afk_ui_remove_body), getString(R.string.projects_afk_ui_remove_confirm), true, () -> {
                     if (!alive()) return;
-                    // A running account stops first (the engine's remove looks it up after it is gone).
-                    if (mAfk.status(account.id).state.running()) mAfk.stop(account.id);
+                    // The engine stops a running account itself.
                     mAfk.remove(account.id);
                     AfkSeen.seen(account.id);
                     toast(getString(R.string.projects_afk_ui_removed, account.name));

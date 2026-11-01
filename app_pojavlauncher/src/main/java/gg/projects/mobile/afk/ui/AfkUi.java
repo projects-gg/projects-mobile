@@ -50,18 +50,15 @@ public final class AfkUi {
 
     /**
      * The AFK screens show on this phone: this build and Android have it and Studio's {@code features.phoneAfk} is on
-     * in the latest content. Before the content is read (a cold start from a notification, a screen Android restores),
-     * a phone with AFK accounts keeps them: accounts are only added while the switch is on, and a start the switch
-     * no longer allows is refused by the engine in words.
+     * in the latest content. Before this start's content is read (a cold start from a notification, a screen Android
+     * restores), the switch as this phone last saw it ({@link PhoneAfk#availableNow()}).
      */
     @MainThread
     public static boolean available(Context context) {
         if (!PhoneAfk.phoneSupported()) return false;
         gg.projects.mobile.content.Snapshot snapshot = ProjectsContent.current();
-        if (PhoneAfk.available(snapshot == null ? null : snapshot.config)) return true;
-        if (snapshot != null) return false;
-        PhoneAfk afk = PhoneAfk.get(context);
-        return afk.runningCount() > 0 || !afk.accounts().isEmpty();
+        if (snapshot != null) return PhoneAfk.available(snapshot.config);
+        return PhoneAfk.get(context).availableNow();
     }
 
     /** The AFK list (from anywhere in the launcher: the home row, a notification). */

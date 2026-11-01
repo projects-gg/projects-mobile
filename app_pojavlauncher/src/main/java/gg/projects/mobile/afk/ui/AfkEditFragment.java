@@ -44,6 +44,7 @@ import gg.projects.mobile.afk.api.AfkDraftException;
 import gg.projects.mobile.afk.api.AfkLimits;
 import gg.projects.mobile.afk.api.AfkLoginMode;
 import gg.projects.mobile.afk.api.AfkProblem;
+import gg.projects.mobile.afk.api.AfkStartResult;
 import gg.projects.mobile.afk.api.AfkTexts;
 import gg.projects.mobile.cloud.ui.CloudUi;
 import gg.projects.mobile.mods.Motion;
@@ -88,6 +89,9 @@ public final class AfkEditFragment extends AfkScreen {
         List<AfkProblem> refused;
         /** The account went away while saving. */
         boolean gone;
+        /** "Kaydet ve yeniden bağlan": the engine's answer to the reconnect after the save (null: no reconnect). */
+        @Nullable
+        AfkStartResult reconnected;
         @Nullable
         AfkEditFragment owner;
     }
@@ -113,6 +117,9 @@ public final class AfkEditFragment extends AfkScreen {
     private TextView mBarWords;
     @Nullable
     private Button mSave;
+    /** "Yalnız kaydet", beside "Kaydet ve yeniden bağlan" while the account runs (null otherwise). */
+    @Nullable
+    private Button mSaveOnly;
     private boolean mSaving;
     private boolean mBarShown;
     /** Counts the form's builds: a late answer for an earlier build ("Vazgeç" built it again) lands nowhere. */
@@ -221,10 +228,6 @@ public final class AfkEditFragment extends AfkScreen {
         final AfkDraft d = mKept.now;
         String id = accountId();
 
-        if (id != null && mAfk.status(id).state.running()) {
-            content.addView(CloudUi.notice(c, R.drawable.projects_ic_info, R.color.projects_gold_300,
-                    getString(R.string.projects_afk_ui_settings_changed)));
-        }
         mNoneError = CloudUi.text(c, "", 13.5f, R.color.projects_flare_400, false);
         mNoneError.setVisibility(View.GONE);
         mNoneError.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
@@ -672,15 +675,34 @@ public final class AfkEditFragment extends AfkScreen {
             mKept.now = AfkFormRules.copy(mKept.start);
             build();
         });
-        mSave = CloudUi.button(c, getString(adding() ? R.string.projects_afk_ui_add : R.string.projects_afk_ui_save), true, v -> save(v));
+        // A running account (the desktop's settings bar): "Yalnız kaydet" keeps the connection as it is, "Kaydet ve
+        // yeniden bağlan" uses the new settings at once. On a phone the long one takes its own line under the two.
+        String id = accountId();
+        boolean live = id != null && mAfk.status(id).state.running();
+        Button save;
+        if (live) {
+            mSaveOnly = CloudUi.button(c, getString(R.string.projects_afk_ui_save_only), false, v -> save(v, false));
+            mSave = CloudUi.button(c, getString(R.string.projects_afk_ui_save_reconnect), true, v -> save(v, true));
+            save = mSaveOnly;
+        } else {
+            mSaveOnly = null;
+            mSave = CloudUi.button(c, getString(adding() ? R.string.projects_afk_ui_add : R.string.projects_afk_ui_save), true,
+                    v -> save(v, false));
+            save = mSave;
+        }
         LinearLayout.LayoutParams discardLp = CloudUi.weight(1f);
         LinearLayout.LayoutParams saveLp = CloudUi.weight(1f);
         saveLp.setMarginStart(AfkUi.dp(c, 8));
         buttons.addView(discard, discardLp);
-        buttons.addView(mSave, saveLp);
+        buttons.addView(save, saveLp);
         LinearLayout.LayoutParams buttonsLp = CloudUi.matchWrap();
         buttonsLp.topMargin = AfkUi.dp(c, 8);
         bar.addView(buttons, buttonsLp);
+        if (live) {
+            LinearLayout.LayoutParams againLp = CloudUi.matchWrap();
+            againLp.topMargin = AfkUi.dp(c, 8);
+            bar.addView(mSave, againLp);
+        }
         LinearLayout holder = new LinearLayout(c);
         holder.setOrientation(LinearLayout.VERTICAL);
         holder.addView(line, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Math.max(1, AfkUi.dp(c, 1))));
@@ -699,6 +721,7 @@ public final class AfkEditFragment extends AfkScreen {
         if (mBarWords != null) mBarWords.setVisibility(adding() ? View.GONE : View.VISIBLE);
         showBar(show);
         if (mSave != null) mSave.setEnabled(!mSaving);
+        if (mSaveOnly != null) mSaveOnly.setEnabled(!mSaving);
     }
 
     /** The bar slides up from under the screen and back (transform only; with animations removed it simply shows). */
@@ -732,7 +755,8 @@ public final class AfkEditFragment extends AfkScreen {
 
     // ---- saving ----
 
-    private void save(final View from) {
+    /** Saves the draft; {@code reconnect}: a running account then connects again at once with it ("Kaydet ve yeniden bağlan"). */
+    private void save(final View from, final boolean reconnect) {
         if (mSaving || mKept.now == null) return;
         final AfkDraft d = AfkFormRules.copy(mKept.now);
         d.address = AfkFormRules.address(d.address);
@@ -751,6 +775,7 @@ public final class AfkEditFragment extends AfkScreen {
         kept.savedName = null;
         kept.refused = null;
         kept.gone = false;
+        kept.reconnected = null;
         final gg.projects.mobile.afk.api.PhoneAfk afk = mAfk;
         IO.execute(() -> {
             AfkAccount saved = null;
@@ -774,13 +799,18 @@ public final class AfkEditFragment extends AfkScreen {
                 kept.refused = refused;
                 kept.gone = accountGone;
                 kept.savedName = refused == null && !accountGone ? account.name : null;
+                // Only an account still running reconnects: one the player stopped meanwhile stays stopped.
+                if (reconnect && kept.savedName != null && afk.status(id).state.running()) kept.reconnected = afk.reconnect(id);
                 AfkEditFragment owner = kept.owner;
                 if (owner != null && owner.alive() && owner.isResumed()) owner.saveDone();
             });
         });
     }
 
-    /** What the save answered: problems under their fields, or "{ad} eklendi" / "{ad} ayarları kaydedildi" and back. */
+    /**
+     * What the save answered: problems under their fields, or "{ad} eklendi" / "{ad} ayarları kaydedildi" / "{ad} yeniden
+     * bağlanıyor" and back.
+     */
     private void saveDone() {
         Kept kept = mKept;
         mSaving = false;
@@ -802,8 +832,11 @@ public final class AfkEditFragment extends AfkScreen {
         String name = kept.savedName;
         if (name == null) return;
         kept.savedName = null;
+        AfkStartResult again = kept.reconnected;
+        kept.reconnected = null;
         Haptics.confirm(from);
-        toast(getString(adding() ? R.string.projects_afk_ui_added : R.string.projects_afk_ui_saved, name));
+        if (again == null) toast(getString(adding() ? R.string.projects_afk_ui_added : R.string.projects_afk_ui_saved, name));
+        else toast(again.ok() ? getString(R.string.projects_afk_ui_reconnecting, name) : AfkTexts.start(ctx(), again));
         kept.start = kept.now == null ? null : AfkFormRules.copy(kept.now);
         holdBack(false);
         leaveNow();
@@ -867,8 +900,7 @@ public final class AfkEditFragment extends AfkScreen {
         ConfirmDialog.show(requireActivity(), getString(R.string.projects_afk_ui_remove_title, account.name),
                 getString(R.string.projects_afk_ui_remove_body), getString(R.string.projects_afk_ui_remove_confirm), true, () -> {
                     if (!alive()) return;
-                    // A running account stops first (the engine's remove looks it up after it is gone).
-                    if (mAfk.status(account.id).state.running()) mAfk.stop(account.id);
+                    // The engine stops a running account itself.
                     mAfk.remove(account.id);
                     AfkSeen.seen(account.id);
                     toast(getString(R.string.projects_afk_ui_removed, account.name));

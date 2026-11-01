@@ -66,6 +66,7 @@
         <item quantity="one">%1$d gün</item>
         <item quantity="other">%1$d gün</item>
     </plurals>
+    <string name="projects_afk_ui_reconnect">Yeniden bağlan</string>
     <string name="projects_afk_ui_console">Konsol</string>
     <string name="projects_afk_ui_settings">Ayarlar</string>
     <string name="projects_afk_ui_delete">Sil</string>
@@ -120,10 +121,12 @@
     <string name="projects_afk_ui_sneak_help">Sunucunun seni AFK saymaması için arada bir eğilir.</string>
     <string name="projects_afk_ui_mobile_data">Mobil veride sürsün</string>
     <string name="projects_afk_ui_mobile_data_help">Kapalıyken yalnız Wi-Fi\'da bağlı kalır.</string>
-    <string name="projects_afk_ui_settings_changed">Yeni ayarlar yeniden bağlanınca geçerli olur.</string>
     <string name="projects_afk_ui_dirty">Kaydedilmemiş değişikliklerin var.</string>
     <string name="projects_afk_ui_discard">Vazgeç</string>
     <string name="projects_afk_ui_save">Kaydet</string>
+    <string name="projects_afk_ui_save_only">Yalnız kaydet</string>
+    <string name="projects_afk_ui_save_reconnect">Kaydet ve yeniden bağlan</string>
+    <string name="projects_afk_ui_reconnecting">%1$s yeniden bağlanıyor</string>
     <string name="projects_afk_ui_fix_errors">Önce işaretli alanları düzelt.</string>
     <string name="projects_afk_ui_saved">%1$s ayarları kaydedildi</string>
     <string name="projects_afk_ui_added">%1$s eklendi</string>
