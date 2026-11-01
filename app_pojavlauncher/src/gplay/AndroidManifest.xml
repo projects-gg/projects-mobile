@@ -26,5 +26,8 @@
         <activity
             android:name="gg.projects.mobile.afk.service.AfkOpenActivity"
             tools:node="remove" />
+        <receiver
+            android:name="gg.projects.mobile.afk.service.AfkWatchdog"
+            tools:node="remove" />
     </application>
 </manifest>

@@ -30,6 +30,13 @@ public class PojavApplication extends Application {
 	
 	@Override
 	public void onCreate() {
+		// Projects fork (PHONE-AFK): the phone AFK process (gg.projects.mobile.afk) needs none of the launcher's
+		// start-up (preferences, runtime unpacking, the crash screen): it stays small (AFK-M0: ~32 MB) and a crash
+		// there never opens a screen.
+		if (isAfkProcess()) {
+			super.onCreate();
+			return;
+		}
 		ContextExecutor.setApplication(this);
 		Thread.setDefaultUncaughtExceptionHandler((thread, th) -> {
 			boolean storagePermAllowed = (Build.VERSION.SDK_INT < 23 || Build.VERSION.SDK_INT >= 29 ||
@@ -84,6 +91,21 @@ public class PojavApplication extends Application {
 			ferrorIntent.setFlags(FLAG_ACTIVITY_NEW_TASK);
 			startActivity(ferrorIntent);
 		}
+	}
+
+	/** This process is the phone AFK's ({@code :afk}). */
+	private static boolean isAfkProcess() {
+		String name = null;
+		if (Build.VERSION.SDK_INT >= 28) {
+			name = Application.getProcessName();
+		} else {
+			try (BufferedReader reader = new BufferedReader(new FileReader("/proc/self/cmdline"))) {
+				name = reader.readLine();
+			} catch (IOException ignored) {
+				// Not the AFK process as far as we know.
+			}
+		}
+		return name != null && name.trim().endsWith(":afk");
 	}
 
 	@Override

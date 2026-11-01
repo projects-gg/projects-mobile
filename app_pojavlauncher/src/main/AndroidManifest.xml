@@ -249,6 +249,12 @@
             <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Keeps the player's own Minecraft accounts connected to game servers the player chose (AFK), started by the player's tap and shown in an ongoing notification until the player stops it."/>
         </service>
+        <!-- PHONE-AFK: the watchdog's alarm, in the AFK process (light: no launcher start-up there); it brings AFK
+             back or says the phone closed it. Never on boot. -->
+        <receiver
+            android:name="gg.projects.mobile.afk.service.AfkWatchdog"
+            android:exported="false"
+            android:process=":afk" />
         <!-- PHONE-AFK: a tap on an AFK notification (the app's own notifications only). -->
         <activity
             android:name="gg.projects.mobile.afk.service.AfkOpenActivity"
