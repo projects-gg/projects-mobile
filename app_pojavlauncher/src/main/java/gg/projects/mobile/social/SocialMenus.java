@@ -111,6 +111,11 @@ public final class SocialMenus {
         public Pending pending = Pending.NONE;
         /** They are on projects.gg. */
         public boolean onProjects;
+        /**
+         * SOC-ID: they have a Discord account linked ({@code discordId} not null): "Discord'dan mesaj at" only then (the
+         * owner, 1 Nov: "discordu bağlı olmayanlar için discord'tan mesaj at kısmı gözükmez").
+         */
+        public boolean discord = true;
         /** Chat is on (CHAT1). */
         public boolean chat;
         /** The menu is in that friend's own conversation: no "Mesaj gönder". */
@@ -134,7 +139,7 @@ public final class SocialMenus {
         if (in.self) return Collections.unmodifiableList(out);
         if (in.blocked) {
             // Someone the player blocked: Discord, unblock and report only.
-            if (in.friend || in.crewmate) out.add(row(PersonAction.DISCORD));
+            if ((in.friend || in.crewmate) && in.discord) out.add(row(PersonAction.DISCORD));
             out.add(null);
             out.add(row(PersonAction.UNBLOCK));
             if (in.reports && in.reportable) out.add(row(PersonAction.REPORT));
@@ -157,7 +162,7 @@ public final class SocialMenus {
         // 2. Together.
         if (in.onProjects) out.add(row(PersonAction.JOIN));
         if (in.friend && in.chat && !in.inTheirConversation) out.add(row(PersonAction.MESSAGE));
-        if (in.friend || in.crewmate) out.add(row(PersonAction.DISCORD));
+        if ((in.friend || in.crewmate) && in.discord) out.add(row(PersonAction.DISCORD));
         if (in.crewmate && !in.friend && in.crewFriendRequests) {
             if (in.incoming) {
                 if (in.pending != Pending.FRIEND_REQUEST) out.add(row(PersonAction.ACCEPT_REQUEST));

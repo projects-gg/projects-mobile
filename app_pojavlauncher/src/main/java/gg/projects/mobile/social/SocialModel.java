@@ -49,6 +49,14 @@ public final class SocialModel {
          */
         @Nullable
         public final Badge badge;
+        /**
+         * SOC-ID: the Discord account behind "Discord'dan mesaj at" and the Discord photo, null without one. A card
+         * without the field (every account opened with Discord, and every card of a service before SOC-ID) has its
+         * number as its Discord id; {@code "discordId": null} has no Discord; a string is that Discord id. An account
+         * opened with Microsoft has a number of its own (19 digits from 9…), never a Discord id.
+         */
+        @Nullable
+        public final String discordId;
 
         public Profile(String id, String username, @Nullable String displayName, String avatar, @Nullable String avatarHash) {
             this(id, username, displayName, avatar, avatarHash, null);
@@ -56,12 +64,18 @@ public final class SocialModel {
 
         public Profile(String id, String username, @Nullable String displayName, String avatar, @Nullable String avatarHash,
                        @Nullable Badge badge) {
+            this(id, username, displayName, avatar, avatarHash, badge, id);
+        }
+
+        public Profile(String id, String username, @Nullable String displayName, String avatar, @Nullable String avatarHash,
+                       @Nullable Badge badge, @Nullable String discordId) {
             this.id = id;
             this.username = username;
             this.displayName = displayName;
             this.avatar = avatar;
             this.avatarHash = avatarHash;
             this.badge = badge;
+            this.discordId = discordId;
         }
 
         @Nullable
@@ -72,17 +86,33 @@ public final class SocialModel {
             String display = Json.str(o, "displayName");
             if (display != null && display.trim().isEmpty()) display = null;
             return new Profile(id, username, display, Json.str(o, "avatar", "discord"), Json.str(o, "avatarHash"),
-                    Badge.read(Json.obj(o, "badge")));
+                    Badge.read(Json.obj(o, "badge")), discordIdOf(o, id));
+        }
+
+        /**
+         * SOC-ID: a card's Discord id by the rule of {@link #discordId}: the field absent, the number; present, its
+         * Discord id, or none when it is null (or anything that is not a Discord id).
+         */
+        @Nullable
+        static String discordIdOf(@Nullable JsonObject o, String id) {
+            if (o == null || !o.has("discordId")) return id;
+            String value = Json.str(o, "discordId");
+            return isUserId(value) ? value : null;
+        }
+
+        /** SOC-ID: a Discord account is linked ("Discord'dan mesaj at" and the Discord photo are there). */
+        public boolean hasDiscord() {
+            return discordId != null;
         }
 
         /** The same player with another tag (TEAM6's {@code badge} message; null takes it off). */
         public Profile withBadge(@Nullable Badge next) {
-            return new Profile(id, username, displayName, avatar, avatarHash, next);
+            return new Profile(id, username, displayName, avatar, avatarHash, next, discordId);
         }
 
         /** The same player with another picture (a presence that carries one). */
         public Profile withAvatar(String nextAvatar, @Nullable String nextHash) {
-            return new Profile(id, username, displayName, nextAvatar, nextHash, badge);
+            return new Profile(id, username, displayName, nextAvatar, nextHash, badge, discordId);
         }
 
         /** The display name, else the username. */
@@ -109,27 +139,30 @@ public final class SocialModel {
          * Discord's CDN address of the picture while {@code avatar} is {@code discord} and the player set one; null
          * without one: the face is the name's letter on the quiet plate, never Discord's stand-in (its logo on a
          * colour), as the desktop since SMALLS-L (TASTE-2: the pink and red logos were the loudest on the page).
+         * SOC-ID: the picture is the linked Discord account's ({@link #discordId}, not the number), and there is none
+         * without a Discord.
          */
         @Nullable
         public String discordAvatarUrl(int size) {
-            if (presetSlug() != null || textureHash() != null) return null;
+            if (discordId == null || presetSlug() != null || textureHash() != null) return null;
             int s = 16;
             while (s < Math.min(1024, Math.max(16, size))) s <<= 1;
             if (avatarHash != null && avatarHash.matches("(a_)?[0-9a-f]{32}")) {
                 // Animated pictures are asked for as a still picture: the app draws one frame anyway.
-                return "https://cdn.discordapp.com/avatars/" + id + "/" + avatarHash + ".png?size=" + s;
+                return "https://cdn.discordapp.com/avatars/" + discordId + "/" + avatarHash + ".png?size=" + s;
             }
             return null;
         }
 
-        /** The Discord profile ("Discord'dan mesaj at"). */
+        /** The Discord profile ("Discord'dan mesaj at"); null without a Discord (SOC-ID: the action is not offered). */
+        @Nullable
         public String discordProfileUrl() {
-            return "https://discord.com/users/" + id;
+            return discordId == null ? null : "https://discord.com/users/" + discordId;
         }
 
         /** What a face shows; a change means the picture must be drawn again. */
         public String faceKey() {
-            return avatar + "|" + (avatarHash == null ? "" : avatarHash);
+            return avatar + "|" + (avatarHash == null ? "" : avatarHash) + (discordId == null ? "|-" : "");
         }
     }
 
@@ -210,6 +243,22 @@ public final class SocialModel {
         public final boolean shareTyping;
         /** CHAT2: the service has the two switches ({@code privacy} carries them). */
         public final boolean chatPrivacy;
+        /** SOC-ID: the account's ways in, Discord first ("Bağlı hesaplar"); from a service before SOC-ID, its Discord. */
+        public final List<Identity> identities;
+        /** SOC-ID: the service lists them ({@code identities} in {@code me}): linking and removing are there. */
+        public final boolean identitiesListed;
+        /** SOC-ID: the way this session signed in with ("Bu cihaz"); null when unknown (the forum's door, older services). */
+        @Nullable
+        public final String signInVia;
+        /** SOC-ID: where the name comes from, {@link #NAME_DISCORD}, {@link #NAME_OWN} or {@link #NAME_UNSET}. */
+        public final String nameSource;
+
+        /** The name follows Discord's (every account before SOC-ID). */
+        public static final String NAME_DISCORD = "discord";
+        /** The player chose it. */
+        public static final String NAME_OWN = "own";
+        /** A new account's "Oyuncu" and four digits, never replaced: the name step asks for one. */
+        public static final String NAME_UNSET = "unset";
 
         public Me(Profile profile, String friendCode, String status, boolean shareServer, boolean shareLastSeen,
                   @Nullable String createdOn) {
@@ -225,6 +274,15 @@ public final class SocialModel {
         public Me(Profile profile, String friendCode, String status, boolean shareServer, boolean shareLastSeen,
                   @Nullable String createdOn, @Nullable Limited limited, List<ModNotice> notices, boolean moderation,
                   boolean shareRead, boolean shareTyping, boolean chatPrivacy) {
+            this(profile, friendCode, status, shareServer, shareLastSeen, createdOn, limited, notices, moderation, shareRead,
+                    shareTyping, chatPrivacy, Collections.singletonList(Identity.discordOf(profile, createdOn)), false, null,
+                    NAME_DISCORD);
+        }
+
+        private Me(Profile profile, String friendCode, String status, boolean shareServer, boolean shareLastSeen,
+                   @Nullable String createdOn, @Nullable Limited limited, List<ModNotice> notices, boolean moderation,
+                   boolean shareRead, boolean shareTyping, boolean chatPrivacy, List<Identity> identities,
+                   boolean identitiesListed, @Nullable String signInVia, String nameSource) {
             this.profile = profile;
             this.friendCode = friendCode;
             this.status = status;
@@ -237,6 +295,10 @@ public final class SocialModel {
             this.shareRead = shareRead;
             this.shareTyping = shareTyping;
             this.chatPrivacy = chatPrivacy;
+            this.identities = Collections.unmodifiableList(new ArrayList<>(identities));
+            this.identitiesListed = identitiesListed;
+            this.signInVia = signInVia;
+            this.nameSource = nameSource;
         }
 
         @Nullable
@@ -247,21 +309,47 @@ public final class SocialModel {
             String status = Json.str(o, "status", Status.ONLINE);
             if (!Status.isKnown(status)) status = Status.ONLINE;
             List<ModNotice> notices = new ArrayList<>();
-            for (JsonObject n : Json.objects(o, "notices")) {
-                ModNotice notice = ModNotice.read(n);
-                if (notice != null) notices.add(notice);
+            // SOC-ID: the notes about the ways in come in identityNotices, apart from notices (phone apps from before
+            // SOC-ID show a kind they do not know as a moderator's warning); both are shown and seen alike.
+            for (String key : new String[] {"notices", "identityNotices"}) {
+                for (JsonObject n : Json.objects(o, key)) {
+                    ModNotice notice = ModNotice.read(n);
+                    if (notice != null) notices.add(notice);
+                }
             }
             boolean moderation = o != null && (o.has("notices") || o.has("limited"));
             boolean chatPrivacy = privacy != null && (privacy.has("shareRead") || privacy.has("shareTyping"));
+            String createdOn = Json.str(o, "createdOn");
+            // SOC-ID: the ways in; a service before SOC-ID has none to list, its accounts are their Discord.
+            boolean listed = o != null && o.has("identities") && o.get("identities").isJsonArray();
+            List<Identity> identities = new ArrayList<>();
+            if (listed) {
+                for (JsonObject i : Json.objects(o, "identities")) {
+                    Identity identity = Identity.read(i);
+                    if (identity == null) continue;
+                    boolean twice = false;
+                    for (Identity seen : identities) twice |= seen.provider.equals(identity.provider);
+                    if (!twice) identities.add(identity);
+                }
+                // Discord first, as the service sorts them.
+                Collections.sort(identities, (a, b) -> Integer.compare(Identity.order(a.provider), Identity.order(b.provider)));
+            } else {
+                identities.add(Identity.discordOf(profile, createdOn));
+            }
+            String via = Json.str(o, "signInVia");
+            if (!SignInFlow.isProvider(via)) via = null;
+            String source = Json.str(o, "nameSource", NAME_DISCORD);
+            if (!NAME_OWN.equals(source) && !NAME_UNSET.equals(source)) source = NAME_DISCORD;
             return new Me(profile, Json.str(o, "friendCode", ""), status,
                     Json.bool(privacy, "shareServer", false), Json.bool(privacy, "shareLastSeen", true),
-                    Json.str(o, "createdOn"), Limited.read(Json.obj(o, "limited")), notices, moderation,
-                    Json.bool(privacy, "shareRead", true), Json.bool(privacy, "shareTyping", true), chatPrivacy);
+                    createdOn, Limited.read(Json.obj(o, "limited")), notices, moderation,
+                    Json.bool(privacy, "shareRead", true), Json.bool(privacy, "shareTyping", true), chatPrivacy,
+                    identities, listed, via, source);
         }
 
         public Me withStatus(String newStatus) {
             return new Me(profile, friendCode, newStatus, shareServer, shareLastSeen, createdOn, limited, notices, moderation,
-                    shareRead, shareTyping, chatPrivacy);
+                    shareRead, shareTyping, chatPrivacy, identities, identitiesListed, signInVia, nameSource);
         }
 
         /** The same account without the notices the player has seen (they go from the service too). */
@@ -269,7 +357,7 @@ public final class SocialModel {
             List<ModNotice> left = new ArrayList<>();
             for (ModNotice n : notices) if (!seen.contains(n.id)) left.add(n);
             return new Me(profile, friendCode, status, shareServer, shareLastSeen, createdOn, limited, left, moderation,
-                    shareRead, shareTyping, chatPrivacy);
+                    shareRead, shareTyping, chatPrivacy, identities, identitiesListed, signInVia, nameSource);
         }
 
         /** With a notice that came live ({@code {"t":"notice"}}), unless it is there already. */
@@ -278,13 +366,79 @@ public final class SocialModel {
             List<ModNotice> next = new ArrayList<>(notices);
             next.add(notice);
             return new Me(profile, friendCode, status, shareServer, shareLastSeen, createdOn, limited, next, true,
-                    shareRead, shareTyping, chatPrivacy);
+                    shareRead, shareTyping, chatPrivacy, identities, identitiesListed, signInVia, nameSource);
         }
 
         /** TEAM6: the same account wearing another tag (null: none). */
         public Me withBadge(@Nullable Badge badge) {
             return new Me(profile.withBadge(badge), friendCode, status, shareServer, shareLastSeen, createdOn, limited, notices,
-                    moderation, shareRead, shareTyping, chatPrivacy);
+                    moderation, shareRead, shareTyping, chatPrivacy, identities, identitiesListed, signInVia, nameSource);
+        }
+
+        /**
+         * SOC-ID: the account's number is its Discord id (every account opened with Discord, while that Discord is still
+         * on it). Only such accounts have 7/24 Bulut and the Projects skin for now ({@code discord_required} otherwise).
+         */
+        public boolean discordNumber() {
+            return profile.discordId != null && profile.discordId.equals(profile.id);
+        }
+
+        /** SOC-ID: a new account's placeholder name ("Oyuncu" and four digits): the name step asks for the player's. */
+        public boolean nameUnset() {
+            return NAME_UNSET.equals(nameSource);
+        }
+
+        /** SOC-ID: the way in of {@code provider}, or null when it is not linked. */
+        @Nullable
+        public Identity identity(@Nullable String provider) {
+            for (Identity i : identities) if (i.provider.equals(provider)) return i;
+            return null;
+        }
+    }
+
+    /**
+     * SOC-ID ({@code me.identities}): one way into the account, as "Bağlı hesaplar" lists it: the provider, the day it
+     * was linked ({@code YYYY-MM-DD}, a Turkey day), "Yeni" for 7 days after a link to an older account, and a hint
+     * (Discord: the Discord username; Microsoft: none, nothing about it is kept). Unknown providers are skipped.
+     */
+    public static final class Identity {
+        public final String provider;
+        @Nullable
+        public final String linkedOn;
+        public final boolean isNew;
+        @Nullable
+        public final String hint;
+
+        public Identity(String provider, @Nullable String linkedOn, boolean isNew, @Nullable String hint) {
+            this.provider = provider;
+            this.linkedOn = linkedOn;
+            this.isNew = isNew;
+            this.hint = hint;
+        }
+
+        @Nullable
+        public static Identity read(@Nullable JsonObject o) {
+            String provider = Json.str(o, "provider");
+            if (!SignInFlow.isProvider(provider)) return null;
+            String linkedOn = Json.str(o, "linkedOn");
+            if (linkedOn != null && !linkedOn.matches("\\d{4}-\\d{2}-\\d{2}")) linkedOn = null;
+            String hint = Json.str(o, "hint");
+            if (hint != null) {
+                hint = hint.trim();
+                if (hint.isEmpty() || hint.length() > 64) hint = null;
+            }
+            return new Identity(provider, linkedOn, Json.bool(o, "isNew", false), hint);
+        }
+
+        /** A service before SOC-ID: the account is its Discord, linked when the account was made. */
+        static Identity discordOf(Profile profile, @Nullable String createdOn) {
+            String hint = profile.username.trim().isEmpty() ? null : profile.username.trim();
+            return new Identity(SignInFlow.DISCORD, createdOn != null && createdOn.matches("\\d{4}-\\d{2}-\\d{2}") ? createdOn : null,
+                    false, hint);
+        }
+
+        static int order(String provider) {
+            return SignInFlow.DISCORD.equals(provider) ? 0 : 1;
         }
     }
 
@@ -309,13 +463,25 @@ public final class SocialModel {
         /** CHAT2: fewer reaction changes a day ({@code perDay}). */
         public static final String CHAT_REACTIONS = "chat_reactions";
 
+        /** SOC-ID ({@code reason}): whose age it is, the Discord account's (before SOC-ID always). */
+        public static final String REASON_DISCORD = "discord";
+        /** SOC-ID: the Projects account's own age (opened with Microsoft, or newer than its Discord): "Hesabın yeni". */
+        public static final String REASON_ACCOUNT = "account";
+
         public final long until;
         /** key → the daily cap ({@code perDay}; 0 when the item has none). */
         public final Map<String, Integer> items;
+        /** {@link #REASON_DISCORD} or {@link #REASON_ACCOUNT}. */
+        public final String reason;
 
         public Limited(long until, Map<String, Integer> items) {
+            this(until, items, REASON_DISCORD);
+        }
+
+        public Limited(long until, Map<String, Integer> items, String reason) {
             this.until = until;
             this.items = Collections.unmodifiableMap(new LinkedHashMap<>(items));
+            this.reason = REASON_ACCOUNT.equals(reason) ? REASON_ACCOUNT : REASON_DISCORD;
         }
 
         @Nullable
@@ -328,7 +494,12 @@ public final class SocialModel {
                 String key = Json.str(item, "key");
                 if (key != null && key.matches("[a-z_]{1,32}")) items.put(key, (int) Math.max(0, Json.num(item, "perDay", 0)));
             }
-            return new Limited(until, items);
+            return new Limited(until, items, Json.str(o, "reason", REASON_DISCORD));
+        }
+
+        /** SOC-ID: the limits come from this account's own age ("Hesabın yeni olduğu için"), not a Discord account's. */
+        public boolean accountAge() {
+            return REASON_ACCOUNT.equals(reason);
         }
 
         /** Still limited at {@code nowSeconds} (the limits lift by themselves). */
@@ -357,19 +528,34 @@ public final class SocialModel {
     public static final class ModNotice {
         public static final String WARNING = "warning";
         public static final String PROFILE_RESET = "profile_reset";
+        /** SOC-ID: a way in was linked to the account ({@link #provider}): every device the player opens hears it once. */
+        public static final String IDENTITY_LINKED = "identity_linked";
+        /** SOC-ID: a way in was removed from the account ({@link #provider}). */
+        public static final String IDENTITY_REMOVED = "identity_removed";
 
         public final String id;
-        /** {@code warning} or {@code profile_reset} (others are kept, shown as a warning). */
+        /**
+         * {@code warning}, {@code profile_reset}, SOC-ID's {@code identity_linked} and {@code identity_removed}; other
+         * kinds (a later service's, SKIN1's {@code skin_reset}) are kept and never shown here ({@link #shown}).
+         */
         public final String kind;
         public final long at;
         @Nullable
         public final String reason;
+        /** SOC-ID: the way in an {@code identity_*} note is about ({@code discord}, {@code microsoft}); null otherwise. */
+        @Nullable
+        public final String provider;
 
         public ModNotice(String id, String kind, long at, @Nullable String reason) {
+            this(id, kind, at, reason, null);
+        }
+
+        public ModNotice(String id, String kind, long at, @Nullable String reason, @Nullable String provider) {
             this.id = id;
             this.kind = kind;
             this.at = at;
             this.reason = reason;
+            this.provider = SignInFlow.isProvider(provider) ? provider : null;
         }
 
         @Nullable
@@ -381,7 +567,22 @@ public final class SocialModel {
             }
             if (id == null || !id.matches("[A-Za-z0-9_:-]{1,64}")) return null;
             String kind = Json.str(o, "kind", WARNING);
-            return new ModNotice(id, kind, Json.num(o, "at", 0), Json.str(o, "reason"));
+            return new ModNotice(id, kind, Json.num(o, "at", 0), Json.str(o, "reason"), Json.str(o, "provider"));
+        }
+
+        /** A moderator's note this app shows ("Uyarı aldın", "Profil resmin sıfırlandı"). */
+        public boolean moderation() {
+            return WARNING.equals(kind) || PROFILE_RESET.equals(kind);
+        }
+
+        /** SOC-ID: a note about the account's ways in that this app shows (its provider known). */
+        public boolean identity() {
+            return (IDENTITY_LINKED.equals(kind) || IDENTITY_REMOVED.equals(kind)) && provider != null;
+        }
+
+        /** Shown at all: unknown kinds stay hidden (and unseen, for a launcher that knows them). */
+        public boolean shown() {
+            return moderation() || identity();
         }
     }
 

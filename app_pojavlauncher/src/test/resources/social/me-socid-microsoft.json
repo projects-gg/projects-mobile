@@ -1,0 +1,44 @@
+{
+ "id": "9123456789012345678",
+ "username": "Oyuncu4821",
+ "displayName": "Oyuncu4821",
+ "avatar": "preset:fox",
+ "avatarHash": null,
+ "discordId": null,
+ "identities": [
+  {
+   "provider": "microsoft",
+   "linkedOn": "2026-11-01",
+   "isNew": false,
+   "hint": null
+  }
+ ],
+ "signInVia": "microsoft",
+ "nameSource": "unset",
+ "discordAvatarHash": null,
+ "friendCode": "PRJ-7K2M-QX4D",
+ "status": "online",
+ "privacy": {
+  "shareServer": false,
+  "shareLastSeen": true,
+  "shareRead": true,
+  "shareTyping": true
+ },
+ "createdOn": "2026-11-01",
+ "settings": null,
+ "limited": {
+  "until": 1793577600,
+  "items": [
+   {
+    "key": "crew_found"
+   },
+   {
+    "key": "chat_messages",
+    "perDay": 100
+   }
+  ],
+  "reason": "account"
+ },
+ "notices": [],
+ "badge": null
+}

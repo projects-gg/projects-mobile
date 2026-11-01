@@ -59,7 +59,10 @@ public final class SessionStore {
                 String verifier = Json.str(attemptJson, "verifier");
                 String challenge = Json.str(attemptJson, "challenge");
                 if (verifier != null && challenge != null) {
-                    attempt = new SignInFlow.Attempt(verifier, challenge, Json.num(attemptJson, "startedAt", 0));
+                    // SOC-ID: the way in and what it is for (a file from before is Discord's sign-in).
+                    attempt = new SignInFlow.Attempt(verifier, challenge, Json.num(attemptJson, "startedAt", 0),
+                            Json.str(attemptJson, "provider"), SignInFlow.Purpose.of(Json.str(attemptJson, "purpose")),
+                            Json.str(attemptJson, "url"));
                 }
             }
             return new Saved(token, Json.str(o, "userId"), Json.obj(o, "me"), attempt);
@@ -80,6 +83,9 @@ public final class SessionStore {
             a.addProperty("verifier", attempt.verifier);
             a.addProperty("challenge", attempt.challenge);
             a.addProperty("startedAt", attempt.startedAt);
+            a.addProperty("provider", attempt.provider);
+            a.addProperty("purpose", attempt.purpose.key());
+            if (attempt.url != null) a.addProperty("url", attempt.url);
             o.add("attempt", a);
         }
         try {

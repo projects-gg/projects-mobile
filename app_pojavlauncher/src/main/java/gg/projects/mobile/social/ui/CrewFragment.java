@@ -1998,7 +1998,8 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         if (me != null && me.limited != null && me.limited.active(now) && me.limited.has(SocialModel.Limited.CREW_LINK)) {
             int days = Math.max(1, SocialModel.Limited.daysLeft(me.limited.until, now));
             Haptics.reject(mList);
-            SocialUi.toast(activity, getResources().getQuantityString(R.plurals.projects_limited_no_link, days, days));
+            SocialUi.toast(activity, getResources().getQuantityString(me.limited.accountAge() ? R.plurals.projects_limited_no_link_account
+                    : R.plurals.projects_limited_no_link, days, days));
             return;
         }
         service.createInviteLink(crewId, new SocialService.Result<String>() {
@@ -2014,7 +2015,8 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
                     long at = SocialService.nowSeconds();
                     int days = Math.max(1, SocialModel.Limited.daysLeft(problem.until == null ? at + 86_400 : problem.until, at));
                     Haptics.reject(mList);
-                    SocialUi.toast(activity, activity.getResources().getQuantityString(R.plurals.projects_limited_no_link, days, days));
+                    SocialUi.toast(activity, activity.getResources().getQuantityString(SocialUi.limitedRes(activity,
+                            R.plurals.projects_limited_no_link, R.plurals.projects_limited_no_link_account), days, days));
                 } else {
                     SocialUi.toastProblem(activity, problem, mList);
                 }
@@ -2495,7 +2497,8 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         long now = SocialService.nowSeconds();
         if (me != null && me.limited != null && me.limited.active(now) && me.limited.has(SocialModel.Limited.CREW_FOUND)) {
             int days = Math.max(1, SocialModel.Limited.daysLeft(me.limited.until, now));
-            mCreateReason.setText(getResources().getQuantityString(R.plurals.projects_limited_no_crew, days, days));
+            mCreateReason.setText(getResources().getQuantityString(me.limited.accountAge() ? R.plurals.projects_limited_no_crew_account
+                    : R.plurals.projects_limited_no_crew, days, days));
             mCreateReason.setVisibility(View.VISIBLE);
             gg.projects.mobile.ui.CardMotion.fadeIn(mCreateReason);
             Haptics.reject(button);

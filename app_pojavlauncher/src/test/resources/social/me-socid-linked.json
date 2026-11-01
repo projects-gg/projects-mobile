@@ -1,0 +1,71 @@
+{
+ "id": "100000000000000021",
+ "username": "blazerunner",
+ "displayName": "BlazeRunner",
+ "avatar": "discord",
+ "avatarHash": "a_0123456789abcdef0123456789abcdef",
+ "discordId": "100000000000000021",
+ "identities": [
+  {
+   "provider": "discord",
+   "linkedOn": "2026-10-21",
+   "isNew": false,
+   "hint": "blazerunner"
+  },
+  {
+   "provider": "microsoft",
+   "linkedOn": "2026-10-30",
+   "isNew": true,
+   "hint": null
+  },
+  {
+   "provider": "steam",
+   "linkedOn": "2026-10-31",
+   "isNew": true,
+   "hint": "4821"
+  }
+ ],
+ "signInVia": "microsoft",
+ "nameSource": "discord",
+ "discordAvatarHash": "a_0123456789abcdef0123456789abcdef",
+ "friendCode": "PRJ-B2ZE-RU9N",
+ "status": "online",
+ "privacy": {
+  "shareServer": false,
+  "shareLastSeen": true,
+  "shareRead": true,
+  "shareTyping": true
+ },
+ "createdOn": "2026-10-21",
+ "settings": null,
+ "limited": null,
+ "notices": [
+  {
+   "id": "1793400000000002",
+   "kind": "skin_reset",
+   "at": 1793400100,
+   "until": null
+  },
+  {
+   "id": "1793400000000003",
+   "kind": "warning",
+   "at": 1793400200,
+   "reason": "spam"
+  }
+ ],
+ "identityNotices": [
+  {
+   "id": "1793400000000001",
+   "kind": "identity_linked",
+   "at": 1793400000,
+   "provider": "microsoft"
+  },
+  {
+   "id": "1793400000000004",
+   "kind": "identity_removed",
+   "at": 1793400300,
+   "provider": "steam"
+  }
+ ],
+ "badge": null
+}

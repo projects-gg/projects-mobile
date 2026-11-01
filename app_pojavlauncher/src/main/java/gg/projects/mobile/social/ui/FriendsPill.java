@@ -164,9 +164,12 @@ public final class FriendsPill extends FrameLayout implements SocialService.List
         }
         float dp = getResources().getDisplayMetrics().density;
         boolean signedIn = service.signedIn();
+        // SOC-ID: once Microsoft opens accounts too, the pill opens a page with both ways in: "Giriş yap" with the
+        // friends icon, no brand (Blurple stays on the button that really opens Discord, design.md §6).
+        boolean neutral = service.signInOptions().equalWays();
         String shown;
         if (!signedIn) {
-            shown = "out";
+            shown = neutral ? "out|any" : "out";
         } else {
             SocialState state = service.state();
             List<Profile> faces = onlineFaces(service);
@@ -181,6 +184,21 @@ public final class FriendsPill extends FrameLayout implements SocialService.List
         if (kindChanged && Motion.enabled(context)) CardMotion.crossfade(mPill);
         mShown = shown;
         setVisibility(VISIBLE);
+        if (!signedIn && neutral) {
+            background(R.drawable.projects_friends_pill);
+            mFaces.setVisibility(GONE);
+            mFaces.removeAllViews();
+            mIcon.setVisibility(VISIBLE);
+            mIcon.setImageResource(R.drawable.projects_ic_users);
+            mIcon.setImageTintList(ContextCompat.getColorStateList(context, R.color.projects_ash_300));
+            mLabel.setVisibility(VISIBLE);
+            mLabel.setText(R.string.projects_social_pill_sign_in);
+            mLabel.setTextColor(ContextCompat.getColor(context, R.color.projects_bone_100));
+            mCount.setVisibility(GONE);
+            mDot.setVisibility(GONE);
+            mPill.setContentDescription(context.getString(R.string.projects_social_pill_sign_in_label));
+            return;
+        }
         if (!signedIn) {
             // Discord's own button: its Blurple, its white logo, "Bağlan".
             background(R.drawable.projects_friends_pill_discord);

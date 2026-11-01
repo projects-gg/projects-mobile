@@ -82,6 +82,12 @@ import gg.projects.mobile.social.ui.SocialUi;
  * and the relations version ({@link RelVersion}); the socket names that version when it connects and its hello says
  * whether the copy is still the service's, so a reconnect reads nothing when nothing changed. The answer is kept on the
  * phone ({@link KeptLists}): a start the same day shows it at once and reads only when the hello names another version.
+ *
+ * <p>SOC-ID (docs soc-id.md §8.2, §16): Microsoft signs in beside Discord through the same browser step while the
+ * service offers it ({@link SignInOptions}); an account opened with Microsoft picks its name first ({@link #setName});
+ * "Bağlı hesaplar" links another way in or removes one ({@link #linkIdentity}, {@link #unlinkIdentity}): the service
+ * hands the page, and the {@code projects://auth/done} link that comes back is claimed at {@code v1/me/identities/claim}
+ * while such a step waits ({@link SignInFlow.Attempt#claimPath}).
  */
 public final class SocialService implements ProjectsContent.Listener, PresenceConnection.Listener {
     private static final String TAG = "ProjectsSocial";
@@ -103,8 +109,14 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         void failed(SocialProblem problem);
     }
 
-    /** What the sign-in screen shows. */
-    public enum SignInStatus { IDLE, CHECKING, WAITING, CLAIMING, FAILED, UNAVAILABLE, RESTRICTED, SIGNUPS_CLOSED }
+    /**
+     * What the sign-in screen shows. SOC-ID: {@code NOT_LINKED}, a Microsoft account no Projects account has while new
+     * accounts open with Discord only; {@code PROVIDER_OFF}, that way in is switched off now.
+     */
+    public enum SignInStatus { IDLE, CHECKING, WAITING, CLAIMING, FAILED, UNAVAILABLE, RESTRICTED, SIGNUPS_CLOSED, NOT_LINKED, PROVIDER_OFF }
+
+    /** SOC-ID: a link or a removal of a way in ("Bağlı hesaplar"): asking the service, in the browser, claiming. */
+    public enum IdentityStatus { IDLE, STARTING, WAITING, CLAIMING }
 
     /** The connection as the screens tell it. */
     public enum Connection { OFF, CONNECTING, LIVE, UNAVAILABLE, REPLACED }
@@ -200,6 +212,29 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     private boolean mAfterKeptRefresh;
     private boolean mAfterKeptForce;
 
+    /** SOC-ID: how long the ways in read from the service count (the sign-in and "Bağlı hesaplar" read them again after). */
+    private static final long OPTIONS_FRESH_MS = 10 * 60_000;
+    /** SOC-ID: the ways in the service offers ({@code GET /v1/auth/providers}), as last read (kept between starts). */
+    private SignInOptions mOptions;
+    private long mOptionsAt;
+    private boolean mOptionsReading;
+    /** SOC-ID: the way in of the sign-in on its way (the waiting card's words, the refusal's). */
+    private String mSignInProvider = SignInFlow.DISCORD;
+    /** SOC-ID: the profile as the service last sent it: the session file keeps it beside a link that waits. */
+    @Nullable
+    private JsonObject mMeJson;
+    /** SOC-ID: a link or a removal on its way (its browser step: {@link #mSignIn}). */
+    private IdentityStatus mIdentityStatus = IdentityStatus.IDLE;
+    private String mIdentityProvider = SignInFlow.DISCORD;
+    private SignInFlow.Purpose mIdentityPurpose = SignInFlow.Purpose.LINK;
+    /**
+     * SOC-ID: the note the service writes for a link or removal made on this phone ({@code identity_linked:microsoft})
+     * and since when: it is no news here, so it is hidden without a word ({@link #hideOwnNotes}; other devices show it).
+     */
+    @Nullable
+    private String mOwnIdentityNote;
+    private long mOwnIdentityNoteSince;
+
     private SocialService(Context app) {
         mApp = app;
         mDebug = SocialDebug.read(app);
@@ -219,18 +254,36 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         final Context assets = app;
         ChatLinks.setSource(() -> assets.getAssets().open("social/chat-links.json"));
         mIo.execute(ChatLinks::rulesVersion);
+        mOptions = SignInOptions.decode(mPrefs.signInOptions());
         SessionStore.Saved saved = mStore.load();
         mToken = saved.token;
         mApi.setToken(mToken);
-        if (mToken != null && saved.me != null) mState.setMe(Me.read(saved.me));
+        if (mToken != null && saved.me != null) {
+            mState.setMe(Me.read(saved.me));
+            mMeJson = saved.me;
+        }
         if (mToken == null) {
-            mSignIn.restore(saved.attempt, nowSeconds());
-            if (mSignIn.phase() == SignInFlow.Phase.WAITING) mSignInStatus = SignInStatus.WAITING;
+            // A sign-in kept from before (SOC-ID: never a link of a session that is gone).
+            if (saved.attempt != null && !saved.attempt.forIdentity()) mSignIn.restore(saved.attempt, nowSeconds());
+            if (mSignIn.phase() == SignInFlow.Phase.WAITING) {
+                mSignInStatus = SignInStatus.WAITING;
+                mSignInProvider = mSignIn.attempt() == null ? SignInFlow.DISCORD : mSignIn.attempt().provider;
+            }
             // M048 (SOC-DISK): nobody is signed in on this phone, so nothing of an account stays kept.
             mKept.clear();
-        } else if (saved.userId != null) {
-            mChat.open(saved.userId);
-            loadKept(saved.userId);
+        } else {
+            // SOC-ID: a link or a removal whose browser step may still come back.
+            if (saved.attempt != null && saved.attempt.forIdentity()) {
+                mSignIn.restore(saved.attempt, nowSeconds());
+                if (mSignIn.phase() == SignInFlow.Phase.WAITING) {
+                    mIdentityProvider = saved.attempt.provider;
+                    mIdentityPurpose = saved.attempt.purpose;
+                }
+            }
+            if (saved.userId != null) {
+                mChat.open(saved.userId);
+                loadKept(saved.userId);
+            }
         }
         ProjectsContent.addListener(this);
     }
@@ -741,7 +794,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
                     Me parsed = Me.read(me);
                     if (parsed != null) {
                         mState.setMe(parsed);
-                        mStore.save(mToken, parsed.profile.id, me, null);
+                        keepSession(parsed.profile.id, me);
                         mChat.open(parsed.profile.id);
                     }
                     List<String> order = mOrderSent;
@@ -921,21 +974,46 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     /** "Discord ile giriş yap": the browser opens only when the service answers. */
     @MainThread
     public void beginSignIn(final Activity activity) {
+        beginSignIn(activity, SignInFlow.DISCORD);
+    }
+
+    /**
+     * SOC-ID: "Discord ile giriş yap" or "Microsoft ile giriş yap". Discord's page opens once the service answers;
+     * Microsoft's once the service also still offers it (Studio may have switched it off since the screen showed).
+     */
+    @MainThread
+    public void beginSignIn(final Activity activity, final String provider) {
         if (mToken != null || mSignInStatus == SignInStatus.CHECKING || mSignInStatus == SignInStatus.CLAIMING) return;
+        final String way = SignInFlow.isProvider(provider) ? provider : SignInFlow.DISCORD;
+        final boolean discord = SignInFlow.DISCORD.equals(way);
         mSignIn.starting();
         mSignInStatus = SignInStatus.CHECKING;
+        mSignInProvider = way;
         mRestrictedUntil = null;
         changed();
         mIo.execute(() -> {
             try {
-                mApi.health();
+                final SignInOptions options;
+                if (discord) {
+                    mApi.health();
+                    options = null;
+                } else {
+                    options = mApi.providers();
+                }
                 mMain.post(() -> {
+                    if (options != null) keepOptions(options);
                     if (mSignInStatus != SignInStatus.CHECKING) return;
-                    SignInFlow.Attempt attempt = mSignIn.begin(mRandom, nowSeconds());
+                    if (options != null && !options.offers(way)) {
+                        mSignIn.reset();
+                        mSignInStatus = SignInStatus.PROVIDER_OFF;
+                        changed();
+                        return;
+                    }
+                    SignInFlow.Attempt attempt = mSignIn.begin(mRandom, nowSeconds(), way);
                     mStore.save(null, null, null, attempt);
                     mSignInStatus = SignInStatus.WAITING;
                     changed();
-                    openSignInPage(activity, attempt);
+                    openSignInPage(pageHost(activity), attempt);
                 });
             } catch (SocialProblem problem) {
                 mMain.post(() -> {
@@ -947,21 +1025,72 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         });
     }
 
-    /** "Tarayıcıyı yeniden aç": the same attempt's page again. */
+    /** SOC-ID: the way in of the sign-in on its way or last tried ({@link SignInFlow#DISCORD}, {@link SignInFlow#MICROSOFT}). */
+    public String signInProvider() {
+        SignInFlow.Attempt attempt = mSignIn.attempt();
+        return attempt != null && !attempt.forIdentity() ? attempt.provider : mSignInProvider;
+    }
+
+    /** SOC-ID: the ways in the service offers, as last read (Discord only before the first read). */
+    public SignInOptions signInOptions() {
+        return mOptions;
+    }
+
+    /**
+     * SOC-ID: reads the ways in when the sign-in or "Bağlı hesaplar" shows (once in ten minutes, {@code force} at once);
+     * a failed read keeps what was known.
+     */
+    @MainThread
+    public void readSignInOptions(boolean force) {
+        if (!enabled() || mOptionsReading) return;
+        if (!force && mOptionsAt > 0 && System.currentTimeMillis() - mOptionsAt < OPTIONS_FRESH_MS) return;
+        mOptionsReading = true;
+        mIo.execute(() -> {
+            SignInOptions read = null;
+            try {
+                read = mApi.providers();
+            } catch (SocialProblem problem) {
+                Log.i(TAG, "ways in not read: " + problem.kind);
+            }
+            final SignInOptions options = read;
+            mMain.post(() -> {
+                mOptionsReading = false;
+                if (options != null) keepOptions(options);
+            });
+        });
+    }
+
+    private void keepOptions(SignInOptions options) {
+        mOptionsAt = System.currentTimeMillis();
+        if (options.equals(mOptions)) return;
+        mOptions = options;
+        mPrefs.setSignInOptions(options.encode());
+        changed();
+    }
+
+    /** "Tarayıcıyı yeniden aç": the same attempt's page again (a sign-in's, or SOC-ID's link or removal). */
     @MainThread
     public void reopenSignInPage(Activity activity) {
         SignInFlow.Attempt attempt = mSignIn.attempt();
         if (attempt != null && mSignIn.waiting(nowSeconds())) openSignInPage(activity, attempt);
     }
 
-    private void openSignInPage(Activity activity, SignInFlow.Attempt attempt) {
-        String url = SignInFlow.startUrl(mApi.base(), attempt.challenge);
+    /** The activity that asked, or the launcher on screen when that one went meanwhile (a turn of the phone). */
+    @Nullable
+    private Activity pageHost(Activity asked) {
+        if (asked != null && !asked.isFinishing() && !asked.isDestroyed()) return asked;
+        return uiActivity();
+    }
+
+    private void openSignInPage(@Nullable Activity activity, SignInFlow.Attempt attempt) {
+        String url = attempt.forIdentity() ? attempt.url : SignInFlow.startUrl(mApi.base(), attempt.provider, attempt.challenge);
+        if (url == null) return;
         if (mDebug.logBrowser) {
             // Debug builds on the emulator: a script plays the browser (no browser runs there).
-            Log.i(TAG, "sign-in page: " + url);
+            Log.i(TAG, (attempt.forIdentity() ? "identity page: " : "sign-in page: ") + url);
             return;
         }
-        openBrowser(activity, url);
+        if (activity != null) openBrowser(activity, url);
     }
 
     /**
@@ -988,6 +1117,11 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
 
     @MainThread
     public void cancelSignIn() {
+        if (mToken != null) {
+            // SOC-ID: a link or a removal that waited for the browser.
+            cancelIdentity();
+            return;
+        }
         mSignIn.reset();
         mStore.save(mToken, mState.myId(), null, null);
         mSignInStatus = SignInStatus.IDLE;
@@ -997,6 +1131,8 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     /**
      * {@code projects://auth/done?c=<code>} came back: claimed only for this app's own waiting sign-in.
      * False when it was not for one (a link any web page can open): then nothing else happens either.
+     * SOC-ID: while a link or a removal of the signed-in account waits, the code is that one's
+     * ({@code v1/me/identities/claim}); a sign-in's goes to {@code v1/auth/claim} as before.
      */
     @MainThread
     public boolean onAuthLink(@Nullable String code) {
@@ -1005,8 +1141,13 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
             Log.i(TAG, "sign-in link ignored: no sign-in of this app waits");
             return false;
         }
+        if (attempt.forIdentity()) {
+            claimIdentity(attempt, code);
+            return true;
+        }
         mStore.save(null, null, null, null);
         mSignInStatus = SignInStatus.CLAIMING;
+        mSignInProvider = attempt.provider;
         changed();
         final String device = deviceLabel();
         mIo.execute(() -> {
@@ -1022,6 +1163,12 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
                         mSignInStatus = SignInStatus.RESTRICTED;
                     } else if (problem.kind == SocialProblem.Kind.SIGNUPS_CLOSED) {
                         mSignInStatus = SignInStatus.SIGNUPS_CLOSED;
+                    } else if (problem.kind == SocialProblem.Kind.IDENTITY_NOT_LINKED) {
+                        // SOC-ID: "Bu Microsoft hesabı henüz bir Projects hesabına bağlı değil. Önce Discord ile gir…"
+                        mSignInStatus = SignInStatus.NOT_LINKED;
+                    } else if (problem.kind == SocialProblem.Kind.PROVIDER_OFF) {
+                        mSignInStatus = SignInStatus.PROVIDER_OFF;
+                        readSignInOptions(true);
                     } else {
                         mSignInStatus = problem.kind == SocialProblem.Kind.UNAVAILABLE ? SignInStatus.UNAVAILABLE : SignInStatus.FAILED;
                     }
@@ -1030,6 +1177,228 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
             }
         });
         return true;
+    }
+
+    // ---- SOC-ID: linked accounts ("Bağlı hesaplar") ----
+
+    /** Where a link or a removal stands (its browser step waits in {@link #mSignIn}). */
+    public IdentityStatus identityStatus() {
+        if (mToken == null) return IdentityStatus.IDLE;
+        if (mIdentityStatus == IdentityStatus.STARTING || mIdentityStatus == IdentityStatus.CLAIMING) return mIdentityStatus;
+        return mSignIn.identityWaiting(nowSeconds()) != null ? IdentityStatus.WAITING : IdentityStatus.IDLE;
+    }
+
+    /** The way in being linked or removed (while {@link #identityStatus} is not idle). */
+    public String identityProvider() {
+        return mIdentityProvider;
+    }
+
+    public SignInFlow.Purpose identityPurpose() {
+        return mIdentityPurpose;
+    }
+
+    /** "Microsoft hesabını bağla": the service hands the page; the browser proves the account if needed, then links. */
+    @MainThread
+    public void linkIdentity(Activity activity, String provider) {
+        startIdentity(activity, provider, SignInFlow.Purpose.LINK);
+    }
+
+    /**
+     * "Kaldır" after its question: done at once when this session's sign-in is fresh, otherwise the browser proves a
+     * way in that stays first.
+     */
+    @MainThread
+    public void unlinkIdentity(Activity activity, String provider) {
+        startIdentity(activity, provider, SignInFlow.Purpose.UNLINK);
+    }
+
+    private void startIdentity(final Activity activity, final String provider, final SignInFlow.Purpose purpose) {
+        final String token = mToken;
+        if (token == null || !SignInFlow.isProvider(provider) || identityStatus() != IdentityStatus.IDLE) return;
+        final SignInFlow.Attempt made = SignInFlow.make(mRandom, nowSeconds(), provider, purpose);
+        mSignIn.reset();
+        mIdentityStatus = IdentityStatus.STARTING;
+        mIdentityProvider = provider;
+        mIdentityPurpose = purpose;
+        changed();
+        mIo.execute(() -> {
+            mApi.bind(token);
+            try {
+                final String url;
+                final JsonObject meNow;
+                if (purpose == SignInFlow.Purpose.LINK) {
+                    url = mApi.linkIdentity(provider, made.challenge);
+                    meNow = null;
+                } else {
+                    JsonObject answer = mApi.unlinkIdentity(provider, made.challenge);
+                    url = Json.str(answer, "url");
+                    meNow = url == null ? Json.obj(answer, "me") : null;
+                }
+                mMain.post(() -> {
+                    // Signed out, or "Vazgeç" while the service was asked.
+                    if (!token.equals(mToken) || mIdentityStatus != IdentityStatus.STARTING) return;
+                    mIdentityStatus = IdentityStatus.IDLE;
+                    if (meNow != null) {
+                        identityDone(made, meNow);
+                        return;
+                    }
+                    String page = SignInFlow.pageUrl(mApi.base(), url);
+                    if (page == null) {
+                        Log.w(TAG, "identity page refused");
+                        changed();
+                        identityProblem(new SocialProblem(SocialProblem.Kind.FAILED, 0, "page", 0), provider);
+                        return;
+                    }
+                    SignInFlow.Attempt attempt = made.withUrl(page);
+                    mSignIn.waitFor(attempt);
+                    keepSession(null, null);
+                    changed();
+                    openSignInPage(pageHost(activity), attempt);
+                });
+            } catch (final SocialProblem problem) {
+                mMain.post(() -> {
+                    if (mIdentityStatus == IdentityStatus.STARTING) mIdentityStatus = IdentityStatus.IDLE;
+                    if (!token.equals(mToken)) return;
+                    changed();
+                    if (!sessionProblem(problem)) identityProblem(problem, provider);
+                });
+            } finally {
+                mApi.bind(null);
+            }
+        });
+    }
+
+    /** "Vazgeç" while a link or a removal waits for the browser (or for the service's page). */
+    @MainThread
+    public void cancelIdentity() {
+        mSignIn.reset();
+        mIdentityStatus = IdentityStatus.IDLE;
+        if (mToken != null) keepSession(null, null);
+        changed();
+    }
+
+    private void claimIdentity(final SignInFlow.Attempt attempt, final String code) {
+        final String token = mToken;
+        if (token == null) {
+            mSignIn.reset();
+            return;
+        }
+        mIdentityStatus = IdentityStatus.CLAIMING;
+        mIdentityProvider = attempt.provider;
+        mIdentityPurpose = attempt.purpose;
+        keepSession(null, null);
+        changed();
+        mIo.execute(() -> {
+            mApi.bind(token);
+            try {
+                final JsonObject me = mApi.claimIdentity(attempt.verifier, code);
+                mMain.post(() -> {
+                    mIdentityStatus = IdentityStatus.IDLE;
+                    if (mSignIn.phase() == SignInFlow.Phase.CLAIMING) mSignIn.reset();
+                    if (!token.equals(mToken)) return;
+                    identityDone(attempt, me);
+                });
+            } catch (final SocialProblem problem) {
+                mMain.post(() -> {
+                    mIdentityStatus = IdentityStatus.IDLE;
+                    if (mSignIn.phase() == SignInFlow.Phase.CLAIMING) mSignIn.reset();
+                    if (!token.equals(mToken)) return;
+                    changed();
+                    if (!sessionProblem(problem)) identityProblem(problem, attempt.provider);
+                });
+            } finally {
+                mApi.bind(null);
+            }
+        });
+    }
+
+    /** A link or a removal is done: the profile the service answered with, its own note quietly seen, a short line. */
+    private void identityDone(SignInFlow.Attempt attempt, JsonObject meJson) {
+        Me me = Me.read(meJson);
+        if (me == null) {
+            changed();
+            refreshMeOnly();
+            return;
+        }
+        boolean linked = attempt.purpose == SignInFlow.Purpose.LINK;
+        mOwnIdentityNote = (linked ? SocialModel.ModNotice.IDENTITY_LINKED : SocialModel.ModNotice.IDENTITY_REMOVED) + ":" + attempt.provider;
+        mOwnIdentityNoteSince = attempt.startedAt;
+        mState.setMe(me);
+        keepSession(me.profile.id, meJson);
+        // M048: a profile read outside the lists' read: no version describes the copy shown now.
+        forgetRel();
+        changed();
+        Set<String> own = new HashSet<>();
+        for (SocialModel.ModNotice n : me.notices) if (ownIdentityNote(n)) own.add(n.id);
+        hideOwnNotes(own);
+        Context context = LanguageManager.wrap(mApp);
+        String name = providerName(attempt.provider);
+        SocialUi.toast(context, linked ? context.getString(R.string.projects_identity_linked_toast, name)
+                : context.getString(R.string.projects_identity_removed_toast, name));
+    }
+
+    /** What went wrong with a link or a removal, in the player's words. */
+    private void identityProblem(SocialProblem problem, String provider) {
+        Context context = LanguageManager.wrap(mApp);
+        SocialUi.toastLong(context, SocialUi.identityProblemText(context, problem, provider));
+    }
+
+    /** A 401 or a restriction ends the session (as every request's): true when it did. */
+    private boolean sessionProblem(SocialProblem problem) {
+        if (problem.kind == SocialProblem.Kind.SIGNED_OUT) {
+            sessionEnded(false, null);
+            return true;
+        }
+        if (problem.restricted()) {
+            sessionEnded(false, problem.until == null ? 0L : problem.until);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * The service's note about a link or a removal made on this phone (the same kind and way in, written since it
+     * started, give or take the clocks): no news here, so it is hidden without a word ({@link #hideOwnNotes}).
+     */
+    public boolean ownIdentityNote(SocialModel.ModNotice notice) {
+        if (!notice.identity() || mOwnIdentityNote == null) return false;
+        if (!mOwnIdentityNote.equals(notice.kind + ":" + notice.provider)) return false;
+        return notice.at >= mOwnIdentityNoteSince - 600 && notice.at <= nowSeconds() + 600;
+    }
+
+    /**
+     * SOC-ID: notes about a change made on this phone go from this phone only, never marked seen at the service:
+     * that would take them from the account's other devices, where they warn about a way in someone else changed.
+     */
+    @MainThread
+    public void hideOwnNotes(Set<String> ids) {
+        if (ids.isEmpty()) return;
+        mState.noticesSeen(ids);
+        changed();
+    }
+
+    /** "Discord", "Microsoft": brand names, the same in both languages. */
+    public static String providerName(@Nullable String provider) {
+        return SignInFlow.MICROSOFT.equals(provider) ? "Microsoft" : "Discord";
+    }
+
+    /** SOC-ID: the name step's "Devam et" ({@code PATCH /v1/me {name}}); the answer's profile replaces the placeholder. */
+    public void setName(String name, Result<JsonObject> result) {
+        JsonObject body = new JsonObject();
+        body.addProperty("name", ProfileName.clean(name));
+        patchMe(body, result);
+    }
+
+    /**
+     * Keeps the session on the phone: the token, the profile as the service sent it ({@code meJson}, else the last
+     * one) and SOC-ID's link or removal that waits for the browser (so its page can still come back after Android
+     * ended the app).
+     */
+    private void keepSession(@Nullable String userId, @Nullable JsonObject meJson) {
+        if (meJson != null) mMeJson = meJson;
+        SignInFlow.Attempt waiting = mSignIn.phase() == SignInFlow.Phase.WAITING && mSignIn.attempt() != null
+                && mSignIn.attempt().forIdentity() ? mSignIn.attempt() : null;
+        mStore.save(mToken, userId != null ? userId : mState.myId(), mMeJson, waiting);
     }
 
     /** A friend link ({@code projects://friend/<code>}) opened before signing in: kept for after the sign-in. */
@@ -1085,7 +1454,8 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         // M048: nothing an earlier session read or kept describes this one.
         forgetRel();
         mState.setMe(me);
-        mStore.save(token, me.profile.id, Json.obj(answer, "me"), null);
+        mMeJson = null;
+        keepSession(me.profile.id, Json.obj(answer, "me"));
         mSignInStatus = SignInStatus.IDLE;
         mRestrictedUntil = null;
         mUnavailable = false;
@@ -1187,6 +1557,10 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         mPrefs.clearAccount();
         mSignIn.reset();
         mSignInStatus = SignInStatus.IDLE;
+        // SOC-ID: the profile kept beside a link, the link or removal on its way, and its note.
+        mMeJson = null;
+        mIdentityStatus = IdentityStatus.IDLE;
+        mOwnIdentityNote = null;
         mUnavailable = false;
         mReplaced = false;
         mLastFetch = 0;
@@ -1549,7 +1923,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
                 mState.setMe(me);
                 // TEAM6: the player's own tag shows the same in their crews' lists.
                 mState.setMyBadge(me.profile.badge);
-                mStore.save(mToken, me.profile.id, answer, null);
+                keepSession(me.profile.id, answer);
                 // M21: "Rahatsız etmeyin" keeps plan reminders quiet.
                 syncPlanReminders();
             }
@@ -1579,7 +1953,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
                     Me parsed = Me.read(me);
                     if (parsed != null && token.equals(mToken)) {
                         mState.setMe(parsed);
-                        mStore.save(mToken, parsed.profile.id, me, null);
+                        keepSession(parsed.profile.id, me);
                         // M048: a profile read outside the lists' read: no version describes the copy shown now.
                         forgetRel();
                         changed();

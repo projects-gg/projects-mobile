@@ -310,7 +310,8 @@ public class AddFriendFragment extends Fragment implements SocialService.Listene
                 break;
             case "none":
             default:
-                line = user.username.isEmpty() || user.username.equals(user.name()) ? "" : "@" + user.username;
+                // SOC-ID: the Discord handle only while a Discord is linked.
+                line = SocialUi.handle(user) == null ? "" : SocialUi.handle(user);
                 mSend.setVisibility(View.VISIBLE);
                 mSend.setText(R.string.projects_social_send);
                 mSend.setOnClickListener(v -> send(code));

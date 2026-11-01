@@ -42,7 +42,7 @@
     <string name="projects_crew_home_invite">Ekip daveti</string>
 
     <string name="projects_social_consent_title">Arkadaşlarınla birlikte oyna</string>
-    <string name="projects_social_consent_body">Discord hesabınla giriş yaparsın. Arkadaşların adını, profil fotoğrafını ve ne oynadığını görür. E-postan ve şifren bize gelmez.</string>
+    <string name="projects_social_consent_body">Discord hesabınla giriş yaparsın. Arkadaşların senin adını, profil fotoğrafını ve ne oynadığını görür. E-postan ve şifren bize gelmez.</string>
     <string name="projects_social_privacy">Gizlilik</string>
     <string name="projects_social_privacy_url">https://projects.gg/gizlilik/#arkadaslar</string>
     <string name="projects_social_sign_in">Discord ile giriş yap</string>
@@ -825,4 +825,68 @@
     <string name="projects_badge_requests_on_line">Üyelerin arkadaşları etiketin kartından katılma isteği gönderebilir.</string>
     <string name="projects_badge_requests_off_line">Etiketin kartından katılma isteği gelmez.</string>
     <string name="projects_badge_settings_today">Ekibin ayarları bugün çok değişti. Yarın yeniden dene.</string>
+
+    <!-- SOC-ID: Microsoft beside Discord, the name step, linked accounts ("Bağlı hesaplar"). -->
+    <string name="projects_sign_in_microsoft">Microsoft ile giriş yap</string>
+    <string name="projects_sign_in_linked">Microsoft hesabını bağladıysan</string>
+    <string name="projects_sign_in_body_both">Discord ya da Microsoft hesabınla giriş yaparsın. Arkadaşların senin adını, profil fotoğrafını ve ne oynadığını görür. E-postan ve şifren bize gelmez.</string>
+    <string name="projects_sign_in_waiting_microsoft">Tarayıcıda Microsoft\'a giriş yap</string>
+    <string name="projects_sign_in_waiting_microsoft_note">Giriş yapınca burada devam edersin.</string>
+    <string name="projects_sign_in_microsoft_safety">Şifreni yalnız Microsoft\'un kendi sayfasında gir.</string>
+    <string name="projects_sign_in_provider_off">Şu an %1$s ile giriş yapılamıyor. Başka bir yolla dene.</string>
+    <string name="projects_social_pill_sign_in">Giriş yap</string>
+    <string name="projects_social_pill_sign_in_label">Arkadaşlar: Giriş yap</string>
+    <string name="projects_name_title">Arkadaşların seni hangi adla görsün?</string>
+    <string name="projects_name_label">Adın</string>
+    <string name="projects_name_continue">Devam et</string>
+    <string name="projects_name_empty">Bir ad yaz.</string>
+    <string name="projects_name_chars">Yalnız Türkçe ya da İngilizce harf, rakam, boşluk ve alt çizgi (_) kullanılabilir.</string>
+    <string name="projects_name_letters">En az 2 harf ya da rakam olmalı.</string>
+    <string name="projects_name_rejected">Bu ad kullanılamıyor.</string>
+    <string name="projects_name_today">Bugün adını daha fazla değiştiremezsin.</string>
+    <string name="projects_discord_only">Bu özellik şimdilik yalnız Discord ile açılmış hesaplarda var.</string>
+    <string name="projects_identity_title">Bağlı hesaplar</string>
+    <string name="projects_identity_linked_on">%1$s bağlandı</string>
+    <string name="projects_identity_remove">Kaldır</string>
+    <string name="projects_identity_remove_title">%1$s bağlantısı kaldırılsın mı?</string>
+    <string name="projects_identity_remove_discord_number">Discord olmadan 7/24 Bulut açılmaz, Projects skinin ve forumdaki ekip etiketin de kalkar.</string>
+    <string name="projects_identity_remove_discord">Discord fotoğrafın ve forumdaki ekip etiketin de kalkar.</string>
+    <string name="projects_identity_link_discord">Discord hesabını bağla</string>
+    <string name="projects_identity_link_microsoft">Microsoft hesabını bağla</string>
+    <string name="projects_identity_linking">Bağlanıyor</string>
+    <string name="projects_identity_removing">Kaldırılıyor</string>
+    <string name="projects_identity_linked_toast">%1$s bağlandı.</string>
+    <string name="projects_identity_removed_toast">%1$s bağlantısı kaldırıldı.</string>
+    <string name="projects_identity_not_linked">Bu %1$s hesabı henüz bağlı değil. Önce Discord ile giriş yap, sonra Arkadaş ayarları\'ndan bağla.</string>
+    <string name="projects_identity_provider_off">Şu an %1$s hesabı bağlanamıyor.</string>
+    <string name="projects_identity_exists">Hesabına zaten bir %1$s hesabı bağlı.</string>
+    <string name="projects_identity_not_found">Bu hesap artık bağlı değil.</string>
+    <string name="projects_identity_last">Son bağlı hesabını kaldıramazsın.</string>
+    <string name="projects_identity_taken">Bu %1$s hesabı başka bir Projects hesabına bağlı.</string>
+    <string name="projects_identity_proof_failed">Bağlı hesaplarından biriyle giriş yap.</string>
+    <string name="projects_identity_unavailable">Bu %1$s hesabı şu an bağlanamıyor.</string>
+    <string name="projects_identity_pending_gone">Tamamlanamadı. Yeniden dene.</string>
+    <string name="projects_identity_today">Bugün daha fazla değişiklik yapamazsın.</string>
+    <string name="projects_identity_note_linked">Hesabına %1$s bağlandı.</string>
+    <string name="projects_identity_note_removed">Hesabından %1$s bağlantısı kaldırıldı.</string>
+    <string name="projects_identity_note_not_you">Sen yapmadıysan kaldır.</string>
+    <string name="projects_identity_open">Bağlı hesaplara bak</string>
+    <string name="projects_limited_body_account">Hesabın yeni olduğu için %1$s tarihine kadar:</string>
+    <plurals name="projects_limited_no_crew_account">
+        <item quantity="one">Hesabın yeni olduğu için ekip kuramazsın. %d gün sonra açılır.</item>
+        <item quantity="other">Hesabın yeni olduğu için ekip kuramazsın. %d gün sonra açılır.</item>
+    </plurals>
+    <string name="projects_limited_invites_today_account">Hesabın yeni olduğu için bugün daha fazla ekip daveti gönderemezsin.</string>
+    <string name="projects_limited_lookups_today_account">Hesabın yeni olduğu için bugün daha fazla kod arayamazsın.</string>
+    <string name="projects_limited_chat_today_account">Hesabın yeni olduğu için günde en çok %1$d mesaj gönderebilirsin.</string>
+    <string name="projects_limited_generic_account">Hesabın yeni olduğu için bu henüz yapılamıyor.</string>
+    <plurals name="projects_limited_no_link_account">
+        <item quantity="one">Hesabın yeni olduğu için davet bağlantısı oluşturamazsın. %d gün sonra açılır.</item>
+        <item quantity="other">Hesabın yeni olduğu için davet bağlantısı oluşturamazsın. %d gün sonra açılır.</item>
+    </plurals>
+    <plurals name="projects_limited_no_plans_account">
+        <item quantity="one">Hesabın yeni olduğu için plan yapamazsın. %d gün sonra açılır.</item>
+        <item quantity="other">Hesabın yeni olduğu için plan yapamazsın. %d gün sonra açılır.</item>
+    </plurals>
+    <string name="projects_links_limited_account">Hesabın yeni olduğu için bağlantı gönderemezsin.</string>
 </resources>

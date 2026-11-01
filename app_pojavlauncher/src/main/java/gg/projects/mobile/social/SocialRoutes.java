@@ -37,6 +37,8 @@ public final class SocialRoutes {
     public static final String CHAT = "chat";
     /** M21: a crew invite link ({@code XXXX-XXXX-XXXX}): the crew page's "+" looks it up. */
     public static final String CREW_LINK = "crew_link";
+    /** SOC-ID: the friends' settings ("Bağlı hesaplar"), over the friends screen. */
+    public static final String SETTINGS = "settings";
     /** AFKPLUS-M: 7/24 Bulut's list; the others take an account id and open on top of it. */
     public static final String CLOUD = "cloud";
     public static final String CLOUD_ACCOUNT = "cloud_account";
@@ -176,6 +178,14 @@ public final class SocialRoutes {
             case INVITE:
                 if (arg != null) args.putString(SocialFragment.ARG_INVITE, arg);
                 Tools.swapFragment(activity, SocialFragment.class, SocialFragment.TAG, args);
+                break;
+            case SETTINGS:
+                // Back leads to the friends screen, then home.
+                Tools.swapFragment(activity, SocialFragment.class, SocialFragment.TAG, args);
+                if (SocialService.get(activity).signedIn()) {
+                    Tools.swapFragment(activity, gg.projects.mobile.social.ui.SocialSettingsFragment.class,
+                            gg.projects.mobile.social.ui.SocialSettingsFragment.TAG, null);
+                }
                 break;
             case FRIENDS:
             default:

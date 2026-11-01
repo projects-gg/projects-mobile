@@ -58,6 +58,9 @@ import gg.projects.mobile.social.SocialModel.Profile;
 import gg.projects.mobile.social.SocialModel.Request;
 import gg.projects.mobile.social.SocialModel.Team;
 import gg.projects.mobile.social.SocialModel.TeamInvite;
+import gg.projects.mobile.social.ProfileName;
+import gg.projects.mobile.social.SignInFlow;
+import gg.projects.mobile.social.SignInOptions;
 import gg.projects.mobile.social.SocialNotifications;
 import gg.projects.mobile.social.SocialProblem;
 import gg.projects.mobile.social.SocialService;
@@ -73,7 +76,8 @@ import gg.projects.mobile.ui.ScreenHeader;
 
 /**
  * The friends screen (M19). Signed out: the desktop's consent screen (what is shared, what never
- * reaches the service, "Gizlilik") and "Discord ile giriş yap". Signed in: the player and their
+ * reaches the service, "Gizlilik") and "Discord ile giriş yap" (SOC-ID: and "Microsoft ile giriş yap"
+ * while the service offers it; a new Microsoft account picks its name first). Signed in: the player and their
  * status, the crew, "Birlikte oyna" invites, crew invites and friend requests, then friends by where
  * they are (in game, online, offline; favourites first) and the requests the player sent. Live while
  * it is on screen; rows that come, go or move glide like the news list.
@@ -105,6 +109,17 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
     private View mWaitingNote;
     private View mReopen;
     private View mConsentRules;
+    /** SOC-ID: "Microsoft ile giriş yap", the line above it while Microsoft only signs in, the waiting card's safety line. */
+    private Button mMicrosoft;
+    private View mLinkedLabel;
+    private TextView mWaitingSafety;
+    /** SOC-ID: the name step of a new account without a name. */
+    private View mNameStep;
+    private android.widget.EditText mNameField;
+    private TextView mNameError;
+    private View mNameSubmit;
+    private boolean mNamePrefilled;
+    private boolean mNameSending;
     private ImageButton mAddAction;
     private ImageButton mSettingsAction;
     private boolean mRemoteSignOutShown;
@@ -169,10 +184,56 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
         Press.attach(mReopen, Press.Style.BUTTON);
         Press.attach(cancel, Press.Style.BUTTON);
         Press.attach(privacy, Press.Style.BUTTON);
-        mSignIn.setOnClickListener(v -> SocialService.get(requireContext()).beginSignIn(requireActivity()));
+        mSignIn.setOnClickListener(v -> SocialService.get(requireContext()).beginSignIn(requireActivity(), SignInFlow.DISCORD));
         mReopen.setOnClickListener(v -> SocialService.get(requireContext()).reopenSignInPage(requireActivity()));
         cancel.setOnClickListener(v -> SocialService.get(requireContext()).cancelSignIn());
         privacy.setOnClickListener(v -> ProjectsUi.openUrl(requireActivity(), getString(R.string.projects_social_privacy_url)));
+        // SOC-ID: Microsoft's button with its own mark (shown while the service offers Microsoft).
+        mMicrosoft = view.findViewById(R.id.projects_consent_microsoft);
+        mLinkedLabel = view.findViewById(R.id.projects_consent_linked_label);
+        mWaitingSafety = view.findViewById(R.id.projects_consent_waiting_safety);
+        Drawable microsoft = microsoftMark(view.getContext(), 18);
+        if (microsoft != null) mMicrosoft.setCompoundDrawablesRelative(microsoft, null, null, null);
+        Press.attach(mMicrosoft, Press.Style.BUTTON);
+        mMicrosoft.setOnClickListener(v -> SocialService.get(requireContext()).beginSignIn(requireActivity(), SignInFlow.MICROSOFT));
+        // SOC-ID: the name step.
+        mNameStep = view.findViewById(R.id.projects_social_name);
+        mNameField = view.findViewById(R.id.projects_name_field);
+        mNameError = view.findViewById(R.id.projects_name_error);
+        mNameSubmit = view.findViewById(R.id.projects_name_submit);
+        if (Build.VERSION.SDK_INT >= 28) view.findViewById(R.id.projects_name_title).setAccessibilityHeading(true);
+        mNameSubmit.setOnClickListener(v -> submitName());
+        mNameField.setOnEditorActionListener((field, action, event) -> {
+            if (action != android.view.inputmethod.EditorInfo.IME_ACTION_DONE) return false;
+            submitName();
+            return true;
+        });
+        mNameField.addTextChangedListener(new android.text.TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+
+            @Override
+            public void afterTextChanged(android.text.Editable s) {
+                // A long name or a character the service refuses says so at once; the rest on "Devam et".
+                showNameError(nameProblemText(ProfileName.check(s.toString(), false)));
+            }
+        });
+    }
+
+    /** SOC-ID: Microsoft's four-square mark, {@code sizeDp} square (never tinted). */
+    @Nullable
+    static Drawable microsoftMark(Context context, int sizeDp) {
+        Drawable mark = ContextCompat.getDrawable(context, R.drawable.projects_ic_microsoft_mark);
+        if (mark == null) return null;
+        mark = mark.mutate();
+        int size = Math.round(sizeDp * context.getResources().getDisplayMetrics().density);
+        mark.setBounds(0, 0, size, size);
+        return mark;
     }
 
     /** Slide up and fade in; leave a little faster (as the news and mod screens). */
@@ -202,6 +263,8 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
         service.addListener(this);
         service.surfaceShown(SocialService.Surface.FRIENDS, true);
         service.refresh(false);
+        // SOC-ID: the ways in the service offers now (Microsoft's button), read when the sign-in shows.
+        if (!service.signedIn()) service.readSignInOptions(false);
         if (service.takeSignedOutRemotely()) mRemoteSignOutShown = true;
         // A notification's invite: its question comes as soon as the invite is known (once).
         Bundle args = getArguments();
@@ -246,15 +309,24 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
             return;
         }
         boolean signedIn = service.signedIn();
-        mAddAction.setVisibility(signedIn ? View.VISIBLE : View.GONE);
+        // SOC-ID: a new account without a name ("Oyuncu" and four digits) picks one before the list.
+        Me me = service.state().me();
+        boolean naming = signedIn && me != null && me.nameUnset();
+        mAddAction.setVisibility(signedIn && !naming ? View.VISIBLE : View.GONE);
         mSettingsAction.setVisibility(signedIn ? View.VISIBLE : View.GONE);
         mConsent.setVisibility(signedIn ? View.GONE : View.VISIBLE);
-        mList.setVisibility(signedIn ? View.VISIBLE : View.GONE);
+        mNameStep.setVisibility(naming ? View.VISIBLE : View.GONE);
+        mList.setVisibility(signedIn && !naming ? View.VISIBLE : View.GONE);
         if (!signedIn) {
+            mNamePrefilled = false;
             renderConsent(service);
             return;
         }
         mRemoteSignOutShown = false;
+        if (naming) {
+            renderName();
+            return;
+        }
         // A friend link opened before the sign-in: "Arkadaş ekle" with its code, now.
         String pendingCode = isResumed() ? service.takePendingFriendCode() : null;
         if (pendingCode != null) {
@@ -286,38 +358,145 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
     }
 
     private void renderConsent(SocialService service) {
+        // SOC-ID: the ways in the service offers. Microsoft only signing in: Discord's button leads, "Bağlı hesabınla
+        // gir" over Microsoft's; Microsoft opening accounts too: two equal buttons and the words name both.
+        SignInOptions options = service.signInOptions();
         // CHAT1: with chat on, the consent says how long the server keeps messages (the desktop's line).
         View body = getView() == null ? null : getView().findViewById(R.id.projects_consent_body);
         if (body instanceof TextView) {
-            String text = getString(R.string.projects_social_consent_body);
+            String text = getString(options.equalWays() ? R.string.projects_sign_in_body_both : R.string.projects_social_consent_body);
             if (service.chatEnabled()) text += " " + getString(R.string.projects_chat_consent);
             ((TextView) body).setText(text);
         }
         SocialService.SignInStatus status = service.signInStatus();
         boolean waiting = status == SocialService.SignInStatus.WAITING || status == SocialService.SignInStatus.CLAIMING;
+        boolean checking = status == SocialService.SignInStatus.CHECKING;
         mWaiting.setVisibility(waiting ? View.VISIBLE : View.GONE);
         mSignIn.setVisibility(waiting ? View.GONE : View.VISIBLE);
-        mSignIn.setEnabled(status != SocialService.SignInStatus.CHECKING);
-        mSignIn.setAlpha(status == SocialService.SignInStatus.CHECKING ? 0.6f : 1f);
+        mSignIn.setEnabled(!checking);
+        mSignIn.setAlpha(checking ? 0.6f : 1f);
+        boolean microsoft = options.microsoftSignIn;
+        mMicrosoft.setVisibility(!waiting && microsoft ? View.VISIBLE : View.GONE);
+        mLinkedLabel.setVisibility(!waiting && microsoft && !options.equalWays() ? View.VISIBLE : View.GONE);
+        mMicrosoft.setEnabled(!checking);
+        mMicrosoft.setAlpha(checking ? 0.6f : 1f);
         boolean claiming = status == SocialService.SignInStatus.CLAIMING;
-        mWaitingTitle.setText(claiming ? R.string.projects_social_signing_in : R.string.projects_social_waiting);
+        String provider = service.signInProvider();
+        boolean viaMicrosoft = SignInFlow.MICROSOFT.equals(provider);
+        mWaitingTitle.setText(claiming ? R.string.projects_social_signing_in
+                : viaMicrosoft ? R.string.projects_sign_in_waiting_microsoft : R.string.projects_social_waiting);
+        // The way in's own mark before what to do there.
+        Drawable mark = claiming ? null : viaMicrosoft ? microsoftMark(requireContext(), 16) : SocialChips.discordMark(requireContext(), 12);
+        mWaitingTitle.setCompoundDrawablesRelative(mark, null, null, null);
+        mWaitingTitle.setCompoundDrawablePadding(Math.round(8 * getResources().getDisplayMetrics().density));
+        if (mWaitingNote instanceof TextView) {
+            ((TextView) mWaitingNote).setText(viaMicrosoft ? R.string.projects_sign_in_waiting_microsoft_note : R.string.projects_social_waiting_note);
+        }
         mWaitingNote.setVisibility(claiming ? View.GONE : View.VISIBLE);
+        mWaitingSafety.setVisibility(!claiming && viaMicrosoft ? View.VISIBLE : View.GONE);
         mReopen.setVisibility(claiming ? View.GONE : View.VISIBLE);
         String message = null;
         boolean restricted = status == SocialService.SignInStatus.RESTRICTED;
+        // SOC-ID: a way in that is not linked yet, or switched off, is guidance, not a failure.
+        boolean guidance = status == SocialService.SignInStatus.NOT_LINKED || status == SocialService.SignInStatus.PROVIDER_OFF;
         if (status == SocialService.SignInStatus.FAILED) message = getString(R.string.projects_social_sign_in_failed);
         else if (status == SocialService.SignInStatus.UNAVAILABLE) message = getString(R.string.projects_social_unavailable);
         else if (restricted) {
             Long until = service.restrictedUntil();
             message = SocialUi.restrictedText(requireContext(), until == null ? 0 : until);
         } else if (status == SocialService.SignInStatus.SIGNUPS_CLOSED) message = getString(R.string.projects_social_signups_closed);
-        else if (mRemoteSignOutShown && status == SocialService.SignInStatus.IDLE) message = getString(R.string.projects_social_signed_out_remote);
+        else if (status == SocialService.SignInStatus.NOT_LINKED) {
+            message = getString(R.string.projects_identity_not_linked, SocialService.providerName(provider));
+        } else if (status == SocialService.SignInStatus.PROVIDER_OFF) {
+            message = getString(R.string.projects_sign_in_provider_off, SocialService.providerName(provider));
+        } else if (mRemoteSignOutShown && status == SocialService.SignInStatus.IDLE) message = getString(R.string.projects_social_signed_out_remote);
         mConsentMessage.setText(message);
         mConsentMessage.setVisibility(message == null ? View.GONE : View.VISIBLE);
         // MOD1: under "Hesabın … kısıtlandı.", the community rules; nothing technical.
         mConsentRules.setVisibility(restricted ? View.VISIBLE : View.GONE);
-        mConsentMessage.setTextColor(ContextCompat.getColor(requireContext(), restricted
+        mConsentMessage.setTextColor(ContextCompat.getColor(requireContext(), restricted || guidance
                 || status == SocialService.SignInStatus.SIGNUPS_CLOSED ? R.color.projects_ash_300 : R.color.projects_flare_400));
+    }
+
+    // ---- SOC-ID: the name step ----
+
+    private void renderName() {
+        if (!mNamePrefilled) {
+            // Once per showing: the active Minecraft account's name, when it passes the rules.
+            mNamePrefilled = true;
+            String start = ProfileName.prefill(minecraftName());
+            if (mNameField.getText().length() == 0 && !start.isEmpty()) {
+                mNameField.setText(start);
+                mNameField.setSelection(mNameField.getText().length());
+            }
+        }
+        mNameSubmit.setEnabled(!mNameSending);
+    }
+
+    /** The launcher's active Minecraft account's name, or null. */
+    @Nullable
+    private String minecraftName() {
+        try {
+            net.kdt.pojavlaunch.value.MinecraftAccount account = net.kdt.pojavlaunch.PojavProfile.getCurrentProfileContent(requireContext(), null);
+            return account == null || account.isDemo() ? null : account.username;
+        } catch (RuntimeException e) {
+            return null;
+        }
+    }
+
+    private void submitName() {
+        if (mNameSending || !isAdded()) return;
+        final String name = mNameField.getText().toString();
+        String problem = nameProblemText(ProfileName.check(name, true));
+        if (problem != null) {
+            showNameError(problem);
+            Haptics.reject(mNameSubmit);
+            return;
+        }
+        mNameSending = true;
+        mNameSubmit.setEnabled(false);
+        showNameError(null);
+        final Context app = requireContext().getApplicationContext();
+        SocialService.get(requireContext()).setName(name, new SocialService.Result<com.google.gson.JsonObject>() {
+            @Override
+            public void ok(com.google.gson.JsonObject value) {
+                mNameSending = false;
+                // The profile carries the name now: the list takes the step's place (render).
+                android.view.inputmethod.InputMethodManager keyboard =
+                        (android.view.inputmethod.InputMethodManager) app.getSystemService(Context.INPUT_METHOD_SERVICE);
+                if (keyboard != null && mNameField != null) keyboard.hideSoftInputFromWindow(mNameField.getWindowToken(), 0);
+                render();
+            }
+
+            @Override
+            public void failed(SocialProblem problem) {
+                mNameSending = false;
+                if (!isAdded()) return;
+                mNameSubmit.setEnabled(true);
+                showNameError(SocialUi.problemText(requireContext(), problem));
+                Haptics.reject(mNameSubmit);
+            }
+        });
+    }
+
+    private void showNameError(@Nullable String text) {
+        if (mNameError == null) return;
+        mNameError.setText(text);
+        mNameError.setVisibility(text == null ? View.GONE : View.VISIBLE);
+    }
+
+    /** The name rule {@code problem} in the player's words, null when there is none. */
+    @Nullable
+    private String nameProblemText(ProfileName.Problem problem) {
+        switch (problem) {
+            case EMPTY: return getString(R.string.projects_name_empty);
+            case TOO_SHORT: return getString(R.string.projects_offline_name_too_short);
+            case TOO_LONG: return getString(R.string.projects_offline_name_too_long);
+            case CHARACTERS: return getString(R.string.projects_name_chars);
+            case LETTERS: return getString(R.string.projects_name_letters);
+            case NONE:
+            default: return null;
+        }
     }
 
     // ---- rows ----

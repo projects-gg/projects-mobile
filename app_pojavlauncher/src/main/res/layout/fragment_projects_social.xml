@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- M19: the friends screen. Signed out: why and how to sign in with Discord. Signed in: the player,
-     the crew, invites, requests and friends by where they are. MOB-POLISH: both fade out under the header
-     (FadingRecyclerView, FadingScrollView). -->
+<!-- M19: the friends screen. Signed out: why and how to sign in with Discord (SOC-ID: or Microsoft). Signed in:
+     the player, the crew, invites, requests and friends by where they are; SOC-ID: first the name step for a new
+     account without a name. MOB-POLISH: they fade out under the header (FadingRecyclerView, FadingScrollView). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -129,6 +129,41 @@
                     android:textColor="#FFFFFFFF"
                     android:textSize="16sp" />
 
+                <!-- SOC-ID: while Microsoft only signs in to accounts it was linked to, a quiet line says so above its
+                     button; once it opens accounts too, the two buttons stand as equals. -->
+                <TextView
+                    android:id="@+id/projects_consent_linked_label"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="18dp"
+                    android:fontFamily="@font/figtree_semibold"
+                    android:gravity="center"
+                    android:text="@string/projects_sign_in_linked"
+                    android:textColor="@color/projects_ash_400"
+                    android:textSize="13sp"
+                    android:visibility="gone"
+                    tools:visibility="visible" />
+
+                <!-- SOC-ID: "Microsoft ile giriş yap", Microsoft's dark surface and four-colour mark (SocialFragment
+                     sets the mark and shows it while the service offers Microsoft). -->
+                <Button
+                    android:id="@+id/projects_consent_microsoft"
+                    style="?android:attr/borderlessButtonStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:layout_marginTop="10dp"
+                    android:background="@drawable/projects_microsoft_button"
+                    android:drawablePadding="10dp"
+                    android:fontFamily="@font/figtree_semibold"
+                    android:maxWidth="420dp"
+                    android:paddingHorizontal="20dp"
+                    android:text="@string/projects_sign_in_microsoft"
+                    android:textAllCaps="false"
+                    android:textColor="@color/projects_bone_100"
+                    android:textSize="16sp"
+                    android:visibility="gone"
+                    tools:visibility="visible" />
+
                 <LinearLayout
                     android:id="@+id/projects_consent_waiting"
                     android:layout_width="match_parent"
@@ -168,6 +203,20 @@
                         android:text="@string/projects_social_waiting_note"
                         android:textColor="@color/projects_ash_400"
                         android:textSize="13sp" />
+
+                    <!-- SOC-ID: a password page that is not Microsoft's own is phishing (an account lost for good). -->
+                    <TextView
+                        android:id="@+id/projects_consent_waiting_safety"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:fontFamily="@font/figtree_regular"
+                        android:gravity="center"
+                        android:text="@string/projects_sign_in_microsoft_safety"
+                        android:textColor="@color/projects_ash_300"
+                        android:textSize="13sp"
+                        android:visibility="gone"
+                        tools:visibility="visible" />
 
                     <LinearLayout
                         android:layout_width="wrap_content"
@@ -218,6 +267,58 @@
                     android:text="@string/projects_social_privacy"
                     android:textColor="@color/projects_gold_300"
                     android:textSize="14sp" />
+            </LinearLayout>
+        </gg.projects.mobile.social.ui.FadingScrollView>
+
+        <!-- SOC-ID: the name step. An account opened with Microsoft has no Discord name: right after its sign-in the
+             player picks the name friends see (the field starts with the Minecraft account's name). -->
+        <gg.projects.mobile.social.ui.FadingScrollView
+            android:id="@+id/projects_social_name"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fillViewport="true"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="24dp"
+                android:paddingTop="24dp"
+                android:paddingBottom="24dp">
+
+                <TextView
+                    android:id="@+id/projects_name_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/tektur_semibold"
+                    android:text="@string/projects_name_title"
+                    android:textColor="@color/projects_bone_100"
+                    android:textSize="20sp" />
+
+                <TextView
+                    style="@style/ProjectsFormLabel"
+                    android:labelFor="@+id/projects_name_field"
+                    android:text="@string/projects_name_label" />
+
+                <EditText
+                    android:id="@+id/projects_name_field"
+                    style="@style/ProjectsFormInput"
+                    android:imeOptions="actionDone"
+                    android:inputType="textPersonName|textNoSuggestions"
+                    android:maxLength="40" />
+
+                <TextView
+                    android:id="@+id/projects_name_error"
+                    style="@style/ProjectsFormError" />
+
+                <com.kdt.mcgui.MineButton
+                    android:id="@+id/projects_name_submit"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:layout_marginTop="24dp"
+                    android:text="@string/projects_name_continue"
+                    android:textSize="16sp" />
             </LinearLayout>
         </gg.projects.mobile.social.ui.FadingScrollView>
     </FrameLayout>

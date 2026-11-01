@@ -130,7 +130,12 @@ public final class SocialUi {
         switch (problem.kind) {
             case UNAVAILABLE: id = R.string.projects_social_error_unavailable; break;
             case SIGNED_OUT: id = R.string.projects_social_error_signed_out; break;
-            case RATE_LIMITED: id = R.string.projects_social_error_rate_limited; break;
+            case RATE_LIMITED:
+                // SOC-ID: the day's three name changes and five changes of the linked accounts.
+                if ("name_changes".equals(problem.item)) id = R.string.projects_name_today;
+                else if ("identity_changes".equals(problem.item)) id = R.string.projects_identity_today;
+                else id = R.string.projects_social_error_rate_limited;
+                break;
             case NOT_A_CODE: id = R.string.projects_social_error_not_a_code; break;
             case NO_ONE_WITH_CODE: id = R.string.projects_social_error_no_one; break;
             case OWN_CODE: id = R.string.projects_social_error_own_code; break;
@@ -209,10 +214,69 @@ public final class SocialUi {
                 id = "kinds".equals(problem.reason) ? R.string.projects_reactions_kinds : R.string.projects_reactions_full;
                 break;
             case CHAT_FEATURE_OFF: id = R.string.projects_chat2_feature_off; break;
+            // SOC-ID: the profile name and the parts that need the account's own Discord.
+            case NAME_INVALID: id = R.string.projects_name_chars; break;
+            case NAME_REJECTED: id = R.string.projects_name_rejected; break;
+            case DISCORD_REQUIRED: id = R.string.projects_discord_only; break;
+            // SOC-ID: linked accounts (Microsoft unless the screen knows better: identityProblemText).
+            case IDENTITY_NOT_LINKED:
+            case PROVIDER_OFF:
+            case IDENTITY_EXISTS:
+            case IDENTITY_NOT_FOUND:
+            case LAST_IDENTITY:
+            case IDENTITY_TAKEN:
+            case PROOF_FAILED:
+            case IDENTITY_UNAVAILABLE:
+            case AUTH_PENDING_GONE:
+                return identityProblemText(context, problem, gg.projects.mobile.social.SignInFlow.MICROSOFT);
             case FAILED:
             default: id = R.string.projects_social_error_failed; break;
         }
         return context.getString(id);
+    }
+
+    /**
+     * SOC-ID: what went wrong with a link, a removal or a sign-in with {@code provider}, naming it ("Bu Microsoft
+     * hesabı başka bir Projects hesabına bağlı."); anything else as {@link #problemText}.
+     */
+    public static String identityProblemText(Context context, SocialProblem problem, @Nullable String provider) {
+        String name = SocialService.providerName(provider);
+        switch (problem.kind) {
+            case IDENTITY_NOT_LINKED: return context.getString(R.string.projects_identity_not_linked, name);
+            case PROVIDER_OFF: return context.getString(R.string.projects_identity_provider_off, name);
+            case IDENTITY_EXISTS: return context.getString(R.string.projects_identity_exists, name);
+            case IDENTITY_NOT_FOUND: return context.getString(R.string.projects_identity_not_found);
+            case LAST_IDENTITY: return context.getString(R.string.projects_identity_last);
+            case IDENTITY_TAKEN: return context.getString(R.string.projects_identity_taken, name);
+            case PROOF_FAILED: return context.getString(R.string.projects_identity_proof_failed);
+            case IDENTITY_UNAVAILABLE: return context.getString(R.string.projects_identity_unavailable, name);
+            case AUTH_PENDING_GONE: return context.getString(R.string.projects_identity_pending_gone);
+            case RATE_LIMITED:
+                if ("identity_changes".equals(problem.item)) return context.getString(R.string.projects_identity_today);
+                return problemText(context, problem);
+            default: return problemText(context, problem);
+        }
+    }
+
+    /** SOC-ID: the account's own age limits it ("Hesabın yeni olduğu için"), not a Discord account's. */
+    public static boolean accountAge(Context context) {
+        gg.projects.mobile.social.SocialModel.Me me = SocialService.get(context).state().me();
+        return me != null && me.limited != null && me.limited.accountAge();
+    }
+
+    /** SOC-ID: a limited account's text {@code discord}, or its "Hesabın yeni olduğu için" twin {@code account}. */
+    public static int limitedRes(Context context, int discord, int account) {
+        return accountAge(context) ? account : discord;
+    }
+
+    /**
+     * The "@username" under a name: the Discord handle, only while a Discord is linked (SOC-ID: an account without one
+     * has no handle) and when it says more than the name; null otherwise.
+     */
+    @Nullable
+    public static String handle(Profile profile) {
+        if (!profile.hasDiscord() || profile.username.isEmpty() || profile.username.equals(profile.name())) return null;
+        return "@" + profile.username;
     }
 
     /**
@@ -222,25 +286,30 @@ public final class SocialUi {
     public static String limitedText(Context context, SocialProblem problem) {
         String item = problem.item == null ? "" : problem.item;
         long now = SocialService.nowSeconds();
+        // SOC-ID: "Hesabın yeni olduğu için" when the account's own age limits it (opened with Microsoft).
+        boolean own = accountAge(context);
         switch (item) {
             case gg.projects.mobile.social.SocialModel.Limited.CREW_FOUND: {
                 int days = Math.max(1, gg.projects.mobile.social.SocialModel.Limited.daysLeft(problem.until == null ? now + 86_400 : problem.until, now));
-                return context.getResources().getQuantityString(R.plurals.projects_limited_no_crew, days, days);
+                return context.getResources().getQuantityString(own ? R.plurals.projects_limited_no_crew_account
+                        : R.plurals.projects_limited_no_crew, days, days);
             }
             case gg.projects.mobile.social.SocialModel.Limited.CREW_INVITES:
-                return context.getString(R.string.projects_limited_invites_today);
+                return context.getString(own ? R.string.projects_limited_invites_today_account : R.string.projects_limited_invites_today);
             case gg.projects.mobile.social.SocialModel.Limited.CODE_LOOKUPS:
-                return context.getString(R.string.projects_limited_lookups_today);
+                return context.getString(own ? R.string.projects_limited_lookups_today_account : R.string.projects_limited_lookups_today);
             case gg.projects.mobile.social.SocialModel.Limited.CREW_LINK: {
                 int days = Math.max(1, gg.projects.mobile.social.SocialModel.Limited.daysLeft(problem.until == null ? now + 86_400 : problem.until, now));
-                return context.getResources().getQuantityString(R.plurals.projects_limited_no_link, days, days);
+                return context.getResources().getQuantityString(own ? R.plurals.projects_limited_no_link_account
+                        : R.plurals.projects_limited_no_link, days, days);
             }
             case gg.projects.mobile.social.SocialModel.Limited.CREW_PLANS: {
                 int days = Math.max(1, gg.projects.mobile.social.SocialModel.Limited.daysLeft(problem.until == null ? now + 86_400 : problem.until, now));
-                return context.getResources().getQuantityString(R.plurals.projects_limited_no_plans, days, days);
+                return context.getResources().getQuantityString(own ? R.plurals.projects_limited_no_plans_account
+                        : R.plurals.projects_limited_no_plans, days, days);
             }
             default:
-                return context.getString(R.string.projects_limited_generic);
+                return context.getString(own ? R.string.projects_limited_generic_account : R.string.projects_limited_generic);
         }
     }
 
@@ -340,9 +409,14 @@ public final class SocialUi {
         }
     }
 
-    /** "Discord'dan mesaj at": the friend's Discord profile (the Discord app opens it when installed). */
+    /**
+     * "Discord'dan mesaj at": the friend's Discord profile (the Discord app opens it when installed); SOC-ID: the linked
+     * Discord account's, nothing without one (the action is not offered then).
+     */
     public static void openDiscord(Activity activity, Profile profile) {
-        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(profile.discordProfileUrl())).addCategory(Intent.CATEGORY_BROWSABLE);
+        String url = profile.discordProfileUrl();
+        if (url == null) return;
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url)).addCategory(Intent.CATEGORY_BROWSABLE);
         try {
             activity.startActivity(intent);
         } catch (RuntimeException e) {

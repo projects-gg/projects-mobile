@@ -52,9 +52,10 @@ public final class FriendCard {
         ((TextView) view.findViewById(R.id.projects_card_name)).setText(profile.name());
         BadgeCard.bindTitleChip(activity, view.findViewById(R.id.projects_card_tag), friendId);
         TextView username = view.findViewById(R.id.projects_card_username);
-        boolean showUser = !profile.username.isEmpty() && !profile.username.equals(profile.name());
-        username.setText("@" + profile.username);
-        username.setVisibility(showUser ? View.VISIBLE : View.GONE);
+        // SOC-ID: the Discord handle only while a Discord is linked.
+        String handle = SocialUi.handle(profile);
+        username.setText(handle == null ? "" : handle);
+        username.setVisibility(handle != null ? View.VISIBLE : View.GONE);
         TextView where = view.findViewById(R.id.projects_card_presence);
         where.setText(SocialUi.presenceLine(activity, presence));
         if (presence.onProjects()) where.setTextColor(ContextCompat.getColor(activity, R.color.projects_jade_400));
@@ -81,8 +82,11 @@ public final class FriendCard {
         });
 
         LinearLayout actions = view.findViewById(R.id.projects_card_actions);
-        actions.addView(CrewViews.discordRow(activity, activity.getString(R.string.projects_social_message),
-                v -> SocialUi.openDiscord(activity, profile)));
+        if (profile.hasDiscord()) {
+            // SOC-ID: only for a friend with a Discord linked.
+            actions.addView(CrewViews.discordRow(activity, activity.getString(R.string.projects_social_message),
+                    v -> SocialUi.openDiscord(activity, profile)));
+        }
         final boolean favourite = service.prefs().favourites().contains(friendId);
         actions.addView(CrewViews.actionRow(activity, favourite ? R.drawable.projects_ic_star_fill : R.drawable.projects_ic_star,
                 activity.getString(favourite ? R.string.projects_social_unfavorite : R.string.projects_social_favorite),

@@ -107,6 +107,30 @@ public final class SocialProblem extends Exception {
         CHAT_REACTIONS_FULL,
         /** CHAT2: Studio switched the extra off ({@code chat_feature_off}, {@link #item}). */
         CHAT_FEATURE_OFF,
+        /** SOC-ID: a Microsoft account no Projects account has, while new accounts open with Discord only. */
+        IDENTITY_NOT_LINKED,
+        /** SOC-ID: Studio switched that way in off ({@code provider_off}). */
+        PROVIDER_OFF,
+        /** SOC-ID: the account has one of that kind already ({@code identity_exists}). */
+        IDENTITY_EXISTS,
+        /** SOC-ID: the way in to remove is not on the account any more ({@code identity_not_found}). */
+        IDENTITY_NOT_FOUND,
+        /** SOC-ID: the last way in cannot go ({@code last_identity}). */
+        LAST_IDENTITY,
+        /** SOC-ID: that account is another Projects account's way in ({@code identity_taken}). */
+        IDENTITY_TAKEN,
+        /** SOC-ID: the browser's proof was not one of the account's ways in ({@code proof_failed}). */
+        PROOF_FAILED,
+        /** SOC-ID: that account cannot be linked now (a removed way in, a restriction; {@code identity_unavailable}). */
+        IDENTITY_UNAVAILABLE,
+        /** SOC-ID: the browser step is gone or was used ({@code auth_pending_not_found}). */
+        AUTH_PENDING_GONE,
+        /** SOC-ID: a profile name outside the rules ({@code invalid_name}). */
+        NAME_INVALID,
+        /** SOC-ID: a profile name the word list refuses ({@code name_rejected}). */
+        NAME_REJECTED,
+        /** SOC-ID: a part that needs the account's own Discord for now (7/24 Bulut, the Projects skin). */
+        DISCORD_REQUIRED,
         /** Anything else: "Bir sorun oluştu." */
         FAILED
     }
@@ -275,6 +299,18 @@ public final class SocialProblem extends Exception {
             case "badges_off": return Kind.BADGES_OFF;
             case "badge_request_closed": return Kind.BADGE_REQUEST_CLOSED;
             case "limit_badge_requests": return Kind.BADGE_REQUESTS_TODAY;
+            case "identity_not_linked": return Kind.IDENTITY_NOT_LINKED;
+            case "provider_off": return Kind.PROVIDER_OFF;
+            case "identity_exists": return Kind.IDENTITY_EXISTS;
+            case "identity_not_found": return Kind.IDENTITY_NOT_FOUND;
+            case "last_identity": return Kind.LAST_IDENTITY;
+            case "identity_taken": return Kind.IDENTITY_TAKEN;
+            case "proof_failed": return Kind.PROOF_FAILED;
+            case "identity_unavailable": return Kind.IDENTITY_UNAVAILABLE;
+            case "auth_pending_not_found": return Kind.AUTH_PENDING_GONE;
+            case "invalid_name": return Kind.NAME_INVALID;
+            case "name_rejected": return Kind.NAME_REJECTED;
+            case "discord_required": return Kind.DISCORD_REQUIRED;
             default: return status >= 500 ? Kind.UNAVAILABLE : Kind.FAILED;
         }
     }

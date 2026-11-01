@@ -839,4 +839,68 @@
     <string name="projects_badge_requests_on_line">Members\' friends can ask to join from the tag\'s card.</string>
     <string name="projects_badge_requests_off_line">No join requests come from the tag\'s card.</string>
     <string name="projects_badge_settings_today">The crew\'s settings changed a lot today. Try again tomorrow.</string>
+
+    <!-- SOC-ID: Microsoft beside Discord, the name step, linked accounts. -->
+    <string name="projects_sign_in_microsoft">Sign in with Microsoft</string>
+    <string name="projects_sign_in_linked">If you\'ve linked Microsoft</string>
+    <string name="projects_sign_in_body_both">You sign in with your Discord or Microsoft account. Your friends see your name, profile picture and what you\'re playing. Your email and password never reach us.</string>
+    <string name="projects_sign_in_waiting_microsoft">Sign in to Microsoft in your browser</string>
+    <string name="projects_sign_in_waiting_microsoft_note">Once you\'re in, you\'ll continue here.</string>
+    <string name="projects_sign_in_microsoft_safety">Only enter your password on Microsoft\'s own page.</string>
+    <string name="projects_sign_in_provider_off">You can\'t sign in with %1$s right now. Try another way.</string>
+    <string name="projects_social_pill_sign_in">Sign in</string>
+    <string name="projects_social_pill_sign_in_label">Friends: Sign in</string>
+    <string name="projects_name_title">What name should friends see?</string>
+    <string name="projects_name_label">Your name</string>
+    <string name="projects_name_continue">Continue</string>
+    <string name="projects_name_empty">Type a name.</string>
+    <string name="projects_name_chars">Use only English or Turkish letters, digits, spaces and underscores (_).</string>
+    <string name="projects_name_letters">Use at least 2 letters or digits.</string>
+    <string name="projects_name_rejected">You can\'t use this name.</string>
+    <string name="projects_name_today">You can\'t change your name again today.</string>
+    <string name="projects_discord_only">For now, this is only for accounts opened with Discord.</string>
+    <string name="projects_identity_title">Linked accounts</string>
+    <string name="projects_identity_linked_on">Linked on %1$s</string>
+    <string name="projects_identity_remove">Remove</string>
+    <string name="projects_identity_remove_title">Remove %1$s?</string>
+    <string name="projects_identity_remove_discord_number">24/7 Cloud won\'t open without Discord, and your Projects skin and forum crew tag go too.</string>
+    <string name="projects_identity_remove_discord">Your Discord photo and forum crew tag go too.</string>
+    <string name="projects_identity_link_discord">Link your Discord account</string>
+    <string name="projects_identity_link_microsoft">Link your Microsoft account</string>
+    <string name="projects_identity_linking">Linking</string>
+    <string name="projects_identity_removing">Removing</string>
+    <string name="projects_identity_linked_toast">%1$s linked.</string>
+    <string name="projects_identity_removed_toast">%1$s removed.</string>
+    <string name="projects_identity_not_linked">This %1$s account isn\'t linked yet. Sign in with Discord first, then link it in Friend settings.</string>
+    <string name="projects_identity_provider_off">%1$s accounts can\'t be linked right now.</string>
+    <string name="projects_identity_exists">A %1$s account is already linked to your account.</string>
+    <string name="projects_identity_not_found">This account isn\'t linked anymore.</string>
+    <string name="projects_identity_last">You can\'t remove your last linked account.</string>
+    <string name="projects_identity_taken">This %1$s account is linked to another Projects account.</string>
+    <string name="projects_identity_proof_failed">Sign in with one of your linked accounts.</string>
+    <string name="projects_identity_unavailable">This %1$s account can\'t be linked right now.</string>
+    <string name="projects_identity_pending_gone">Couldn\'t finish. Try again.</string>
+    <string name="projects_identity_today">You can\'t make more changes today.</string>
+    <string name="projects_identity_note_linked">%1$s was linked to your account.</string>
+    <string name="projects_identity_note_removed">%1$s was removed from your account.</string>
+    <string name="projects_identity_note_not_you">If it wasn\'t you, remove it.</string>
+    <string name="projects_identity_open">See linked accounts</string>
+    <string name="projects_limited_body_account">Because your account is new, until %1$s:</string>
+    <plurals name="projects_limited_no_crew_account">
+        <item quantity="one">Because your account is new, you can\'t create a crew yet. It opens in %d day.</item>
+        <item quantity="other">Because your account is new, you can\'t create a crew yet. It opens in %d days.</item>
+    </plurals>
+    <string name="projects_limited_invites_today_account">Because your account is new, you can\'t send more crew invites today.</string>
+    <string name="projects_limited_lookups_today_account">Because your account is new, you can\'t look up more codes today.</string>
+    <string name="projects_limited_chat_today_account">Because your account is new, you can send up to %1$d messages a day.</string>
+    <string name="projects_limited_generic_account">Because your account is new, this isn\'t possible yet.</string>
+    <plurals name="projects_limited_no_link_account">
+        <item quantity="one">Because your account is new, you can\'t make invite links yet. It opens in %d day.</item>
+        <item quantity="other">Because your account is new, you can\'t make invite links yet. It opens in %d days.</item>
+    </plurals>
+    <plurals name="projects_limited_no_plans_account">
+        <item quantity="one">Because your account is new, you can\'t make plans yet. It opens in %d day.</item>
+        <item quantity="other">Because your account is new, you can\'t make plans yet. It opens in %d days.</item>
+    </plurals>
+    <string name="projects_links_limited_account">Your account is new, so you can\'t send links yet.</string>
 </resources>
