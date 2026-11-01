@@ -16,6 +16,18 @@ dependencyResolutionManagement {
             }
             filter { includeModule("com.bytedance", "bytehook") }
         }
+        // Phone AFK (PHONE-AFK): MCProtocolLib and two of its libraries exist only on GeyserMC's repository; nothing
+        // else may come from there.
+        exclusiveContent {
+            forRepository {
+                maven { url = "https://repo.opencollab.dev/maven-releases/" }
+            }
+            filter {
+                includeGroup("org.geysermc.mcprotocollib")
+                includeGroup("org.cloudburstmc.math")
+                includeGroup("com.nukkitx.fastutil")
+            }
+        }
         google()
         mavenCentral()
         maven { url "https://jitpack.io" }
