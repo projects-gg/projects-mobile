@@ -109,6 +109,8 @@ final class RelVersion {
             case "groups":
             case "badge":
             case "mark":
+            // BADGES: a person's badges (the whole set; SOC-VERIFY's "mark" above is its older form).
+            case "marks":
             case "status":
             case "profile":
             case "notice":

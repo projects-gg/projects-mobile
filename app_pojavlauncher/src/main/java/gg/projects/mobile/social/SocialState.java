@@ -1166,6 +1166,14 @@ public final class SocialState {
                 if (SocialModel.isUserId(id)) applyBadge(id, Badge.read(Json.obj(message, "badge")), notices);
                 break;
             }
+            case "marks":
+            case "mark": {
+                // BADGES: a friend's, a crewmate's or the player's own badges changed: every badge they show now
+                // ({@code marks}); a service before badges says SOC-VERIFY's one {@code mark} (MarkCatalog.keysOf).
+                String id = Json.str(message, "id");
+                if (SocialModel.isUserId(id)) applyMarks(id, MarkCatalog.keysOf(message));
+                break;
+            }
             case "plan": {
                 // Kept even before the list names its crew (the socket may speak first); read through plans().
                 Plan plan = Plan.read(Json.obj(message, "plan"));
@@ -1353,6 +1361,29 @@ public final class SocialState {
         if (mMe == null) return;
         String me = mMe.profile.id;
         applyBadge(me, badge, new ArrayList<Notice>());
+    }
+
+    /**
+     * BADGES ({@code marks}): the badges a friend, a crewmate or the player shows now take the old ones' place wherever
+     * they show (badges are no presence: the hub says it while they are offline or invisible too).
+     */
+    void applyMarks(String userId, List<String> marks) {
+        Friend f = mFriends.get(userId);
+        if (f != null && !f.profile.marks.equals(marks)) {
+            mFriends.put(userId, new Friend(f.profile.withMarks(marks), f.since, f.lastSeen));
+        }
+        for (int i = 0; i < mCrews.size(); i++) {
+            Crew c = mCrews.get(i);
+            Member m = c.team.member(userId);
+            if (m == null || m.profile.marks.equals(marks)) continue;
+            mCrews.set(i, c.withTeam(c.team.withMemberMarks(userId, marks)));
+        }
+        if (mMe != null && mMe.profile.id.equals(userId) && !mMe.profile.marks.equals(marks)) mMe = mMe.withMarks(marks);
+    }
+
+    /** BADGES: the player's own badges as an answer of theirs says them (hiding one, showing it again). */
+    public void setMyMarks(List<String> marks) {
+        if (mMe != null) applyMarks(mMe.profile.id, marks);
     }
 
     private boolean myRequestEver(String teamId) {
