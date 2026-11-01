@@ -11,5 +11,10 @@
             android:name="gg.projects.mobile.social.DebugPushReceiver"
             android:exported="true"
             android:permission="android.permission.DUMP" />
+        <!-- Debug builds only (PHONE-AFK): the phone AFK driven from adb (AfkDebugReceiver); shell only. -->
+        <receiver
+            android:name="gg.projects.mobile.afk.debug.AfkDebugReceiver"
+            android:exported="true"
+            android:permission="android.permission.DUMP" />
     </application>
 </manifest>

@@ -19,6 +19,9 @@ import gg.projects.mobile.afk.api.AfkProblem;
 public final class AfkDrafts {
     private AfkDrafts() {}
 
+    /** Debug builds' adb harness only (a local test server on an emulator); never set by the app itself. */
+    public static volatile boolean allowLocalForTests;
+
     /** A draft as it is kept: trimmed name, lower-case ASCII host, port (0: none written), clean login commands. */
     public static final class Clean {
         public final String name;
@@ -86,7 +89,7 @@ public final class AfkDrafts {
                 problems.add(AfkProblem.ADDRESS_INVALID);
             } else {
                 if (parsed.port < 0) problems.add(AfkProblem.PORT_INVALID);
-                if (isLocal(host)) problems.add(AfkProblem.LOCAL_ADDRESS);
+                if (isLocal(host) && !allowLocalForTests) problems.add(AfkProblem.LOCAL_ADDRESS);
             }
         }
         List<String> commands = cleanCommands(draft.loginCommands);
