@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -427,16 +428,24 @@ public class SocialSettingsFragment extends Fragment implements SocialService.Li
             // The theme's font.
         }
         title.addView(name);
-        // "Bu cihaz": the way this phone's session signed in with; "Yeni": linked in the last 7 days (a link the player
-        // did not make shows on every device).
-        if (identity.provider.equals(me.signInVia)) title.addView(chip(context, getString(R.string.projects_identity_this_device)));
-        if (identity.isNew) title.addView(chip(context, getString(R.string.projects_identity_new)));
-        words.addView(title);
-        String second = identity.hint != null && SignInFlow.DISCORD.equals(identity.provider) ? identity.hint : null;
-        if (second == null) {
-            String day = IdentityDays.linkedDay(AppDates.turkish(context), identity.linkedOn, System.currentTimeMillis());
-            second = day == null ? null : getString(R.string.projects_identity_linked_on, day);
+        // Discord's handle beside its name, quiet; the day it was linked under them (SOC-ID-C, the launcher's row: no
+        // "Bu cihaz" or "Yeni" chips, projects-taste; the day says when, and a link the player did not make shows on
+        // every device all the same).
+        if (identity.hint != null && SignInFlow.DISCORD.equals(identity.provider)) {
+            TextView handle = new TextView(context);
+            handle.setText("@" + identity.hint);
+            handle.setTextSize(13);
+            handle.setTextColor(ContextCompat.getColor(context, R.color.projects_ash_400));
+            handle.setSingleLine(true);
+            handle.setEllipsize(TextUtils.TruncateAt.END);
+            handle.setTextIsSelectable(false);
+            LinearLayout.LayoutParams handleLp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+            handleLp.setMarginStart(dp(8));
+            title.addView(handle, handleLp);
         }
+        words.addView(title);
+        String day = IdentityDays.linkedDay(AppDates.turkish(context), identity.linkedOn, System.currentTimeMillis());
+        String second = day == null ? null : getString(R.string.projects_identity_linked_on, day);
         if (second != null) {
             TextView line = new TextView(context);
             line.setText(second);
@@ -462,20 +471,6 @@ public class SocialSettingsFragment extends Fragment implements SocialService.Li
             row.addView(remove);
         }
         return row;
-    }
-
-    /** A quiet label beside the way in's name ("Bu cihaz", "Yeni"): words in ash on the quiet chip, never gold. */
-    private TextView chip(Context context, String text) {
-        TextView chip = new TextView(context);
-        chip.setText(text);
-        chip.setTextSize(12);
-        chip.setTextColor(ContextCompat.getColor(context, R.color.projects_ash_300));
-        chip.setBackground(SocialChips.quiet(context, 4));
-        chip.setPadding(dp(7), dp(1), dp(7), dp(2));
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        lp.setMarginStart(dp(8));
-        chip.setLayoutParams(lp);
-        return chip;
     }
 
     /** "Kaldır": "Microsoft bağlantısı kaldırılsın mı?" (Discord's says what goes with it), then the removal. */

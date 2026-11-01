@@ -847,11 +847,9 @@
     <string name="projects_discord_only">Bu özellik şimdilik yalnız Discord ile açılmış hesaplarda var.</string>
     <string name="projects_identity_title">Bağlı hesaplar</string>
     <string name="projects_identity_linked_on">%1$s bağlandı</string>
-    <string name="projects_identity_this_device">Bu cihaz</string>
-    <string name="projects_identity_new">Yeni</string>
     <string name="projects_identity_remove">Kaldır</string>
     <string name="projects_identity_remove_title">%1$s bağlantısı kaldırılsın mı?</string>
-    <string name="projects_identity_remove_discord_number">Discord olmadan 7/24 Bulut açılmaz; Projects skini eşlemen ve forumdaki ekip etiketin de kalkar.</string>
+    <string name="projects_identity_remove_discord_number">Discord olmadan 7/24 Bulut açılmaz. Projects skini eşlemen ve forumdaki ekip etiketin de kalkar.</string>
     <string name="projects_identity_remove_discord">Discord fotoğrafın ve forumdaki ekip etiketin de kalkar.</string>
     <string name="projects_identity_link_discord">Discord hesabını bağla</string>
     <string name="projects_identity_link_microsoft">Microsoft hesabını bağla</string>

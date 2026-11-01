@@ -861,11 +861,9 @@
     <string name="projects_discord_only">For now, this is only for accounts opened with Discord.</string>
     <string name="projects_identity_title">Linked accounts</string>
     <string name="projects_identity_linked_on">Linked on %1$s</string>
-    <string name="projects_identity_this_device">This device</string>
-    <string name="projects_identity_new">New</string>
     <string name="projects_identity_remove">Remove</string>
     <string name="projects_identity_remove_title">Remove %1$s?</string>
-    <string name="projects_identity_remove_discord_number">24/7 Cloud won\'t open without Discord, and your Projects skin link and forum crew tag go too.</string>
+    <string name="projects_identity_remove_discord_number">24/7 Cloud won\'t open without Discord. Your Projects skin link and forum crew tag go too.</string>
     <string name="projects_identity_remove_discord">Your Discord photo and forum crew tag go too.</string>
     <string name="projects_identity_link_discord">Link your Discord account</string>
     <string name="projects_identity_link_microsoft">Link your Microsoft account</string>
