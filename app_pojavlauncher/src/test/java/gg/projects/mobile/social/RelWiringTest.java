@@ -91,22 +91,25 @@ public class RelWiringTest {
         for (String way : Arrays.asList(
                 "private void forgetSession() {", // sign-out, the session's end, a restriction, "Verilerimi sil"
                 "private void signedIn(JsonObject answer) {", // a new sign-in
-                "public void noticesSeen(final Set<String> ids) {", // moderators' notes seen here
                 "private void refreshMeOnly() {", // the profile read outside the list
+                "private void refreshTeam() {", // the crews read outside the list (a service without many crews)
+                "public void forgetJoinRequest(String teamId, String userId) {", // a join request that went elsewhere
                 "private void identityDone(")) { // a link's or a removal's profile
             has(way, body(code, way), "forgetRel();");
         }
+        // Moderators' notes seen here: when they go and again when the service has them (a read in between keeps none).
+        assertEquals("noticesSeen forgets twice", 2, count(body(code, "public void noticesSeen(final Set<String> ids) {"), "forgetRel();"));
         // Spec 7: a push forgets before it reads.
         String push = body(code, "public void pushArrived() {");
         has("pushArrived", push, "forgetRel();");
         assertTrue("pushArrived forgets before it reads", push.indexOf("forgetRel();") < push.indexOf("refresh(false)"));
         // Every socket frame that changes the lists or the profile.
         String frames = body(code, "public void onMessage(PresenceConnection connection, JsonObject message) {");
-        int check = frames.indexOf("RelVersion.changesRelations(type)");
-        assertTrue("onMessage asks RelVersion.changesRelations(type)", check > 0);
-        int brace = frames.indexOf('{', check);
-        assertTrue("a frame that changes the lists forgets the version and the copy",
-                brace > 0 && frames.substring(brace, close(frames, brace)).contains("forgetRel();"));
+        has("a frame that changes the lists", block(frames, "if (RelVersion.changesRelations(type)) {"), "forgetRel();");
+        // Spec 6: a hello naming another version takes the copy kept for a start at once, a read on its way or not.
+        String changed = block(frames, "if (hello == RelVersion.Hello.CHANGED) {");
+        has("a hello with another version", changed, "if (mFetching) mListChanges++;");
+        has("a hello with another version", changed, "forgetRel();");
         // "Verilerimi sil" takes the copy also when the socket's 4002 ended the session first.
         has("deleteAccount", body(code, "public void deleteAccount("), "mKept.clear();");
         // A start without a session keeps nothing of an account; with one, it loads the copy of its account.
@@ -131,14 +134,22 @@ public class RelWiringTest {
         assertEquals("refresh reads GET /v1/me only in the fallback", 1, count(read, "mApi.me()"));
         has("refresh", read, "mRel.readStarts()");
         has("refresh", read, "mRel.keep(");
+        // A crew shown from an older copy (its detail not read now) is not the answer: no version for it.
+        has("refresh", read, "new CrewDetails.Noted(mApi::teamDetail)");
+        has("refresh", read, "!crews.missed()");
         // Spec 7: an unforced read waits for the hello of the connection up or on its way.
         has("refresh", read, "mRel.refreshSkips(force, mState.loaded(), mConnection != null)");
         // Spec 3: the connect names the version held.
         has("ensureConnected", body(code, "private void ensureConnected() {"), "PresenceConnection.open(mApi, mToken, caps(), mRel.held(), this)");
         has("PresenceConnection", code(source("PresenceConnection.java")), "RelVersion.presencePath(caps, rel)");
-        // Spec 4: the hello's version decides.
-        has("onMessage", rawBody(raw, code, "public void onMessage(PresenceConnection connection, JsonObject message) {"),
-                "mRel.hello(Json.str(message, \"rel\"), mState.loaded())");
+        // Spec 4: the hello's version decides (the call in code, its "rel" as written).
+        int[] frames = bodySpan(code, "public void onMessage(PresenceConnection connection, JsonObject message) {");
+        int hello = code.indexOf("mRel.hello(Json.str(message, ", frames[0]);
+        assertTrue("onMessage no longer asks mRel.hello", hello > 0 && hello < frames[1]);
+        assertTrue("the hello's own rel decides", raw.startsWith("mRel.hello(Json.str(message, \"rel\"), mState.loaded())", hello));
+        // A connection that ended before its hello reads the lists once in a run, not at every failed reconnect.
+        has("onEnded", body(code, "public void onEnded(PresenceConnection connection, int code, boolean failed) {"),
+                "if (!saidHello && mLastTry == 0) refresh(false, true);");
         // Spec 6: a start shows the copy only while nothing replaced it meanwhile.
         has("keptLoaded", body(code, "private void keptLoaded("), "!mState.loaded() && mRel.keep(kept.rel, since)");
     }
@@ -147,9 +158,15 @@ public class RelWiringTest {
     @Test
     public void aRequestsPushTakesTheCopyAlsoWithoutTheApp() throws IOException {
         String push = code(source("SocialPush.java"));
-        has("SocialPush", push, "SocialService.get(app).pushArrived();");
-        has("SocialPush", push, "else if (PushMessage.REQUEST.equals(message.type))");
-        has("SocialPush", push, "new KeptLists(KeptLists.folder(app.getNoBackupFilesDir(), debug.override)).clear();");
+        // The running app's pushArrived, else (no service in this process) the request's own clear.
+        int open = push.indexOf('{', push.indexOf("if (SocialService.exists()) {"));
+        assertTrue("SocialPush no longer asks whether the service runs", open > 0);
+        has("SocialPush", push.substring(open, close(push, open)), "SocialService.get(app).pushArrived();");
+        String otherwise = push.substring(close(push, open) + 1);
+        assertTrue("without the service, a request's push clears the copy",
+                otherwise.trim().startsWith("else if (PushMessage.REQUEST.equals(message.type)) {"));
+        has("SocialPush", block(otherwise, "else if (PushMessage.REQUEST.equals(message.type)) {"),
+                "new KeptLists(KeptLists.folder(app.getNoBackupFilesDir(), debug.override)).clear();");
         // The same folder as the service's.
         has("the service's start", code(source("SocialService.java")), "new KeptLists(KeptLists.folder(app.getNoBackupFilesDir(), mDebug.override))");
     }
@@ -157,6 +174,14 @@ public class RelWiringTest {
     /** A short failure: where, and what is missing (never the whole method). */
     private static void has(String where, String text, String part) {
         assertTrue(where + " no longer has: " + part, text.contains(part));
+    }
+
+    /** The block ({@code {…}}) that {@code opening} (ending with its brace) starts in {@code code}. */
+    private static String block(String code, String opening) {
+        int at = code.indexOf(opening);
+        assertTrue("no longer there: " + opening, at >= 0);
+        int open = at + opening.length() - 1;
+        return code.substring(open, close(code, open) + 1);
     }
 
     // ---- reading the sources ----
@@ -239,12 +264,6 @@ public class RelWiringTest {
     private static String body(String code, String signature) {
         int[] span = bodySpan(code, signature);
         return code.substring(span[0], span[1]);
-    }
-
-    /** The same body as written (for what sits in a string). */
-    private static String rawBody(String raw, String code, String signature) {
-        int[] span = bodySpan(code, signature);
-        return raw.substring(span[0], span[1]);
     }
 
     private static int count(String text, String part) {

@@ -47,6 +47,34 @@ public final class CrewDetails {
     }
 
     /**
+     * SOC-REL-M: a {@link Fetcher} that remembers a detail it could not read. {@link #resolve} then shows that crew from
+     * its older copy (or the read fails): lists that are not the service's answer, so no relations version describes them.
+     */
+    public static final class Noted implements Fetcher {
+        private final Fetcher mFetcher;
+        private volatile boolean mMissed;
+
+        public Noted(Fetcher fetcher) {
+            mFetcher = fetcher;
+        }
+
+        @Override
+        public Detail fetch(String crewId, @Nullable String etag) throws SocialProblem {
+            try {
+                return mFetcher.fetch(crewId, etag);
+            } catch (SocialProblem problem) {
+                mMissed = true;
+                throw problem;
+            }
+        }
+
+        /** True once a detail was not read. */
+        public boolean missed() {
+            return mMissed;
+        }
+    }
+
+    /**
      * The list's look of a crew, laid over an older copy when it could not be read again; CHAT-CALM's {@code slow} (the
      * chat's slow mode, read with the crew's row) too, so a copy from before a change does not count a wait it no longer has.
      */

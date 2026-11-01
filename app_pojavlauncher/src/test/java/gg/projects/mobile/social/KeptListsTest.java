@@ -301,6 +301,37 @@ public class KeptListsTest {
         }
     }
 
+    /**
+     * SOC-REL-M (the independent review's P2): a crew whose detail could not be read is shown from its older copy, so the
+     * read is noted and keeps no version (else the hello's "same" would keep the old crew for the rest of the run).
+     */
+    @Test
+    public void aCrewShownFromAnOlderCopyIsNoted() throws SocialProblem {
+        CrewCache crews = new CrewCache(new File(tmp.getRoot(), "crews"), ME);
+        crews.store(CREW, "\"3-" + DAY + "\"", 3, DAY, fullCrew(3));
+        // The list names revision 4 and its detail cannot be read now (a timeout, a busy service): the older copy stands in.
+        CrewDetails.Noted failing = new CrewDetails.Noted((id, etag) -> {
+            throw SocialProblem.unavailable("timeout");
+        });
+        JsonObject lists = answer(ME, "Blaze_Runner", REL);
+        CrewDetails.resolve(lists, crews, failing, DAY);
+        assertTrue(failing.missed());
+        assertEquals(3, Json.objects(lists, "crews").get(0).getAsJsonObject("team").get("rev").getAsInt());
+        // Read now: nothing missed.
+        CrewDetails.Noted reading = new CrewDetails.Noted((id, etag) -> new CrewDetails.Detail(CrewDetails.Detail.Status.OK,
+                "\"4-" + DAY + "\"", fullCrew(4)));
+        JsonObject again = answer(ME, "Blaze_Runner", REL);
+        CrewDetails.resolve(again, crews, reading, DAY);
+        assertFalse(reading.missed());
+        assertEquals(4, Json.objects(again, "crews").get(0).getAsJsonObject("team").get("rev").getAsInt());
+        // Today's copy at the list's revision: nothing read, nothing missed.
+        CrewDetails.Noted none = new CrewDetails.Noted((id, etag) -> {
+            throw new AssertionError("read " + id);
+        });
+        CrewDetails.resolve(answer(ME, "Blaze_Runner", REL), crews, none, DAY);
+        assertFalse(none.missed());
+    }
+
     /** The copies sit in the app's no-backup folder, beside the session; a debug build on another service has its own. */
     @Test
     public void theCopiesLiveInTheNoBackupFolder() {
