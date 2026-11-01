@@ -26,9 +26,9 @@ import gg.projects.mobile.ui.Press;
  * game's: "Menü" opens the editor's menu (upstream's faint cog at a third of its opacity, which players did not
  * find) and "Kaydet" writes the layout the game reads. "Kaydet" is quiet and cannot be pressed while nothing changed,
  * and turns gold, the editor's one loud thing, once something did. Chamfered actions in the keys' own colours
- * (obsidian, a bone hairline), so they read over snow and in a cave; 40 dp tall inside 48 dp targets. Above the keys,
- * under a key's settings panel and its action row. It fades in and out with the editor (opacity only, interruptible;
- * at once with animations off).
+ * (obsidian, a bone hairline), so they read over snow and in a cave; 40 dp tall inside 48 dp targets. Just under the
+ * keys (a key placed at the top centre stays reachable), under a key's settings panel and its action row. It fades in
+ * and out with the editor (opacity only, interruptible; at once with animations off).
  */
 @SuppressLint("ViewConstructor")
 public final class EditorBar extends LinearLayout {
@@ -52,10 +52,10 @@ public final class EditorBar extends LinearLayout {
         setGravity(Gravity.CENTER_VERTICAL);
         setClipChildren(false);
         setClipToPadding(false);
-        // Above the keys (upstream lifts every key to a translation Z of 10), without a shadow; a key's settings panel
-        // and its action row stay above it.
+        // Just under the keys (upstream lifts every key to a translation Z of 10, the resize handle to 10.5), without a
+        // shadow: a key a player put at the top centre, and its handle, stay reachable over the bar.
         setOutlineProvider(null);
-        setTranslationZ(11f);
+        setTranslationZ(9.5f);
 
         mMenu = button(context, R.string.projects_ctrl_menu, quiet(context, dp), ContextCompat.getColor(context, R.color.projects_bone_100),
                 R.font.figtree_semibold);

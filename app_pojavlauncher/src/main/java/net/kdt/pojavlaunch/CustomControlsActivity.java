@@ -29,6 +29,7 @@ import gg.projects.mobile.controls.SavedLayoutNotice;
 public class CustomControlsActivity extends BaseActivity implements EditorExitable, EditorHost {
 	/** Projects fork (CTRL-SAVE): unsaved keys kept while Android stops the app in the background. */
 	private static final String STATE_UNSAVED = "projects_ctrl_unsaved";
+	private static final int MAX_UNSAVED_CHARS = 256 * 1024;
 
 	private DrawerLayout mDrawerLayout;
 	private ListView mDrawerNavigationView;
@@ -91,7 +92,10 @@ public class CustomControlsActivity extends BaseActivity implements EditorExitab
 	protected void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
 		if (mControlLayout != null && mControlLayout.isModified() && mControlLayout.getLayout() != null) {
-			outState.putString(STATE_UNSAVED, mControlLayout.getLayout().toJson());
+			String json = mControlLayout.getLayout().toJson();
+			// A saved state travels through a binder transaction (about 1 MB for everything): a layout far larger than
+			// any real one stays out rather than fail the stop.
+			if (json.length() <= MAX_UNSAVED_CHARS) outState.putString(STATE_UNSAVED, json);
 		}
 	}
 
@@ -156,5 +160,10 @@ public class CustomControlsActivity extends BaseActivity implements EditorExitab
 	@Override
 	public void editorSavedAndLeft(LayoutBackups.Saved saved) {
 		SavedLayoutNotice.offerOnReturn(saved);
+	}
+
+	@Override
+	public void editorLayoutReloaded() {
+		// The editor's own bar opens the menu here: nothing follows the layout.
 	}
 }

@@ -367,7 +367,10 @@ public interface ControlInterface extends View.OnLongClickListener, GrabListener
                         break;
 
                     case MotionEvent.ACTION_MOVE:
-                        if (gg.projects.mobile.controls.EditorRules.dragged(event.getRawX() - downRawX, event.getRawY() - downRawY, 8))
+                        // Projects fork (CTRL-SAVE): Android's touch slop (about 8 dp), not upstream's 8 raw pixels
+                        // (3 dp on a sharp screen): a trembling tap opens the key's settings instead of moving it.
+                        if (gg.projects.mobile.controls.EditorRules.dragged(event.getRawX() - downRawX, event.getRawY() - downRawY,
+                                android.view.ViewConfiguration.get(view.getContext()).getScaledTouchSlop()))
                             mCanTriggerLongClick = false;
                         // Projects fork (CTRL-SAVE): the key stays put until the finger has really moved (a tap that
                         // trembled shifted it, snapped it to a neighbour and rewrote its place), and a move is a

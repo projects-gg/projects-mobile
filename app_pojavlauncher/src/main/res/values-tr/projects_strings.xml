@@ -306,6 +306,9 @@
     <string name="projects_ctrl_save_question_body">Kaydetmeden çıkarsan tuşlar eski hâline döner.</string>
     <string name="projects_ctrl_save_leave">Kaydet ve çık</string>
     <string name="projects_ctrl_leave_unsaved">Kaydetmeden çık</string>
+    <!-- CTRL-SAVE: "Yükle" or "Varsayılan kontrolleri seç" with a change not saved yet. -->
+    <string name="projects_ctrl_replace_body">Kaydetmezsen yaptığın değişiklikler silinir.</string>
+    <string name="projects_ctrl_dont_save">Kaydetme</string>
     <string name="projects_ctrl_saved">Tuşlar kaydedildi.</string>
     <string name="projects_ctrl_undone">Eski tuşların geri geldi.</string>
     <string name="projects_ctrl_save_failed">Tuşlar kaydedilemedi. Tekrar dene.</string>

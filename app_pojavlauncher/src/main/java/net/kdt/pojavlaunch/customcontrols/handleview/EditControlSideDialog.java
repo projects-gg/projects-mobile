@@ -341,11 +341,13 @@ public class EditControlSideDialog extends SideDialogView {
         mNameEditText.addTextChangedListener((SimpleTextWatcher) s -> {
             if (internalChanges) return;
 
+            boolean renamed = !s.toString().equals(mCurrentlyEditedButton.getProperties().name);
             mCurrentlyEditedButton.getProperties().name = s.toString();
 
             // Cheap and unoptimized, doesn't break the abstraction layer
             mCurrentlyEditedButton.setProperties(mCurrentlyEditedButton.getProperties(), false);
-            changed();
+            // A keyboard committing the same text again is no change.
+            if (renamed) changed();
         });
 
         mWidthEditText.addTextChangedListener((SimpleTextWatcher) s -> {

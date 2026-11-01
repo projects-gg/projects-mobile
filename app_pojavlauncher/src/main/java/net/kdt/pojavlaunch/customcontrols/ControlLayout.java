@@ -105,7 +105,8 @@ public class ControlLayout extends FrameLayout {
 
 	public void loadLayout(CustomControls controlLayout) {
 		// Projects fork (CTRL-SAVE): the keys a load puts in place are no edit of the player's; the editor's bar
-		// learns the layout's state once, at the end.
+		// learns the layout's state once, at the end. A save's line (and its "Geri al") belongs to what was shown.
+		if (mSaveLine != null) mSaveLine.hide();
 		mLoading = true;
 		try {
 			putLayout(controlLayout);
@@ -476,9 +477,12 @@ public class ControlLayout extends FrameLayout {
 				saved = LayoutBackups.save(target, bytes, System.currentTimeMillis());
 			} catch (IOException | RuntimeException e) {
 				Log.w("ControlLayout", "layout not saved", e);
+			} finally {
+				// Whatever happened, the editor hears back (a save that never answers would keep "Kaydet" and
+				// leaving locked).
+				final LayoutBackups.Saved result = saved;
+				post(() -> afterSave(result, edits, leaving, after));
 			}
-			final LayoutBackups.Saved result = saved;
-			post(() -> afterSave(result, edits, leaving, after));
 		});
 	}
 
@@ -498,24 +502,29 @@ public class ControlLayout extends FrameLayout {
 			showSaveLine(getContext().getString(R.string.projects_ctrl_save_failed), null);
 			return;
 		}
-		// An edit made while the file was written stays a change to save.
-		if (edits == mEdits) setModified(false);
-		else if (mEditorBar != null) mEditorBar.setCanSave(mIsModified);
-		if (leaving && mHost != null) {
+		// An edit made while the file was written stays a change to save, and keeps the editor open: leaving now would
+		// drop it. Its "Geri al" would drop it too, so the line comes without one.
+		boolean newer = edits != mEdits;
+		if (newer) {
+			if (mEditorBar != null) mEditorBar.setCanSave(mIsModified);
+		} else {
+			setModified(false);
+		}
+		if (leaving && !newer && mHost != null) {
 			mHost.exitEditor();
 			mHost.editorSavedAndLeft(saved);
 			return;
 		}
-		showSaved(saved);
+		showSaved(newer ? null : saved);
 		if (after != null) after.run();
 	}
 
 	/**
 	 * Projects fork (CTRL-SAVE): "Tuşlar kaydedildi." under the editor's bar (or where it stood, in the game after
-	 * "Kaydet ve çık"), with "Geri al" while the save can be taken back.
+	 * "Kaydet ve çık"), with "Geri al" while the save can be taken back ({@code saved} null: without it).
 	 */
-	public void showSaved(final LayoutBackups.Saved saved) {
-		ControlHint.Action undo = saved.undoable()
+	public void showSaved(@Nullable final LayoutBackups.Saved saved) {
+		ControlHint.Action undo = saved != null && saved.undoable()
 				? new ControlHint.Action(getContext().getString(R.string.projects_undo), () -> undoSave(saved)) : null;
 		showSaveLine(getContext().getString(R.string.projects_ctrl_saved), undo);
 	}
@@ -536,30 +545,49 @@ public class ControlLayout extends FrameLayout {
 		// One decision: a second tap while the line answers does nothing.
 		if (mUndoing == saved) return;
 		mUndoing = saved;
+		final int edits = mEdits;
 		LayoutBackups.run(() -> {
-			boolean undone;
+			boolean undone = false;
 			try {
 				undone = LayoutBackups.undo(saved);
 			} catch (IOException | RuntimeException e) {
 				Log.w("ControlLayout", "save not taken back", e);
-				undone = false;
+			} finally {
+				final boolean done = undone;
+				post(() -> afterUndo(done, edits));
 			}
-			final boolean done = undone;
-			post(() -> {
-				mUndoing = null;
-				if (!done) {
-					showSaveLine(getContext().getString(R.string.projects_ctrl_undo_failed), null);
-					return;
-				}
-				if (mModifiable) removeEditWindow();
-				try {
-					loadLayout(activeLayoutPath());
-				} catch (IOException | RuntimeException e) {
-					Log.w("ControlLayout", "layout not read again", e);
-				}
-				showSaveLine(getContext().getString(R.string.projects_ctrl_undone), null);
-			});
 		});
+	}
+
+	private void afterUndo(boolean done, int edits) {
+		mUndoing = null;
+		if (!done) {
+			showSaveLine(getContext().getString(R.string.projects_ctrl_undo_failed), null);
+			return;
+		}
+		// An edit made meanwhile stays on screen (the file holds the version before the save; "Kaydet" writes it).
+		if (edits != mEdits) return;
+		if (mModifiable) removeEditWindow();
+		reloadActive();
+		showSaveLine(getContext().getString(R.string.projects_ctrl_undone), null);
+	}
+
+	/**
+	 * Projects fork (CTRL-SAVE): shows the layout the game reads again; a file that is gone (a save that made it was
+	 * taken back) gives way to the shipped default, as the game's start does. The host then sees what is shown.
+	 */
+	private void reloadActive() {
+		try {
+			loadLayout(activeLayoutPath());
+		} catch (IOException | RuntimeException e) {
+			Log.w("ControlLayout", "layout not read again, the default instead", e);
+			try {
+				loadLayout(Tools.CTRLDEF_FILE);
+			} catch (IOException | RuntimeException e2) {
+				Log.w("ControlLayout", "default layout not read", e2);
+			}
+		}
+		if (mHost != null) mHost.editorLayoutReloaded();
 	}
 
 	public List<ControlInterface> getButtonChildren(){
@@ -805,15 +833,18 @@ public class ControlLayout extends FrameLayout {
 
 			@Override
 			public void onFileSelected(File file, String path) {
-				try {
-					loadLayout(path);
-					// Projects fork (CTRL-SAVE): another file's layout in the editor is a change to the layout in use
-					// until "Kaydet" writes it there.
-					if (EditorRules.loadedAnother(path, activeLayoutPath())) setModified(true);
-				}catch (IOException e) {
-					Tools.showError(getContext(), e);
-				}
 				dialog.dismiss();
+				// Projects fork (CTRL-SAVE): a change not saved yet is asked about first.
+				replaceAfterAsking(() -> {
+					try {
+						loadLayout(path);
+						// Another file's layout in the editor is a change to the layout in use until "Kaydet"
+						// writes it there.
+						if (EditorRules.loadedAnother(path, activeLayoutPath())) setModified(true);
+					}catch (IOException | JsonSyntaxException e) {
+						Tools.showError(getContext(), e);
+					}
+				});
 			}
 		});
 		dialog.setView(flv);
@@ -832,20 +863,48 @@ public class ControlLayout extends FrameLayout {
 
 			@Override
 			public void onFileSelected(File file, String path) {
-				try {
-					LauncherPreferences.DEFAULT_PREF.edit().putString("defaultCtrl", path).apply();
-					LauncherPreferences.PREF_DEFAULTCTRL_PATH = path;
-					// Projects fork (CTRL-SAVE): the editor shows the layout the game reads now (in the game, a
-					// profile with a control file of its own keeps it), so "Kaydet" writes what is shown.
-					loadLayout(activeLayoutPath());
-				}catch (IOException|JsonSyntaxException e) {
-					Tools.showError(getContext(), e);
-				}
 				dialog.dismiss();
+				// Projects fork (CTRL-SAVE): a change not saved yet is asked about first (in the game, a profile with
+				// a control file of its own would just show that file again and drop the change).
+				replaceAfterAsking(() -> {
+					try {
+						LauncherPreferences.DEFAULT_PREF.edit().putString("defaultCtrl", path).apply();
+						LauncherPreferences.PREF_DEFAULTCTRL_PATH = path;
+						// The editor shows the layout the game reads now, so "Kaydet" writes what is shown.
+						loadLayout(activeLayoutPath());
+					}catch (IOException|JsonSyntaxException e) {
+						Tools.showError(getContext(), e);
+					}
+				});
 			}
 		});
 		dialog.setView(flv);
 		dialog.show();
+	}
+
+	/**
+	 * Projects fork (CTRL-SAVE): another layout is about to take the editor's place ("Yükle", "Varsayılan kontrolleri
+	 * seç"). With a change not saved, one question first: "Kaydet" writes it and goes on, "Kaydetme" goes on, the
+	 * close mark (or back, or a tap outside) keeps everything as it is.
+	 */
+	private void replaceAfterAsking(final Runnable replace) {
+		if (!mIsModified) {
+			replace.run();
+			return;
+		}
+		Context context = getContext();
+		Activity activity = activityOf(context);
+		if (activity == null || mSaving) return; // Nothing is dropped.
+		ConfirmDialog.show(activity,
+				context.getString(R.string.projects_ctrl_save_question),
+				context.getString(R.string.projects_ctrl_replace_body),
+				context.getString(R.string.projects_ctrl_save), false,
+				// Saved, then replaced: the line still says so, without a "Geri al" for keys no longer shown.
+				() -> saveActive(false, () -> {
+					replace.run();
+					showSaved(null);
+				}),
+				context.getString(R.string.projects_ctrl_dont_save), replace);
 	}
 
 	public boolean areControlVisible(){

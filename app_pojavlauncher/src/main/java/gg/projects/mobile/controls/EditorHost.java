@@ -15,4 +15,7 @@ public interface EditorHost extends EditorExitable {
 
     /** The editor closed after "Kaydet ve çık": "Geri al" is offered wherever the player is now. */
     void editorSavedAndLeft(LayoutBackups.Saved saved);
+
+    /** "Geri al" put another layout on screen (in the game, the menu's pull button follows its MENÜ key). */
+    void editorLayoutReloaded();
 }

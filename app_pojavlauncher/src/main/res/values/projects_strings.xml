@@ -321,6 +321,9 @@
     <string name="projects_ctrl_save_question_body">If you leave without saving, your controls go back to how they were.</string>
     <string name="projects_ctrl_save_leave">Save and leave</string>
     <string name="projects_ctrl_leave_unsaved">Leave without saving</string>
+    <!-- CTRL-SAVE: "Load" or "Select default controlmap" with a change not saved yet. -->
+    <string name="projects_ctrl_replace_body">If you don\'t save, your changes are lost.</string>
+    <string name="projects_ctrl_dont_save">Don\'t save</string>
     <string name="projects_ctrl_saved">Controls saved.</string>
     <string name="projects_ctrl_undone">Your old controls are back.</string>
     <string name="projects_ctrl_save_failed">Couldn\'t save the controls. Try again.</string>

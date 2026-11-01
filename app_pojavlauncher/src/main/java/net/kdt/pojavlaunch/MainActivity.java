@@ -714,10 +714,19 @@ public class MainActivity extends BaseActivity implements ControlButtonMenuListe
             mControlLayout.loadLayout((CustomControls)null);
             mControlLayout.setModifiable(false);
             System.gc();
-            mControlLayout.loadLayout(activeLayoutPath());
-            mDrawerPullButton.setVisibility(mControlLayout.hasMenuButton() ? View.GONE : View.VISIBLE);
+            try {
+                mControlLayout.loadLayout(activeLayoutPath());
+            } catch (IOException | com.google.gson.JsonSyntaxException e) {
+                // Projects fork (CTRL-SAVE): the profile's own file is missing or broken (the game started on the
+                // default, loadControls): the default again, never a screen without keys.
+                Log.w(TAG, "Unable to load the control file on leaving the editor, loading the default now", e);
+                mControlLayout.loadLayout(Tools.CTRLDEF_FILE);
+            }
         } catch (IOException e) {
             Tools.showError(this,e);
+        } finally {
+            // Projects fork (CTRL-SAVE): the menu's pull button (hidden while editing) comes back whatever happened.
+            mDrawerPullButton.setVisibility(mControlLayout.hasMenuButton() ? View.GONE : View.VISIBLE);
         }
 
         navDrawer.setAdapter(gameActionArrayAdapter);
@@ -742,6 +751,12 @@ public class MainActivity extends BaseActivity implements ControlButtonMenuListe
     @Override
     public void editorSavedAndLeft(gg.projects.mobile.controls.LayoutBackups.Saved saved) {
         mControlLayout.showSaved(saved);
+    }
+
+    /** Projects fork (CTRL-SAVE): "Geri al" in play brought a layout back: the pull button follows its MENÜ key. */
+    @Override
+    public void editorLayoutReloaded() {
+        if (!isInEditor) mDrawerPullButton.setVisibility(mControlLayout.hasMenuButton() ? View.GONE : View.VISIBLE);
     }
 
     @Override
