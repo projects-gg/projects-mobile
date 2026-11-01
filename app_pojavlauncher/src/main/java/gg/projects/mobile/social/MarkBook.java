@@ -98,6 +98,14 @@ public final class MarkBook {
         return decide();
     }
 
+    /**
+     * The one later try after a failed read (the caller waits a minute, once): true when the revision the service named is
+     * still not the one held and a read should start now.
+     */
+    public boolean retry() {
+        return named(mNamed);
+    }
+
     /** A read starts: the ETag it sends ({@code If-None-Match}; null: none held). */
     @Nullable
     public String begin() {

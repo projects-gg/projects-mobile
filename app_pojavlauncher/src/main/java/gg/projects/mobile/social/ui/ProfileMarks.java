@@ -209,8 +209,9 @@ public final class ProfileMarks {
     }
 
     /**
-     * Where a badge goes in {@code text}: after the word holding {@code name}, at its start when the line starts from it,
-     * else its first appearance as a word of its own; -1 when it is not there.
+     * Where a badge goes in {@code text}: after the first appearance of {@code name} as a word of its own (not inside a
+     * longer name: "Can" in "Canberk" or "Can_Blok"), and after a suffix joined to it by an apostrophe ("Ayşe'nin",
+     * "Ayşe's"); -1 when it is not there.
      */
     static int nameEnd(String text, @Nullable String name) {
         if (name == null || name.isEmpty()) return -1;
@@ -218,18 +219,28 @@ public final class ProfileMarks {
         while (true) {
             int at = text.indexOf(name, from);
             if (at < 0) return -1;
-            if (at == 0 || !Character.isLetterOrDigit(text.codePointBefore(at))) {
-                int end = at + name.length();
-                // A suffix stays with the name: "Ayşe'nin", "Ayşe's".
-                while (end < text.length()) {
-                    char c = text.charAt(end);
-                    if (!Character.isLetterOrDigit(c) && c != '\'' && c != '\u2019') break;
-                    end++;
+            int end = at + name.length();
+            boolean starts = at == 0 || !inName(text.codePointBefore(at));
+            boolean ends = end == text.length() || !inName(text.codePointAt(end));
+            if (starts && ends) {
+                if (end < text.length() && isApostrophe(text.charAt(end))) {
+                    int suffix = end + 1;
+                    while (suffix < text.length() && Character.isLetter(text.charAt(suffix))) suffix++;
+                    if (suffix > end + 1) end = suffix;
                 }
                 return end;
             }
             from = at + 1;
         }
+    }
+
+    /** A character a player's name holds (Minecraft-style names: letters, digits, "_"). */
+    private static boolean inName(int codePoint) {
+        return Character.isLetterOrDigit(codePoint) || codePoint == '_';
+    }
+
+    private static boolean isApostrophe(char c) {
+        return c == '\'' || c == '\u2019';
     }
 
     /** The badge inside a sentence: the space under it is as wide as the gap and the drawing, which sits on the line. */

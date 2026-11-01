@@ -311,7 +311,8 @@ const java = build(drawings);
 if (check) {
   let now = "";
   try {
-    now = readFileSync(OUT, "utf8");
+    // A Windows checkout (core.autocrlf) has CRLF line ends: the drawings are the same.
+    now = readFileSync(OUT, "utf8").replace(/\r\n/g, "\n");
   } catch {
     // Missing: differs.
   }

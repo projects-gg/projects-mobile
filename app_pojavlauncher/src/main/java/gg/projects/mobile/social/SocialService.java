@@ -94,6 +94,8 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     private static final long RETRY_GAP_MS = 10_000;
     /** BADGES: a change of the player's own badges is taken as on its way this long (its answer brings the profile). */
     private static final long MARKS_SENDING_MS = 20_000;
+    /** BADGES: a failed catalogue read is tried once more after this long. */
+    private static final long MARKS_RETRY_MS = 60_000;
 
     public interface Listener {
         @MainThread
@@ -198,6 +200,12 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     private final MarkBook mMarks = new MarkBook();
     /** BADGES: when the player last sent a change of their own badges (elapsed ms; the profile is not read meanwhile). */
     private long mMarksSentAt = Long.MIN_VALUE / 2;
+    /** BADGES: a failed catalogue read was tried once more already (until a read gets through). */
+    private boolean mMarksRetried;
+    /** BADGES: that one later try, only while the socket is up (the app in use: no wake-up in the background). */
+    private final Runnable mMarksRetry = () -> {
+        if (connection() == Connection.LIVE && mMarks.retry()) readMarks();
+    };
     /**
      * M048: a start reads the lists an earlier start kept today (a few milliseconds of disk, off the main thread); the
      * socket and the reads wait for it, so the connect names its version and nothing is read twice.
@@ -604,17 +612,28 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         final MarkStore store = markStore();
         mIo.execute(() -> {
             MarkStore.Kept read = null;
+            boolean failed = false;
             try {
                 read = mApi.markCatalog(etag);
                 if (read != null) store.save(read.catalog, read.etag);
             } catch (SocialProblem problem) {
-                // The catalogue held stays; the next list read or frame that asks tries again.
+                // The catalogue held stays: one more try a minute later, then the next list read or frame that asks.
+                failed = true;
             }
             final MarkStore.Kept answer = read;
+            final boolean retry = failed;
             mMain.post(() -> {
                 boolean again = mMarks.ended(answer);
                 if (answer != null) changed();
-                if (again) readMarks();
+                if (again) {
+                    readMarks();
+                } else if (retry && !mMarksRetried) {
+                    // A blip at a same-day start would keep the older catalogue all day (no list read names it again).
+                    mMarksRetried = true;
+                    mMain.removeCallbacks(mMarksRetry);
+                    mMain.postDelayed(mMarksRetry, MARKS_RETRY_MS);
+                }
+                if (!retry) mMarksRetried = false;
             });
         });
     }
@@ -915,7 +934,9 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
                 KeptLists.Copy copy = mKept.load(account, today);
                 JsonObject lists = copy == null ? null : KeptLists.listsWithCrews(copy, new CrewCache(mCrewRoot, account), today);
                 Me me = lists == null ? null : Me.read(copy.me);
-                if (me != null && account.equals(me.profile.id)) found = new KeptStart(copy.rel, me, FriendsData.read(lists));
+                if (me != null && account.equals(me.profile.id)) {
+                    found = new KeptStart(copy.rel, me, FriendsData.read(lists), Json.numOrNull(lists, "marksRev"));
+                }
             } catch (RuntimeException e) {
                 Log.w(TAG, "the friend list kept on the phone is not read", e);
                 found = null;
@@ -932,11 +953,15 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         final String rel;
         final Me me;
         final FriendsData data;
+        /** BADGES: the badge catalogue's revision the kept answer named (null: a service before badges). */
+        @Nullable
+        final Long marksRev;
 
-        KeptStart(String rel, Me me, FriendsData data) {
+        KeptStart(String rel, Me me, FriendsData data, @Nullable Long marksRev) {
             this.rel = rel;
             this.me = me;
             this.data = data;
+            this.marksRev = marksRev;
         }
     }
 
@@ -946,6 +971,8 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         if (kept != null && token != null && token.equals(mToken) && !mState.loaded() && mRel.keep(kept.rel, since)) {
             mState.setMe(kept.me);
             mState.applyFriends(kept.data);
+            // BADGES: the kept answer names the catalogue's revision (a same-day start may read no list at all).
+            marksListed(kept.marksRev);
             mPrefs.setCrewSettings(mState.teamNotifications());
             rememberCrewNames();
             syncPlanReminders();

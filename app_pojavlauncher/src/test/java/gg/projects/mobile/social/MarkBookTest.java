@@ -96,6 +96,22 @@ public class MarkBookTest {
     }
 
     @Test
+    public void aFailedReadIsTriedOnceMoreOnlyWhileTheNamedRevisionIsNotHeld() {
+        MarkBook book = new MarkBook();
+        book.loaded(null);
+        // Nothing named yet: nothing to try.
+        assertFalse(book.retry());
+        assertTrue(book.named(3));
+        book.begin();
+        assertFalse(book.ended(null));
+        assertTrue(book.retry());
+        book.begin();
+        assertFalse(book.ended(kept(3, "\"3\"")));
+        // Held now: the later try reads nothing.
+        assertFalse(book.retry());
+    }
+
+    @Test
     public void anUnknownBadgeReadsAtMostEveryHalfHour() {
         MarkBook book = new MarkBook();
         book.loaded(null);

@@ -24,6 +24,11 @@ public class ProfileMarksTest {
     @Test
     public void aNameInsideAnotherWordOrMissingTakesNoBadge() {
         assertEquals(-1, ProfileMarks.nameEnd("SuperCan seni çağırıyor", "Can"));
+        // Nor at the start of a longer name.
+        assertEquals(-1, ProfileMarks.nameEnd("Canberk seni çağırıyor", "Can"));
+        assertEquals(-1, ProfileMarks.nameEnd("Can_Blok seni çağırıyor", "Can"));
+        // An apostrophe with nothing after it is no suffix.
+        assertEquals(8, ProfileMarks.nameEnd("KorAtesi' seni", "KorAtesi"));
         assertEquals(-1, ProfileMarks.nameEnd("Biri seni oyuna çağırıyor", "KorAtesi"));
         assertEquals(-1, ProfileMarks.nameEnd("KorAtesi seni çağırıyor", ""));
         assertEquals(-1, ProfileMarks.nameEnd("KorAtesi seni çağırıyor", null));

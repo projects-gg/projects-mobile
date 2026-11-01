@@ -2,6 +2,7 @@ package gg.projects.mobile.social.ui;
 
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.os.SystemClock;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -34,17 +35,25 @@ import gg.projects.mobile.ui.Haptics;
  * ({@code me.marksHidden} missing).
  *
  * <p>A switch turns at the tap and its drawing fades with it (160 ms, at once with animations off); the whole hidden
- * list goes, with every switch turned before the last answer ({@link MarkCatalog#hiddenToSend}). The answer that agrees
- * with the switches redraws nothing (the page's key stays, so no motion is cut); a refusal turns the switch back and says
- * why.
+ * list goes ({@link MarkCatalog#hiddenToSend}), one change at a time: a switch turned while one is on its way goes with
+ * the next, so answers never come out of order. The answer that agrees with the switches redraws nothing (the page's key
+ * stays, so no motion is cut); a refusal turns the switches back and says why.
  */
 final class OwnMarks {
     /** A badge kept off the profile (design.md: 45 %). */
     private static final int OFF_ALPHA = 115;
     private static final long FADE_MS = 160;
 
+    /** A change taken as lost when no answer came in this long (a session that ended answers nothing). */
+    private static final long SENDING_MS = 30_000;
+
     /** Switches turned whose answer has not come: badge key to shown. */
     private final Map<String, Boolean> mPending = new HashMap<>();
+    /** A change is on its way (one at a time, so a later answer never overtakes an earlier one). */
+    private boolean mSending;
+    private long mSentAt;
+    /** A switch turned while one was on its way: the list goes again when it is answered. */
+    private boolean mResend;
     /** What the switches on screen show (the catalogue's revision and each badge's state); "" without the section. */
     private String mOnScreen = "";
     /** Bumps when the switches must be drawn again: the page's key for this section. */
@@ -126,23 +135,40 @@ final class OwnMarks {
         list.addView(note);
     }
 
-    /** A switch turned: what the switches show now goes as the whole hidden list. */
-    private void turn(final Context context, SocialService service, final String key, boolean on, final Runnable redraw) {
-        Me me = service.state().me();
-        List<MarkCatalog.Own> own = own(service, me);
+    /** A switch turned: what the switches show now goes as the whole hidden list, one change at a time. */
+    private void turn(Context context, SocialService service, String key, boolean on, Runnable redraw) {
         mPending.put(key, on);
         // The switches show it already: the answer that agrees redraws nothing.
-        mOnScreen = wanted(service, own);
-        List<String> hidden = MarkCatalog.hiddenToSend(own, mPending, me == null ? null : me.profile.marksHidden);
+        mOnScreen = wanted(service, own(service, service.state().me()));
+        if (mSending && SystemClock.elapsedRealtime() - mSentAt < SENDING_MS) {
+            // The list goes again when the one on its way is answered: answers never come out of order.
+            mResend = true;
+            return;
+        }
+        send(context, service, redraw);
+    }
+
+    /** Sends the hidden list as the switches show it now (a turned switch over the profile). */
+    private void send(final Context context, final SocialService service, final Runnable redraw) {
+        Me me = service.state().me();
+        List<String> hidden = MarkCatalog.hiddenToSend(own(service, me), mPending, me == null ? null : me.profile.marksHidden);
+        mSending = true;
+        mResend = false;
+        mSentAt = SystemClock.elapsedRealtime();
         service.setMarksHidden(hidden, new SocialService.Result<JsonObject>() {
             @Override
             public void ok(JsonObject value) {
-                // The profile in the answer redraws the page if it says otherwise.
+                // The profile in the answer is applied (and the page redrawn if it says otherwise) before this.
+                mSending = false;
+                if (mResend) send(context, service, redraw);
             }
 
             @Override
             public void failed(SocialProblem problem) {
-                if (Boolean.valueOf(on).equals(mPending.get(key))) mPending.remove(key);
+                mSending = false;
+                mResend = false;
+                // Every switch not answered turns back to what the profile says.
+                mPending.clear();
                 redraw.run();
                 SocialUi.toastProblem(context, problem, null);
             }
