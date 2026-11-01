@@ -313,6 +313,18 @@
     <string name="projects_keyfix_talk_title">Push to talk has no key</string>
     <string name="projects_keyfix_talk_body">You need one to talk in voice chat.</string>
     <string name="projects_keyfix_bound">Push to talk key set</string>
+    <!-- CTRL-SAVE: the controls editor's "Menu" and "Save" at the top centre, the question when leaving with a change,
+         and the line after a save (with "Undo"). -->
+    <string name="projects_ctrl_menu">Menu</string>
+    <string name="projects_ctrl_save">Save</string>
+    <string name="projects_ctrl_save_question">Save your changes?</string>
+    <string name="projects_ctrl_save_question_body">If you leave without saving, your controls go back to how they were.</string>
+    <string name="projects_ctrl_save_leave">Save and leave</string>
+    <string name="projects_ctrl_leave_unsaved">Leave without saving</string>
+    <string name="projects_ctrl_saved">Controls saved.</string>
+    <string name="projects_ctrl_undone">Your old controls are back.</string>
+    <string name="projects_ctrl_save_failed">Couldn\'t save the controls. Try again.</string>
+    <string name="projects_ctrl_undo_failed">Couldn\'t bring your old controls back.</string>
     <!-- M17: a Projects start that ends while the player is away from the home screen: no game starts by
          itself; the notification says so and the home screen has Play ready. -->
     <string name="projects_ready_title">Projects is ready</string>

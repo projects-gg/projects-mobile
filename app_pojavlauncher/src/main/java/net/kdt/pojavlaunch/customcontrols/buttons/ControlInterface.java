@@ -367,13 +367,23 @@ public interface ControlInterface extends View.OnLongClickListener, GrabListener
                         break;
 
                     case MotionEvent.ACTION_MOVE:
-                        if (Math.abs(event.getRawX() - downRawX) > 8 || Math.abs(event.getRawY() - downRawY) > 8)
+                        if (gg.projects.mobile.controls.EditorRules.dragged(event.getRawX() - downRawX, event.getRawY() - downRawY, 8))
                             mCanTriggerLongClick = false;
+                        // Projects fork (CTRL-SAVE): the key stays put until the finger has really moved (a tap that
+                        // trembled shifted it, snapped it to a neighbour and rewrote its place), and a move is a
+                        // change to save.
+                        if (mCanTriggerLongClick) break;
                         getControlLayoutParent().adaptPanelPosition();
+                        String placeX = getProperties().dynamicX;
+                        String placeY = getProperties().dynamicY;
                         snapAndAlign(
                                 MathUtils.clamp(event.getRawX() - downX, 0, CallbackBridge.physicalWidth - view.getWidth()),
                                 MathUtils.clamp(event.getRawY() - downY, 0, CallbackBridge.physicalHeight - view.getHeight())
                         );
+                        if (!java.util.Objects.equals(placeX, getProperties().dynamicX)
+                                || !java.util.Objects.equals(placeY, getProperties().dynamicY)) {
+                            getControlLayoutParent().setModified(true);
+                        }
                         break;
                 }
 

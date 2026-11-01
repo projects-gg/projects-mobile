@@ -68,6 +68,8 @@ public class CustomSeekBarPreference extends SeekBarPreference {
         SeekBar seekBar = (SeekBar) view.findViewById(R.id.seekbar);
 
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            /** Projects fork (CTRL-SAVE): a finger is on the bar (its value is kept when it lifts). */
+            private boolean mTracking;
 
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -78,13 +80,20 @@ public class CustomSeekBarPreference extends SeekBarPreference {
 
                 mTextView.setText(String.valueOf(progress + mMin));
                 updateTextViewWithSuffix();
+                // Projects fork (CTRL-SAVE): a change made without a finger (arrow keys, TalkBack's adjust) is kept at
+                // once, as androidx's own SeekBarPreference does; this listener replaced it and kept only what a
+                // finger left, so "Düğmelerin ölçeklemesini ayarla" set from a keyboard went back.
+                if (fromUser && !mTracking) setValue(progress + mMin);
             }
 
             @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {}
+            public void onStartTrackingTouch(SeekBar seekBar) {
+                mTracking = true;
+            }
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
+                mTracking = false;
 
                 int progress = seekBar.getProgress() + mMin;
                 progress /= getSeekBarIncrement();

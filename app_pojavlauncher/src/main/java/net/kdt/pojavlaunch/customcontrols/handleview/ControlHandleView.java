@@ -13,6 +13,7 @@ import androidx.annotation.Nullable;
 import androidx.core.content.res.ResourcesCompat;
 
 import net.kdt.pojavlaunch.R;
+import net.kdt.pojavlaunch.customcontrols.ControlLayout;
 import net.kdt.pojavlaunch.customcontrols.buttons.ControlInterface;
 
 public class ControlHandleView extends View {
@@ -79,9 +80,16 @@ public class ControlHandleView extends View {
                 System.out.println(getY() - mView.getControlView().getY());
 
 
+                float width = mView.getProperties().getWidth();
+                float height = mView.getProperties().getHeight();
                 mView.getProperties().setWidth(getX() - mView.getControlView().getX());
                 mView.getProperties().setHeight(getY() - mView.getControlView().getY());
                 mView.regenerateDynamicCoordinates();
+                // Projects fork (CTRL-SAVE): a resized key is a change to save (upstream never counted it).
+                if (width != mView.getProperties().getWidth() || height != mView.getProperties().getHeight()) {
+                    ControlLayout layout = mView.getControlLayoutParent();
+                    if (layout != null) layout.setModified(true);
+                }
                 break;
         }
 

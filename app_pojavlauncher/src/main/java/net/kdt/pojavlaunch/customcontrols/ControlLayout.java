@@ -6,17 +6,18 @@ import static net.kdt.pojavlaunch.Tools.currentDisplayMetrics;
 import static org.lwjgl.glfw.CallbackBridge.isGrabbing;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
 import android.os.Build;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.EditText;
 import android.widget.FrameLayout;
-import android.widget.Toast;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 
 import com.google.gson.JsonSyntaxException;
@@ -38,9 +39,17 @@ import net.kdt.pojavlaunch.prefs.LauncherPreferences;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+
+import gg.projects.mobile.controls.ControlHint;
+import gg.projects.mobile.controls.EditorBar;
+import gg.projects.mobile.controls.EditorHost;
+import gg.projects.mobile.controls.EditorRules;
+import gg.projects.mobile.controls.LayoutBackups;
+import gg.projects.mobile.ui.ConfirmDialog;
 
 public class ControlLayout extends FrameLayout {
 	protected CustomControls mLayout;
@@ -61,6 +70,18 @@ public class ControlLayout extends FrameLayout {
 	private ControlButtonMenuListener mMenuListener;
 	public ActionRow mActionRow = null;
 	public String mLayoutFileName;
+	// Projects fork (CTRL-SAVE): the screen the editor runs in, its "Menü" and "Kaydet", and the line that says a
+	// save happened (with "Geri al").
+	private EditorHost mHost;
+	private EditorBar mEditorBar;
+	private ControlHint mSaveLine;
+	/** True while loadLayout puts keys in place: adding them is no edit of the player's. */
+	private boolean mLoading;
+	private boolean mSaving;
+	/** Counts the player's edits, so a save that ran meanwhile does not count a newer edit as saved. */
+	private int mEdits;
+	/** The save whose "Geri al" is running. */
+	private LayoutBackups.Saved mUndoing;
 
 	public ControlLayout(Context ctx) {
 		super(ctx);
@@ -83,6 +104,18 @@ public class ControlLayout extends FrameLayout {
 	}
 
 	public void loadLayout(CustomControls controlLayout) {
+		// Projects fork (CTRL-SAVE): the keys a load puts in place are no edit of the player's; the editor's bar
+		// learns the layout's state once, at the end.
+		mLoading = true;
+		try {
+			putLayout(controlLayout);
+		} finally {
+			mLoading = false;
+		}
+		if (mEditorBar != null) mEditorBar.setCanSave(mIsModified && !mSaving);
+	}
+
+	private void putLayout(CustomControls controlLayout) {
 		boolean sanitizedModified = false;
 		if(controlLayout != null) {
 			sanitizedModified = LayoutSanitizer.sanitizeLayout(controlLayout);
@@ -212,6 +245,8 @@ public class ControlLayout extends FrameLayout {
 	public void addJoystickButton(ControlJoystickData data){
 		mLayout.mJoystickDataList.add(data);
 		addJoystickView(data);
+		// Projects fork (CTRL-SAVE): an added joystick is a change to save, as every other added key.
+		setModified(true);
 	}
 
 	private void addJoystickView(ControlJoystickData data){
@@ -353,6 +388,8 @@ public class ControlLayout extends FrameLayout {
 				if (button instanceof ControlButton) ((ControlButton) button).onControlsShown(true);
 			}
 		}
+		// Projects fork (CTRL-SAVE): "Menü" and "Kaydet" while the editor is open.
+		showEditorBar(isModifiable);
 		refreshModKeys();
 	}
 
@@ -362,6 +399,167 @@ public class ControlLayout extends FrameLayout {
 
 	public void setModified(boolean isModified) {
 		mIsModified = isModified;
+		// Projects fork (CTRL-SAVE): upstream counted only an added key; every edit of the player's now comes here
+		// (a move, a resize, a key's settings, a removal), turns "Kaydet" gold and makes leaving ask.
+		if (mLoading) return;
+		if (isModified) {
+			mEdits++;
+			// The last save's "Geri al" would throw this edit away too: it goes.
+			if (mSaveLine != null) mSaveLine.hide();
+		}
+		if (mEditorBar != null) mEditorBar.setCanSave(isModified && !mSaving);
+	}
+
+	/** Projects fork (CTRL-SAVE): true while the layout holds a change "Kaydet" has not written. */
+	public boolean isModified() {
+		return mIsModified;
+	}
+
+	/** Projects fork (CTRL-SAVE): the screen the editor runs in (the file "Kaydet" writes, the menu, leaving). */
+	public void setEditorHost(EditorHost host) {
+		mHost = host;
+	}
+
+	/** Projects fork (CTRL-SAVE): the layout file the game reads now. */
+	public String activeLayoutPath() {
+		return mHost != null ? mHost.activeLayoutPath() : LauncherPreferences.PREF_DEFAULTCTRL_PATH;
+	}
+
+	private void showEditorBar(boolean show) {
+		if (!show) {
+			if (mEditorBar != null) mEditorBar.disappear();
+			return;
+		}
+		if (mEditorBar == null) {
+			mEditorBar = new EditorBar(getContext(), this::openEditorMenu, () -> saveActive(false, null));
+			LayoutParams params = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT,
+					Gravity.TOP | Gravity.CENTER_HORIZONTAL);
+			// 8 dp from the top to the drawn buttons (each draws 40 dp inside its 48 dp target).
+			params.topMargin = Math.round(4 * getResources().getDisplayMetrics().density);
+			addView(mEditorBar, params);
+		}
+		mEditorBar.setCanSave(mIsModified && !mSaving);
+		mEditorBar.appear();
+	}
+
+	private void openEditorMenu() {
+		if (mHost != null) mHost.openEditorMenu();
+		else notifyAppMenu();
+	}
+
+	/**
+	 * Projects fork (CTRL-SAVE): "Kaydet". Writes the layout to the file the game reads (the version there is copied
+	 * first, {@link LayoutBackups}), off the main thread; then the editor closes when {@code leaving} ("Kaydet ve
+	 * çık"), or {@code after} runs. A save that fails says so and changes nothing.
+	 */
+	public void saveActive(final boolean leaving, @Nullable final Runnable after) {
+		if (mSaving || mLayout == null) return;
+		if (!mIsModified) {
+			// The file already holds these keys. Writing it again would only turn an untouched default into an
+			// edited layout, which no longer follows the app's language or a newer default (ControlLayouts).
+			if (leaving) {
+				if (mHost != null) mHost.exitEditor();
+				return;
+			}
+			showSaveLine(getContext().getString(R.string.projects_ctrl_saved), null);
+			if (after != null) after.run();
+			return;
+		}
+		final File target = new File(activeLayoutPath());
+		final byte[] bytes = mLayout.toJson().getBytes(StandardCharsets.UTF_8);
+		final int edits = mEdits;
+		mSaving = true;
+		if (mEditorBar != null) mEditorBar.setCanSave(false);
+		LayoutBackups.run(() -> {
+			LayoutBackups.Saved saved = null;
+			try {
+				saved = LayoutBackups.save(target, bytes, System.currentTimeMillis());
+			} catch (IOException | RuntimeException e) {
+				Log.w("ControlLayout", "layout not saved", e);
+			}
+			final LayoutBackups.Saved result = saved;
+			post(() -> afterSave(result, edits, leaving, after));
+		});
+	}
+
+	/** Projects fork (CTRL-SAVE): "Kaydet" when there is something to save; then {@code then}. */
+	public void saveIfChanged(Runnable then) {
+		if (!mIsModified) {
+			then.run();
+			return;
+		}
+		saveActive(false, then);
+	}
+
+	private void afterSave(@Nullable LayoutBackups.Saved saved, int edits, boolean leaving, @Nullable Runnable after) {
+		mSaving = false;
+		if (saved == null) {
+			if (mEditorBar != null) mEditorBar.setCanSave(mIsModified);
+			showSaveLine(getContext().getString(R.string.projects_ctrl_save_failed), null);
+			return;
+		}
+		// An edit made while the file was written stays a change to save.
+		if (edits == mEdits) setModified(false);
+		else if (mEditorBar != null) mEditorBar.setCanSave(mIsModified);
+		if (leaving && mHost != null) {
+			mHost.exitEditor();
+			mHost.editorSavedAndLeft(saved);
+			return;
+		}
+		showSaved(saved);
+		if (after != null) after.run();
+	}
+
+	/**
+	 * Projects fork (CTRL-SAVE): "Tuşlar kaydedildi." under the editor's bar (or where it stood, in the game after
+	 * "Kaydet ve çık"), with "Geri al" while the save can be taken back.
+	 */
+	public void showSaved(final LayoutBackups.Saved saved) {
+		ControlHint.Action undo = saved.undoable()
+				? new ControlHint.Action(getContext().getString(R.string.projects_undo), () -> undoSave(saved)) : null;
+		showSaveLine(getContext().getString(R.string.projects_ctrl_saved), undo);
+	}
+
+	private void showSaveLine(String message, @Nullable ControlHint.Action action) {
+		if (mEditorBar == null) return;
+		if (mSaveLine == null) {
+			mSaveLine = new ControlHint(getContext());
+			addView(mSaveLine);
+		}
+		android.graphics.RectF clear = new android.graphics.RectF(mEditorBar.getX(), mEditorBar.getY(),
+				mEditorBar.getX() + mEditorBar.getWidth(), mEditorBar.getY() + mEditorBar.getHeight());
+		mSaveLine.show(mEditorBar, clear, message, false, action);
+	}
+
+	/** Projects fork (CTRL-SAVE): "Geri al": the version before the save comes back and is shown. */
+	private void undoSave(final LayoutBackups.Saved saved) {
+		// One decision: a second tap while the line answers does nothing.
+		if (mUndoing == saved) return;
+		mUndoing = saved;
+		LayoutBackups.run(() -> {
+			boolean undone;
+			try {
+				undone = LayoutBackups.undo(saved);
+			} catch (IOException | RuntimeException e) {
+				Log.w("ControlLayout", "save not taken back", e);
+				undone = false;
+			}
+			final boolean done = undone;
+			post(() -> {
+				mUndoing = null;
+				if (!done) {
+					showSaveLine(getContext().getString(R.string.projects_ctrl_undo_failed), null);
+					return;
+				}
+				if (mModifiable) removeEditWindow();
+				try {
+					loadLayout(activeLayoutPath());
+				} catch (IOException | RuntimeException e) {
+					Log.w("ControlLayout", "layout not read again", e);
+				}
+				showSaveLine(getContext().getString(R.string.projects_ctrl_undone), null);
+			});
+		});
 	}
 
 	public List<ControlInterface> getButtonChildren(){
@@ -552,12 +750,25 @@ public class ControlLayout extends FrameLayout {
 		return mGameSurface;
 	}
 
+	/**
+	 * Projects fork (CTRL-SAVE): leaving the editor (back, the back gesture, "Düzenleyici'den çık"). Nothing changed:
+	 * the editor closes at once (upstream asked "Çıkılsın mı?" even then). Something changed: one question, "Kaydet
+	 * ve çık" writes the layout the game reads (upstream's yes / no had no save and dropped every move and resize),
+	 * "Kaydetmeden çık" leaves it as it was; the close mark, back or a tap outside go on editing.
+	 */
 	public void askToExit(EditorExitable editorExitable) {
-		if(mIsModified) {
-			openSaveDialog(editorExitable);
-		}else{
-			openExitDialog(editorExitable);
+		if (mSaving) return;
+		final EditorExitable exit = mHost != null ? mHost : editorExitable;
+		Context context = getContext();
+		if (EditorRules.leave(mIsModified) == EditorRules.Leave.NOW || !(context instanceof Activity)) {
+			exit.exitEditor();
+			return;
 		}
+		ConfirmDialog.show((Activity) context,
+				context.getString(R.string.projects_ctrl_save_question),
+				context.getString(R.string.projects_ctrl_save_question_body),
+				context.getString(R.string.projects_ctrl_save_leave), false, () -> saveActive(true, null),
+				context.getString(R.string.projects_ctrl_leave_unsaved), exit::exitEditor);
 	}
 
 	public void updateLoadedFileName(String path) {
@@ -566,62 +777,9 @@ public class ControlLayout extends FrameLayout {
 		mLayoutFileName = path;
 	}
 
-	public String saveToDirectory(String name) throws Exception{
-		String jsonPath = Tools.CTRLMAP_PATH + "/" + name + ".json";
-		saveLayout(jsonPath);
-		return jsonPath;
-	}
-
-	class OnClickExitListener implements View.OnClickListener {
-		private final AlertDialog mDialog;
-		private final EditText mEditText;
-		private final EditorExitable mListener;
-
-		public OnClickExitListener(AlertDialog mDialog, EditText mEditText, EditorExitable mListener) {
-			this.mDialog = mDialog;
-			this.mEditText = mEditText;
-			this.mListener = mListener;
-		}
-
-		@Override
-		public void onClick(View v) {
-			Context context = v.getContext();
-			if (mEditText.getText().toString().isEmpty()) {
-				mEditText.setError(context.getString(R.string.global_error_field_empty));
-				return;
-			}
-			try {
-				String jsonPath = saveToDirectory(mEditText.getText().toString());
-				Toast.makeText(context, context.getString(R.string.global_save) + ": " + jsonPath, Toast.LENGTH_SHORT).show();
-				mDialog.dismiss();
-				if(mListener != null) mListener.exitEditor();
-			} catch (Throwable th) {
-				Tools.showError(context, th, mListener != null);
-			}
-		}
-	}
-
-	public void openSaveDialog(EditorExitable editorExitable) {
-		final Context context = getContext();
-		final EditText edit = new EditText(context);
-		edit.setSingleLine();
-		edit.setText(mLayoutFileName);
-
-		AlertDialog.Builder builder = new AlertDialog.Builder(context);
-		builder.setTitle(R.string.global_save);
-		builder.setView(edit);
-		builder.setPositiveButton(android.R.string.ok, null);
-		builder.setNegativeButton(android.R.string.cancel, null);
-		if(editorExitable != null) builder.setNeutralButton(R.string.global_save_and_exit, null);
-		final AlertDialog dialog = builder.create();
-		dialog.setOnShowListener(dialogInterface -> {
-			dialog.getButton(AlertDialog.BUTTON_POSITIVE)
-					.setOnClickListener(new OnClickExitListener(dialog, edit, null));
-			if(editorExitable != null) dialog.getButton(AlertDialog.BUTTON_NEUTRAL)
-					.setOnClickListener(new OnClickExitListener(dialog, edit, editorExitable));
-		});
-		dialog.show();
-	}
+	// Projects fork (CTRL-SAVE): upstream's save dialog (a file name, prefilled "./default") is gone. A name typed there
+	// wrote a new file while the game kept reading the old one, so the edits seemed lost; "Kaydet" now writes the
+	// layout in use (saveActive), and the menu's "Varsayılan kontrolleri seç" still picks which file that is.
 
 	public void openLoadDialog() {
 		AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
@@ -638,6 +796,9 @@ public class ControlLayout extends FrameLayout {
 			public void onFileSelected(File file, String path) {
 				try {
 					loadLayout(path);
+					// Projects fork (CTRL-SAVE): another file's layout in the editor is a change to the layout in use
+					// until "Kaydet" writes it there.
+					if (EditorRules.loadedAnother(path, activeLayoutPath())) setModified(true);
 				}catch (IOException e) {
 					Tools.showError(getContext(), e);
 				}
@@ -662,7 +823,10 @@ public class ControlLayout extends FrameLayout {
 			public void onFileSelected(File file, String path) {
 				try {
 					LauncherPreferences.DEFAULT_PREF.edit().putString("defaultCtrl", path).apply();
-					LauncherPreferences.PREF_DEFAULTCTRL_PATH = path;loadLayout(path);
+					LauncherPreferences.PREF_DEFAULTCTRL_PATH = path;
+					// Projects fork (CTRL-SAVE): the editor shows the layout the game reads now (in the game, a
+					// profile with a control file of its own keeps it), so "Kaydet" writes what is shown.
+					loadLayout(activeLayoutPath());
 				}catch (IOException|JsonSyntaxException e) {
 					Tools.showError(getContext(), e);
 				}
@@ -671,15 +835,6 @@ public class ControlLayout extends FrameLayout {
 		});
 		dialog.setView(flv);
 		dialog.show();
-	}
-
-	public void openExitDialog(EditorExitable exitListener) {
-		AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-		builder.setTitle(R.string.customctrl_editor_exit_title);
-		builder.setMessage(R.string.customctrl_editor_exit_msg);
-		builder.setPositiveButton(R.string.global_yes, (d,w)->exitListener.exitEditor());
-		builder.setNegativeButton(R.string.global_no, (d,w)->{});
-		builder.show();
 	}
 
 	public boolean areControlVisible(){

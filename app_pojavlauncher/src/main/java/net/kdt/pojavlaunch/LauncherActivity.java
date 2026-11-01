@@ -465,6 +465,8 @@ public class LauncherActivity extends BaseActivity implements gg.projects.mobile
         // while the app was away (or on Android 13+'s "App languages" page) is taken in here.
         gg.projects.mobile.language.LanguageManager.apply(this);
         if (gg.projects.mobile.language.LanguageManager.outdated(this)) recreate();
+        // Projects fork (CTRL-SAVE): back from the controls editor after "Kaydet ve çık": the save, with "Geri al".
+        else gg.projects.mobile.controls.SavedLayoutNotice.showPending(this);
     }
 
     @Override

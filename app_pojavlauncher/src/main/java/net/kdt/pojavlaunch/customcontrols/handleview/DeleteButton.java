@@ -8,6 +8,7 @@ import android.widget.Button;
 import androidx.annotation.Nullable;
 
 import net.kdt.pojavlaunch.R;
+import net.kdt.pojavlaunch.customcontrols.ControlLayout;
 import net.kdt.pojavlaunch.customcontrols.buttons.ControlInterface;
 
 @SuppressLint("AppCompatCustomView")
@@ -38,6 +39,9 @@ public class DeleteButton extends Button implements ActionButtonInterface {
     public void onClick() {
         if(mCurrentlySelectedButton == null) return;
 
+        // Projects fork (CTRL-SAVE): a removed key is a change to save (upstream never counted it).
+        ControlLayout layout = mCurrentlySelectedButton.getControlLayoutParent();
         mCurrentlySelectedButton.removeButton();
+        if (layout != null) layout.setModified(true);
     }
 }
