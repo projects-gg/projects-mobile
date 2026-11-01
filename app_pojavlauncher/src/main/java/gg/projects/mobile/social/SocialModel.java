@@ -309,9 +309,13 @@ public final class SocialModel {
             String status = Json.str(o, "status", Status.ONLINE);
             if (!Status.isKnown(status)) status = Status.ONLINE;
             List<ModNotice> notices = new ArrayList<>();
-            for (JsonObject n : Json.objects(o, "notices")) {
-                ModNotice notice = ModNotice.read(n);
-                if (notice != null) notices.add(notice);
+            // SOC-ID: the notes about the ways in come in identityNotices, apart from notices (phone apps from before
+            // SOC-ID show a kind they do not know as a moderator's warning); both are shown and seen alike.
+            for (String key : new String[] {"notices", "identityNotices"}) {
+                for (JsonObject n : Json.objects(o, key)) {
+                    ModNotice notice = ModNotice.read(n);
+                    if (notice != null) notices.add(notice);
+                }
             }
             boolean moderation = o != null && (o.has("notices") || o.has("limited"));
             boolean chatPrivacy = privacy != null && (privacy.has("shareRead") || privacy.has("shareTyping"));

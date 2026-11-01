@@ -41,12 +41,6 @@
  "limited": null,
  "notices": [
   {
-   "id": "1793400000000001",
-   "kind": "identity_linked",
-   "at": 1793400000,
-   "provider": "microsoft"
-  },
-  {
    "id": "1793400000000002",
    "kind": "skin_reset",
    "at": 1793400100,
@@ -57,6 +51,14 @@
    "kind": "warning",
    "at": 1793400200,
    "reason": "spam"
+  }
+ ],
+ "identityNotices": [
+  {
+   "id": "1793400000000001",
+   "kind": "identity_linked",
+   "at": 1793400000,
+   "provider": "microsoft"
   },
   {
    "id": "1793400000000004",
