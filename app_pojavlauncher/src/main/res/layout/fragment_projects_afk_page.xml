@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- PHONE-AFK (AFK-M-UI): an AFK screen (the list, an account's settings), 7/24 Bulut's page: the header, the scrolling
+     content built in code (AfkScreen), and an optional bar at the bottom (the save bar). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_app"
+    android:orientation="vertical">
+
+    <gg.projects.mobile.ui.ScreenHeader
+        android:id="@+id/projects_afk_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="4dp" />
+
+    <!-- Rows fade under the header instead of being sliced mid-letter (MOB-POLISH). -->
+    <gg.projects.mobile.social.ui.FadingScrollView
+        android:id="@+id/projects_afk_scroll"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:fadingEdgeLength="20dp"
+        android:fillViewport="true"
+        android:requiresFadingEdge="vertical">
+
+        <LinearLayout
+            android:id="@+id/projects_afk_content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:paddingBottom="28dp" />
+    </gg.projects.mobile.social.ui.FadingScrollView>
+
+    <FrameLayout
+        android:id="@+id/projects_afk_bottom"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone" />
+</LinearLayout>

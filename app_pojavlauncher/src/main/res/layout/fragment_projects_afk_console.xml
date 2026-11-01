@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- PHONE-AFK (AFK-M-UI): the AFK console. The header, the account tabs (chips, shown with two accounts or more), one
+     page per account that swipes sideways (its state line, server and main action over its lines, built in code), and
+     the composer with the line under it (the password stays hidden, why a line could not go). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_app"
+    android:orientation="vertical">
+
+    <gg.projects.mobile.ui.ScreenHeader
+        android:id="@+id/projects_afk_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="2dp" />
+
+    <FrameLayout
+        android:id="@+id/projects_afk_console_tabs"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
+        android:paddingBottom="4dp"
+        android:visibility="gone"
+        tools:visibility="visible" />
+
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/projects_afk_console_pager"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <LinearLayout
+        android:id="@+id/projects_afk_console_composer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="bottom"
+        android:orientation="horizontal"
+        android:paddingStart="12dp"
+        android:paddingTop="6dp"
+        android:paddingEnd="8dp"
+        android:paddingBottom="4dp">
+
+        <EditText
+            android:id="@+id/projects_afk_console_input"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/projects_chat_input"
+            android:fontFamily="@font/figtree_regular"
+            android:gravity="center_vertical|start"
+            android:imeOptions="actionSend|flagNoExtractUi|flagNoPersonalizedLearning"
+            android:importantForAutofill="no"
+            android:inputType="text|textNoSuggestions"
+            android:maxLines="3"
+            android:minHeight="44dp"
+            android:paddingStart="16dp"
+            android:paddingTop="10dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="10dp"
+            android:textColor="@color/projects_bone_100"
+            android:textColorHint="@color/projects_ash_400"
+            android:textCursorDrawable="@null"
+            android:textSize="15sp" />
+
+        <ImageButton
+            android:id="@+id/projects_afk_console_send"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/projects_chat_send_bg"
+            android:enabled="false"
+            android:padding="11dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/projects_ic_send" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/projects_afk_console_note"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:accessibilityLiveRegion="polite"
+        android:drawablePadding="6dp"
+        android:fontFamily="@font/figtree_regular"
+        android:gravity="center_vertical"
+        android:minHeight="20dp"
+        android:paddingStart="20dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="10dp"
+        android:textColor="@color/projects_ash_400"
+        android:textSize="12.5sp"
+        android:visibility="gone"
+        tools:visibility="visible" />
+</LinearLayout>

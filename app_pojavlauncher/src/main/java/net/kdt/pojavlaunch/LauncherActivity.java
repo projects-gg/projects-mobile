@@ -455,6 +455,7 @@ public class LauncherActivity extends BaseActivity implements gg.projects.mobile
     protected void onPostResume() {
         super.onPostResume();
         gg.projects.mobile.social.SocialRoutes.consume(this);
+        gg.projects.mobile.afk.ui.AfkRoutes.onLauncherShown(this); // AFK-M-UI: a notification's AFK screen, AFK back after a game
     }
 
     @Override
