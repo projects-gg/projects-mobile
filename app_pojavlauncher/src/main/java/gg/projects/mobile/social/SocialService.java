@@ -258,6 +258,17 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         mCrewRoot = new java.io.File(app.getNoBackupFilesDir(), mDebug.override ? "projects-social/crews-debug" : "projects-social/crews");
         mKept = new KeptLists(KeptLists.folder(app.getNoBackupFilesDir(), mDebug.override));
         mPrefs = new SocialPrefs(app);
+        // APK-REL: the note of the last link or removal made on this phone outlives the process (SocialPrefs).
+        String ownNote = mPrefs.ownIdentityNote();
+        int bar = ownNote == null ? -1 : ownNote.lastIndexOf('|');
+        if (bar > 0) {
+            try {
+                mOwnIdentityNoteSince = Long.parseLong(ownNote.substring(bar + 1));
+                mOwnIdentityNote = ownNote.substring(0, bar);
+            } catch (NumberFormatException ignored) {
+                // An unreadable copy hides nothing.
+            }
+        }
         // M19's socket that kept the player's own call in the game is not used any more (see the class doc).
         mPrefs.setOwnCallUntil(0);
         boolean[] config = mPrefs.lastConfig();
@@ -1452,6 +1463,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         boolean linked = attempt.purpose == SignInFlow.Purpose.LINK;
         mOwnIdentityNote = (linked ? SocialModel.ModNotice.IDENTITY_LINKED : SocialModel.ModNotice.IDENTITY_REMOVED) + ":" + attempt.provider;
         mOwnIdentityNoteSince = attempt.startedAt;
+        mPrefs.setOwnIdentityNote(mOwnIdentityNote, mOwnIdentityNoteSince);
         mState.setMe(me);
         keepSession(me.profile.id, meJson);
         // M048: a profile read outside the lists' read: no version describes the copy shown now.

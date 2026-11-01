@@ -293,6 +293,24 @@ public final class SocialPrefs {
     public void clearAccount() {
         mPrefs.edit().remove(KEY_FAVOURITES).remove(KEY_ENDED_CALLS).remove(KEY_PUSH_REGISTERED).remove(KEY_PUSH_TAG)
                 .remove(KEY_CREW_AUDIBLE).remove(KEY_CALLED_AT).remove(KEY_OWN_CALL_UNTIL)
-                .remove(KEY_MUTED_CONVERSATIONS).remove(KEY_CREW_NAMES).remove(KEY_PEOPLE_NAMES).apply();
+                .remove(KEY_MUTED_CONVERSATIONS).remove(KEY_CREW_NAMES).remove(KEY_PEOPLE_NAMES)
+                .remove(KEY_OWN_IDENTITY_NOTE).apply();
+    }
+
+    private static final String KEY_OWN_IDENTITY_NOTE = "own_identity_note";
+
+    /**
+     * APK-REL (0.4.9's emulator run): SOC-ID's note of the last link or removal made on this phone, as
+     * "{@code <kind>:<provider>|<since, seconds>}", kept so the app still hides it after Android stopped it. The service
+     * keeps the note for the account's other devices, so a restarted phone said "Hesabına Discord bağlandı. Sen
+     * yapmadıysan kaldır." about the player's own change. Null when there is none.
+     */
+    public String ownIdentityNote() {
+        return mPrefs.getString(KEY_OWN_IDENTITY_NOTE, null);
+    }
+
+    public void setOwnIdentityNote(String note, long since) {
+        if (note == null) mPrefs.edit().remove(KEY_OWN_IDENTITY_NOTE).apply();
+        else mPrefs.edit().putString(KEY_OWN_IDENTITY_NOTE, note + "|" + since).apply();
     }
 }
