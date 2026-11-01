@@ -17,7 +17,9 @@ public enum AfkProblem {
     TOO_MANY_COMMANDS("too_many_commands", Field.LOGIN_COMMANDS),
     COMMAND_TOO_LONG("command_too_long", Field.LOGIN_COMMANDS),
     /** The phone already keeps {@link AfkLimits#MAX_ACCOUNTS} (adding only). */
-    TOO_MANY_ACCOUNTS("too_many_accounts", Field.NONE);
+    TOO_MANY_ACCOUNTS("too_many_accounts", Field.NONE),
+    /** The phone could not save the account (its storage or its key store); trying again may work. */
+    NOT_SAVED("not_saved", Field.NONE);
 
     /** The input the problem belongs to. */
     public enum Field { NAME, ADDRESS, LOGIN_COMMANDS, NONE }

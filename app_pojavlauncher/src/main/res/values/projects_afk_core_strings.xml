@@ -21,7 +21,7 @@
     <string name="projects_afk_reason_already_connected">This name is already on the server</string>
     <string name="projects_afk_reason_login_timeout">Login timed out</string>
     <string name="projects_afk_reason_unsupported_version">This server doesn\'t accept the phone AFK\'s version</string>
-    <string name="projects_afk_reason_battery_low">Battery at 15%</string>
+    <string name="projects_afk_reason_battery_low" formatted="false">Battery at 15%</string>
     <string name="projects_afk_reason_too_hot">Phone too hot</string>
     <string name="projects_afk_reason_process_ended">The phone closed AFK</string>
     <string name="projects_afk_reason_app_updated">The app was updated</string>
@@ -46,6 +46,7 @@
     <string name="projects_afk_problem_too_many_commands">You can add up to 5 login commands.</string>
     <string name="projects_afk_problem_command_too_long">A login command can be up to 256 characters.</string>
     <string name="projects_afk_problem_too_many_accounts">You can add up to 20 AFK accounts.</string>
+    <string name="projects_afk_problem_not_saved">Couldn\'t save. Try again.</string>
 
     <!-- Start and send answers (AfkStartResult, AfkSendResult) -->
     <string name="projects_afk_start_started">Starting</string>
@@ -92,7 +93,7 @@
     <string name="projects_afk_alert_mention">%1$s was mentioned in chat</string>
     <string name="projects_afk_alert_private">%1$s got a private message</string>
     <string name="projects_afk_alert_window">The server opened a window for %1$s</string>
-    <string name="projects_afk_alert_battery">Battery at 15%, AFK stopped. Plug your phone in to keep going.</string>
+    <string name="projects_afk_alert_battery" formatted="false">Battery at 15%, AFK stopped. Plug your phone in to keep going.</string>
     <string name="projects_afk_alert_hot">Your phone got too hot, AFK stopped. Let it cool down.</string>
     <!-- The morning notification after the phone closed AFK. %1$s: the time ("03:12") -->
     <string name="projects_afk_end_title">AFK stopped</string>

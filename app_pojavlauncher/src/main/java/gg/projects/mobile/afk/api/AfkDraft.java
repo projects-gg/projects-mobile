@@ -18,6 +18,11 @@ public final class AfkDraft {
     public AfkLoginMode loginMode = AfkLoginMode.EVERY_JOIN;
     public boolean sneak = true;
     public boolean mobileData = false;
+    /**
+     * Set by {@link PhoneAfk#edit} when the saved login commands could not be read (the phone's key was lost): the
+     * draft has none; the screen may say they need to be written again. Ignored by add and update.
+     */
+    public boolean loginCommandsUnreadable = false;
 
     public AfkDraft() {}
 
