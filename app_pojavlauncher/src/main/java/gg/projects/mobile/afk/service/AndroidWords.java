@@ -66,6 +66,11 @@ final class AndroidWords implements AfkHost.Words {
     }
 
     @Override
+    public String reconnecting() {
+        return c.getString(R.string.projects_afk_line_reconnect);
+    }
+
+    @Override
     public boolean turkish() {
         return turkish;
     }

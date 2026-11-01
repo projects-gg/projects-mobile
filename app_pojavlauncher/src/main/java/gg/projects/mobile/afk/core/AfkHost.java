@@ -56,6 +56,9 @@ public interface AfkHost {
 
         String loginCommandsSent();
 
+        /** The player saved new settings and asked to connect again with them. */
+        String reconnecting();
+
         /** The app speaks Turkish (vanilla's keys are shown in it; the client tells servers {@code tr_tr}). */
         boolean turkish();
     }

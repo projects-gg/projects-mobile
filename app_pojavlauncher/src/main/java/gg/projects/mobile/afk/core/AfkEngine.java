@@ -91,6 +91,17 @@ public final class AfkEngine {
         }
     }
 
+    /**
+     * "Kaydet ve yeniden bağlan": a running account drops its connection and connects again at once (in its turn)
+     * with its saved settings; the back-off count starts over. False when it does not run.
+     */
+    public boolean reconnect(String id) {
+        Run run = runs.get(id);
+        if (run == null) return false;
+        run.reconnectNow();
+        return true;
+    }
+
     /** Every account: {@code reason} null for the player's stop, else the phone's (battery, heat). */
     public void stopAll(AfkReason reason) {
         for (Run run : new ArrayList<>(runs.values())) run.end(reason, null, false);
@@ -436,6 +447,34 @@ public final class AfkEngine {
             setState(AfkState.WAITING);
             notice(host.words().dropped(reason, delay));
             connectTimer = host.schedule(delay, this::requestConnect);
+        }
+
+        void reconnectNow() {
+            if (!running) return;
+            if (conn != null) conn.close();
+            conn = null;
+            events = null;
+            cancelConnTimers();
+            cancel(connectTimer);
+            connectTimer = null;
+            joinedThisConn = false;
+            joinedAt = 0;
+            inGameSince = 0;
+            transferHost = null;
+            attempts = 0;
+            lastCause = null;
+            causeRepeats = 0;
+            reason = null;
+            serverMessage = null;
+            // The saved settings now (its turn is at the new server, if the address changed).
+            AfkHost.Loaded loaded = host.load(id);
+            if (loaded == null) {
+                end(null, null, true);
+                return;
+            }
+            take(loaded);
+            notice(host.words().reconnecting());
+            requestConnect();
         }
 
         void networkChanged() {

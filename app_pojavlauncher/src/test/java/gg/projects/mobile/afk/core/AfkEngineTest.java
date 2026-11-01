@@ -385,6 +385,35 @@ public class AfkEngineTest {
     }
 
     @Test
+    public void reconnectDropsTheConnectionAndComesBackWithTheSavedSettings() {
+        engine.start("c");
+        host.advance(0);
+        FakeWire.Conn first = wire.last();
+        first.join();
+        first.events.ended(AfkDrop.of(AfkDrop.Kind.CONNECTION_LOST));
+        host.advance(5_000);
+        wire.last().events.ended(AfkDrop.of(AfkDrop.Kind.UNREACHABLE));
+        assertEquals(2, host.lastStatus("c").attempt);
+        // The player saves a new address and asks to reconnect: the wait goes, the count starts over.
+        host.accounts.put("c", new AfkHost.Loaded(new gg.projects.mobile.afk.api.AfkAccount("c", "Ember_77",
+                "mc.moved.org", 25570, 0, AfkLoginMode.EVERY_JOIN, true, true, 1L), Collections.<String>emptyList()));
+        assertTrue(engine.reconnect("c"));
+        assertFalse(engine.reconnect("a"));
+        host.advance(0);
+        FakeWire.Conn moved = wire.last();
+        assertEquals("mc.moved.org", moved.target.host);
+        assertEquals(25570, moved.target.port);
+        moved.join();
+        assertEquals(0, host.lastStatus("c").attempt);
+        assertTrue(host.texts("c").contains("NOTICE: reconnecting"));
+        // In game: the connection closes first.
+        assertTrue(engine.reconnect("c"));
+        assertTrue(moved.closed);
+        host.advance(4_500);
+        assertEquals(4, wire.opened.size());
+    }
+
+    @Test
     public void sneaksNowAndThenWhileInGame() {
         engine.start("c");
         host.advance(0);

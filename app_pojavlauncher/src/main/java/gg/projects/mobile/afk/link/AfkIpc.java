@@ -32,6 +32,8 @@ public final class AfkIpc {
     public static final int SEND = 3;
     public static final int STOP = 4;
     public static final int STOP_ALL = 5;
+    /** {@link #KEY_ACCOUNT}: drop the connection and connect again with the saved settings. */
+    public static final int RECONNECT = 6;
 
     // The service to the screens.
     public static final int STATUSES = 101;

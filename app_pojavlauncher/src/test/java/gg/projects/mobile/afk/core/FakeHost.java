@@ -184,6 +184,11 @@ final class FakeHost implements AfkHost {
         }
 
         @Override
+        public String reconnecting() {
+            return "reconnecting";
+        }
+
+        @Override
         public boolean turkish() {
             return false;
         }

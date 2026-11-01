@@ -37,6 +37,8 @@ final class AfkHub extends Handler {
         void stop(String accountId);
 
         void stopAll(boolean erase);
+
+        void reconnect(String accountId);
     }
 
     interface Done<T> {
@@ -89,6 +91,11 @@ final class AfkHub extends Handler {
                 return;
             case AfkIpc.STOP_ALL:
                 engine.stopAll(m.arg1 == 1);
+                return;
+            case AfkIpc.RECONNECT:
+                if (data != null && data.getString(AfkIpc.KEY_ACCOUNT) != null) {
+                    engine.reconnect(data.getString(AfkIpc.KEY_ACCOUNT));
+                }
                 return;
             default:
                 super.handleMessage(m);
