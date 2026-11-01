@@ -148,7 +148,11 @@ public final class AfkService extends Service {
         boolean starts = intent == null || ACTION_START.equals(action) || ACTION_RESUME.equals(action);
         if (starts && !ensureForeground()) return START_NOT_STICKY;
         if (ACTION_START.equals(action) && id != null) {
-            engine.start(id);
+            if (!engine.start(id).ok()) {
+                // Refused (three already run, or the account is gone): the screens drop their "starting".
+                AfkStore.Entry stored = store.find(id);
+                hub.status(AfkStatus.stopped(id, stored == null ? "" : stored.account.name));
+            }
             phoneCheck();
         } else if (ACTION_STOP.equals(action) && id != null) {
             engine.stop(id);

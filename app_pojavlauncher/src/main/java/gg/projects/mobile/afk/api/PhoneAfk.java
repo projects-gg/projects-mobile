@@ -610,7 +610,7 @@ public final class PhoneAfk {
     // ---- dispatch ----
 
     private void dropStalePromises() {
-        if (promised.isEmpty() || connected) return;
+        if (promised.isEmpty()) return;
         long now = System.currentTimeMillis();
         List<String> stale = new ArrayList<>();
         for (Map.Entry<String, Long> e : promised.entrySet()) {
@@ -650,10 +650,18 @@ public final class PhoneAfk {
 
         @Override
         public void statuses(List<AfkStatus> all) {
+            // A start the service has not reached yet (its first answer comes before the start) stays promised.
+            Map<String, AfkStatus> kept = new LinkedHashMap<>();
+            for (String id : promised.keySet()) {
+                AfkStatus s = live.get(id);
+                if (s != null) kept.put(id, s);
+            }
             live.clear();
-            promised.clear();
+            live.putAll(kept);
             for (AfkStatus s : all) {
+                promised.remove(s.accountId);
                 if (s.state.running() || s.reason != null) live.put(s.accountId, s);
+                else live.remove(s.accountId);
             }
             dispatchStatuses();
         }
