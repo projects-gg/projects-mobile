@@ -226,7 +226,7 @@ final class ReactionSheet {
                 key.append(',').append(who);
                 Profile p = state.profile(who);
                 if (p == null) continue;
-                key.append('/').append(p.name()).append('/').append(p.avatar);
+                key.append('/').append(p.name()).append('/').append(p.avatar).append('/').append(ProfileMarks.key(service, p));
                 if (badges && p.badge != null) key.append('/').append(p.badge.tag).append(p.badge.color);
             }
         }
@@ -293,6 +293,8 @@ final class ReactionSheet {
         TextView name = new TextView(context);
         name.setText(mine ? context.getString(R.string.projects_reactions_you)
                 : profile == null ? context.getString(R.string.projects_crew_someone) : profile.name());
+        // BADGES: their first badge right of their name ("Sen" is no name: none).
+        if (!mine) ProfileMarks.inline(name, profile, 14);
         name.setTextSize(15);
         name.setMaxLines(1);
         name.setEllipsize(android.text.TextUtils.TruncateAt.END);
@@ -306,7 +308,7 @@ final class ReactionSheet {
         mark.setTextSize(20);
         mark.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         row.addView(mark);
-        row.setContentDescription(name.getText() + ", " + emoji);
+        row.setContentDescription(ProfileMarks.spoken(name) + ", " + emoji);
         if (!mine && profile != null) {
             final String crewId = ChatConv.crewId(conv);
             // "Rapor et" here reports the reaction itself (CHAT2 README "Reports").

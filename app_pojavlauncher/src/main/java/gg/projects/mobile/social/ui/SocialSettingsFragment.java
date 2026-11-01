@@ -53,6 +53,8 @@ public class SocialSettingsFragment extends Fragment implements SocialService.Li
 
     private LinearLayout mList;
     private String mShown = "";
+    /** BADGES: "Rozetler". */
+    private final OwnMarks mOwnMarks = new OwnMarks();
 
     public SocialSettingsFragment() {
         super(R.layout.fragment_projects_social_settings);
@@ -99,6 +101,8 @@ public class SocialSettingsFragment extends Fragment implements SocialService.Li
         Me me = service.state().me();
         SocialGate gate = service.gate();
         StringBuilder key = new StringBuilder();
+        // BADGES: changes only when "Rozetler" must be drawn again (an answer agreeing with its switches is not).
+        key.append(mOwnMarks.key(service, me)).append('|');
         key.append(me == null ? "" : me.shareLastSeen + "|" + me.shareServer + "|" + me.shareRead + "|" + me.shareTyping + "|"
                 + me.chatPrivacy).append('|')
                 .append(SocialNotifications.canNotify(context)).append('|').append(gate.teams).append(gate.calls).append(gate.mute)
@@ -110,6 +114,16 @@ public class SocialSettingsFragment extends Fragment implements SocialService.Li
         if (key.toString().equals(mShown)) return;
         mShown = key.toString();
         mList.removeAllViews();
+
+        // BADGES: "Rozetler" before "Gizlilik", the launcher's order (it follows "Profil fotoğrafı" there, which the
+        // phone has not), while the player holds a badge and the service keeps the choice.
+        if (mOwnMarks.shows(service, me)) {
+            section(R.string.projects_marks_title);
+            mOwnMarks.addRows(mList, service, () -> {
+                mShown = "";
+                render();
+            });
+        }
 
         section(R.string.projects_social_privacy);
         if (me != null) {

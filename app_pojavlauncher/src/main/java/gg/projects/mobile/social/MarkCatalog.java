@@ -11,7 +11,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -280,12 +282,36 @@ public final class MarkCatalog {
         return out;
     }
 
-    /** The hidden keys after showing ({@code show}) or hiding {@code key}; the others stay as they were. */
-    public static List<String> hiddenAfter(@Nullable List<String> hidden, String key, boolean show) {
+    /**
+     * The hidden list "Rozetler" sends: each badge it lists that is off now ({@code pending}: switches turned whose
+     * answer has not come, over what the profile says), then the hidden keys it does not list (this version cannot draw
+     * them) as they were, so none of them shows again. A second switch turned before the first answer sends both.
+     */
+    public static List<String> hiddenToSend(List<Own> own, Map<String, Boolean> pending, @Nullable List<String> hidden) {
         List<String> next = new ArrayList<>();
-        if (hidden != null) for (String k : hidden) if (!k.equals(key)) next.add(k);
-        if (!show) next.add(key);
+        Set<String> listed = new HashSet<>();
+        for (Own o : own) {
+            listed.add(o.def.key);
+            Boolean turned = pending.get(o.def.key);
+            if (!(turned != null ? turned : o.shown)) next.add(o.def.key);
+        }
+        if (hidden != null) for (String key : hidden) if (!listed.contains(key) && !next.contains(key)) next.add(key);
         return next;
+    }
+
+    /** Forgets the switches the profile now agrees with, and those of badges no longer listed. */
+    public static void settle(Map<String, Boolean> pending, List<Own> own) {
+        Iterator<Map.Entry<String, Boolean>> it = pending.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<String, Boolean> turned = it.next();
+            boolean waiting = false;
+            for (Own o : own) {
+                if (!o.def.key.equals(turned.getKey())) continue;
+                waiting = o.shown != turned.getValue();
+                break;
+            }
+            if (!waiting) it.remove();
+        }
     }
 
     /**

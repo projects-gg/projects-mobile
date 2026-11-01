@@ -122,6 +122,8 @@ final class InviteCard {
         names.setOrientation(LinearLayout.VERTICAL);
         TextView name = new TextView(activity);
         name.setText(request.profile.name());
+        // BADGES: who asks, with their first badge right of their name.
+        ProfileMarks.inline(name, request.profile, 16);
         name.setTextSize(17);
         name.setTextColor(ContextCompat.getColor(activity, R.color.projects_bone_100));
         names.addView(name);

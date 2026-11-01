@@ -62,6 +62,9 @@ public final class FriendCard {
         String day = CrewViews.sinceDay(activity, friend.since);
         since.setText(day == null ? "" : activity.getString(R.string.projects_social_friends_since, day));
         since.setVisibility(day == null ? View.GONE : View.VISIBLE);
+        // BADGES: the first badge right of the name; every badge with its name under the name block.
+        ProfileMarks.inline(view.findViewById(R.id.projects_card_name), profile, 16);
+        ProfileMarks.list(view.findViewById(R.id.projects_card_marks), profile);
 
         SocialGate gate = service.gate();
         View message = view.findViewById(R.id.projects_card_message);

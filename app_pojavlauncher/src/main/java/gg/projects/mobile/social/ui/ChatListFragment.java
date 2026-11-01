@@ -312,6 +312,10 @@ public class ChatListFragment extends Fragment implements SocialService.Listener
             Profile other = service.state().profile(ChatConv.other(conv, service.state().myId()));
             if (other != null && other.badge != null) key.append('|').append(other.badge.key());
         }
+        // BADGES: the friend's badges.
+        if (ChatConv.crewId(conv) == null) {
+            key.append('|').append(ProfileMarks.key(service, service.state().profile(ChatConv.other(conv, service.state().myId()))));
+        }
         return key.toString();
     }
 
@@ -355,6 +359,8 @@ public class ChatListFragment extends Fragment implements SocialService.Listener
             avatar.setSurfaceColor(ContextCompat.getColor(activity, R.color.projects_obsidian_800));
             avatar.setDot(SocialUi.dot(service.state().presence(friend.profile.id)));
             ((TextView) row.findViewById(R.id.projects_person_name)).setText(friend.profile.name());
+            // BADGES: the friend's first badge right of their name.
+            ProfileMarks.inline(row.findViewById(R.id.projects_person_name), friend.profile, 14);
             ((TextView) row.findViewById(R.id.projects_person_line)).setText(SocialUi.presenceLine(activity, service.state().presence(friend.profile.id)));
             Press.attach(row, Press.Style.ROW);
             row.setOnClickListener(v -> {
@@ -442,6 +448,8 @@ public class ChatListFragment extends Fragment implements SocialService.Listener
             name.setText(crew == null ? getString(R.string.projects_chat_crew) : crew.team.name);
             ((CrewTagChip) view.findViewById(R.id.projects_person_tag)).setBadgeOf(null, null, CrewTagChip.Size.MD);
             CrewTagChip.labelName(name, null);
+            // BADGES: a crew's name carries no badge (a reused row may have had one).
+            ProfileMarks.inline(name, null, 14);
         } else {
             Profile other = state.profile(ChatConv.other(row.conv, me));
             mark.setVisibility(View.GONE);
@@ -457,6 +465,8 @@ public class ChatListFragment extends Fragment implements SocialService.Listener
             ((CrewTagChip) view.findViewById(R.id.projects_person_tag)).setBadgeOf(other == null ? null : other.id, worn,
                     CrewTagChip.Size.MD);
             CrewTagChip.labelName(name, worn);
+            // BADGES: the friend's first badge right of their name.
+            ProfileMarks.inline(name, other, 14, false, worn);
         }
         ChatBook.Summary s = row.summary;
         int unread = s == null ? 0 : s.unread;
@@ -490,10 +500,10 @@ public class ChatListFragment extends Fragment implements SocialService.Listener
                 int size = Math.round(14 * context.getResources().getDisplayMetrics().density);
                 slash.setBounds(0, 0, size, size);
             }
-            name.setCompoundDrawablesRelative(null, null, slash, null);
-            name.setCompoundDrawablePadding(Math.round(6 * context.getResources().getDisplayMetrics().density));
+            // BADGES: after the friend's badge, still at the end of the name's box.
+            ProfileMarks.endIcon(name, slash, Math.round(6 * context.getResources().getDisplayMetrics().density));
         } else {
-            name.setCompoundDrawablesRelative(null, null, null, null);
+            ProfileMarks.endIcon(name, null, 0);
         }
         // TABLET-M: in two panes the open conversation's row sits on the quiet plate (a background of its own: a selected
         // state would reach the row's chips and faces too).

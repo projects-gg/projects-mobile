@@ -729,7 +729,10 @@ public final class SocialMenuSheet {
         avatar.setSurfaceColor(ContextCompat.getColor(context, R.color.projects_obsidian_800));
         avatar.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         row.addView(avatar, new LinearLayout.LayoutParams(Math.round(36 * dp), Math.round(36 * dp)));
-        row.addView(names(context, profile.name(), line), namesParams(dp));
+        ViewGroup names = (ViewGroup) names(context, profile.name(), line);
+        // BADGES: the person's first badge right of their name (a menu keeps it short: no list).
+        ProfileMarks.inline((TextView) names.getChildAt(0), profile, 14);
+        row.addView(names, namesParams(dp));
         gg.projects.mobile.ui.Press.attach(row, gg.projects.mobile.ui.Press.Style.ROW);
         row.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         return row;

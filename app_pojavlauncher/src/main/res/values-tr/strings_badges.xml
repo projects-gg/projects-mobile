@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- BADGES: the player's own profile badges in the friends settings, in the launcher's words. -->
+<resources>
+    <string name="projects_marks_title">Rozetler</string>
+    <string name="projects_marks_note">Kapattığın rozet profilinde görünmez.</string>
+</resources>

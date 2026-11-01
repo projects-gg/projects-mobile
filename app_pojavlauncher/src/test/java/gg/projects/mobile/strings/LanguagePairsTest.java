@@ -90,6 +90,9 @@ public class LanguagePairsTest {
         // APK-UPD: the app's own updates.
         english.putAll(texts(new File(RES, "values/strings_app_update.xml")));
         turkish.putAll(texts(new File(RES, "values-tr/strings_app_update.xml")));
+        // BADGES: the player's own badges in the friends settings.
+        english.putAll(texts(new File(RES, "values/strings_badges.xml")));
+        turkish.putAll(texts(new File(RES, "values-tr/strings_badges.xml")));
         TreeSet<String> missingTurkish = new TreeSet<>(english.keySet());
         missingTurkish.removeAll(turkish.keySet());
         TreeSet<String> missingEnglish = new TreeSet<>(turkish.keySet());
@@ -121,7 +124,8 @@ public class LanguagePairsTest {
     @Test
     public void theEnglishInterfaceHasNoTurkishLeft() throws Exception {
         for (String file : new String[]{"values/projects_strings.xml", "values/projects_social_strings.xml", "values/projects_cloud_strings.xml",
-                "values/strings_cloud_feat.xml", "values/strings_cloud_plus.xml", "values/strings_app_update.xml", "values/strings.xml"}) {
+                "values/strings_cloud_feat.xml", "values/strings_cloud_plus.xml", "values/strings_app_update.xml", "values/strings.xml",
+                "values/strings_badges.xml"}) {
             for (Map.Entry<String, String> text : texts(new File(RES, file)).entrySet()) {
                 if (TURKISH_ON_PURPOSE.contains(text.getKey())) continue;
                 assertTrue(file + ": " + text.getKey() + " = " + text.getValue(), !TURKISH_LETTER.matcher(text.getValue()).find());
@@ -160,6 +164,9 @@ public class LanguagePairsTest {
             // AFKPLUS-M: the cloud contract's password command names ("/giriş", shared with the launcher and the
             // site) and the Turkish number and suffix tables; neither is interface text.
             if (file.getName().equals("CloudText.java") || file.getName().equals("TrGrammar.java")) continue;
+            // BADGES: the service's built-in badge catalogue names each badge in both languages (data, as GET /v1/marks
+            // sends it), drawn until the catalogue is read.
+            if (file.getName().equals("MarkCatalog.java")) continue;
             String code = withoutComments(new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8));
             Matcher literal = STRING_LITERAL.matcher(code);
             while (literal.find()) {

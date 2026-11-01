@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- BADGES: the player's own profile badges in the friends settings, in the launcher's words. The badges' own names come
+     from the service's catalogue in both languages, never from here. -->
+<resources>
+    <!-- The section's heading, a plain name as the page's other headings. -->
+    <string name="projects_marks_title">Badges</string>
+    <!-- One line under the badges' switches. -->
+    <string name="projects_marks_note">A badge you turn off doesn\'t show on your profile.</string>
+</resources>

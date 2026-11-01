@@ -246,6 +246,8 @@ final class CrewSheets {
             SocialModel.Presence p = service.state().presence(friend.profile.id);
             avatar.setDot(SocialUi.dot(p));
             ((TextView) row.findViewById(R.id.projects_person_name)).setText(friend.profile.name());
+            // BADGES: the friend's first badge right of their name.
+            ProfileMarks.inline(row.findViewById(R.id.projects_person_name), friend.profile, 14);
             ((TextView) row.findViewById(R.id.projects_person_line)).setText(SocialUi.presenceLine(activity, p));
             final Button invite = row.findViewById(R.id.projects_person_action);
             invite.setVisibility(View.VISIBLE);
@@ -317,6 +319,9 @@ final class CrewSheets {
         TextView where = view.findViewById(R.id.projects_card_presence);
         where.setText(SocialUi.presenceLine(activity, presence));
         view.findViewById(R.id.projects_card_since).setVisibility(View.GONE);
+        // BADGES: the first badge right of the name; every badge with its name under the name block.
+        ProfileMarks.inline(view.findViewById(R.id.projects_card_name), member.profile, 16);
+        ProfileMarks.list(view.findViewById(R.id.projects_card_marks), member.profile);
         View join = view.findViewById(R.id.projects_card_join);
         join.setVisibility(presence.onProjects() ? View.VISIBLE : View.GONE);
         view.findViewById(R.id.projects_card_buttons).setVisibility(presence.onProjects() ? View.VISIBLE : View.GONE);

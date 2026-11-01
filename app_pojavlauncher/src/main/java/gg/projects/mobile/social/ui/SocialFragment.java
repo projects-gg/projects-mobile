@@ -378,7 +378,7 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
         Me me = state.me();
         if (me != null) {
             rows.add(new Row(T_ME, "me", me.profile.name() + "|" + me.status + "|" + me.profile.faceKey() + "|"
-                    + (gate.badges && me.profile.badge != null ? me.profile.badge.key() : ""), me));
+                    + (gate.badges && me.profile.badge != null ? me.profile.badge.key() : "") + "|" + ProfileMarks.key(service, me.profile), me));
         }
 
         SocialService.Connection connection = service.connection();
@@ -425,8 +425,8 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
             for (Invite invite : invites) {
                 Profile from = state.profile(invite.fromId);
                 if (from == null) continue;
-                rows.add(new Row(T_PERSON, "invite-" + invite.id, "invite|" + from.name() + from.faceKey() + "|" + invite.where + invite.host,
-                        new Person("invite", from, invite)));
+                rows.add(new Row(T_PERSON, "invite-" + invite.id, "invite|" + from.name() + from.faceKey() + "|" + invite.where + invite.host
+                        + "|" + ProfileMarks.key(service, from), new Person("invite", from, invite)));
             }
         }
         // TEAM4: with several crews the invites stay listed in a crew too (at the limit they can be declined).
@@ -441,8 +441,8 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
         if (!incoming.isEmpty()) {
             rows.add(header("h-requests", getString(R.string.projects_social_requests)));
             for (Request request : incoming) {
-                rows.add(new Row(T_PERSON, "in-" + request.profile.id, "in|" + request.profile.name() + request.profile.faceKey(),
-                        new Person("in", request.profile, request)));
+                rows.add(new Row(T_PERSON, "in-" + request.profile.id, "in|" + request.profile.name() + request.profile.faceKey()
+                        + "|" + ProfileMarks.key(service, request.profile), new Person("in", request.profile, request)));
             }
         }
         SocialState.Sections sections = state.sections(favourites);
@@ -453,8 +453,8 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
         if (!outgoing.isEmpty()) {
             rows.add(header("h-sent", getString(R.string.projects_social_sent)));
             for (Request request : outgoing) {
-                rows.add(new Row(T_PERSON, "out-" + request.profile.id, "out|" + request.profile.name() + request.profile.faceKey(),
-                        new Person("out", request.profile, request)));
+                rows.add(new Row(T_PERSON, "out-" + request.profile.id, "out|" + request.profile.name() + request.profile.faceKey()
+                        + "|" + ProfileMarks.key(service, request.profile), new Person("out", request.profile, request)));
             }
         }
         if (state.loaded() && state.friends().isEmpty() && incoming.isEmpty() && outgoing.isEmpty()) {
@@ -503,11 +503,13 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
         if (friends.isEmpty()) return;
         rows.add(header("h-" + id, getString(title), friends.size()));
         boolean tags = SocialService.get(requireContext()).gate().badges;
+        SocialService service = SocialService.get(requireContext());
         for (Friend f : friends) {
             Presence p = state.presence(f.profile.id);
             rows.add(new Row(T_PERSON, "f-" + f.profile.id, "f|" + f.profile.name() + f.profile.faceKey() + "|" + p.state + p.dnd + p.where
                     + p.host + "|" + f.lastSeen + "|" + favourites.contains(f.profile.id) + "|"
-                    + (tags && f.profile.badge != null ? f.profile.badge.key() : ""), new Person("friend", f.profile, f)));
+                    + (tags && f.profile.badge != null ? f.profile.badge.key() : "") + "|" + ProfileMarks.key(service, f.profile),
+                    new Person("friend", f.profile, f)));
         }
     }
 
@@ -920,13 +922,15 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
         avatar.setSurfaceColor(ContextCompat.getColor(view.getContext(), R.color.projects_obsidian_900));
         avatar.setDot(SocialUi.statusDot(me.status));
         ((TextView) view.findViewById(R.id.projects_me_name)).setText(me.profile.name());
+        // BADGES: the player's first badge right of their name, as others see it (the status sheet stays for the status).
+        ProfileMarks.inline(view.findViewById(R.id.projects_me_name), me.profile, 14);
         // TEAM6: the player's own tag, a button to its card (where it comes off).
         CrewTagChip ownTag = view.findViewById(R.id.projects_me_tag);
         SocialModel.Badge own = gg.projects.mobile.social.BadgeRules.shown(SocialService.get(view.getContext()).gate(), me.profile.badge);
         ownTag.setBadgeOf(me.profile.id, own, CrewTagChip.Size.MD);
         if (own != null) ownTag.makeButton(own, v -> BadgeCard.show(requireActivity(), me.profile.id));
         ((TextView) view.findViewById(R.id.projects_me_status)).setText(SocialUi.statusLabel(me.status));
-        view.setContentDescription(me.profile.name() + ", " + getString(SocialUi.statusLabel(me.status)) + ". "
+        view.setContentDescription(ProfileMarks.spoken(view.getContext(), me.profile) + ", " + getString(SocialUi.statusLabel(me.status)) + ". "
                 + getString(R.string.projects_social_status_change));
         view.setOnClickListener(v -> StatusSheet.show(requireActivity()));
         // SPAM1: only the player sees it; a tap says what is limited and until when.
@@ -1190,6 +1194,12 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
             default:
                 break;
         }
+        // BADGES: the person's first badge right of their name (a crew invite's row names the crew: none); an offline
+        // friend's at 70 % with their face; TalkBack names every badge, then the friend's tag.
+        boolean friendRow = "friend".equals(person.kind);
+        ProfileMarks.inline(name, teamInvite ? null : person.profile, 14,
+                friendRow && person.profile != null && !state.presence(person.profile.id).online(),
+                friendRow && person.profile != null ? gg.projects.mobile.social.BadgeRules.shown(service.gate(), person.profile.badge) : null);
         primary.setOnClickListener(v -> onPrimary(person, primary));
         secondary.setOnClickListener(v -> onSecondary(person, secondary));
         view.setOnClickListener(v -> onPerson(person, view));

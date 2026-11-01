@@ -272,12 +272,15 @@ public final class SocialHomeRow implements SocialService.Listener {
         }
         StringBuilder facesKey = new StringBuilder();
         for (Profile p : line.faces) facesKey.append(p.id).append(p.faceKey()).append(',');
-        String shown = line.kind + "|" + title + "|" + text + "|" + gold + "|" + join + "|" + line.pending + "|" + facesKey;
+        Profile subject = subject(line);
+        String shown = line.kind + "|" + title + "|" + text + "|" + gold + "|" + join + "|" + line.pending + "|" + facesKey
+                + "|" + ProfileMarks.key(service, subject);
         if (shown.equals(mShown)) return;
         boolean kindChanged = !mShown.startsWith(line.kind + "|");
         if (!mShown.isEmpty() && kindChanged) CardMotion.crossfade(mRow);
         mShown = shown;
-        mTitle.setText(title);
+        // BADGES: a line that starts from someone carries their first badge right after their name.
+        String saidTitle = ProfileMarks.sentence(mTitle, title, subject, 14);
         mLine.setText(text);
         mLine.setVisibility(text.isEmpty() ? View.GONE : View.VISIBLE);
         // What waits for the player reads a step brighter, never gold (FREE-M 0.4.5, TASTE-2: words are never gold; the
@@ -289,8 +292,26 @@ public final class SocialHomeRow implements SocialService.Listener {
             if (activity != null) SocialUi.joinProjects(activity);
         });
         mDot.setVisibility(line.pending ? View.VISIBLE : View.GONE);
-        mRow.setContentDescription(line.pending ? title + ". " + text + ". " + context.getString(R.string.projects_social_pending) : null);
+        mRow.setContentDescription(line.pending ? saidTitle + ". " + text + ". " + context.getString(R.string.projects_social_pending) : null);
         bindFaces(context, line.faces);
+    }
+
+    /** BADGES: whom the line starts from (their first badge follows their name in it); null for a line about no one. */
+    @androidx.annotation.Nullable
+    private static Profile subject(HomeLine line) {
+        switch (line.kind) {
+            case CALL:
+            case MESSAGE:
+            case INVITE:
+            case FRIENDS_ON_PROJECTS:
+            case REQUEST:
+            case JOIN_REQUEST:
+                return line.faces.isEmpty() ? null : line.faces.get(0);
+            case CREW_INVITE:
+                return line.teamInvite == null ? null : line.teamInvite.from;
+            default:
+                return null;
+        }
     }
 
     /** FIX2: the row's own actions, then its people (a request's or a join request's row: that person's menu). */

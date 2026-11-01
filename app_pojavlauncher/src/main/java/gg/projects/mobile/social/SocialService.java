@@ -620,13 +620,11 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     }
 
     /**
-     * Shows ({@code show}) or hides one of the player's own badges on their profile ("Rozetler"): the whole hidden list
+     * The player's own badges they keep off their profile ("Rozetler", {@link MarkCatalog#hiddenToSend}): the whole list
      * goes ({@code PATCH /v1/me {marksHidden}}), keys this version cannot draw included, so none of them shows again.
      */
     @MainThread
-    public void setMarkShown(String key, boolean show, Result<JsonObject> result) {
-        Me me = mState.me();
-        List<String> hidden = MarkCatalog.hiddenAfter(me == null ? null : me.profile.marksHidden, key, show);
+    public void setMarksHidden(List<String> hidden, Result<JsonObject> result) {
         mMarksSentAt = SystemClock.elapsedRealtime();
         patchMe(MarkCatalog.hiddenBody(hidden), result);
     }
