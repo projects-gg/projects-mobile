@@ -76,10 +76,9 @@ public class RelWiringTest {
         }
         assertTrue("changes sent without change(): " + outside, outside.isEmpty());
         assertTrue("found " + seen, seen >= CHANGES.size());
-        assertEquals(2, count(body(code, "private <T> void change("), "forgetRel();"));
+        assertEquals("change() forgets when it sends and when it applies", 2, count(body(code, "private <T> void change("), "forgetRel();"));
         // A report with "Engelle" blocks: it is the player's own change too.
-        String report = body(code, "public void report(");
-        assertTrue(report, Pattern.compile("if \\(blocks\\) change\\(").matcher(report).find());
+        has("report", body(code, "public void report("), "if (blocks) change(");
     }
 
     /** Spec 5 and 6: the version and the copy kept on the phone go wherever the copy stops being the service's answer. */
@@ -87,27 +86,33 @@ public class RelWiringTest {
     public void theVersionAndTheCopyGoWheneverTheyStopDescribingTheLists() throws IOException {
         String code = code(source("SocialService.java"));
         String forget = body(code, "private void forgetRel() {");
-        assertTrue(forget, forget.contains("mRel.forget();") && forget.contains("mKept.clear();"));
+        has("forgetRel", forget, "mRel.forget();");
+        has("forgetRel", forget, "mKept.clear();");
         for (String way : Arrays.asList(
                 "private void forgetSession() {", // sign-out, the session's end, a restriction, "Verilerimi sil"
                 "private void signedIn(JsonObject answer) {", // a new sign-in
                 "public void noticesSeen(final Set<String> ids) {", // moderators' notes seen here
                 "private void refreshMeOnly() {", // the profile read outside the list
                 "private void identityDone(")) { // a link's or a removal's profile
-            assertTrue(way, body(code, way).contains("forgetRel();"));
+            has(way, body(code, way), "forgetRel();");
         }
         // Spec 7: a push forgets before it reads.
         String push = body(code, "public void pushArrived() {");
-        assertTrue(push, push.contains("forgetRel();") && push.indexOf("forgetRel();") < push.indexOf("refresh(false)"));
+        has("pushArrived", push, "forgetRel();");
+        assertTrue("pushArrived forgets before it reads", push.indexOf("forgetRel();") < push.indexOf("refresh(false)"));
         // Every socket frame that changes the lists or the profile.
         String frames = body(code, "public void onMessage(PresenceConnection connection, JsonObject message) {");
         int check = frames.indexOf("RelVersion.changesRelations(type)");
-        assertTrue(frames, check > 0 && frames.indexOf("forgetRel();", check) > check);
+        assertTrue("onMessage asks RelVersion.changesRelations(type)", check > 0);
+        int brace = frames.indexOf('{', check);
+        assertTrue("a frame that changes the lists forgets the version and the copy",
+                brace > 0 && frames.substring(brace, close(frames, brace)).contains("forgetRel();"));
         // "Verilerimi sil" takes the copy also when the socket's 4002 ended the session first.
-        assertTrue(body(code, "public void deleteAccount(").contains("mKept.clear();"));
+        has("deleteAccount", body(code, "public void deleteAccount("), "mKept.clear();");
         // A start without a session keeps nothing of an account; with one, it loads the copy of its account.
         String start = body(code, "private SocialService(Context app) {");
-        assertTrue(start, start.contains("mKept.clear();") && start.contains("loadKept(saved.userId);"));
+        has("the service's start", start, "mKept.clear();");
+        has("the service's start", start, "loadKept(saved.userId);");
     }
 
     /** Spec 1-4 and 7: the read, the connect and the hello use the version. */
@@ -117,36 +122,41 @@ public class RelWiringTest {
         String code = code(raw);
         // Spec 1.
         assertEquals("v1/friends?crews=lite&rel=1", KeptLists.FROM);
-        assertTrue(body(code(source("SocialApi.java")), "public JsonObject friends()").contains("KeptLists.FROM"));
+        has("SocialApi.friends", body(code(source("SocialApi.java")), "public JsonObject friends()"), "KeptLists.FROM");
         // Spec 2: one request when the answer brings the profile; GET /v1/me only without it. The version is kept only
         // when nothing changed since the read started.
         String read = body(code, "private void refresh(boolean force, boolean anyVersion) {");
-        assertTrue(read, read.contains("KeptLists.Answer.of(friends)"));
-        assertTrue(read, read.contains("brought.me != null ? brought.me : mApi.me()"));
-        assertEquals(1, count(read, "mApi.me()"));
-        assertTrue(read, read.contains("mRel.readStarts()") && read.contains("mRel.keep("));
+        has("refresh", read, "KeptLists.Answer.of(friends)");
+        has("refresh", read, "brought.me != null ? brought.me : mApi.me()");
+        assertEquals("refresh reads GET /v1/me only in the fallback", 1, count(read, "mApi.me()"));
+        has("refresh", read, "mRel.readStarts()");
+        has("refresh", read, "mRel.keep(");
         // Spec 7: an unforced read waits for the hello of the connection up or on its way.
-        assertTrue(read, read.contains("mRel.refreshSkips(force, mState.loaded(), mConnection != null)"));
+        has("refresh", read, "mRel.refreshSkips(force, mState.loaded(), mConnection != null)");
         // Spec 3: the connect names the version held.
-        assertTrue(body(code, "private void ensureConnected() {").contains("PresenceConnection.open(mApi, mToken, caps(), mRel.held(), this)"));
-        assertTrue(code(source("PresenceConnection.java")).contains("RelVersion.presencePath(caps, rel)"));
+        has("ensureConnected", body(code, "private void ensureConnected() {"), "PresenceConnection.open(mApi, mToken, caps(), mRel.held(), this)");
+        has("PresenceConnection", code(source("PresenceConnection.java")), "RelVersion.presencePath(caps, rel)");
         // Spec 4: the hello's version decides.
-        String frames = rawBody(raw, code, "public void onMessage(PresenceConnection connection, JsonObject message) {");
-        assertTrue(frames, frames.contains("mRel.hello(Json.str(message, \"rel\"), mState.loaded())"));
+        has("onMessage", rawBody(raw, code, "public void onMessage(PresenceConnection connection, JsonObject message) {"),
+                "mRel.hello(Json.str(message, \"rel\"), mState.loaded())");
         // Spec 6: a start shows the copy only while nothing replaced it meanwhile.
-        String kept = body(code, "private void keptLoaded(");
-        assertTrue(kept, kept.contains("!mState.loaded() && mRel.keep(kept.rel, since)"));
+        has("keptLoaded", body(code, "private void keptLoaded("), "!mState.loaded() && mRel.keep(kept.rel, since)");
     }
 
     /** Spec 6, also with the app not running: a friend request's push takes the copy kept for a start. */
     @Test
     public void aRequestsPushTakesTheCopyAlsoWithoutTheApp() throws IOException {
-        String push = source("SocialPush.java");
-        assertTrue(push.contains("SocialService.get(app).pushArrived();"));
-        assertTrue(push.contains("else if (PushMessage.REQUEST.equals(message.type))"));
-        assertTrue(push.contains("new KeptLists(KeptLists.folder(app.getNoBackupFilesDir(), debug.override)).clear();"));
+        String push = code(source("SocialPush.java"));
+        has("SocialPush", push, "SocialService.get(app).pushArrived();");
+        has("SocialPush", push, "else if (PushMessage.REQUEST.equals(message.type))");
+        has("SocialPush", push, "new KeptLists(KeptLists.folder(app.getNoBackupFilesDir(), debug.override)).clear();");
         // The same folder as the service's.
-        assertTrue(source("SocialService.java").contains("new KeptLists(KeptLists.folder(app.getNoBackupFilesDir(), mDebug.override))"));
+        has("the service's start", code(source("SocialService.java")), "new KeptLists(KeptLists.folder(app.getNoBackupFilesDir(), mDebug.override))");
+    }
+
+    /** A short failure: where, and what is missing (never the whole method). */
+    private static void has(String where, String text, String part) {
+        assertTrue(where + " no longer has: " + part, text.contains(part));
     }
 
     // ---- reading the sources ----
