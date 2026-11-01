@@ -759,16 +759,27 @@ public class ControlLayout extends FrameLayout {
 	public void askToExit(EditorExitable editorExitable) {
 		if (mSaving) return;
 		final EditorExitable exit = mHost != null ? mHost : editorExitable;
-		Context context = getContext();
-		if (EditorRules.leave(mIsModified) == EditorRules.Leave.NOW || !(context instanceof Activity)) {
+		if (EditorRules.leave(mIsModified) == EditorRules.Leave.NOW) {
 			exit.exitEditor();
 			return;
 		}
-		ConfirmDialog.show((Activity) context,
+		Context context = getContext();
+		Activity activity = activityOf(context);
+		if (activity == null) return; // No window to ask in: the edits stay, nothing is dropped.
+		ConfirmDialog.show(activity,
 				context.getString(R.string.projects_ctrl_save_question),
 				context.getString(R.string.projects_ctrl_save_question_body),
 				context.getString(R.string.projects_ctrl_save_leave), false, () -> saveActive(true, null),
 				context.getString(R.string.projects_ctrl_leave_unsaved), exit::exitEditor);
+	}
+
+	@Nullable
+	private static Activity activityOf(Context context) {
+		while (context instanceof android.content.ContextWrapper) {
+			if (context instanceof Activity) return (Activity) context;
+			context = ((android.content.ContextWrapper) context).getBaseContext();
+		}
+		return null;
 	}
 
 	public void updateLoadedFileName(String path) {
