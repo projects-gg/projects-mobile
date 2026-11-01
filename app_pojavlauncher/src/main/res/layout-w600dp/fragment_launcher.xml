@@ -60,6 +60,16 @@
 				android:layout_marginEnd="12dp"
 				android:layout_marginBottom="6dp" />
 
+			<!-- AFK-M-UI: phone AFK, for a player with AFK accounts on this phone (others find it in the menu below) -->
+			<include
+				layout="@layout/view_projects_afk_row"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:layout_marginStart="12dp"
+				android:layout_marginTop="6dp"
+				android:layout_marginEnd="12dp"
+				android:layout_marginBottom="6dp" />
+
 			<LinearLayout
 				android:id="@+id/projects_menu_group"
 				android:layout_width="match_parent"
@@ -83,6 +93,21 @@
 
 				<View
 					android:id="@+id/cloud_divider"
+					style="@style/ProjectsMenuDivider"
+					android:visibility="gone" />
+
+				<!-- AFK-M-UI: "AFK hesapları" (players without AFK accounts on this phone while the feature is on), its
+				     divider after it. -->
+				<com.kdt.mcgui.LauncherMenuButton
+					android:id="@+id/afk_button"
+					style="@style/LauncherMenuButton.Universal"
+					android:layout_width="match_parent"
+					android:drawableStart="@drawable/projects_menu_afk"
+					android:text="@string/projects_afk_ui_title"
+					android:visibility="gone" />
+
+				<View
+					android:id="@+id/afk_divider"
 					style="@style/ProjectsMenuDivider"
 					android:visibility="gone" />
 

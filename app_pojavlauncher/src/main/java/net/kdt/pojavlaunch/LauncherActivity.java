@@ -326,6 +326,7 @@ public class LauncherActivity extends BaseActivity implements gg.projects.mobile
             }
         }
 
+        mAccountSpinner.notePlayed(); // SWIPE-M: the account order's "last play"
         gg.projects.mobile.ui.PlayButtons.confirm(feedback);
         new MinecraftDownloader().start(
                 this,
@@ -454,6 +455,7 @@ public class LauncherActivity extends BaseActivity implements gg.projects.mobile
     protected void onPostResume() {
         super.onPostResume();
         gg.projects.mobile.social.SocialRoutes.consume(this);
+        gg.projects.mobile.afk.ui.AfkRoutes.onLauncherShown(this); // AFK-M-UI: a notification's AFK screen, AFK back after a game
     }
 
     @Override

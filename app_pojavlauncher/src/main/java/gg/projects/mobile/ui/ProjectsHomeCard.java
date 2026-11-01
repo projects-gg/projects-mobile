@@ -483,8 +483,9 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         Press.attach(mNotifyOfferClose, Press.Style.ICON);
         mNotifyOfferAllow.setOnClickListener(v -> allowNotificationsFromOffer());
         mNotifyOfferClose.setOnClickListener(v -> setNotifyOfferAside());
-        mEventJoin.setOnClickListener(v -> join(mEventJoin));
-        mJoinButton.setOnClickListener(v -> join(mJoinButton));
+        // AFK-M-UI: a join plays the chosen account; its name AFK on this phone asks first (gg.projects.mobile.afk.ui.AfkPlayGate).
+        mEventJoin.setOnClickListener(v -> gg.projects.mobile.afk.ui.AfkPlayGate.check(mFragment, mEventJoin, () -> join(mEventJoin)));
+        mJoinButton.setOnClickListener(v -> gg.projects.mobile.afk.ui.AfkPlayGate.check(mFragment, mJoinButton, () -> join(mJoinButton)));
         mModsRow.setOnClickListener(v -> openMods());
         mEvent.setOnClickListener(v -> openEvent());
         mEventMore.setOnClickListener(v -> showOtherEvents());
