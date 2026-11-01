@@ -156,14 +156,12 @@ public final class AfkFragment extends AfkScreen {
         boolean first = !mBuilt;
         mBuilt = true;
         content.removeAllViews();
+        // The screen's one authored moment: the accounts' rows arriving one after another (the desktop's cards);
+        // everything else is simply there.
         int entering = 0;
 
         AfkEnd end = mAfk.lastEnd();
-        if (end != null) {
-            View notice = endNotice(c, end);
-            content.addView(notice);
-            if (first) enter(notice, entering++);
-        }
+        if (end != null) content.addView(endNotice(c, end));
 
         List<AfkAccount> accounts = mAfk.accounts();
         if (accounts.isEmpty()) {
@@ -189,7 +187,6 @@ public final class AfkFragment extends AfkScreen {
             box.addView(add, addLp);
             empty.addView(box, CloudUi.matchWrap());
             content.addView(empty);
-            if (first) enter(empty, entering);
             return;
         }
 
@@ -203,10 +200,6 @@ public final class AfkFragment extends AfkScreen {
         countLp.setMarginStart(AfkUi.dp(c, 4));
         countLp.topMargin = AfkUi.dp(c, 2);
         content.addView(mCount, countLp);
-        if (first) {
-            enter(section, entering);
-            enter(mCount, entering++);
-        }
 
         LinearLayout group = CloudUi.group(c);
         LinearLayout.LayoutParams groupLp = CloudUi.matchWrap();
@@ -274,10 +267,6 @@ public final class AfkFragment extends AfkScreen {
         LinearLayout.LayoutParams settingsLp = CloudUi.matchWrap();
         settingsLp.topMargin = AfkUi.dp(c, 8);
         content.addView(settings, settingsLp);
-        if (first) {
-            enter(phone, entering);
-            enter(settings, entering);
-        }
     }
 
     /** Why AFK ended while nobody stopped it (the morning's notice), its fix, and once the calm 7/24 Bulut line. */

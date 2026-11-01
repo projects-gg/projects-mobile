@@ -102,6 +102,8 @@ public final class AfkEditFragment extends AfkScreen {
     private Button mSave;
     private boolean mSaving;
     private boolean mBarShown;
+    /** Counts the form's builds: a late answer for an earlier build ("Vazgeç" built it again) lands nowhere. */
+    private int mBuilds;
     private final Handler mMain = new Handler(Looper.getMainLooper());
 
     public static Bundle args(@Nullable String accountId, boolean commands) {
@@ -184,6 +186,7 @@ public final class AfkEditFragment extends AfkScreen {
     // ---- the form ----
 
     private void build() {
+        mBuilds++;
         final LinearLayout content = clear();
         if (content == null || mKept.now == null) return;
         final Context c = ctx();
@@ -322,6 +325,7 @@ public final class AfkEditFragment extends AfkScreen {
     /** "Bu telefondaki adlar": this phone's username accounts not yet AFK, one tap fills the name (read off the main thread). */
     private void phoneNames(final LinearLayout content, final AfkDraft d) {
         final int at = content.getChildCount();
+        final int build = mBuilds;
         final List<String> afkNames = new ArrayList<>();
         for (AfkAccount a : mAfk.accounts()) afkNames.add(a.name);
         IO.execute(() -> {
@@ -341,7 +345,7 @@ public final class AfkEditFragment extends AfkScreen {
             }
             final List<String> names = AfkFormRules.phoneNames(local, afkNames);
             mMain.post(() -> {
-                if (!alive() || names.isEmpty() || mName == null) return;
+                if (!alive() || build != mBuilds || names.isEmpty() || mName == null) return;
                 Context c = ctx();
                 LinearLayout block = new LinearLayout(c);
                 block.setOrientation(LinearLayout.VERTICAL);
