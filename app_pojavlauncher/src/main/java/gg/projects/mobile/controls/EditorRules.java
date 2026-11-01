@@ -57,4 +57,45 @@ public final class EditorRules {
             return file.getAbsolutePath();
         }
     }
+
+    /**
+     * APK-REL (0.4.9's emulator run): where the editor's bar ("Menü", "Kaydet") starts from the left. At the top
+     * centre while no key is there; else at the free place nearest to the centre. The default layout's two drawers open
+     * their keys up to 410 dp from the left edge, so on a phone held sideways (narrower than about 980 dp, nearly every
+     * phone) the centred bar sat under "MİKROFON" and the player saw "enü". {@code lefts} and {@code rights} are the
+     * edges of the keys in the bar's band, {@code gap} the room kept beside a key, {@code margin} the room kept from the
+     * screen's edges. With no free place the bar stays centred: the keys are drawn over it and stay reachable.
+     */
+    public static int barLeft(int width, int barWidth, int[] lefts, int[] rights, int gap, int margin) {
+        int centred = (width - barWidth) / 2;
+        int min = margin;
+        int max = width - margin - barWidth;
+        if (max < min || lefts.length != rights.length) return centred;
+        int best = centred;
+        long bestDistance = Long.MAX_VALUE;
+        // The places worth trying: the centre, and just after or just before each key.
+        int[] tries = new int[1 + 2 * lefts.length];
+        tries[0] = centred;
+        for (int i = 0; i < lefts.length; i++) {
+            tries[1 + 2 * i] = rights[i] + gap;
+            tries[2 + 2 * i] = lefts[i] - gap - barWidth;
+        }
+        for (int at : tries) {
+            int x = Math.max(min, Math.min(max, at));
+            if (!clearOfKeys(x, barWidth, lefts, rights, gap)) continue;
+            long distance = Math.abs((long) x - centred);
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                best = x;
+            }
+        }
+        return best;
+    }
+
+    private static boolean clearOfKeys(int x, int barWidth, int[] lefts, int[] rights, int gap) {
+        for (int i = 0; i < lefts.length; i++) {
+            if (x < rights[i] + gap && x + barWidth > lefts[i] - gap) return false;
+        }
+        return true;
+    }
 }

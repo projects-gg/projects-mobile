@@ -113,7 +113,10 @@ public class ControlLayout extends FrameLayout {
 		} finally {
 			mLoading = false;
 		}
-		if (mEditorBar != null) mEditorBar.setCanSave(mIsModified && !mSaving);
+		if (mEditorBar != null) {
+			mEditorBar.setCanSave(mIsModified && !mSaving);
+			mEditorBar.post(this::placeEditorBar);
+		}
 	}
 
 	private void putLayout(CustomControls controlLayout) {
@@ -438,9 +441,48 @@ public class ControlLayout extends FrameLayout {
 			// 8 dp from the top to the drawn buttons (each draws 40 dp inside its 48 dp target).
 			params.topMargin = Math.round(4 * getResources().getDisplayMetrics().density);
 			addView(mEditorBar, params);
+			// APK-REL: placed clear of the keys each time it is laid out (opened, a new window size).
+			mEditorBar.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> placeEditorBar());
 		}
 		mEditorBar.setCanSave(mIsModified && !mSaving);
 		mEditorBar.appear();
+		mEditorBar.post(this::placeEditorBar);
+	}
+
+	/**
+	 * APK-REL (0.4.9's emulator run): the bar keeps clear of the keys in its band ({@link EditorRules#barLeft}), measured
+	 * when the editor opens, when a layout is loaded and when the keys take their places on a new window size; not while
+	 * a key is dragged (a key moved over the bar is drawn above it and stays reachable, as CTRL-SAVE decided). The
+	 * "Tuşlar kaydedildi." line under the bar follows it (it starts at the bar's left edge).
+	 */
+	private void placeEditorBar() {
+		if (mEditorBar == null || !mModifiable) return;
+		int width = getWidth();
+		int barWidth = mEditorBar.getWidth();
+		if (width == 0 || barWidth == 0) return;
+		int top = mEditorBar.getTop();
+		int bottom = mEditorBar.getBottom();
+		List<ControlInterface> keys = getButtonChildren();
+		int[] lefts = new int[keys.size()];
+		int[] rights = new int[keys.size()];
+		int n = 0;
+		for (ControlInterface key : keys) {
+			View view = key.getControlView();
+			if (view.getVisibility() != VISIBLE) continue;
+			android.view.ViewGroup.LayoutParams size = view.getLayoutParams();
+			int keyWidth = view.getWidth() > 0 ? view.getWidth() : (size != null ? size.width : 0);
+			int keyHeight = view.getHeight() > 0 ? view.getHeight() : (size != null ? size.height : 0);
+			if (keyWidth <= 0 || keyHeight <= 0) continue;
+			float y = view.getY();
+			if (y >= bottom || y + keyHeight <= top) continue;
+			lefts[n] = Math.round(view.getX());
+			rights[n] = Math.round(view.getX() + keyWidth);
+			n++;
+		}
+		int room = Math.round(8 * getResources().getDisplayMetrics().density);
+		int left = EditorRules.barLeft(width, barWidth, java.util.Arrays.copyOf(lefts, n),
+				java.util.Arrays.copyOf(rights, n), room, room);
+		mEditorBar.setTranslationX(left - mEditorBar.getLeft());
 	}
 
 	private void openEditorMenu() {
@@ -608,6 +650,8 @@ public class ControlLayout extends FrameLayout {
 			button.setDynamicX(button.getProperties().dynamicX);
 			button.setDynamicY(button.getProperties().dynamicY);
 		}
+		// APK-REL: the keys took their places on a new size; the editor's bar keeps clear of them.
+		if (mEditorBar != null) mEditorBar.post(this::placeEditorBar);
 	}
 
     @Override

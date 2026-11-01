@@ -48,4 +48,27 @@ public class EditorRulesTest {
         assertTrue(EditorRules.sameFile(null, null));
         assertFalse(EditorRules.sameFile(active.getPath(), null));
     }
+
+    /**
+     * APK-REL: on a phone held sideways (2400 x 1080 px at 2.625, 914 dp) the default layout's drawer keys reach
+     * 410 dp (1076 px) from the left in the bar's band; the centred bar (420 px wide) started at 990 px, under
+     * "MİKROFON". It now starts right after the keys, as near to the centre as it can.
+     */
+    @Test
+    public void theBarStaysCentredUnlessKeysAreThereThenTakesTheNearestFreePlace() {
+        int[] none = new int[0];
+        assertEquals(990, EditorRules.barLeft(2400, 420, none, none, 21, 21));
+        // The default layout's keys on a phone: right after the last one (1076 + 21).
+        assertEquals(1097, EditorRules.barLeft(2400, 420, new int[] {31, 540, 908}, new int[] {157, 709, 1076}, 21, 21));
+        // On a tablet the keys end far from the centre: centred.
+        assertEquals(1070, EditorRules.barLeft(2560, 420, new int[] {24, 412, 692}, new int[] {120, 552, 820}, 16, 16));
+        // A key under the bar's right end: the free place before it is nearer than the one after it.
+        assertEquals(1300 - 21 - 420, EditorRules.barLeft(2400, 420, new int[] {1300}, new int[] {1400}, 21, 21));
+        // Keys across the whole band: no free place, the bar stays centred (the keys are drawn over it).
+        assertEquals(990, EditorRules.barLeft(2400, 420, new int[] {0}, new int[] {2400}, 21, 21));
+        // A place after the keys that would run off the screen is no place: centred again.
+        assertEquals(990, EditorRules.barLeft(2400, 420, new int[] {0}, new int[] {1960}, 21, 21));
+        // The place right after long keys, still on the screen.
+        assertEquals(1921, EditorRules.barLeft(2400, 420, new int[] {0}, new int[] {1900}, 21, 21));
+    }
 }
