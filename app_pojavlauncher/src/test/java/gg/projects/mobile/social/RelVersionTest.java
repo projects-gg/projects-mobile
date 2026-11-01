@@ -128,6 +128,39 @@ public class RelVersionTest {
     }
 
     /**
+     * SOC-REL-M (the lead's decision, 1 November): a push forgets the version and the copy kept for a start only when it
+     * changes what the list shows. A friend request does (its notification opens the list, which must show it at once);
+     * a message, a crew call, its end and "Birlikte oyna" (a game invite, not in the list) do not: the version stays, an
+     * unforced read still waits for the hello, and the next start the same day finds the copy. SocialService and SocialPush
+     * decide with pushChangesLists (RelWiringTest).
+     */
+    @Test
+    public void onlyAPushThatChangesTheListsForgetsTheVersion() {
+        File dir = new File(tmp.getRoot(), "lists");
+        final String me = SocialStateTest.ME;
+        final long day = 20758;
+        for (String kind : Arrays.asList(PushMessage.REQUEST, PushMessage.INVITE, PushMessage.MESSAGE, PushMessage.CALL,
+                PushMessage.CALL_END, "afk", null, "", "REQUEST")) {
+            KeptLists kept = new KeptLists(dir);
+            RelVersion rel = new RelVersion();
+            assertTrue(rel.keep(REL, rel.readStarts()));
+            assertTrue(kept.save(kept.generation(), me, day, KeptListsTest.answer(me, "Blaze_Runner", REL)));
+            // The service's pushArrived (and SocialPush's clear while the app is not running).
+            boolean forgets = RelVersion.pushChangesLists(kind);
+            if (forgets) {
+                rel.forget();
+                kept.clear();
+            }
+            boolean request = PushMessage.REQUEST.equals(kind);
+            assertEquals(String.valueOf(kind), request, forgets);
+            assertEquals(String.valueOf(kind), request ? null : REL, rel.held());
+            assertEquals(String.valueOf(kind), !request, rel.refreshSkips(false, true, true));
+            assertEquals(String.valueOf(kind), !request, new KeptLists(dir).load(me, day) != null);
+            new KeptLists(dir).clear();
+        }
+    }
+
+    /**
      * A day with the copy kept on the phone, as SocialService runs it: the first start reads the lists and keeps them;
      * the next start the same day shows them, names their version and reads nothing when the hello names the same; a
      * change on the socket takes the copy, so the start after reads again; the next day's start reads too.

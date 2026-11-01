@@ -568,12 +568,13 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     }
 
     /**
-     * A push came while the app ran without a socket: the list is read again when its screens are up. M048 (spec 7):
-     * something may have changed meanwhile, so the version held says nothing now and the copy kept for a start goes.
+     * A push came while the app ran without a socket: the list is read again when its screens are up. SOC-REL-M (the
+     * lead's decision, 1 November): only a push that changes what the list shows (a friend request) forgets the version
+     * held and the copy kept for a start; after a message, a call or "Birlikte oyna" the next hello's version decides.
      */
     @MainThread
-    public void pushArrived() {
-        forgetRel();
+    public void pushArrived(String type) {
+        if (RelVersion.pushChangesLists(type)) forgetRel();
         mLastFetch = 0;
         if (mUiStarted > 0) refresh(false);
     }

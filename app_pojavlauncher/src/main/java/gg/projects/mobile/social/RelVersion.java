@@ -88,6 +88,16 @@ final class RelVersion {
     }
 
     /**
+     * SOC-REL-M (the lead's decision, 1 November): the pushes that change what the list's answer shows, and so forget the
+     * version held and the copy kept for a start: a friend request. A message, a crew call, its end and "Birlikte oyna"
+     * (a game invite, not in the list) change nothing there: the version stays and the next hello decides. Crew invites
+     * come on the socket ({@code team_invite}, {@link #changesRelations}).
+     */
+    static boolean pushChangesLists(@Nullable String type) {
+        return PushMessage.REQUEST.equals(type);
+    }
+
+    /**
      * The socket frames that change what the list's answer shows, the profile included (spec 5; the launcher's
      * {@code changes_relations}): requests, friends, blocks' and crews' changes, invites to crews and join requests, the
      * player's crew order, mutes and notification settings, categories, tags and marks, and the player's own status,

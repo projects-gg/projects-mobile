@@ -100,8 +100,10 @@ public class RelWiringTest {
         // Moderators' notes seen here: when they go and again when the service has them (a read in between keeps none).
         assertEquals("noticesSeen forgets twice", 2, count(body(code, "public void noticesSeen(final Set<String> ids) {"), "forgetRel();"));
         // Spec 7: a push forgets before it reads.
-        String push = body(code, "public void pushArrived() {");
-        has("pushArrived", push, "forgetRel();");
+        // Spec 7 and the lead's decision (1 November): only a push that changes the lists forgets, before it reads.
+        String push = body(code, "public void pushArrived(String type) {");
+        has("pushArrived", push, "if (RelVersion.pushChangesLists(type)) forgetRel();");
+        assertEquals("pushArrived forgets only through pushChangesLists", 1, count(push, "forgetRel();"));
         assertTrue("pushArrived forgets before it reads", push.indexOf("forgetRel();") < push.indexOf("refresh(false)"));
         // Every socket frame that changes the lists or the profile.
         String frames = body(code, "public void onMessage(PresenceConnection connection, JsonObject message) {");
@@ -161,11 +163,11 @@ public class RelWiringTest {
         // The running app's pushArrived, else (no service in this process) the request's own clear.
         int open = push.indexOf('{', push.indexOf("if (SocialService.exists()) {"));
         assertTrue("SocialPush no longer asks whether the service runs", open > 0);
-        has("SocialPush", push.substring(open, close(push, open)), "SocialService.get(app).pushArrived();");
+        has("SocialPush", push.substring(open, close(push, open)), "SocialService.get(app).pushArrived(message.type);");
         String otherwise = push.substring(close(push, open) + 1);
-        assertTrue("without the service, a request's push clears the copy",
-                otherwise.trim().startsWith("else if (PushMessage.REQUEST.equals(message.type)) {"));
-        has("SocialPush", block(otherwise, "else if (PushMessage.REQUEST.equals(message.type)) {"),
+        assertTrue("without the service, a push that changes the lists clears the copy",
+                otherwise.trim().startsWith("else if (RelVersion.pushChangesLists(message.type)) {"));
+        has("SocialPush", block(otherwise, "else if (RelVersion.pushChangesLists(message.type)) {"),
                 "new KeptLists(KeptLists.folder(app.getNoBackupFilesDir(), debug.override)).clear();");
         // The same folder as the service's.
         has("the service's start", code(source("SocialService.java")), "new KeptLists(KeptLists.folder(app.getNoBackupFilesDir(), mDebug.override))");
