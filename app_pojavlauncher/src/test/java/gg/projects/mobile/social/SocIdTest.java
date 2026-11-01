@@ -228,7 +228,7 @@ public class SocIdTest {
                 "{\"providers\":[{\"id\":\"discord\",\"signIn\":true,\"signUp\":true},{\"id\":\"microsoft\",\"signIn\":true,\"signUp\":false},"
                         + "{\"id\":\"steam\",\"signIn\":true,\"signUp\":true}]}"));
         assertTrue(signIn.microsoftSignIn);
-        assertFalse("Discord leads, Microsoft under \"Bağlı hesabınla gir\"", signIn.equalWays());
+        assertFalse("Discord leads, Microsoft under \"Microsoft hesabını bağladıysan\"", signIn.equalWays());
         assertTrue(signIn.offers(SignInFlow.MICROSOFT));
         assertFalse(signIn.offers("steam"));
 
