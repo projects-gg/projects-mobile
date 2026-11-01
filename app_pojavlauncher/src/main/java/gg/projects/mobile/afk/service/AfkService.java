@@ -50,6 +50,7 @@ public final class AfkService extends Service {
     public static final String ACTION_STOP = "gg.projects.mobile.afk.STOP";
     public static final String ACTION_STOP_ALL = "gg.projects.mobile.afk.STOP_ALL";
     public static final String ACTION_RESUME = "gg.projects.mobile.afk.RESUME";
+    public static final String ACTION_RECONNECT = "gg.projects.mobile.afk.RECONNECT";
     public static final String EXTRA_ACCOUNT = "account";
     public static final String EXTRA_ERASE = "erase";
     private static final long TICK_MS = 5 * 60 * 1000L;
@@ -70,6 +71,11 @@ public final class AfkService extends Service {
 
     static Intent resumeIntent(Context context) {
         return new Intent(context, AfkService.class).setAction(ACTION_RESUME);
+    }
+
+    /** A running account connects again with its saved settings (started through startForegroundService). */
+    public static Intent reconnectIntent(Context context, String accountId) {
+        return new Intent(context, AfkService.class).setAction(ACTION_RECONNECT).putExtra(EXTRA_ACCOUNT, accountId);
     }
 
     /** The service is alive in this process. */
@@ -154,8 +160,13 @@ public final class AfkService extends Service {
         String action = intent == null ? null : intent.getAction();
         String id = intent == null ? null : intent.getStringExtra(EXTRA_ACCOUNT);
         // Starts come through startForegroundService (the foreground at once); a stop may find no service running.
-        boolean starts = intent == null || ACTION_START.equals(action) || ACTION_RESUME.equals(action);
+        boolean starts = intent == null || ACTION_START.equals(action) || ACTION_RESUME.equals(action)
+                || ACTION_RECONNECT.equals(action);
         if (starts && !ensureForeground()) return START_NOT_STICKY;
+        if (ACTION_RECONNECT.equals(action) && id != null && !engine.reconnect(id)) {
+            // Not running in this service (it was just started for this): a start, as the screens asked.
+            action = ACTION_START;
+        }
         if (ACTION_START.equals(action) && id != null) {
             if (!engine.start(id).ok()) {
                 // Refused (three already run, or the account is gone): the screens drop their "starting".
@@ -380,6 +391,11 @@ public final class AfkService extends Service {
         @Override
         public void stopAll(boolean erase) {
             AfkService.this.stopAll(erase);
+        }
+
+        @Override
+        public void reconnect(String accountId) {
+            engine.reconnect(accountId);
         }
     }
 

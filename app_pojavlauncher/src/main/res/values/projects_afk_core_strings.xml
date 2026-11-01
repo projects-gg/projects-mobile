@@ -74,6 +74,7 @@
     <string name="projects_afk_line_window_untitled">The server opened a window</string>
     <string name="projects_afk_line_respawn">The account died and came back</string>
     <string name="projects_afk_line_login_commands">Login commands sent</string>
+    <string name="projects_afk_line_reconnect">Reconnecting with the new settings</string>
 
     <!-- Notifications (the service) -->
     <string name="projects_afk_channel_running">AFK accounts</string>

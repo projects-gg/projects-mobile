@@ -150,6 +150,19 @@ public final class PhoneAfk {
         return phoneSupported() && (sStudioOn || sDebugOn);
     }
 
+    /**
+     * Studio's {@code features.phoneAfk} as last stored on this phone (the content seen last, kept across restarts):
+     * the home row can show before this start's content loads. False until the phone has seen it on.
+     */
+    public boolean savedSwitch() {
+        return sStudioOn;
+    }
+
+    /** The AFK row shows now: {@link #phoneSupported()} and the saved switch (or a debug build's local switch). */
+    public boolean availableNow() {
+        return switchOn();
+    }
+
     // ---- accounts ----
 
     /** The AFK accounts in the order they were added. */
@@ -244,13 +257,17 @@ public final class PhoneAfk {
         });
     }
 
-    /** Removes an account (stopping it first). Any thread. */
+    /**
+     * Removes an account; a running one stops first (the screens need not stop it themselves). Any thread. Its
+     * stop reason, if any, goes with it.
+     */
     public void remove(String id) {
         synchronized (store) {
             if (store.find(id) == null) return;
-            main.post(() -> {
-                if (status(id).state.running()) stop(id);
-            });
+            // Always told to stop: by the time a check could run the account is gone from the store, and a stop of
+            // an account that does not run only clears its stop reason.
+            if (Looper.myLooper() == Looper.getMainLooper()) stop(id);
+            else main.post(() -> stop(id));
             List<AfkStore.Entry> entries = new ArrayList<>();
             for (AfkStore.Entry e : store.entries()) {
                 if (!e.account.id.equals(id)) entries.add(e);
@@ -423,6 +440,30 @@ public final class PhoneAfk {
         if (!live.isEmpty()) {
             live.clear();
             dispatchStatuses();
+        }
+    }
+
+    /**
+     * "Kaydet ve yeniden bağlan": a running account drops its connection and connects again at once (in its turn at
+     * its server) with the settings saved now; the back-off count starts over. An account that does not run starts
+     * ({@link #start}).
+     */
+    @MainThread
+    public AfkStartResult reconnect(String id) {
+        if (!switchOn()) return AfkStartResult.NOT_AVAILABLE;
+        AfkAccount account = account(id);
+        if (account == null) return AfkStartResult.NO_ACCOUNT;
+        if (!status(id).state.running()) return start(id);
+        Bundle data = new Bundle();
+        data.putString(AfkIpc.KEY_ACCOUNT, id);
+        if (client.send(AfkIpc.RECONNECT, 0, data)) return AfkStartResult.STARTED;
+        // The link is not up (the service is just starting): Android's start reaches it either way.
+        try {
+            ContextCompat.startForegroundService(app, AfkService.reconnectIntent(app, id));
+            return AfkStartResult.STARTED;
+        } catch (IllegalStateException | SecurityException e) {
+            Log.w(TAG, "AFK service not reached for a reconnect", e);
+            return AfkStartResult.NOT_ALLOWED;
         }
     }
 

@@ -75,6 +75,7 @@
     <string name="projects_afk_line_window_untitled">Sunucu bir pencere açtı</string>
     <string name="projects_afk_line_respawn">Hesap öldü ve yeniden doğdu</string>
     <string name="projects_afk_line_login_commands">Giriş komutları gönderildi</string>
+    <string name="projects_afk_line_reconnect">Yeni ayarlarla yeniden bağlanıyor</string>
 
     <!-- Bildirimler (hizmet) -->
     <string name="projects_afk_channel_running">AFK hesapları</string>
