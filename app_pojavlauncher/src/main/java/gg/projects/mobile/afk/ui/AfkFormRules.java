@@ -81,22 +81,26 @@ public final class AfkFormRules {
     public static String masked(String line) {
         if (!secret(line)) return line;
         StringBuilder out = new StringBuilder(line.length());
-        boolean word = true;
-        boolean seenText = false;
-        for (int i = 0; i < line.length(); i++) {
-            char c = line.charAt(i);
-            if (word) {
-                if (c == ' ' || c == '\t') {
-                    if (seenText) word = false;
-                } else {
-                    seenText = true;
-                }
-                out.append(c);
-            } else {
-                out.append(c == ' ' || c == '\t' ? c : MASK);
-            }
-        }
+        for (int i = 0; i < line.length(); i++) out.append(shown(line, i));
         return out.toString();
+    }
+
+    /**
+     * The character a hidden line shows at {@code i}, read from the line as it is now (an EditText's text changes under
+     * its transformation, so the mask is worked out per character, never from a copy): the command word and white
+     * space as typed, the rest of a secret line as {@link #MASK}. Costs the first word's length, not the line's.
+     */
+    public static char shown(CharSequence line, int i) {
+        char c = line.charAt(i);
+        if (c == ' ' || c == '\t') return c;
+        int start = 0;
+        int length = line.length();
+        while (start < length && (line.charAt(start) == ' ' || line.charAt(start) == '\t')) start++;
+        int end = start;
+        while (end < length && line.charAt(end) != ' ' && line.charAt(end) != '\t') end++;
+        // Within the command word, or a lone command with nothing after it: as typed.
+        if (i < end || end >= length) return c;
+        return AfkLineFilter.isSensitiveCommand(line.subSequence(start, end).toString()) ? MASK : c;
     }
 
     /**

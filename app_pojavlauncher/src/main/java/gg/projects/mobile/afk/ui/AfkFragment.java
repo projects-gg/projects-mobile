@@ -60,10 +60,26 @@ public final class AfkFragment extends AfkScreen {
     private List<AfkStatus> mStatuses = new ArrayList<>();
     private String mShape = "";
     private boolean mBuilt;
+    /** This view of the screen has been built once (a later change glides; the first build is simply there). */
+    private boolean mViewBuilt;
+    @Nullable
+    private AlertDialog mMenu;
+    @Nullable
+    private androidx.appcompat.app.AlertDialog mConfirm;
+    @Nullable
+    private TextView mSection;
     @Nullable
     private TextView mCount;
     @Nullable
     private LinearLayout mGroup;
+    @Nullable
+    private View mAddDivider;
+    @Nullable
+    private LinearLayout mBulk;
+    @Nullable
+    private TextView mPhoneSection;
+    @Nullable
+    private LinearLayout mPhoneGroup;
     @Nullable
     private CloudUi.Row mAddRow;
     @Nullable
@@ -81,6 +97,32 @@ public final class AfkFragment extends AfkScreen {
     @Override
     protected void created(View view, @Nullable Bundle savedInstanceState) {
         mHeader.setTitle(getString(R.string.projects_afk_ui_title));
+    }
+
+    /** The view goes (another screen on top, a rotation): its blocks go with it, the next view builds its own. */
+    @Override
+    public void onDestroyView() {
+        if (mMenu != null) mMenu.dismiss();
+        if (mConfirm != null) mConfirm.dismiss();
+        mMenu = null;
+        mConfirm = null;
+        mRows.clear();
+        mSection = null;
+        mCount = null;
+        mGroup = null;
+        mAddDivider = null;
+        mAddRow = null;
+        mBulk = null;
+        mConnectAll = null;
+        mStopAll = null;
+        mLimitNote = null;
+        mPhoneSection = null;
+        mPhoneGroup = null;
+        mBatteryRow = null;
+        mNotifyRow = null;
+        mShape = "";
+        mViewBuilt = false;
+        super.onDestroyView();
     }
 
     @Override
@@ -124,14 +166,12 @@ public final class AfkFragment extends AfkScreen {
 
     // ---- building ----
 
-    /** What decides the screen's blocks (the words inside them change in place). */
+    /** What decides the screen's blocks (the words inside them, the phone's settings included, change in place). */
     private String shape() {
-        Context c = ctx();
         StringBuilder key = new StringBuilder();
         AfkEnd end = mAfk.lastEnd();
         key.append(end == null ? "-" : end.at + ":" + end.kind).append('|');
         key.append(cloudOffer(end)).append('|');
-        key.append(mAfk.batteryUnrestricted()).append(AfkBattery.notificationsOn(c)).append('|');
         for (AfkAccount a : mAfk.accounts()) key.append(a.id).append(',');
         return key.toString();
     }
@@ -142,7 +182,8 @@ public final class AfkFragment extends AfkScreen {
         String shape = shape();
         if (!shape.equals(mShape)) {
             // A change of blocks (an account added or removed, a notice): what stays glides, the rest fades.
-            if (mBuilt) CardMotion.beginLayoutChange(mContent);
+            if (mViewBuilt) CardMotion.beginLayoutChange(mContent);
+            mViewBuilt = true;
             mShape = shape;
             rebuild();
         }
@@ -166,13 +207,6 @@ public final class AfkFragment extends AfkScreen {
         List<AfkAccount> accounts = mAfk.accounts();
         if (accounts.isEmpty()) {
             mRows.clear();
-            mGroup = null;
-            mCount = null;
-            mConnectAll = null;
-            mStopAll = null;
-            mLimitNote = null;
-            mBatteryRow = null;
-            mNotifyRow = null;
             LinearLayout empty = CloudUi.empty(c, PixelSprites.Sprite.AFK, getString(R.string.projects_afk_ui_empty_body));
             TextView title = CloudUi.text(c, getString(R.string.projects_afk_ui_empty_title), 17, R.color.projects_bone_100, true);
             title.setGravity(Gravity.CENTER);
@@ -190,72 +224,79 @@ public final class AfkFragment extends AfkScreen {
             return;
         }
 
-        // "Bu telefonda" and the count, then the rows.
-        TextView section = CloudUi.section(c, getString(R.string.projects_afk_ui_here));
+        // The blocks are made once and put back each time: what stays is the same view, so a change glides
+        // (CardMotion) instead of cross-fading identical rows.
+        if (mSection == null) makeBlocks(c);
         LinearLayout.LayoutParams sectionLp = CloudUi.matchWrap();
         sectionLp.topMargin = AfkUi.dp(c, end == null ? 8 : 20);
-        content.addView(section, sectionLp);
-        mCount = CloudUi.text(c, "", 13, R.color.projects_ash_400, false);
+        content.addView(detached(mSection), sectionLp);
         LinearLayout.LayoutParams countLp = CloudUi.matchWrap();
         countLp.setMarginStart(AfkUi.dp(c, 4));
         countLp.topMargin = AfkUi.dp(c, 2);
-        content.addView(mCount, countLp);
+        content.addView(detached(mCount), countLp);
 
-        LinearLayout group = CloudUi.group(c);
-        LinearLayout.LayoutParams groupLp = CloudUi.matchWrap();
-        groupLp.topMargin = AfkUi.dp(c, 8);
+        LinearLayout group = mGroup;
+        group.removeAllViews();
         Map<String, AccountRow> kept = new LinkedHashMap<>();
         for (AfkAccount a : accounts) {
             AccountRow row = mRows.get(a.id);
             if (row == null) {
                 row = new AccountRow(c, a.id);
                 if (first) enter(row.wrap, entering++);
-            } else if (row.wrap.getParent() instanceof ViewGroup) {
-                ((ViewGroup) row.wrap.getParent()).removeView(row.wrap);
             }
             row.divider.setVisibility(kept.isEmpty() ? View.GONE : View.VISIBLE);
             kept.put(a.id, row);
-            group.addView(row.wrap);
+            group.addView(detached(row.wrap));
         }
         mRows.clear();
         mRows.putAll(kept);
-        group.addView(CloudUi.rowDivider(c));
-        mAddRow = CloudUi.addRow(c, getString(R.string.projects_afk_ui_add), v -> addAccount());
+        group.addView(detached(mAddDivider));
         CloudUi.enable(mAddRow, accounts.size() < AfkLimits.MAX_ACCOUNTS);
-        group.addView(mAddRow.view);
-        content.addView(group, groupLp);
-        mGroup = group;
+        group.addView(detached(mAddRow.view));
+        LinearLayout.LayoutParams groupLp = CloudUi.matchWrap();
+        groupLp.topMargin = AfkUi.dp(c, 8);
+        content.addView(detached(group), groupLp);
 
         // Several accounts: both bulk actions, quiet (the desktop's "Buradakileri bağla / durdur").
-        mConnectAll = null;
-        mStopAll = null;
         if (accounts.size() >= 2) {
-            LinearLayout bulk = new LinearLayout(c);
-            bulk.setOrientation(LinearLayout.HORIZONTAL);
-            mConnectAll = CloudUi.button(c, getString(R.string.projects_afk_ui_connect_all), false, this::connectAll);
-            mStopAll = CloudUi.button(c, getString(R.string.projects_afk_ui_stop_all), false, v -> {
-                Haptics.tick(v);
-                mAfk.stopAll();
-            });
-            LinearLayout.LayoutParams leftLp = CloudUi.weight(1f);
-            LinearLayout.LayoutParams rightLp = CloudUi.weight(1f);
-            rightLp.setMarginStart(AfkUi.dp(c, 8));
-            bulk.addView(mConnectAll, leftLp);
-            bulk.addView(mStopAll, rightLp);
             LinearLayout.LayoutParams bulkLp = CloudUi.matchWrap();
             bulkLp.topMargin = AfkUi.dp(c, 10);
-            content.addView(bulk, bulkLp);
+            content.addView(detached(mBulk), bulkLp);
         }
-        mLimitNote = CloudUi.note(c, AfkTexts.start(c, AfkStartResult.LIMIT_REACHED));
-        mLimitNote.setVisibility(View.GONE);
-        content.addView(mLimitNote);
+        content.addView(detached(mLimitNote));
 
         // The phone's own settings AFK needs.
-        TextView phone = CloudUi.section(c, getString(R.string.projects_afk_ui_phone));
         LinearLayout.LayoutParams phoneLp = CloudUi.matchWrap();
         phoneLp.topMargin = AfkUi.dp(c, 24);
-        content.addView(phone, phoneLp);
-        LinearLayout settings = CloudUi.group(c);
+        content.addView(detached(mPhoneSection), phoneLp);
+        LinearLayout.LayoutParams settingsLp = CloudUi.matchWrap();
+        settingsLp.topMargin = AfkUi.dp(c, 8);
+        content.addView(detached(mPhoneGroup), settingsLp);
+    }
+
+    /** The list's blocks, made once per screen. */
+    private void makeBlocks(Context c) {
+        mSection = CloudUi.section(c, getString(R.string.projects_afk_ui_here));
+        mCount = CloudUi.text(c, "", 13, R.color.projects_ash_400, false);
+        mGroup = CloudUi.group(c);
+        mAddDivider = CloudUi.rowDivider(c);
+        mAddRow = CloudUi.addRow(c, getString(R.string.projects_afk_ui_add), v -> addAccount());
+        mBulk = new LinearLayout(c);
+        mBulk.setOrientation(LinearLayout.HORIZONTAL);
+        mConnectAll = CloudUi.button(c, getString(R.string.projects_afk_ui_connect_all), false, this::connectAll);
+        mStopAll = CloudUi.button(c, getString(R.string.projects_afk_ui_stop_all), false, v -> {
+            Haptics.tick(v);
+            mAfk.stopAll();
+        });
+        LinearLayout.LayoutParams leftLp = CloudUi.weight(1f);
+        LinearLayout.LayoutParams rightLp = CloudUi.weight(1f);
+        rightLp.setMarginStart(AfkUi.dp(c, 8));
+        mBulk.addView(mConnectAll, leftLp);
+        mBulk.addView(mStopAll, rightLp);
+        mLimitNote = CloudUi.note(c, AfkTexts.start(c, AfkStartResult.LIMIT_REACHED));
+        mLimitNote.setVisibility(View.GONE);
+        mPhoneSection = CloudUi.section(c, getString(R.string.projects_afk_ui_phone));
+        mPhoneGroup = CloudUi.group(c);
         mBatteryRow = CloudUi.row(c, R.drawable.projects_ic_battery_charging, getString(R.string.projects_afk_ui_battery),
                 v -> AfkBattery.openFromRow(this));
         mNotifyRow = CloudUi.row(c, R.drawable.projects_ic_bell, getString(R.string.projects_afk_ui_notifications),
@@ -263,10 +304,13 @@ public final class AfkFragment extends AfkScreen {
         List<View> rows = new ArrayList<>();
         rows.add(mBatteryRow.view);
         rows.add(mNotifyRow.view);
-        CloudUi.fill(settings, rows);
-        LinearLayout.LayoutParams settingsLp = CloudUi.matchWrap();
-        settingsLp.topMargin = AfkUi.dp(c, 8);
-        content.addView(settings, settingsLp);
+        CloudUi.fill(mPhoneGroup, rows);
+    }
+
+    /** {@code view} out of the parent it had, ready to be put back. */
+    private static <T extends View> T detached(T view) {
+        if (view.getParent() instanceof ViewGroup) ((ViewGroup) view.getParent()).removeView(view);
+        return view;
     }
 
     /** Why AFK ended while nobody stopped it (the morning's notice), its fix, and once the calm 7/24 Bulut line. */
@@ -405,7 +449,8 @@ public final class AfkFragment extends AfkScreen {
                     on ? R.color.projects_ash_400 : R.color.projects_bone_100);
             CloudUi.warnMark(mNotifyRow.line, !on);
         }
-        if (next > 0) view.postDelayed(mTick, Math.max(250, next));
+        // Only while on screen: a status already on its way after onPause must not start a tick in the background.
+        if (next > 0 && isResumed()) view.postDelayed(mTick, Math.max(250, next));
     }
 
     private static void setEnabled(Button button, boolean enabled) {
@@ -495,6 +540,7 @@ public final class AfkFragment extends AfkScreen {
         LinearLayout list = sheet.findViewById(R.id.projects_actions_list);
         list.addView(menuHeader(c, account.name));
         final AlertDialog dialog = new AlertDialog.Builder(c).setView(sheet).create();
+        mMenu = dialog;
         AfkLook.Action action = AfkLook.action(status);
         int icon = action == AfkLook.Action.STOP ? R.drawable.projects_ic_stop
                 : action == AfkLook.Action.CONNECT ? R.drawable.projects_ic_play : R.drawable.projects_ic_pencil;
@@ -542,9 +588,11 @@ public final class AfkFragment extends AfkScreen {
     }
 
     private void confirmRemove(final AfkAccount account) {
-        ConfirmDialog.show(requireActivity(), getString(R.string.projects_afk_ui_remove_title, account.name),
+        mConfirm = ConfirmDialog.show(requireActivity(), getString(R.string.projects_afk_ui_remove_title, account.name),
                 getString(R.string.projects_afk_ui_remove_body), getString(R.string.projects_afk_ui_remove_confirm), true, () -> {
                     if (!alive()) return;
+                    // A running account stops first (the engine's remove looks it up after it is gone).
+                    if (mAfk.status(account.id).state.running()) mAfk.stop(account.id);
                     mAfk.remove(account.id);
                     AfkSeen.seen(account.id);
                     toast(getString(R.string.projects_afk_ui_removed, account.name));

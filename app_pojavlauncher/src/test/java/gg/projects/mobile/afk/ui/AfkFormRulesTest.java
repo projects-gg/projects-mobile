@@ -62,6 +62,21 @@ public final class AfkFormRulesTest {
     }
 
     @Test
+    public void theMaskIsReadFromTheLineAsItIsNowCharacterByCharacter() {
+        for (String line : new String[]{"/login gizli123", "/L x", "herkese merhaba", "  /register a b", "/login", "/login ", ""}) {
+            StringBuilder out = new StringBuilder();
+            for (int i = 0; i < line.length(); i++) out.append(AfkFormRules.shown(line, i));
+            assertEquals(AfkFormRules.masked(line), out.toString());
+        }
+        // The field's text grows under the mask: each character comes from the text as it is now.
+        StringBuilder typed = new StringBuilder("/login");
+        assertEquals('n', AfkFormRules.shown(typed, 5));
+        typed.append(" ab");
+        assertEquals('•', AfkFormRules.shown(typed, 7));
+        assertEquals(' ', AfkFormRules.shown(typed, 6));
+    }
+
+    @Test
     public void thePhonesOwnNamesThatMayFillTheNameField() {
         assertEquals(Arrays.asList("Ali_K", "x7Ender"),
                 AfkFormRules.phoneNames(Arrays.asList("Ali_K", "golge_avci", "x7Ender", "Demo.Player", "ab", "ALI_K"),

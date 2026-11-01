@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- PHONE-AFK (AFK-M-UI): the AFK console. The header, the account tabs (chips, shown with two accounts or more), one
      page per account that swipes sideways (its state line, server and main action over its lines, built in code), and
-     the composer with the line under it (the password stays hidden, why a line could not go). -->
+     the composer with the line under it (the password stays hidden, why a line could not go). The field keeps no saved
+     state: an unsent "/login ..." never goes into a Bundle. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -59,6 +60,7 @@
             android:paddingTop="10dp"
             android:paddingEnd="16dp"
             android:paddingBottom="10dp"
+            android:saveEnabled="false"
             android:textColor="@color/projects_bone_100"
             android:textColorHint="@color/projects_ash_400"
             android:textCursorDrawable="@null"

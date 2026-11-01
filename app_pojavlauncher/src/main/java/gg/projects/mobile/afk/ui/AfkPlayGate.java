@@ -90,8 +90,12 @@ public final class AfkPlayGate {
                 activity.getString(R.string.projects_afk_ui_guard_body),
                 activity.getString(R.string.projects_afk_ui_guard_stop), () -> {
                     if (!fragment.isAdded()) return;
-                    afk.stopForGame(same.accountId);
-                    next(activity, fragment, AfkPlayRules.afterSameName(false, others, fits), play);
+                    // The account stops only when the game goes ahead (a "Vazgeç" on the memory question keeps it AFK).
+                    Runnable stopAndPlay = () -> {
+                        afk.stopForGame(same.accountId);
+                        play.run();
+                    };
+                    next(activity, fragment, AfkPlayRules.afterSameName(false, others, fits), stopAndPlay);
                 },
                 activity.getString(R.string.projects_afk_ui_guard_keep), () -> {
                     if (!fragment.isAdded()) return;

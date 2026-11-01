@@ -70,13 +70,26 @@ public final class AfkEditFragment extends AfkScreen {
         return t;
     });
 
-    /** The draft as it started and as it is now, kept through a rotation (in memory only). */
+    /**
+     * The draft as it started and as it is now, kept through a rotation (in memory only), and a save that finished
+     * while the screen was being made again (its answer goes to the screen showing then).
+     */
     public static final class Kept extends ViewModel {
         @Nullable
         AfkDraft start;
         @Nullable
         AfkDraft now;
         boolean asked;
+        boolean saving;
+        /** The saved account's name once a save went through, for the screen to say so and leave. */
+        @Nullable
+        String savedName;
+        @Nullable
+        List<AfkProblem> refused;
+        /** The account went away while saving. */
+        boolean gone;
+        @Nullable
+        AfkEditFragment owner;
     }
 
     private Kept mKept;
@@ -126,6 +139,8 @@ public final class AfkEditFragment extends AfkScreen {
     @Override
     protected void created(View view, @Nullable Bundle savedInstanceState) {
         mKept = new ViewModelProvider(this).get(Kept.class);
+        mKept.owner = this;
+        mSaving = mKept.saving;
         String id = accountId();
         if (id == null) {
             mHeader.setTitle(getString(R.string.projects_afk_ui_add));
@@ -159,6 +174,19 @@ public final class AfkEditFragment extends AfkScreen {
             mKept.now = draft;
             build();
         });
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // A save that finished while the screen was being made again.
+        if (alive() && mKept != null && !mKept.saving && (mKept.savedName != null || mKept.refused != null || mKept.gone)) saveDone();
+    }
+
+    @Override
+    public void onDestroyView() {
+        if (mKept != null && mKept.owner == this) mKept.owner = null;
+        super.onDestroyView();
     }
 
     @Override
@@ -207,6 +235,8 @@ public final class AfkEditFragment extends AfkScreen {
             mName = CloudUi.field(c, getString(R.string.projects_afk_ui_name), d.name, null,
                     InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
             mName.input.setFilters(new InputFilter[]{new InputFilter.LengthFilter(AfkLimits.NAME_MAX)});
+            // The password variation (no suggestions on any keyboard) puts a monospace face on: Figtree again.
+            mName.input.setTypeface(AfkUi.font(c, R.font.figtree_regular));
             mName.setHelp(getString(R.string.projects_afk_ui_name_help));
             mName.input.addTextChangedListener(new Watcher(s -> {
                 d.name = s;
@@ -424,7 +454,6 @@ public final class AfkEditFragment extends AfkScreen {
             line.setGravity(Gravity.CENTER_VERTICAL);
             input = new EditText(c);
             input.setBackgroundResource(R.drawable.projects_input);
-            input.setTypeface(AfkUi.font(c, R.font.figtree_regular));
             input.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
             input.setTextColor(AfkUi.color(c, R.color.projects_bone_100));
             input.setHintTextColor(AfkUi.color(c, R.color.projects_ash_400));
@@ -432,6 +461,9 @@ public final class AfkEditFragment extends AfkScreen {
             input.setSingleLine(true);
             // No suggestions and no learning: a login command holds a password.
             input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+            // After the input type: its password variation puts a monospace face on the field (the phone's fields are
+            // Figtree, the cloud's secret rows too).
+            input.setTypeface(AfkUi.font(c, R.font.figtree_regular));
             input.setImeOptions(EditorInfo.IME_ACTION_DONE | EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING);
             input.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_NO);
             input.setFilters(new InputFilter[]{new InputFilter.LengthFilter(AfkLimits.MAX_LINE_CHARS)});
@@ -484,19 +516,53 @@ public final class AfkEditFragment extends AfkScreen {
         }
     }
 
-    /** A secret line's words after its command show as bullets while hidden (the desktop's one look for secrets). */
+    /**
+     * A secret line's words after its command show as bullets while hidden (the desktop's one look for secrets). Like
+     * Android's own password transformation, the shown text is a live view of the field's text, read character by
+     * character ({@link AfkFormRules#shown}): a copy would fall behind the text as the player types and break drawing.
+     */
     private static final class Mask implements TransformationMethod {
         boolean hidden = true;
 
         @Override
         public CharSequence getTransformation(CharSequence source, View view) {
             if (!hidden || source == null) return source;
-            String s = source.toString();
-            return AfkFormRules.secret(s) ? AfkFormRules.masked(s) : source;
+            return new Masked(source);
         }
 
         @Override
         public void onFocusChanged(View view, CharSequence sourceText, boolean focused, int direction, Rect previouslyFocusedRect) {}
+    }
+
+    /** The field's text as a hidden line shows it, always as long as the text. */
+    private static final class Masked implements CharSequence {
+        private final CharSequence mSource;
+
+        Masked(CharSequence source) {
+            mSource = source;
+        }
+
+        @Override
+        public int length() {
+            return mSource.length();
+        }
+
+        @Override
+        public char charAt(int index) {
+            return AfkFormRules.shown(mSource, index);
+        }
+
+        @Override
+        public CharSequence subSequence(int start, int end) {
+            StringBuilder out = new StringBuilder(Math.max(0, end - start));
+            for (int i = start; i < end; i++) out.append(charAt(i));
+            return out.toString();
+        }
+
+        @Override
+        public String toString() {
+            return subSequence(0, length()).toString();
+        }
     }
 
     private final List<CommandRow> mCommandRows = new ArrayList<>();
@@ -680,42 +746,67 @@ public final class AfkEditFragment extends AfkScreen {
         }
         mSaving = true;
         changedNow();
+        final Kept kept = mKept;
+        kept.saving = true;
+        kept.savedName = null;
+        kept.refused = null;
+        kept.gone = false;
+        final gg.projects.mobile.afk.api.PhoneAfk afk = mAfk;
         IO.execute(() -> {
             AfkAccount saved = null;
             List<AfkProblem> failed = null;
             boolean gone = false;
             try {
-                if (id == null) saved = mAfk.add(d);
+                if (id == null) saved = afk.add(d);
                 else {
-                    saved = mAfk.update(id, d);
+                    saved = afk.update(id, d);
                     gone = saved == null;
                 }
             } catch (AfkDraftException e) {
                 failed = e.problems;
             }
             final AfkAccount account = saved;
-            final List<AfkProblem> problems2 = failed;
-            final boolean accountGone = gone;
+            final List<AfkProblem> refused = failed;
+            final boolean accountGone = gone || (refused == null && account == null);
             mMain.post(() -> {
-                mSaving = false;
-                if (!alive()) return;
-                if (problems2 != null) {
-                    changedNow();
-                    Haptics.reject(from);
-                    show(problems2);
-                    return;
-                }
-                if (accountGone || account == null) {
-                    leaveNow();
-                    return;
-                }
-                Haptics.confirm(from);
-                toast(getString(id == null ? R.string.projects_afk_ui_added : R.string.projects_afk_ui_saved, account.name));
-                mKept.start = AfkFormRules.copy(mKept.now);
-                holdBack(false);
-                leaveNow();
+                // The outcome stays with the draft: a screen made again meanwhile (a rotation) takes it.
+                kept.saving = false;
+                kept.refused = refused;
+                kept.gone = accountGone;
+                kept.savedName = refused == null && !accountGone ? account.name : null;
+                AfkEditFragment owner = kept.owner;
+                if (owner != null && owner.alive() && owner.isResumed()) owner.saveDone();
             });
         });
+    }
+
+    /** What the save answered: problems under their fields, or "{ad} eklendi" / "{ad} ayarları kaydedildi" and back. */
+    private void saveDone() {
+        Kept kept = mKept;
+        mSaving = false;
+        View from = mSave;
+        if (kept.refused != null) {
+            List<AfkProblem> refused = kept.refused;
+            kept.refused = null;
+            changedNow();
+            Haptics.reject(from);
+            show(refused);
+            return;
+        }
+        if (kept.gone) {
+            kept.gone = false;
+            holdBack(false);
+            leaveNow();
+            return;
+        }
+        String name = kept.savedName;
+        if (name == null) return;
+        kept.savedName = null;
+        Haptics.confirm(from);
+        toast(getString(adding() ? R.string.projects_afk_ui_added : R.string.projects_afk_ui_saved, name));
+        kept.start = kept.now == null ? null : AfkFormRules.copy(kept.now);
+        holdBack(false);
+        leaveNow();
     }
 
     /** Each problem under its field ("Önce işaretli alanları düzelt." when the field is off screen), the first one in view. */
@@ -776,6 +867,8 @@ public final class AfkEditFragment extends AfkScreen {
         ConfirmDialog.show(requireActivity(), getString(R.string.projects_afk_ui_remove_title, account.name),
                 getString(R.string.projects_afk_ui_remove_body), getString(R.string.projects_afk_ui_remove_confirm), true, () -> {
                     if (!alive()) return;
+                    // A running account stops first (the engine's remove looks it up after it is gone).
+                    if (mAfk.status(account.id).state.running()) mAfk.stop(account.id);
                     mAfk.remove(account.id);
                     AfkSeen.seen(account.id);
                     toast(getString(R.string.projects_afk_ui_removed, account.name));

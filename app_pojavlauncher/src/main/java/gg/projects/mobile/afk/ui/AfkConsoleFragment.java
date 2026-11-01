@@ -85,6 +85,9 @@ public final class AfkConsoleFragment extends AfkScreen {
     @Nullable
     private String mFailNote;
     private final Runnable mTick = this::tick;
+    /** The account whose page is shown (kept while another screen is on top, so the console comes back on it). */
+    @Nullable
+    private String mShownId;
 
     public AfkConsoleFragment() {
         super(R.layout.fragment_projects_afk_console);
@@ -110,10 +113,14 @@ public final class AfkConsoleFragment extends AfkScreen {
         mInput = view.findViewById(R.id.projects_afk_console_input);
         mSend = view.findViewById(R.id.projects_afk_console_send);
         mNote = view.findViewById(R.id.projects_afk_console_note);
+        // A view made again (back from the settings): its own chips and pages; the tabs and lines stay.
+        mChips = null;
+        mPages.clear();
         mPager.setAdapter(mAdapter);
         mPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override
             public void onPageSelected(int position) {
+                if (position >= 0 && position < mTabs.size()) mShownId = mTabs.get(position);
                 if (mChips != null && mChips.selected() != position) mChips.select(position);
                 mFailNote = null;
                 String id = current();
@@ -155,6 +162,14 @@ public final class AfkConsoleFragment extends AfkScreen {
                 composer();
             }
         });
+    }
+
+    @Override
+    public void onDestroyView() {
+        if (mPager != null) mPager.setAdapter(null);
+        mPages.clear();
+        mChips = null;
+        super.onDestroyView();
     }
 
     @Override
@@ -214,6 +229,7 @@ public final class AfkConsoleFragment extends AfkScreen {
 
     @Override
     public void onBacklog(String accountId, List<AfkLine> lines) {
+        if (!alive()) return;
         List<AfkLine> kept = new ArrayList<>(lines);
         while (kept.size() > AfkLimits.CONSOLE_LINES) kept.remove(0);
         mLines.put(accountId, kept);
@@ -223,38 +239,40 @@ public final class AfkConsoleFragment extends AfkScreen {
 
     @Override
     public void onLine(AfkLine line) {
+        if (!alive()) return;
         List<AfkLine> list = mLines.get(line.accountId);
         if (list == null) {
             list = new ArrayList<>();
             mLines.put(line.accountId, list);
         }
         list.add(line);
-        int over = list.size() - AfkLimits.CONSOLE_LINES;
+        int over = Math.max(0, list.size() - AfkLimits.CONSOLE_LINES);
         for (int i = 0; i < over; i++) list.remove(0);
         Page page = mPages.get(line.accountId);
-        if (page != null) page.appended(over > 0);
+        if (page != null) page.appended(over);
         if (line.accountId.equals(current())) AfkSeen.seen(line.accountId);
     }
 
     /** The tabs as they are now; {@code select} the page to show (-1: keep the one shown). */
     private void setTabs(List<String> tabs, int select) {
-        String shown = current();
+        String shown = mShownId;
         boolean changed = !tabs.equals(mTabs);
         if (changed) {
             mTabs.clear();
             mTabs.addAll(tabs);
             for (String gone : new ArrayList<>(mPages.keySet())) if (!mTabs.contains(gone)) mPages.remove(gone);
             mAdapter.notifyDataSetChanged();
-            mPager.setOffscreenPageLimit(Math.max(1, mTabs.size()));
-            chips();
         }
+        mPager.setOffscreenPageLimit(Math.max(1, mTabs.size()));
         int target = select >= 0 ? select : shown == null ? 0 : Math.max(0, mTabs.indexOf(shown));
+        if (target < mTabs.size()) mShownId = mTabs.get(target);
+        if (changed || mChips == null) chips(target);
         if (mPager.getCurrentItem() != target) mPager.setCurrentItem(target, false);
         if (mChips != null) mChips.select(target);
     }
 
     /** The account chips over the pages, with two accounts or more (one account names itself in the title). */
-    private void chips() {
+    private void chips(int selected) {
         mTabsBox.removeAllViews();
         mChips = null;
         if (mTabs.size() < 2) {
@@ -266,7 +284,7 @@ public final class AfkConsoleFragment extends AfkScreen {
             AfkAccount a = mAfk.account(mTabs.get(i));
             labels[i] = a == null ? "" : a.name;
         }
-        mChips = new ConsoleViews.Chips(ctx(), labels, Math.max(0, mPager.getCurrentItem()),
+        mChips = new ConsoleViews.Chips(ctx(), labels, Math.max(0, selected),
                 index -> mPager.setCurrentItem(index, Motion.enabled(ctx())));
         mChips.view.setContentDescription(getString(R.string.projects_afk_ui_console_accounts));
         mTabsBox.addView(mChips.view, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -299,7 +317,8 @@ public final class AfkConsoleFragment extends AfkScreen {
         Page page = mPages.get(id);
         if (page != null) page.bindHead();
         long next = AfkLook.nextChange(status(id), System.currentTimeMillis());
-        if (next > 0) view.postDelayed(mTick, Math.max(250, next));
+        // Only while on screen: a status already on its way after onPause must not start a tick in the background.
+        if (next > 0 && isResumed()) view.postDelayed(mTick, Math.max(250, next));
     }
 
     // ---- sending ----
@@ -575,12 +594,14 @@ public final class AfkConsoleFragment extends AfkScreen {
             emptyState();
         }
 
-        void appended(boolean trimmed) {
+        /** A line came ({@code removed} old ones went from the top): the reader's place stays where it is. */
+        void appended(int removed) {
             boolean atBottom = !list.canScrollVertically(1);
             List<AfkLine> all = mLines.get(id);
             lines.set(all == null ? new ArrayList<AfkLine>() : all);
-            if (trimmed) lines.notifyDataSetChanged();
-            else lines.notifyItemInserted(lines.getItemCount() - 1);
+            // In the old list's numbering: the new line at its end, then the oldest ones from the top.
+            lines.notifyItemInserted(lines.getItemCount() - 1 + removed);
+            if (removed > 0) lines.notifyItemRangeRemoved(0, removed);
             if (atBottom) list.scrollToPosition(Math.max(0, lines.getItemCount() - 1));
             else showJump(true);
             emptyState();
