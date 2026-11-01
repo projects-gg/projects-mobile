@@ -255,6 +255,15 @@
     <string name="projects_account_chip">Hesap: %1$s</string>
     <string name="projects_account_remove">%1$s hesabını kaldır</string>
     <string name="projects_account_remove_question">%1$s hesabı bu telefondan kaldırılsın mı?</string>
+    <!-- SWIPE-M: hesap çipini kaydırma ve listesinde hesap sabitleme. -->
+    <string name="projects_account_swipe_hint">Hesaplar arasında geçmek için kaydır.</string>
+    <string name="projects_account_next">Sonraki hesap: %1$s</string>
+    <string name="projects_account_previous">Önceki hesap: %1$s</string>
+    <string name="projects_account_pin">Sabitle</string>
+    <string name="projects_account_unpin">Sabitlemeyi kaldır</string>
+    <string name="projects_account_row_pinned">%1$s, sabitlenmiş</string>
+    <string name="projects_account_pinned">%1$s sabitlendi</string>
+    <string name="projects_account_unpinned">%1$s artık sabit değil</string>
     <string name="projects_settings_title">Ayarlar</string>
     <string name="projects_haptics_title">Dokunma titreşimi</string>
     <string name="projects_or">ya da</string>
