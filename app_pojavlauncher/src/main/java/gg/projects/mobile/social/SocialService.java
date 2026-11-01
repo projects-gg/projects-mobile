@@ -256,7 +256,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         mApi = new SocialApi(mDebug.url, ProjectsContent.userAgent());
         mStore = new SessionStore(app, mDebug.override ? "session-debug.json" : "session.json");
         mCrewRoot = new java.io.File(app.getNoBackupFilesDir(), mDebug.override ? "projects-social/crews-debug" : "projects-social/crews");
-        mKept = new KeptLists(new java.io.File(app.getNoBackupFilesDir(), mDebug.override ? "projects-social/lists-debug" : "projects-social/lists"));
+        mKept = new KeptLists(KeptLists.folder(app.getNoBackupFilesDir(), mDebug.override));
         mPrefs = new SocialPrefs(app);
         // M19's socket that kept the player's own call in the game is not used any more (see the class doc).
         mPrefs.setOwnCallUntil(0);
@@ -568,12 +568,13 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     }
 
     /**
-     * A push came while the app ran without a socket: the list is read again when its screens are up. M048 (spec 7):
-     * something may have changed meanwhile, so the version held says nothing now and the copy kept for a start goes.
+     * A push came while the app ran without a socket: the list is read again when its screens are up. SOC-REL-M (the
+     * lead's decision, 1 November): only a push that changes what the list shows (a friend request) forgets the version
+     * held and the copy kept for a start; after a message, a call or "Birlikte oyna" the next hello's version decides.
      */
     @MainThread
-    public void pushArrived() {
-        forgetRel();
+    public void pushArrived(String type) {
+        if (RelVersion.pushChangesLists(type)) forgetRel();
         mLastFetch = 0;
         if (mUiStarted > 0) refresh(false);
     }
@@ -764,11 +765,10 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
             RelVersion.Hello hello = mRel.hello(Json.str(message, "rel"), mState.loaded());
             if (hello == RelVersion.Hello.CHANGED) {
                 // A read on its way may have been answered before the change this hello reports: it keeps no version
-                // and the lists are read once more when it ends.
-                if (mFetching) {
-                    mListChanges++;
-                    forgetRel();
-                }
+                // and the lists are read once more when it ends. SOC-REL-M (spec 6): the copy kept for a start is older
+                // than the service's, so it goes now, also when no read is on its way (held back, or the screens gone).
+                if (mFetching) mListChanges++;
+                forgetRel();
                 readChanged();
             } else if (hello == RelVersion.Hello.UNSAID) {
                 refresh(false, true);
@@ -849,7 +849,8 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         mMain.postDelayed(mReconnect, delay);
         // M048: a connection that ended before its hello decided nothing. When nothing was read in this run yet (a start
         // that shows the copy kept on the phone), the lists are read now by the usual rule, as a start read them before.
-        if (!saidHello && mLastFetch == 0) refresh(false, true);
+        // SOC-REL-M: once per run (a read tried, not one that got through): in an outage every reconnect failed and read.
+        if (!saidHello && mLastTry == 0) refresh(false, true);
         changed();
     }
 
@@ -891,18 +892,19 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
             mApi.bind(token);
             try {
                 final JsonObject friends = mApi.friends();
-                // M048 (spec 2): the answer brings the profile too, so one request; an older service's does not.
-                JsonObject answered = Json.obj(friends, "me");
-                final boolean withMe = Me.read(answered) != null;
-                final JsonObject me = withMe ? answered : mApi.me();
+                // M048 (spec 2): the answer brings the profile too, so one request; an older service's does not. With it
+                // (SOC-DISK, spec 6) come its version and the answer as the service sent it (crews still light), to keep.
+                final KeptLists.Answer brought = KeptLists.Answer.of(friends);
+                final JsonObject me = brought.me != null ? brought.me : mApi.me();
                 final long day = CrewDetails.turkeyDay(nowSeconds());
-                // M048 (SOC-DISK, spec 6): the answer as the service sent it (its crews still light), for the next start.
-                final String rel = withMe ? Json.str(friends, "rel") : null;
-                final JsonObject keep = KeptLists.isRel(rel) ? friends.deepCopy() : null;
-                // SOC9 (TEAM4-B): the light list's crews in full, from the phone's copies or their details.
+                final String rel = brought.rel;
+                final JsonObject keep = brought.keep;
+                // SOC9 (TEAM4-B): the light list's crews in full, from the phone's copies or their details. SOC-REL-M: a
+                // detail not read now shows the crew's older copy, and such lists are not the answer the version describes.
                 Me who = Me.read(me);
+                final CrewDetails.Noted crews = new CrewDetails.Noted(mApi::teamDetail);
                 if (who != null) {
-                    CrewDetails.resolve(friends, new CrewCache(mCrewRoot, who.profile.id), mApi::teamDetail, day);
+                    CrewDetails.resolve(friends, new CrewCache(mCrewRoot, who.profile.id), crews, day);
                 }
                 mMain.post(() -> {
                     mFetching = false;
@@ -921,9 +923,9 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
                     // An order the player just chose wins over a list read before it reached the service.
                     if (order != null) mState.setCrewOrder(order);
                     // M048: the version is held only when the copy is exactly this answer (no change since the read
-                    // started, no order of the player's laid over it: spec 2), and the answer is kept with it (spec 6).
-                    // Otherwise a copy kept earlier is no longer current and goes.
-                    if (mRel.keep(parsed != null && order == null && keep != null ? rel : null, relSince)) {
+                    // started, no order of the player's laid over it: spec 2; SOC-REL-M: every crew read, none from an
+                    // older copy), and the answer is kept with it (spec 6). Otherwise a copy kept earlier goes.
+                    if (mRel.keep(parsed != null && order == null && keep != null && !crews.missed() ? rel : null, relSince)) {
                         final long generation = mKept.generation();
                         final String account = parsed.profile.id;
                         mIo.execute(() -> mKept.save(generation, account, day, keep));
@@ -2156,6 +2158,11 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
             mApi.bind(token);
             try {
                 mApi.noticesSeen(list);
+                // SOC-REL-M: and again when the service has them as seen (as change() does): a list read on the other
+                // thread answered before that keeps no version and no copy with the notes still in it.
+                mMain.post(() -> {
+                    if (token.equals(mToken)) forgetRel();
+                });
             } catch (SocialProblem problem) {
                 Log.i(TAG, "notices not marked seen: " + problem.kind);
             } finally {

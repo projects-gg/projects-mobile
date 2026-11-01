@@ -113,15 +113,50 @@ public class RelVersionTest {
 
     @Test
     public void exactlyTheChangesOfTheListsAndTheProfileForgetTheVersion() {
+        // The launcher's changes_relations (pl-social service.rs), BADGES' "marks" (every badge of someone) included.
         for (String type : Arrays.asList("friend_added", "friend_removed", "request", "request_cancelled", "team_invite", "team",
-                "team_requests", "crew_order", "crew_notifications", "team_notifications", "groups", "badge", "mark", "status",
-                "profile", "notice")) {
+                "team_requests", "crew_order", "crew_notifications", "team_notifications", "groups", "badge", "mark", "marks",
+                "status", "profile", "notice")) {
             assertTrue(type, RelVersion.changesRelations(type));
         }
+        // The badge catalogue's revision ("markdefs") is no relation: it is read on its own (GET v1/marks).
         for (String type : Arrays.asList(null, "", "hello", "presence", "invite", "invites", "call", "call_answer", "call_end",
-                "chat", "chat_state", "chat_synced", "typing", "plan", "plans", "plan_removed", "bye", "afk_notice", "ack",
-                "error", "TEAM", "team ")) {
+                "chat", "chat_state", "chat_synced", "chat_typing", "typing", "plan", "plans", "plan_removed", "bye", "afk_notice",
+                "markdefs", "ack", "error", "TEAM", "team ")) {
             assertFalse(String.valueOf(type), RelVersion.changesRelations(type));
+        }
+    }
+
+    /**
+     * SOC-REL-M (the lead's decision, 1 November): a push forgets the version and the copy kept for a start only when it
+     * changes what the list shows. A friend request does (its notification opens the list, which must show it at once);
+     * a message, a crew call, its end and "Birlikte oyna" (a game invite, not in the list) do not: the version stays, an
+     * unforced read still waits for the hello, and the next start the same day finds the copy. SocialService and SocialPush
+     * decide with pushChangesLists (RelWiringTest).
+     */
+    @Test
+    public void onlyAPushThatChangesTheListsForgetsTheVersion() {
+        File dir = new File(tmp.getRoot(), "lists");
+        final String me = SocialStateTest.ME;
+        final long day = 20758;
+        for (String kind : Arrays.asList(PushMessage.REQUEST, PushMessage.INVITE, PushMessage.MESSAGE, PushMessage.CALL,
+                PushMessage.CALL_END, "afk", null, "", "REQUEST")) {
+            KeptLists kept = new KeptLists(dir);
+            RelVersion rel = new RelVersion();
+            assertTrue(rel.keep(REL, rel.readStarts()));
+            assertTrue(kept.save(kept.generation(), me, day, KeptListsTest.answer(me, "Blaze_Runner", REL)));
+            // The service's pushArrived (and SocialPush's clear while the app is not running).
+            boolean forgets = RelVersion.pushChangesLists(kind);
+            if (forgets) {
+                rel.forget();
+                kept.clear();
+            }
+            boolean request = PushMessage.REQUEST.equals(kind);
+            assertEquals(String.valueOf(kind), request, forgets);
+            assertEquals(String.valueOf(kind), request ? null : REL, rel.held());
+            assertEquals(String.valueOf(kind), !request, rel.refreshSkips(false, true, true));
+            assertEquals(String.valueOf(kind), !request, new KeptLists(dir).load(me, day) != null);
+            new KeptLists(dir).clear();
         }
     }
 
