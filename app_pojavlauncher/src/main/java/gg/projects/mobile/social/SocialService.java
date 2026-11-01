@@ -1909,6 +1909,26 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
                         SocialUi.toastLong(context, context.getString(R.string.projects_badge_hidden_toast));
                     }
                     break;
+                case CROWDED: {
+                    // CHAT-CALM: "Gece Kartalları kalabalık, bu yüzden senin için sessize alındı." with "Sesi aç" (the
+                    // desktop's toast); the crew's bell says it anyway when the app is away.
+                    if (!foreground || notice.crewId == null || notice.teamName == null || !gate().teams) break;
+                    final String crewId = notice.crewId;
+                    final Context shown = context;
+                    SocialUi.toastAction(context, context.getString(R.string.projects_chat_calm_crowded, notice.teamName),
+                            context.getString(R.string.projects_crew_unmute), () -> unmuteCrew(crewId, new Result<TeamNotifications>() {
+                                @Override
+                                public void ok(TeamNotifications value) {
+                                    // The crew's bell and menus follow the state.
+                                }
+
+                                @Override
+                                public void failed(SocialProblem problem) {
+                                    SocialUi.toastProblem(shown, problem, null);
+                                }
+                            }));
+                    break;
+                }
                 default:
                     break;
             }
@@ -2287,6 +2307,16 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
             MyRequest mine = MyRequest.read(Json.obj(answer, "request"));
             if (mine != null) mState.addMyRequest(mine);
         });
+    }
+
+    /**
+     * CHAT-CALM "Yavaş mod" (the leader's and moderators'): seconds each other member waits between two new messages in
+     * the crew's chat, one of {@link SlowMode#STEPS} (0: off).
+     */
+    public void setCrewSlow(final String teamId, int seconds, Result<JsonObject> result) {
+        final JsonObject body = new JsonObject();
+        body.addProperty("slow", SlowMode.step(seconds));
+        change(() -> mApi.patchTeam(teamId, body), result, this::applyTeamAnswer);
     }
 
     /** TEAM5 "Yeni üyeleri onayla" (the leader's): {@code join} {@code approval} or {@code open}. */

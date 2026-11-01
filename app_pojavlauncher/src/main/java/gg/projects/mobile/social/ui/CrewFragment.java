@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.HapticFeedbackConstants;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -54,6 +55,8 @@ import gg.projects.mobile.social.BadgeRules;
 import gg.projects.mobile.social.ChatBook;
 import gg.projects.mobile.social.ChatConv;
 import gg.projects.mobile.social.Json;
+import gg.projects.mobile.cloud.ui.CloudUi;
+import gg.projects.mobile.social.SlowMode;
 import gg.projects.mobile.social.SocialCodes;
 import gg.projects.mobile.social.SocialGate;
 import gg.projects.mobile.social.SocialModel;
@@ -72,6 +75,7 @@ import gg.projects.mobile.social.SocialNotifications;
 import gg.projects.mobile.social.SocialProblem;
 import gg.projects.mobile.social.SocialService;
 import gg.projects.mobile.social.SocialState;
+import gg.projects.mobile.ui.CardMotion;
 import gg.projects.mobile.ui.ChamferDrawable;
 import gg.projects.mobile.ui.Haptics;
 import gg.projects.mobile.ui.Press;
@@ -126,6 +130,8 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
     private static final int T_SWITCH = 13;
     /** TEAM6: the leader's "Görünürlük" and "Etiketten istek". */
     private static final int T_TAGS = 14;
+    /** CHAT-CALM: the "Sohbet" box with "Yavaş mod" (the leader's and moderators'). */
+    private static final int T_SLOW = 15;
     /** M21: a crew invite link ({@code XXXX-XXXX-XXXX}) to look up on "+" (a {@code projects://crew/} link). */
     public static final String ARG_LINK = "link";
 
@@ -169,6 +175,18 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
     private boolean mApprovalBusy;
     /** TEAM6: a tag setting's answer is on its way. */
     private boolean mTagsBusy;
+    /**
+     * CHAT-CALM: the slow mode the box shows while the player's pick is on its way to the service ({@link #mSlowCrew}'s;
+     * null: the crew's own), a pick made meanwhile (it goes after the answer: one change at a time, answers in order),
+     * and whether one is on its way.
+     */
+    @Nullable
+    private Integer mSlowPending;
+    @Nullable
+    private String mSlowCrew;
+    @Nullable
+    private Integer mSlowNext;
+    private boolean mSlowBusy;
     /** M21: crews "+" shows the player's waiting request to (its card, their list): one that comes is shown. */
     private final java.util.Set<String> mAwaiting = new java.util.HashSet<>();
     /** FIX2: plans and calls whose answers are open ("Kimler geliyor"), and groups that show everyone. */
@@ -945,6 +963,10 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         if (gate.badges && leader != null && leader.founder && !team.tag.isEmpty()) {
             rows.add(new Row(T_TAGS, "tags", "tags|" + team.hidden + "|" + team.badgeRequests + "|" + gate.badgeRequests + "|" + mTagsBusy, team));
         }
+        // CHAT-CALM: the chat's rules in their own box, for the leader and the moderators (they never wait themselves).
+        if (gate.slow && leader != null && (leader.founder || leader.moderator)) {
+            rows.add(new Row(T_SLOW, "slow", "slow|" + team.id + "|" + slowShown(team), team));
+        }
         if (me != null && team.allows(me, team.permissions.invite)) {
             rows.add(new Row(T_ACTION, "invite", "invite", new Action("invite", R.drawable.projects_ic_user_plus,
                     R.string.projects_crew_invite_title, R.color.projects_bone_100)));
@@ -1104,7 +1126,8 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
                     Press.attach(view.findViewById(R.id.projects_plan_more), Press.Style.ICON);
                     break;
                 case T_SWITCH:
-                case T_TAGS: {
+                case T_TAGS:
+                case T_SLOW: {
                     FrameLayout frame = new FrameLayout(context);
                     int side = Math.round(12 * context.getResources().getDisplayMetrics().density);
                     frame.setPadding(side, Math.round(6 * context.getResources().getDisplayMetrics().density), side, 0);
@@ -1191,6 +1214,9 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
                     break;
                 case T_TAGS:
                     bindTags((FrameLayout) view, (Team) row.data);
+                    break;
+                case T_SLOW:
+                    bindSlow((FrameLayout) view, (Team) row.data);
                     break;
                 case T_ACTION:
                     bindAction((FrameLayout) view, (Action) row.data);
@@ -2170,6 +2196,176 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         SocialService service = SocialService.get(activity);
         if (visibility) service.setCrewHidden(team.id, !on, done);
         else service.setCrewBadgeRequests(team.id, on, done);
+    }
+
+    // ---- the crew chat's slow mode (CHAT-CALM) ----
+
+    /** What the "Sohbet" box holds once built: it changes in place (a pick's line fades, nothing else moves). */
+    private static final class SlowBox {
+        final String crew;
+        final LinearLayout segments;
+        final TextView line;
+        int shown;
+
+        SlowBox(String crew, LinearLayout segments, TextView line, int shown) {
+            this.crew = crew;
+            this.segments = segments;
+            this.line = line;
+            this.shown = shown;
+        }
+    }
+
+    /** The step the box shows: the player's pick while it is on its way, else the crew's own. */
+    private int slowShown(Team team) {
+        if (mSlowPending != null && team.id.equals(mSlowCrew)) return mSlowPending;
+        return SlowMode.step(team.slow);
+    }
+
+    /** "Kapalı", "5 sn" (the short units, as the field's hint and the desktop's control). */
+    private static String slowWords(Context context, int seconds) {
+        return seconds > 0 ? context.getString(R.string.projects_span_seconds, seconds)
+                : context.getString(R.string.projects_chat_calm_slow_off);
+    }
+
+    /** "Üyeler iki mesaj arasında 30 saniye bekler." / "Üyeler beklemeden yazar." (whole words in a sentence). */
+    private static String slowLine(Context context, int seconds) {
+        if (seconds <= 0) return context.getString(R.string.projects_chat_calm_slow_off_line);
+        String span = context.getResources().getQuantityString(R.plurals.projects_chat_calm_slow_span, seconds, seconds);
+        return context.getString(R.string.projects_chat_calm_slow_on_line, span);
+    }
+
+    /**
+     * The crew chat's rules in their own box under the code, as the desktop's "Sohbet" section: "Yavaş mod" off, 5, 10
+     * or 30 seconds between two messages of one member (the leader and moderators never wait), and a line that says
+     * what the pick means. A pick applies at once and goes back if the service refuses it.
+     */
+    private void bindSlow(FrameLayout frame, final Team team) {
+        int shown = slowShown(team);
+        View built = frame.getChildCount() == 1 ? frame.getChildAt(0) : null;
+        if (built != null && built.getTag() instanceof SlowBox && ((SlowBox) built.getTag()).crew.equals(team.id)) {
+            SlowBox box = (SlowBox) built.getTag();
+            if (box.shown != shown) {
+                CloudUi.selectSegment(box.segments, SlowMode.index(shown));
+                showSlowLine(box, shown);
+            }
+            return;
+        }
+        frame.removeAllViews();
+        Context context = frame.getContext();
+        float dp = context.getResources().getDisplayMetrics().density;
+        LinearLayout card = new LinearLayout(context);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setBackgroundResource(R.drawable.projects_card_background);
+        card.setPadding(Math.round(14 * dp), Math.round(10 * dp), Math.round(14 * dp), Math.round(12 * dp));
+        // The box's name as the code box's ("Ekip kodu"): quiet, a heading.
+        TextView title = new TextView(context);
+        title.setText(R.string.projects_chat_calm_chat_title);
+        title.setTextSize(13);
+        title.setTextColor(ContextCompat.getColor(context, R.color.projects_ash_300));
+        ViewCompat.setAccessibilityHeading(title, true);
+        TextView label = new TextView(context);
+        label.setText(R.string.projects_chat_calm_slow_title);
+        label.setTextSize(15);
+        label.setTextColor(ContextCompat.getColor(context, R.color.projects_bone_100));
+        label.setPadding(0, Math.round(8 * dp), 0, Math.round(2 * dp));
+        try {
+            title.setTypeface(androidx.core.content.res.ResourcesCompat.getFont(context, R.font.figtree_semibold));
+            label.setTypeface(androidx.core.content.res.ResourcesCompat.getFont(context, R.font.figtree_semibold));
+        } catch (RuntimeException ignored) {
+            // The theme's font.
+        }
+        card.addView(title);
+        card.addView(label);
+        CharSequence[] options = new CharSequence[SlowMode.STEPS.length];
+        for (int i = 0; i < options.length; i++) options[i] = slowWords(context, SlowMode.STEPS[i]);
+        final String crewId = team.id;
+        LinearLayout segments = CloudUi.segmented(context, options, SlowMode.index(shown), index -> pickSlow(crewId, SlowMode.STEPS[index]));
+        // Its edges on the box's words (the row brings 8 dp of its own).
+        segments.setPadding(0, segments.getPaddingTop(), 0, segments.getPaddingBottom());
+        card.addView(segments);
+        TextView line = new TextView(context);
+        line.setTextSize(13);
+        line.setTextColor(ContextCompat.getColor(context, R.color.projects_ash_400));
+        line.setPadding(0, Math.round(6 * dp), 0, 0);
+        line.setText(slowLine(context, shown));
+        card.addView(line);
+        card.setTag(new SlowBox(crewId, segments, line, shown));
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.topMargin = Math.round(10 * dp);
+        frame.addView(card, lp);
+    }
+
+    /** The line says what the step shown means; a change of its words cross-fades (only a fade with animations off: none). */
+    private static void showSlowLine(SlowBox box, int seconds) {
+        box.shown = seconds;
+        String text = slowLine(box.line.getContext(), seconds);
+        if (TextUtils.equals(box.line.getText(), text)) return;
+        CardMotion.crossfade(box.line);
+        box.line.setText(text);
+    }
+
+    /** The box on screen now (null while it is off screen: a rebind builds it right). */
+    @Nullable
+    private SlowBox slowBox() {
+        int i = indexOfRow("slow");
+        if (i < 0 || mList == null) return null;
+        RecyclerView.ViewHolder holder = mList.findViewHolderForAdapterPosition(i);
+        if (holder == null || !(holder.itemView instanceof FrameLayout)) return null;
+        FrameLayout frame = (FrameLayout) holder.itemView;
+        View built = frame.getChildCount() == 1 ? frame.getChildAt(0) : null;
+        return built != null && built.getTag() instanceof SlowBox ? (SlowBox) built.getTag() : null;
+    }
+
+    private void pickSlow(String crewId, int seconds) {
+        if (!isAdded()) return;
+        Crew crew = SocialService.get(requireContext()).state().crew(crewId);
+        if (crew == null) return;
+        mSlowCrew = crewId;
+        mSlowPending = seconds;
+        // The segment is chosen already; the line says what it means now.
+        SlowBox box = slowBox();
+        if (box != null && box.crew.equals(crewId)) showSlowLine(box, seconds);
+        if (mSlowBusy) {
+            mSlowNext = seconds;
+            return;
+        }
+        sendSlow(crewId, seconds);
+    }
+
+    private void sendSlow(final String crewId, final int seconds) {
+        mSlowBusy = true;
+        final FragmentActivity activity = requireActivity();
+        SocialService.get(activity).setCrewSlow(crewId, seconds, new SocialService.Result<JsonObject>() {
+            @Override
+            public void ok(JsonObject value) {
+                mSlowBusy = false;
+                Integer next = mSlowNext;
+                mSlowNext = null;
+                if (next != null && next != seconds && isAdded()) {
+                    sendSlow(crewId, next);
+                    return;
+                }
+                mSlowPending = null;
+                if (!isAdded()) return;
+                View page = getView();
+                if (page != null) {
+                    page.announceForAccessibility(seconds > 0
+                            ? getString(R.string.projects_chat_calm_slow_set, slowWords(activity, seconds))
+                            : getString(R.string.projects_chat_calm_slow_set_off));
+                }
+                render();
+            }
+
+            @Override
+            public void failed(SocialProblem problem) {
+                mSlowBusy = false;
+                mSlowNext = null;
+                mSlowPending = null;
+                SocialUi.toastProblem(activity, problem, null);
+                // The box shows the crew's setting again, in place.
+                if (isAdded()) render();
+            }
+        });
     }
 
     private int indexOfRow(String id) {

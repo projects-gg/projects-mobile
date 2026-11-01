@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- CHAT-CALM (1 November 2026): the launcher's apps/launcher/src/locales/tr-chat-calm.ts, word for word. -->
+<resources>
+    <string name="projects_chat_hint_crew">Ekibine yaz</string>
+    <string name="projects_chat_calm_slow_hint">%1$s (yavaş mod: %2$s)</string>
+    <plurals name="projects_chat_calm_slow_wait">
+        <item quantity="one">Göndermek için %1$d saniye bekle</item>
+        <item quantity="other">Göndermek için %1$d saniye bekle</item>
+    </plurals>
+    <string name="projects_chat_calm_slow_failure">Yavaş mod açık. Biraz bekle.</string>
+    <string name="projects_chat_calm_slow_on">Yavaş mod açık.</string>
+    <string name="projects_chat_calm_chat_title">Sohbet</string>
+    <string name="projects_chat_calm_slow_title">Yavaş mod</string>
+    <string name="projects_chat_calm_slow_off">Kapalı</string>
+    <plurals name="projects_chat_calm_slow_span">
+        <item quantity="one">%1$d saniye</item>
+        <item quantity="other">%1$d saniye</item>
+    </plurals>
+    <string name="projects_chat_calm_slow_on_line">Üyeler iki mesaj arasında %1$s bekler.</string>
+    <string name="projects_chat_calm_slow_off_line">Üyeler beklemeden yazar.</string>
+    <string name="projects_chat_calm_slow_set">Yavaş mod: %1$s</string>
+    <string name="projects_chat_calm_slow_set_off">Yavaş mod kapandı</string>
+    <string name="projects_chat_calm_crowded">%1$s kalabalık, bu yüzden senin için sessize alındı.</string>
+</resources>
