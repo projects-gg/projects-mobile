@@ -92,6 +92,16 @@ public final class EditorRules {
         return best;
     }
 
+    /**
+     * APK-REL (0.4.9's emulator run): whether the launcher screen that comes up {@code now} shows the save's line
+     * ("Tuşlar kaydedildi." with "Geri al") the editor left behind. {@code shownAt} is when it first showed (0: not yet).
+     * A screen relaunched within {@code againMs} of it (the turn back from the sideways editor relaunches the launcher)
+     * shows it again; a later return does not.
+     */
+    public static boolean showSavedLine(long shownAt, long now, long againMs) {
+        return shownAt == 0 || now - shownAt <= againMs;
+    }
+
     private static boolean clearOfKeys(int x, int barWidth, int[] lefts, int[] rights, int gap) {
         for (int i = 0; i < lefts.length; i++) {
             if (x < rights[i] + gap && x + barWidth > lefts[i] - gap) return false;

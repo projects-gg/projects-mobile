@@ -71,4 +71,17 @@ public class EditorRulesTest {
         // The place right after long keys, still on the screen.
         assertEquals(1921, EditorRules.barLeft(2400, 420, new int[] {0}, new int[] {1900}, 21, 21));
     }
+
+    /**
+     * APK-REL: after "Kaydet ve çık" the launcher comes back sideways and is relaunched upright, sometimes twice: the
+     * save's line shows on each screen that comes up within 3 s of its first showing, never on a later return.
+     */
+    @Test
+    public void theSavedLineShowsAgainOnARelaunchedScreenButNotOnALaterReturn() {
+        assertTrue(EditorRules.showSavedLine(0, 5_000, 3_000));
+        assertTrue(EditorRules.showSavedLine(5_000, 5_800, 3_000));
+        assertTrue(EditorRules.showSavedLine(5_000, 8_000, 3_000));
+        assertFalse(EditorRules.showSavedLine(5_000, 8_001, 3_000));
+        assertFalse(EditorRules.showSavedLine(5_000, 65_000, 3_000));
+    }
 }
