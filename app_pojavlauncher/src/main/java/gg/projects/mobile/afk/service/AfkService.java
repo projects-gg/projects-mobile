@@ -105,6 +105,15 @@ public final class AfkService extends Service {
     public void onCreate() {
         super.onCreate();
         sRunning = true;
+        // The foreground first (Android allows ~10 s from the start; a slow phone's first set-up below must not count):
+        // a stop that started the service from the background may not, which is fine.
+        try {
+            AfkNotifications.ensureChannels(this);
+            AfkNotifications.startForeground(this, AfkNotifications.running(this, Collections.<AfkStatus>emptyList()));
+            foreground = true;
+        } catch (RuntimeException e) {
+            Log.w(TAG, "AFK service not in the foreground yet", e);
+        }
         dir = PhoneAfk.afkDir(this);
         store = new AfkStore(dir);
         sealer = new KeystoreSealer();
