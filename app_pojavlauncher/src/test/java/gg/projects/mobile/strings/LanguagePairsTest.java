@@ -160,6 +160,10 @@ public class LanguagePairsTest {
             // AFKPLUS-M: the cloud contract's password command names ("/giriş", shared with the launcher and the
             // site) and the Turkish number and suffix tables; neither is interface text.
             if (file.getName().equals("CloudText.java") || file.getName().equals("TrGrammar.java")) continue;
+            // PHONE-AFK: the phone AFK's rule tables shared with the desktop (Turkish kick phrases, password command
+            // names, vanilla's Turkish keys, a plugin's whisper form); none is interface text.
+            if (file.getName().equals("AfkRestart.java") || file.getName().equals("AfkLineFilter.java")
+                    || file.getName().equals("AfkComponents.java") || file.getName().equals("AfkChatRules.java")) continue;
             String code = withoutComments(new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8));
             Matcher literal = STRING_LITERAL.matcher(code);
             while (literal.find()) {
