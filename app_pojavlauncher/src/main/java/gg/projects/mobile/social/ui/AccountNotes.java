@@ -112,7 +112,7 @@ public final class AccountNotes {
         Me me = service.state().me();
         if (me == null || me.notices.isEmpty() || !service.gate().reports) return false;
         // SOC-ID: kinds this app does not know stay hidden (and unseen, for a launcher that knows them); a note about
-        // a link or a removal made on this phone is no news here: seen without a word.
+        // a link or a removal made on this phone is no news here: hidden without a word (other devices show it).
         List<ModNotice> notices = new java.util.ArrayList<>();
         List<ModNotice> identities = new java.util.ArrayList<>();
         Set<String> own = new HashSet<>();
@@ -121,7 +121,7 @@ public final class AccountNotes {
             else if (notice.identity() && service.ownIdentityNote(notice)) own.add(notice.id);
             else if (notice.identity()) identities.add(notice);
         }
-        if (!own.isEmpty()) service.noticesSeen(own);
+        service.hideOwnNotes(own);
         if (notices.isEmpty()) return !identities.isEmpty() && showIdentityNotes(activity, service, identities);
         final Set<String> ids = new HashSet<>();
         StringBuilder text = new StringBuilder();

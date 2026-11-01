@@ -229,7 +229,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     private SignInFlow.Purpose mIdentityPurpose = SignInFlow.Purpose.LINK;
     /**
      * SOC-ID: the note the service writes for a link or removal made on this phone ({@code identity_linked:microsoft})
-     * and since when: it is no news here, so it is marked seen without a word (other devices show it).
+     * and since when: it is no news here, so it is hidden without a word ({@link #hideOwnNotes}; other devices show it).
      */
     @Nullable
     private String mOwnIdentityNote;
@@ -1330,7 +1330,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         changed();
         Set<String> own = new HashSet<>();
         for (SocialModel.ModNotice n : me.notices) if (ownIdentityNote(n)) own.add(n.id);
-        noticesSeen(own);
+        hideOwnNotes(own);
         Context context = LanguageManager.wrap(mApp);
         String name = providerName(attempt.provider);
         SocialUi.toast(context, linked ? context.getString(R.string.projects_identity_linked_toast, name)
@@ -1358,12 +1358,23 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
 
     /**
      * The service's note about a link or a removal made on this phone (the same kind and way in, written since it
-     * started, give or take the clocks): no news here, so it is marked seen without a word.
+     * started, give or take the clocks): no news here, so it is hidden without a word ({@link #hideOwnNotes}).
      */
     public boolean ownIdentityNote(SocialModel.ModNotice notice) {
         if (!notice.identity() || mOwnIdentityNote == null) return false;
         if (!mOwnIdentityNote.equals(notice.kind + ":" + notice.provider)) return false;
         return notice.at >= mOwnIdentityNoteSince - 600 && notice.at <= nowSeconds() + 600;
+    }
+
+    /**
+     * SOC-ID: notes about a change made on this phone go from this phone only, never marked seen at the service:
+     * that would take them from the account's other devices, where they warn about a way in someone else changed.
+     */
+    @MainThread
+    public void hideOwnNotes(Set<String> ids) {
+        if (ids.isEmpty()) return;
+        mState.noticesSeen(ids);
+        changed();
     }
 
     /** "Discord", "Microsoft": brand names, the same in both languages. */
