@@ -326,6 +326,7 @@ public class LauncherActivity extends BaseActivity implements gg.projects.mobile
             }
         }
 
+        mAccountSpinner.notePlayed(); // SWIPE-M: the account order's "last play"
         gg.projects.mobile.ui.PlayButtons.confirm(feedback);
         new MinecraftDownloader().start(
                 this,

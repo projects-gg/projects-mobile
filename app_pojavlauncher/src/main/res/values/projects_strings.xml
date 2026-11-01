@@ -266,6 +266,15 @@
     <string name="projects_account_chip">Account: %1$s</string>
     <string name="projects_account_remove">Remove %1$s</string>
     <string name="projects_account_remove_question">Remove %1$s from this phone?</string>
+    <!-- SWIPE-M: swiping the account chip, and pinning accounts in its list. -->
+    <string name="projects_account_swipe_hint">Swipe to switch accounts.</string>
+    <string name="projects_account_next">Next account: %1$s</string>
+    <string name="projects_account_previous">Previous account: %1$s</string>
+    <string name="projects_account_pin">Pin</string>
+    <string name="projects_account_unpin">Unpin</string>
+    <string name="projects_account_row_pinned">%1$s, pinned</string>
+    <string name="projects_account_pinned">%1$s pinned</string>
+    <string name="projects_account_unpinned">%1$s is no longer pinned</string>
     <string name="projects_settings_title">Settings</string>
     <string name="projects_haptics_title">Haptic feedback</string>
     <string name="projects_or">or</string>
