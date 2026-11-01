@@ -98,10 +98,13 @@ final class BadgeActions {
 
     /**
      * The line after joining or founding a crew ("Gece Kartalları ekibine katıldın"): with "Etiketi tak"
-     * while tags are on, no tag is worn and the crew is not hidden; a plain toast otherwise.
+     * while tags are on, no tag is worn and the crew is not hidden; a plain toast otherwise. CHAT-CALM: none
+     * when the crew's crowded notice ("… kalabalık, bu yüzden senin için sessize alındı." with "Sesi aç")
+     * just showed: one line at a time, and that one says more.
      */
     static void joined(final FragmentActivity activity, String text, @Nullable final String crewId) {
         SocialService service = SocialService.get(activity);
+        if (service.crowdedSaid(crewId)) return;
         SocialState state = service.state();
         String me = state.myId();
         boolean offer = crewId != null && me != null && service.gate().badges && state.badgeOf(me) == null;

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- CHAT-CALM (1 November 2026): crew chat's slow mode and the crowded crew that starts muted, in the launcher's words
+     (apps/launcher/src/locales/en-chat-calm.ts; "Sesi aç" is projects_crew_unmute, "5 s" projects_span_seconds). -->
+<resources>
+    <!-- The crew chat's field when it is empty (the desktop's crew placeholder; direct messages keep projects_chat_hint). -->
+    <string name="projects_chat_hint_crew">Write to your crew</string>
+    <!-- In the line over the field after the player's message; writing goes on meanwhile, only sending waits. -->
+    <plurals name="projects_chat_calm_slow_wait">
+        <item quantity="one">Wait %1$d second to send</item>
+        <item quantity="other">Wait %1$d seconds to send</item>
+    </plurals>
+    <!-- A message the service held back (under its bubble). -->
+    <string name="projects_chat_calm_slow_failure">Slow mode is on. Wait a moment.</string>
+    <!-- A send tried while the wait lasts (over the field, quiet: waiting is no error), and the send button's words then. -->
+    <string name="projects_chat_calm_slow_on">Slow mode is on.</string>
+    <!-- The crew page's box of the chat's rules (the leader and moderators). -->
+    <string name="projects_chat_calm_chat_title">Chat</string>
+    <string name="projects_chat_calm_slow_title">Slow mode</string>
+    <string name="projects_chat_calm_slow_off">Off</string>
+    <plurals name="projects_chat_calm_slow_span">
+        <item quantity="one">%1$d second</item>
+        <item quantity="other">%1$d seconds</item>
+    </plurals>
+    <!-- %1$s: projects_chat_calm_slow_span ("30 seconds"). -->
+    <string name="projects_chat_calm_slow_on_line">Members wait %1$s between messages.</string>
+    <string name="projects_chat_calm_slow_off_line">Members write without waiting.</string>
+    <!-- %1$s: "5 s". The crew chat's rule over the field, and what TalkBack hears once the service took a leader's pick. -->
+    <string name="projects_chat_calm_slow_set">Slow mode: %1$s</string>
+    <string name="projects_chat_calm_slow_set_off">Slow mode is off</string>
+    <!-- %1$s: the crew's name (no suffix). -->
+    <string name="projects_chat_calm_crowded">%1$s is a big crew, so it\'s muted for you.</string>
+</resources>

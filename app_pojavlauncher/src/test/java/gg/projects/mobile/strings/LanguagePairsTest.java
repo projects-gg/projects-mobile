@@ -93,6 +93,9 @@ public class LanguagePairsTest {
         // BADGES: the player's own badges in the friends settings.
         english.putAll(texts(new File(RES, "values/strings_badges.xml")));
         turkish.putAll(texts(new File(RES, "values-tr/strings_badges.xml")));
+        // CHAT-CALM: crew chat's slow mode and the crowded crew.
+        english.putAll(texts(new File(RES, "values/strings_chat_calm.xml")));
+        turkish.putAll(texts(new File(RES, "values-tr/strings_chat_calm.xml")));
         TreeSet<String> missingTurkish = new TreeSet<>(english.keySet());
         missingTurkish.removeAll(turkish.keySet());
         TreeSet<String> missingEnglish = new TreeSet<>(turkish.keySet());
@@ -125,7 +128,7 @@ public class LanguagePairsTest {
     public void theEnglishInterfaceHasNoTurkishLeft() throws Exception {
         for (String file : new String[]{"values/projects_strings.xml", "values/projects_social_strings.xml", "values/projects_cloud_strings.xml",
                 "values/strings_cloud_feat.xml", "values/strings_cloud_plus.xml", "values/strings_app_update.xml", "values/strings.xml",
-                "values/strings_badges.xml"}) {
+                "values/strings_badges.xml", "values/strings_chat_calm.xml"}) {
             for (Map.Entry<String, String> text : texts(new File(RES, file)).entrySet()) {
                 if (TURKISH_ON_PURPOSE.contains(text.getKey())) continue;
                 assertTrue(file + ": " + text.getKey() + " = " + text.getValue(), !TURKISH_LETTER.matcher(text.getValue()).find());

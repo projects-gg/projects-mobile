@@ -680,6 +680,18 @@ public final class CloudUi {
         }
     }
 
+    /**
+     * CHAT-CALM: shows {@code selected} as chosen in a row made by {@link #segmented} without calling its choice (a pick
+     * the service refused goes back).
+     */
+    public static void selectSegment(LinearLayout row, int selected) {
+        List<Button> buttons = new ArrayList<>();
+        for (int i = 0; i < row.getChildCount(); i++) {
+            if (row.getChildAt(i) instanceof Button) buttons.add((Button) row.getChildAt(i));
+        }
+        select(buttons, selected);
+    }
+
     private static void select(List<Button> buttons, int selected) {
         for (int i = 0; i < buttons.size(); i++) {
             Button b = buttons.get(i);

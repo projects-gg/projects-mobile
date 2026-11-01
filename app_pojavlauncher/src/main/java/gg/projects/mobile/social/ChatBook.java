@@ -79,7 +79,12 @@ public final class ChatBook {
         /** CHAT2: a new Discord account sends no links yet ({@code account_limited}, {@code chat_links}). */
         LIMITED_LINKS,
         /** CHAT2: Studio switched the extra off ({@code chat_feature_off}). */
-        FEATURE_OFF
+        FEATURE_OFF,
+        /**
+         * CHAT-CALM: the crew's slow mode held it back ({@code rate_limited} with {@code item: "slow"}): it waits for the
+         * player's "Tekrar dene", never goes again by itself.
+         */
+        SLOW
     }
 
     /** Where the device keeps the chat (the app's SQLite file; a map in the tests). */
@@ -1352,6 +1357,7 @@ public final class ChatBook {
             case "rate_limited":
                 if ("stickers".equals(item)) return Failure.STICKERS;
                 if ("links".equals(item)) return Failure.LINKS;
+                if ("slow".equals(item)) return Failure.SLOW;
                 return retryAfterSeconds > 30 ? Failure.DAILY : Failure.RATE;
             case "friend_not_found": return Failure.NOT_FRIENDS;
             case "team_not_found": return Failure.NOT_IN_CREW;
@@ -1392,17 +1398,24 @@ public final class ChatBook {
     /** "Tekrar dene": a failed message waits again (a new nonce once the service forgot the old one). */
     @Nullable
     public Outbox retry(String nonce, String freshNonce, long phoneNowMs) {
+        return retry(nonce, freshNonce, phoneNowMs, 0);
+    }
+
+    /** The same, not sent before {@code notBefore} (ms; 0: at once): CHAT-CALM's crew slow mode still waits. */
+    @Nullable
+    public Outbox retry(String nonce, String freshNonce, long phoneNowMs, long notBefore) {
         Conversation c = byNonce(nonce);
         if (c == null) return null;
         Outbox o = c.outbox.get(nonce);
         if (o.state != Outbox.State.FAILED) return o;
         Outbox next;
         if (o.firstSentAt == 0 || phoneNowMs - o.firstSentAt < NONCE_WINDOW_MS) {
-            next = new Outbox(o.nonce, o.conv, o.text, o.createdAt, o.firstSentAt, 0, Outbox.State.WAITING, null, 0,
-                    o.sticker, o.reply, null);
+            next = new Outbox(o.nonce, o.conv, o.text, o.createdAt, o.firstSentAt, 0, Outbox.State.WAITING, null,
+                    Math.max(0, notBefore), o.sticker, o.reply, null);
             c.outbox.put(nonce, next);
         } else {
             next = o.renewed(freshNonce);
+            if (notBefore > 0) next = next.with(Outbox.State.WAITING, null, notBefore);
             c.outbox.remove(nonce);
             mStore.removeOutbox(nonce);
             c.outbox.put(next.nonce, next);

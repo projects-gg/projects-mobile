@@ -9,6 +9,7 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.text.Editable;
+import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -61,6 +62,7 @@ import gg.projects.mobile.social.ChatText;
 import gg.projects.mobile.social.ChatTyping;
 import gg.projects.mobile.social.MutePresets;
 import gg.projects.mobile.social.Reports;
+import gg.projects.mobile.social.SlowMode;
 import gg.projects.mobile.social.SocialChat;
 import gg.projects.mobile.social.SocialModel;
 import gg.projects.mobile.social.SocialModel.Crew;
@@ -209,6 +211,16 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
     /** CHAT2: a message to glow once it is drawn (a quote was pressed), or null. */
     @Nullable
     private String mGlow;
+    /** CHAT-CALM: the crew's slow mode for the player here (seconds; 0: none, or they lead or moderate the crew). */
+    private int mSlow;
+    /** CHAT-CALM: when the player may send again (the phone's ms; 0: now). */
+    private long mSlowUntil;
+    /** CHAT-CALM: a send tried while the slow mode waits: "Yavaş mod açık." stays under the field until the wait ends. */
+    private boolean mSlowNote;
+    /** CHAT-CALM: the quick replies wait with the slow mode (dimmed). */
+    private boolean mQuickDimmed;
+    /** CHAT-CALM: the slow mode's seconds; the clock runs only while the wait lasts, landing where the seconds change. */
+    private final Runnable mSlowTick = this::slowTick;
 
     public ChatFragment() {
         super(R.layout.fragment_projects_chat);
@@ -522,6 +534,7 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
             mList.removeCallbacks(mTick);
             mList.removeCallbacks(mSeenCheck);
             mList.removeCallbacks(mComposerCardAsk);
+            mList.removeCallbacks(mSlowTick);
         }
         mWatching = 0;
         // CHAT2: no one writes while the screen is away (the pill's dots stop with it).
@@ -538,11 +551,14 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
             mList.removeCallbacks(mTick);
             mList.removeCallbacks(mSeenCheck);
             mList.removeCallbacks(mComposerCardAsk);
+            mList.removeCallbacks(mSlowTick);
             mList.setAdapter(null);
         }
         // A new view starts without the edit and reply bars: their states go with this one.
         mEditing = null;
         mReplyTo = null;
+        mSlowNote = false;
+        mQuickDimmed = false;
         mPickerOpen = false;
         mPickerBack.setEnabled(false);
         mPickerSlot = null;
@@ -601,7 +617,11 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
             }
         }
         if (isResumed()) chat.seen(mConv);
+        // CHAT-CALM: the crew's slow mode counts from the player's newest message here.
+        mSlow = chat.slow(mConv);
+        mSlowUntil = mSlow > 0 ? chat.slowUntil(mConv) : 0;
         renderComposer(context, service, state);
+        scheduleSlowTick();
         renderTyping(context, service);
         // A mute by moderators ends by itself: the field comes back then; "Selam ver" goes after ten minutes.
         mList.removeCallbacks(mTick);
@@ -801,6 +821,11 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
         String text = mInput.getText().toString();
         ChatText.Verdict verdict = chat.verdict(text);
         int length = ChatText.length(ChatText.clean(text));
+        // CHAT-CALM: the seconds the crew's slow mode still waits (0: none, or an edit, which never waits).
+        int wait = slowWait();
+        if (wait == 0) mSlowNote = false;
+        CharSequence hint = composerHint();
+        if (!TextUtils.equals(mInput.getHint(), hint)) mInput.setHint(hint);
         String line = null;
         switch (verdict.problem) {
             case LINK: line = linkWords(verdict.rule, text); break;
@@ -812,16 +837,48 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
         boolean hasLinks = verdict.problem == ChatText.Problem.NONE && !ChatLinks.find(ChatText.clean(text)).isEmpty();
         SocialModel.Limited limited = hasLinks ? chat.linksLimited() : null;
         if (limited != null) line = limitedLinks(limited);
-        boolean counter = length >= ChatText.COUNTER_FROM;
-        boolean row = mComposer.getVisibility() == View.VISIBLE && (line != null || counter);
-        mProblemRow.setVisibility(row ? View.VISIBLE : View.GONE);
-        mProblem.setText(line);
+        // CHAT-CALM, the line over the field: a send tried while the slow mode waits says so in quiet words (waiting is
+        // no error); else the wait itself, "Göndermek için 12 saniye bekle", or the rule, "Yavaş mod: 30 sn" (the
+        // desktop's words; here rather than in the field's hint, whose 30 letters wrap on a 360 dp phone: the empty
+        // field would be two lines tall and shrink at the first letter).
+        int lineColor = R.color.projects_flare_400;
+        // The slow mode's own state (the wait or the rule), not news: quiet and not read out.
+        boolean status = false;
+        if (line == null && mSlowNote) {
+            line = getString(R.string.projects_chat_calm_slow_on);
+            lineColor = R.color.projects_ash_300;
+        } else if (line == null && wait > 0) {
+            line = getResources().getQuantityString(R.plurals.projects_chat_calm_slow_wait, wait, wait);
+            lineColor = R.color.projects_ash_400;
+            status = true;
+        } else if (line == null && mSlow > 0 && mEditing == null) {
+            line = getString(R.string.projects_chat_calm_slow_set, getString(R.string.projects_span_seconds, mSlow));
+            lineColor = R.color.projects_ash_400;
+            status = true;
+        }
+        // The count; while the line says something else (a reason, the note), the wait's seconds stand where the count would.
+        boolean waitShown = wait > 0 && !status && length < ChatText.COUNTER_FROM;
+        boolean counter = waitShown || length >= ChatText.COUNTER_FROM;
+        boolean open = mComposer.getVisibility() == View.VISIBLE;
+        // In a crew with a slow mode the line keeps its room (empty or not): its words coming and going move nothing.
+        mProblemRow.setVisibility(open && (line != null || counter) ? View.VISIBLE : open && mSlow > 0 ? View.INVISIBLE : View.GONE);
+        // A reason or the note is read out once; the countdown and the rule are not (one changes every second, the other
+        // comes back after each wait). The same words are not set again (a live region would read them again).
+        int live = status ? View.ACCESSIBILITY_LIVE_REGION_NONE : View.ACCESSIBILITY_LIVE_REGION_POLITE;
+        if (mProblem.getAccessibilityLiveRegion() != live) mProblem.setAccessibilityLiveRegion(live);
+        if (!TextUtils.equals(mProblem.getText(), line)) mProblem.setText(line);
+        mProblem.setTextColor(ContextCompat.getColor(requireContext(), lineColor));
         mCounter.setVisibility(counter ? View.VISIBLE : View.GONE);
-        mCounter.setText(getString(R.string.projects_crew_count, length, ChatText.MAX));
-        mCounter.setTextColor(ContextCompat.getColor(requireContext(), length > ChatText.MAX ? R.color.projects_flare_400 : R.color.projects_ash_400));
+        mCounter.setText(waitShown ? getString(R.string.projects_span_seconds, wait) : getString(R.string.projects_crew_count, length, ChatText.MAX));
+        mCounter.setTextColor(ContextCompat.getColor(requireContext(), !waitShown && length > ChatText.MAX ? R.color.projects_flare_400
+                : R.color.projects_ash_400));
+        // TalkBack hears why the button does nothing (a fixed sentence: it is not read again every second).
+        String sendWords = getString(wait > 0 ? R.string.projects_chat_calm_slow_on : R.string.projects_chat_send);
+        if (!TextUtils.equals(mSend.getContentDescription(), sendWords)) mSend.setContentDescription(sendWords);
         boolean enabled = verdict.problem == ChatText.Problem.NONE && limited == null
                 && chat.canWrite(mConv) == SocialChat.Refusal.NONE
-                && (mEditing == null || !ChatText.clean(text).equals(mEditing.text));
+                && (mEditing == null || !ChatText.clean(text).equals(mEditing.text))
+                && wait == 0;
         if (enabled != mSend.isEnabled()) {
             mSend.setEnabled(enabled);
             // The button answers the field: it grows a little into gold, or settles back.
@@ -836,7 +893,58 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
         boolean quick = mComposer.getVisibility() == View.VISIBLE && ChatConv.isCrew(mConv) && mEditing == null && mReplyTo == null
                 && text.isEmpty();
         if (quick != (mQuick.getVisibility() == View.VISIBLE)) mQuick.setVisibility(quick ? View.VISIBLE : View.GONE);
+        dimQuick(wait > 0);
         renderComposerCard(text);
+    }
+
+    /** CHAT-CALM: the seconds the crew's slow mode still waits here (0: none, or an edit, which never waits). */
+    private int slowWait() {
+        if (mSlow <= 0 || mEditing != null) return 0;
+        return SlowMode.left(mSlowUntil, System.currentTimeMillis());
+    }
+
+    /**
+     * The field's hint: a crew's chat says "Ekibine yaz" (the desktop's words), a friend's "Mesaj yaz"; the slow mode
+     * and its wait are said in the line over the field (writing goes on, only sending waits).
+     */
+    private CharSequence composerHint() {
+        return getString(ChatConv.isCrew(mConv) ? R.string.projects_chat_hint_crew : R.string.projects_chat_hint);
+    }
+
+    /** CHAT-CALM: the quick replies wait with the slow mode, dimmed and not pressable; nothing moves. */
+    private void dimQuick(boolean dim) {
+        if (mQuickRow == null || dim == mQuickDimmed) return;
+        mQuickDimmed = dim;
+        boolean animate = Motion.enabled(requireContext()) && mQuickRow.isAttachedToWindow() && mQuick.getVisibility() == View.VISIBLE;
+        for (int i = 0; i < mQuickRow.getChildCount(); i++) {
+            View chip = mQuickRow.getChildAt(i);
+            chip.setEnabled(!dim);
+            chip.animate().cancel();
+            if (animate) chip.animate().alpha(dim ? 0.4f : 1f).setDuration(150).setInterpolator(Motion.EASE_OUT).start();
+            else chip.setAlpha(dim ? 0.4f : 1f);
+        }
+    }
+
+    /**
+     * CHAT-CALM: the slow mode's seconds changed (or its wait ended). The end is read again: a message not gone yet
+     * (written offline, held back) keeps the wait from running down until it goes.
+     */
+    private void slowTick() {
+        if (!isAdded() || mInput == null) return;
+        SocialChat chat = SocialService.get(requireContext()).chat();
+        mSlow = chat.slow(mConv);
+        mSlowUntil = mSlow > 0 ? chat.slowUntil(mConv) : 0;
+        updateComposer();
+        scheduleSlowTick();
+    }
+
+    /** The next tick where the seconds shown change, the last one on the wait's end; none while nothing waits. */
+    private void scheduleSlowTick() {
+        if (mList == null) return;
+        mList.removeCallbacks(mSlowTick);
+        if (mSlow <= 0 || !isResumed() || mComposer.getVisibility() != View.VISIBLE) return;
+        long next = SlowMode.nextTick(mSlowUntil, System.currentTimeMillis());
+        if (next > 0) mList.postDelayed(mSlowTick, next);
     }
 
     /** What a refused link says, by its rule ("https:// ile yaz." for a bare domain). */
@@ -943,7 +1051,15 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
             scrollToBottom(true);
             return;
         }
+        if (refusal == SocialChat.Refusal.SLOW) {
+            // CHAT-CALM (a hardware Enter while the wait lasts): the text stays, the line under the field says why.
+            slowRefused();
+            return;
+        }
         Haptics.reject(mSend);
+        // The reason is read out (the line may have been the slow mode's countdown, which is not).
+        mProblem.setTextColor(ContextCompat.getColor(activity, R.color.projects_flare_400));
+        mProblem.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
         String why;
         switch (refusal) {
             case LINK: why = linkWords(service.chat().verdict(text).rule, text); break;
@@ -965,6 +1081,10 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
 
     private void sendQuick(View chip, String text) {
         SocialChat.Refusal refusal = SocialService.get(requireContext()).chat().send(mConv, text);
+        if (refusal == SocialChat.Refusal.SLOW) {
+            slowRefused();
+            return;
+        }
         if (refusal != SocialChat.Refusal.NONE) {
             Haptics.reject(chip);
             return;
@@ -1085,9 +1205,26 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
         mInput.setSelection(Math.min(text.length(), start + emoji.length()));
     }
 
+    /**
+     * CHAT-CALM: a send tried while the crew's slow mode waits (Enter, a quick reply, a sticker) says "Yavaş mod açık."
+     * under the field in quiet words until the wait is over; no buzz, waiting is no error.
+     */
+    private void slowRefused() {
+        SocialService service = SocialService.get(requireContext());
+        mSlow = service.chat().slow(mConv);
+        mSlowUntil = mSlow > 0 ? service.chat().slowUntil(mConv) : 0;
+        mSlowNote = true;
+        updateComposer();
+        scheduleSlowTick();
+    }
+
     private void sendSticker(String ref, View cell) {
         if (!isAdded() || mList == null) return;
         SocialChat.Refusal refusal = SocialService.get(requireContext()).chat().sendSticker(mConv, ref, mReplyTo);
+        if (refusal == SocialChat.Refusal.SLOW) {
+            slowRefused();
+            return;
+        }
         if (refusal != SocialChat.Refusal.NONE) {
             Haptics.reject(cell);
             return;
@@ -1733,6 +1870,11 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
             SocialChat chat = SocialService.get(requireContext()).chat();
             SocialChat.Refusal sent = chat.stickerSets().contains("pl1") && EmojiStore.stickerRes(requireContext(), "pl1/hi") != 0
                     ? chat.sendSticker(mConv, "pl1/hi", null) : chat.send(mConv, getString(R.string.projects_welcome_text));
+            if (sent == SocialChat.Refusal.SLOW) {
+                // CHAT-CALM: the hi is a message too; the line over the field says why it waits.
+                slowRefused();
+                return;
+            }
             if (sent != SocialChat.Refusal.NONE) {
                 Haptics.reject(v);
                 return;
@@ -2272,6 +2414,7 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
             }
             case STICKERS: return getString(R.string.projects_chat2_failure_stickers);
             case LINKS: return getString(R.string.projects_chat2_failure_links);
+            case SLOW: return getString(R.string.projects_chat_calm_slow_failure);
             case LIMITED_LINKS: return getString(SocialUi.limitedRes(requireContext(), R.string.projects_links_limited,
                     R.string.projects_links_limited_account));
             case FEATURE_OFF: return getString(R.string.projects_chat2_feature_off);
