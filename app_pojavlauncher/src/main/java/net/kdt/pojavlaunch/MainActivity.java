@@ -86,7 +86,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 
-public class MainActivity extends BaseActivity implements ControlButtonMenuListener, EditorExitable, ServiceConnection, TouchControllerInputView.InputAreaRectListener {
+public class MainActivity extends BaseActivity implements ControlButtonMenuListener, EditorExitable, gg.projects.mobile.controls.EditorHost, ServiceConnection, TouchControllerInputView.InputAreaRectListener {
     public static volatile ClipboardManager GLOBAL_CLIPBOARD;
     public static final String TAG = "MainActivity";
     public static final String INTENT_MINECRAFT_VERSION = "intent_version";
@@ -178,9 +178,17 @@ public class MainActivity extends BaseActivity implements ControlButtonMenuListe
                 case 1: mControlLayout.addDrawer(new ControlDrawerData()); break;
                 case 2: mControlLayout.addJoystickButton(new ControlJoystickData()); break;
                 case 3: mControlLayout.openLoadDialog(); break;
-                case 4: mControlLayout.openSaveDialog(this); break;
+                // Projects fork (CTRL-SAVE): "Kaydet" writes the layout in use (no file name to type), and leaving
+                // asks to save only when something changed (upstream's "Düzenleyici'den çık" went straight to a
+                // yes / no without a save).
+                case 4:
+                    drawerLayout.closeDrawers();
+                    mControlLayout.saveActive(false, null);
+                    break;
                 case 5: mControlLayout.openSetDefaultDialog(); break;
-                case 6: mControlLayout.openExitDialog(this);
+                case 6:
+                    drawerLayout.closeDrawers();
+                    mControlLayout.askToExit(this);
             }
         };
 
@@ -326,10 +334,7 @@ public class MainActivity extends BaseActivity implements ControlButtonMenuListe
     private void loadControls() {
         try {
             // Load keys
-            mControlLayout.loadLayout(
-                    minecraftProfile.controlFile == null
-                            ? LauncherPreferences.PREF_DEFAULTCTRL_PATH
-                            : Tools.CTRLMAP_PATH + "/" + minecraftProfile.controlFile);
+            mControlLayout.loadLayout(activeLayoutPath());
         } catch(IOException e) {
             try {
                 Log.w("MainActivity", "Unable to load the control file, loading the default now", e);
@@ -555,10 +560,13 @@ public class MainActivity extends BaseActivity implements ControlButtonMenuListe
     private void openCustomControls() {
         if(ingameControlsEditorListener == null || ingameControlsEditorArrayAdapter == null) return;
 
+        // Projects fork (CTRL-SAVE): the editor's own "Menü" and "Kaydet" stand at the top centre in place of
+        // upstream's faint cog.
+        mControlLayout.setEditorHost(this);
         mControlLayout.setModifiable(true);
         navDrawer.setAdapter(ingameControlsEditorArrayAdapter);
         navDrawer.setOnItemClickListener(ingameControlsEditorListener);
-        mDrawerPullButton.setVisibility(View.VISIBLE);
+        mDrawerPullButton.setVisibility(View.GONE);
         isInEditor = true;
     }
 
@@ -603,7 +611,11 @@ public class MainActivity extends BaseActivity implements ControlButtonMenuListe
         if (gg.projects.mobile.launch.LaunchCurtain.onBack(event)) return true;
         if(isInEditor) {
             if(event.getKeyCode() == KeyEvent.KEYCODE_BACK) {
-                if(event.getAction() == KeyEvent.ACTION_DOWN) mControlLayout.askToExit(this);
+                // Projects fork (CTRL-SAVE): back closes the editor's open menu first.
+                if(event.getAction() == KeyEvent.ACTION_DOWN) {
+                    if (drawerLayout.isDrawerOpen(navDrawer)) drawerLayout.closeDrawers();
+                    else mControlLayout.askToExit(this);
+                }
                 return true;
             }
             return super.dispatchKeyEvent(event);
@@ -702,18 +714,49 @@ public class MainActivity extends BaseActivity implements ControlButtonMenuListe
             mControlLayout.loadLayout((CustomControls)null);
             mControlLayout.setModifiable(false);
             System.gc();
-            mControlLayout.loadLayout(
-                    minecraftProfile.controlFile == null
-                            ? LauncherPreferences.PREF_DEFAULTCTRL_PATH
-                            : Tools.CTRLMAP_PATH + "/" + minecraftProfile.controlFile);
-            mDrawerPullButton.setVisibility(mControlLayout.hasMenuButton() ? View.GONE : View.VISIBLE);
+            try {
+                mControlLayout.loadLayout(activeLayoutPath());
+            } catch (IOException | com.google.gson.JsonSyntaxException e) {
+                // Projects fork (CTRL-SAVE): the profile's own file is missing or broken (the game started on the
+                // default, loadControls): the default again, never a screen without keys.
+                Log.w(TAG, "Unable to load the control file on leaving the editor, loading the default now", e);
+                mControlLayout.loadLayout(Tools.CTRLDEF_FILE);
+            }
         } catch (IOException e) {
             Tools.showError(this,e);
+        } finally {
+            // Projects fork (CTRL-SAVE): the menu's pull button (hidden while editing) comes back whatever happened.
+            mDrawerPullButton.setVisibility(mControlLayout.hasMenuButton() ? View.GONE : View.VISIBLE);
         }
 
         navDrawer.setAdapter(gameActionArrayAdapter);
         navDrawer.setOnItemClickListener(gameActionClickListener);
         isInEditor = false;
+    }
+
+    /** Projects fork (CTRL-SAVE): the layout this game reads (the profile's own file, else the default one). */
+    @Override
+    public String activeLayoutPath() {
+        return minecraftProfile.controlFile == null
+                ? LauncherPreferences.PREF_DEFAULTCTRL_PATH
+                : Tools.CTRLMAP_PATH + "/" + minecraftProfile.controlFile;
+    }
+
+    @Override
+    public void openEditorMenu() {
+        onClickedMenu();
+    }
+
+    /** Projects fork (CTRL-SAVE): back in the game after "Kaydet ve çık": the line with "Geri al" where the bar was. */
+    @Override
+    public void editorSavedAndLeft(gg.projects.mobile.controls.LayoutBackups.Saved saved) {
+        mControlLayout.showSaved(saved);
+    }
+
+    /** Projects fork (CTRL-SAVE): "Geri al" in play brought a layout back: the pull button follows its MENÜ key. */
+    @Override
+    public void editorLayoutReloaded() {
+        if (!isInEditor) mDrawerPullButton.setVisibility(mControlLayout.hasMenuButton() ? View.GONE : View.VISIBLE);
     }
 
     @Override

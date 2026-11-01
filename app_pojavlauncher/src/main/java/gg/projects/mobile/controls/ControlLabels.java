@@ -47,6 +47,19 @@ public final class ControlLabels {
      */
     static final Map<String, String> ENGLISH_LABELS;
 
+    /**
+     * CTRL-SAVE (0.4.9): the editor-only welcome key of the default layout. The editor's "Menü" stands at the top
+     * where upstream's gear was, so the earlier texts ({@link #OLD_EDITOR_NOTES}, which send the player to the gear)
+     * become this one in an edited layout too.
+     */
+    static final String EDITOR_NOTE_TURKISH = "DÜZENLEYİCİYE HOŞ GELDİN.\nAYARLARI İÇİN BİR TUŞA DOKUN.\nDAHA FAZLASI ÜSTTEKİ MENÜDE.";
+    static final String EDITOR_NOTE_ENGLISH = "WELCOME TO THE EDITOR.\nTAP A BUTTON TO SEE ITS SETTINGS.\nMORE IS IN THE MENU AT THE TOP.";
+    /** The welcome texts of 0.1.0 to 0.4.8 (upstream's English one, then ours in both languages). */
+    static final Set<String> OLD_EDITOR_NOTES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+            "Welcome to the Editor.\nTap a button to see what you can do!\nTap the gear at the top to see more options.",
+            "DÜZENLEYİCİYE HOŞ GELDİN.\nAYARLARI İÇİN BİR TUŞA DOKUN.\nDAHA FAZLASI İÇİN ÜSTTEKİ DİŞLİYE DOKUN.",
+            "WELCOME TO THE EDITOR.\nTAP A BUTTON TO SEE ITS SETTINGS.\nTAP THE GEAR AT THE TOP FOR MORE.")));
+
     static {
         Map<String, String> labels = new LinkedHashMap<>();
         // 0.1.6 (M15): one line each; the glyph says the rest.
@@ -78,8 +91,7 @@ public final class ControlLabels {
         labels.put("TUŞLARI\nGİZLE", "HIDE\nBUTTONS");
         labels.put("DURAKLAT", "PAUSE");
         labels.put("ENVANTER", "INVENTORY");
-        labels.put("DÜZENLEYİCİYE HOŞ GELDİN.\nAYARLARI İÇİN BİR TUŞA DOKUN.\nDAHA FAZLASI İÇİN ÜSTTEKİ DİŞLİYE DOKUN.",
-                "WELCOME TO THE EDITOR.\nTAP A BUTTON TO SEE ITS SETTINGS.\nTAP THE GEAR AT THE TOP FOR MORE.");
+        labels.put(EDITOR_NOTE_TURKISH, EDITOR_NOTE_ENGLISH);
         labels.put("GERİ", "BACK");
         labels.put("DİĞER", "MORE");
         labels.put("GÖRÜŞ\nAÇISI", "THIRD\nPERSON");
@@ -107,15 +119,18 @@ public final class ControlLabels {
      * APKs built on Windows carry CRLF, upstream's CI builds LF): upstream's English one of 0.1.0 to
      * 0.1.3, the Turkish one of 0.1.4 and 0.1.5 and the English one of 0.1.5 (the layout before the
      * M15 redesign), and TABLET-M: the Turkish and English ones of 0.1.7 to 0.4.6 (the same places in
-     * every landscape window; 0.4.7 adds those of a window taller than wide). An untouched one of these is
-     * replaced by this version's layout.
+     * every landscape window; 0.4.7 adds those of a window taller than wide), and CTRL-SAVE: the Turkish and English
+     * ones of 0.4.7 and 0.4.8 (their editor welcome key sends the player to the gear that "Menü" replaced). An
+     * untouched one of these is replaced by this version's layout.
      */
     private static final Set<String> OLD_DEFAULTS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
             "d92a182bde65a19c1c9edb1291f8dde2ff9efcbb95b9a7745c3e591b85f7516a",
             "bbc73ba76be9fd51e9cb938dc3373dea04458e119d10098f541f6264fbda700a",
             "cb6c4bef9d985c1a3adf31c4b41674c0f51611ed874762eb2dbcadb492802341",
             "53cbe0a1eeeba8cad3476b5d89a94de1a8fc06a56d57f03b557a1c86604b509c",
-            "92c31961324430ccde44c183c3eadefe49c4cbb3e7170bf8a368bfcf85e68423")));
+            "92c31961324430ccde44c183c3eadefe49c4cbb3e7170bf8a368bfcf85e68423",
+            "abd1012a88a000bc5c6385132d116fb6fe453561a3d5b737e859c9dc631d5ace",
+            "23ff7e79f013138cd177075e38d1316806e2470f3e21e8084ab82494cd492693")));
 
     /**
      * True when {@code installed} is an earlier version's default layout, byte for byte apart from
@@ -153,7 +168,9 @@ public final class ControlLabels {
      * a layout). Positions, sizes, keys and every other label stay as the player left them.
      */
     public static String translate(String layoutJson, boolean toTurkish) {
-        Map<String, String> map = toTurkish ? turkishLabels() : ENGLISH_LABELS;
+        Map<String, String> map = new LinkedHashMap<>(toTurkish ? turkishLabels() : ENGLISH_LABELS);
+        // CTRL-SAVE: an earlier welcome text (it sent the player to the gear) becomes this version's, in either language.
+        for (String note : OLD_EDITOR_NOTES) map.put(note, toTurkish ? EDITOR_NOTE_TURKISH : EDITOR_NOTE_ENGLISH);
         JsonElement root;
         try {
             root = JsonParser.parseString(layoutJson);
@@ -219,7 +236,7 @@ public final class ControlLabels {
         labels.put("Pause", "DURAKLAT");
         labels.put("Inventory", "ENVANTER");
         labels.put("Welcome to the Editor.\nTap a button to see what you can do!\nTap the gear at the top to see more options.",
-                "DÜZENLEYİCİYE HOŞ GELDİN.\nAYARLARI İÇİN BİR TUŞA DOKUN.\nDAHA FAZLASI İÇİN ÜSTTEKİ DİŞLİYE DOKUN.");
+                EDITOR_NOTE_TURKISH);
         labels.put("Exit\nMenu", "GERİ");
         labels.put("Shift", "SHIFT");
         labels.put("More", "DİĞER");

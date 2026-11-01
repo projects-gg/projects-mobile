@@ -415,7 +415,11 @@ public class ControlLayoutTest {
                         assertEquals(a.size(), b.size());
                         for (int i = 0; i < a.size(); i++) {
                             String what = s[0] + " " + scale + "% inset " + inset + ": " + a.get(i);
-                            assertEquals(what, a.get(i).name, b.get(i).name);
+                            // CTRL-SAVE: the editor's welcome key names the menu now; its place is the same.
+                            String name = ControlLabels.OLD_EDITOR_NOTES.contains(a.get(i).name)
+                                    ? (pair[0] == TURKISH ? ControlLabels.EDITOR_NOTE_TURKISH : ControlLabels.EDITOR_NOTE_ENGLISH)
+                                    : a.get(i).name;
+                            assertEquals(what, name, b.get(i).name);
                             assertEquals(what, a.get(i).x, b.get(i).x, 1e-6);
                             assertEquals(what, a.get(i).y, b.get(i).y, 1e-6);
                             assertEquals(what, a.get(i).w, b.get(i).w, 1e-6);

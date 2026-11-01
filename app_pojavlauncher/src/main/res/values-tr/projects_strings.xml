@@ -308,6 +308,20 @@
     <string name="projects_keyfix_talk_title">Bas-konuş tuşu yok</string>
     <string name="projects_keyfix_talk_body">Sesli sohbette konuşmak için gerekli.</string>
     <string name="projects_keyfix_bound">Bas-konuş tuşu atandı</string>
+    <!-- CTRL-SAVE: the controls editor's "Menü" and "Kaydet", the question when leaving with a change, the line after a save. -->
+    <string name="projects_ctrl_menu">Menü</string>
+    <string name="projects_ctrl_save">Kaydet</string>
+    <string name="projects_ctrl_save_question">Değişiklikler kaydedilsin mi?</string>
+    <string name="projects_ctrl_save_question_body">Kaydetmeden çıkarsan tuşlar eski hâline döner.</string>
+    <string name="projects_ctrl_save_leave">Kaydet ve çık</string>
+    <string name="projects_ctrl_leave_unsaved">Kaydetmeden çık</string>
+    <!-- CTRL-SAVE: "Yükle" or "Varsayılan kontrolleri seç" with a change not saved yet. -->
+    <string name="projects_ctrl_replace_body">Kaydetmezsen yaptığın değişiklikler silinir.</string>
+    <string name="projects_ctrl_dont_save">Kaydetme</string>
+    <string name="projects_ctrl_saved">Tuşlar kaydedildi.</string>
+    <string name="projects_ctrl_undone">Eski tuşların geri geldi.</string>
+    <string name="projects_ctrl_save_failed">Tuşlar kaydedilemedi. Tekrar dene.</string>
+    <string name="projects_ctrl_undo_failed">Eski tuşların geri getirilemedi.</string>
     <!-- M17: a Projects start that ends while the player is away from the home screen. -->
     <string name="projects_ready_title">Projects hazır</string>
     <string name="projects_ready_body">Kurulum bitti. Başlatmak için Oyna\'ya bas.</string>

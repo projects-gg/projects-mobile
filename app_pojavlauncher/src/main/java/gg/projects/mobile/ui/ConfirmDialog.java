@@ -29,6 +29,17 @@ public final class ConfirmDialog {
 
     public static AlertDialog show(Activity activity, @Nullable CharSequence title, @Nullable CharSequence message,
                                    CharSequence action, boolean danger, final Runnable onAction) {
+        return show(activity, title, message, action, danger, onAction, null, null);
+    }
+
+    /**
+     * CTRL-SAVE: as {@link #show(Activity, CharSequence, CharSequence, CharSequence, boolean, Runnable)} with a second
+     * way out in the ghost button's place ("Kaydetmeden çık" beside "Kaydet ve çık"); the close mark, back and a tap
+     * outside only close the question.
+     */
+    public static AlertDialog show(Activity activity, @Nullable CharSequence title, @Nullable CharSequence message,
+                                   CharSequence action, boolean danger, final Runnable onAction,
+                                   @Nullable CharSequence other, @Nullable final Runnable onOther) {
         Context c = activity;
         final AlertDialog[] dialog = new AlertDialog[1];
         LinearLayout root = new LinearLayout(c);
@@ -73,7 +84,8 @@ public final class ConfirmDialog {
         buttons.setOrientation(LinearLayout.HORIZONTAL);
         buttons.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
         Button cancel = new Button(c, null, android.R.attr.borderlessButtonStyle);
-        cancel.setText(R.string.projects_social_cancel);
+        if (other != null) cancel.setText(other);
+        else cancel.setText(R.string.projects_social_cancel);
         cancel.setAllCaps(false);
         cancel.setTypeface(ResourcesCompat.getFont(c, R.font.figtree_semibold));
         cancel.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
@@ -85,7 +97,10 @@ public final class ConfirmDialog {
         cancel.setMinimumWidth(0);
         cancel.setPadding(dp(c, 14), 0, dp(c, 14), 0);
         Press.attach(cancel, Press.Style.BUTTON);
-        cancel.setOnClickListener(v -> dialog[0].dismiss());
+        cancel.setOnClickListener(v -> {
+            dialog[0].dismiss();
+            if (onOther != null) onOther.run();
+        });
         buttons.addView(cancel);
         Button go = new Button(c, null, android.R.attr.borderlessButtonStyle);
         go.setText(action);

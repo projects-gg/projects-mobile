@@ -171,9 +171,10 @@ export const CONTROLS = [
     x: { edge: "right", off: 0 }, y: { edge: "bottom", off: 0 }, w: JUMP, h: JUMP },
   { icon: "rightclick", tr: "SAĞ TIK", en: "RIGHT CLICK", keys: [K.MOUSE_RIGHT], ...MENU,
     x: { edge: "right", off: JUMP + 8 }, y: { edge: "bottom", off: ACT_Y }, w: ACT, h: ACT },
-  // Shown in the controls editor only (upstream's welcome text, no glyph).
-  { note: true, tr: "DÜZENLEYİCİYE HOŞ GELDİN.\nAYARLARI İÇİN BİR TUŞA DOKUN.\nDAHA FAZLASI İÇİN ÜSTTEKİ DİŞLİYE DOKUN.",
-    en: "WELCOME TO THE EDITOR.\nTAP A BUTTON TO SEE ITS SETTINGS.\nTAP THE GEAR AT THE TOP FOR MORE.",
+  // Shown in the controls editor only (upstream's welcome text, no glyph). CTRL-SAVE (0.4.9): the editor's "Menü"
+  // stands at the top in place of the gear (ControlLabels upgrades the earlier text in edited layouts).
+  { note: true, tr: "DÜZENLEYİCİYE HOŞ GELDİN.\nAYARLARI İÇİN BİR TUŞA DOKUN.\nDAHA FAZLASI ÜSTTEKİ MENÜDE.",
+    en: "WELCOME TO THE EDITOR.\nTAP A BUTTON TO SEE ITS SETTINGS.\nMORE IS IN THE MENU AT THE TOP.",
     keys: [], game: false, menu: false, style: "note", center: true, w: 288, h: 110 },
 ];
 

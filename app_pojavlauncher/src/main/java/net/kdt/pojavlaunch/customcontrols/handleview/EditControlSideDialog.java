@@ -28,6 +28,7 @@ import net.kdt.pojavlaunch.colorselector.ColorSelector;
 import net.kdt.pojavlaunch.customcontrols.ControlData;
 import net.kdt.pojavlaunch.customcontrols.ControlDrawerData;
 import net.kdt.pojavlaunch.customcontrols.ControlJoystickData;
+import net.kdt.pojavlaunch.customcontrols.ControlLayout;
 import net.kdt.pojavlaunch.customcontrols.buttons.ControlDrawer;
 import net.kdt.pojavlaunch.customcontrols.buttons.ControlInterface;
 import net.kdt.pojavlaunch.utils.interfaces.SimpleItemSelectedListener;
@@ -335,13 +336,18 @@ public class EditControlSideDialog extends SideDialogView {
      * @noinspection SuspiciousNameCombination
      */
     private void setupRealTimeListeners() {
+        // Projects fork (CTRL-SAVE): every change below is a change to save (changed()); upstream counted none of
+        // them, so leaving the editor after a resize offered no save and dropped it.
         mNameEditText.addTextChangedListener((SimpleTextWatcher) s -> {
             if (internalChanges) return;
 
+            boolean renamed = !s.toString().equals(mCurrentlyEditedButton.getProperties().name);
             mCurrentlyEditedButton.getProperties().name = s.toString();
 
             // Cheap and unoptimized, doesn't break the abstraction layer
             mCurrentlyEditedButton.setProperties(mCurrentlyEditedButton.getProperties(), false);
+            // A keyboard committing the same text again is no change.
+            if (renamed) changed();
         });
 
         mWidthEditText.addTextChangedListener((SimpleTextWatcher) s -> {
@@ -349,12 +355,14 @@ public class EditControlSideDialog extends SideDialogView {
 
             float width = safeParseFloat(s.toString());
             if (width >= 0) {
+                float before = mCurrentlyEditedButton.getProperties().getWidth();
                 mCurrentlyEditedButton.getProperties().setWidth(width);
                 if (mCurrentlyEditedButton.getProperties() instanceof ControlJoystickData) {
                     // Joysticks are square
                      mCurrentlyEditedButton.getProperties().setHeight(width);
                 }
                 mCurrentlyEditedButton.updateProperties();
+                if (before != mCurrentlyEditedButton.getProperties().getWidth()) changed();
             }
         });
 
@@ -363,37 +371,44 @@ public class EditControlSideDialog extends SideDialogView {
 
             float height = safeParseFloat(s.toString());
             if (height >= 0) {
+                float before = mCurrentlyEditedButton.getProperties().getHeight();
                 mCurrentlyEditedButton.getProperties().setHeight(height);
                 if (mCurrentlyEditedButton.getProperties() instanceof ControlJoystickData) {
                     // Joysticks are square
                     mCurrentlyEditedButton.getProperties().setWidth(height);
                 }
                 mCurrentlyEditedButton.updateProperties();
+                if (before != mCurrentlyEditedButton.getProperties().getHeight()) changed();
             }
         });
 
         mSwipeableSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (internalChanges) return;
             mCurrentlyEditedButton.getProperties().isSwipeable = isChecked;
+            changed();
         });
         mToggleSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (internalChanges) return;
             mCurrentlyEditedButton.getProperties().isToggle = isChecked;
+            changed();
         });
         mPassthroughSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (internalChanges) return;
             mCurrentlyEditedButton.getProperties().passThruEnabled = isChecked;
+            changed();
         });
         mForwardLockSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (internalChanges) return;
             if(mCurrentlyEditedButton.getProperties() instanceof ControlJoystickData){
                 ((ControlJoystickData) mCurrentlyEditedButton.getProperties()).forwardLock = isChecked;
+                changed();
             }
         });
         mAbsoluteTrackingSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (internalChanges) return;
             if(mCurrentlyEditedButton.getProperties() instanceof ControlJoystickData){
                 ((ControlJoystickData) mCurrentlyEditedButton.getProperties()).absolute = isChecked;
+                changed();
             }
         });
 
@@ -402,6 +417,7 @@ public class EditControlSideDialog extends SideDialogView {
             mCurrentlyEditedButton.getProperties().opacity = mAlphaSeekbar.getProgress() / 100f;
             mCurrentlyEditedButton.getControlView().setAlpha(mAlphaSeekbar.getProgress() / 100f);
             setPercentageText(mAlphaPercentTextView, progress);
+            changed();
         });
 
         mStrokeWidthSeekbar.setOnSeekBarChangeListener((SimpleSeekBarListener) (seekBar, progress, fromUser) -> {
@@ -409,6 +425,7 @@ public class EditControlSideDialog extends SideDialogView {
             mCurrentlyEditedButton.getProperties().strokeWidth = mStrokeWidthSeekbar.getProgress() / 10F;
             mCurrentlyEditedButton.setBackground();
             setPercentageText(mStrokePercentTextView, progress);
+            changed();
         });
 
         mCornerRadiusSeekbar.setOnSeekBarChangeListener((SimpleSeekBarListener) (seekBar, progress, fromUser) -> {
@@ -416,6 +433,7 @@ public class EditControlSideDialog extends SideDialogView {
             mCurrentlyEditedButton.getProperties().cornerRadius = mCornerRadiusSeekbar.getProgress();
             mCurrentlyEditedButton.setBackground();
             setPercentageText(mCornerRadiusPercentTextView, progress);
+            changed();
         });
 
 
@@ -426,12 +444,15 @@ public class EditControlSideDialog extends SideDialogView {
             mKeycodeSpinners[i].setOnItemSelectedListener((SimpleItemSelectedListener) (parent, view, position, id) -> {
                 // Side note, spinner listeners are fired later than all the other ones.
                 // Meaning the internalChanges bool is useless here.
+                int before = mCurrentlyEditedButton.getProperties().keycodes[finalI];
                 if (position < mSpecialArray.size()) {
                     mCurrentlyEditedButton.getProperties().keycodes[finalI] = mKeycodeSpinners[finalI].getSelectedItemPosition() - mSpecialArray.size();
                 } else {
                     mCurrentlyEditedButton.getProperties().keycodes[finalI] = EfficientAndroidLWJGLKeycode.getValueByIndex(mKeycodeSpinners[finalI].getSelectedItemPosition() - mSpecialArray.size());
                 }
                 mKeycodeTextviews[finalI].setText((String) mKeycodeSpinners[finalI].getSelectedItem());
+                // Showing a key's settings selects its keys too: only another key is a change.
+                if (before != mCurrentlyEditedButton.getProperties().keycodes[finalI]) changed();
             });
         }
 
@@ -441,24 +462,29 @@ public class EditControlSideDialog extends SideDialogView {
             // Meaning the internalChanges bool is useless here.
 
             if (mCurrentlyEditedButton instanceof ControlDrawer) {
+                ControlDrawerData.Orientation before = ((ControlDrawer) mCurrentlyEditedButton).drawerData.orientation;
                 ((ControlDrawer) mCurrentlyEditedButton).drawerData.orientation = ControlDrawerData.intToOrientation(mOrientationSpinner.getSelectedItemPosition());
                 ((ControlDrawer) mCurrentlyEditedButton).syncButtons();
+                if (before != ((ControlDrawer) mCurrentlyEditedButton).drawerData.orientation) changed();
             }
         });
 
         mDisplayInGameCheckbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (internalChanges) return;
             mCurrentlyEditedButton.getProperties().displayInGame = isChecked;
+            changed();
         });
 
         mDisplayInMenuCheckbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (internalChanges) return;
             mCurrentlyEditedButton.getProperties().displayInMenu = isChecked;
+            changed();
         });
 
         mSelectStrokeColor.setOnClickListener(v -> {
             mColorSelector.setAlphaEnabled(false);
             mColorSelector.setColorSelectionListener(color -> {
+                if (mCurrentlyEditedButton.getProperties().strokeColor != color) changed();
                 mCurrentlyEditedButton.getProperties().strokeColor = color;
                 mCurrentlyEditedButton.setBackground();
             });
@@ -468,11 +494,17 @@ public class EditControlSideDialog extends SideDialogView {
         mSelectBackgroundColor.setOnClickListener(v -> {
             mColorSelector.setAlphaEnabled(true);
             mColorSelector.setColorSelectionListener(color -> {
+                if (mCurrentlyEditedButton.getProperties().bgColor != color) changed();
                 mCurrentlyEditedButton.getProperties().bgColor = color;
                 mCurrentlyEditedButton.setBackground();
             });
             appearColor(isAtRight(), mCurrentlyEditedButton.getProperties().bgColor);
         });
+    }
+
+    /** Projects fork (CTRL-SAVE): the player changed the key: "Kaydet" turns gold and leaving asks. */
+    private void changed() {
+        if (mParent instanceof ControlLayout) ((ControlLayout) mParent).setModified(true);
     }
 
     private float safeParseFloat(String string) {
