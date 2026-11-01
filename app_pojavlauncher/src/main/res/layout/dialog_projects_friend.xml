@@ -82,6 +82,15 @@
             </LinearLayout>
         </LinearLayout>
 
+        <!-- BADGES: every badge of the person with its name, one per line, at the card's full width (ProfileMarks.list). -->
+        <LinearLayout
+            android:id="@+id/projects_card_marks"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:orientation="vertical"
+            android:visibility="gone" />
+
         <TextView
             android:id="@+id/projects_card_since"
             android:layout_width="match_parent"

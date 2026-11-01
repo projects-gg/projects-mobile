@@ -57,6 +57,17 @@ public final class SocialModel {
          */
         @Nullable
         public final String discordId;
+        /**
+         * BADGES: the keys of the badges this player's cards show, in the catalogue's order ({@code marks}; SOC-VERIFY's
+         * {@code mark} from a service before badges: {@link MarkCatalog#keysOf}); never null, usually empty.
+         */
+        public final List<String> marks;
+        /**
+         * BADGES: on the player's own profile ({@code me}) the badges they chose not to show ({@code marksHidden}); null
+         * on everyone else's and from a service before badges (nothing can be hidden there).
+         */
+        @Nullable
+        public final List<String> marksHidden;
 
         public Profile(String id, String username, @Nullable String displayName, String avatar, @Nullable String avatarHash) {
             this(id, username, displayName, avatar, avatarHash, null);
@@ -69,6 +80,13 @@ public final class SocialModel {
 
         public Profile(String id, String username, @Nullable String displayName, String avatar, @Nullable String avatarHash,
                        @Nullable Badge badge, @Nullable String discordId) {
+            this(id, username, displayName, avatar, avatarHash, badge, discordId, Collections.<String>emptyList(), null);
+        }
+
+        /** Every field (SOC-ID's {@code discordId}, BADGES' {@code marks} and {@code marksHidden}); the copies below use it. */
+        public Profile(String id, String username, @Nullable String displayName, String avatar, @Nullable String avatarHash,
+                       @Nullable Badge badge, @Nullable String discordId, List<String> marks,
+                       @Nullable List<String> marksHidden) {
             this.id = id;
             this.username = username;
             this.displayName = displayName;
@@ -76,6 +94,8 @@ public final class SocialModel {
             this.avatarHash = avatarHash;
             this.badge = badge;
             this.discordId = discordId;
+            this.marks = marks;
+            this.marksHidden = marksHidden;
         }
 
         @Nullable
@@ -86,7 +106,7 @@ public final class SocialModel {
             String display = Json.str(o, "displayName");
             if (display != null && display.trim().isEmpty()) display = null;
             return new Profile(id, username, display, Json.str(o, "avatar", "discord"), Json.str(o, "avatarHash"),
-                    Badge.read(Json.obj(o, "badge")), discordIdOf(o, id));
+                    Badge.read(Json.obj(o, "badge")), discordIdOf(o, id), MarkCatalog.keysOf(o), MarkCatalog.hiddenOf(o));
         }
 
         /**
@@ -107,12 +127,25 @@ public final class SocialModel {
 
         /** The same player with another tag (TEAM6's {@code badge} message; null takes it off). */
         public Profile withBadge(@Nullable Badge next) {
-            return new Profile(id, username, displayName, avatar, avatarHash, next, discordId);
+            return new Profile(id, username, displayName, avatar, avatarHash, next, discordId, marks, marksHidden);
         }
 
         /** The same player with another picture (a presence that carries one). */
         public Profile withAvatar(String nextAvatar, @Nullable String nextHash) {
-            return new Profile(id, username, displayName, nextAvatar, nextHash, badge, discordId);
+            return new Profile(id, username, displayName, nextAvatar, nextHash, badge, discordId, marks, marksHidden);
+        }
+
+        /**
+         * BADGES: the same player showing other badges (a {@code marks} frame); {@code hidden}: the player's own hidden ones
+         * ({@link MarkCatalog#hiddenAfterFrame}), null on everyone else's.
+         */
+        public Profile withMarks(List<String> next, @Nullable List<String> hidden) {
+            return new Profile(id, username, displayName, avatar, avatarHash, badge, discordId, next, hidden);
+        }
+
+        /** BADGES: what a change of the badges this player shows means for a row ({@link MarkCatalog#key}). */
+        public String marksKey() {
+            return MarkCatalog.key(marks);
         }
 
         /** The display name, else the username. */
@@ -373,6 +406,16 @@ public final class SocialModel {
         public Me withBadge(@Nullable Badge badge) {
             return new Me(profile.withBadge(badge), friendCode, status, shareServer, shareLastSeen, createdOn, limited, notices,
                     moderation, shareRead, shareTyping, chatPrivacy, identities, identitiesListed, signInVia, nameSource);
+        }
+
+        /**
+         * BADGES: the same account showing other badges and hiding others (a {@code marks} frame about the player).
+         * Everything else stays: when {@code Me} gains a field, it is passed on here too
+         * ({@code MarksTest.meWithMarksKeepsEveryOtherField}).
+         */
+        public Me withMarks(List<String> marks, @Nullable List<String> hidden) {
+            return new Me(profile.withMarks(marks, hidden), friendCode, status, shareServer, shareLastSeen, createdOn, limited,
+                    notices, moderation, shareRead, shareTyping, chatPrivacy, identities, identitiesListed, signInVia, nameSource);
         }
 
         /**
@@ -882,6 +925,11 @@ public final class SocialModel {
         public Member withBadge(@Nullable Badge badge) {
             return new Member(profile.withBadge(badge), founder, moderator, joinedAt);
         }
+
+        /** BADGES: the same member showing other badges. */
+        public Member withMarks(List<String> marks) {
+            return new Member(profile.withMarks(marks, profile.marksHidden), founder, moderator, joinedAt);
+        }
     }
 
     /** A crew's look and name (what invites and lookups show). */
@@ -1024,6 +1072,21 @@ public final class SocialModel {
             for (Member m : members) {
                 if (m.profile.id.equals(userId)) {
                     next.add(m.withBadge(badge));
+                    changed = true;
+                } else {
+                    next.add(m);
+                }
+            }
+            return changed ? new Team(this, code, createdOn, next, permissions, textLockedUntil, link, hidden, badgeRequests) : this;
+        }
+
+        /** BADGES: the same crew with one member showing other badges ({@code this} when they are not in it). */
+        public Team withMemberMarks(String userId, List<String> marks) {
+            List<Member> next = new ArrayList<>();
+            boolean changed = false;
+            for (Member m : members) {
+                if (m.profile.id.equals(userId)) {
+                    next.add(m.withMarks(marks));
                     changed = true;
                 } else {
                     next.add(m);

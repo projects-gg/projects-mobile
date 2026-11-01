@@ -642,6 +642,8 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
                     mHeaderTag.makeButton(badge, v -> BadgeCard.show(requireActivity(), friendId));
                 }
             }
+            // BADGES: the friend's first badge right of their name in the title (a title line: no list).
+            ProfileMarks.inline(mHeader.findViewById(R.id.projects_header_title), other, 16);
         }
         // FIX2: holding the title opens the friend's or the crew's menu (no "Mesaj gönder" / "Sohbeti aç" here).
         View title = mHeader.findViewById(R.id.projects_header_title);
@@ -1379,7 +1381,8 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
                 // The sender's name, face and tag (TalkBack reads the name in a direct conversation too): a row
                 // bound before the list came is bound again once they are known.
                 Profile p = state.profile(e.from(me));
-                content.append('|').append(p == null ? "" : p.name() + p.faceKey() + (badges && p.badge != null ? p.badge.key() : ""));
+                content.append('|').append(p == null ? "" : p.name() + p.faceKey() + (badges && p.badge != null ? p.badge.key() : "")
+                        + "|" + ProfileMarks.key(service, p));
             }
             if (e.deleted()) content.append('|').append(deletedText(context, e.tombstone, me, state));
             // CHAT2: the quote, the reactions, the card, "Görüldü", the rules the links are drawn by.
@@ -1782,6 +1785,8 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
             // It fades only when this sender's tag changes, never on a first or a reused row.
             tag.setBadgeOf(sender == null ? null : sender.id, sender == null ? null : BadgeRules.shown(service.gate(), sender.badge),
                     CrewTagChip.Size.SM);
+            // BADGES: the sender's first badge right of their name.
+            ProfileMarks.inline(name, sender, 12);
         }
 
         bindQuote(view, e, me);

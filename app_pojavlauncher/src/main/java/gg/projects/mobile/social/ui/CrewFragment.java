@@ -881,8 +881,8 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
                 rows.add(new Row(T_HEADER, "h-requests", text, counted(getString(R.string.projects_requests_title), requests.size())));
                 for (JoinRequest r : requests) {
                     rows.add(new Row(T_REQUEST, "r-" + team.id + "-" + r.from.id, r.from.name() + r.from.faceKey() + "|" + viaName(team, r) + "|"
-                            + PlanViews.ago(requireContext(), r.sentAt, now) + "|" + mRequestBusy.contains(team.id + "|" + r.from.id),
-                            new RequestRow(team.id, r)));
+                            + PlanViews.ago(requireContext(), r.sentAt, now) + "|" + mRequestBusy.contains(team.id + "|" + r.from.id)
+                            + "|" + ProfileMarks.key(service, r.from), new RequestRow(team.id, r)));
                 }
             }
         }
@@ -922,7 +922,8 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
                 // The player's own row shows their status (their presence is not sent to themselves).
                 String mine = m.profile.id.equals(state.myId()) && state.me() != null ? state.me().status : "";
                 rows.add(new Row(T_MEMBER, "m-" + m.profile.id, m.profile.name() + m.profile.faceKey() + m.founder + m.moderator
-                        + p.state + p.dnd + p.where + p.host + state.isFriend(m.profile.id) + mine + "|" + badgeKey(gate, m.profile.badge), m));
+                        + p.state + p.dnd + p.where + p.host + state.isFriend(m.profile.id) + mine + "|" + badgeKey(gate, m.profile.badge)
+                        + "|" + ProfileMarks.key(service, m.profile), m));
             }
         }
         if (!team.code.isEmpty()) rows.add(new Row(T_CODE, "code", team.code, team.code));
@@ -1577,6 +1578,8 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         avatar.setDimmed(false);
         ((TextView) view.findViewById(R.id.projects_person_name)).setText(request.from.name());
         ((CrewTagChip) view.findViewById(R.id.projects_person_tag)).setBadgeOf(null, null, CrewTagChip.Size.MD);
+        // BADGES: who asks, with their first badge right of their name.
+        ProfileMarks.inline(view.findViewById(R.id.projects_person_name), request.from, 14);
         view.findViewById(R.id.projects_person_badge).setVisibility(View.GONE);
         view.findViewById(R.id.projects_person_star).setVisibility(View.GONE);
         TextView line = view.findViewById(R.id.projects_person_line);
@@ -2190,6 +2193,9 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         SocialModel.Badge worn = BadgeRules.shown(service.gate(), member.profile.badge);
         ((CrewTagChip) view.findViewById(R.id.projects_person_tag)).setBadgeOf(member.profile.id, worn, CrewTagChip.Size.MD);
         CrewTagChip.labelName(name, worn);
+        // BADGES: the member's first badge right of their name, after "(Sen)" on the player's own row (as others see it);
+        // an offline member's at 70 % with their face.
+        ProfileMarks.inline(name, member.profile, 14, !me && !state.presence(member.profile.id).online(), worn);
         TextView badge = view.findViewById(R.id.projects_person_badge);
         // "Lider", "Moderatör": bone on the quiet plate (a role is a fact, not an action; TASTE-2).
         badge.setBackgroundResource(R.drawable.projects_social_badge);

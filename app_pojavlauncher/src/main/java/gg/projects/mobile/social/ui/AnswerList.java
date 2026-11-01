@@ -323,6 +323,8 @@ final class AnswerList {
         TextView text = new TextView(context);
         text.setText(name);
         CrewTagChip.labelName(text, worn);
+        // BADGES: their first badge right of their name (the player's own row says "Sen": none).
+        if (!me) ProfileMarks.inline(text, profile, 14, false, worn);
         text.setTextSize(14);
         text.setMaxLines(1);
         text.setEllipsize(android.text.TextUtils.TruncateAt.END);
