@@ -1,19 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- CHAT-CALM (1 November 2026): crew chat's slow mode and the crowded crew that starts muted, in the launcher's words
-     (apps/launcher/src/locales/en-chat-calm.ts; "Sesi aç" is projects_crew_unmute, "5 sn" projects_span_seconds). -->
+     (apps/launcher/src/locales/en-chat-calm.ts; "Sesi aç" is projects_crew_unmute, "5 s" projects_span_seconds). -->
 <resources>
     <!-- The crew chat's field when it is empty (the desktop's crew placeholder; direct messages keep projects_chat_hint). -->
     <string name="projects_chat_hint_crew">Write to your crew</string>
-    <!-- %1$s: the field's own hint, %2$s: the wait in short units ("30 s"). -->
-    <string name="projects_chat_calm_slow_hint">%1$s (slow mode: %2$s)</string>
-    <!-- Writing goes on meanwhile; only sending waits. -->
+    <!-- In the line over the field after the player's message; writing goes on meanwhile, only sending waits. -->
     <plurals name="projects_chat_calm_slow_wait">
         <item quantity="one">Wait %1$d second to send</item>
         <item quantity="other">Wait %1$d seconds to send</item>
     </plurals>
     <!-- A message the service held back (under its bubble). -->
     <string name="projects_chat_calm_slow_failure">Slow mode is on. Wait a moment.</string>
-    <!-- A send tried while the wait lasts (under the field, quiet: waiting is no error). -->
+    <!-- A send tried while the wait lasts (over the field, quiet: waiting is no error), and the send button's words then. -->
     <string name="projects_chat_calm_slow_on">Slow mode is on.</string>
     <!-- The crew page's box of the chat's rules (the leader and moderators). -->
     <string name="projects_chat_calm_chat_title">Chat</string>
@@ -26,7 +24,7 @@
     <!-- %1$s: projects_chat_calm_slow_span ("30 seconds"). -->
     <string name="projects_chat_calm_slow_on_line">Members wait %1$s between messages.</string>
     <string name="projects_chat_calm_slow_off_line">Members write without waiting.</string>
-    <!-- Said to TalkBack once the service took the pick; %1$s: "5 s". -->
+    <!-- %1$s: "5 s". The crew chat's rule over the field, and what TalkBack hears once the service took a leader's pick. -->
     <string name="projects_chat_calm_slow_set">Slow mode: %1$s</string>
     <string name="projects_chat_calm_slow_set_off">Slow mode is off</string>
     <!-- %1$s: the crew's name (no suffix). -->

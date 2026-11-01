@@ -2,7 +2,6 @@
 <!-- CHAT-CALM (1 November 2026): the launcher's apps/launcher/src/locales/tr-chat-calm.ts, word for word. -->
 <resources>
     <string name="projects_chat_hint_crew">Ekibine yaz</string>
-    <string name="projects_chat_calm_slow_hint">%1$s (yavaş mod: %2$s)</string>
     <plurals name="projects_chat_calm_slow_wait">
         <item quantity="one">Göndermek için %1$d saniye bekle</item>
         <item quantity="other">Göndermek için %1$d saniye bekle</item>

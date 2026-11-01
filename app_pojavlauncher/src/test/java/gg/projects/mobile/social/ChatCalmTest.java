@@ -141,37 +141,58 @@ public class ChatCalmTest {
     @Test
     public void theWaitCountsFromThePlayersNewestMessage() {
         ChatBook book = new ChatBook(ME);
-        book.apply(frame("chat", msg(T, MATE, "Selam")));
+        // The hub's clock is 5 s ahead of the phone's: the hub took the player's message at the phone's T - 3 s.
+        long offset = 5_000;
+        book.apply(frame("chat", msg(T - 10_000, MATE, "Selam")));
         book.apply(frame("chat", msg(T + 2_000, ME, "Geliyorum")));
         book.apply(frame("chat", msg(T + 9_000, LEAD, "Hadi")));
-        long offset = 5_000;
         List<ChatBook.Entry> entries = book.entries(CHAT);
+        long now = T + 1_000;
         // The hub's time in the phone's clock, a second later (its clock comes in whole seconds).
-        long sent = T + 2_000 - offset + SlowMode.CLOCK_MARGIN_MS;
-        assertEquals(sent + 10_000, SlowMode.until(entries, ME, 10, offset, 0, 0, 0));
-        assertEquals("nothing waits without a slow mode", 0, SlowMode.until(entries, ME, 0, offset, 0, 0, 0));
-        assertEquals("nor for someone with no message here", 0, SlowMode.until(entries, MOD, 10, offset, 0, 0, 0));
-        // The message this phone sent counts from when its answer came.
-        assertEquals(T + 1_000 + 10_000, SlowMode.until(entries, ME, 10, offset, T + 2_000, T + 1_000, 0));
-        // A message sent from here without an answer yet counts from when it went.
-        assertEquals(T + 20_000 + 10_000, SlowMode.until(entries, ME, 10, offset, T + 2_000, T + 1_000, T + 20_000));
+        long converted = T + 2_000 - offset + SlowMode.CLOCK_MARGIN_MS;
+        assertEquals(converted + 10_000, SlowMode.until(entries, ME, 10, offset, 0, 0, 0, now));
+        assertEquals("nothing waits without a slow mode", 0, SlowMode.until(entries, ME, 0, offset, 0, 0, 0, now));
+        assertEquals("nor for someone with no message here", 0, SlowMode.until(entries, MOD, 10, offset, 0, 0, 0, now));
+        // The message this phone sent counts from when its answer came (200 ms after the hub took it).
+        assertEquals(T - 2_800 + 10_000, SlowMode.until(entries, ME, 10, offset, T + 2_000, T - 2_800, 0, now));
+        // A resend answered with a message taken long before counts from the message, not from the late answer.
+        assertEquals(converted + 10_000, SlowMode.until(entries, ME, 10, offset, T + 2_000, T + 40_000, 0, T + 41_000));
+        // An answer without its message counts from when it came.
+        assertEquals(T + 20_000 + 10_000, SlowMode.until(entries, ME, 10, offset, 0, 0, T + 20_000, T + 21_000));
     }
 
     @Test
-    public void aMessageOnItsWayCountsAFailedOneDoesNot() {
+    public void aClockBehindTheHubsNeverMakesTheWaitLonger() {
+        ChatBook book = new ChatBook(ME);
+        // Before the first hello the offset is 0, while the hub is five minutes ahead: the message cannot be newer than now.
+        book.apply(frame("chat", msg(T + 300_000, ME, "Selam")));
+        assertEquals(T + 1_000 + 10_000, SlowMode.until(book.entries(CHAT), ME, 10, 0, 0, 0, 0, T + 1_000));
+    }
+
+    @Test
+    public void aMessageNotGoneYetHoldsTheWaitAFailedOneDoesNot() {
         ChatBook book = new ChatBook(ME);
         book.apply(frame("chat", msg(T, ME, "Bir")));
         ChatBook.Outbox waiting = book.write(CHAT, "İki", "n1", T + 30_000);
-        assertEquals(T + 30_000 + 5_000, SlowMode.until(book.entries(CHAT), ME, 5, 0, 0, 0, 0));
-        book.sending(waiting.nonce, T + 30_000);
-        book.notSent(waiting.nonce, "chat_rejected", "words", 0, T + 30_100);
+        assertEquals(T + 30_000 + 5_000, SlowMode.until(book.entries(CHAT), ME, 5, 0, 0, 0, 0, T + 30_000));
+        // Written offline, it has not gone a minute later: the wait does not run down before it goes.
+        assertEquals(T + 90_000 + 5_000, SlowMode.until(book.entries(CHAT), ME, 5, 0, 0, 0, 0, T + 90_000));
+        book.sending(waiting.nonce, T + 90_000);
+        assertEquals("on its way: the same", T + 90_500 + 5_000, SlowMode.until(book.entries(CHAT), ME, 5, 0, 0, 0, 0, T + 90_500));
+        book.notSent(waiting.nonce, "chat_rejected", "words", 0, T + 90_600);
         assertEquals("the failed one does not count", T + SlowMode.CLOCK_MARGIN_MS + 5_000,
-                SlowMode.until(book.entries(CHAT), ME, 5, 0, 0, 0, 0));
+                SlowMode.until(book.entries(CHAT), ME, 5, 0, 0, 0, 0, T + 90_600));
         // Held back until a moment (a short rate limit, a retry during the wait): it goes then, the wait counts from there.
-        ChatBook.Outbox held = book.write(CHAT, "Üç", "n2", T + 40_000);
-        book.sending(held.nonce, T + 40_000);
-        book.notSent(held.nonce, "rate_limited", null, 3, T + 40_000);
-        assertEquals(T + 43_000 + 5_000, SlowMode.until(book.entries(CHAT), ME, 5, 0, 0, 0, 0));
+        ChatBook.Outbox held = book.write(CHAT, "Üç", "n2", T + 100_000);
+        book.sending(held.nonce, T + 100_000);
+        book.notSent(held.nonce, "rate_limited", null, 3, T + 100_000);
+        assertEquals(T + 103_000 + 5_000, SlowMode.until(book.entries(CHAT), ME, 5, 0, 0, 0, 0, T + 100_100));
+        // Taken by the hub without its message (it comes with the next sync): from when it was written, at most now.
+        ChatBook.Outbox taken = book.write(CHAT, "Dört", "n3", T + 110_000);
+        book.sending(taken.nonce, T + 110_000);
+        book.sent(taken.nonce, null);
+        book.discard("n2");
+        assertEquals(T + 110_000 + 5_000, SlowMode.until(book.entries(CHAT), ME, 5, 0, 0, 0, 0, T + 120_000));
     }
 
     @Test
@@ -186,7 +207,7 @@ public class ChatCalmTest {
         book.apply(gone);
         assertNotNull(book.entries(CHAT).get(0).tombstone);
         assertEquals("the hub still remembers it", T + SlowMode.CLOCK_MARGIN_MS + 30_000,
-                SlowMode.until(book.entries(CHAT), ME, 30, 0, 0, 0, 0));
+                SlowMode.until(book.entries(CHAT), ME, 30, 0, 0, 0, 0, T + 5_000));
     }
 
     @Test

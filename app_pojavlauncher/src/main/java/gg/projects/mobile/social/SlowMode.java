@@ -57,31 +57,33 @@ public final class SlowMode {
 
     /**
      * When the player may send again (the phone's ms), or 0: {@code slowSeconds} after their newest message in the
-     * conversation. A message on its way counts from when it was written, or from when it may go when it is held back
-     * (a retry during the wait); a failed one not at all. A sent message (or one deleted since, which the hub still
-     * remembers) counts from its hub time in the phone's clock ({@code hubOffsetMs}: the hub's clock minus the phone's)
-     * and {@link #CLOCK_MARGIN_MS}; the one the hub took last from this phone ({@code anchorId}, 0: none) counts from
-     * when its answer came ({@code anchorAtMs}), which is never before the hub took it, and one sent from this phone
-     * without an answer yet from when it went ({@code sentAtMs}, 0: none).
+     * conversation. A message that has not gone yet (written offline, on its way, held back until a moment) counts from
+     * when it can go at the earliest, {@code nowMs} or later, so nothing written meanwhile reaches the hub too soon; a
+     * failed one not at all. A sent message (or one deleted since, which the hub still remembers) counts from its hub
+     * time in the phone's clock ({@code hubOffsetMs}: the hub's clock minus the phone's) and {@link #CLOCK_MARGIN_MS},
+     * never later than now; the one the hub took last from this phone ({@code anchorId}, 0: none) from when its answer
+     * came ({@code anchorAtMs}) when that is earlier (a resend answered with a message taken long before is not), and an
+     * answer without its message from when it came ({@code sentAtMs}, 0: none). Every one of these is a moment at or
+     * after the hub took the message: the wait never ends early.
      */
     public static long until(List<ChatBook.Entry> entries, @Nullable String me, int slowSeconds, long hubOffsetMs,
-                             long anchorId, long anchorAtMs, long sentAtMs) {
+                             long anchorId, long anchorAtMs, long sentAtMs, long nowMs) {
         if (slowSeconds <= 0 || me == null) return 0;
-        long newest = sentAtMs > 0 ? sentAtMs : Long.MIN_VALUE;
+        long newest = sentAtMs > 0 ? Math.min(sentAtMs, nowMs) : Long.MIN_VALUE;
         for (ChatBook.Entry e : entries) {
             long at;
             if (e.outbox != null) {
                 if (e.outbox.state == ChatBook.Outbox.State.FAILED) continue;
-                at = e.outbox.createdAt;
-                // Held back until then (Long.MAX_VALUE: the hub took it, its message comes with the next sync).
                 long notBefore = e.outbox.notBefore;
-                if (notBefore > at && notBefore != Long.MAX_VALUE) at = notBefore;
+                // Long.MAX_VALUE: the hub took it already (its message comes with the next sync).
+                at = notBefore == Long.MAX_VALUE ? Math.min(e.outbox.createdAt, nowMs)
+                        : Math.max(Math.max(e.outbox.createdAt, notBefore), nowMs);
             } else if (e.message != null) {
                 if (!me.equals(e.message.from)) continue;
-                at = hubToPhone(e.message.id, hubOffsetMs, anchorId, anchorAtMs);
+                at = hubToPhone(e.message.id, hubOffsetMs, anchorId, anchorAtMs, nowMs);
             } else if (e.tombstone != null) {
                 if (!me.equals(e.tombstone.from)) continue;
-                at = hubToPhone(e.tombstone.id, hubOffsetMs, anchorId, anchorAtMs);
+                at = hubToPhone(e.tombstone.id, hubOffsetMs, anchorId, anchorAtMs, nowMs);
             } else {
                 continue;
             }
@@ -90,9 +92,10 @@ public final class SlowMode {
         return newest == Long.MIN_VALUE ? 0 : newest + slowSeconds * 1000L;
     }
 
-    private static long hubToPhone(long hubMs, long hubOffsetMs, long anchorId, long anchorAtMs) {
-        if (anchorId != 0 && hubMs == anchorId) return anchorAtMs;
-        return hubMs - hubOffsetMs + CLOCK_MARGIN_MS;
+    private static long hubToPhone(long hubMs, long hubOffsetMs, long anchorId, long anchorAtMs, long nowMs) {
+        long converted = Math.min(hubMs - hubOffsetMs + CLOCK_MARGIN_MS, nowMs);
+        if (anchorId != 0 && hubMs == anchorId) return Math.min(anchorAtMs, converted);
+        return converted;
     }
 
     /** Whole seconds left, rounded up; 0 once the player may send. */

@@ -177,8 +177,9 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
     private boolean mTagsBusy;
     /**
      * CHAT-CALM: the slow mode the box shows while the player's pick is on its way to the service ({@link #mSlowCrew}'s;
-     * null: the crew's own), a pick made meanwhile (it goes after the answer: one change at a time, answers in order),
-     * and whether one is on its way.
+     * null: the crew's own), a pick made meanwhile and its crew (it goes after the answer: one change at a time, answers
+     * in order), and since when one is on its way (elapsed ms; 0: none; an answer that never comes, as after an account
+     * change, stops counting after {@link #SLOW_LOST_MS}).
      */
     @Nullable
     private Integer mSlowPending;
@@ -186,7 +187,10 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
     private String mSlowCrew;
     @Nullable
     private Integer mSlowNext;
-    private boolean mSlowBusy;
+    @Nullable
+    private String mSlowNextCrew;
+    private long mSlowBusySince;
+    private static final long SLOW_LOST_MS = 30_000;
     /** M21: crews "+" shows the player's waiting request to (its card, their list): one that comes is shown. */
     private final java.util.Set<String> mAwaiting = new java.util.HashSet<>();
     /** FIX2: plans and calls whose answers are open ("Kimler geliyor"), and groups that show everyone. */
@@ -2316,36 +2320,40 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         return built != null && built.getTag() instanceof SlowBox ? (SlowBox) built.getTag() : null;
     }
 
+    private boolean slowBusy() {
+        return mSlowBusySince != 0 && android.os.SystemClock.elapsedRealtime() - mSlowBusySince < SLOW_LOST_MS;
+    }
+
     private void pickSlow(String crewId, int seconds) {
         if (!isAdded()) return;
         Crew crew = SocialService.get(requireContext()).state().crew(crewId);
-        if (crew == null) return;
+        // The step already shown (a press on the chosen segment) sends nothing.
+        if (crew == null || seconds == slowShown(crew.team)) return;
         mSlowCrew = crewId;
         mSlowPending = seconds;
-        // The segment is chosen already; the line says what it means now.
+        // The segment is chosen already; the line says what it means now, and the row's content follows what the box
+        // shows (a refusal then brings the crew's own setting back through the list).
         SlowBox box = slowBox();
         if (box != null && box.crew.equals(crewId)) showSlowLine(box, seconds);
-        if (mSlowBusy) {
+        render();
+        if (slowBusy()) {
             mSlowNext = seconds;
+            mSlowNextCrew = crewId;
             return;
         }
         sendSlow(crewId, seconds);
     }
 
     private void sendSlow(final String crewId, final int seconds) {
-        mSlowBusy = true;
+        mSlowBusySince = android.os.SystemClock.elapsedRealtime();
         final FragmentActivity activity = requireActivity();
         SocialService.get(activity).setCrewSlow(crewId, seconds, new SocialService.Result<JsonObject>() {
             @Override
             public void ok(JsonObject value) {
-                mSlowBusy = false;
-                Integer next = mSlowNext;
-                mSlowNext = null;
-                if (next != null && next != seconds && isAdded()) {
-                    sendSlow(crewId, next);
-                    return;
-                }
+                mSlowBusySince = 0;
+                if (sendNextSlow()) return;
                 mSlowPending = null;
+                mSlowCrew = null;
                 if (!isAdded()) return;
                 View page = getView();
                 if (page != null) {
@@ -2358,14 +2366,33 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
 
             @Override
             public void failed(SocialProblem problem) {
-                mSlowBusy = false;
-                mSlowNext = null;
-                mSlowPending = null;
+                mSlowBusySince = 0;
                 SocialUi.toastProblem(activity, problem, null);
-                // The box shows the crew's setting again, in place.
+                // A pick on the same crew made meanwhile goes with the refused one; one on another crew still goes.
+                if (crewId.equals(mSlowNextCrew)) {
+                    mSlowNext = null;
+                    mSlowNextCrew = null;
+                }
+                if (sendNextSlow()) return;
+                mSlowPending = null;
+                mSlowCrew = null;
+                // The box shows the crew's setting again, in place (its line fading back).
                 if (isAdded()) render();
             }
         });
+    }
+
+    /** Sends the pick made while a change was on its way, unless its crew has it already; true when it went. */
+    private boolean sendNextSlow() {
+        Integer next = mSlowNext;
+        String crewId = mSlowNextCrew;
+        mSlowNext = null;
+        mSlowNextCrew = null;
+        if (next == null || crewId == null || !isAdded()) return false;
+        Crew crew = SocialService.get(requireContext()).state().crew(crewId);
+        if (crew == null || next == SlowMode.step(crew.team.slow)) return false;
+        sendSlow(crewId, next);
+        return true;
     }
 
     private int indexOfRow(String id) {

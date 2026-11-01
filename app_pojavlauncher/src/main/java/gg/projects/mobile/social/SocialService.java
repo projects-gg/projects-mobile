@@ -1876,7 +1876,8 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
                     break;
                 }
                 case REQUEST_ACCEPTED:
-                    if (foreground && notice.teamName != null && gate().teams) {
+                    // CHAT-CALM: a crowded crew's notice (with "Sesi aç") said it already.
+                    if (foreground && notice.teamName != null && gate().teams && !crowdedSaid(notice.crewId)) {
                         SocialUi.toastLong(context, context.getString(R.string.projects_crew_joined, notice.teamName));
                     }
                     break;
@@ -1911,10 +1912,12 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
                     break;
                 case CROWDED: {
                     // CHAT-CALM: "Gece Kartalları kalabalık, bu yüzden senin için sessize alındı." with "Sesi aç" (the
-                    // desktop's toast); the crew's bell says it anyway when the app is away.
+                    // desktop's toast); the crew's bell says it anyway when the app is away. The join's own line
+                    // ("… ekibine katıldın") would take its place (one line at a time): it stays away for a while.
                     if (!foreground || notice.crewId == null || notice.teamName == null || !gate().teams) break;
                     final String crewId = notice.crewId;
                     final Context shown = context;
+                    mCrowdedSaid.put(crewId, android.os.SystemClock.elapsedRealtime());
                     SocialUi.toastAction(context, context.getString(R.string.projects_chat_calm_crowded, notice.teamName),
                             context.getString(R.string.projects_crew_unmute), () -> unmuteCrew(crewId, new Result<TeamNotifications>() {
                                 @Override
@@ -2307,6 +2310,20 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
             MyRequest mine = MyRequest.read(Json.obj(answer, "request"));
             if (mine != null) mState.addMyRequest(mine);
         });
+    }
+
+    /** CHAT-CALM: when a crowded crew's notice showed (crew id → elapsed ms), so a join's own line does not replace it. */
+    private final Map<String, Long> mCrowdedSaid = new HashMap<>();
+    private static final long CROWDED_SAID_MS = 10_000;
+
+    /**
+     * CHAT-CALM: the crowded-crew notice of {@code crewId} showed in the last few seconds: the join's own line ("Gece
+     * Kartalları ekibine katıldın", one line at a time) would take its place and its "Sesi aç", so it stays away. The
+     * socket's word comes before the join's answer.
+     */
+    public boolean crowdedSaid(@Nullable String crewId) {
+        Long at = crewId == null ? null : mCrowdedSaid.get(crewId);
+        return at != null && android.os.SystemClock.elapsedRealtime() - at < CROWDED_SAID_MS;
     }
 
     /**

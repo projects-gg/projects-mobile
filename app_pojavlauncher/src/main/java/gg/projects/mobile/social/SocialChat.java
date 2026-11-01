@@ -117,8 +117,8 @@ public final class SocialChat {
     private final Set<String> mLookingUp = new HashSet<>();
     /**
      * CHAT-CALM: per conversation, the hub's id of the player's message it took last from this phone and when its answer
-     * came (the phone's ms), and when a message went from here without an answer yet: the slow mode counts from there
-     * ({@link SlowMode#until}).
+     * came (the phone's ms), and when an answer came without its message: the slow mode counts from there
+     * ({@link SlowMode#until}; a message not answered yet counts from now).
      */
     private final Map<String, long[]> mOwnAcks = new HashMap<>();
     private final Map<String, Long> mSentAt = new HashMap<>();
@@ -405,7 +405,7 @@ public final class SocialChat {
         long[] ack = mOwnAcks.get(conv);
         Long sentAt = mSentAt.get(conv);
         return SlowMode.until(mBook.entries(conv), state.myId(), slow, offsetMs, ack == null ? 0 : ack[0], ack == null ? 0 : ack[1],
-                sentAt == null ? 0 : sentAt);
+                sentAt == null ? 0 : sentAt, System.currentTimeMillis());
     }
 
     /** CHAT-CALM: the slow mode still waits in {@code conv} (a new message is not written down yet). */
@@ -502,15 +502,11 @@ public final class SocialChat {
         mSending = true;
         JsonObject frame = mBook.frameOf(o);
         mBook.sending(o.nonce, now);
-        // CHAT-CALM: a crew's slow mode counts from here until the hub's answer says when it took the message.
-        final Long sentAt = now;
-        mSentAt.put(o.conv, sentAt);
         mHost.changed();
         connection.request(frame, answer -> {
             mSending = false;
             if (mBook == null) return;
             long at = System.currentTimeMillis();
-            if (sentAt.equals(mSentAt.get(o.conv))) mSentAt.remove(o.conv);
             if (answer == null) {
                 mBook.notSent(o.nonce, "unavailable", null, 0, at);
                 mHost.changed();
@@ -519,9 +515,11 @@ public final class SocialChat {
             }
             if ("ack".equals(Json.str(answer, "t"))) {
                 mBook.setReactionsTaken(offers(SocialModel.ChatState.REACTIONS));
+                // CHAT-CALM: a crew's slow mode counts from the answer (never before the hub took the message).
                 JsonObject msg = Json.obj(answer, "msg");
                 long id = (long) Json.num(msg, "id", 0);
                 if (id > 0) mOwnAcks.put(o.conv, new long[]{id, at});
+                else mSentAt.put(o.conv, at);
                 mBook.sent(o.nonce, msg);
             } else {
                 String code = Json.str(answer, "code", "bad_request");
