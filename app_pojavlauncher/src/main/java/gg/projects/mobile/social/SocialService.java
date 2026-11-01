@@ -8,6 +8,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.util.Log;
 
 import androidx.annotation.MainThread;
@@ -91,6 +92,8 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     private static final long BACKGROUND_GRACE_MS = 10_000;
     /** "Tekrar dene" waits this long between tries (the desktop's 10 s). */
     private static final long RETRY_GAP_MS = 10_000;
+    /** BADGES: a change of the player's own badges is taken as on its way this long (its answer brings the profile). */
+    private static final long MARKS_SENDING_MS = 20_000;
 
     public interface Listener {
         @MainThread
@@ -191,6 +194,10 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     private final RelVersion mRel = new RelVersion();
     /** M048 (SOC-DISK): the list's answer kept for the next start the same day. */
     private final KeptLists mKept;
+    /** BADGES: the badge catalogue the screens draw with ({@link #marks()}) and when it is read again. */
+    private final MarkBook mMarks = new MarkBook();
+    /** BADGES: when the player last sent a change of their own badges (elapsed ms; the profile is not read meanwhile). */
+    private long mMarksSentAt = Long.MIN_VALUE / 2;
     /**
      * M048: a start reads the lists an earlier start kept today (a few milliseconds of disk, off the main thread); the
      * socket and the reads wait for it, so the connect names its version and nothing is read twice.
@@ -527,9 +534,101 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         caps.add("plans");
         // TEAM6: crew tag changes, live (the same reasoning).
         caps.add("badges");
+        // BADGES: profile badges, live: "marks" is SOC-VERIFY's single mark, "marks2" every badge and the catalogue's
+        // revision (a service with both sends only the newer frames).
+        caps.add("marks");
+        caps.add("marks2");
         // AFKPLUS-M: 7/24 Bulut's notices on the socket ("afk_notice"; a service without them ignores the name).
         caps.add("afk");
         return caps;
+    }
+
+    // ---- profile badges (BADGES) ----
+
+    /**
+     * The badge catalogue to draw with: the built-in one until the copy kept on the phone is read (the first call reads
+     * it, off the main thread, and the screens hear when it is in), then the service's when it names another one.
+     */
+    @MainThread
+    public MarkCatalog marks() {
+        if (mMarks.takeLoad()) loadMarks();
+        return mMarks.catalog();
+    }
+
+    private MarkStore markStore() {
+        return new MarkStore(new java.io.File(mApp.getNoBackupFilesDir(),
+                mDebug.override ? "projects-social/marks-debug.json" : "projects-social/marks.json"));
+    }
+
+    @MainThread
+    private void loadMarks() {
+        final MarkStore store = markStore();
+        mIo.execute(() -> {
+            final MarkStore.Kept kept = store.load();
+            mMain.post(() -> {
+                boolean read = mMarks.loaded(kept);
+                if (kept != null) changed();
+                if (read) readMarks();
+            });
+        });
+    }
+
+    /** A fresh list named the catalogue's revision (null: a service before badges) and the badges it shows. */
+    @MainThread
+    private void marksListed(@Nullable Long rev) {
+        if (rev == null) return;
+        marks();
+        if (mMarks.named(rev)) readMarks();
+        if (mMarks.saw(mState.markKeys(), SystemClock.elapsedRealtime())) readMarks();
+    }
+
+    /** {@code markdefs} (a new catalogue), {@code marks} and {@code mark} (someone's badges; applied before this). */
+    @MainThread
+    private void onMarksFrame(String type, JsonObject message) {
+        if (type.equals("markdefs")) {
+            Long rev = Json.numOrNull(message, "rev");
+            marks();
+            if (rev != null && mMarks.named(rev)) readMarks();
+            return;
+        }
+        if (mMarks.saw(MarkCatalog.keysOf(message), SystemClock.elapsedRealtime())) readMarks();
+        // One of the player's shown badges went on another device (or Studio took it): the profile says which, read
+        // again unless the change is this phone's own, still on its way (its answer says).
+        if (mState.takeMyMarksUnsure() && SystemClock.elapsedRealtime() - mMarksSentAt > MARKS_SENDING_MS) refreshMeOnly();
+    }
+
+    /** One read of {@code GET /v1/marks} at a time (MarkBook's rules); a new catalogue is kept on the phone. */
+    @MainThread
+    private void readMarks() {
+        final String etag = mMarks.begin();
+        final MarkStore store = markStore();
+        mIo.execute(() -> {
+            MarkStore.Kept read = null;
+            try {
+                read = mApi.markCatalog(etag);
+                if (read != null) store.save(read.catalog, read.etag);
+            } catch (SocialProblem problem) {
+                // The catalogue held stays; the next list read or frame that asks tries again.
+            }
+            final MarkStore.Kept answer = read;
+            mMain.post(() -> {
+                boolean again = mMarks.ended(answer);
+                if (answer != null) changed();
+                if (again) readMarks();
+            });
+        });
+    }
+
+    /**
+     * Shows ({@code show}) or hides one of the player's own badges on their profile ("Rozetler"): the whole hidden list
+     * goes ({@code PATCH /v1/me {marksHidden}}), keys this version cannot draw included, so none of them shows again.
+     */
+    @MainThread
+    public void setMarkShown(String key, boolean show, Result<JsonObject> result) {
+        Me me = mState.me();
+        List<String> hidden = MarkCatalog.hiddenAfter(me == null ? null : me.profile.marksHidden, key, show);
+        mMarksSentAt = SystemClock.elapsedRealtime();
+        patchMe(MarkCatalog.hiddenBody(hidden), result);
     }
 
     @MainThread
@@ -612,6 +711,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
             forgetRel();
         }
         List<SocialState.Notice> notices = mState.apply(message, now);
+        if (type.equals("marks") || type.equals("mark") || type.equals("markdefs")) onMarksFrame(type, message);
         if (type.equals("team_notifications") || type.equals("hello")) mPrefs.setCrewSettings(mState.teamNotifications());
         if (type.equals("team") || type.equals("crew_order")) rememberCrewNames();
         if (type.equals("team")) {
@@ -746,6 +846,8 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
                     }
                     List<String> order = mOrderSent;
                     mState.applyFriends(FriendsData.read(friends));
+                    // BADGES: the answer names the badge catalogue's revision (read again when it moved).
+                    marksListed(Json.numOrNull(friends, "marksRev"));
                     // An order the player just chose wins over a list read before it reached the service.
                     if (order != null) mState.setCrewOrder(order);
                     // M048: the version is held only when the copy is exactly this answer (no change since the read

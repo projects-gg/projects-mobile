@@ -288,6 +288,31 @@ public final class MarkCatalog {
         return next;
     }
 
+    /**
+     * The player's hidden badges after a frame says what they show now: one that shows is not hidden (shown again on
+     * another device, so a list sent later does not hide it again); one that showed and went reads as hidden, the usual
+     * reason, until the profile read again says ({@link #wentUnsaid}). Null stays null: a service before badges.
+     */
+    @Nullable
+    public static List<String> hiddenAfterFrame(List<String> shownBefore, @Nullable List<String> hidden,
+                                                List<String> shownNow) {
+        if (hidden == null) return null;
+        List<String> next = new ArrayList<>();
+        for (String key : hidden) if (!shownNow.contains(key)) next.add(key);
+        for (String key : shownBefore) if (!shownNow.contains(key) && !next.contains(key)) next.add(key);
+        return Collections.unmodifiableList(next);
+    }
+
+    /**
+     * Whether a frame took away a badge the player showed that their hidden list does not name (hidden on another device,
+     * or taken by Studio or a Discord role): only the profile says which. False without a hidden list.
+     */
+    public static boolean wentUnsaid(List<String> shownBefore, @Nullable List<String> hidden, List<String> shownNow) {
+        if (hidden == null) return false;
+        for (String key : shownBefore) if (!shownNow.contains(key) && !hidden.contains(key)) return true;
+        return false;
+    }
+
     /** {@code PATCH /v1/me}: {@code {"marksHidden": [...]}} (unknown keys are ignored there, {@code []} shows all). */
     public static JsonObject hiddenBody(List<String> hidden) {
         JsonArray list = new JsonArray();

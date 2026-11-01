@@ -190,6 +190,20 @@ public final class SocialApi {
         return new CrewDetails.Detail(CrewDetails.Detail.Status.OK, answer.etag, team);
     }
 
+    /**
+     * BADGES: the badge catalogue, {@code GET /v1/marks} (no session: it is public; ETag {@code "<rev>"}). {@code etag}
+     * goes as {@code If-None-Match}: null when the catalogue is still that one (304), else the catalogue and its ETag.
+     */
+    @Nullable
+    @WorkerThread
+    public MarkStore.Kept markCatalog(@Nullable String etag) throws SocialProblem {
+        Answer answer = exchange("GET", "v1/marks", null, false, false, etag);
+        if (answer.status == 304) return null;
+        MarkCatalog catalog = MarkCatalog.read(answer.json);
+        if (catalog == null) throw SocialProblem.unavailable("not a badge catalogue");
+        return new MarkStore.Kept(catalog, MarkStore.etag(answer.etag));
+    }
+
     @WorkerThread
     public JsonObject lookup(String code) throws SocialProblem {
         return require(send("POST", "v1/friends/lookup", codeBody(code), true, false));

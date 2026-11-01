@@ -103,9 +103,12 @@ public final class SocialModel {
             return new Profile(id, username, displayName, nextAvatar, nextHash, badge, marks, marksHidden);
         }
 
-        /** BADGES: the same player showing other badges (a {@code marks} frame); the hidden ones stay as they were. */
-        public Profile withMarks(List<String> next) {
-            return new Profile(id, username, displayName, avatar, avatarHash, badge, next, marksHidden);
+        /**
+         * BADGES: the same player showing other badges (a {@code marks} frame); {@code hidden}: the player's own hidden ones
+         * ({@link MarkCatalog#hiddenAfterFrame}), null on everyone else's.
+         */
+        public Profile withMarks(List<String> next, @Nullable List<String> hidden) {
+            return new Profile(id, username, displayName, avatar, avatarHash, badge, next, hidden);
         }
 
         /** BADGES: what a change of the badges this player shows means for a row ({@link MarkCatalog#key}). */
@@ -316,12 +319,13 @@ public final class SocialModel {
         }
 
         /**
-         * BADGES: the same account showing other badges (a {@code marks} frame about the player). Everything else stays:
-         * when {@code Me} gains a field, it is passed on here too ({@code MarksTest.meWithMarksKeepsEveryOtherField}).
+         * BADGES: the same account showing other badges and hiding others (a {@code marks} frame about the player).
+         * Everything else stays: when {@code Me} gains a field, it is passed on here too
+         * ({@code MarksTest.meWithMarksKeepsEveryOtherField}).
          */
-        public Me withMarks(List<String> marks) {
-            return new Me(profile.withMarks(marks), friendCode, status, shareServer, shareLastSeen, createdOn, limited, notices,
-                    moderation, shareRead, shareTyping, chatPrivacy);
+        public Me withMarks(List<String> marks, @Nullable List<String> hidden) {
+            return new Me(profile.withMarks(marks, hidden), friendCode, status, shareServer, shareLastSeen, createdOn, limited,
+                    notices, moderation, shareRead, shareTyping, chatPrivacy);
         }
     }
 
@@ -721,7 +725,7 @@ public final class SocialModel {
 
         /** BADGES: the same member showing other badges. */
         public Member withMarks(List<String> marks) {
-            return new Member(profile.withMarks(marks), founder, moderator, joinedAt);
+            return new Member(profile.withMarks(marks, profile.marksHidden), founder, moderator, joinedAt);
         }
     }
 

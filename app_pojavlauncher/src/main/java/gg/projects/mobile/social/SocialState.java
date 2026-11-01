@@ -97,6 +97,8 @@ public final class SocialState {
     private boolean mPlansKnown;
     /** TEAM6: who joined the player's crews while the app ran (the crew chat's local "Hoş geldin" lines), oldest first. */
     private final List<CrewJoin> mJoins = new ArrayList<>();
+    /** BADGES: a frame took one of the player's shown badges away and the profile does not say it is hidden. */
+    private boolean mMyMarksUnsure;
 
     /** TEAM6: someone (or the player) came into one of the player's crews, at {@code at} (Unix seconds, the phone's clock). */
     public static final class CrewJoin {
@@ -717,6 +719,8 @@ public final class SocialState {
 
     public void setMe(@Nullable Me me) {
         mMe = me;
+        // BADGES: the player's own badges show the same in their crews' lists (hiding one, showing it again).
+        if (me != null) applyMarks(me.profile.id, me.profile.marks);
     }
 
     /** A new {@code GET /v1/friends}: it replaces the lists; presence keeps what the socket said. */
@@ -1170,6 +1174,9 @@ public final class SocialState {
             case "mark": {
                 // BADGES: a friend's, a crewmate's or the player's own badges changed: every badge they show now
                 // ({@code marks}); a service before badges says SOC-VERIFY's one {@code mark} (MarkCatalog.keysOf).
+                // One that speaks marks2 never sends "mark" to this socket; if one came, its single mark would take
+                // the other badges away (the desktop drops it too).
+                if (type.equals("mark") && mCaps.contains("marks2")) break;
                 String id = Json.str(message, "id");
                 if (SocialModel.isUserId(id)) applyMarks(id, MarkCatalog.keysOf(message));
                 break;
@@ -1370,7 +1377,7 @@ public final class SocialState {
     void applyMarks(String userId, List<String> marks) {
         Friend f = mFriends.get(userId);
         if (f != null && !f.profile.marks.equals(marks)) {
-            mFriends.put(userId, new Friend(f.profile.withMarks(marks), f.since, f.lastSeen));
+            mFriends.put(userId, new Friend(f.profile.withMarks(marks, f.profile.marksHidden), f.since, f.lastSeen));
         }
         for (int i = 0; i < mCrews.size(); i++) {
             Crew c = mCrews.get(i);
@@ -1378,12 +1385,46 @@ public final class SocialState {
             if (m == null || m.profile.marks.equals(marks)) continue;
             mCrews.set(i, c.withTeam(c.team.withMemberMarks(userId, marks)));
         }
-        if (mMe != null && mMe.profile.id.equals(userId) && !mMe.profile.marks.equals(marks)) mMe = mMe.withMarks(marks);
+        if (mMe != null && mMe.profile.id.equals(userId) && !mMe.profile.marks.equals(marks)) {
+            // A badge the player showed and that went was hidden on another device or taken: it reads as hidden until
+            // the profile, read again, says which (MarkCatalog.hiddenAfterFrame); one shown again is no longer hidden.
+            Profile before = mMe.profile;
+            if (MarkCatalog.wentUnsaid(before.marks, before.marksHidden, marks)) mMyMarksUnsure = true;
+            mMe = mMe.withMarks(marks, MarkCatalog.hiddenAfterFrame(before.marks, before.marksHidden, marks));
+        }
     }
 
     /** BADGES: the player's own badges as an answer of theirs says them (hiding one, showing it again). */
     public void setMyMarks(List<String> marks) {
         if (mMe != null) applyMarks(mMe.profile.id, marks);
+    }
+
+    /**
+     * BADGES: true once after a frame took one of the player's shown badges away without the profile saying it is
+     * hidden: the profile is read again ({@code GET /v1/me}) so "Rozetler" lists it right.
+     */
+    public boolean takeMyMarksUnsure() {
+        boolean unsure = mMyMarksUnsure;
+        mMyMarksUnsure = false;
+        return unsure;
+    }
+
+    /**
+     * BADGES: every badge key the people on these lists show (friends, requests, crewmates, join requests, crew invites,
+     * the player): a key the catalogue does not know means a newer catalogue (MarkBook.saw).
+     */
+    public Set<String> markKeys() {
+        Set<String> keys = new HashSet<>();
+        if (mMe != null) keys.addAll(mMe.profile.marks);
+        for (Friend f : mFriends.values()) keys.addAll(f.profile.marks);
+        for (Request r : mIncoming) keys.addAll(r.profile.marks);
+        for (Request r : mOutgoing) keys.addAll(r.profile.marks);
+        for (Crew c : mCrews) {
+            for (Member m : c.team.members) keys.addAll(m.profile.marks);
+            for (JoinRequest r : c.requests) keys.addAll(r.from.marks);
+        }
+        for (TeamInvite invite : mTeamInvites) keys.addAll(invite.from.marks);
+        return keys;
     }
 
     private boolean myRequestEver(String teamId) {
