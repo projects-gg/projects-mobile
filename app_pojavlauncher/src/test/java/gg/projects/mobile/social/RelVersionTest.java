@@ -113,14 +113,16 @@ public class RelVersionTest {
 
     @Test
     public void exactlyTheChangesOfTheListsAndTheProfileForgetTheVersion() {
+        // The launcher's changes_relations (pl-social service.rs), BADGES' "marks" (every badge of someone) included.
         for (String type : Arrays.asList("friend_added", "friend_removed", "request", "request_cancelled", "team_invite", "team",
-                "team_requests", "crew_order", "crew_notifications", "team_notifications", "groups", "badge", "mark", "status",
-                "profile", "notice")) {
+                "team_requests", "crew_order", "crew_notifications", "team_notifications", "groups", "badge", "mark", "marks",
+                "status", "profile", "notice")) {
             assertTrue(type, RelVersion.changesRelations(type));
         }
+        // The badge catalogue's revision ("markdefs") is no relation: it is read on its own (GET v1/marks).
         for (String type : Arrays.asList(null, "", "hello", "presence", "invite", "invites", "call", "call_answer", "call_end",
-                "chat", "chat_state", "chat_synced", "typing", "plan", "plans", "plan_removed", "bye", "afk_notice", "ack",
-                "error", "TEAM", "team ")) {
+                "chat", "chat_state", "chat_synced", "chat_typing", "typing", "plan", "plans", "plan_removed", "bye", "afk_notice",
+                "markdefs", "ack", "error", "TEAM", "team ")) {
             assertFalse(String.valueOf(type), RelVersion.changesRelations(type));
         }
     }

@@ -257,4 +257,61 @@ public class KeptListsTest {
         assertNotNull(me);
         assertEquals(ME, me.profile.id);
     }
+
+    /**
+     * SOC-REL-M (spec 1, 2 and 6): what a list read brought. A service with the version sends the profile in the answer (no
+     * {@code GET /v1/me}) and its version, and the answer is kept as it came; an older service sends neither, so the
+     * profile is read as before and nothing is kept. A version without a readable profile is none: a start needs both.
+     */
+    @Test
+    public void aReadSaysWhetherTheProfileCameAndWhatIsKept() {
+        JsonObject friends = answer(ME, "Blaze_Runner", REL);
+        KeptLists.Answer now = KeptLists.Answer.of(friends);
+        assertNotNull("the profile is in the answer: no GET /v1/me", now.me);
+        assertEquals(ME, Json.str(now.me, "id"));
+        assertEquals(REL, now.rel);
+        assertEquals(friends, now.keep);
+        // The copy to keep is the answer as it came: filling the crews in afterwards (CrewDetails.resolve) leaves it light.
+        Json.objects(friends, "crews").get(0).getAsJsonObject("team").add("members", new com.google.gson.JsonArray());
+        assertEquals(2, Json.objects(now.keep, "crews").get(0).getAsJsonObject("team").get("members").getAsInt());
+
+        // An older service: neither the profile nor the version (GET /v1/me then, and nothing kept).
+        JsonObject old = answer(ME, "Blaze_Runner", null);
+        old.remove("me");
+        KeptLists.Answer before = KeptLists.Answer.of(old);
+        assertNull(before.me);
+        assertNull(before.rel);
+        assertNull(before.keep);
+        // The profile but no version (a service between the two), or one that is no version: nothing kept.
+        for (String rel : Arrays.asList(null, "", "0123456789ABCDEF", "0123456789abcde", "0123456789abcdef0")) {
+            KeptLists.Answer some = KeptLists.Answer.of(answer(ME, "Blaze_Runner", rel));
+            assertNotNull(String.valueOf(rel), some.me);
+            assertNull(String.valueOf(rel), some.rel);
+            assertNull(String.valueOf(rel), some.keep);
+        }
+        // A version beside a profile this app cannot read (no id) or none at all: the profile is read as before.
+        JsonObject broken = answer(ME, "Blaze_Runner", REL);
+        broken.getAsJsonObject("me").remove("id");
+        for (JsonObject odd : Arrays.asList(broken, SocialStateTest.json("{\"rel\":\"" + REL + "\",\"me\":[]}"),
+                SocialStateTest.json("{\"rel\":\"" + REL + "\"}"))) {
+            KeptLists.Answer none = KeptLists.Answer.of(odd);
+            assertNull(none.me);
+            assertNull(none.rel);
+            assertNull(none.keep);
+        }
+    }
+
+    /** The copies sit in the app's no-backup folder, beside the session; a debug build on another service has its own. */
+    @Test
+    public void theCopiesLiveInTheNoBackupFolder() {
+        File noBackup = tmp.getRoot();
+        assertEquals(new File(new File(noBackup, "projects-social"), "lists"), KeptLists.folder(noBackup, false));
+        assertEquals(new File(new File(noBackup, "projects-social"), "lists-debug"), KeptLists.folder(noBackup, true));
+        // A copy saved there goes with a clear of the same folder made elsewhere (a push while the app is not running).
+        KeptLists kept = new KeptLists(KeptLists.folder(noBackup, false));
+        assertTrue(kept.save(kept.generation(), ME, DAY, answer(ME, "Blaze_Runner", REL)));
+        new KeptLists(KeptLists.folder(noBackup, false)).clear();
+        assertNull(new KeptLists(KeptLists.folder(noBackup, false)).load(ME, DAY));
+        assertFalse(KeptLists.folder(noBackup, false).exists());
+    }
 }

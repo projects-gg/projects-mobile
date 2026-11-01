@@ -256,7 +256,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         mApi = new SocialApi(mDebug.url, ProjectsContent.userAgent());
         mStore = new SessionStore(app, mDebug.override ? "session-debug.json" : "session.json");
         mCrewRoot = new java.io.File(app.getNoBackupFilesDir(), mDebug.override ? "projects-social/crews-debug" : "projects-social/crews");
-        mKept = new KeptLists(new java.io.File(app.getNoBackupFilesDir(), mDebug.override ? "projects-social/lists-debug" : "projects-social/lists"));
+        mKept = new KeptLists(KeptLists.folder(app.getNoBackupFilesDir(), mDebug.override));
         mPrefs = new SocialPrefs(app);
         // M19's socket that kept the player's own call in the game is not used any more (see the class doc).
         mPrefs.setOwnCallUntil(0);
@@ -891,14 +891,13 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
             mApi.bind(token);
             try {
                 final JsonObject friends = mApi.friends();
-                // M048 (spec 2): the answer brings the profile too, so one request; an older service's does not.
-                JsonObject answered = Json.obj(friends, "me");
-                final boolean withMe = Me.read(answered) != null;
-                final JsonObject me = withMe ? answered : mApi.me();
+                // M048 (spec 2): the answer brings the profile too, so one request; an older service's does not. With it
+                // (SOC-DISK, spec 6) come its version and the answer as the service sent it (crews still light), to keep.
+                final KeptLists.Answer brought = KeptLists.Answer.of(friends);
+                final JsonObject me = brought.me != null ? brought.me : mApi.me();
                 final long day = CrewDetails.turkeyDay(nowSeconds());
-                // M048 (SOC-DISK, spec 6): the answer as the service sent it (its crews still light), for the next start.
-                final String rel = withMe ? Json.str(friends, "rel") : null;
-                final JsonObject keep = KeptLists.isRel(rel) ? friends.deepCopy() : null;
+                final String rel = brought.rel;
+                final JsonObject keep = brought.keep;
                 // SOC9 (TEAM4-B): the light list's crews in full, from the phone's copies or their details.
                 Me who = Me.read(me);
                 if (who != null) {

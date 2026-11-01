@@ -95,7 +95,14 @@ public final class SocialPush {
         }
         // A running app reads the list again when its screens come back (it may have moved on).
         new Handler(Looper.getMainLooper()).post(() -> {
-            if (SocialService.exists()) SocialService.get(app).pushArrived();
+            if (SocialService.exists()) {
+                SocialService.get(app).pushArrived();
+            } else if (PushMessage.REQUEST.equals(message.type)) {
+                // SOC-REL-M (spec 6): with the app not running, a friend request's push still takes the list kept for a
+                // start, so the screen its notification opens never shows the lists without that request first. Other
+                // pushes (messages, calls, game invites) change nothing the list shows: the copy stays, the hello decides.
+                new KeptLists(KeptLists.folder(app.getNoBackupFilesDir(), debug.override)).clear();
+            }
         });
     }
 

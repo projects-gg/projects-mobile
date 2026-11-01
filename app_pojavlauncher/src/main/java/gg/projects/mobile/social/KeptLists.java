@@ -37,14 +37,52 @@ public final class KeptLists {
     /** False while the folder is known to be gone (a clear then touches no file); unknown at start. */
     private boolean mMaybeKept = true;
 
-    /** {@code dir}: the folder of the copies ({@code projects-social/lists}, {@code lists-debug} in debug builds). */
+    /** {@code dir}: the folder of the copies ({@link #folder}). */
     public KeptLists(File dir) {
         mDir = dir;
+    }
+
+    /**
+     * The folder of the copies in the app's no-backup folder ({@code noBackup}): {@code projects-social/lists}, or
+     * {@code lists-debug} while a debug build talks to another service. The service and a push that comes while the app
+     * is not running (SOC-REL-M) use the same one.
+     */
+    public static File folder(File noBackup, boolean debug) {
+        return new File(noBackup, debug ? "projects-social/lists-debug" : "projects-social/lists");
     }
 
     /** A relations version as the service writes it: 16 lowercase hex digits (anything else is never sent back). */
     public static boolean isRel(@Nullable String rel) {
         return rel != null && REL.matcher(rel).matches();
+    }
+
+    /**
+     * What a read of {@link #FROM} brought (the phone's spec 1, 2 and 6; SOC-REL-M took it out of the service to test it):
+     * the profile ({@code me}, as {@code GET /v1/me} answers it; null from an older service, which then needs that
+     * request), the relations version (only beside the profile: a start needs both) and the answer as it came for the
+     * disk (only with a version; a copy of its own, taken before the crews are filled in).
+     */
+    public static final class Answer {
+        @Nullable
+        public final JsonObject me;
+        @Nullable
+        public final String rel;
+        @Nullable
+        public final JsonObject keep;
+
+        private Answer(@Nullable JsonObject me, @Nullable String rel, @Nullable JsonObject keep) {
+            this.me = me;
+            this.rel = rel;
+            this.keep = keep;
+        }
+
+        public static Answer of(JsonObject friends) {
+            JsonObject me = Json.obj(friends, "me");
+            if (SocialModel.Me.read(me) == null) return new Answer(null, null, null);
+            String rel = Json.str(friends, "rel");
+            if (!isRel(rel)) return new Answer(me, null, null);
+            return new Answer(me, rel, friends.deepCopy());
+        }
     }
 
     /** The copy a start may show. */
