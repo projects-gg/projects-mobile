@@ -811,7 +811,9 @@ public class ControlLayout extends FrameLayout {
 			button.setDynamicX(button.getProperties().dynamicX);
 			button.setDynamicY(button.getProperties().dynamicY);
 		}
-		// APK-REL: the keys took their places on a new size; the editor's bar keeps clear of them.
+		// APK-REL: the keys took their places on a new size; the editor's bar keeps clear of them. MOB-NEXT: and the
+		// welcome text looks again whether keys lie over it there.
+		if (mModifiable) showEditorScene(false);
 		if (mEditorBar != null) mEditorBar.post(this::placeEditorBars);
 	}
 
