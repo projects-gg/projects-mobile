@@ -100,7 +100,7 @@ import gg.projects.mobile.ui.ScreenHeader;
  * ({@link MessageActions}); swiping a message to the right past 64 dp (a tick there, the reply arrow
  * showing) or "Yanıtla" starts a reply (the strip over the field: "Yanıtlanıyor: Ayşe", × or a sent
  * message ends it); a reply's quote sits above its bubble and a press on it goes to the message (it
- * glows once). Reactions are chips under the bubble (the player's own with a gold edge; a press opens
+ * glows once). Reactions are chips under the bubble (the player's own on the quiet bone plate; a press opens
  * who reacted). Stickers stand without a bubble at 120 dp and move once, as they arrive and when
  * pressed (their own pattern; with animations off they only fade in). One to three emoji alone are
  * drawn big without a bubble. Links the rules let through are bone and underlined, with the hub's card
@@ -2236,7 +2236,7 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
         }
     }
 
-    /** CHAT2: the reactions as chips under the message ([👍 3]); the player's own with a gold edge; a press opens who reacted. */
+    /** CHAT2: the reactions as chips under the message ([👍 3]); the player's own on the quiet bone plate; a press opens who reacted. */
     private void bindReactions(View view, final ChatBook.Entry e, String me) {
         WrapLayout chips = view.findViewById(R.id.projects_msg_reactions);
         List<ChatMessage.Reaction> reactions = e.deleted() ? Collections.<ChatMessage.Reaction>emptyList() : e.reactions;
@@ -2264,7 +2264,8 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
             chip.setGravity(Gravity.CENTER);
             chip.setMinHeight(Math.round(28 * dp));
             chip.setPadding(Math.round(9 * dp), 0, Math.round(10 * dp), 0);
-            chip.setTextColor(ContextCompat.getColor(context, mine ? R.color.projects_gold_200 : R.color.projects_bone_100));
+            // MOB-NEXT: the player's own in bone on the quiet plate (a chosen chip is never gold, design.md §2).
+            chip.setTextColor(ContextCompat.getColor(context, mine ? R.color.projects_bone_50 : R.color.projects_bone_100));
             // MOB-POLISH: chamfered as an action (the desktop's reaction chips), the same colours.
             chip.setBackground(SocialChips.reaction(context, mine));
             String people = getResources().getQuantityString(R.plurals.projects_reactions_chip, r.count(), r.e, r.count());

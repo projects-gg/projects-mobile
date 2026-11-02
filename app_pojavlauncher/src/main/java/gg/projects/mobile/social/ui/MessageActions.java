@@ -326,10 +326,12 @@ final class MessageActions {
                 if (ChatBook.sameEmoji(r.e, emoji) && r.has(SocialService.get(context).state().myId())) mineAlready = true;
             }
             if (mineAlready) {
+                // MOB-NEXT: a reaction the player already gave sits on the quiet bone plate with a bone ring (a chosen
+                // chip is never gold, design.md §2; the desktop's menu does the same).
                 GradientDrawable ring = new GradientDrawable();
                 ring.setShape(GradientDrawable.OVAL);
-                ring.setColor(ContextCompat.getColor(context, R.color.projects_obsidian_700));
-                ring.setStroke(Math.max(1, Math.round(1.5f * dp)), ContextCompat.getColor(context, R.color.projects_gold_700));
+                ring.setColor(SocialChips.chosenOn(ContextCompat.getColor(context, R.color.projects_obsidian_700)));
+                ring.setStroke(Math.max(1, Math.round(1.5f * dp)), SocialChips.CHOSEN_LINE);
                 cell.setBackground(ring);
             }
             cell.setContentDescription(context.getString(R.string.projects_reactions_give, emoji));

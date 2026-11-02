@@ -15,9 +15,10 @@ import gg.projects.mobile.ui.ChamferDrawable;
  * MOB-POLISH: the friends screens' chips in the desktop's two-shape rule (design.md §1): an action (a chip, a tab, a
  * quick reply, a reaction) is chamfered, its top-left and bottom-right corners cut, never a pill; containers keep their
  * 10 dp radius, and message bubbles, the field, faces and crew tags keep their own shapes. Quiet by default: a faint
- * fill and hairline, as the desktop's quick replies. Gold only where it carries meaning: the player's own reaction, or
- * the one action a place offers now ("Selam ver"). 0.4.5: what is chosen among several (a tab, a day) sits on the quiet
- * bone plate, the one selected look of the launcher, the site and Studio (it was a faint gold plate with a gold line).
+ * fill and hairline, as the desktop's quick replies. Gold only where it carries meaning: the one action a place offers
+ * now ("Selam ver"). 0.4.5: what is chosen among several (a tab, a day) sits on the quiet bone plate, the one selected
+ * look of the launcher, the site and Studio (it was a faint gold plate with a gold line); MOB-NEXT: the player's own
+ * reaction too (it was gold: design.md §2, a chosen chip is never gold; the desktop's in 2.0.3-beta.2).
  */
 final class SocialChips {
     private SocialChips() {}
@@ -33,7 +34,7 @@ final class SocialChips {
     private static final int QUIET_PRESSED_LINE = 0x29FFFFFF;
     /** The quiet bone plate of a chosen option (ChamferDrawable.toggle's chosen look). */
     private static final int CHOSEN_FILL = 0x1FF3EBDD;
-    private static final int CHOSEN_LINE = 0x80F3EBDD;
+    static final int CHOSEN_LINE = 0x80F3EBDD;
     private static final int CHOSEN_PRESSED_FILL = 0x2EF3EBDD;
     private static final int GOLD_FILL = 0x1FE89A2C;
     private static final int GOLD_PRESSED_FILL = 0x33E89A2C;
@@ -82,12 +83,21 @@ final class SocialChips {
         return states;
     }
 
-    /** A reaction under a message (28 dp): the player's own on the "mine" colour with a gold edge (the desktop's). */
+    /**
+     * A reaction under a message (28 dp). MOB-NEXT: the player's own on the quiet bone plate with a bone edge, as any
+     * chosen chip (it had the own bubble's brown with a gold edge and gold count).
+     */
     static Drawable reaction(Context context, boolean mine) {
         float d = dp(context);
-        int fill = ContextCompat.getColor(context, mine ? R.color.projects_chat_mine : R.color.projects_obsidian_800);
-        int line = ContextCompat.getColor(context, mine ? R.color.projects_gold_700 : R.color.projects_obsidian_700);
+        int base = ContextCompat.getColor(context, R.color.projects_obsidian_800);
+        int fill = mine ? chosenOn(base) : base;
+        int line = mine ? CHOSEN_LINE : ContextCompat.getColor(context, R.color.projects_obsidian_700);
         return new ChamferDrawable(fill, line, Math.max(1f, Math.round(d)), 5 * d, null);
+    }
+
+    /** MOB-NEXT: the quiet bone plate laid on an opaque {@code base} (a chosen chip, a reaction the player gave). */
+    static int chosenOn(int base) {
+        return androidx.core.graphics.ColorUtils.compositeColors(CHOSEN_FILL, base);
     }
 
     /** Discord's own symbol in Blurple, {@code heightDp} tall at its own proportions. */
