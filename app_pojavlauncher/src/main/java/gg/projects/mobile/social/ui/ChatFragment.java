@@ -650,7 +650,7 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
         } else {
             final Profile other = state.profile(ChatConv.other(mConv, state.myId()));
             mHeader.setTitle(other == null ? getString(R.string.projects_chat_title) : other.name());
-            // SOC-ID: "Discord'dan mesajlaş" only with a friend whose Discord is linked.
+            // SOC-ID: "Discord'dan mesaj at" only with a friend whose Discord is linked.
             if (mDiscord != null) mDiscord.setVisibility(other != null && other.hasDiscord() ? View.VISIBLE : View.GONE);
             mHeader.setCaption(other == null || !state.isFriend(other.id) ? null
                     : SocialUi.presenceText(context, state.presence(other.id)));
@@ -1095,7 +1095,8 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
 
     private void buildQuickReplies(Context context) {
         if (!ChatConv.isCrew(mConv)) return;
-        int[] replies = {R.string.projects_crew_call_yes, R.string.projects_chat_quick_five, R.string.projects_chat_quick_where,
+        // MOB-NEXT (TASTE-2): the desktop's chips ("On my way" and "Come over" in English; the crew call's "Coming" stays).
+        int[] replies = {R.string.projects_chat_quick_coming, R.string.projects_chat_quick_five, R.string.projects_chat_quick_where,
                 R.string.projects_chat_quick_come};
         float dp = getResources().getDisplayMetrics().density;
         for (int reply : replies) {

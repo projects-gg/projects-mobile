@@ -594,6 +594,13 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
         boolean projects = ProjectsProfile.KEY.equals(
                 LauncherPreferences.DEFAULT_PREF.getString(LauncherPreferences.PREF_KEY_CURRENT_PROFILE, ""));
         mJoinButton.setVisibility(projects ? View.GONE : View.VISIBLE);
+        // MOB-NEXT (TASTE-2): alone, "Tüm haberler" lines up with the text above it (its 10 dp only part it from the join).
+        android.view.ViewGroup.MarginLayoutParams secondary = (android.view.ViewGroup.MarginLayoutParams) mSecondaryButton.getLayoutParams();
+        int start = projects ? 0 : Math.round(10 * mSecondaryButton.getResources().getDisplayMetrics().density);
+        if (secondary.getMarginStart() != start) {
+            secondary.setMarginStart(start);
+            mSecondaryButton.setLayoutParams(secondary);
+        }
         mJoinButton.setEnabled(!mJoining);
         mJoinButton.setText(mJoining && !projects ? R.string.projects_join_preparing : R.string.projects_join);
         hugStartMark(mJoinButton);

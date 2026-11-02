@@ -1394,6 +1394,11 @@ public class mcAccountSpinner extends AppCompatSpinner implements AdapterView.On
             // gives its rows its own delegate (click, select, the hold that opens the menu) only when they have none.
             convertView.setContentDescription(null);
 
+            // MOB-NEXT (TASTE-2): the account in use sits on the quiet plate (design.md §1, the chosen item's tint; the
+            // desktop's switcher marks it too), and TalkBack hears it as chosen.
+            boolean active = position > 0 && position == mcAccountSpinner.this.getSelectedItemPosition();
+            convertView.setBackgroundResource(active ? R.drawable.projects_account_row_active : 0);
+
             // Handle the "Add account section"
             if(position == 0) {
                 headView.setImageResource(R.drawable.projects_ic_user_plus);
@@ -1419,7 +1424,10 @@ public class mcAccountSpinner extends AppCompatSpinner implements AdapterView.On
                 // in the hold menu, which TalkBack reaches as the row's long press).
                 boolean pinned = mPinned.contains(username);
                 pinView.setVisibility(pinned ? View.VISIBLE : View.GONE);
-                if (pinned) {
+                if (active) {
+                    convertView.setContentDescription(parent.getContext().getString(
+                            pinned ? R.string.projects_account_row_active_pinned : R.string.projects_account_row_active, username));
+                } else if (pinned) {
                     convertView.setContentDescription(parent.getContext().getString(R.string.projects_account_row_pinned, username));
                 }
             }

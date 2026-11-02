@@ -395,7 +395,7 @@
     <string name="projects_chat_message">Mesaj</string>
     <string name="projects_chat_hint">Mesaj yaz</string>
     <string name="projects_chat_send">Gönder</string>
-    <string name="projects_chat_discord">Discord\'dan mesajlaş</string>
+    <string name="projects_chat_discord">Discord\'dan mesaj at</string>
     <string name="projects_chat_edited">düzenlendi</string>
     <string name="projects_chat_pending">Gönderiliyor</string>
     <string name="projects_chat_sent">Gönderildi</string>
@@ -413,7 +413,7 @@
     <string name="projects_chat_yesterday">Dün</string>
     <string name="projects_chat_days_ago">%1$d gün önce</string>
     <string name="projects_chat_empty">Henüz mesaj yok</string>
-    <string name="projects_chat_empty_body">Bir arkadaşının kartında “Mesaj”a bas.</string>
+    <string name="projects_chat_empty_body">Bir arkadaşının kartında \"Mesaj\"a bas.</string>
     <!-- TABLET-M: the conversation pane beside the list before one is chosen (two panes). -->
     <string name="projects_chat_pick">Bir konuşma seç</string>
     <string name="projects_chat_you">Sen: %1$s</string>
@@ -443,6 +443,8 @@
     <string name="projects_chat_quick_five">5 dk</string>
     <string name="projects_chat_quick_where">Neredesin?</string>
     <string name="projects_chat_quick_come">Gel</string>
+    <!-- MOB-NEXT: the first quick reply, its own text (the desktop's chips; the crew call's answer stays). -->
+    <string name="projects_chat_quick_coming">Geliyorum</string>
     <string name="projects_chat_notifications">Bildirimler</string>
     <string name="projects_chat_more">Diğer</string>
     <string name="projects_chat_consent">Sohbet mesajların yalnız iletilmek için sunucuda en çok 7 gün tutulur.</string>
@@ -504,7 +506,7 @@
     <string name="projects_social_error_text_locked">Ekibin adı ve sloganı şu an değiştirilemez.</string>
     <string name="projects_social_error_blocks_full">Engel listen dolu.</string>
     <string name="projects_social_error_call_needs_server">Ekibini çağırmak için çok oyunculu bir sunucuda olmalısın.</string>
-    <string name="projects_social_error_call_server_hidden">“Başka sunuculardaysam adresini göster” kapalı.</string>
+    <string name="projects_social_error_call_server_hidden">\"Başka sunuculardaysam adresini göster\" kapalı.</string>
     <!-- M21 (TEAM5): katılma istekleri, davet bağlantıları, katılma ayarı ve ekip planları (masaüstünün metinleri, team2.md Ek A) -->
     <string name="projects_requests_title">Katılma istekleri</string>
     <string name="projects_requests_mine">Katılma isteklerin</string>

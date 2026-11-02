@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- MOB-NEXT (TASTE-2): the account in use in the list under the top bar's chip sits on the quiet bone plate, the one
+     selected look (design.md §1: the chosen item's tint, the active account too), inset from the list's edges. -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:insetLeft="8dp"
+    android:insetTop="4dp"
+    android:insetRight="8dp"
+    android:insetBottom="4dp">
+    <shape android:shape="rectangle">
+        <corners android:radius="10dp" />
+        <solid android:color="#1FF3EBDD" />
+    </shape>
+</inset>

@@ -9,7 +9,7 @@ import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
 /**
- * MOB-POLISH: a friends screen's list under a fixed top (the header, the DM's "Discord'dan mesajlaş", the crew rail):
+ * MOB-POLISH: a friends screen's list under a fixed top (the header, the DM's "Discord'dan mesaj at", the crew rail):
  * what scrolls under it fades out over 20 dp instead of being cut by a hard line, the 7/24 Bulut screens' fading edge.
  * Only the top edge, and only once something is scrolled under it: the fade grows over the first 20 dp of scroll,
  * nothing moves, so it needs no reduced-motion form. It is drawn from the list's own edge, since the lists scroll into

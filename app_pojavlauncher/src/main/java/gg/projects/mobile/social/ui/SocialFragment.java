@@ -397,8 +397,10 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
         mReopen.setVisibility(claiming ? View.GONE : View.VISIBLE);
         String message = null;
         boolean restricted = status == SocialService.SignInStatus.RESTRICTED;
-        // SOC-ID: a way in that is not linked yet, or switched off, is guidance, not a failure.
-        boolean guidance = status == SocialService.SignInStatus.NOT_LINKED || status == SocialService.SignInStatus.PROVIDER_OFF;
+        // SOC-ID: a way in that is not linked yet, or switched off, is guidance, not a failure. MOB-NEXT (TASTE-2): so is
+        // "Arkadaşlar'dan çıkış yapıldı." (a sign-out made elsewhere), which was red: red is for errors only.
+        boolean guidance = status == SocialService.SignInStatus.NOT_LINKED || status == SocialService.SignInStatus.PROVIDER_OFF
+                || (mRemoteSignOutShown && status == SocialService.SignInStatus.IDLE);
         if (status == SocialService.SignInStatus.FAILED) message = getString(R.string.projects_social_sign_in_failed);
         else if (status == SocialService.SignInStatus.UNAVAILABLE) message = getString(R.string.projects_social_unavailable);
         else if (restricted) {

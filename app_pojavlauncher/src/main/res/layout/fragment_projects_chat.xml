@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- M20: a conversation (crew chat or a friend's direct messages). The header names it; a direct
-     conversation has the small "Discord'dan mesajlaş" under it; the messages fill the screen, newest at
+     conversation has the small "Discord'dan mesaj at" under it; the messages fill the screen, newest at
      the bottom; crew chat has quick replies above the rounded field and its round send button.
      MOB1 (CHAT2): who writes floats over the list's bottom ("Ayşe yazıyor"); a reply's strip and a typed
      link's card sit over the field; the emoji and sticker button starts the field.
-     MOB-POLISH: "Discord'dan mesajlaş" is a quiet chamfered chip with Discord's symbol in Blurple (set in code);
+     MOB-POLISH: "Discord'dan mesaj at" is a quiet chamfered chip with Discord's symbol in Blurple (set in code);
      the messages fade out under the fixed top instead of being cut by a hard line (FadingRecyclerView).
      0.4.5: the emoji and sticker panel opens in its slot under the field, in the keyboard's place. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -60,9 +60,12 @@
         tools:text="Mesajlar şu an yalnız çevrimiçi olanlara gidiyor."
         tools:visibility="visible" />
 
+    <!-- MOB-NEXT (TASTE-2): the messages scroll under the top 6 dp below it, so a row half under the top fades out in
+         that room instead of reading as a name cut under the title (crew chat at 130 %: right under "3 çevrimiçi"). -->
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
+        android:layout_marginTop="6dp"
         android:layout_weight="1">
 
         <gg.projects.mobile.social.ui.FadingRecyclerView

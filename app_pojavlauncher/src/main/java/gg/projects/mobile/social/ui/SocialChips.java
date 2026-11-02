@@ -42,7 +42,7 @@ final class SocialChips {
         return context.getResources().getDisplayMetrics().density;
     }
 
-    /** A quiet action chip ("Geliyorum", "Discord'dan mesajlaş", "Sınırlı hesap"); {@code cutDp} by its height. */
+    /** A quiet action chip ("Geliyorum", "Discord'dan mesaj at", "Sınırlı hesap"); {@code cutDp} by its height. */
     static Drawable quiet(Context context, float cutDp) {
         float d = dp(context);
         float cut = cutDp * d;

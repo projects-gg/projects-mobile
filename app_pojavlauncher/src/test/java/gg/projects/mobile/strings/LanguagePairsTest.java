@@ -140,6 +140,29 @@ public class LanguagePairsTest {
         assertEquals(new ArrayList<String>(), found);
     }
 
+    /**
+     * MOB-NEXT: the owner's rule (25 Oct 2026): a quote a player sees is the straight "…", never “…”, in both languages
+     * (TASTE-2's copy look found three of each).
+     */
+    @Test
+    public void playersSeeStraightQuotes() throws Exception {
+        List<String> curly = new ArrayList<>();
+        for (String folder : new String[]{"values", "values-tr"}) {
+            File[] files = new File(RES, folder).listFiles();
+            assertTrue(folder, files != null);
+            for (File file : files) {
+                String name = file.getName();
+                if (!name.endsWith(".xml") || !(name.startsWith("projects_") || name.startsWith("strings_"))) continue;
+                for (Map.Entry<String, String> text : texts(file).entrySet()) {
+                    if (text.getValue().indexOf('“') >= 0 || text.getValue().indexOf('”') >= 0) {
+                        curly.add(folder + "/" + name + ": " + text.getKey());
+                    }
+                }
+            }
+        }
+        assertEquals(new ArrayList<String>(), curly);
+    }
+
     @Test
     public void theLanguageSettingOffersAutomaticTurkishAndEnglish() throws Exception {
         Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new File(RES, "values/projects_arrays.xml"));

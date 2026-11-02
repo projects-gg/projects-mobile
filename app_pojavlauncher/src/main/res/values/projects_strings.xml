@@ -195,7 +195,7 @@
     <string name="projects_auth_local">Play with a username</string>
     <string name="projects_login_started">Signing in…</string>
     <string name="projects_pref_autojre_title">Disable automatic JRE selection</string>
-    <string name="projects_pref_autojre_summary">Stops automatic selection of which runtime to use in “%1$s”</string>
+    <string name="projects_pref_autojre_summary">Stops automatic selection of which runtime to use in \"%1$s\"</string>
     <string name="projects_profile_custom_path">Custom path</string>
     <string name="projects_version_recommended">Recommended</string>
 
@@ -273,6 +273,9 @@
     <string name="projects_account_pin">Pin</string>
     <string name="projects_account_unpin">Unpin</string>
     <string name="projects_account_row_pinned">%1$s, pinned</string>
+    <!-- MOB-NEXT: the account in use in the list, as TalkBack hears its row. -->
+    <string name="projects_account_row_active">%1$s, selected</string>
+    <string name="projects_account_row_active_pinned">%1$s, selected, pinned</string>
     <string name="projects_account_pinned">%1$s pinned</string>
     <string name="projects_account_unpinned">%1$s is no longer pinned</string>
     <string name="projects_settings_title">Settings</string>

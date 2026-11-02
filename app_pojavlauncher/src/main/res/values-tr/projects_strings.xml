@@ -187,7 +187,7 @@
     <string name="projects_auth_local">Oyuncu adıyla oyna</string>
     <string name="projects_login_started">Giriş yapılıyor…</string>
     <string name="projects_pref_autojre_title">Otomatik Java seçimini kapat</string>
-    <string name="projects_pref_autojre_summary">“%1$s” için Java sürümü otomatik seçilmez.</string>
+    <string name="projects_pref_autojre_summary">\"%1$s\" için Java sürümü otomatik seçilmez.</string>
     <string name="projects_profile_custom_path">Oyun klasörü</string>
     <string name="projects_version_recommended">Önerilen</string>
 
@@ -262,6 +262,9 @@
     <string name="projects_account_pin">Sabitle</string>
     <string name="projects_account_unpin">Sabitlemeyi kaldır</string>
     <string name="projects_account_row_pinned">%1$s, sabitlenmiş</string>
+    <!-- MOB-NEXT: the account in use in the list, as TalkBack hears its row. -->
+    <string name="projects_account_row_active">%1$s, seçili</string>
+    <string name="projects_account_row_active_pinned">%1$s, seçili, sabitlenmiş</string>
     <string name="projects_account_pinned">%1$s sabitlendi</string>
     <string name="projects_account_unpinned">%1$s artık sabit değil</string>
     <string name="projects_settings_title">Ayarlar</string>

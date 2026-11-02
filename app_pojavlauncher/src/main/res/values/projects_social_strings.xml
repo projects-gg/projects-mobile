@@ -427,7 +427,7 @@
     <!-- CHAT-UX: the day line from two to six calendar days back. -->
     <string name="projects_chat_days_ago">%1$d days ago</string>
     <string name="projects_chat_empty">No messages yet</string>
-    <string name="projects_chat_empty_body">Press “Message” on a friend\'s card.</string>
+    <string name="projects_chat_empty_body">Press \"Message\" on a friend\'s card.</string>
     <!-- TABLET-M: the conversation pane beside the list before one is chosen (two panes). -->
     <string name="projects_chat_pick">Pick a conversation</string>
     <string name="projects_chat_you">You: %1$s</string>
@@ -456,7 +456,9 @@
     <string name="projects_chat_cleared">History cleared</string>
     <string name="projects_chat_quick_five">5 min</string>
     <string name="projects_chat_quick_where">Where are you?</string>
-    <string name="projects_chat_quick_come">Come</string>
+    <string name="projects_chat_quick_come">Come over</string>
+    <!-- MOB-NEXT: the first quick reply, its own text (the desktop's chips; the crew call's answer stays). -->
+    <string name="projects_chat_quick_coming">On my way</string>
     <string name="projects_chat_notifications">Notifications</string>
     <string name="projects_chat_more">More</string>
     <string name="projects_chat_consent">Chat messages stay on our server only to be delivered, for at most 7 days.</string>
@@ -518,7 +520,7 @@
     <string name="projects_social_error_text_locked">The crew\'s name and motto can\'t be changed right now.</string>
     <string name="projects_social_error_blocks_full">Your block list is full.</string>
     <string name="projects_social_error_call_needs_server">Join a multiplayer server to call your crew.</string>
-    <string name="projects_social_error_call_server_hidden">“Show the address when I\'m on other servers” is off.</string>
+    <string name="projects_social_error_call_server_hidden">\"Show the address when I\'m on other servers\" is off.</string>
     <!-- M21 (TEAM5): join requests, invite links, the join setting and crew plans (the desktop's wording, team2.md Ek A) -->
     <string name="projects_requests_title">Join requests</string>
     <string name="projects_requests_mine">Your join requests</string>
