@@ -71,9 +71,10 @@ public class ActionRow extends LinearLayout {
         for(int i = 0; i < actionButtons.length; i++){
             View button = ((View)(actionButtons[i]));
             // Projects fork (MOB-NEXT, TASTE-2's second look): in the editor bar's dress (the keys' dark, a bone
-            // hairline, chamfered, Figtree as written), apart by 6 dp; upstream's were the platform's grey capitals.
+            // hairline, chamfered, Figtree as written), each as wide as its words and 6 dp apart; upstream's were the
+            // platform's grey capitals in equal thirds (equal shares of the words' widths cut "Kopyala" in two).
             if (button instanceof Button) EditorBar.dressAction((Button) button);
-            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1F);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT);
             if (i > 0) params.setMarginStart(Math.round(6 * dp));
             addView(button, params);
         }

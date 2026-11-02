@@ -143,15 +143,24 @@ public final class EditorBar extends LinearLayout {
 
     /**
      * MOB-NEXT (TASTE-2's second look): a selected key's action row ("Sil", "Kopyala", "Tuş ekle") in this bar's dress:
-     * the keys' dark with a bone hairline, chamfered, Figtree in bone and as written, no lift; upstream's were the
-     * platform's grey buttons in capitals.
+     * the keys' dark with a bone hairline, chamfered, Figtree in bone and as written, one line, no lift; upstream's were
+     * the platform's grey buttons in capitals. Opaque: the row stands over the keys above the selected one, whose
+     * words would show through the bar's 88 %.
      */
     public static void dressAction(Button button) {
         Context context = button.getContext();
         float dp = context.getResources().getDisplayMetrics().density;
         button.setAllCaps(false);
+        button.setSingleLine(true);
         button.setStateListAnimator(null);
-        button.setBackground(quiet(context, dp));
+        float cut = 9 * dp;
+        float stroke = Math.max(1f, dp);
+        StateListDrawable states = new StateListDrawable();
+        states.addState(new int[]{android.R.attr.state_pressed}, new ChamferDrawable(FILL_PRESSED | 0xFF000000, RING_PRESSED, stroke, cut, null));
+        states.addState(new int[]{android.R.attr.state_focused},
+                new ChamferDrawable(FILL | 0xFF000000, ContextCompat.getColor(context, R.color.projects_gold_300), 2 * stroke, cut, null));
+        states.addState(new int[]{}, new ChamferDrawable(FILL | 0xFF000000, RING, stroke, cut, null));
+        button.setBackground(inset(states, dp));
         try {
             button.setTypeface(ResourcesCompat.getFont(context, R.font.figtree_semibold));
         } catch (RuntimeException ignored) {
