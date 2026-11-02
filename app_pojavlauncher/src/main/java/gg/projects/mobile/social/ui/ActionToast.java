@@ -8,6 +8,7 @@ import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -129,24 +130,51 @@ public final class ActionToast {
         }
         // APK-REL (0.4.9's emulator run): on the home screen the line sat over OYNA ("Tuşlar kaydedildi." after the controls
         // editor): it held OYNA's touch for 5 s, and a late tap on "Geri al" landed on OYNA once it left. It now stands
-        // above the play bar whenever that bar is on screen.
-        View playBar = root.findViewById(R.id.projects_play_bar_top);
-        if (playBar != null && playBar.isShown() && root.getHeight() > 0) {
-            int[] at = new int[2];
-            int[] rootAt = new int[2];
-            playBar.getLocationInWindow(at);
-            root.getLocationInWindow(rootAt);
-            int belowBarTop = root.getHeight() - (at[1] - rootAt[1]);
-            if (belowBarTop > 0 && belowBarTop < root.getHeight()) bottom = Math.max(bottom, belowBarTop + margin);
-        }
-        lp.setMargins(margin, 0, margin, bottom);
+        // above the play bar whenever that bar is on screen, also when the home screen is laid out after the line came
+        // (the launcher relaunched upright after the sideways editor).
+        final int floor = bottom;
+        lp.setMargins(margin, 0, margin, Math.max(floor, aboveBar(root, margin)));
         root.addView(bar, lp);
+        final FrameLayout.LayoutParams place = lp;
+        root.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                if (bar.getParent() != root) {
+                    if (root.getViewTreeObserver().isAlive()) root.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                    return;
+                }
+                int want = Math.max(floor, aboveBar(root, margin));
+                if (place.bottomMargin != want) {
+                    place.bottomMargin = want;
+                    bar.setLayoutParams(place);
+                }
+            }
+        });
         root.setTag(R.id.projects_action_toast, bar);
         if (Motion.enabled(context)) {
             bar.setAlpha(0f);
             bar.setTranslationY(10 * dp);
             bar.animate().alpha(1f).translationY(0f).setDuration(240).setInterpolator(Motion.EASE_OUT).start();
         }
+    }
+
+    /**
+     * APK-REL: the room the line keeps above the home screen's play bar (its top's distance from the root's bottom plus
+     * {@code margin}); 0 when that bar is not on screen or not laid out yet.
+     */
+    private static int aboveBar(FrameLayout root, int margin) {
+        // The marker is a Space, which keeps itself INVISIBLE: whether the bar is on screen is its parent's.
+        View playBar = root.findViewById(R.id.projects_play_bar_top);
+        if (playBar == null || !(playBar.getParent() instanceof View) || !((View) playBar.getParent()).isShown()
+                || playBar.getHeight() == 0 || root.getHeight() == 0) {
+            return 0;
+        }
+        int[] at = new int[2];
+        int[] rootAt = new int[2];
+        playBar.getLocationInWindow(at);
+        root.getLocationInWindow(rootAt);
+        int below = root.getHeight() - (at[1] - rootAt[1]);
+        return below > 0 && below < root.getHeight() ? below + margin : 0;
     }
 
     private static void leave(final View bar, final FrameLayout root, boolean animate) {
