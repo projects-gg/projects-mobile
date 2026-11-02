@@ -319,6 +319,16 @@ final class AfkPackets {
         }
     }
 
+    /** MOB-NEXT: the player's health; a client back in a game while dead hears only this, never a new death. */
+    static final class SetHealth extends In {
+        final float health;
+
+        SetHealth(ByteBuf in) {
+            health = in.readFloat();
+            in.skipBytes(in.readableBytes());
+        }
+    }
+
     static final class PlayerPosition extends In {
         final int teleportId;
         final double x, y, z;

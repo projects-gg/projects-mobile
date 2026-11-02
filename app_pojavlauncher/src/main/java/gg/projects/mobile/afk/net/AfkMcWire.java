@@ -167,6 +167,8 @@ public final class AfkMcWire implements AfkWire {
         // Event loop only.
         private int entityId = Integer.MIN_VALUE;
         private boolean loadedSent;
+        /** MOB-NEXT: a respawn is asked for this life (a death and its health both say so; one is enough). */
+        private boolean respawnAsked;
         private double x;
         private double y;
         private double z;
@@ -410,15 +412,20 @@ public final class AfkMcWire implements AfkWire {
             } else if (packet instanceof AfkPackets.Login) {
                 entityId = ((AfkPackets.Login) packet).entityId;
                 loadedSent = false;
+                respawnAsked = false;
                 post(events::joined);
             } else if (packet instanceof AfkPackets.Respawn) {
                 loadedSent = false;
+                respawnAsked = false;
             } else if (packet instanceof AfkPackets.CombatKill) {
                 if (((AfkPackets.CombatKill) packet).playerId != entityId) return;
-                s.getChannel().eventLoop().schedule(() -> {
-                    if (!closed) s.send(new ServerboundClientCommandPacket(ClientCommand.PERFORM_RESPAWN));
-                }, 1, TimeUnit.SECONDS);
-                post(events::died);
+                respawn(s);
+            } else if (packet instanceof AfkPackets.SetHealth) {
+                // MOB-NEXT: back in a game while dead (the connection ended while the account lay dead: a drop, the
+                // phone's AFK process restarted) the server sends no new death, only a health of 0, and the account
+                // stayed dead: commands refused, nothing done. It respawns as after a death.
+                if (((AfkPackets.SetHealth) packet).health <= 0f) respawn(s);
+                else respawnAsked = false;
             } else if (packet instanceof AfkPackets.OpenScreen) {
                 final String title = AfkComponents.render(((AfkPackets.OpenScreen) packet).title, turkish).text;
                 post(() -> events.window(title));
@@ -431,6 +438,16 @@ public final class AfkMcWire implements AfkWire {
             } else {
                 common(s, packet);
             }
+        }
+
+        /** After a death: the respawn a second later (as a player's click), once per life, and the console's notice. */
+        private void respawn(final AfkNetSession s) {
+            if (respawnAsked) return;
+            respawnAsked = true;
+            s.getChannel().eventLoop().schedule(() -> {
+                if (!closed) s.send(new ServerboundClientCommandPacket(ClientCommand.PERFORM_RESPAWN));
+            }, 1, TimeUnit.SECONDS);
+            post(events::died);
         }
 
         private void position(AfkNetSession s, AfkPackets.PlayerPosition p) {

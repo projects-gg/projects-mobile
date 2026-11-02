@@ -100,6 +100,7 @@ public final class AfkComponents {
         key("command.expected.separator", "Expected whitespace to end one argument, but found trailing data",
                 "Bir değerin sonunda boşluk bekleniyordu, ardından başka yazı geldi");
         key("commands.help.failed", "Unknown command or insufficient permissions", "Bilinmeyen komut ya da yetkin yok");
+        key("chat.disabled.options", "Chat disabled in client options.", "Sohbet bu oyuncunun ayarlarında kapalı.");
     }
 
     /** Collects the translation keys of a component (for telling kick reasons apart). */

@@ -2,6 +2,7 @@ package gg.projects.mobile.afk.net;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import net.kyori.adventure.key.Key;
@@ -16,6 +17,7 @@ import org.geysermc.mcprotocollib.network.packet.Packet;
 import org.geysermc.mcprotocollib.network.server.NetworkServer;
 import org.geysermc.mcprotocollib.protocol.MinecraftConstants;
 import org.geysermc.mcprotocollib.protocol.MinecraftProtocol;
+import org.geysermc.mcprotocollib.protocol.data.game.ClientCommand;
 import org.geysermc.mcprotocollib.protocol.data.game.entity.player.GameMode;
 import org.geysermc.mcprotocollib.protocol.data.game.entity.player.PlayerSpawnInfo;
 import org.geysermc.mcprotocollib.protocol.data.game.entity.player.PositionElement;
@@ -23,9 +25,12 @@ import org.geysermc.mcprotocollib.protocol.packet.common.serverbound.Serverbound
 import org.geysermc.mcprotocollib.protocol.packet.common.serverbound.ServerboundCustomPayloadPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.ClientboundLoginPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.ClientboundSystemChatPacket;
+import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.entity.player.ClientboundPlayerCombatKillPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.entity.player.ClientboundPlayerPositionPacket;
+import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.entity.player.ClientboundSetHealthPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.serverbound.ServerboundChatCommandPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.serverbound.ServerboundChatPacket;
+import org.geysermc.mcprotocollib.protocol.packet.ingame.serverbound.ServerboundClientCommandPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.serverbound.ServerboundClientTickEndPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.serverbound.level.ServerboundAcceptTeleportationPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.serverbound.player.ServerboundMovePlayerPosRotPacket;
@@ -249,6 +254,37 @@ public class AfkMcWireTest {
         }
         assertEquals(Arrays.asList(1, 2), accepted);
         assertEquals(2, ticks);
+    }
+
+    /**
+     * MOB-NEXT: an account back in a game while dead (its connection ended while it lay dead: a drop, the phone's AFK
+     * process restarted) hears no new death from the server, only a health of 0, and stayed dead (seen on the emulator,
+     * 2 Nov: its commands refused with "chat.disabled.options"). It respawns as after a death, once per life; a death's
+     * packet and its health of 0 together ask once.
+     */
+    @Test
+    public void anAccountBackWhileDeadRespawnsOncePerLife() throws Exception {
+        int port = startServer(false);
+        wire.open(new AfkWire.Target("127.0.0.1", port, "Golge_Avci_2010", false, "tr_tr"), recorder);
+        assertEquals("loggingIn", take(events));
+        assertEquals("configuring", take(events));
+        assertEquals("joined", take(events));
+        serverSession.send(new ClientboundSetHealthPacket(0f, 20, 5f));
+        serverSession.send(new ClientboundSetHealthPacket(0f, 20, 5f));
+        assertEquals(ClientCommand.PERFORM_RESPAWN, receivedOf(ServerboundClientCommandPacket.class).getRequest());
+        assertEquals("died", take(events));
+        assertNull("asked once for this life", events.poll(1500, TimeUnit.MILLISECONDS));
+        // Alive again, then a real death: its packet and its health ask once more, together once.
+        serverSession.send(new ClientboundSetHealthPacket(20f, 20, 5f));
+        serverSession.send(new ClientboundPlayerCombatKillPacket(42, Component.text("Golge_Avci_2010 was slain by Slime")));
+        serverSession.send(new ClientboundSetHealthPacket(0f, 20, 5f));
+        assertEquals(ClientCommand.PERFORM_RESPAWN, receivedOf(ServerboundClientCommandPacket.class).getRequest());
+        assertEquals("died", take(events));
+        assertNull(events.poll(1500, TimeUnit.MILLISECONDS));
+        // Health while alive asks for nothing.
+        serverSession.send(new ClientboundSetHealthPacket(20f, 20, 5f));
+        serverSession.send(new ClientboundSetHealthPacket(12.5f, 18, 2f));
+        assertNull(events.poll(1500, TimeUnit.MILLISECONDS));
     }
 
     @Test

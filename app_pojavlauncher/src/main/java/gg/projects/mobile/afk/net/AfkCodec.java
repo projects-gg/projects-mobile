@@ -31,6 +31,7 @@ import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.Clientbound
 import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.ClientboundSystemChatPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.entity.player.ClientboundPlayerCombatKillPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.entity.player.ClientboundPlayerPositionPacket;
+import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.entity.player.ClientboundSetHealthPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.inventory.ClientboundOpenScreenPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.level.ClientboundChunkBatchFinishedPacket;
 import org.geysermc.mcprotocollib.protocol.packet.login.clientbound.ClientboundCustomQueryPacket;
@@ -94,6 +95,7 @@ final class AfkCodec {
         READERS.put(ClientboundStartConfigurationPacket.class, (in, s) ->
                 new AfkPackets.Terminal(AfkPackets.Terminal.Kind.START_CONFIGURATION));
         READERS.put(ClientboundPlayerCombatKillPacket.class, (in, s) -> new AfkPackets.CombatKill(in));
+        READERS.put(ClientboundSetHealthPacket.class, (in, s) -> new AfkPackets.SetHealth(in));
         READERS.put(ClientboundPlayerPositionPacket.class, (in, s) -> new AfkPackets.PlayerPosition(in));
         READERS.put(ClientboundChunkBatchFinishedPacket.class, (in, s) -> new AfkPackets.ChunkBatchFinished(in));
         READERS.put(ClientboundOpenScreenPacket.class, (in, s) -> new AfkPackets.OpenScreen(in));
