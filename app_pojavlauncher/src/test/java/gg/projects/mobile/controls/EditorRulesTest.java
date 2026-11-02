@@ -73,6 +73,48 @@ public class EditorRulesTest {
     }
 
     /**
+     * MOB-NEXT (TASTE-2's P1): the editor shows one of the game's screens at a time. A key shows on the screens its two
+     * boxes name; a key the game never hides (the hide key) on both, as in play; a key shown on neither (the welcome
+     * text) on both, as upstream's editor showed it.
+     */
+    @Test
+    public void eachScreenShowsItsKeysTheUnhideableAndTheNotesOnBoth() {
+        EditorRules.Scene game = EditorRules.Scene.GAME, menus = EditorRules.Scene.MENU;
+        // DURAKLAT (play only) and GERİ (menus only) in one place: never together.
+        assertTrue(EditorRules.shownIn(game, true, false, true));
+        assertFalse(EditorRules.shownIn(menus, true, false, true));
+        assertFalse(EditorRules.shownIn(game, false, true, true));
+        assertTrue(EditorRules.shownIn(menus, false, true, true));
+        // MENÜ (both): on both.
+        assertTrue(EditorRules.shownIn(game, true, true, true));
+        assertTrue(EditorRules.shownIn(menus, true, true, true));
+        // The welcome text (neither) and an unhideable key (the game never hides it): on both.
+        assertTrue(EditorRules.shownIn(game, false, false, true));
+        assertTrue(EditorRules.shownIn(menus, false, false, true));
+        assertTrue(EditorRules.shownIn(menus, true, false, false));
+        assertTrue(EditorRules.shownIn(game, false, true, false));
+    }
+
+    /** MOB-NEXT: the launcher's editor opens on play's keys; the game's on the keys of the screen the game showed. */
+    @Test
+    public void theEditorOpensOnTheScreenTheGameShowed() {
+        assertEquals(EditorRules.Scene.GAME, EditorRules.firstScene(false, false));
+        assertEquals(EditorRules.Scene.GAME, EditorRules.firstScene(false, true));
+        assertEquals(EditorRules.Scene.GAME, EditorRules.firstScene(true, true));
+        assertEquals(EditorRules.Scene.MENU, EditorRules.firstScene(true, false));
+    }
+
+    /** MOB-NEXT: the welcome text steps aside only while an open drawer's key lies over it (touching is not over). */
+    @Test
+    public void theWelcomeTextGivesWayOnlyToDrawerKeysOverIt() {
+        float[] note = {313, 150, 601, 260};
+        assertFalse(EditorRules.noteGivesWay(note, new float[0][]));
+        assertFalse(EditorRules.noteGivesWay(note, new float[][]{{206, 12, 270, 60}, {346, 12, 410, 60}}));
+        assertTrue(EditorRules.noteGivesWay(note, new float[][]{{206, 12, 270, 60}, {346, 120, 410, 168}}));
+        assertFalse("edge to edge", EditorRules.noteGivesWay(note, new float[][]{{249, 150, 313, 198}, {346, 102, 410, 150}}));
+    }
+
+    /**
      * APK-REL: after "Kaydet ve çık" the launcher comes back sideways and is relaunched upright, sometimes twice: the
      * save's line shows on each screen that comes up within 3 s of its first showing, never on a later return.
      */

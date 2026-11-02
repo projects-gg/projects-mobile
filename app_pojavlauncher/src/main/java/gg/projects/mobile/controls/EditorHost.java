@@ -18,4 +18,12 @@ public interface EditorHost extends EditorExitable {
 
     /** "Geri al" put another layout on screen (in the game, the menu's pull button follows its MENÜ key). */
     void editorLayoutReloaded();
+
+    /**
+     * MOB-NEXT: true for the game's editor, which opens on the keys of the screen the game showed (its menus' keys when a
+     * menu was open, {@link EditorRules#firstScene}); the launcher's editor opens on play's keys.
+     */
+    default boolean editsInGame() {
+        return false;
+    }
 }

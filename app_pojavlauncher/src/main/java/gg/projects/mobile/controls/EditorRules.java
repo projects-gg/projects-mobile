@@ -13,6 +13,32 @@ import java.io.IOException;
 public final class EditorRules {
     private EditorRules() {}
 
+    /**
+     * MOB-NEXT (TASTE-2's P1): the game's two screens, whose keys the editor shows one at a time. The game shows a key in
+     * play ("Oyunda"), in its menus ("Menülerde") or in both, as the key's two boxes say, so the default layout puts
+     * twins in one place (DURAKLAT and GERİ, SOHBET and KLAVYE, ZIPLA and SHIFT, SALDIR and SAĞ TIK); the editor showed
+     * every key at once and drew the twins over each other. Only what is shown changes: the layout and its file do not.
+     */
+    public enum Scene { GAME, MENU }
+
+    /**
+     * Whether the editor shows a key while it shows {@code scene}: a key the game shows on that screen; a key the game
+     * never hides (upstream's hide and mouse keys, {@code hideable} false) on both, as in play; and a key shown on
+     * neither screen (the default layout's welcome text, an editor-only note) on both, as upstream's editor did.
+     */
+    public static boolean shownIn(Scene scene, boolean inGame, boolean inMenus, boolean hideable) {
+        if (!hideable || (!inGame && !inMenus)) return true;
+        return scene == Scene.GAME ? inGame : inMenus;
+    }
+
+    /**
+     * The screen the editor opens on: the launcher's editor on play's keys; the game's editor on the keys the game
+     * showed when it opened (its menus' keys when a menu was open: the inventory's SHIFT, the pause menu's GERİ).
+     */
+    public static Scene firstScene(boolean inGame, boolean grabbing) {
+        return inGame && !grabbing ? Scene.MENU : Scene.GAME;
+    }
+
     /** What leaving the editor does. */
     public enum Leave {
         /** Nothing changed since the layout was read or saved: the editor closes at once, no question. */
@@ -100,6 +126,19 @@ public final class EditorRules {
      */
     public static boolean showSavedLine(long shownAt, long now, long againMs) {
         return shownAt == 0 || now - shownAt <= againMs;
+    }
+
+    /**
+     * MOB-NEXT: whether a key shown on neither of the game's screens (the welcome text) steps aside in the editor: while
+     * a key it shows lies over it (an open drawer's: the default layout's DİĞER panel reaches the centred text on phones
+     * held sideways; or a key made larger: the joystick at 110 % on a 16:9 phone). It comes back when they go.
+     * Rectangles are left, top, right, bottom.
+     */
+    public static boolean noteGivesWay(float[] note, float[][] keys) {
+        for (float[] key : keys) {
+            if (key[0] < note[2] && note[0] < key[2] && key[1] < note[3] && note[1] < key[3]) return true;
+        }
+        return false;
     }
 
     private static boolean clearOfKeys(int x, int barWidth, int[] lefts, int[] rights, int gap) {

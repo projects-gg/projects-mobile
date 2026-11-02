@@ -35,12 +35,12 @@ public final class EditorBar extends LinearLayout {
     private static final long ENTER_MS = 160;
     private static final long EXIT_MS = 110;
     /** obsidian-900 at 88 %: the keys' own dark, a little denser so a label reads over the world. */
-    private static final int FILL = 0xE0121016;
-    private static final int FILL_PRESSED = 0xE6272229;
+    static final int FILL = 0xE0121016;
+    static final int FILL_PRESSED = 0xE6272229;
     /** bone-100 at 30 % (the keys' ring), at 16 % around a "Kaydet" that cannot be pressed yet. */
-    private static final int RING = 0x4DF3EBDD;
-    private static final int RING_QUIET = 0x29F3EBDD;
-    private static final int RING_PRESSED = 0x80F3EBDD;
+    static final int RING = 0x4DF3EBDD;
+    static final int RING_QUIET = 0x29F3EBDD;
+    static final int RING_PRESSED = 0x80F3EBDD;
 
     private final Button mMenu;
     private final Button mSave;
@@ -81,32 +81,42 @@ public final class EditorBar extends LinearLayout {
 
     /** Shows the bar (the editor opened). */
     public void appear() {
-        animate().cancel();
-        if (!Motion.enabled(getContext())) {
-            setAlpha(1f);
-            setVisibility(VISIBLE);
-            return;
-        }
-        if (getVisibility() != VISIBLE) {
-            setAlpha(0f);
-            setVisibility(VISIBLE);
-        }
-        animate().alpha(1f).setDuration(ENTER_MS).setInterpolator(Motion.EASE_OUT).withLayer();
+        fadeIn(this);
     }
 
     /** Hides the bar (the editor closed), faster than it came. */
     public void disappear() {
-        animate().cancel();
-        if (getVisibility() != VISIBLE) return;
-        if (!Motion.enabled(getContext())) {
-            setVisibility(GONE);
-            return;
-        }
-        animate().alpha(0f).setDuration(EXIT_MS).setInterpolator(Motion.EASE_OUT).withLayer()
-                .withEndAction(() -> setVisibility(GONE));
+        fadeOut(this);
     }
 
-    private static Button button(Context context, int text, Drawable background, int textColor, int font) {
+    /** The editor's bars come with it (MOB-NEXT: the bottom switch of the game's screens too). */
+    static void fadeIn(android.view.View bar) {
+        bar.animate().cancel();
+        if (!Motion.enabled(bar.getContext())) {
+            bar.setAlpha(1f);
+            bar.setVisibility(VISIBLE);
+            return;
+        }
+        if (bar.getVisibility() != VISIBLE) {
+            bar.setAlpha(0f);
+            bar.setVisibility(VISIBLE);
+        }
+        bar.animate().alpha(1f).setDuration(ENTER_MS).setInterpolator(Motion.EASE_OUT).withLayer();
+    }
+
+    /** ...and go with it, faster than they came. */
+    static void fadeOut(android.view.View bar) {
+        bar.animate().cancel();
+        if (bar.getVisibility() != VISIBLE) return;
+        if (!Motion.enabled(bar.getContext())) {
+            bar.setVisibility(GONE);
+            return;
+        }
+        bar.animate().alpha(0f).setDuration(EXIT_MS).setInterpolator(Motion.EASE_OUT).withLayer()
+                .withEndAction(() -> bar.setVisibility(GONE));
+    }
+
+    static Button button(Context context, int text, Drawable background, int textColor, int font) {
         float dp = context.getResources().getDisplayMetrics().density;
         Button button = new Button(context, null, android.R.attr.borderlessButtonStyle);
         button.setText(text);
@@ -158,7 +168,7 @@ public final class EditorBar extends LinearLayout {
     }
 
     /** 40 dp drawn inside the 48 dp target. */
-    private static Drawable inset(Drawable drawable, float dp) {
+    static Drawable inset(Drawable drawable, float dp) {
         int v = Math.round(4 * dp);
         return new InsetDrawable(drawable, 0, v, 0, v);
     }

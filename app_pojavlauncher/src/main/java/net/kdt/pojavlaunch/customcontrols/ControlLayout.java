@@ -45,10 +45,14 @@ import java.util.HashMap;
 import java.util.List;
 
 import gg.projects.mobile.controls.ControlHint;
+import gg.projects.mobile.controls.DrawerMotion;
 import gg.projects.mobile.controls.EditorBar;
 import gg.projects.mobile.controls.EditorHost;
+import gg.projects.mobile.controls.EditorMotion;
 import gg.projects.mobile.controls.EditorRules;
+import gg.projects.mobile.controls.EditorScenes;
 import gg.projects.mobile.controls.LayoutBackups;
+import gg.projects.mobile.mods.Motion;
 import gg.projects.mobile.ui.ConfirmDialog;
 
 public class ControlLayout extends FrameLayout {
@@ -82,6 +86,13 @@ public class ControlLayout extends FrameLayout {
 	private int mEdits;
 	/** The save whose "Geri al" is running. */
 	private LayoutBackups.Saved mUndoing;
+	// Projects fork (MOB-NEXT): the game's screen whose keys the editor shows, its switch at the bottom, and the one
+	// drawer whose keys are out (TASTE-2's P1: the default layout's twins and both drawers' grids were drawn over each
+	// other). Only what the editor shows changes, never the layout or its file.
+	private EditorRules.Scene mScene = EditorRules.Scene.GAME;
+	private EditorScenes mSceneSwitch;
+	@Nullable private ControlDrawer mEditorDrawer;
+	private static final long BAR_MOVE_MS = 180;
 
 	public ControlLayout(Context ctx) {
 		super(ctx);
@@ -115,7 +126,7 @@ public class ControlLayout extends FrameLayout {
 		}
 		if (mEditorBar != null) {
 			mEditorBar.setCanSave(mIsModified && !mSaving);
-			mEditorBar.post(this::placeEditorBar);
+			mEditorBar.post(this::placeEditorBars);
 		}
 	}
 
@@ -157,8 +168,7 @@ public class ControlLayout extends FrameLayout {
 
 		//CONTROL DRAWER
 		for(ControlDrawerData drawerData : controlLayout.mDrawerDataList){
-			ControlDrawer drawer = addDrawerView(drawerData);
-			if(mModifiable) drawer.areButtonsVisible = true;
+			addDrawerView(drawerData);
 		}
 
 		mLayout.scaledAt = LauncherPreferences.PREF_BUTTONSIZE;
@@ -169,6 +179,12 @@ public class ControlLayout extends FrameLayout {
 		// Projects fork (M15): the hide button starts in the state the controls are in.
 		for (ControlInterface button : mButtons) {
 			if (button instanceof ControlButton) ((ControlButton) button).onControlsShown(mModifiable || mControlVisible);
+		}
+		// Projects fork (MOB-NEXT): a layout put in the editor shows the keys of the screen the editor shows, with every
+		// drawer's keys away (upstream showed all of them, the twins and both grids over each other).
+		if (mModifiable) {
+			mEditorDrawer = null;
+			showEditorScene(false);
 		}
 	} // loadLayout
 
@@ -195,6 +211,9 @@ public class ControlLayout extends FrameLayout {
 	public void addDrawer(ControlDrawerData drawerData){
 		mLayout.mDrawerDataList.add(drawerData);
 		addDrawerView();
+		// Projects fork (MOB-NEXT): an added drawer's keys wait in it (a copy's would lie over the open grid), as every
+		// drawer's do in the editor until it is tapped.
+		if (mModifiable) showEditorScene(true);
 	}
 
 	private void addDrawerView(){
@@ -381,14 +400,21 @@ public class ControlLayout extends FrameLayout {
 		if(!isModifiable && mModifiable){
 			removeEditWindow();
 		}
+		boolean opening = isModifiable && !mModifiable;
 		mModifiable = isModifiable;
 		if(isModifiable){
 			// Projects fork (M16): the reason line goes with play.
 			hideModHint();
-			// In edit mode, all controls have to be shown
+			// Projects fork (MOB-NEXT): upstream showed every control here, the twins and both drawers' grids over each
+			// other. The editor shows the keys of one of the game's screens: the one the game shows (play's in the
+			// launcher), with the drawer that was open.
+			if (opening) {
+				mScene = EditorRules.firstScene(mHost != null && mHost.editsInGame(), isGrabbing());
+				mEditorDrawer = openDrawer();
+			}
+			showEditorScene(false);
+			// Projects fork (M15): and the hide button as itself.
 			for(ControlInterface button : getButtonChildren()){
-				button.setVisible(true);
-				// Projects fork (M15): and the hide button as itself.
 				if (button instanceof ControlButton) ((ControlButton) button).onControlsShown(true);
 			}
 		}
@@ -432,57 +458,192 @@ public class ControlLayout extends FrameLayout {
 	private void showEditorBar(boolean show) {
 		if (!show) {
 			if (mEditorBar != null) mEditorBar.disappear();
+			if (mSceneSwitch != null) mSceneSwitch.disappear();
 			return;
 		}
+		float dp = getResources().getDisplayMetrics().density;
 		if (mEditorBar == null) {
 			mEditorBar = new EditorBar(getContext(), this::openEditorMenu, () -> saveActive(false, null));
 			LayoutParams params = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT,
 					Gravity.TOP | Gravity.CENTER_HORIZONTAL);
 			// 8 dp from the top to the drawn buttons (each draws 40 dp inside its 48 dp target).
-			params.topMargin = Math.round(4 * getResources().getDisplayMetrics().density);
+			params.topMargin = Math.round(4 * dp);
 			addView(mEditorBar, params);
 			// APK-REL: placed clear of the keys each time it is laid out (opened, a new window size).
-			mEditorBar.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> placeEditorBar());
+			mEditorBar.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> placeEditorBars());
+		}
+		if (mSceneSwitch == null) {
+			// MOB-NEXT: the game's two screens, 8 dp from the bottom (the hotbar's place, free in the default layout).
+			mSceneSwitch = new EditorScenes(getContext(), this::pickScene);
+			LayoutParams params = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT,
+					Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
+			params.bottomMargin = Math.round(4 * dp);
+			addView(mSceneSwitch, params);
+			mSceneSwitch.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> placeEditorBars());
 		}
 		mEditorBar.setCanSave(mIsModified && !mSaving);
 		mEditorBar.appear();
-		mEditorBar.post(this::placeEditorBar);
+		mSceneSwitch.setScene(mScene);
+		mSceneSwitch.appear();
+		mEditorBar.post(this::placeEditorBars);
 	}
 
 	/**
 	 * APK-REL (0.4.9's emulator run): the bar keeps clear of the keys in its band ({@link EditorRules#barLeft}), measured
 	 * when the editor opens, when a layout is loaded and when the keys take their places on a new window size; not while
 	 * a key is dragged (a key moved over the bar is drawn above it and stays reachable, as CTRL-SAVE decided). The
-	 * "Tuşlar kaydedildi." line under the bar follows it (it starts at the bar's left edge).
+	 * "Tuşlar kaydedildi." line under the bar follows it (it starts at the bar's left edge). MOB-NEXT: the bottom switch
+	 * of the game's screens the same way; both also when the shown keys change (another screen, a drawer's keys out or
+	 * away), then sliding there (transform only) once they are fully shown.
 	 */
-	private void placeEditorBar() {
-		if (mEditorBar == null || !mModifiable) return;
+	private void placeEditorBars() {
+		if (!mModifiable) return;
+		placeBar(mEditorBar);
+		placeBar(mSceneSwitch);
+	}
+
+	private void placeBar(@Nullable View bar) {
+		if (bar == null) return;
 		int width = getWidth();
-		int barWidth = mEditorBar.getWidth();
+		int barWidth = bar.getWidth();
 		if (width == 0 || barWidth == 0) return;
-		int top = mEditorBar.getTop();
-		int bottom = mEditorBar.getBottom();
+		int top = bar.getTop();
+		int bottom = bar.getBottom();
 		List<ControlInterface> keys = getButtonChildren();
 		int[] lefts = new int[keys.size()];
 		int[] rights = new int[keys.size()];
 		int n = 0;
 		for (ControlInterface key : keys) {
 			View view = key.getControlView();
-			if (view.getVisibility() != VISIBLE) continue;
-			android.view.ViewGroup.LayoutParams size = view.getLayoutParams();
-			int keyWidth = view.getWidth() > 0 ? view.getWidth() : (size != null ? size.width : 0);
-			int keyHeight = view.getHeight() > 0 ? view.getHeight() : (size != null ? size.height : 0);
-			if (keyWidth <= 0 || keyHeight <= 0) continue;
-			float y = view.getY();
-			if (y >= bottom || y + keyHeight <= top) continue;
-			lefts[n] = Math.round(view.getX());
-			rights[n] = Math.round(view.getX() + keyWidth);
+			if (view.getVisibility() != VISIBLE || DrawerMotion.isLeaving(view)) continue;
+			float[] box = boxOf(view);
+			if (box == null) continue;
+			if (box[1] >= bottom || box[3] <= top) continue;
+			lefts[n] = Math.round(box[0]);
+			rights[n] = Math.round(box[2]);
 			n++;
 		}
 		int room = Math.round(8 * getResources().getDisplayMetrics().density);
 		int left = EditorRules.barLeft(width, barWidth, java.util.Arrays.copyOf(lefts, n),
 				java.util.Arrays.copyOf(rights, n), room, room);
-		mEditorBar.setTranslationX(left - mEditorBar.getLeft());
+		float target = left - bar.getLeft();
+		// A bar that is fully shown slides to its new place; one fading in or out (its fade cancels any slide first) or
+		// with animations off takes it at once.
+		if (bar.getVisibility() == VISIBLE && bar.getAlpha() >= 1f && Motion.enabled(getContext())) {
+			if (Math.abs(bar.getTranslationX() - target) >= 1f) {
+				bar.animate().translationX(target).setStartDelay(0).setDuration(BAR_MOVE_MS).setInterpolator(Motion.EASE_OUT);
+			}
+		} else {
+			bar.setTranslationX(target);
+		}
+	}
+
+	/** A key's box (left, top, right, bottom), its size from its layout params before it is laid out; null if none. */
+	@Nullable
+	private static float[] boxOf(View view) {
+		android.view.ViewGroup.LayoutParams size = view.getLayoutParams();
+		int keyWidth = view.getWidth() > 0 ? view.getWidth() : (size != null ? size.width : 0);
+		int keyHeight = view.getHeight() > 0 ? view.getHeight() : (size != null ? size.height : 0);
+		if (keyWidth <= 0 || keyHeight <= 0) return null;
+		return new float[]{view.getX(), view.getY(), view.getX() + keyWidth, view.getY() + keyHeight};
+	}
+
+	/**
+	 * Projects fork (MOB-NEXT): shows the keys of the game's screen the editor shows ({@link EditorRules#shownIn}) and the
+	 * open drawer's keys, every other drawer's away; a key shown on neither screen (the welcome text) steps aside while a
+	 * shown key lies over it ({@link EditorRules#noteGivesWay}). {@code animate}: keys cross-fade in place and a drawer's
+	 * grow out of it, as in the game (with animations on). Keys already where they belong do not move.
+	 */
+	private void showEditorScene(boolean animate) {
+		if (!mModifiable) return;
+		boolean motion = animate && Motion.enabled(getContext());
+		List<ControlInterface> keys = getButtonChildren();
+		ControlDrawer open = mEditorDrawer != null && mEditorDrawer.getParent() == this && shownInScene(mEditorDrawer)
+				? mEditorDrawer : null;
+		List<float[]> shownBoxes = new ArrayList<>();
+		List<ControlInterface> notes = new ArrayList<>();
+		for (ControlInterface key : keys) {
+			View view = key.getControlView();
+			if (key instanceof ControlSubButton) {
+				// Their drawer shows them; the open one's lie where they lie.
+				if (((ControlSubButton) key).parentDrawer == open) addBox(shownBoxes, view);
+				continue;
+			}
+			if (isNote(key)) {
+				notes.add(key);
+				continue;
+			}
+			boolean shown = shownInScene(key);
+			if (shown) {
+				EditorMotion.show(view, motion, 0, null);
+				addBox(shownBoxes, view);
+			} else {
+				EditorMotion.hide(view, motion);
+			}
+			if (key instanceof ControlDrawer) ((ControlDrawer) key).showKeysInEditor(key == open, motion);
+		}
+		float[][] covering = shownBoxes.toArray(new float[0][]);
+		for (ControlInterface note : notes) {
+			View view = note.getControlView();
+			float[] box = boxOf(view);
+			if (box != null && EditorRules.noteGivesWay(box, covering)) EditorMotion.hide(view, motion);
+			else EditorMotion.show(view, motion, 0, null);
+		}
+		if (mSceneSwitch != null) mSceneSwitch.setScene(mScene);
+		placeEditorBars();
+	}
+
+	private static void addBox(List<float[]> boxes, View view) {
+		float[] box = boxOf(view);
+		if (box != null) boxes.add(box);
+	}
+
+	/** A key the game shows on neither screen (the welcome text): the editor shows it on both, unless keys lie over it. */
+	private static boolean isNote(ControlInterface key) {
+		ControlData data = key.getProperties();
+		return !(key instanceof ControlDrawer) && data.isHideable && !data.displayInGame && !data.displayInMenu;
+	}
+
+	private boolean shownInScene(ControlInterface key) {
+		ControlData data = key.getProperties();
+		return EditorRules.shownIn(mScene, data.displayInGame, data.displayInMenu, data.isHideable);
+	}
+
+	/** Projects fork (MOB-NEXT): the switch at the bottom picked the other screen of the game. */
+	private void pickScene(EditorRules.Scene scene) {
+		if (!mModifiable || scene == mScene) return;
+		removeEditWindow();
+		mScene = scene;
+		mEditorDrawer = null;
+		showEditorScene(true);
+	}
+
+	/**
+	 * Projects fork (MOB-NEXT): the drawer whose keys are out in the editor: the one a tapped key belongs to (a drawer, or
+	 * one of its keys), none after another key was tapped; the screen is shown again only when that changed.
+	 */
+	private void openEditorDrawer(@Nullable ControlDrawer drawer) {
+		if (drawer == mEditorDrawer) return;
+		mEditorDrawer = drawer;
+		showEditorScene(true);
+	}
+
+	/** The drawer a key opens in the editor: itself, or the drawer it belongs to; null for any other key. */
+	@Nullable
+	private static ControlDrawer drawerOf(ControlInterface key) {
+		if (key instanceof ControlSubButton) return ((ControlSubButton) key).parentDrawer;
+		if (key instanceof ControlDrawer) return (ControlDrawer) key;
+		return null;
+	}
+
+	/** The drawer open in play when the game's editor opens (its keys stay out), else null. */
+	@Nullable
+	private ControlDrawer openDrawer() {
+		for (ControlInterface key : getButtonChildren()) {
+			if (key instanceof ControlDrawer && ((ControlDrawer) key).areButtonsVisible
+					&& key.getControlView().getVisibility() == VISIBLE) return (ControlDrawer) key;
+		}
+		return null;
 	}
 
 	private void openEditorMenu() {
@@ -651,12 +812,14 @@ public class ControlLayout extends FrameLayout {
 			button.setDynamicY(button.getProperties().dynamicY);
 		}
 		// APK-REL: the keys took their places on a new size; the editor's bar keeps clear of them.
-		if (mEditorBar != null) mEditorBar.post(this::placeEditorBar);
+		if (mEditorBar != null) mEditorBar.post(this::placeEditorBars);
 	}
 
     @Override
     public void onViewRemoved(View child) {
         super.onViewRemoved(child);
+        // Projects fork (MOB-NEXT): a removed drawer's keys are not out any more.
+        if (child == mEditorDrawer) mEditorDrawer = null;
         if(child instanceof ControlInterface && mControlDialog != null){
 			mControlDialog.disappearColor();
             mControlDialog.disappear(false);
@@ -668,6 +831,9 @@ public class ControlLayout extends FrameLayout {
 	 * to the button at hand.
 	 */
 	public void editControlButton(ControlInterface button){
+		// Projects fork (MOB-NEXT): a tapped drawer (or one of its keys) has its keys out, the other drawer's go away; a
+		// tap on any other key puts them away.
+		if (mModifiable) openEditorDrawer(drawerOf(button));
 		if(mControlDialog == null){
 			// When the panel is null, it needs to inflate first.
 			// So inflate it, then process it on the next frame
@@ -768,9 +934,14 @@ public class ControlLayout extends FrameLayout {
 
 		// When the input window cannot be hidden, it returns false
 		if(!imm.hideSoftInputFromWindow(getWindowToken(), 0)){
+			// Projects fork (MOB-NEXT): a tap outside closes one layer at a time: the colour picker, the key's panel, then
+			// the open drawer's keys. A key whose screens changed in its panel leaves or joins the shown keys now.
+			boolean panelShown = mControlDialog.isDisplaying();
 			if(mControlDialog.disappearLayer()){
 				mActionRow.setFollowedButton(null);
-				mHandleView.hide();
+				if (mHandleView != null) mHandleView.hide();
+				if (!panelShown) mEditorDrawer = null;
+				showEditorScene(true);
 			}
 		}
 		return true;

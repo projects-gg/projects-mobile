@@ -759,6 +759,12 @@ public class MainActivity extends BaseActivity implements ControlButtonMenuListe
         if (!isInEditor) mDrawerPullButton.setVisibility(mControlLayout.hasMenuButton() ? View.GONE : View.VISIBLE);
     }
 
+    /** Projects fork (MOB-NEXT): the game's editor opens on the keys of the screen the game shows. */
+    @Override
+    public boolean editsInGame() {
+        return true;
+    }
+
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
         GameService.LocalBinder localBinder = (GameService.LocalBinder) service;

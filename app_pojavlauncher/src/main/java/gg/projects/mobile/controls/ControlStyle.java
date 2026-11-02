@@ -186,6 +186,37 @@ public final class ControlStyle {
         return Math.max(size, minSize);
     }
 
+    /** Measures a block of lines at a text size (px or sp, as long as the room is in the same unit). */
+    public interface LinesMeasure {
+        /** The width of one line at {@code size}. */
+        float width(String line, float size);
+
+        /** The height a line takes at {@code size}, the space between lines included. */
+        float lineHeight(float size);
+    }
+
+    /**
+     * MOB-NEXT (TASTE-2's P1): the size for a key's text of several lines without a glyph (the editor's welcome text),
+     * so that it fits its key at any font size: the largest size from {@code startSize} down to {@code minSize} (0.25
+     * steps) at which every line stays one line within {@code maxWidth} and all of them fit {@code maxHeight};
+     * {@code minSize} when nothing fits. At 130 % the welcome text's longest line ran over the key's edges and its last
+     * line broke in two.
+     */
+    public static float fitLines(LinesMeasure measure, String[] lines, float maxWidth, float maxHeight, float startSize,
+                                 float minSize) {
+        float size = startSize;
+        while (size > minSize && !linesFit(measure, lines, maxWidth, maxHeight, size)) size -= 0.25f;
+        return Math.max(size, minSize);
+    }
+
+    private static boolean linesFit(LinesMeasure measure, String[] lines, float maxWidth, float maxHeight, float size) {
+        if (measure.lineHeight(size) * lines.length > maxHeight) return false;
+        for (String line : lines) {
+            if (measure.width(line, size) > maxWidth) return false;
+        }
+        return true;
+    }
+
     /**
      * The label a key shows: one line, upper-cased with {@link Locale#ROOT} when the "all caps"
      * setting is on, like upstream's labels ({@link ControlLabels#upper}).

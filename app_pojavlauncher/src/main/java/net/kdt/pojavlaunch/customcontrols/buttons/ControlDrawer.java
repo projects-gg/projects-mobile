@@ -58,6 +58,23 @@ public class ControlDrawer extends ControlButton {
         gg.projects.mobile.ui.Haptics.toggle(this, areButtonsVisible);
     }
 
+    /**
+     * Projects fork (MOB-NEXT): in the editor, this drawer's keys are out ({@code open}) or away. One drawer at a time, as
+     * in the game: the default layout's two panels share one place, and the editor drew both grids over each other.
+     * They grow out of the drawer and go back into it (EditorMotion); the drawer itself keeps its look.
+     */
+    public void showKeysInEditor(boolean open, boolean motion) {
+        areButtonsVisible = open;
+        for (int i = 0; i < buttons.size(); i++) {
+            ControlSubButton button = buttons.get(i);
+            if (open) {
+                gg.projects.mobile.controls.EditorMotion.show(button, motion, i * gg.projects.mobile.controls.EditorMotion.STAGGER_MS, this);
+            } else {
+                gg.projects.mobile.controls.EditorMotion.hide(button, motion);
+            }
+        }
+    }
+
     /** Projects fork (M15): closes the drawer if it is open (another drawer opened). */
     public void close() {
         if (!areButtonsVisible || parentLayout.getModifiable()) return;

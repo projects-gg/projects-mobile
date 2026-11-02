@@ -322,6 +322,9 @@
     <string name="projects_ctrl_undone">Eski tuşların geri geldi.</string>
     <string name="projects_ctrl_save_failed">Tuşlar kaydedilemedi. Tekrar dene.</string>
     <string name="projects_ctrl_undo_failed">Eski tuşların geri getirilemedi.</string>
+    <!-- MOB-NEXT: the editor's switch at the bottom between the keys the game shows in play and those it shows in menus. -->
+    <string name="projects_ctrl_scene_game">Oyunda</string>
+    <string name="projects_ctrl_scene_menus">Menülerde</string>
     <!-- M17: a Projects start that ends while the player is away from the home screen. -->
     <string name="projects_ready_title">Projects hazır</string>
     <string name="projects_ready_body">Kurulum bitti. Başlatmak için Oyna\'ya bas.</string>

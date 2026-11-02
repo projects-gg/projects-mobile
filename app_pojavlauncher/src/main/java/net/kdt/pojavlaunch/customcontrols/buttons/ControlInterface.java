@@ -216,6 +216,10 @@ public interface ControlInterface extends View.OnLongClickListener, GrabListener
         float MIN_DISTANCE = getSnapDistance();
 
         if (button == this) return false;
+        // Projects fork (MOB-NEXT): a key the editor does not show now (the other screen's twin, a drawer's keys that
+        // are away) is no place to snap to.
+        View other = button.getControlView();
+        if (other.getVisibility() != VISIBLE || gg.projects.mobile.controls.DrawerMotion.isLeaving(other)) return false;
         return !(net.kdt.pojavlaunch.utils.MathUtils.dist(
                 button.getControlView().getX() + button.getControlView().getWidth() / 2f,
                 button.getControlView().getY() + button.getControlView().getHeight() / 2f,

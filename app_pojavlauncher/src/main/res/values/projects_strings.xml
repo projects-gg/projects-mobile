@@ -337,6 +337,9 @@
     <string name="projects_ctrl_undone">Your old controls are back.</string>
     <string name="projects_ctrl_save_failed">Couldn\'t save the controls. Try again.</string>
     <string name="projects_ctrl_undo_failed">Couldn\'t bring your old controls back.</string>
+    <!-- MOB-NEXT: the editor's switch at the bottom between the keys the game shows in play and those it shows in menus. -->
+    <string name="projects_ctrl_scene_game">In game</string>
+    <string name="projects_ctrl_scene_menus">In menus</string>
     <!-- M17: a Projects start that ends while the player is away from the home screen: no game starts by
          itself; the notification says so and the home screen has Play ready. -->
     <string name="projects_ready_title">Projects is ready</string>

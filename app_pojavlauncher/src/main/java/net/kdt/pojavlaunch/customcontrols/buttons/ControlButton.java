@@ -167,6 +167,58 @@ public class ControlButton extends TextView implements ControlInterface {
         return true;
     }
 
+    /**
+     * MOB-NEXT (TASTE-2's P1): a key without a glyph whose text has several lines (the editor's welcome text) fits them
+     * into the key at any font size, each line on one line with room around the block (12 dp at the sides, 8 dp above
+     * and below). It starts at upstream's 14 sp, which grows with the phone's font size; at 130 % the welcome text ran
+     * over its key's edges and broke its last line. Other keys keep upstream's 14 sp.
+     */
+    private static final float NOTE_START_SP = 14f;
+    private static final float NOTE_MIN_DP = 8f;
+    private static final float NOTE_SIDE_DP = 12f;
+    private static final float NOTE_END_DP = 8f;
+    private android.text.TextPaint mNoteProbe;
+
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        if (MeasureSpec.getMode(widthMeasureSpec) == MeasureSpec.EXACTLY && MeasureSpec.getMode(heightMeasureSpec) == MeasureSpec.EXACTLY) {
+            fitNote(MeasureSpec.getSize(widthMeasureSpec), MeasureSpec.getSize(heightMeasureSpec));
+        }
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+    }
+
+    private void fitNote(int width, int height) {
+        if (mSkin != null || width <= 0 || height <= 0) return;
+        CharSequence text = getText();
+        android.text.method.TransformationMethod caps = getTransformationMethod();
+        if (caps != null && text != null) text = caps.getTransformation(text, this);
+        String shown = text == null ? "" : text.toString();
+        android.util.DisplayMetrics metrics = getResources().getDisplayMetrics();
+        float start = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, NOTE_START_SP, metrics);
+        float size = start;
+        if (shown.indexOf('\n') >= 0) {
+            if (mNoteProbe == null) mNoteProbe = new android.text.TextPaint();
+            mNoteProbe.set(getPaint());
+            final float spacingMult = getLineSpacingMultiplier();
+            final float spacingAdd = getLineSpacingExtra();
+            float dp = metrics.density;
+            size = gg.projects.mobile.controls.ControlStyle.fitLines(new gg.projects.mobile.controls.ControlStyle.LinesMeasure() {
+                @Override
+                public float width(String line, float s) {
+                    mNoteProbe.setTextSize(s);
+                    return mNoteProbe.measureText(line);
+                }
+
+                @Override
+                public float lineHeight(float s) {
+                    mNoteProbe.setTextSize(s);
+                    return mNoteProbe.getFontSpacing() * spacingMult + spacingAdd;
+                }
+            }, shown.split("\n", -1), width - 2 * NOTE_SIDE_DP * dp, height - 2 * NOTE_END_DP * dp, start, Math.min(start, NOTE_MIN_DP * dp));
+        }
+        if (Math.abs(getTextSize() - size) > 0.5f) setTextSize(TypedValue.COMPLEX_UNIT_PX, size);
+    }
+
     @Override
     protected void onDraw(Canvas canvas) {
         if (mSkin != null) {

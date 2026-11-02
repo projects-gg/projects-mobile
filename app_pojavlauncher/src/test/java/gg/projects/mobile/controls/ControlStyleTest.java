@@ -144,6 +144,44 @@ public class ControlStyleTest {
         assertEquals("never below the floor", 6.5f, ControlStyle.fit(measure, "A VERY LONG LABEL INDEED", 30, 9f, 6.5f), 0f);
     }
 
+    /**
+     * MOB-NEXT (TASTE-2's P1): the editor's welcome text, three lines in a 288 x 110 dp key, keeps upstream's 14 sp at
+     * the usual font size and fits its key at 130 % and 200 %: every line one line, all of them in the key's height.
+     * Measured as Roboto's capitals (0.68 em a letter, a line 1.17 em), dp for px.
+     */
+    @Test
+    public void aNoteOfSeveralLinesFitsItsKeyAtAnyFontSize() {
+        ControlStyle.LinesMeasure measure = new ControlStyle.LinesMeasure() {
+            @Override
+            public float width(String line, float size) {
+                return line.length() * size * 0.68f;
+            }
+
+            @Override
+            public float lineHeight(float size) {
+                return size * 1.17f;
+            }
+        };
+        String[] lines = {"DÜZENLEYİCİYE HOŞ GELDİN.", "AYARLARI İÇİN BİR TUŞA DOKUN.", "DAHA FAZLASI ÜSTTEKİ MENÜDE."};
+        float maxWidth = 288 - 24, maxHeight = 110 - 16;
+        assertEquals("the usual size stays", 13f, ControlStyle.fitLines(measure, lines, maxWidth, maxHeight, 13f, 8f), 0f);
+        for (float start : new float[]{14f * 1.3f, 14f * 2f}) {
+            float size = ControlStyle.fitLines(measure, lines, maxWidth, maxHeight, start, 8f);
+            assertTrue(start + ": smaller", size < start);
+            for (String line : lines) assertTrue(start + ": " + line, measure.width(line, size) <= maxWidth);
+            assertTrue(start + ": height", measure.lineHeight(size) * lines.length <= maxHeight);
+            // The largest such size: a quarter more and the longest line runs over.
+            assertTrue(start + ": largest", measure.width(lines[1], size + 0.25f) > maxWidth);
+        }
+        // Too many lines for the height: the height decides too.
+        String[] tall = {"A", "B", "C", "D", "E", "F", "G", "H"};
+        float size = ControlStyle.fitLines(measure, tall, maxWidth, maxHeight, 14f, 6f);
+        assertTrue(measure.lineHeight(size) * tall.length <= maxHeight);
+        assertTrue(measure.lineHeight(size + 0.25f) * tall.length > maxHeight);
+        // Nothing fits: the floor.
+        assertEquals(8f, ControlStyle.fitLines(measure, new String[]{"A VERY VERY LONG LINE INDEED"}, 40, 94, 14f, 8f), 0f);
+    }
+
     @Test
     public void labelsAreOneLineInRootCapitals() {
         Locale before = Locale.getDefault();
