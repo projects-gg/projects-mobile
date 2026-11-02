@@ -111,6 +111,17 @@ public class LanguagePairsTest {
         }
     }
 
+    /** MOB-NEXT: the key settings panel's drawer directions, one per ControlDrawerData.Orientation (it showed "FREE"). */
+    @Test
+    public void theDrawerDirectionsNameEveryOrientationInItsOrder() throws Exception {
+        int orientations = net.kdt.pojavlaunch.customcontrols.ControlDrawerData.Orientation.values().length;
+        String english = texts(new File(RES, "values/projects_strings.xml")).get("projects_ctrl_drawer_orientations");
+        String turkish = texts(new File(RES, "values-tr/projects_strings.xml")).get("projects_ctrl_drawer_orientations");
+        assertEquals(orientations, english.split("\n").length);
+        assertEquals(orientations, turkish.split("\n").length);
+        assertEquals("Down\nLeft\nUp\nRight\nFree\n", english);
+    }
+
     @Test
     public void turkishListsReplaceWholeEnglishLists() throws Exception {
         Map<String, String> turkish = texts(new File(RES, "values-tr/projects_arrays.xml"));

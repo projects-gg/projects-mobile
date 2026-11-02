@@ -62,7 +62,8 @@ public final class EditorBar extends LinearLayout {
         mMenu.setOnClickListener(v -> onMenu.run());
         addView(mMenu, new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
-        mSave = button(context, R.string.projects_ctrl_save, save(context, dp), 0, R.font.tektur_semibold);
+        // Figtree like every primary button (design.md §2: Tektur only for titles, live numbers and OYNA).
+        mSave = button(context, R.string.projects_ctrl_save, save(context, dp), 0, R.font.figtree_semibold);
         mSave.setTextColor(new ColorStateList(
                 new int[][]{new int[]{-android.R.attr.state_enabled}, new int[]{}},
                 new int[]{ContextCompat.getColor(context, R.color.projects_ash_400), ContextCompat.getColor(context, R.color.projects_on_gold)}));
@@ -138,6 +139,34 @@ public final class EditorBar extends LinearLayout {
         button.setIncludeFontPadding(false);
         Press.attach(button, Press.Style.BUTTON);
         return button;
+    }
+
+    /**
+     * MOB-NEXT (TASTE-2's second look): a selected key's action row ("Sil", "Kopyala", "Tuş ekle") in this bar's dress:
+     * the keys' dark with a bone hairline, chamfered, Figtree in bone and as written, no lift; upstream's were the
+     * platform's grey buttons in capitals.
+     */
+    public static void dressAction(Button button) {
+        Context context = button.getContext();
+        float dp = context.getResources().getDisplayMetrics().density;
+        button.setAllCaps(false);
+        button.setStateListAnimator(null);
+        button.setBackground(quiet(context, dp));
+        try {
+            button.setTypeface(ResourcesCompat.getFont(context, R.font.figtree_semibold));
+        } catch (RuntimeException ignored) {
+            // The platform font is fine.
+        }
+        button.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        button.setTextColor(ContextCompat.getColor(context, R.color.projects_bone_100));
+        button.setIncludeFontPadding(false);
+        button.setGravity(Gravity.CENTER);
+        button.setMinHeight(0);
+        button.setMinimumHeight(0);
+        button.setMinWidth(Math.round(64 * dp));
+        button.setMinimumWidth(Math.round(64 * dp));
+        button.setPadding(Math.round(12 * dp), 0, Math.round(12 * dp), 0);
+        Press.attach(button, Press.Style.BUTTON);
     }
 
     /** "Menü": the keys' dark with their bone hairline; lighter while pressed. */

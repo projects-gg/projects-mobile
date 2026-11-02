@@ -2,6 +2,8 @@ package gg.projects.mobile.controls;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.NumberFormat;
+import java.util.Locale;
 
 /**
  * CTRL-SAVE (1 Nov 2026): the controls editor's decisions, apart from its views (the tests run them on the JVM).
@@ -139,6 +141,20 @@ public final class EditorRules {
             if (key[0] < note[2] && note[0] < key[2] && key[1] < note[3] && note[1] < key[3]) return true;
         }
         return false;
+    }
+
+    /**
+     * MOB-NEXT (TASTE-2's second look): a key's size as the key settings panel shows it, a whole number; upstream printed
+     * the float ("Boyut 121.00001 x 110.00001"). The field only shows it: the layout keeps its value until the player
+     * types one.
+     */
+    public static String sizeText(float size) {
+        return String.valueOf(Math.round(size));
+    }
+
+    /** MOB-NEXT (TASTE-2's second look): a slider's value the language's way: "%10" in Turkish, "10%" in English. */
+    public static String percent(Locale locale, int value) {
+        return NumberFormat.getPercentInstance(locale).format(value / 100d);
     }
 
     private static boolean clearOfKeys(int x, int barWidth, int[] lefts, int[] rights, int gap) {

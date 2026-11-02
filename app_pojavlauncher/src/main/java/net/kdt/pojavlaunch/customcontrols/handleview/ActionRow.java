@@ -7,6 +7,7 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.widget.Button;
 import android.widget.LinearLayout;
 
 import androidx.annotation.Nullable;
@@ -14,6 +15,8 @@ import androidx.core.math.MathUtils;
 
 import net.kdt.pojavlaunch.R;
 import net.kdt.pojavlaunch.customcontrols.buttons.ControlInterface;
+
+import gg.projects.mobile.controls.EditorBar;
 
 /**
  * Layout floating around a Control Button, displaying contextual actions
@@ -64,9 +67,15 @@ public class ActionRow extends LinearLayout {
         actionButtons[2] = new AddSubButton(getContext());
 
         // This is not pretty code, don't do this.
-        for(ActionButtonInterface buttonInterface: actionButtons){
-            View button = ((View)(buttonInterface));
-            addView(button, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1F));
+        float dp = getResources().getDisplayMetrics().density;
+        for(int i = 0; i < actionButtons.length; i++){
+            View button = ((View)(actionButtons[i]));
+            // Projects fork (MOB-NEXT, TASTE-2's second look): in the editor bar's dress (the keys' dark, a bone
+            // hairline, chamfered, Figtree as written), apart by 6 dp; upstream's were the platform's grey capitals.
+            if (button instanceof Button) EditorBar.dressAction((Button) button);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1F);
+            if (i > 0) params.setMarginStart(Math.round(6 * dp));
+            addView(button, params);
         }
 
         setElevation(5F);

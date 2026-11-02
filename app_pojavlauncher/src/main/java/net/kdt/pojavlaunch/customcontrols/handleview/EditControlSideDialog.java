@@ -7,6 +7,7 @@ import static net.kdt.pojavlaunch.Tools.currentDisplayMetrics;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.util.Log;
 import android.view.View;
@@ -19,7 +20,12 @@ import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
 
+import androidx.core.content.ContextCompat;
+import androidx.core.os.ConfigurationCompat;
+
 import com.kdt.SideDialogView;
+
+import gg.projects.mobile.controls.EditorRules;
 
 import net.kdt.pojavlaunch.EfficientAndroidLWJGLKeycode;
 import net.kdt.pojavlaunch.R;
@@ -36,6 +42,7 @@ import net.kdt.pojavlaunch.utils.interfaces.SimpleSeekBarListener;
 import net.kdt.pojavlaunch.utils.interfaces.SimpleTextWatcher;
 
 import java.util.List;
+import java.util.Locale;
 
 public class EditControlSideDialog extends SideDialogView {
 
@@ -144,8 +151,10 @@ public class EditControlSideDialog extends SideDialogView {
         }
     }
 
+    /** Projects fork (MOB-NEXT): the language's own percent, "%10" in Turkish (upstream's format read "10%" in both). */
     public static void setPercentageText(TextView textView, int progress) {
-        textView.setText(textView.getContext().getString(R.string.percent_format, progress));
+        Locale locale = ConfigurationCompat.getLocales(textView.getResources().getConfiguration()).get(0);
+        textView.setText(EditorRules.percent(locale != null ? locale : Locale.getDefault(), progress));
     }
 
     /* LOADING VALUES */
@@ -161,8 +170,10 @@ public class EditControlSideDialog extends SideDialogView {
         mAbsoluteTrackingSwitch.setVisibility(GONE);
 
         mNameEditText.setText(data.name);
-        mWidthEditText.setText(String.valueOf(data.getWidth()));
-        mHeightEditText.setText(String.valueOf(data.getHeight()));
+        // Projects fork (MOB-NEXT): whole numbers, not the float's "121.00001" (loaded with internalChanges set: the
+        // layout keeps its value until the player types one).
+        mWidthEditText.setText(EditorRules.sizeText(data.getWidth()));
+        mHeightEditText.setText(EditorRules.sizeText(data.getHeight()));
 
         mAlphaSeekbar.setProgress((int) (data.opacity * 100));
         mStrokeWidthSeekbar.setProgress((int) data.strokeWidth * 10);
@@ -274,9 +285,10 @@ public class EditControlSideDialog extends SideDialogView {
             spinner.setAdapter(mAdapter);
         }
 
-        // Orientation spinner
-        ArrayAdapter<ControlDrawerData.Orientation> adapter = new ArrayAdapter<>(mDialogContent.getContext(), android.R.layout.simple_spinner_item);
-        adapter.addAll(ControlDrawerData.getOrientations());
+        // Orientation spinner. Projects fork (MOB-NEXT): the directions in the player's language, in
+        // ControlDrawerData.Orientation's order (upstream showed the names in code: "Yön: FREE").
+        ArrayAdapter<CharSequence> adapter = new ArrayAdapter<>(mDialogContent.getContext(), android.R.layout.simple_spinner_item,
+                mDialogContent.getResources().getTextArray(R.array.projects_ctrl_drawer_orientations));
         adapter.setDropDownViewResource(android.R.layout.simple_list_item_single_choice);
 
         mOrientationSpinner.setAdapter(adapter);
@@ -319,6 +331,13 @@ public class EditControlSideDialog extends SideDialogView {
         mCornerRadiusPercentTextView = mDialogContent.findViewById(R.id.editCornerRadius_textView_percent);
         mDisplayInGameCheckbox = mDialogContent.findViewById(R.id.visibility_game_checkbox);
         mDisplayInMenuCheckbox = mDialogContent.findViewById(R.id.visibility_menu_checkbox);
+
+        // Projects fork (MOB-NEXT): a slider's fill and thumb are bone (design.md §6), not the theme's gold.
+        ColorStateList bone = ColorStateList.valueOf(ContextCompat.getColor(mDialogContent.getContext(), R.color.projects_bone_100));
+        for (SeekBar bar : new SeekBar[]{mStrokeWidthSeekbar, mCornerRadiusSeekbar, mAlphaSeekbar}) {
+            bar.setProgressTintList(bone);
+            bar.setThumbTintList(bone);
+        }
 
         //Decorative stuff
         mMappingTextView = mDialogContent.findViewById(R.id.editMapping_textView);

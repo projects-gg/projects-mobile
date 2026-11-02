@@ -10,6 +10,7 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Locale;
 
 /**
  * CTRL-SAVE: what leaving the controls editor does, when a finger moves a key, and when a loaded layout is a change.
@@ -125,5 +126,15 @@ public class EditorRulesTest {
         assertTrue(EditorRules.showSavedLine(5_000, 8_000, 3_000));
         assertFalse(EditorRules.showSavedLine(5_000, 8_001, 3_000));
         assertFalse(EditorRules.showSavedLine(5_000, 65_000, 3_000));
+    }
+
+    /** MOB-NEXT: the key settings panel read "Boyut 121.00001 x 110.00001" and "10%" in Turkish. */
+    @Test
+    public void thePanelShowsWholeSizesAndEachLanguagesPercent() {
+        assertEquals("121", EditorRules.sizeText(121.00001f));
+        assertEquals("110", EditorRules.sizeText(109.99999f));
+        assertEquals("51", EditorRules.sizeText(50.5f));
+        assertEquals("%10", EditorRules.percent(new Locale("tr", "TR"), 10));
+        assertEquals("40%", EditorRules.percent(Locale.ENGLISH, 40));
     }
 }

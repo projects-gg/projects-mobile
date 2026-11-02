@@ -328,6 +328,14 @@
     <!-- MOB-NEXT: the editor's switch at the bottom between the keys the game shows in play and those it shows in menus. -->
     <string name="projects_ctrl_scene_game">Oyunda</string>
     <string name="projects_ctrl_scene_menus">Menülerde</string>
+    <!-- MOB-NEXT: the way a drawer's keys open (the key settings panel's "Yön"), in ControlDrawerData.Orientation's order. -->
+    <string-array name="projects_ctrl_drawer_orientations">
+        <item>Aşağı</item>
+        <item>Sola</item>
+        <item>Yukarı</item>
+        <item>Sağa</item>
+        <item>Serbest</item>
+    </string-array>
     <!-- M17: a Projects start that ends while the player is away from the home screen. -->
     <string name="projects_ready_title">Projects hazır</string>
     <string name="projects_ready_body">Kurulum bitti. Başlatmak için Oyna\'ya bas.</string>
