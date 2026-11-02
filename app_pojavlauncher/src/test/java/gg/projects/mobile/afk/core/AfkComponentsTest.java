@@ -75,6 +75,79 @@ public class AfkComponentsTest {
         assertEquals(Arrays.asList("chat.type.text"), AfkComponents.keys(chat));
     }
 
+    /**
+     * MOB-NEXT: the console showed "command.unknown.command", "command.context.here" and, in a death,
+     * "entity.minecraft.slime" raw. A command's errors are in the built-in table; the rest come from the game's own
+     * files on the phone, or a creature's, item's or block's id in words without them.
+     */
+    @Test
+    public void aCommandsErrorReadsInBothLanguagesWithoutGameFiles() {
+        AfkLang.setSource(null);
+        Object unknown = map("translate", "command.unknown.command", "color", "red");
+        assertEquals("Unknown or incomplete command, see below for error", AfkComponents.render(unknown, false).text);
+        assertEquals("Bilinmeyen ya da eksik komut, hatası aşağıda", AfkComponents.render(unknown, true).text);
+        // The second line: what was typed, the wrong part, then where.
+        Object context = Arrays.<Object>asList(map("text", "", "color", "gray"), "/hlep", map("translate",
+                "command.context.here", "color", "red", "italic", true));
+        assertEquals("/hlep<--[BURADA]", AfkComponents.render(context, true).text);
+        assertEquals("/hlep<--[HERE]", AfkComponents.render(context, false).text);
+    }
+
+    @Test
+    public void keysTheTableLacksComeFromTheGameFilesOnThePhone() {
+        final int[] opens = {0};
+        AfkLang.setSource(code -> {
+            opens[0]++;
+            String json = code.equals("tr_tr")
+                    ? "{\"entity.minecraft.slime\":\"Balçık\",\"death.attack.sonicBoom.player\":\"%1$s, %2$s kaçmaya çalışırken"
+                    + " çığlıkla yok edildi\",\"mco.configure.world.title\":\"Realms\",\"commands.list.players\":\"%2$s oyuncudan"
+                    + " %1$s çevrimiçi: %3$s\",\"subtitles.entity.slime.attack\":\"Balçık saldırıyor\"}"
+                    : "{\"entity.minecraft.slime\":\"Slime\"}";
+            return new java.io.ByteArrayInputStream(json.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        });
+        try {
+            Object slain = map("translate", "death.attack.mob", "with", Arrays.asList("A_b",
+                    map("translate", "entity.minecraft.slime")));
+            assertEquals("A_b, Balçık tarafından öldürüldü", AfkComponents.render(slain, true).text);
+            assertEquals("A_b was slain by Slime", AfkComponents.render(slain, false).text);
+            // A death the table lacks reads as the game says it, not the generic one.
+            assertEquals("A_b, Warden kaçmaya çalışırken çığlıkla yok edildi", AfkComponents.render(map("translate",
+                    "death.attack.sonicBoom.player", "with", Arrays.asList("A_b", "Warden")), true).text);
+            assertEquals("2 oyuncudan 1 çevrimiçi: A_b", AfkComponents.render(map("translate", "commands.list.players",
+                    "with", Arrays.asList(1, 2, "A_b")), true).text);
+            // Each language's file is read once per process.
+            AfkComponents.render(slain, true);
+            assertEquals(2, opens[0]);
+            // Only the game's own screens use these: they are not kept.
+            assertEquals(null, AfkLang.get("mco.configure.world.title", 1));
+            assertEquals(null, AfkLang.get("subtitles.entity.slime.attack", 1));
+            // Kick reasons are matched on the built-in English alone, whatever the phone has.
+            assertEquals("A_b was slain by Slime", AfkComponents.english(slain));
+        } finally {
+            AfkLang.setSource(null);
+        }
+    }
+
+    @Test
+    public void withoutGameFilesACreatureItemOrBlockShowsItsIdInWords() {
+        AfkLang.setSource(null);
+        assertEquals("A_b, Cave Spider tarafından öldürüldü", AfkComponents.render(map("translate", "death.attack.mob",
+                "with", Arrays.asList("A_b", map("translate", "entity.minecraft.cave_spider"))), true).text);
+        assertEquals("Diamond Sword", AfkComponents.render(map("translate", "item.minecraft.diamond_sword"), true).text);
+        assertEquals("Stone", AfkComponents.render(map("translate", "block.minecraft.stone"), false).text);
+        // The server's own fallback still wins over the id; any other unknown key stays as the game shows it.
+        assertEquals("Kral Balçık", AfkComponents.render(map("translate", "entity.minecraft.slime", "fallback",
+                "Kral Balçık"), true).text);
+        assertEquals("commands.unknown.thing", AfkComponents.render(map("translate", "commands.unknown.thing"), true).text);
+        // A broken game file is no file.
+        AfkLang.setSource(code -> new java.io.ByteArrayInputStream("{\"entity.minecraft.slime\":".getBytes()));
+        try {
+            assertEquals("Slime", AfkComponents.render(map("translate", "entity.minecraft.slime"), true).text);
+        } finally {
+            AfkLang.setSource(null);
+        }
+    }
+
     @Test
     public void listsWrappedListsAndJson() {
         // A list: the first is the parent of the rest; NBT wraps mixed lists in {"": ...}.

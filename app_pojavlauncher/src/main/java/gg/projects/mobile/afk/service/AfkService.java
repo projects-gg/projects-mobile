@@ -30,8 +30,10 @@ import gg.projects.mobile.afk.api.AfkStatus;
 import gg.projects.mobile.afk.api.PhoneAfk;
 import gg.projects.mobile.afk.core.AfkEngine;
 import gg.projects.mobile.afk.core.AfkHost;
+import gg.projects.mobile.afk.core.AfkLang;
 import gg.projects.mobile.afk.net.AfkMcWire;
 import gg.projects.mobile.afk.store.AfkEnds;
+import gg.projects.mobile.afk.store.AfkGameLang;
 import gg.projects.mobile.afk.store.AfkRuntime;
 import gg.projects.mobile.afk.store.AfkStore;
 import gg.projects.mobile.afk.store.KeystoreSealer;
@@ -83,6 +85,18 @@ public final class AfkService extends Service {
         return sRunning;
     }
 
+    /**
+     * MOB-NEXT: the game's {@code .minecraft} folder, as the launcher's start-up places it (Tools.initStorageConstants,
+     * which the {@code :afk} process skips): the app's external files on Android 10+, else the shared games folder;
+     * null while that storage is not there.
+     */
+    @Nullable
+    static File gameDir(Context context) {
+        File root = Build.VERSION.SDK_INT >= 29 ? context.getExternalFilesDir(null)
+                : new File(android.os.Environment.getExternalStorageDirectory(), "games/ProjectsLauncher");
+        return root == null ? null : new File(root, ".minecraft");
+    }
+
     private final Handler main = new Handler(Looper.getMainLooper());
     private File dir;
     private AfkStore store;
@@ -95,6 +109,9 @@ public final class AfkService extends Service {
     private long startedAt;
     private boolean foreground;
     private List<String> resumable = Collections.emptyList();
+    /** MOB-NEXT: the closed {@code :afk} process whose accounts {@link #resumable} brings back (0: none). */
+    private int closedPid;
+    private long closedStartedAt;
     private final Runnable tick = new Runnable() {
         @Override
         public void run() {
@@ -149,7 +166,12 @@ public final class AfkService extends Service {
         if (!previous.running.isEmpty() && previous.pid != Process.myPid()) {
             AfkEnds.detect(this, dir, previous, false);
             resumable = new ArrayList<>(previous.running);
+            closedPid = previous.pid;
+            closedStartedAt = previous.startedAt;
         }
+        // MOB-NEXT: the console's vanilla keys the built-in table lacks, from the game files on this phone.
+        File game = gameDir(this);
+        AfkLang.setSource(game == null ? null : new AfkGameLang(game));
         phone = new AfkPhone(this, new PhoneListener());
         phone.start();
         main.postDelayed(tick, TICK_MS);
@@ -180,8 +202,13 @@ public final class AfkService extends Service {
             stopAll(intent.getBooleanExtra(EXTRA_ERASE, false));
         } else if (intent == null || ACTION_RESUME.equals(action)) {
             // Android's sticky restart or the watchdog: what the player had running comes back.
-            for (String r : resumable) engine.start(r);
+            int back = 0;
+            for (String r : resumable) {
+                if (engine.start(r).ok()) back++;
+            }
             resumable = Collections.emptyList();
+            // MOB-NEXT: back by itself, so the closed process's end needs no morning notice.
+            if (back > 0) AfkEnds.cameBack(dir, closedPid, closedStartedAt);
             phoneCheck();
         }
         if (engine.runningCount() == 0) main.post(this::finishIfIdle);

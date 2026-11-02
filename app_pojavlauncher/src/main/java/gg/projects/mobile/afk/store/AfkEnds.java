@@ -23,8 +23,10 @@ import gg.projects.mobile.content.AtomicFiles;
  * PHONE-AFK: AFK that ended while accounts were running and nobody stopped it ({@link AfkEnd}). The {@code :afk}
  * process left accounts in {@link AfkRuntime#running} and is gone: Android 11+ says why
  * ({@code getHistoricalProcessExitReasons}), older phones do not. Kept in {@code no_backup/afk/end.json} until the player
- * has seen it; the same process is never reported twice (its pid and start time are kept). Written by the app's
- * process only (the screens and the watchdog's receiver run there).
+ * has seen it; the same process is never reported twice (its pid and start time are kept). Written by the screens, the
+ * watchdog's receiver and a new {@code :afk} service (each write whole and atomic). MOB-NEXT: when AFK came back by
+ * itself (Android restarted the service, or the watchdog did, and the accounts run again) that end is set aside
+ * ({@link #cameBack}): the morning notice is for a phone that really stopped AFK.
  */
 public final class AfkEnds {
     private AfkEnds() {}
@@ -72,11 +74,62 @@ public final class AfkEnds {
     }
 
     /**
+     * MOB-NEXT: AFK came back by itself after the process {@code pid} (its service started at {@code startedAt}) was
+     * closed: Android restarted the service, or the watchdog did, and its accounts run again. The end that process left
+     * needs no notice ("Telefonun AFK'yı 06:13'te kapattı." showed in the morning although AFK had run on). Another
+     * process's end (one the player has not seen) stays.
+     */
+    public static void cameBack(File afkDir, int pid, long startedAt) {
+        if (pid == 0) return;
+        synchronized (LOCK) {
+            File file = new File(afkDir, FILE);
+            if (!file.isFile()) return;
+            try {
+                JsonObject o = JsonParser.parseString(new String(AtomicFiles.read(file, MAX_BYTES), StandardCharsets.UTF_8))
+                        .getAsJsonObject();
+                if (AfkStore.number(o, "pid", 0) != pid || AfkStore.number(o, "startedAt", 0) != startedAt) return;
+                if (AfkStore.bool(o, "dismissed", false)) return;
+                o.addProperty("dismissed", true);
+                AtomicFiles.write(file, o.toString().getBytes(StandardCharsets.UTF_8));
+            } catch (IOException | RuntimeException e) {
+                //noinspection ResultOfMethodCallIgnored
+                file.delete();
+            }
+        }
+    }
+
+    /**
      * Looks for a new end: {@code runtime} still lists running accounts, its process is gone ({@code afkAlive} false)
      * and it was not reported yet. Returns the new end (also written to {@code end.json}) or null.
      */
-    public static AfkEnd detect(Context context, File afkDir, AfkRuntime runtime, boolean afkAlive) {
-        if (afkAlive || runtime.running.isEmpty() || runtime.pid == 0) return null;
+    public static AfkEnd detect(final Context context, File afkDir, AfkRuntime runtime, boolean afkAlive) {
+        if (afkAlive) return null;
+        return record(afkDir, runtime, pid -> {
+            if (Build.VERSION.SDK_INT < 30) return null;
+            ApplicationExitInfo info = exitInfo(context, pid);
+            return info == null ? null : new Exit(kindOf(info.getReason()), info.getTimestamp());
+        });
+    }
+
+    /** How a process ended, as Android 11+ says it. */
+    public static final class Exit {
+        final AfkEnd.Kind kind;
+        final long at;
+
+        public Exit(AfkEnd.Kind kind, long at) {
+            this.kind = kind;
+            this.at = at;
+        }
+    }
+
+    /** Android's account of a gone process (asked only for an end not reported yet), or null when it does not say. */
+    public interface Exits {
+        Exit of(int pid);
+    }
+
+    /** {@link #detect}'s file side: the end {@code runtime}'s gone process left, unless already reported. */
+    static AfkEnd record(File afkDir, AfkRuntime runtime, Exits exits) {
+        if (runtime.running.isEmpty() || runtime.pid == 0) return null;
         synchronized (LOCK) {
             File file = new File(afkDir, FILE);
             if (file.isFile()) {
@@ -92,12 +145,10 @@ public final class AfkEnds {
             }
             long at = runtime.updatedAt > 0 ? runtime.updatedAt : System.currentTimeMillis();
             AfkEnd.Kind kind = AfkEnd.Kind.UNKNOWN;
-            if (Build.VERSION.SDK_INT >= 30) {
-                ApplicationExitInfo info = exitInfo(context, runtime.pid);
-                if (info != null) {
-                    kind = kindOf(info.getReason());
-                    if (info.getTimestamp() > 0) at = info.getTimestamp();
-                }
+            Exit exit = exits.of(runtime.pid);
+            if (exit != null) {
+                kind = exit.kind;
+                if (exit.at > 0) at = exit.at;
             }
             AfkEnd end = new AfkEnd(kind, at, new ArrayList<>(runtime.runningNames));
             JsonObject o = new JsonObject();

@@ -14,8 +14,9 @@ import gg.projects.mobile.afk.api.AfkLine;
  * from NBT ({@code AfkNbt}) or JSON ({@link #fromJson}) of {@code String}, {@code Map<String, Object>},
  * {@code List<Object>}, numbers and booleans. Colours (16 named + hex), bold/italic/lines and legacy § codes inside
  * literal text become {@link AfkLine.Span}s (§k plain, never scrambled). Vanilla's translation keys come from a small
- * built-in table (Turkish and English: chat kinds, joins, kicks, common deaths); an unknown key shows its fallback or
- * the key, as the game does. Pure Java.
+ * built-in table (Turkish and English: chat kinds, joins, kicks, common deaths, a command's errors); MOB-NEXT: a key
+ * it lacks from the game's own files on this phone ({@link AfkLang}), then the key's fallback, a death's generic
+ * sentence, a creature's, item's or block's id in words, else the key, as the game does. Pure Java.
  */
 public final class AfkComponents {
     private AfkComponents() {}
@@ -91,6 +92,14 @@ public final class AfkComponents {
         key("death.attack.arrow", "%1$s was shot by %2$s", "%1$s, %2$s tarafından vuruldu");
         key("death.attack.cactus", "%1$s was pricked to death", "%1$s kaktüse batarak öldü");
         key("death.attack.inWall", "%1$s suffocated in a wall", "%1$s bir duvarın içinde boğuldu");
+        // MOB-NEXT: a command the server did not take (the console's own commands), also on a phone without game files.
+        key("command.unknown.command", "Unknown or incomplete command, see below for error",
+                "Bilinmeyen ya da eksik komut, hatası aşağıda");
+        key("command.unknown.argument", "Incorrect argument for command", "Komutun bir değeri yanlış");
+        key("command.context.here", "<--[HERE]", "<--[BURADA]");
+        key("command.expected.separator", "Expected whitespace to end one argument, but found trailing data",
+                "Bir değerin sonunda boşluk bekleniyordu, ardından başka yazı geldi");
+        key("commands.help.failed", "Unknown command or insufficient permissions", "Bilinmeyen komut ya da yetkin yok");
     }
 
     /** Collects the translation keys of a component (for telling kick reasons apart). */
@@ -126,22 +135,30 @@ public final class AfkComponents {
     /** The component in Turkish ({@code turkish}) or English, with its style runs. */
     public static AfkText render(Object component, boolean turkish) {
         AfkText.Builder b = new AfkText.Builder();
-        new Renderer(b, turkish ? 1 : 0).node(component, AfkLine.NO_COLOR, 0, 0);
+        new Renderer(b, turkish ? 1 : 0, true).node(component, AfkLine.NO_COLOR, 0, 0);
         return b.build();
     }
 
-    /** The component's plain English text (kick reasons are matched in English, like the desktop's). */
+    /**
+     * The component's plain English text (kick reasons are matched in English, like the desktop's): the built-in table
+     * only, so a match never depends on the game files on this phone.
+     */
     public static String english(Object component) {
-        return render(component, false).text;
+        AfkText.Builder b = new AfkText.Builder();
+        new Renderer(b, 0, false).node(component, AfkLine.NO_COLOR, 0, 0);
+        return b.build().text;
     }
 
     private static final class Renderer {
         private final AfkText.Builder out;
         private final int lang;
+        /** The game's own words ({@link AfkLang}) for keys the table lacks. */
+        private final boolean gameWords;
 
-        Renderer(AfkText.Builder out, int lang) {
+        Renderer(AfkText.Builder out, int lang, boolean gameWords) {
             this.out = out;
             this.lang = lang;
+            this.gameWords = gameWords;
         }
 
         void node(Object c, int color, int style, int depth) {
@@ -196,13 +213,19 @@ public final class AfkComponents {
 
         private void translate(String key, Object with, Object fallback, int color, int style, int depth) {
             String[] known = KEYS.get(key);
+            String game = known == null && gameWords ? AfkLang.get(key, lang) : null;
+            String named = known == null && game == null && !(fallback instanceof String) ? AfkLang.nameOfId(key) : null;
             String format;
             if (known != null) {
                 format = known[lang];
+            } else if (game != null) {
+                format = game;
             } else if (fallback instanceof String) {
                 format = (String) fallback;
             } else if (key.startsWith("death.")) {
                 format = KEYS.get("death.attack.generic")[lang];
+            } else if (named != null) {
+                format = named.replace("%", "%%");
             } else {
                 format = key;
             }
