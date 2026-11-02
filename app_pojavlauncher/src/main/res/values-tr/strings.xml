@@ -367,7 +367,7 @@
     <string name="controller_remapper_exit_part2">çıkmak için</string>
     <string name="controller_remapper_operating_mode">Geçerli mod</string>
     <string name="customctrl_visibility_title">Görünürlük</string>
-    <string name="customctrl_visibility_ingame">Oyun İçi</string>
+    <string name="customctrl_visibility_ingame">Oyunda</string>
     <string name="customctrl_visibility_in_menus">Menülerde</string>
     <string name="controller_remapper_expand_entry">Tuș kodlarını değiștirmek için genişlet</string>
     <string name="preference_remap_controller_title">Kontrolcü tuș atamalarını değiştir</string>

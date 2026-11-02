@@ -332,12 +332,14 @@ public class EditControlSideDialog extends SideDialogView {
         mDisplayInGameCheckbox = mDialogContent.findViewById(R.id.visibility_game_checkbox);
         mDisplayInMenuCheckbox = mDialogContent.findViewById(R.id.visibility_menu_checkbox);
 
-        // Projects fork (MOB-NEXT): a slider's fill and thumb are bone (design.md §6), not the theme's gold.
+        // Projects fork (MOB-NEXT): a slider's fill and thumb and a checkbox are bone (design.md §6), not the theme's gold.
         ColorStateList bone = ColorStateList.valueOf(ContextCompat.getColor(mDialogContent.getContext(), R.color.projects_bone_100));
         for (SeekBar bar : new SeekBar[]{mStrokeWidthSeekbar, mCornerRadiusSeekbar, mAlphaSeekbar}) {
             bar.setProgressTintList(bone);
             bar.setThumbTintList(bone);
         }
+        mDisplayInGameCheckbox.setButtonTintList(bone);
+        mDisplayInMenuCheckbox.setButtonTintList(bone);
 
         //Decorative stuff
         mMappingTextView = mDialogContent.findViewById(R.id.editMapping_textView);
