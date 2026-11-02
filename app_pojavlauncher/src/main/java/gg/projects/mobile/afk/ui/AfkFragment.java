@@ -231,7 +231,8 @@ public final class AfkFragment extends AfkScreen {
         sectionLp.topMargin = AfkUi.dp(c, end == null ? 8 : 20);
         content.addView(detached(mSection), sectionLp);
         LinearLayout.LayoutParams countLp = CloudUi.matchWrap();
-        countLp.setMarginStart(AfkUi.dp(c, 4));
+        // Under the section title's text (CloudUi.section pads its start by 8 dp).
+        countLp.setMarginStart(AfkUi.dp(c, 8));
         countLp.topMargin = AfkUi.dp(c, 2);
         content.addView(detached(mCount), countLp);
 
@@ -324,7 +325,8 @@ public final class AfkFragment extends AfkScreen {
         panel.setBackground(bg);
         panel.setPaddingRelative(AfkUi.dp(c, 14), AfkUi.dp(c, 12), AfkUi.dp(c, 4), AfkUi.dp(c, 4));
         ImageView glyph = new ImageView(c);
-        glyph.setImageResource(R.drawable.projects_ic_warning_circle);
+        // The same warning mark as the rows' state lines (CloudUi.warnMark).
+        glyph.setImageResource(R.drawable.projects_ic_warning);
         glyph.setImageTintList(ColorStateList.valueOf(AfkUi.color(c, R.color.projects_gold_300)));
         glyph.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         LinearLayout.LayoutParams glyphLp = new LinearLayout.LayoutParams(AfkUi.dp(c, 20), AfkUi.dp(c, 20));

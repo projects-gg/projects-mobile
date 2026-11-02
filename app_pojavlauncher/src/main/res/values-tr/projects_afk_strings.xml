@@ -76,7 +76,7 @@
     <string name="projects_afk_ui_removed">%1$s silindi</string>
     <string name="projects_afk_ui_alert_mention">Sohbette adın geçti</string>
     <string name="projects_afk_ui_alert_private">Özel mesaj geldi</string>
-    <string name="projects_afk_ui_cloud_line">Telefonun da kapalıyken oyunda kalmak için 7/24 Bulut.</string>
+    <string name="projects_afk_ui_cloud_line">Telefonun kapalıyken de oyunda kalmak için 7/24 Bulut.</string>
     <string name="projects_afk_ui_cloud_link">7/24 Bulut\'u gör</string>
 
     <!-- Telefonun kendi ayarları: pil ve bildirimler -->

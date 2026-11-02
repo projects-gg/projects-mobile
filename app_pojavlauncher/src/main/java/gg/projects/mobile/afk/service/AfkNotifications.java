@@ -83,7 +83,11 @@ public final class AfkNotifications {
         } else if (inGame > 0) {
             text = c.getResources().getQuantityString(R.plurals.projects_afk_notify_in_game, inGame, inGame);
         } else {
-            text = AfkTexts.state(c, statuses.get(0), System.currentTimeMillis());
+            // Nobody in game: the first account by name ("SleepyFox_42: 23 saniye sonra yeniden bağlanacak"), so a state
+            // never reads as everyone's; the expanded notification lists them all.
+            AfkStatus first = statuses.get(0);
+            text = c.getString(R.string.projects_afk_notify_account_line, first.name,
+                    AfkTexts.state(c, first, System.currentTimeMillis()));
         }
         NotificationCompat.InboxStyle inbox = new NotificationCompat.InboxStyle();
         long now = System.currentTimeMillis();
