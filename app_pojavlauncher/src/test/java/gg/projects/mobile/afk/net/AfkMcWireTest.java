@@ -18,12 +18,17 @@ import org.geysermc.mcprotocollib.protocol.MinecraftConstants;
 import org.geysermc.mcprotocollib.protocol.MinecraftProtocol;
 import org.geysermc.mcprotocollib.protocol.data.game.entity.player.GameMode;
 import org.geysermc.mcprotocollib.protocol.data.game.entity.player.PlayerSpawnInfo;
+import org.geysermc.mcprotocollib.protocol.data.game.entity.player.PositionElement;
 import org.geysermc.mcprotocollib.protocol.packet.common.serverbound.ServerboundClientInformationPacket;
 import org.geysermc.mcprotocollib.protocol.packet.common.serverbound.ServerboundCustomPayloadPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.ClientboundLoginPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.ClientboundSystemChatPacket;
+import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.entity.player.ClientboundPlayerPositionPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.serverbound.ServerboundChatCommandPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.serverbound.ServerboundChatPacket;
+import org.geysermc.mcprotocollib.protocol.packet.ingame.serverbound.ServerboundClientTickEndPacket;
+import org.geysermc.mcprotocollib.protocol.packet.ingame.serverbound.level.ServerboundAcceptTeleportationPacket;
+import org.geysermc.mcprotocollib.protocol.packet.ingame.serverbound.player.ServerboundMovePlayerPosRotPacket;
 import org.geysermc.mcprotocollib.protocol.packet.login.serverbound.ServerboundHelloPacket;
 import org.junit.After;
 import org.junit.Test;
@@ -31,6 +36,9 @@ import org.junit.Test;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -198,6 +206,49 @@ public class AfkMcWireTest {
         AfkDrop drop = take(drops);
         assertEquals(AfkDrop.Kind.KICKED, drop.kind);
         assertEquals("You are banned from this server!", drop.english);
+    }
+
+    /**
+     * Two teleports in a row, as a Paper 26.3 server sends them to a new player (its join, then its own correction)
+     * or after a respawn. The 26.3 server takes one position per client tick and kicks a second one before
+     * ServerboundClientTickEnd ("Invalid move player packet received", receivedPositionThisTick): the client confirms
+     * each teleport with its id and absolute position and ends the tick after each position.
+     */
+    @Test
+    public void teleportsKeepOnePositionPerClientTick() throws Exception {
+        int port = startServer(false);
+        wire.open(new AfkWire.Target("127.0.0.1", port, "Golge_Avci_2010", false, "tr_tr"), recorder);
+        assertEquals("loggingIn", take(events));
+        assertEquals("configuring", take(events));
+        assertEquals("joined", take(events));
+        serverSession.send(new ClientboundPlayerPositionPacket(1, -7.5, -60.0, -3.5, 0, 0, 0, 90.0f, 0.0f));
+        serverSession.send(new ClientboundPlayerPositionPacket(2, -7.5, -60.0, -3.5, 0, 0, 0, 0.0f, 0.0f,
+                PositionElement.Y_ROT, PositionElement.X_ROT));
+        List<Integer> accepted = new ArrayList<>();
+        boolean positionThisTick = false;
+        int ticks = 0;
+        long end = System.currentTimeMillis() + 20_000;
+        while (ticks < 2 && System.currentTimeMillis() < end) {
+            Packet p = received.poll(1, TimeUnit.SECONDS);
+            if (p instanceof ServerboundAcceptTeleportationPacket) {
+                ServerboundAcceptTeleportationPacket a = (ServerboundAcceptTeleportationPacket) p;
+                accepted.add(a.getId());
+                assertEquals(-7.5, a.getX(), 0);
+                assertEquals(-60.0, a.getY(), 0);
+                assertEquals(-3.5, a.getZ(), 0);
+                // The second teleport keeps the rotation (relative yaw and pitch): absolute 90 again, never 180.
+                assertEquals(90.0f, a.getYRot(), 0);
+            } else if (p instanceof ServerboundMovePlayerPosRotPacket) {
+                assertTrue("a second position before the client tick ended: the 26.3 server kicks", !positionThisTick);
+                positionThisTick = true;
+                assertEquals(-7.5, ((ServerboundMovePlayerPosRotPacket) p).getX(), 0);
+            } else if (p instanceof ServerboundClientTickEndPacket) {
+                positionThisTick = false;
+                ticks++;
+            }
+        }
+        assertEquals(Arrays.asList(1, 2), accepted);
+        assertEquals(2, ticks);
     }
 
     @Test

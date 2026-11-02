@@ -30,6 +30,7 @@ import org.geysermc.mcprotocollib.protocol.packet.ingame.serverbound.Serverbound
 import org.geysermc.mcprotocollib.protocol.packet.ingame.serverbound.ServerboundChatCommandPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.serverbound.ServerboundChatPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.serverbound.ServerboundClientCommandPacket;
+import org.geysermc.mcprotocollib.protocol.packet.ingame.serverbound.ServerboundClientTickEndPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.serverbound.ServerboundConfigurationAcknowledgedPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.serverbound.ServerboundPlayerLoadedPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.serverbound.level.ServerboundAcceptTeleportationPacket;
@@ -441,6 +442,11 @@ public final class AfkMcWire implements AfkWire {
             xRot = (rel & 16) != 0 ? xRot + p.xRot : p.xRot;
             s.send(new ServerboundAcceptTeleportationPacket(p.teleportId, x, y, z, yRot, xRot));
             s.send(new ServerboundMovePlayerPosRotPacket(true, false, x, y, z, yRot, xRot));
+            // The position is this "client tick"'s one: a 26.3 server takes one position per client tick and kicks a
+            // second one before ServerboundClientTickEnd ("Invalid move player packet received", receivedPositionThisTick).
+            // A client that never ends its ticks was kicked at its second teleport: the server's own correction right
+            // after a new player's join, or the respawn.
+            s.send(ServerboundClientTickEndPacket.INSTANCE);
             if (!loadedSent) {
                 loadedSent = true;
                 s.send(ServerboundPlayerLoadedPacket.INSTANCE);

@@ -200,4 +200,39 @@ public class AfkNetPartsTest {
         assertTrue(AfkResolver.isIpLiteral("2001:db8::1"));
         assertTrue(!AfkResolver.isIpLiteral("play.example.com"));
     }
+
+    /**
+     * "Synchronize Player Position" as the Minecraft 26.3 server writes it: these bytes come from Paper 26.3-236's own
+     * ClientboundPlayerPositionPacket.STREAM_CODEC (AFK-M-TRIAL's RealBytes, no server running): VarInt teleport id
+     * first, then position, motion (doubles), yaw, pitch (floats) and the relative flags as an int.
+     */
+    @Test
+    public void positionPacketsReadAsTheServerWritesThem() {
+        AfkPackets.PlayerPosition join = new AfkPackets.PlayerPosition(Unpooled.wrappedBuffer(hex(
+                "01c01e000000000000c04e000000000000c00c000000000000000000000000000000000000000000000000000000000000"
+                        + "42b400000000000000000000")));
+        assertEquals(1, join.teleportId);
+        assertEquals(-7.5, join.x, 0);
+        assertEquals(-60.0, join.y, 0);
+        assertEquals(-3.5, join.z, 0);
+        assertEquals(90.0f, join.yRot, 0);
+        assertEquals(0.0f, join.xRot, 0);
+        assertEquals(0, join.relatives);
+        ByteBuf relativeBytes = Unpooled.wrappedBuffer(hex(
+                "ac024016000000000000c04e000000000000401e0000000000000000000000000000bfb41205c28f5c29000000000000"
+                        + "0000000000000000000000000018"));
+        AfkPackets.PlayerPosition relative = new AfkPackets.PlayerPosition(relativeBytes);
+        assertEquals(300, relative.teleportId);
+        assertEquals(5.5, relative.x, 0);
+        assertEquals(7.5, relative.z, 0);
+        // Y_ROT (bit 3) and X_ROT (bit 4): the rotation stays, the position is absolute.
+        assertEquals(0x18, relative.relatives);
+        assertEquals(0, relativeBytes.readableBytes());
+    }
+
+    private static byte[] hex(String s) {
+        byte[] out = new byte[s.length() / 2];
+        for (int i = 0; i < out.length; i++) out[i] = (byte) Integer.parseInt(s.substring(2 * i, 2 * i + 2), 16);
+        return out;
+    }
 }
