@@ -83,7 +83,7 @@
     <string name="global_load">Load</string>
     <string name="global_name">Name</string>
     <string name="global_remove">Remove</string>
-    <string name="global_clone">Clone</string>
+    <string name="global_clone">Copy</string>
     <string name="global_restart">Restart</string>
     <string name="global_save">Save</string>
     <string name="global_unpacking">Unpacking %s</string>
@@ -143,15 +143,15 @@
     <string name="customctrl_orientation">Orientation</string>
     <string name="customctrl_background_color">Background color</string>
     <string name="customctrl_corner_radius">Corner radius</string>
-    <string name="customctrl_stroke_width">Stroke width</string>
-    <string name="customctrl_stroke_color">Stroke color</string>
+    <string name="customctrl_stroke_width">Border width</string>
+    <string name="customctrl_stroke_color">Border color</string>
 
-    <string name="customctrl_button_opacity">Button Opacity</string>
+    <string name="customctrl_button_opacity">Key opacity</string>
 
     <string name="customctrl_addbutton">Add button</string>
     <string name="customctrl_addbutton_drawer">Add button drawer</string>
     <string name="customctrl_addbutton_joystick">Add joystick</string>
-    <string name="customctrl_addsubbutton">Add sub-button</string>
+    <string name="customctrl_addsubbutton">Add key</string>
 
     <string name="customctrl_selectdefault">Select default controlmap</string>
     <string name="customctrl_export">Export controlmap</string>
@@ -419,7 +419,7 @@
     <string name="controller_remapper_exit_part2">to exit</string>
     <string name="controller_remapper_operating_mode">Current mode</string>
     <string name="customctrl_visibility_title">Visibility</string>
-    <string name="customctrl_visibility_ingame">In-game</string>
+    <string name="customctrl_visibility_ingame">In game</string>
     <string name="customctrl_visibility_in_menus">In menus</string>
     <string name="controller_remapper_expand_entry">Expand to change keycodes</string>
     <string name="preference_remap_controller_title">Change controller key bindings</string>

@@ -121,7 +121,7 @@
     <string name="customctrl_corner_radius">Köşe yuvarlaklığı</string>
     <string name="customctrl_stroke_width">Kenar kalınlığı</string>
     <string name="customctrl_stroke_color">Kenar rengi</string>
-    <string name="customctrl_button_opacity">Düğme saydamlığı</string>
+    <string name="customctrl_button_opacity">Tuş opaklığı</string>
     <string name="customctrl_addbutton">Düğme ekle</string>
     <string name="customctrl_addbutton_drawer">Düğme saklama menüsü ekle</string>
     <string name="customctrl_addbutton_joystick">Joystick ekle</string>

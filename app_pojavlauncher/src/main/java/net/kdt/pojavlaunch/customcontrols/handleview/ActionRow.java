@@ -121,7 +121,9 @@ public class ActionRow extends LinearLayout {
         if(mFollowedView == null) return;
         int side = pickSide();
 
-        setX(MathUtils.clamp(getXPosition(side), 0, currentDisplayMetrics.widthPixels - getWidth()));
+        // Projects fork (MOB-NEXT): 8 dp from the screen's edges, as the editor's bars (it stood flush against them).
+        float margin = 8 * getResources().getDisplayMetrics().density;
+        setX(MathUtils.clamp(getXPosition(side), margin, Math.max(margin, currentDisplayMetrics.widthPixels - getWidth() - margin)));
         setY(getYPosition(side));
     }
 
