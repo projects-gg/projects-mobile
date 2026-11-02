@@ -1397,7 +1397,11 @@ public class mcAccountSpinner extends AppCompatSpinner implements AdapterView.On
             // MOB-NEXT (TASTE-2): the account in use sits on the quiet plate (design.md §1, the chosen item's tint; the
             // desktop's switcher marks it too), and TalkBack hears it as chosen.
             boolean active = position > 0 && position == mcAccountSpinner.this.getSelectedItemPosition();
+            // The plate's inset would become the row's padding: the row keeps its own, so every name lines up.
+            int start = convertView.getPaddingStart(), top = convertView.getPaddingTop();
+            int end = convertView.getPaddingEnd(), bottom = convertView.getPaddingBottom();
             convertView.setBackgroundResource(active ? R.drawable.projects_account_row_active : 0);
+            convertView.setPaddingRelative(start, top, end, bottom);
 
             // Handle the "Add account section"
             if(position == 0) {
