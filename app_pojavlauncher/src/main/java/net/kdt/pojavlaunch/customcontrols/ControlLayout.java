@@ -67,6 +67,8 @@ public class ControlLayout extends FrameLayout {
 	private boolean mControlVisible = false;
 
 	private EditControlSideDialog mControlDialog = null;
+	/** Projects fork (MOB-NEXT): a key's panel was asked for and not closed since (it opens a frame later). */
+	private boolean mKeyPanelWanted;
 	// Projects fork (M16): why a MODLAR key cannot act, beside it; the keys follow the game's bindings.
 	private gg.projects.mobile.controls.ControlHint mModHint;
 	private final Runnable mModKeysChanged = this::refreshModKeys;
@@ -510,8 +512,8 @@ public class ControlLayout extends FrameLayout {
 		int top = bar.getTop();
 		int bottom = bar.getBottom();
 		List<ControlInterface> keys = getButtonChildren();
-		int[] lefts = new int[keys.size()];
-		int[] rights = new int[keys.size()];
+		int[] lefts = new int[keys.size() + 1];
+		int[] rights = new int[keys.size() + 1];
 		int n = 0;
 		for (ControlInterface key : keys) {
 			View view = key.getControlView();
@@ -523,10 +525,29 @@ public class ControlLayout extends FrameLayout {
 			rights[n] = Math.round(box[2]);
 			n++;
 		}
+		// MOB-NEXT (the lead's decision, 2 Nov): an open key panel stands in every band, like a key; a bar with no room
+		// beside it fades away until the panel closes ("Kaydet" is one tap after closing it, gold with a change waiting).
+		float[] panel = mControlDialog != null ? mControlDialog.restingSpan() : null;
+		if (panel != null) {
+			lefts[n] = Math.round(panel[0]);
+			rights[n] = Math.round(panel[1]);
+			n++;
+		}
 		int room = Math.round(8 * getResources().getDisplayMetrics().density);
-		int left = EditorRules.barLeft(width, barWidth, java.util.Arrays.copyOf(lefts, n),
+		int left = EditorRules.freeLeft(width, barWidth, (width - barWidth) / 2, java.util.Arrays.copyOf(lefts, n),
 				java.util.Arrays.copyOf(rights, n), room, room);
+		if (left < 0 && panel != null) {
+			EditorBar.away(bar);
+			return;
+		}
+		// With no free place and no panel the bar stays centred, as EditorRules.barLeft: the keys are drawn over it.
+		if (left < 0) left = (width - barWidth) / 2;
 		float target = left - bar.getLeft();
+		if (EditorBar.isAway(bar)) {
+			bar.setTranslationX(target);
+			EditorBar.back(bar);
+			return;
+		}
 		// A bar that is fully shown slides to its new place; one fading in or out (its fade cancels any slide first) or
 		// with animations off takes it at once.
 		if (bar.getVisibility() == VISIBLE && bar.getAlpha() >= 1f && Motion.enabled(getContext())) {
@@ -823,8 +844,11 @@ public class ControlLayout extends FrameLayout {
         // Projects fork (MOB-NEXT): a removed drawer's keys are not out any more.
         if (child == mEditorDrawer) mEditorDrawer = null;
         if(child instanceof ControlInterface && mControlDialog != null){
+			boolean panel = mControlDialog.isShownOrComing();
 			mControlDialog.disappearColor();
             mControlDialog.disappear(false);
+			mKeyPanelWanted = false;
+			if (panel) post(this::placeEditorBars);
         }
     }
 
@@ -836,6 +860,7 @@ public class ControlLayout extends FrameLayout {
 		// Projects fork (MOB-NEXT): a tapped drawer (or one of its keys) has its keys out, the other drawer's go away; a
 		// tap on any other key puts them away.
 		if (mModifiable) openEditorDrawer(drawerOf(button));
+		mKeyPanelWanted = true;
 		if(mControlDialog == null){
 			// When the panel is null, it needs to inflate first.
 			// So inflate it, then process it on the next frame
@@ -861,11 +886,48 @@ public class ControlLayout extends FrameLayout {
 		mHandleView.setControlButton(button);
 
 		//mHandleView.show();
+		// Projects fork (MOB-NEXT): the editor's bars keep clear of the panel coming in, or fade until it goes.
+		post(this::placeEditorBars);
 	}
 
 	/** Swap the panel if the button position requires it */
 	public void adaptPanelPosition(){
-		if(mControlDialog != null) mControlDialog.adaptPanelPosition();
+		if(mControlDialog == null) return;
+		boolean right = mControlDialog.restsAtRight();
+		mControlDialog.adaptPanelPosition();
+		// Projects fork (MOB-NEXT): the panel changed sides under a dragged key: the bars look again.
+		if (right != mControlDialog.restsAtRight()) placeEditorBars();
+	}
+
+	/** Projects fork (MOB-NEXT): a key's panel is open or opening; the key's action row is in its header then. */
+	public boolean keyPanelWanted() {
+		return mKeyPanelWanted || (mControlDialog != null && mControlDialog.isShownOrComing());
+	}
+
+	/**
+	 * Projects fork (MOB-NEXT, the lead's decision 2 Nov): where the selected key's floating action row docks while the
+	 * key's panel is closed ({@link EditorRules#rowSpot}): clear of every shown key (an open drawer's included), the
+	 * editor's bars and the key's resize handle, the free place nearest the key, under it first; null when none is free.
+	 */
+	@Nullable
+	public float[] actionRowSpot(View row, View key) {
+		float[] keyBox = boxOf(key);
+		if (keyBox == null || row.getWidth() == 0 || row.getHeight() == 0 || getWidth() == 0) return null;
+		List<float[]> boxes = new ArrayList<>();
+		for (ControlInterface other : getButtonChildren()) {
+			View view = other.getControlView();
+			if (view == key || view.getVisibility() != VISIBLE || DrawerMotion.isLeaving(view)) continue;
+			float[] box = boxOf(view);
+			if (box != null) boxes.add(box);
+		}
+		for (View bar : new View[]{mEditorBar, mSceneSwitch, mHandleView}) {
+			if (bar == null || bar.getVisibility() != VISIBLE) continue;
+			float[] box = boxOf(bar);
+			if (box != null) boxes.add(box);
+		}
+		float room = 8 * getResources().getDisplayMetrics().density;
+		return EditorRules.rowSpot(keyBox, row.getWidth(), row.getHeight(), boxes.toArray(new float[0][]), getWidth(),
+				getHeight(), room, room);
 	}
 
 
@@ -940,10 +1002,12 @@ public class ControlLayout extends FrameLayout {
 			// the open drawer's keys. A key whose screens changed in its panel leaves or joins the shown keys now.
 			boolean panelShown = mControlDialog.isDisplaying();
 			if(mControlDialog.disappearLayer()){
+				mKeyPanelWanted = false;
 				mActionRow.setFollowedButton(null);
 				if (mHandleView != null) mHandleView.hide();
 				if (!panelShown) mEditorDrawer = null;
 				showEditorScene(true);
+				placeEditorBars();
 			}
 		}
 		return true;
@@ -958,9 +1022,11 @@ public class ControlLayout extends FrameLayout {
 			mControlDialog.disappearColor();
 			mControlDialog.disappear(true);
 		}
+		mKeyPanelWanted = false;
 
 		if(mActionRow != null) mActionRow.setFollowedButton(null);
 		if(mHandleView != null) mHandleView.hide();
+		placeEditorBars();
 	}
 
 	public void save(String path){

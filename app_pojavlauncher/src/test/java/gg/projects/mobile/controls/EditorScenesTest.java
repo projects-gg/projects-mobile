@@ -1,6 +1,7 @@
 package gg.projects.mobile.controls;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -154,6 +155,49 @@ public class EditorScenesTest {
         assertTrue(hasNote(shown(boxes, EditorRules.Scene.GAME, mods)));
         // In menus the drawers are not shown, so their keys never come out over it.
         assertTrue(hasNote(shown(boxes, EditorRules.Scene.MENU, more)));
+    }
+
+    /**
+     * MOB-NEXT (the lead's decision, 2 Nov): a selected key's action row, docked while the key's panel is closed, never
+     * lies over a shown key, an open drawer's keys included, on any screen ({@link EditorRules#rowSpot}); DİĞER's, with
+     * its keys out, has a place on a phone held sideways. (While the panel is open the row is in its header.)
+     */
+    @Test
+    public void aSelectedKeysActionRowNeverLiesOverAKey() throws IOException {
+        for (File file : new File[]{TURKISH, ENGLISH}) {
+            JsonObject layout = layout(file);
+            for (Object[] s : SCREENS) {
+                int w = (int) s[1], h = (int) s[2];
+                float density = (float) s[3];
+                float rowW = 230 * density, rowH = 44 * density, room = 8 * density;
+                List<ControlLayoutTest.Box> boxes = ControlLayoutTest.resolve(layout, w, h, density, 100f, 0);
+                for (ControlLayoutTest.Box open : boxes) {
+                    if (!open.isDrawer) continue;
+                    List<ControlLayoutTest.Box> shown = shown(boxes, EditorRules.Scene.GAME, open);
+                    for (ControlLayoutTest.Box selected : shown) {
+                        float[][] others = others(shown, selected);
+                        float[] spot = EditorRules.rowSpot(box(selected), rowW, rowH, others, w, h, room, room);
+                        if (spot == null) continue;
+                        for (float[] o : others) {
+                            assertFalse(file.getName() + " " + s[0] + " " + selected + ": the row over a key",
+                                    spot[0] < o[2] && o[0] < spot[0] + rowW && spot[1] < o[3] && o[1] < spot[1] + rowH);
+                        }
+                    }
+                }
+            }
+        }
+        List<ControlLayoutTest.Box> boxes = ControlLayoutTest.resolve(layout(TURKISH), 2400, 1080, 2.625f, 100f, 0);
+        ControlLayoutTest.Box more = null;
+        for (ControlLayoutTest.Box b : boxes) if (b.isDrawer && "DİĞER".equals(b.name)) more = b;
+        assertTrue(more != null);
+        List<ControlLayoutTest.Box> shown = shown(boxes, EditorRules.Scene.GAME, more);
+        assertNotNull(EditorRules.rowSpot(box(more), 230 * 2.625f, 44 * 2.625f, others(shown, more), 2400, 1080, 21, 21));
+    }
+
+    private static float[][] others(List<ControlLayoutTest.Box> shown, ControlLayoutTest.Box selected) {
+        List<float[]> out = new ArrayList<>();
+        for (ControlLayoutTest.Box b : shown) if (b != selected) out.add(box(b));
+        return out.toArray(new float[0][]);
     }
 
     private static boolean hasNote(List<ControlLayoutTest.Box> shown) {

@@ -1,7 +1,10 @@
 package gg.projects.mobile.controls;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Rule;
@@ -126,6 +129,46 @@ public class EditorRulesTest {
         assertTrue(EditorRules.showSavedLine(5_000, 8_000, 3_000));
         assertFalse(EditorRules.showSavedLine(5_000, 8_001, 3_000));
         assertFalse(EditorRules.showSavedLine(5_000, 65_000, 3_000));
+    }
+
+    /**
+     * MOB-NEXT (the lead's decision, 2 Nov): an open key panel is a box in the bar's band. A 20:9 phone held sideways
+     * with DİĞER's keys out (the first row to 498 px, the grid 574 to 1134, the panel from 1584): the 438 px bar ("Kayde"
+     * at 130 %) has no place, so it fades until the panel closes; without the panel it sits after the grid.
+     */
+    @Test
+    public void aBarWithNoRoomBesideAnOpenPanelHasNoPlace() {
+        assertEquals(-1, EditorRules.freeLeft(2400, 438, 981, new int[] {36, 574, 1584}, new int[] {498, 1134, 2400}, 21, 21));
+        assertEquals(1155, EditorRules.freeLeft(2400, 438, 981, new int[] {36, 574}, new int[] {498, 1134}, 21, 21));
+        // A narrower bar fits between the grid and the panel.
+        assertEquals(1155, EditorRules.freeLeft(2400, 400, 1000, new int[] {36, 574, 1584}, new int[] {498, 1134, 2400}, 21, 21));
+        // barLeft is freeLeft from the centre, and centred when nothing is free.
+        assertEquals(981, EditorRules.barLeft(2400, 438, new int[] {0}, new int[] {2400}, 21, 21));
+    }
+
+    /**
+     * MOB-NEXT (the lead's decision, 2 Nov): a selected key's action row, with the key's panel closed, docks at the free
+     * place nearest the key, under it first, never over a key; with no free place it stays away.
+     */
+    @Test
+    public void theActionRowDocksNearTheKeyUnderItFirstAndNeverOverAKey() {
+        float[] key = {300, 200, 400, 300};
+        assertArrayEquals(new float[] {200, 320}, EditorRules.rowSpot(key, 300, 100, new float[0][], 2400, 1080, 20, 20), 0.5f);
+        float[][] under = {{250, 330, 450, 430}};
+        float[] spot = EditorRules.rowSpot(key, 300, 100, under, 2400, 1080, 20, 20);
+        assertNotNull(spot);
+        assertClear(spot, 300, 100, under);
+        float[][] floor = {{0, 330, 2400, 1080}};
+        assertArrayEquals(new float[] {200, 80}, EditorRules.rowSpot(key, 300, 100, floor, 2400, 1080, 20, 20), 0.5f);
+        float[][] boxed = {{0, 0, 2400, 190}, {0, 310, 2400, 1080}};
+        assertNull(EditorRules.rowSpot(key, 300, 100, boxed, 2400, 1080, 20, 20));
+    }
+
+    private static void assertClear(float[] spot, float width, float height, float[][] boxes) {
+        for (float[] b : boxes) {
+            assertFalse(spot[0] + "," + spot[1] + " over a key",
+                    spot[0] < b[2] && b[0] < spot[0] + width && spot[1] < b[3] && b[1] < spot[1] + height);
+        }
     }
 
     /** MOB-NEXT: the key settings panel read "Boyut 121.00001 x 110.00001" and "10%" in Turkish. */

@@ -93,6 +93,7 @@ public final class EditorBar extends LinearLayout {
     /** The editor's bars come with it (MOB-NEXT: the bottom switch of the game's screens too). */
     static void fadeIn(android.view.View bar) {
         bar.animate().cancel();
+        bar.setTag(R.id.projects_editor_bar_away, null);
         if (!Motion.enabled(bar.getContext())) {
             bar.setAlpha(1f);
             bar.setVisibility(VISIBLE);
@@ -108,6 +109,8 @@ public final class EditorBar extends LinearLayout {
     /** ...and go with it, faster than they came. */
     static void fadeOut(android.view.View bar) {
         bar.animate().cancel();
+        bar.setTag(R.id.projects_editor_bar_away, null);
+        if (bar.getVisibility() == INVISIBLE) bar.setVisibility(GONE);
         if (bar.getVisibility() != VISIBLE) return;
         if (!Motion.enabled(bar.getContext())) {
             bar.setVisibility(GONE);
@@ -115,6 +118,41 @@ public final class EditorBar extends LinearLayout {
         }
         bar.animate().alpha(0f).setDuration(EXIT_MS).setInterpolator(Motion.EASE_OUT).withLayer()
                 .withEndAction(() -> bar.setVisibility(GONE));
+    }
+
+    /**
+     * MOB-NEXT (the lead's decision, 2 Nov): a bar an open key panel leaves no room fades away (opacity only,
+     * interruptible; at once with animations off) and keeps its size, to be placed again when the panel closes.
+     */
+    public static void away(android.view.View bar) {
+        if (isAway(bar) || bar.getVisibility() == GONE) return;
+        bar.setTag(R.id.projects_editor_bar_away, Boolean.TRUE);
+        bar.animate().cancel();
+        if (!Motion.enabled(bar.getContext())) {
+            bar.setAlpha(0f);
+            bar.setVisibility(INVISIBLE);
+            return;
+        }
+        bar.animate().alpha(0f).setDuration(EXIT_MS).setInterpolator(Motion.EASE_OUT).withLayer()
+                .withEndAction(() -> bar.setVisibility(INVISIBLE));
+    }
+
+    /** ...and comes back when there is room again ("Kaydet" gold if a change is waiting). */
+    public static void back(android.view.View bar) {
+        if (!isAway(bar)) return;
+        bar.setTag(R.id.projects_editor_bar_away, null);
+        bar.animate().cancel();
+        bar.setVisibility(VISIBLE);
+        if (!Motion.enabled(bar.getContext())) {
+            bar.setAlpha(1f);
+            return;
+        }
+        bar.animate().alpha(1f).setDuration(ENTER_MS).setInterpolator(Motion.EASE_OUT).withLayer();
+    }
+
+    /** Whether {@link #away} sent the bar off. */
+    public static boolean isAway(android.view.View bar) {
+        return Boolean.TRUE.equals(bar.getTag(R.id.projects_editor_bar_away));
     }
 
     static Button button(Context context, int text, Drawable background, int textColor, int font) {

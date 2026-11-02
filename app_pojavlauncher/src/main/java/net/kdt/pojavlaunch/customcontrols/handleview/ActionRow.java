@@ -1,7 +1,5 @@
 package net.kdt.pojavlaunch.customcontrols.handleview;
 
-import static net.kdt.pojavlaunch.Tools.currentDisplayMetrics;
-
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.View;
@@ -11,15 +9,21 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 
 import androidx.annotation.Nullable;
-import androidx.core.math.MathUtils;
 
 import net.kdt.pojavlaunch.R;
+import net.kdt.pojavlaunch.customcontrols.ControlLayout;
 import net.kdt.pojavlaunch.customcontrols.buttons.ControlInterface;
 
 import gg.projects.mobile.controls.EditorBar;
 
 /**
  * Layout floating around a Control Button, displaying contextual actions
+ *
+ * <p>Projects fork (MOB-NEXT, the lead's decision 2 Nov): the row never covers a key. While the key's panel is open the
+ * row lives in the panel's header (an embedded row, {@link EditControlSideDialog}) and the floating one stays away; with
+ * the panel closed the floating row docks at the free place nearest the key, under it first, never over a key or an
+ * open drawer's keys ({@link ControlLayout#actionRowSpot}), and stays away when no place is free. Upstream put it over
+ * the key, on the keys above it.
  */
 public class ActionRow extends LinearLayout {
 
@@ -29,11 +33,17 @@ public class ActionRow extends LinearLayout {
     public static final int SIDE_BOTTOM = 0x3;
     public static final int SIDE_AUTO = 0x4;
 
+    /** In the key panel's header: it neither follows nor docks. */
+    private final boolean mEmbedded;
+
     public ActionRow(Context context) {
-        super(context); init();
+        this(context, false);
+    }
+    public ActionRow(Context context, boolean embedded) {
+        super(context); mEmbedded = embedded; init();
     }
     public ActionRow(Context context, @Nullable AttributeSet attrs) {
-        super(context, attrs); init();
+        super(context, attrs); mEmbedded = false; init();
     }
 
     public final ViewTreeObserver.OnPreDrawListener mFollowedViewListener = new ViewTreeObserver.OnPreDrawListener() {
@@ -44,13 +54,12 @@ public class ActionRow extends LinearLayout {
                 return true;
             }
 
-            setNewPosition();
+            if (!mEmbedded) setNewPosition();
             return true;
         }
     };
     private final ActionButtonInterface[] actionButtons = new ActionButtonInterface[3];
     private View mFollowedView = null;
-    private final int mSide = SIDE_AUTO;
 
     /** Add action buttons and configure them */
     private void init(){
@@ -91,59 +100,31 @@ public class ActionRow extends LinearLayout {
             ((View)(buttonInterface)).setVisibility(buttonInterface.shouldBeVisible() ? VISIBLE : GONE);
         }
 
-        setVisibility(VISIBLE);
         mFollowedView = (View) controlInterface;
-        if(mFollowedView != null)
-            mFollowedView.getViewTreeObserver().addOnPreDrawListener(mFollowedViewListener);
-    }
-
-    private float getXPosition(int side){
-        if(side == SIDE_LEFT){
-            return mFollowedView.getX() - getWidth();
-        }else if(side == SIDE_RIGHT){
-            return mFollowedView.getX() + mFollowedView.getWidth();
-        }else{
-            return mFollowedView.getX() + mFollowedView.getWidth()/2f - getWidth()/2f;
+        if (mFollowedView == null) {
+            setVisibility(GONE);
+            return;
         }
+        // A floating row shows once it has a place (its first frame decides); the panel's row at once.
+        setVisibility(mEmbedded ? VISIBLE : INVISIBLE);
+        mFollowedView.getViewTreeObserver().addOnPreDrawListener(mFollowedViewListener);
     }
 
-    private float getYPosition(int side){
-        if(side == SIDE_TOP){
-            return mFollowedView.getY() - getHeight();
-        } else if(side == SIDE_BOTTOM){
-            return mFollowedView.getY() + mFollowedView.getHeight();
-        }else{
-            return mFollowedView.getY() + mFollowedView.getHeight()/2f - getHeight()/2f;
-        }
-    }
-
+    /** The floating row: at the free place nearest the key while the key's panel is closed, else away. */
     private void setNewPosition(){
         if(mFollowedView == null) return;
-        int side = pickSide();
-
-        // Projects fork (MOB-NEXT): 8 dp from the screen's edges, as the editor's bars (it stood flush against them).
-        float margin = 8 * getResources().getDisplayMetrics().density;
-        setX(MathUtils.clamp(getXPosition(side), margin, Math.max(margin, currentDisplayMetrics.widthPixels - getWidth() - margin)));
-        setY(getYPosition(side));
-    }
-
-    private int pickSide(){
-        if(mFollowedView == null) return mSide; //Value should not matter
-
-        if(mSide != SIDE_AUTO) return mSide;
-        //TODO improve the "algo"
-        ViewGroup parent = ((ViewGroup) mFollowedView.getParent());
-        if(parent == null) return mSide;//Value should not matter
-
-        int side = SIDE_TOP;
-        float futurePos = getYPosition(side);
-        if(futurePos + getHeight() > (parent.getHeight() + getHeight()/2f)){
-            side = SIDE_TOP;
-        }else if (futurePos < -getHeight()/2f){
-            side = SIDE_BOTTOM;
+        float[] spot = null;
+        if (getParent() instanceof ControlLayout) {
+            ControlLayout layout = (ControlLayout) getParent();
+            if (!layout.keyPanelWanted()) spot = layout.actionRowSpot(this, mFollowedView);
         }
-
-        return side;
+        if (spot == null) {
+            if (getVisibility() == VISIBLE) setVisibility(INVISIBLE);
+            return;
+        }
+        setX(spot[0]);
+        setY(spot[1]);
+        if (getVisibility() != VISIBLE) setVisibility(VISIBLE);
     }
 
     public void hide(){

@@ -96,14 +96,25 @@ public final class EditorRules {
      */
     public static int barLeft(int width, int barWidth, int[] lefts, int[] rights, int gap, int margin) {
         int centred = (width - barWidth) / 2;
+        int left = freeLeft(width, barWidth, centred, lefts, rights, gap, margin);
+        return left >= 0 ? left : centred;
+    }
+
+    /**
+     * MOB-NEXT (the lead's decision, 2 Nov): the left edge nearest {@code preferred} where something {@code barWidth}
+     * wide keeps {@code gap} from every box in its band ({@code lefts}, {@code rights}) and {@code margin} from the
+     * screen's edges; -1 when there is none. {@link #barLeft} is this from the centre, centred when nothing is free; an
+     * open key panel counts as a box (a bar with no room beside it fades until the panel closes).
+     */
+    public static int freeLeft(int width, int barWidth, int preferred, int[] lefts, int[] rights, int gap, int margin) {
         int min = margin;
         int max = width - margin - barWidth;
-        if (max < min || lefts.length != rights.length) return centred;
-        int best = centred;
+        if (max < min || lefts.length != rights.length) return -1;
+        int best = -1;
         long bestDistance = Long.MAX_VALUE;
-        // The places worth trying: the centre, and just after or just before each key.
+        // The places worth trying: the preferred one, and just after or just before each box.
         int[] tries = new int[1 + 2 * lefts.length];
-        tries[0] = centred;
+        tries[0] = preferred;
         for (int i = 0; i < lefts.length; i++) {
             tries[1 + 2 * i] = rights[i] + gap;
             tries[2 + 2 * i] = lefts[i] - gap - barWidth;
@@ -111,10 +122,55 @@ public final class EditorRules {
         for (int at : tries) {
             int x = Math.max(min, Math.min(max, at));
             if (!clearOfKeys(x, barWidth, lefts, rights, gap)) continue;
-            long distance = Math.abs((long) x - centred);
+            long distance = Math.abs((long) x - preferred);
             if (distance < bestDistance) {
                 bestDistance = distance;
                 best = x;
+            }
+        }
+        return best;
+    }
+
+    /**
+     * MOB-NEXT (the lead's decision, 2 Nov): where a selected key's action row ("Sil", "Kopyala", "Tuş ekle") docks
+     * while the key's panel is closed (while it is open the row is in the panel's header): never over a box (the shown
+     * keys, an open drawer's included, the editor's bars, the key's handle), at the free place nearest the key, under it
+     * rather than above it at a like distance; {@code margin} from the screen's edges, {@code gap} beside every box.
+     * Boxes are left, top, right, bottom. Returns the row's left and top, or null when no place is free.
+     */
+    public static float[] rowSpot(float[] key, float rowWidth, float rowHeight, float[][] boxes, float width, float height,
+                                  float gap, float margin) {
+        float step = Math.max(1f, rowHeight / 2f);
+        float preferred = (key[0] + key[2]) / 2f - rowWidth / 2f;
+        float[] best = null;
+        double bestDistance = Double.MAX_VALUE;
+        int[] lefts = new int[boxes.length];
+        int[] rights = new int[boxes.length];
+        for (int above = 0; above < 2; above++) {
+            // Above the key counts a row's height farther: under it first.
+            double bias = above == 1 ? rowHeight : 0;
+            for (int n = 0; ; n++) {
+                float top = above == 0 ? key[3] + gap + n * step : key[1] - gap - rowHeight - n * step;
+                if (top < margin || top + rowHeight > height - margin) break;
+                float dy = gap + n * step;
+                if (dy + bias >= bestDistance) break;
+                int count = 0;
+                for (float[] box : boxes) {
+                    if (box[1] < top + rowHeight + gap && top - gap < box[3]) {
+                        lefts[count] = Math.round(box[0]);
+                        rights[count] = Math.round(box[2]);
+                        count++;
+                    }
+                }
+                int left = freeLeft(Math.round(width), Math.round(rowWidth), Math.round(preferred),
+                        java.util.Arrays.copyOf(lefts, count), java.util.Arrays.copyOf(rights, count),
+                        Math.round(gap), Math.round(margin));
+                if (left < 0) continue;
+                double distance = Math.hypot(left - preferred, dy) + bias;
+                if (distance < bestDistance) {
+                    bestDistance = distance;
+                    best = new float[]{left, top};
+                }
             }
         }
         return best;

@@ -39,6 +39,10 @@ public abstract class SideDialogView {
     protected final int mMargin;
     private ObjectAnimator mSideDialogAnimator;
     protected boolean mDisplaying = false;
+    // Projects fork (MOB-NEXT): the side the panel was last asked to show on, and whether it was asked and has not slid
+    // in yet (its slide starts on the next frame): the controls editor's bars keep clear of where it comes to rest.
+    private boolean mFromRight;
+    private boolean mComing;
     /* Whether the layout is built */
     private boolean mIsInstantiated = false;
 
@@ -160,8 +164,11 @@ public abstract class SideDialogView {
         }
 
         // To avoid UI sizing issue when the dialog is not fully inflated
+        mFromRight = fromRight;
+        mComing = true;
         onAppear();
         Tools.runOnUiThread(() -> {
+            mComing = false;
             if (fromRight) {
                 if (!mDisplaying || !isAtRight()) {
                     mSideDialogAnimator.setFloatValues(currentDisplayMetrics.widthPixels, currentDisplayMetrics.widthPixels - mScrollView.getWidth() - mMargin);
@@ -189,6 +196,7 @@ public abstract class SideDialogView {
      */
     @CallSuper
     public final void disappear(boolean destroy) {
+        mComing = false;
         if(!mIsInstantiated) {
             Log.w("SideDialogView", "Layout not inflated");
             return;
@@ -226,6 +234,31 @@ public abstract class SideDialogView {
     /** @return Whether the dialog is currently displaying */
     public final boolean isDisplaying(){
         return mDisplaying;
+    }
+
+    /** Projects fork (MOB-NEXT): shown, or asked to show and about to slide in. */
+    public final boolean isShownOrComing() {
+        return mDisplaying || mComing;
+    }
+
+    /**
+     * Projects fork (MOB-NEXT): where the panel comes to rest while shown, its left and right edges in its parent (the
+     * controls editor's bars keep clear of it), or null while it is neither shown nor coming.
+     */
+    @Nullable
+    public final float[] restingSpan() {
+        if (!isShownOrComing()) return null;
+        float width = mDialogLayout != null && mDialogLayout.getWidth() > 0 ? mDialogLayout.getWidth()
+                : mParent.getResources().getDimensionPixelOffset(R.dimen._280sdp);
+        if (!mFromRight) return new float[]{mMargin, mMargin + width};
+        float scroll = mScrollView != null && mScrollView.getWidth() > 0 ? mScrollView.getWidth() : width;
+        float left = currentDisplayMetrics.widthPixels - scroll - mMargin;
+        return new float[]{left, left + width};
+    }
+
+    /** Projects fork (MOB-NEXT): a view at the top of the panel, above its scrolling content (a key's action row). */
+    protected final void addHeader(View header, ViewGroup.LayoutParams params) {
+        if (mDialogLayout != null) mDialogLayout.addView(header, 0, params);
     }
 
     /**

@@ -86,6 +86,9 @@ public class EditControlSideDialog extends SideDialogView {
     // Color selector related stuff
     private ColorSelector mColorSelector;
     private final ViewGroup mParent;
+    // Projects fork (MOB-NEXT, the lead's decision 2 Nov): the edited key's action row ("Sil", "Kopyala", "Tuş ekle")
+    // lives in the panel's header while the panel is open, so it never covers a key.
+    private ActionRow mHeaderRow;
 
     public EditControlSideDialog(Context context, ViewGroup parent) {
         super(context, parent, R.layout.dialog_control_button_setting);
@@ -98,11 +101,21 @@ public class EditControlSideDialog extends SideDialogView {
         buildColorSelector();
         loadAdapter();
         setupRealTimeListeners();
+        // Projects fork (MOB-NEXT): the action row at the top, in line with the panel's words.
+        mHeaderRow = new ActionRow(mParent.getContext(), true);
+        int side = mParent.getResources().getDimensionPixelOffset(R.dimen.padding_moderate);
+        android.widget.LinearLayout.LayoutParams params = new android.widget.LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, mParent.getResources().getDimensionPixelOffset(R.dimen._40sdp));
+        params.setMargins(side, side, side, 0);
+        addHeader(mHeaderRow, params);
+        if (mCurrentlyEditedButton != null) mHeaderRow.setFollowedButton(mCurrentlyEditedButton);
     }
 
     @Override
     protected void onDestroy() {
         mColorSelector.disappear(true);
+        if (mHeaderRow != null) mHeaderRow.setFollowedButton(null);
+        mHeaderRow = null;
     }
 
     private void buildColorSelector() {
@@ -543,6 +556,13 @@ public class EditControlSideDialog extends SideDialogView {
             mCurrentlyEditedButton.getControlView().removeOnLayoutChangeListener(mLayoutChangedListener);
         mCurrentlyEditedButton = button;
         mCurrentlyEditedButton.getControlView().addOnLayoutChangeListener(mLayoutChangedListener);
+        if (mHeaderRow != null) mHeaderRow.setFollowedButton(button);
+    }
+
+    /** Projects fork (MOB-NEXT): whether the panel rests (or is to rest) at the screen's right. */
+    public boolean restsAtRight() {
+        float[] span = restingSpan();
+        return span != null && span[0] > currentDisplayMetrics.widthPixels / 2f;
     }
 
 }

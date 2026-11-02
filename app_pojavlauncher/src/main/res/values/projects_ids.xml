@@ -15,6 +15,8 @@
     <item name="projects_drawer_leaving" type="id" />
     <!-- View tag (MOB-NEXT): the opacity a key rests at in the controls editor while it fades in or out (EditorMotion). -->
     <item name="projects_editor_rest_alpha" type="id" />
+    <!-- View tag (MOB-NEXT): an editor bar faded away because an open key panel leaves it no room (EditorBar.away). -->
+    <item name="projects_editor_bar_away" type="id" />
     <!-- View tag (M17): the home screen's undo bar, made once per menu view (UndoBar.attach). -->
     <item name="projects_undo_bar" type="id" />
     <!-- View tag (M17): whether a news category chip is styled for a Minecraft update (ProjectsUi.bindCategory). -->
