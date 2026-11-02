@@ -127,6 +127,18 @@ public final class ActionToast {
             bottom += Math.max(insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom,
                     insets.getInsets(WindowInsetsCompat.Type.ime()).bottom);
         }
+        // APK-REL (0.4.9's emulator run): on the home screen the line sat over OYNA ("Tuşlar kaydedildi." after the controls
+        // editor): it held OYNA's touch for 5 s, and a late tap on "Geri al" landed on OYNA once it left. It now stands
+        // above the play bar whenever that bar is on screen.
+        View playBar = root.findViewById(R.id.projects_play_bar_top);
+        if (playBar != null && playBar.isShown() && root.getHeight() > 0) {
+            int[] at = new int[2];
+            int[] rootAt = new int[2];
+            playBar.getLocationInWindow(at);
+            root.getLocationInWindow(rootAt);
+            int belowBarTop = root.getHeight() - (at[1] - rootAt[1]);
+            if (belowBarTop > 0 && belowBarTop < root.getHeight()) bottom = Math.max(bottom, belowBarTop + margin);
+        }
         lp.setMargins(margin, 0, margin, bottom);
         root.addView(bar, lp);
         root.setTag(R.id.projects_action_toast, bar);
