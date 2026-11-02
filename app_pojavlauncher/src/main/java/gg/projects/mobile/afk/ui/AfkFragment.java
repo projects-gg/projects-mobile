@@ -362,8 +362,9 @@ public final class AfkFragment extends AfkScreen {
             see.setPadding(0, 0, AfkUi.dp(c, 16), 0);
             actions.addView(see);
         }
-        View spacer = new View(c);
-        actions.addView(spacer, CloudUi.weight(1f));
+        // Pushes "Kapat" to the end, with no height of its own: a plain View takes all the height it is offered, and in a
+        // short list (the scroll view stretched to the screen) the notice filled the screen and the rows got none.
+        actions.addView(new View(c), new LinearLayout.LayoutParams(0, 0, 1f));
         Button close = CloudUi.textButton(c, getString(R.string.projects_close), v -> {
             Haptics.tick(v);
             mAfk.dismissLastEnd();
