@@ -851,8 +851,8 @@
     <string name="projects_identity_linked_on">%1$s bağlandı</string>
     <string name="projects_identity_remove">Kaldır</string>
     <string name="projects_identity_remove_title">%1$s bağlantısı kaldırılsın mı?</string>
-    <string name="projects_identity_remove_discord_number">Discord olmadan 7/24 Bulut açılmaz, Projects skinin ve forumdaki ekip etiketin de kalkar.</string>
-    <string name="projects_identity_remove_discord">Discord fotoğrafın ve forumdaki ekip etiketin de kalkar.</string>
+    <string name="projects_identity_remove_discord_number">Discord fotoğrafın, Projects skinin ve forumdaki ekip etiketin de kalkar.</string>
+    <string name="projects_identity_remove_discord">Discord fotoğrafın, Projects skinin ve forumdaki ekip etiketin de kalkar.</string>
     <string name="projects_identity_link_discord">Discord hesabını bağla</string>
     <string name="projects_identity_link_microsoft">Microsoft hesabını bağla</string>
     <string name="projects_identity_linking">Bağlanıyor</string>

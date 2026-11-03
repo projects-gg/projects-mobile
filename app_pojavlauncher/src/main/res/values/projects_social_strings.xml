@@ -865,8 +865,8 @@
     <string name="projects_identity_linked_on">Linked on %1$s</string>
     <string name="projects_identity_remove">Remove</string>
     <string name="projects_identity_remove_title">Remove %1$s?</string>
-    <string name="projects_identity_remove_discord_number">24/7 Cloud won\'t open without Discord, and your Projects skin and forum crew tag go too.</string>
-    <string name="projects_identity_remove_discord">Your Discord photo and forum crew tag go too.</string>
+    <string name="projects_identity_remove_discord_number">Your Discord photo, Projects skin and forum crew tag go too.</string>
+    <string name="projects_identity_remove_discord">Your Discord photo, Projects skin and forum crew tag go too.</string>
     <string name="projects_identity_link_discord">Link your Discord account</string>
     <string name="projects_identity_link_microsoft">Link your Microsoft account</string>
     <string name="projects_identity_linking">Linking</string>
