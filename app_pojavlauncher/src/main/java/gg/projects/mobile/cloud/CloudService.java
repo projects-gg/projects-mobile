@@ -62,10 +62,10 @@ public final class CloudService implements SocialService.Listener {
     }
 
     /**
-     * What the list can say. SOC-ID: {@code DISCORD_REQUIRED}, the friends account was not opened with its Discord (7/24
-     * Bulut needs that for now, the service answers {@code discord_required}): one line, nothing is read.
+     * What the list can say. AFK-MS: an account without Discord has 7/24 Bulut too (the service knows it by its number),
+     * so nothing here asks for Discord.
      */
-    public enum Load { IDLE, LOADING, LOADED, FAILED, SIGNED_OUT, DISCORD_REQUIRED }
+    public enum Load { IDLE, LOADING, LOADED, FAILED, SIGNED_OUT }
 
     private static CloudService sInstance;
 
@@ -202,17 +202,7 @@ public final class CloudService implements SocialService.Listener {
 
     public Load load() {
         if (!signedIn()) return Load.SIGNED_OUT;
-        if (discordRequired()) return Load.DISCORD_REQUIRED;
         return mLoad;
-    }
-
-    /**
-     * SOC-ID: 7/24 Bulut is only for accounts whose number is their Discord id for now (an account opened with
-     * Microsoft, or one whose Discord was removed, gets {@code discord_required}): its screens say so in one line.
-     */
-    public boolean discordRequired() {
-        gg.projects.mobile.social.SocialModel.Me me = SocialService.get(mApp).state().me();
-        return me != null && !me.discordNumber();
     }
 
     @Nullable
@@ -404,8 +394,6 @@ public final class CloudService implements SocialService.Listener {
         final String token = token();
         final String user = SocialService.get(mApp).signedInId();
         if (token == null || user == null || mFetching) return;
-        // SOC-ID: the service would only say discord_required.
-        if (discordRequired()) return;
         long now = System.currentTimeMillis();
         if (!force && mLoad == Load.LOADED && user.equals(mFetchedFor) && now - mFetchedAt < ACCOUNTS_STALE_MS) return;
         mFetching = true;

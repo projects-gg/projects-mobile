@@ -112,7 +112,7 @@ public class SocIdTest {
         assertNotNull(me);
         assertEquals("9123456789012345678", me.profile.id);
         assertNull(me.profile.discordId);
-        assertFalse("7/24 Bulut is for the account's own Discord", me.discordNumber());
+        assertFalse("no Discord: its number is not a Discord id", me.discordNumber());
         assertTrue("the name step", me.nameUnset());
         assertEquals(Me.NAME_UNSET, me.nameSource);
         assertTrue(me.identitiesListed);

@@ -420,7 +420,7 @@ public final class SocialModel {
 
         /**
          * SOC-ID: the account's number is its Discord id (every account opened with Discord, while that Discord is still
-         * on it). Only such accounts have 7/24 Bulut and the Projects skin for now ({@code discord_required} otherwise).
+         * on it). 7/24 Bulut needs no Discord any more (AFK-MS: the service knows an account by its number).
          */
         public boolean discordNumber() {
             return profile.discordId != null && profile.discordId.equals(profile.id);
