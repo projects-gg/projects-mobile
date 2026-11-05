@@ -36,6 +36,7 @@ public final class PlayButtonDrawable extends Drawable {
     private final Paint mFocusPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Path mSocket = new Path();
     private final Path mFace = new Path();
+    private final Path mFocusRing = new Path();
     private final RectF mFaceRect = new RectF();
     private final Matrix mSheenMatrix = new Matrix();
     private final Rect mPadding;
@@ -67,7 +68,11 @@ public final class PlayButtonDrawable extends Drawable {
         mInk = ContextCompat.getColor(context, R.color.projects_ember_900);
         mFocusPaint.setStyle(Paint.Style.STROKE);
         mFocusPaint.setStrokeWidth(2 * mDensity);
-        mFocusPaint.setColor(ContextCompat.getColor(context, R.color.projects_gold_200));
+        // MOB-PARITY: the focus ring (a TV remote, a keyboard). gold-200 drawn on the face vanished into its gold top.
+        // OYNA rings its face in the socket's gap with gold-300 (design.md §8: 2 dp, 2 dp out); the socketless
+        // "Projects'e katıl" has no room outside, so an ember ring sits inside its face.
+        mFocusPaint.setColor(withSocket ? ContextCompat.getColor(context, R.color.projects_gold_300)
+                : (ContextCompat.getColor(context, R.color.projects_ember_900) & 0x00FFFFFF) | 0xD9000000);
         int h = Math.round(16 * mDensity + mSocketInset), v = Math.round(8 * mDensity + mSocketInset);
         mPadding = new Rect(h, v, h, v);
     }
@@ -117,6 +122,8 @@ public final class PlayButtonDrawable extends Drawable {
         float r = bounds.right - mSocketInset, b = bounds.bottom - mSocketInset;
         mFaceRect.set(l, t, r, b);
         chamfer(mFace, l, t, r, b, mCut);
+        float ring = mWithSocket ? -Math.min(2 * mDensity, mSocketInset - mDensity) : 3 * mDensity;
+        chamfer(mFocusRing, l + ring, t + ring, r - ring, b - ring, mCut - ring * 0.4f);
         mSocketPaint.setShader(new LinearGradient(0, bounds.top, 0, bounds.bottom,
                 0xE63F0A0A, 0xF20A090C, Shader.TileMode.CLAMP));
         mFaceUp = new LinearGradient(0, t, 0, b, new int[]{mGold200, mGold400, mGold500, mGold600},
@@ -173,7 +180,7 @@ public final class PlayButtonDrawable extends Drawable {
         }
         canvas.restoreToCount(save);
 
-        if (mFocused) canvas.drawPath(mFace, mFocusPaint);
+        if (mFocused) canvas.drawPath(mFocusRing, mFocusPaint);
     }
 
     @Override

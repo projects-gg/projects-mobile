@@ -9,6 +9,24 @@
     <uses-feature
         android:name="android.hardware.type.pc"
         android:required="false" />
+    <!-- MOB-PARITY: Android TV and Chromebooks. Nothing here is a hardware must: a TV has no touch screen, many
+         TVs and Chromebooks no microphone (RECORD_AUDIO would make it required), the game also runs with a
+         gamepad, a mouse or a remote. -->
+    <uses-feature
+        android:name="android.software.leanback"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.touchscreen"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.faketouch"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.microphone"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.gamepad"
+        android:required="false" />
 
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission
@@ -45,6 +63,7 @@
         android:allowBackup="true"
         android:allowNativeHeapPointerTagging="false"
         android:appCategory="game"
+        android:banner="@drawable/projects_tv_banner"
         android:hasFragileUserData="true"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
@@ -73,6 +92,8 @@
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
+                <!-- MOB-PARITY: the same entry on an Android TV's home screen (the banner above). -->
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
         </activity>
         <!-- Projects fork (M14): the launcher speaks Figtree everywhere (AppTheme.Launcher). -->
