@@ -111,6 +111,9 @@ public final class FocusRing implements ViewTreeObserver.OnGlobalFocusChangeList
         int left = mViewAt[0] - mRootAt[0], top = mViewAt[1] - mRootAt[1];
         mRect.set(left, top, left + Math.round(target.getWidth() * target.getScaleX()),
                 top + Math.round(target.getHeight() * target.getScaleY()));
+        // MOB-REL: the ring replaces Android's own focus highlight (8.0+), which otherwise fills the whole touch target
+        // in grey under the ring (the friends pill's 48 dp row showed a square behind its round ring).
+        if (Build.VERSION.SDK_INT >= 26 && target.getDefaultFocusHighlightEnabled()) target.setDefaultFocusHighlightEnabled(false);
         Object tag = target.getTag(R.id.projects_focus_shape);
         Shape shape = tag instanceof Shape ? (Shape) tag : null;
         if (shape != null) mRect.inset(shape.insetHorizontal, shape.insetVertical);
