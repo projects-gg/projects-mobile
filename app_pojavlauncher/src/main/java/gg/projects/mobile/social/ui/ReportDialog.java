@@ -68,6 +68,14 @@ public final class ReportDialog {
         show(activity, Reports.Target.PLAN, maker, null, maker.name(), null, null, null, plan, null, null);
     }
 
+    /** MOB-PARITY: {@code via} that marks a crew reported from "Ekip bul" ({@code discover: true}). */
+    static final String VIA_DISCOVER = ":discover";
+
+    /** MOB-PARITY: a crew from its "Ekip bul" card (its name reason reads "Uygunsuz ad ya da yazı"). */
+    public static void crewFromDiscover(FragmentActivity activity, TeamSummary crew) {
+        show(activity, Reports.Target.CREW, null, crew, crew.name, null, null, null, null, VIA_DISCOVER, null);
+    }
+
     /** {@code code}: only for a crew looked up by its code or (M21) its invite link. */
     public static void crew(FragmentActivity activity, TeamSummary crew, @Nullable String code) {
         show(activity, Reports.Target.CREW, null, crew, crew.name, code, null, null, null, null, null);
@@ -194,7 +202,8 @@ public final class ReportDialog {
             RadioButton option = new RadioButton(activity);
             option.setId(View.generateViewId());
             option.setTag(keys.get(i));
-            option.setText(reasonLabel(target, keys.get(i)));
+            option.setText(VIA_DISCOVER.equals(via) && Reports.NAME.equals(keys.get(i))
+                    ? R.string.projects_discover_report_reason : reasonLabel(target, keys.get(i)));
             option.setTextSize(15);
             option.setTextColor(ContextCompat.getColor(activity, R.color.projects_bone_100));
             option.setMinHeight(Math.round(46 * dp));
@@ -290,7 +299,8 @@ public final class ReportDialog {
                 JsonObject body;
                 switch (target) {
                     case CREW:
-                        body = via != null ? Reports.crewFromTag(crew.id, via, reason, note.getText().toString())
+                        body = VIA_DISCOVER.equals(via) ? Reports.crewFromDiscover(crew.id, reason, note.getText().toString())
+                                : via != null ? Reports.crewFromTag(crew.id, via, reason, note.getText().toString())
                                 : Reports.crew(crew.id, code, reason, note.getText().toString());
                         break;
                     case REACTION:

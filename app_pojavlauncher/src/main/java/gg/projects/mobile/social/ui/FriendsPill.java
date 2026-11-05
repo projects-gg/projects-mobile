@@ -105,6 +105,8 @@ public final class FriendsPill extends FrameLayout implements SocialService.List
         addView(mDot, dotLp);
 
         Press.attach(mPill, Press.Style.BUTTON);
+        // MOB-PARITY: the focus ring (a keyboard, a gamepad) hugs the 36 dp pill, not its 48 dp target.
+        mPill.setTag(R.id.projects_focus_shape, new gg.projects.mobile.ui.FocusRing.Shape(0, Math.round(6 * dp), 18 * dp));
         mPill.setOnClickListener(v -> open());
         setVisibility(GONE);
     }

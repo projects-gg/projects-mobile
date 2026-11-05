@@ -73,6 +73,9 @@ public final class SocialState {
     private TeamNotifications mTeamNotifications = TeamNotifications.DEFAULT;
     @Nullable
     private Set<String> mFeatures;
+    /** MOB-PARITY: the friend categories; null while the service has none (an older one). */
+    @Nullable
+    private FriendGroups mGroups;
     private boolean mLoaded;
 
     /** Online friends and teammates by id (absent: offline). Filled only while {@link #mLive}. */
@@ -758,6 +761,8 @@ public final class SocialState {
         mFeatures = data.features == null ? null : new HashSet<>(data.features);
         mMyRequests.clear();
         mMyRequests.addAll(data.teamRequests);
+        // MOB-PARITY: a newer copy from the socket or a save on its way is not taken back by an older list.
+        if (data.groups == null || mGroups == null || data.groups.version >= mGroups.version) mGroups = data.groups;
         mLoaded = true;
         mRestrictedUntil = null;
         prunePresence();
@@ -1003,8 +1008,22 @@ public final class SocialState {
     }
 
     /** Signed out or the account went: nothing stays. */
+    // ---- MOB-PARITY: friend categories ----
+
+    /** The friend categories; null while the service has none. */
+    @Nullable
+    public FriendGroups groups() {
+        return mGroups;
+    }
+
+    /** A save the player just made shows at once (the service's answer or frame confirms it). */
+    public void setGroups(@Nullable FriendGroups groups) {
+        mGroups = groups;
+    }
+
     public void clear() {
         mMe = null;
+        mGroups = null;
         mFriends.clear();
         mIncoming.clear();
         mOutgoing.clear();
@@ -1140,6 +1159,12 @@ public final class SocialState {
             case "crew_order":
                 setCrewOrder(Json.strings(message, "order"));
                 break;
+            case "groups": {
+                // MOB-PARITY: the categories changed on another device (or this save came back): newer copies only.
+                FriendGroups groups = FriendGroups.read(Json.obj(message, "groups"));
+                if (groups != null && (mGroups == null || groups.version >= mGroups.version)) mGroups = groups;
+                break;
+            }
             case "call":
                 onCall(message, nowSeconds, notices);
                 break;

@@ -627,9 +627,24 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
             }
         }
         SocialState.Sections sections = state.sections(favourites);
-        addFriends(rows, "playing", R.string.projects_social_playing, sections.playing, state, favourites);
-        addFriends(rows, "online", R.string.projects_social_online, sections.online, state, favourites);
-        addFriends(rows, "offline", R.string.projects_social_offline, sections.offline, state, favourites);
+        gg.projects.mobile.social.FriendGroups groups = state.groups();
+        if (groups != null && groups.hasGroups()) {
+            // MOB-PARITY: the player's categories in their order (empty ones too, so they can be managed), each in the
+            // list's order (in game, on, off; favourites first), then "Arkadaşlar" for everyone else.
+            List<Friend> ordered = new ArrayList<>(sections.playing);
+            ordered.addAll(sections.online);
+            ordered.addAll(sections.offline);
+            for (gg.projects.mobile.social.FriendGroups.Group group : groups.groups) {
+                List<Friend> in = gg.projects.mobile.social.FriendGroups.inGroup(ordered, groups, group.id, f -> f.profile.id);
+                addGroup(rows, "g-" + group.id, group.name, in, state, favourites);
+            }
+            List<Friend> rest = gg.projects.mobile.social.FriendGroups.inGroup(ordered, groups, null, f -> f.profile.id);
+            if (!rest.isEmpty()) addGroup(rows, "rest", getString(R.string.projects_parity_groups_rest), rest, state, favourites);
+        } else {
+            addFriends(rows, "playing", R.string.projects_social_playing, sections.playing, state, favourites);
+            addFriends(rows, "online", R.string.projects_social_online, sections.online, state, favourites);
+            addFriends(rows, "offline", R.string.projects_social_offline, sections.offline, state, favourites);
+        }
         List<Request> outgoing = state.outgoing();
         if (!outgoing.isEmpty()) {
             rows.add(header("h-sent", getString(R.string.projects_social_sent)));
@@ -680,9 +695,24 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
                 gg.projects.mobile.ui.Apart.of(requireContext(), title, String.valueOf(count), R.color.projects_ash_400));
     }
 
+    /**
+     * MOB-PARITY: a category (or "Arkadaşlar") with how many of its friends are on, then its friends. A category's
+     * header opens its menu; it is listed even while empty.
+     */
+    private void addGroup(List<Row> rows, String id, String title, List<Friend> friends, SocialState state, Set<String> favourites) {
+        int on = 0;
+        for (Friend f : friends) if (!Presence.OFFLINE.equals(state.presence(f.profile.id).state)) on++;
+        rows.add(header(id.startsWith("g-") ? id : "h-" + id, title, on));
+        addPeople(rows, friends, state, favourites);
+    }
+
     private void addFriends(List<Row> rows, String id, int title, List<Friend> friends, SocialState state, Set<String> favourites) {
         if (friends.isEmpty()) return;
         rows.add(header("h-" + id, getString(title), friends.size()));
+        addPeople(rows, friends, state, favourites);
+    }
+
+    private void addPeople(List<Row> rows, List<Friend> friends, SocialState state, Set<String> favourites) {
         boolean tags = SocialService.get(requireContext()).gate().badges;
         SocialService service = SocialService.get(requireContext());
         for (Friend f : friends) {
@@ -692,6 +722,44 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
                     + (tags && f.profile.badge != null ? f.profile.badge.key() : "") + "|" + ProfileMarks.key(service, f.profile),
                     new Person("friend", f.profile, f)));
         }
+    }
+
+    /** MOB-PARITY: a category's header opens its menu (a tap, a long press, a keyboard's Enter). */
+    private void bindGroupHeader(TextView header, String rowId) {
+        if (!rowId.startsWith("g-")) {
+            header.setOnClickListener(null);
+            header.setOnLongClickListener(null);
+            header.setClickable(false);
+            header.setFocusable(false);
+            header.setBackground(null);
+            header.setMinHeight(0);
+            header.setCompoundDrawablesRelative(null, null, null, null);
+            return;
+        }
+        final String groupId = rowId.substring(2);
+        gg.projects.mobile.social.FriendGroups doc = SocialService.get(requireContext()).state().groups();
+        gg.projects.mobile.social.FriendGroups.Group group = doc == null ? null : doc.group(groupId);
+        header.setContentDescription(group == null ? null : getString(R.string.projects_parity_groups_options, group.name));
+        header.setBackgroundResource(R.drawable.projects_row_ripple);
+        header.setFocusable(true);
+        // A 48 dp target with the menu's three dots at its end (the friend rows' "⋮").
+        float dp = getResources().getDisplayMetrics().density;
+        header.setMinHeight(Math.round(48 * dp));
+        header.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        android.graphics.drawable.Drawable dots = ContextCompat.getDrawable(requireContext(), R.drawable.projects_ic_dots);
+        if (dots != null) {
+            dots = dots.mutate();
+            dots.setTint(ContextCompat.getColor(requireContext(), R.color.projects_ash_400));
+            int size = Math.round(18 * dp);
+            dots.setBounds(0, 0, size, size);
+        }
+        header.setCompoundDrawablesRelative(null, null, dots, null);
+        header.setOnClickListener(v -> FriendGroupSheets.groupMenu(requireActivity(), groupId));
+        header.setOnLongClickListener(v -> {
+            Haptics.perform(v, gg.projects.mobile.ui.HapticMap.Kind.LONG_PRESS);
+            FriendGroupSheets.groupMenu(requireActivity(), groupId);
+            return true;
+        });
     }
 
     // ---- actions ----
@@ -1084,6 +1152,7 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
                     break;
                 case T_HEADER:
                     ((TextView) view).setText((CharSequence) row.data);
+                    bindGroupHeader((TextView) view, row.id);
                     break;
                 case T_EMPTY:
                     View add = view.findViewById(R.id.projects_social_empty_add);

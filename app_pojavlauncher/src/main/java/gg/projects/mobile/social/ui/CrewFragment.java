@@ -152,6 +152,9 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
     private LinearLayout mInvites;
     private TextView mLimitText;
     private View mJoinGroup;
+    /** MOB-PARITY: the "Ekip bul" row on top of the join group. */
+    @Nullable
+    private View mDiscoverEntry;
     private EditText mJoinCode;
     private TextView mJoinMessage;
     private View mJoinResult;
@@ -988,6 +991,20 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         if (gate.slow && leader != null && (leader.founder || leader.moderator)) {
             rows.add(new Row(T_SLOW, "slow", "slow|" + team.id + "|" + slowShown(team), team));
         }
+        // MOB-PARITY: "Düzenle" (the leader; whoever the crew lets edit its look) and the leader's "Yetkiler".
+        if (me != null && gg.projects.mobile.social.CrewRoleRules.mayEdit(team, me, gate.roles)) {
+            rows.add(new Row(T_ACTION, "edit", "edit", new Action("edit", R.drawable.projects_ic_pencil,
+                    R.string.projects_parity_crew_edit, R.color.projects_bone_100)));
+        }
+        if (gate.roles && leader != null && leader.founder) {
+            rows.add(new Row(T_ACTION, "roles", "roles", new Action("roles", R.drawable.projects_ic_sliders,
+                    R.string.projects_parity_roles_title, R.color.projects_bone_100)));
+        }
+        // MOB-PARITY "Keşif": the leader lists the crew in "Ekip bul" (while the service has it).
+        if (leader != null && leader.founder && service.discoverOn()) {
+            rows.add(new Row(T_ACTION, "discover", "discover", new Action("discover", R.drawable.projects_ic_magnifying_glass,
+                    R.string.projects_discover_block_title, R.color.projects_bone_100)));
+        }
         if (me != null && team.allows(me, team.permissions.invite)) {
             rows.add(new Row(T_ACTION, "invite", "invite", new Action("invite", R.drawable.projects_ic_user_plus,
                     R.string.projects_crew_invite_title, R.color.projects_bone_100)));
@@ -1590,6 +1607,15 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         switch (action.kind) {
             case "invite":
                 CrewSheets.inviteFriends(activity, team.id);
+                break;
+            case "edit":
+                CrewCreateFragment.edit(activity, team.id);
+                break;
+            case "roles":
+                CrewRoles.show(activity, team.id);
+                break;
+            case "discover":
+                DiscoverLeaderSheet.show(activity, team.id);
                 break;
             case "report":
                 ReportDialog.crew(activity, team, null);
@@ -2556,6 +2582,12 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         mLimitText.setVisibility(full ? View.VISIBLE : View.GONE);
         if (full) mLimitText.setText(getResources().getQuantityString(R.plurals.projects_crews_limit, state.crewLimit(), state.crewLimit()));
         mJoinGroup.setVisibility(full ? View.GONE : View.VISIBLE);
+        // MOB-PARITY: "Ekip bul" first, while the service lists crews (the desktop's row above founding and joining).
+        if (mDiscoverEntry == null && mJoinGroup instanceof ViewGroup) {
+            mDiscoverEntry = DiscoverViews.entry(context, v -> DiscoverFragment.open(requireActivity()));
+            ((ViewGroup) mJoinGroup).addView(mDiscoverEntry, 0);
+        }
+        if (mDiscoverEntry != null) mDiscoverEntry.setVisibility(service.discoverOn() ? View.VISIBLE : View.GONE);
         // M21: a crew the player asked to join that came meanwhile (accepted): its result card goes.
         if (mLookupTeam != null && state.crew(mLookupTeam) != null) {
             mLookupTeam = null;

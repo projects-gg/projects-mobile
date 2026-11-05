@@ -30,7 +30,9 @@ public class RelWiringTest {
             "crewNotifications", "crewOrder", "decline", "declineJoinRequest", "declineTeamInvite", "deleteInviteLink",
             "disbandTeam", "handOver", "inviteToTeam", "joinTeam", "leaveTeam", "patchMe", "patchTeam", "removeFriend",
             "removeMember", "request", "requestCrewmate", "requestFromBadge", "rotateFriendCode", "teamNotifications",
-            "unblock", "withdrawJoinRequest"));
+            "unblock", "withdrawJoinRequest",
+            // MOB-PARITY: crew editing, moderators, friend categories, joining from "Ekip bul".
+            "discoverJoin", "editTeam", "saveFriendGroups", "setModerator"));
     /**
      * The others: reads, the session's own calls, and the few with a way of their own, checked below (moderators' notes
      * seen, a report that blocks, a link's or a removal's answer, the crews' and the profile's reads outside the list).
@@ -39,6 +41,8 @@ public class RelWiringTest {
             "claim", "claimIdentity", "deleteAccount", "deletePushDevice", "friends", "health", "linkIdentity", "logout",
             "lookup", "lookupTeam", "lookupTeamByLink", "markCatalog", "me", "noticesSeen", "providers", "putPushDevice",
             "report", "teamDetail", "teams", "unlinkIdentity",
+            // MOB-PARITY: the sessions (not in the lists) and the leader's discover block (its own status).
+            "discoverStatus", "revokeOtherSessions", "revokeSession", "sessions",
             // MOB-VOICE: voice chat's tickets and a ring's answer change no list.
             "voiceCrew", "voiceCrewNew", "voiceRing"));
 

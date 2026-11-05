@@ -30,6 +30,8 @@ public class MinecraftAccount {
     public String xuid;
     public long expiresAt;
     public String skinFaceBase64;
+    /** Projects fork (MOB-PARITY): the Mojang skin texture id (lowercase hex) of a Microsoft account; null until known. */
+    public String skinTexture;
     private Bitmap mFaceCache;
     
     /**
@@ -39,6 +41,9 @@ public class MinecraftAccount {
      */
     public void updateSkinFace(@Nullable String skinUrl) {
         mFaceCache = null;
+        // Projects fork (MOB-PARITY): the skin's texture id, for "Minecraft kafası" in the friends' profile picture.
+        String texture = gg.projects.mobile.accounts.SkinFace.textureId(skinUrl);
+        if (texture != null) skinTexture = texture;
         if (gg.projects.mobile.accounts.AccountHeads.saveFromTexture(skinUrl, getSkinFaceFile(username))) {
             Log.i("SkinLoader", "Update skin face success");
         } else {

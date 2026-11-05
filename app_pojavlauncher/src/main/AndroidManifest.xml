@@ -9,6 +9,21 @@
     <uses-feature
         android:name="android.hardware.type.pc"
         android:required="false" />
+    <!-- MOB-PARITY: tablets and Chromebooks. Nothing here is a hardware must: a Chromebook may have no touch screen,
+         many have no microphone (RECORD_AUDIO would make it required), the game also runs with a gamepad or a mouse.
+         Android TV was dropped (the owner, 5 Nov 2026): no TV home-screen entry. -->
+    <uses-feature
+        android:name="android.hardware.touchscreen"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.faketouch"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.microphone"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.gamepad"
+        android:required="false" />
 
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission

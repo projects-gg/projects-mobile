@@ -41,10 +41,27 @@ import gg.projects.mobile.ui.Press;
 /**
  * "Ekip kur" (M19): a phone-only player can found a crew too. Name and tag (the service's rules,
  * checked as they type), an emblem, and where the service offers looks a colour, a frame and a motto,
- * with the crew's mark previewed live. Changing it later stays on the desktop launcher.
+ * with the crew's mark previewed live. MOB-PARITY: the same page edits a crew ({@link #edit}, the desktop's
+ * "Düzenle"): its leader changes the name and tag, whoever the crew lets edit its look the emblem, colour, frame and
+ * motto (texts locked by Projects' moderators stay as they are); only what changed is sent.
  */
 public class CrewCreateFragment extends Fragment {
     public static final String TAG = "ProjectsCrewCreateFragment";
+    /** MOB-PARITY: the crew to edit (absent: a new crew). */
+    private static final String ARG_EDIT = "edit_crew";
+
+    /** MOB-PARITY: "Düzenle" opens the page on that crew. */
+    public static void edit(FragmentActivity activity, String crewId) {
+        Bundle args = new Bundle();
+        args.putString(ARG_EDIT, crewId);
+        net.kdt.pojavlaunch.Tools.swapFragment(activity, CrewCreateFragment.class, TAG, args);
+    }
+
+    /** The crew being edited; null for a new crew. */
+    @Nullable
+    private gg.projects.mobile.social.SocialModel.Team mEditing;
+    /** Editing: the player leads the crew (name and tag are theirs alone). */
+    private boolean mLeads;
 
     private CrewMarkView mMark;
     private TextView mPreviewName;
@@ -76,6 +93,23 @@ public class CrewCreateFragment extends Fragment {
         Context context = view.getContext();
         SocialGate gate = SocialService.get(context).gate();
         mLook = gate.look;
+        String editId = getArguments() == null ? null : getArguments().getString(ARG_EDIT);
+        if (editId != null) {
+            SocialService service = SocialService.get(context);
+            gg.projects.mobile.social.SocialModel.Crew crew = service.state().crew(editId);
+            String me = service.state().myId();
+            gg.projects.mobile.social.SocialModel.Member mine = crew == null || me == null ? null : crew.team.member(me);
+            if (mine == null) {
+                // Not in the crew any more (or it is gone): nothing to edit.
+                view.post(() -> SocialUi.leave(this));
+                return;
+            }
+            mEditing = crew.team;
+            mLeads = mine.founder;
+            mEmblem = mEditing.emblem;
+            mColor = mEditing.color;
+            mFrame = mEditing.frame;
+        }
         mMark = view.findViewById(R.id.projects_create_mark);
         mPreviewName = view.findViewById(R.id.projects_create_preview_name);
         mPreviewTag = view.findViewById(R.id.projects_create_preview_tag);
@@ -90,6 +124,7 @@ public class CrewCreateFragment extends Fragment {
         mEmblems = view.findViewById(R.id.projects_create_emblems);
         mColors = view.findViewById(R.id.projects_create_colors);
         mFrames = view.findViewById(R.id.projects_create_frames);
+        if (mEditing != null) prepareEdit(view);
         view.findViewById(R.id.projects_create_motto_group).setVisibility(mLook ? View.VISIBLE : View.GONE);
         view.findViewById(R.id.projects_create_look).setVisibility(mLook ? View.VISIBLE : View.GONE);
         View submit = view.findViewById(R.id.projects_create_submit);
@@ -121,6 +156,26 @@ public class CrewCreateFragment extends Fragment {
         preview();
     }
 
+    /** MOB-PARITY: the page as "Ekibi düzenle": the crew's values in, the fields the player may not change out. */
+    private void prepareEdit(View view) {
+        gg.projects.mobile.social.SocialModel.Team team = mEditing;
+        if (team == null) return;
+        ((gg.projects.mobile.ui.ScreenHeader) view.findViewById(R.id.projects_create_header))
+                .setTitle(getString(R.string.projects_parity_crew_edit_title));
+        ((TextView) view.findViewById(R.id.projects_create_submit)).setText(R.string.projects_parity_crew_save);
+        mName.setText(team.name);
+        mTag.setText(team.tag);
+        mMotto.setText(team.motto == null ? "" : team.motto);
+        boolean locked = team.textLocked(SocialService.nowSeconds());
+        int texts = mLeads && !locked ? View.VISIBLE : View.GONE;
+        for (int id : new int[]{R.id.projects_create_name_label, R.id.projects_create_name, R.id.projects_create_tag_label,
+                R.id.projects_create_tag}) {
+            view.findViewById(id).setVisibility(texts);
+        }
+        // The motto is part of the look, but the moderators' lock holds it too.
+        if (locked) view.findViewById(R.id.projects_create_motto_group).setVisibility(View.GONE);
+    }
+
     private void preview() {
         mMark.setLook(mEmblem, mColor, mFrame);
         String name = CrewRules.clean(mName.getText().toString());
@@ -139,6 +194,16 @@ public class CrewCreateFragment extends Fragment {
 
     private boolean validate() {
         boolean ok = true;
+        // MOB-PARITY: editing, only the fields on the page count.
+        if (mEditing != null && mName.getVisibility() != View.VISIBLE) {
+            if (mLook && mMotto.isShown()) {
+                CrewRules.Problem motto = CrewRules.motto(mMotto.getText().toString());
+                ok = show(mMottoError, mMotto, motto == CrewRules.Problem.MOTTO_LONG ? R.string.projects_crew_motto_long
+                        : motto == CrewRules.Problem.MOTTO_CHARS ? R.string.projects_crew_motto_chars
+                        : motto == CrewRules.Problem.MOTTO_LETTERS ? R.string.projects_crew_motto_letters : 0);
+            }
+            return ok;
+        }
         CrewRules.Problem name = CrewRules.name(mName.getText().toString());
         ok &= show(mNameError, mName, name == CrewRules.Problem.NAME_SHORT ? R.string.projects_crew_name_short
                 : name == CrewRules.Problem.NAME_LONG ? R.string.projects_crew_name_long
@@ -166,6 +231,10 @@ public class CrewCreateFragment extends Fragment {
         mTried = true;
         if (!validate()) {
             Haptics.reject(button);
+            return;
+        }
+        if (mEditing != null) {
+            save(button);
             return;
         }
         JsonObject body = new JsonObject();
@@ -201,6 +270,88 @@ public class CrewCreateFragment extends Fragment {
             public void failed(SocialProblem problem) {
                 mBusy = false;
                 button.setEnabled(true);
+                switch (problem.kind) {
+                    case CREW_NAME:
+                    case CREW_NAME_REJECTED:
+                        show(mNameError, mName, problem.kind == SocialProblem.Kind.CREW_NAME
+                                ? R.string.projects_social_error_crew_name : R.string.projects_social_error_crew_name_rejected);
+                        Haptics.reject(button);
+                        break;
+                    case CREW_TAG:
+                        show(mTagError, mTag, R.string.projects_social_error_crew_tag);
+                        Haptics.reject(button);
+                        break;
+                    case CREW_MOTTO:
+                    case CREW_MOTTO_REJECTED:
+                        show(mMottoError, mMotto, problem.kind == SocialProblem.Kind.CREW_MOTTO
+                                ? R.string.projects_social_error_crew_motto : R.string.projects_social_error_crew_motto_rejected);
+                        Haptics.reject(button);
+                        break;
+                    default:
+                        SocialUi.toastProblem(activity, problem, button);
+                        break;
+                }
+            }
+        });
+    }
+
+    /** MOB-PARITY: "Kaydet": only the changed fields go; nothing changed, the page just closes. */
+    private void save(View button) {
+        gg.projects.mobile.social.SocialModel.Team team = mEditing;
+        if (team == null) return;
+        JsonObject body = new JsonObject();
+        boolean texts = false;
+        if (mName.getVisibility() == View.VISIBLE) {
+            String name = CrewRules.clean(mName.getText().toString());
+            if (!name.equals(team.name)) {
+                body.addProperty("name", name);
+                texts = true;
+            }
+            String tag = CrewRules.tagOf(mTag.getText().toString());
+            if (!tag.equals(team.tag)) {
+                body.addProperty("tag", tag);
+                texts = true;
+            }
+        }
+        if (!mEmblem.equals(team.emblem)) body.addProperty("emblem", mEmblem);
+        if (mLook) {
+            // Only a service with looks takes these (an older one refuses unknown fields).
+            if (!mColor.equals(team.color)) body.addProperty("color", mColor);
+            if (!mFrame.equals(team.frame)) body.addProperty("frame", mFrame);
+            if (mMotto.isShown()) {
+                String motto = CrewRules.clean(mMotto.getText().toString());
+                String before = team.motto == null ? "" : team.motto;
+                if (!motto.equals(before)) {
+                    // An empty motto takes it away.
+                    body.addProperty("motto", motto);
+                    texts = true;
+                }
+            }
+        }
+        if (body.size() == 0) {
+            SocialUi.leave(this);
+            return;
+        }
+        mBusy = true;
+        button.setEnabled(false);
+        final FragmentActivity activity = requireActivity();
+        SocialService.get(activity).editCrew(team.id, body, texts, new SocialService.Result<JsonObject>() {
+            @Override
+            public void ok(JsonObject value) {
+                mBusy = false;
+                Haptics.confirm(button);
+                SocialUi.toast(activity, activity.getString(R.string.projects_parity_crew_saved));
+                if (isAdded()) SocialUi.leave(CrewCreateFragment.this);
+            }
+
+            @Override
+            public void failed(SocialProblem problem) {
+                mBusy = false;
+                button.setEnabled(true);
+                if (!isAdded()) {
+                    SocialUi.toastProblem(activity, problem, null);
+                    return;
+                }
                 switch (problem.kind) {
                     case CREW_NAME:
                     case CREW_NAME_REJECTED:

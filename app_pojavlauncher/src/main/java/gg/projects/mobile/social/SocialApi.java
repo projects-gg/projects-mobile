@@ -561,6 +561,70 @@ public final class SocialApi {
         return send("POST", "v1/voice/ring", body, true, false);
     }
 
+    // ---- MOB-PARITY: sessions, friend categories, crew moderators and texts ----
+
+    /** {@code GET /v1/sessions}: {@code {sessions: [{id, device, app, via, createdOn, lastUsedOn, current}]}}. */
+    @WorkerThread
+    public JsonObject sessions() throws SocialProblem {
+        return require(send("GET", "v1/sessions", null, true, false));
+    }
+
+    /** {@code DELETE /v1/sessions/:id} (16 hex characters): that device signs out. */
+    @WorkerThread
+    public void revokeSession(String session) throws SocialProblem {
+        if (session == null || !session.matches("[0-9a-f]{16}")) throw new SocialProblem(SocialProblem.Kind.FAILED, 0, "bad id", 0);
+        send("DELETE", "v1/sessions/" + session, null, true, false);
+    }
+
+    /** {@code POST /v1/sessions/revoke-others}: {@code {revoked}}, every other device signed out. */
+    @WorkerThread
+    public int revokeOtherSessions() throws SocialProblem {
+        return (int) Json.num(require(send("POST", "v1/sessions/revoke-others", null, true, false)), "revoked", 0);
+    }
+
+    /** {@code PUT /v1/friends/groups} with {@code {groups, members}}: the new {@code version}. */
+    @WorkerThread
+    public long saveFriendGroups(FriendGroups groups) throws SocialProblem {
+        return Json.num(require(send("PUT", "v1/friends/groups", groups.body(), true, false)), "version", 0);
+    }
+
+    /** {@code PUT} or {@code DELETE /v1/teams/:id/moderators/:user} (the leader names or un-names a moderator). */
+    @WorkerThread
+    public void setModerator(String team, String user, boolean moderator) throws SocialProblem {
+        send(moderator ? "PUT" : "DELETE", "v1/teams/" + segment(team) + "/moderators/" + id(user), null, true, false);
+    }
+
+    /**
+     * {@code PATCH /v1/teams/:id} that may change the crew's name, tag or motto ({@code teamText}: a 429 then means the
+     * day's ten): {@code {team, invited}}.
+     */
+    @WorkerThread
+    public JsonObject editTeam(String team, JsonObject changes, boolean texts) throws SocialProblem {
+        return require(send("PATCH", "v1/teams/" + segment(team), changes, true, texts));
+    }
+
+    // ---- MOB-PARITY: "Ekip bul" (CREW-DISCOVER; README "Crew discovery") ----
+
+    /** {@code GET /v1/discover} with the kept copy's ETag ({@code 304}: unchanged). {@code 404 discover_off}: off. */
+    @WorkerThread
+    Answer discoverListing(@Nullable String etag) throws SocialProblem {
+        return exchange("GET", "v1/discover", null, true, false, etag);
+    }
+
+    /** {@code POST /v1/discover/:id/join {multi?}}: {@code {team, invited}} (in), {@code {request}} (asked). */
+    @WorkerThread
+    public JsonObject discoverJoin(String team, boolean multi) throws SocialProblem {
+        JsonObject body = new JsonObject();
+        if (multi) body.addProperty("multi", true);
+        return require(send("POST", "v1/discover/" + segment(team) + "/join", body, true, false));
+    }
+
+    /** The leader's block: {@code GET}, {@code PUT {text, tags}}, {@code DELETE /v1/teams/:id/discover}: {@code {discover}}. */
+    @WorkerThread
+    public JsonObject discoverStatus(String team, String method, @Nullable JsonObject body) throws SocialProblem {
+        return require(send(method, "v1/teams/" + segment(team) + "/discover", body, true, false));
+    }
+
     // ---- plumbing ----
 
     private static JsonObject codeBody(String code) {

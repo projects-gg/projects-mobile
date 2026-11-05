@@ -285,6 +285,12 @@ public final class SocialModel {
         public final String signInVia;
         /** SOC-ID: where the name comes from, {@link #NAME_DISCORD}, {@link #NAME_OWN} or {@link #NAME_UNSET}. */
         public final String nameSource;
+        /**
+         * MOB-PARITY: the linked Discord account's own picture ({@code discordAvatarUrl}), offered in "Profil fotoğrafı"
+         * whatever the player shows now; null without a Discord, without a picture of its own or from an older service.
+         */
+        @Nullable
+        public final String discordPhoto;
 
         /** The name follows Discord's (every account before SOC-ID). */
         public static final String NAME_DISCORD = "discord";
@@ -309,13 +315,13 @@ public final class SocialModel {
                   boolean shareRead, boolean shareTyping, boolean chatPrivacy) {
             this(profile, friendCode, status, shareServer, shareLastSeen, createdOn, limited, notices, moderation, shareRead,
                     shareTyping, chatPrivacy, Collections.singletonList(Identity.discordOf(profile, createdOn)), false, null,
-                    NAME_DISCORD);
+                    NAME_DISCORD, null);
         }
 
         private Me(Profile profile, String friendCode, String status, boolean shareServer, boolean shareLastSeen,
                    @Nullable String createdOn, @Nullable Limited limited, List<ModNotice> notices, boolean moderation,
                    boolean shareRead, boolean shareTyping, boolean chatPrivacy, List<Identity> identities,
-                   boolean identitiesListed, @Nullable String signInVia, String nameSource) {
+                   boolean identitiesListed, @Nullable String signInVia, String nameSource, @Nullable String discordPhoto) {
             this.profile = profile;
             this.friendCode = friendCode;
             this.status = status;
@@ -332,6 +338,7 @@ public final class SocialModel {
             this.identitiesListed = identitiesListed;
             this.signInVia = signInVia;
             this.nameSource = nameSource;
+            this.discordPhoto = discordPhoto;
         }
 
         @Nullable
@@ -377,12 +384,20 @@ public final class SocialModel {
                     Json.bool(privacy, "shareServer", false), Json.bool(privacy, "shareLastSeen", true),
                     createdOn, Limited.read(Json.obj(o, "limited")), notices, moderation,
                     Json.bool(privacy, "shareRead", true), Json.bool(privacy, "shareTyping", true), chatPrivacy,
-                    identities, listed, via, source);
+                    identities, listed, via, source, discordPhotoOf(Json.str(o, "discordAvatarUrl")));
+        }
+
+        /** Only a picture of Discord's own address, never its stand-in (the letter is shown instead, as everywhere). */
+        @Nullable
+        static String discordPhotoOf(@Nullable String url) {
+            if (url == null || !url.startsWith("https://cdn.discordapp.com/")) return null;
+            if (url.startsWith("https://cdn.discordapp.com/embed/avatars/")) return null;
+            return url;
         }
 
         public Me withStatus(String newStatus) {
             return new Me(profile, friendCode, newStatus, shareServer, shareLastSeen, createdOn, limited, notices, moderation,
-                    shareRead, shareTyping, chatPrivacy, identities, identitiesListed, signInVia, nameSource);
+                    shareRead, shareTyping, chatPrivacy, identities, identitiesListed, signInVia, nameSource, discordPhoto);
         }
 
         /** The same account without the notices the player has seen (they go from the service too). */
@@ -390,7 +405,7 @@ public final class SocialModel {
             List<ModNotice> left = new ArrayList<>();
             for (ModNotice n : notices) if (!seen.contains(n.id)) left.add(n);
             return new Me(profile, friendCode, status, shareServer, shareLastSeen, createdOn, limited, left, moderation,
-                    shareRead, shareTyping, chatPrivacy, identities, identitiesListed, signInVia, nameSource);
+                    shareRead, shareTyping, chatPrivacy, identities, identitiesListed, signInVia, nameSource, discordPhoto);
         }
 
         /** With a notice that came live ({@code {"t":"notice"}}), unless it is there already. */
@@ -399,13 +414,13 @@ public final class SocialModel {
             List<ModNotice> next = new ArrayList<>(notices);
             next.add(notice);
             return new Me(profile, friendCode, status, shareServer, shareLastSeen, createdOn, limited, next, true,
-                    shareRead, shareTyping, chatPrivacy, identities, identitiesListed, signInVia, nameSource);
+                    shareRead, shareTyping, chatPrivacy, identities, identitiesListed, signInVia, nameSource, discordPhoto);
         }
 
         /** TEAM6: the same account wearing another tag (null: none). */
         public Me withBadge(@Nullable Badge badge) {
             return new Me(profile.withBadge(badge), friendCode, status, shareServer, shareLastSeen, createdOn, limited, notices,
-                    moderation, shareRead, shareTyping, chatPrivacy, identities, identitiesListed, signInVia, nameSource);
+                    moderation, shareRead, shareTyping, chatPrivacy, identities, identitiesListed, signInVia, nameSource, discordPhoto);
         }
 
         /**
@@ -415,7 +430,7 @@ public final class SocialModel {
          */
         public Me withMarks(List<String> marks, @Nullable List<String> hidden) {
             return new Me(profile.withMarks(marks, hidden), friendCode, status, shareServer, shareLastSeen, createdOn, limited,
-                    notices, moderation, shareRead, shareTyping, chatPrivacy, identities, identitiesListed, signInVia, nameSource);
+                    notices, moderation, shareRead, shareTyping, chatPrivacy, identities, identitiesListed, signInVia, nameSource, discordPhoto);
         }
 
         /**
@@ -1727,6 +1742,12 @@ public final class SocialModel {
         public final int crewLimit;
         /** TEAM5: the player's own waiting join requests, newest first (empty from services before them). */
         public final List<MyRequest> teamRequests;
+        /**
+         * MOB-PARITY: the friend categories ({@code groups}); null from a service without them (the list then shows no
+         * categories). Set by {@link #read} only, so the constructors stay as they were.
+         */
+        @Nullable
+        public FriendGroups groups;
 
         public FriendsData(List<Friend> friends, List<Request> incoming, List<Request> outgoing, List<Profile> blocked,
                            Limits limits, @Nullable Team team, Set<String> teamInvited, List<TeamInvite> teamInvites,
@@ -1810,10 +1831,12 @@ public final class SocialModel {
                 MyRequest request = MyRequest.read(r);
                 if (request != null && asked.add(request.team.id)) mine.add(request);
             }
-            return new FriendsData(friends, incoming, outgoing, blocked, Limits.read(Json.obj(o, "limits")),
+            FriendsData data = new FriendsData(friends, incoming, outgoing, blocked, Limits.read(Json.obj(o, "limits")),
                     Team.read(Json.obj(o, "team")), invited, teamInvites, new HashSet<>(Json.strings(o, "teamFeatures")),
                     TeamNotifications.read(Json.obj(o, "teamNotifications")), features, crews,
                     (int) Math.max(0, Json.num(o, "crewLimit", 0)), mine);
+            data.groups = FriendGroups.read(Json.obj(o, "groups"));
+            return data;
         }
 
         private static List<Request> requests(@Nullable JsonObject o, String key) {

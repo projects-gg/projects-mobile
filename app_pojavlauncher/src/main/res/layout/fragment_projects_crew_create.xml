@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- MOB-PARITY: the same page edits a crew ("Ekibi düzenle"): the leader its name and tag, whoever may edit the look
+     its emblem, colour, frame and motto. -->
 <!-- M19: "Ekip kur": a live preview of the crew's mark and name, then name, tag, motto, emblem, colour
      and frame (colour, frame and motto where the service offers looks). MOB-POLISH: the page fades out under
      the header (FadingScrollView). -->
@@ -10,6 +12,7 @@
     android:orientation="vertical">
 
     <gg.projects.mobile.ui.ScreenHeader
+        android:id="@+id/projects_create_header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingBottom="4dp"
@@ -95,6 +98,7 @@
             </LinearLayout>
 
             <TextView
+                android:id="@+id/projects_create_name_label"
                 style="@style/ProjectsFormLabel"
                 android:labelFor="@+id/projects_create_name"
                 android:text="@string/projects_crew_name" />
@@ -110,6 +114,7 @@
                 style="@style/ProjectsFormError" />
 
             <TextView
+                android:id="@+id/projects_create_tag_label"
                 style="@style/ProjectsFormLabel"
                 android:labelFor="@+id/projects_create_tag"
                 android:text="@string/projects_crew_tag" />
