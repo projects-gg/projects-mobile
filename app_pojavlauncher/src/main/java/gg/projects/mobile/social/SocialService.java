@@ -2893,7 +2893,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         mGroupsWaiting = null;
         mGroupsResult = null;
         mGroupsSaving = true;
-        run(() -> mApi.saveFriendGroups(doc), new Result<Long>() {
+        change(() -> mApi.saveFriendGroups(doc), new Result<Long>() {
             @Override
             public void ok(Long version) {
                 mGroupsSaving = false;
