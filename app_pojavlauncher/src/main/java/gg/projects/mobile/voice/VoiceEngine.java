@@ -464,7 +464,7 @@ public final class VoiceEngine {
         boolean interrupted;
         boolean done;
         private final Runnable connectTimeout = () -> {
-            if (!done && !wasConnected) finish(withTurn ? "lost" : "needTurn");
+            if (!done && !wasConnected) finish(Call.this.withTurn ? "lost" : "needTurn");
         };
         private final Runnable lostTimeout = () -> {
             if (!done && !connected()) finish("lost");
