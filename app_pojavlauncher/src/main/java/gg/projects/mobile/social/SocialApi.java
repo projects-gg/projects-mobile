@@ -571,6 +571,28 @@ public final class SocialApi {
         return require(send("PATCH", "v1/teams/" + segment(team), changes, true, texts));
     }
 
+    // ---- MOB-PARITY: "Ekip bul" (CREW-DISCOVER; README "Crew discovery") ----
+
+    /** {@code GET /v1/discover} with the kept copy's ETag ({@code 304}: unchanged). {@code 404 discover_off}: off. */
+    @WorkerThread
+    Answer discoverListing(@Nullable String etag) throws SocialProblem {
+        return exchange("GET", "v1/discover", null, true, false, etag);
+    }
+
+    /** {@code POST /v1/discover/:id/join {multi?}}: {@code {team, invited}} (in), {@code {request}} (asked). */
+    @WorkerThread
+    public JsonObject discoverJoin(String team, boolean multi) throws SocialProblem {
+        JsonObject body = new JsonObject();
+        if (multi) body.addProperty("multi", true);
+        return require(send("POST", "v1/discover/" + segment(team) + "/join", body, true, false));
+    }
+
+    /** The leader's block: {@code GET}, {@code PUT {text, tags}}, {@code DELETE /v1/teams/:id/discover}: {@code {discover}}. */
+    @WorkerThread
+    public JsonObject discoverStatus(String team, String method, @Nullable JsonObject body) throws SocialProblem {
+        return require(send(method, "v1/teams/" + segment(team) + "/discover", body, true, false));
+    }
+
     // ---- plumbing ----
 
     private static JsonObject codeBody(String code) {

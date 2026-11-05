@@ -88,4 +88,93 @@
     <string name="projects_parity_unmake_moderator">Remove as moderator</string>
     <string name="projects_parity_made_moderator">%1$s is a moderator now</string>
     <string name="projects_parity_unmade_moderator">%1$s is a member now</string>
+    <!-- Find a crew (CREW-DISCOVER; the desktop's locales/en-discover.ts words) -->
+    <string name="projects_discover_title">Find a crew</string>
+    <string name="projects_discover_entry_line">Browse listed crews and join one that fits you.</string>
+    <string name="projects_discover_search">Search crews, tags or text</string>
+    <string name="projects_discover_search_label">Search listed crews</string>
+    <string name="projects_discover_filters">Filters</string>
+    <string name="projects_discover_filters_count">Filters %1$d</string>
+    <string name="projects_discover_filter_open">Open to join now</string>
+    <string name="projects_discover_filter_active">Active this week</string>
+    <string name="projects_discover_size_any">Any size</string>
+    <string name="projects_discover_size_small">Small crews</string>
+    <string name="projects_discover_size_mid">Medium crews</string>
+    <string name="projects_discover_size_big">Big crews</string>
+    <string name="projects_discover_filters_clear">Clear filters</string>
+    <string name="projects_discover_tag_survival">Survival</string>
+    <string name="projects_discover_tag_skyblock">SkyBlock</string>
+    <string name="projects_discover_tag_smp">SMP</string>
+    <string name="projects_discover_tag_hg">HG</string>
+    <string name="projects_discover_tag_pvp">PvP</string>
+    <string name="projects_discover_tag_build">Building</string>
+    <string name="projects_discover_tag_events">Events</string>
+    <string name="projects_discover_tag_chat">Chat</string>
+    <string name="projects_discover_tag_voice">Voice chat</string>
+    <string name="projects_discover_tag_newcomers">New players welcome</string>
+    <plurals name="projects_discover_members">
+        <item quantity="one">%d member</item>
+        <item quantity="other">%d members</item>
+    </plurals>
+    <plurals name="projects_discover_members_active">
+        <item quantity="one">%d member, active this week</item>
+        <item quantity="other">%d members, active this week</item>
+    </plurals>
+    <string name="projects_discover_join">Join</string>
+    <string name="projects_discover_ask">Ask to join</string>
+    <string name="projects_discover_member">You\'re in this crew</string>
+    <string name="projects_discover_go_to">Go to crew</string>
+    <string name="projects_discover_waiting">Your request is waiting</string>
+    <string name="projects_discover_full">Crew is full</string>
+    <string name="projects_discover_limit">You\'re at your crew limit</string>
+    <string name="projects_discover_menu">%1$s options</string>
+    <string name="projects_discover_report">Report crew</string>
+    <string name="projects_discover_report_reason">Inappropriate name or text</string>
+    <string name="projects_discover_gone">This crew isn\'t listed any more.</string>
+    <string name="projects_discover_empty_title">No crews listed yet</string>
+    <string name="projects_discover_empty_body">The list refreshes every day. You can list your own crew too.</string>
+    <string name="projects_discover_no_match_title">No crews match</string>
+    <string name="projects_discover_no_match_body">Try another search or other filters.</string>
+    <string name="projects_discover_off">Find a crew is off right now.</string>
+    <string name="projects_discover_failed_title">Couldn\'t load crews</string>
+    <string name="projects_discover_failed_body">Check your connection, then try again.</string>
+    <!-- The leader's "Discover" block -->
+    <string name="projects_discover_block_title">Discover</string>
+    <string name="projects_discover_block_switch">Show in Find a crew</string>
+    <string name="projects_discover_block_help">Your crew\'s name, tag, motto, member count and this text are public. Members aren\'t shown.</string>
+    <string name="projects_discover_block_text">Discover text</string>
+    <string name="projects_discover_block_placeholder">What do you play, and who are you looking for?</string>
+    <string name="projects_discover_block_tags">Tags</string>
+    <string name="projects_discover_block_tags_help">Pick up to 3.</string>
+    <string name="projects_discover_block_send">Send for listing</string>
+    <string name="projects_discover_block_send_change">Send change</string>
+    <string name="projects_discover_block_waiting_today">We\'ll look at it today at %1$s.</string>
+    <string name="projects_discover_block_waiting_tomorrow">We\'ll look at it tomorrow at %1$s.</string>
+    <string name="projects_discover_block_listed">Showing in Find a crew.</string>
+    <string name="projects_discover_block_change_today">Showing in Find a crew. We\'ll look at your change today at %1$s.</string>
+    <string name="projects_discover_block_change_tomorrow">Showing in Find a crew. We\'ll look at your change tomorrow at %1$s.</string>
+    <plurals name="projects_discover_block_refused">
+        <item quantity="one">Not approved this time. You can try again in %d day.</item>
+        <item quantity="other">Not approved this time. You can try again in %d days.</item>
+    </plurals>
+    <string name="projects_discover_block_closed">This crew can\'t be listed.</string>
+    <string name="projects_discover_block_held">Not showing right now. A moderator will take a look.</string>
+    <plurals name="projects_discover_block_edits">
+        <item quantity="one">You\'ve changed it enough this week. You can change it again in %d day.</item>
+        <item quantity="other">You\'ve changed it enough this week. You can change it again in %d days.</item>
+    </plurals>
+    <string name="projects_discover_need_members">Needs at least %1$d members. The crew has %2$d.</string>
+    <plurals name="projects_discover_need_crew_days">
+        <item quantity="one">The crew needs to be at least %d day old.</item>
+        <item quantity="other">The crew needs to be at least %d days old.</item>
+    </plurals>
+    <plurals name="projects_discover_need_leader_days">
+        <item quantity="one">Your account needs to be at least %d day old.</item>
+        <item quantity="other">Your account needs to be at least %d days old.</item>
+    </plurals>
+    <string name="projects_discover_need_hidden">Hidden crews can\'t be listed.</string>
+    <string name="projects_discover_off_ask">Your crew leaves the list now. If you add it again, it waits for approval again.</string>
+    <string name="projects_discover_off_confirm">Remove from list</string>
+    <string name="projects_discover_off_done">Your crew left the list.</string>
+    <string name="projects_discover_block_failed">Couldn\'t load the discover settings.</string>
 </resources>

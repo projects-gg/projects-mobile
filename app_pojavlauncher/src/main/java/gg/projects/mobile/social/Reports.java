@@ -138,6 +138,15 @@ public final class Reports {
         return body(target, reason, note, false);
     }
 
+    /** MOB-PARITY: a crew reported from its "Ekip bul" card: the listing's text goes to the moderators with it. */
+    public static JsonObject crewFromDiscover(String teamId, String reason, @Nullable String note) {
+        JsonObject target = new JsonObject();
+        target.addProperty("kind", "crew");
+        target.addProperty("id", teamId);
+        target.addProperty("discover", true);
+        return body(target, reason, note, false);
+    }
+
     /** CHAT2: the player who gave a reaction, with it ({@code conv}, the message's {@code id}, the emoji). */
     public static JsonObject reaction(String userId, String conv, long messageId, String emoji, String reason, @Nullable String note,
                                       boolean block) {

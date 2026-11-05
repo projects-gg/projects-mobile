@@ -88,4 +88,93 @@
     <string name="projects_parity_unmake_moderator">Moderatörlükten al</string>
     <string name="projects_parity_made_moderator">%1$s artık moderatör</string>
     <string name="projects_parity_unmade_moderator">%1$s artık üye</string>
+    <!-- Ekip bul (CREW-DISCOVER; masaüstünün locales/tr-discover.ts sözleri) -->
+    <string name="projects_discover_title">Ekip bul</string>
+    <string name="projects_discover_entry_line">Keşifteki ekiplere göz at, sana uyana katıl.</string>
+    <string name="projects_discover_search">Ekip, etiket ya da yazı ara</string>
+    <string name="projects_discover_search_label">Keşifte ara</string>
+    <string name="projects_discover_filters">Filtreler</string>
+    <string name="projects_discover_filters_count">Filtreler %1$d</string>
+    <string name="projects_discover_filter_open">Hemen katılınabilenler</string>
+    <string name="projects_discover_filter_active">Bu hafta aktif olanlar</string>
+    <string name="projects_discover_size_any">Her büyüklükte</string>
+    <string name="projects_discover_size_small">Küçük ekipler</string>
+    <string name="projects_discover_size_mid">Orta ekipler</string>
+    <string name="projects_discover_size_big">Kalabalık ekipler</string>
+    <string name="projects_discover_filters_clear">Filtreleri temizle</string>
+    <string name="projects_discover_tag_survival">Survival</string>
+    <string name="projects_discover_tag_skyblock">SkyBlock</string>
+    <string name="projects_discover_tag_smp">SMP</string>
+    <string name="projects_discover_tag_hg">HG</string>
+    <string name="projects_discover_tag_pvp">PvP</string>
+    <string name="projects_discover_tag_build">Yapı</string>
+    <string name="projects_discover_tag_events">Etkinlik</string>
+    <string name="projects_discover_tag_chat">Sohbet</string>
+    <string name="projects_discover_tag_voice">Sesli sohbet</string>
+    <string name="projects_discover_tag_newcomers">Yeni oyunculara açık</string>
+    <plurals name="projects_discover_members">
+        <item quantity="one">%d üye</item>
+        <item quantity="other">%d üye</item>
+    </plurals>
+    <plurals name="projects_discover_members_active">
+        <item quantity="one">%d üye, bu hafta aktif</item>
+        <item quantity="other">%d üye, bu hafta aktif</item>
+    </plurals>
+    <string name="projects_discover_join">Katıl</string>
+    <string name="projects_discover_ask">Katılma isteği gönder</string>
+    <string name="projects_discover_member">Ekibindesin</string>
+    <string name="projects_discover_go_to">Ekibe git</string>
+    <string name="projects_discover_waiting">İsteğin bekliyor</string>
+    <string name="projects_discover_full">Ekip dolu</string>
+    <string name="projects_discover_limit">Ekip sınırındasın</string>
+    <string name="projects_discover_menu">%1$s seçenekleri</string>
+    <string name="projects_discover_report">Ekibi rapor et</string>
+    <string name="projects_discover_report_reason">Uygunsuz ad ya da yazı</string>
+    <string name="projects_discover_gone">Bu ekip artık keşifte değil.</string>
+    <string name="projects_discover_empty_title">Keşifte henüz ekip yok</string>
+    <string name="projects_discover_empty_body">Liste her gün yenilenir. Kendi ekibini de ekleyebilirsin.</string>
+    <string name="projects_discover_no_match_title">Uyan ekip yok</string>
+    <string name="projects_discover_no_match_body">Aramayı ya da filtreleri değiştir.</string>
+    <string name="projects_discover_off">Ekip bul şu an kapalı.</string>
+    <string name="projects_discover_failed_title">Ekipler yüklenemedi</string>
+    <string name="projects_discover_failed_body">Bağlantını denetle, sonra tekrar dene.</string>
+    <!-- Liderin "Keşif" bloğu -->
+    <string name="projects_discover_block_title">Keşif</string>
+    <string name="projects_discover_block_switch">Keşifte görün</string>
+    <string name="projects_discover_block_help">Ekibin adı, etiketi, sloganı, üye sayısı ve bu yazı herkese görünür. Üyeler görünmez.</string>
+    <string name="projects_discover_block_text">Keşif yazısı</string>
+    <string name="projects_discover_block_placeholder">Ne oynuyorsunuz, nasıl oyuncular arıyorsunuz?</string>
+    <string name="projects_discover_block_tags">Etiketler</string>
+    <string name="projects_discover_block_tags_help">En çok 3 tane seç.</string>
+    <string name="projects_discover_block_send">Keşfe gönder</string>
+    <string name="projects_discover_block_send_change">Değişikliği gönder</string>
+    <string name="projects_discover_block_waiting_today">Bugün %1$s bakılacak.</string>
+    <string name="projects_discover_block_waiting_tomorrow">Yarın %1$s bakılacak.</string>
+    <string name="projects_discover_block_listed">Keşifte görünüyor.</string>
+    <string name="projects_discover_block_change_today">Keşifte görünüyor. Değişikliğine bugün %1$s bakılacak.</string>
+    <string name="projects_discover_block_change_tomorrow">Keşifte görünüyor. Değişikliğine yarın %1$s bakılacak.</string>
+    <plurals name="projects_discover_block_refused">
+        <item quantity="one">Bu sefer onaylanmadı. %d gün sonra yeniden deneyebilirsin.</item>
+        <item quantity="other">Bu sefer onaylanmadı. %d gün sonra yeniden deneyebilirsin.</item>
+    </plurals>
+    <string name="projects_discover_block_closed">Bu ekip keşifte görünemez.</string>
+    <string name="projects_discover_block_held">Şu an keşifte görünmüyor. Bir yetkili bakacak.</string>
+    <plurals name="projects_discover_block_edits">
+        <item quantity="one">Bu hafta yeterince değiştirdin. %d gün sonra yeniden değiştirebilirsin.</item>
+        <item quantity="other">Bu hafta yeterince değiştirdin. %d gün sonra yeniden değiştirebilirsin.</item>
+    </plurals>
+    <string name="projects_discover_need_members">En az %1$d üye gerekli. Ekipte %2$d kişi var.</string>
+    <plurals name="projects_discover_need_crew_days">
+        <item quantity="one">Ekip kurulalı en az %d gün olmalı.</item>
+        <item quantity="other">Ekip kurulalı en az %d gün olmalı.</item>
+    </plurals>
+    <plurals name="projects_discover_need_leader_days">
+        <item quantity="one">Hesabın en az %d günlük olmalı.</item>
+        <item quantity="other">Hesabın en az %d günlük olmalı.</item>
+    </plurals>
+    <string name="projects_discover_need_hidden">Gizli ekipler keşifte görünmez.</string>
+    <string name="projects_discover_off_ask">Ekip keşiften hemen çıkar. Yeniden eklersen yine onay bekler.</string>
+    <string name="projects_discover_off_confirm">Keşiften çıkar</string>
+    <string name="projects_discover_off_done">Ekip keşiften çıktı.</string>
+    <string name="projects_discover_block_failed">Keşif bilgisi yüklenemedi.</string>
 </resources>

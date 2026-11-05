@@ -2931,6 +2931,93 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         }, result, value -> refreshTeam());
     }
 
+    // ---- MOB-PARITY: "Ekip bul" ----
+
+    /** The listing this phone keeps (memory only), and when it was asked for. */
+    @Nullable
+    private DiscoverModel.Listing mDiscover;
+    @Nullable
+    private String mDiscoverEtag;
+    private long mDiscoverAt;
+
+    /** "Ekip bul" is on (the service lists {@code discover} in {@code teamFeatures}). */
+    public boolean discoverOn() {
+        return gate().teams && mState.teamFeatures().contains("discover");
+    }
+
+    @Nullable
+    public DiscoverModel.Listing discoverListing() {
+        return mDiscover;
+    }
+
+    /**
+     * Brings the kept listing up to date as {@link DiscoverModel#freshness} says ({@code force}: "Tekrar dene"). Asked
+     * only when the screen opens; nothing polls. The answer is the listing (also when unchanged).
+     */
+    public void loadDiscover(boolean force, final Result<DiscoverModel.Listing> result) {
+        long now = System.currentTimeMillis();
+        DiscoverModel.Freshness mode = force ? DiscoverModel.Freshness.FETCH : DiscoverModel.freshness(mDiscover, mDiscoverAt, now);
+        if (mode == DiscoverModel.Freshness.KEEP && mDiscover != null) {
+            result.ok(mDiscover);
+            return;
+        }
+        final String etag = mode == DiscoverModel.Freshness.REVALIDATE ? mDiscoverEtag : null;
+        run(() -> mApi.discoverListing(etag), new Result<SocialApi.Answer>() {
+            @Override
+            public void ok(SocialApi.Answer answer) {
+                mDiscoverAt = System.currentTimeMillis();
+                if (answer.status != 304 || mDiscover == null) {
+                    DiscoverModel.Listing listing = DiscoverModel.readListing(answer.json);
+                    if (listing == null) {
+                        result.failed(SocialProblem.unavailable("discover format"));
+                        return;
+                    }
+                    mDiscover = listing;
+                    mDiscoverEtag = answer.etag;
+                }
+                result.ok(mDiscover);
+            }
+
+            @Override
+            public void failed(SocialProblem problem) {
+                result.failed(problem);
+            }
+        }, null);
+    }
+
+    /** "Katıl" / "Katılma isteği gönder" from a card; a crew that left the listing goes from the kept copy. */
+    public void joinFromDiscover(final String teamId, Result<JsonObject> result) {
+        final boolean multi = gate().multi;
+        change(() -> {
+            try {
+                return mApi.discoverJoin(teamId, multi);
+            } catch (SocialProblem problem) {
+                if ("discover_gone".equals(problem.code) && mDiscover != null) {
+                    final DiscoverModel.Listing kept = mDiscover;
+                    mMain.post(() -> {
+                        if (mDiscover == kept) mDiscover = kept.without(teamId);
+                    });
+                }
+                throw problem;
+            }
+        }, result, answer -> {
+            JsonObject asked = Json.obj(answer, "request");
+            if (asked != null) {
+                MyRequest mine = MyRequest.read(asked);
+                if (mine != null) mState.addMyRequest(mine);
+            } else {
+                applyTeamAnswer(answer);
+                Team team = Team.read(Json.obj(answer, "team"));
+                if (team != null) noteOwnJoin(team.id);
+            }
+        });
+    }
+
+    /** The leader's "Keşif": {@code GET} ({@code body} null), {@code PUT} (a body) or {@code DELETE}. */
+    public void discoverStatus(final String teamId, final String method, @Nullable final JsonObject body, Result<JsonObject> result) {
+        run(() -> mApi.discoverStatus(teamId, method, body), result, null);
+    }
+
     /** "Düzenle" and "Yetkiler": only the changed fields; {@code texts} when the name, tag or motto changes. */
     public void editCrew(final String teamId, final JsonObject changes, final boolean texts, Result<JsonObject> result) {
         change(() -> mApi.editTeam(teamId, changes, texts), result, this::applyTeamAnswer);
