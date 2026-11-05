@@ -34,6 +34,8 @@ public final class SocialPush {
             gg.projects.mobile.cloud.CloudPush.handle(app, data);
             return;
         }
+        // MOB-VOICE: a voice chat ring (or its end) while the app had no socket.
+        if (gg.projects.mobile.voice.VoicePush.handle(app, data)) return;
         PushMessage message = PushMessage.parse(data);
         if (message == null) {
             Log.i(TAG, "push ignored: not a message of this app's format");

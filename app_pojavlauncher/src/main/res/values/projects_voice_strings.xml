@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- MOB-VOICE: voice chat on the phone. The desktop's words (apps/launcher/src/locales/en-voice.ts), British English;
+     no explanations but the one before "Close room" and the two under settings. -->
+<resources>
+    <string name="projects_voice_title">Voice chat</string>
+    <string name="projects_voice_someone">A player</string>
+    <string name="projects_voice_just_you">Just you</string>
+    <string name="projects_voice_names_more">%1$s and %2$d more</string>
+
+    <string name="projects_voice_call_action">Start voice call</string>
+    <string name="projects_voice_invite_to_room">Invite to room</string>
+    <string name="projects_voice_ringing">Calling…</string>
+    <string name="projects_voice_ringing_name">Calling %1$s…</string>
+    <string name="projects_voice_cancel">Cancel</string>
+    <string name="projects_voice_cancel_label">Cancel the call</string>
+    <string name="projects_voice_no_answer">No answer</string>
+    <string name="projects_voice_call_again">Call again</string>
+    <string name="projects_voice_ask">Call %1$s?</string>
+    <string name="projects_voice_ask_yes">Call</string>
+    <string name="projects_voice_ask_no">Cancel</string>
+    <string name="projects_voice_ask_dnd">Do not disturb is on: no ring, they\'ll see it later.</string>
+    <string name="projects_voice_ask_first">Ask before calling</string>
+    <string name="projects_voice_unreachable">Can\'t be called right now.</string>
+    <string name="projects_voice_together">Already in your room.</string>
+    <string name="projects_voice_call_kind">Voice call</string>
+    <string name="projects_voice_elsewhere">In another room</string>
+    <string name="projects_voice_sounds">Voice chat sounds</string>
+
+    <string name="projects_voice_ring_calling">%1$s is calling</string>
+    <string name="projects_voice_ring_others">In the room: %1$s</string>
+    <string name="projects_voice_join">Join</string>
+    <string name="projects_voice_decline">Decline</string>
+    <string name="projects_voice_missed">Missed call</string>
+    <string name="projects_voice_missed_from">%1$s called</string>
+    <string name="projects_voice_call_back">Call back</string>
+    <string name="projects_voice_in_voice">In voice</string>
+
+    <string name="projects_voice_bar_label">Voice chat: %1$s</string>
+    <string name="projects_voice_open_room">Open the room</string>
+    <string name="projects_voice_invite">Invite</string>
+    <string name="projects_voice_leave">Leave</string>
+    <string name="projects_voice_mic">Microphone</string>
+    <string name="projects_voice_deafen">Deafen</string>
+    <string name="projects_voice_mute_mic">Mute</string>
+    <string name="projects_voice_unmute_mic">Unmute</string>
+    <string name="projects_voice_deafen_on">Deafen</string>
+    <string name="projects_voice_deafen_off">Undeafen</string>
+    <string name="projects_voice_leader">Leader</string>
+    <string name="projects_voice_moderator">Moderator</string>
+    <string name="projects_voice_you">You</string>
+    <plurals name="projects_voice_count">
+        <item quantity="one">%d person</item>
+        <item quantity="other">%d people</item>
+    </plurals>
+    <string name="projects_voice_rename">Rename</string>
+    <string name="projects_voice_name_hint">Room name</string>
+    <string name="projects_voice_save">Save</string>
+    <string name="projects_voice_close">Close room</string>
+    <string name="projects_voice_close_ask">The room closes for everyone.</string>
+    <string name="projects_voice_new_room">New room</string>
+    <string name="projects_voice_general">General</string>
+    <string name="projects_voice_numbered">Room %1$s</string>
+    <string name="projects_voice_joining">Connecting…</string>
+    <string name="projects_voice_reconnecting">Reconnecting…</string>
+    <string name="projects_voice_failed">Couldn\'t connect</string>
+    <string name="projects_voice_retry">Try again</string>
+    <string name="projects_voice_weak">Weak connection</string>
+
+    <string name="projects_voice_volume">Volume</string>
+    <string name="projects_voice_mute_for_me">Mute for me</string>
+    <string name="projects_voice_mute_for_all">Mute for everyone</string>
+    <string name="projects_voice_unmute_for_all">Unmute for everyone</string>
+    <string name="projects_voice_kick">Remove from room</string>
+    <string name="projects_voice_kicked_them">%1$s was removed from the room.</string>
+    <string name="projects_voice_undo">Undo</string>
+    <string name="projects_voice_move">Move</string>
+    <string name="projects_voice_moved_them">%1$s was moved to another room.</string>
+    <string name="projects_voice_make_mod">Make moderator</string>
+    <string name="projects_voice_unmake_mod">Remove as moderator</string>
+    <string name="projects_voice_mic_off">Microphone off</string>
+    <string name="projects_voice_deafened">Deafened</string>
+    <string name="projects_voice_muted_for_all">Muted for everyone</string>
+    <string name="projects_voice_muted_for_me">Muted for you</string>
+    <string name="projects_voice_their_weak">Weak connection</string>
+    <string name="projects_voice_speaking">Speaking</string>
+
+    <string name="projects_voice_muted_by_mod">A moderator muted you.</string>
+    <string name="projects_voice_moved">You were moved to another room.</string>
+    <string name="projects_voice_left_closed">The leader closed the room.</string>
+    <string name="projects_voice_left_alone">Nobody else is here.</string>
+    <string name="projects_voice_left_elsewhere">You joined on another device.</string>
+    <string name="projects_voice_left_kicked">You were removed from the room.</string>
+    <string name="projects_voice_left_crew">You left the crew\'s room.</string>
+    <string name="projects_voice_left_idle">You left because you were away for a while.</string>
+    <string name="projects_voice_left_unavailable">Voice chat isn\'t available right now.</string>
+    <string name="projects_voice_left_failed">Couldn\'t connect.</string>
+    <string name="projects_voice_left_restricted">Your voice chat was restricted.</string>
+    <string name="projects_voice_left_restricted_until">Your voice chat is restricted until %1$s.</string>
+
+    <string name="projects_voice_mic_denied">Microphone access is off.</string>
+    <string name="projects_voice_mic_settings">Open settings</string>
+    <string name="projects_voice_mic_missing">No microphone found.</string>
+
+    <string name="projects_voice_refused_off">Voice chat isn\'t available right now.</string>
+    <string name="projects_voice_refused_unreachable">%1$s can\'t be called right now.</string>
+    <string name="projects_voice_refused_rate">Wait a moment and try again.</string>
+    <string name="projects_voice_refused_daily">You\'ve used up today\'s calls.</string>
+    <string name="projects_voice_refused_staff">You can\'t do that while you\'re muted.</string>
+    <string name="projects_voice_refused_full">The room is full.</string>
+    <string name="projects_voice_refused_rooms_full">The crew can\'t open more rooms.</string>
+    <string name="projects_voice_refused_gone">This room has ended.</string>
+    <string name="projects_voice_refused_kicked">You can go back to this room a little later.</string>
+    <string name="projects_voice_refused_not_member">You\'re not in this crew.</string>
+    <string name="projects_voice_refused_not_allowed">You can\'t do that.</string>
+    <string name="projects_voice_refused_not_found">This player isn\'t in the room any more.</string>
+    <string name="projects_voice_refused_invalid_name">Room names are 3 to 24 characters long.</string>
+    <string name="projects_voice_refused_name_rejected">That name can\'t be used.</string>
+    <string name="projects_voice_refused_failed">Couldn\'t connect.</string>
+
+    <string name="projects_voice_invite_title">Invite</string>
+    <string name="projects_voice_invite_search_friends">Search friends</string>
+    <string name="projects_voice_invite_search_crew">Search crewmates</string>
+    <string name="projects_voice_invite_none">Nobody you can invite is around right now.</string>
+    <string name="projects_voice_invite_no_match">Nobody by that name.</string>
+
+    <string name="projects_voice_crew_title">Voice</string>
+    <string name="projects_voice_crew_empty">Nobody here</string>
+    <string name="projects_voice_room_count">%1$d/%2$d</string>
+
+    <string name="projects_voice_settings_enabled">Use voice chat</string>
+    <string name="projects_voice_settings_enabled_help">While it\'s off, nobody can call you.</string>
+
+    <string name="projects_voice_channel_rings">Voice calls</string>
+    <string name="projects_voice_channel_stay">Voice chat</string>
+    <string name="projects_voice_stay_title">In voice chat</string>
+    <string name="projects_voice_crew_room">%1$s, %2$s</string>
+</resources>

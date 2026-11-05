@@ -67,10 +67,20 @@
         android:id="@+id/container_fragment"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintBottom_toTopOf="@+id/progress_layout"
+        app:layout_constraintBottom_toTopOf="@+id/projects_voice_bar"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/projects_top_bar" />
+
+    <!-- MOB-VOICE: voice chat's bar (the room the player is in, or a call ringing while the app is in front). Gone
+         otherwise; when it shows, the screen above makes room for it (a chat's field is never covered). -->
+    <gg.projects.mobile.voice.ui.VoiceBar
+        android:id="@+id/projects_voice_bar"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toTopOf="@+id/progress_layout"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
 
     <com.kdt.mcgui.ProgressLayout

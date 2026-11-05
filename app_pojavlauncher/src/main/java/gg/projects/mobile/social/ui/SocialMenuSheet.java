@@ -169,6 +169,7 @@ public final class SocialMenuSheet {
         in.removableHere = theirs != null && CrewSheets.mayRemove(here.team, mine, theirs, gate);
         in.reports = gate.reports;
         in.reportable = in.friend || in.crewmate || in.incoming || pending == SocialMenus.Pending.JOIN_REQUEST;
+        in.voice = voiceOf(activity, id);
         List<SocialMenus.Row<SocialMenus.PersonAction>> rows = SocialMenus.person(in);
         if (rows.isEmpty()) return;
 
@@ -223,8 +224,21 @@ public final class SocialMenuSheet {
         return invited ? SocialMenus.Invite.INVITED : full ? SocialMenus.Invite.FULL : SocialMenus.Invite.NONE;
     }
 
+    /** MOB-VOICE: the voice row a friend gets (none while voice chat does not show). */
+    private static SocialMenus.Voice voiceOf(Context context, String id) {
+        switch (gg.projects.mobile.voice.ui.VoiceUi.friendAction(context, id)) {
+            case CALL: return SocialMenus.Voice.CALL;
+            case INVITE: return SocialMenus.Voice.INVITE;
+            case CALL_OFF:
+            case TOGETHER: return SocialMenus.Voice.CALL_OFF;
+            default: return SocialMenus.Voice.NONE;
+        }
+    }
+
     private static int personIcon(SocialMenus.PersonAction action) {
         switch (action) {
+            case VOICE_CALL: return R.drawable.projects_ic_voice_call;
+            case VOICE_INVITE: return R.drawable.projects_ic_voice_invite;
             case ACCEPT:
             case ACCEPT_REQUEST: return R.drawable.projects_ic_check;
             case DECLINE:
@@ -249,6 +263,8 @@ public final class SocialMenuSheet {
 
     private static String personLabel(Context c, SocialMenus.PersonAction action, SocialMenus.PersonInput in) {
         switch (action) {
+            case VOICE_CALL: return c.getString(R.string.projects_voice_call_action);
+            case VOICE_INVITE: return c.getString(R.string.projects_voice_invite_to_room);
             case ACCEPT: return c.getString(R.string.projects_social_accept);
             case DECLINE: return c.getString(R.string.projects_social_decline);
             case CANCEL_REQUEST: return c.getString(R.string.projects_social_cancel_request);
@@ -288,6 +304,10 @@ public final class SocialMenuSheet {
         final String id = profile.id;
         final String name = profile.name();
         switch (action) {
+            case VOICE_CALL:
+            case VOICE_INVITE:
+                gg.projects.mobile.voice.ui.VoiceUi.friend(activity, id, name);
+                break;
             case ACCEPT:
                 if (pending == SocialMenus.Pending.JOIN_REQUEST && crewId != null) {
                     service.acceptJoinRequest(crewId, id, json(activity, activity.getString(R.string.projects_requests_accepted, name)));

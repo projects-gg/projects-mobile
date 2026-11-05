@@ -23,6 +23,10 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
+    <!-- MOB-VOICE: the voice chat's stay is a foreground service that records (microphone) and plays (mediaPlayback,
+         also for a stay without the microphone). -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
     <uses-permission android:name="android.permission.VIBRATE" />
     <!-- Projects fork (M18): downloads keep the CPU and Wi-Fi awake while they run, also with the screen off. -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
@@ -234,6 +238,25 @@
                 <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
             </intent-filter>
         </receiver>
+
+        <!-- MOB-VOICE: voice chat's stay in a process of its own (it goes on through the game and in the background),
+             "Katıl" from a ring's notification (a see-through activity that waits for the answer: the microphone may
+             start only from the app in front, and it may ask for the microphone first) and "Reddet" (a broadcast). -->
+        <service
+            android:name="gg.projects.mobile.voice.VoiceService"
+            android:process=":voice"
+            android:exported="false"
+            android:foregroundServiceType="microphone|mediaPlayback" />
+        <activity
+            android:name="gg.projects.mobile.voice.VoiceActionActivity"
+            android:exported="false"
+            android:taskAffinity=""
+            android:noHistory="true"
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+        <receiver
+            android:name="gg.projects.mobile.voice.VoiceActionReceiver"
+            android:exported="false" />
 
         <!-- APK-UPD: the install session's answers (an explicit intent Android fills in) and the app's replacement. -->
         <receiver

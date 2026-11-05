@@ -277,6 +277,17 @@ public final class SocialPrefs {
         mPrefs.edit().putString(KEY_CONFIG, (friends ? "1" : "0") + (teams ? "1" : "0") + (chat ? "1" : "0")).apply();
     }
 
+    /** MOB-VOICE: the signed config's {@code features.voice} as last seen (its own key: older versions read three flags). */
+    private static final String KEY_CONFIG_VOICE = "config_voice";
+
+    public boolean lastVoiceConfig() {
+        return mPrefs.getBoolean(KEY_CONFIG_VOICE, false);
+    }
+
+    public void setLastVoiceConfig(boolean voice) {
+        mPrefs.edit().putBoolean(KEY_CONFIG_VOICE, voice).apply();
+    }
+
     /** SOC-ID: the ways in the service offered when it was last asked ({@link SignInOptions#encode}). */
     private static final String KEY_SIGN_IN_OPTIONS = "sign_in_ways";
 

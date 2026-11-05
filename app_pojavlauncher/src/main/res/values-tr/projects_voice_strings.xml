@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- MOB-VOICE: sesli sohbet telefonda. Masaüstünün sözcükleri (apps/launcher/src/locales/tr-voice.ts) aynen; açıklama
+     cümlesi yalnız "Odayı kapat"ın sorusunda ve iki ayarın altında. Oyuncu adı ek almaz. -->
+<resources>
+    <string name="projects_voice_title">Sesli sohbet</string>
+    <string name="projects_voice_someone">Bir oyuncu</string>
+    <string name="projects_voice_just_you">Yalnız sen</string>
+    <string name="projects_voice_names_more">%1$s ve %2$d kişi daha</string>
+
+    <string name="projects_voice_call_action">Sesli arama başlat</string>
+    <string name="projects_voice_invite_to_room">Odaya davet et</string>
+    <string name="projects_voice_ringing">Aranıyor…</string>
+    <string name="projects_voice_ringing_name">%1$s aranıyor…</string>
+    <string name="projects_voice_cancel">İptal</string>
+    <string name="projects_voice_cancel_label">Aramayı iptal et</string>
+    <string name="projects_voice_no_answer">Cevap yok</string>
+    <string name="projects_voice_call_again">Tekrar ara</string>
+    <string name="projects_voice_ask">%1$s aransın mı?</string>
+    <string name="projects_voice_ask_yes">Ara</string>
+    <string name="projects_voice_ask_no">Vazgeç</string>
+    <string name="projects_voice_ask_dnd">Rahatsız etmeyin açık: zil çalmaz, aradığını sonra görür.</string>
+    <string name="projects_voice_ask_first">Aramadan önce sor</string>
+    <string name="projects_voice_unreachable">Şu an aranamıyor.</string>
+    <string name="projects_voice_together">Zaten seninle aynı odada.</string>
+    <string name="projects_voice_call_kind">Sesli arama</string>
+    <string name="projects_voice_elsewhere">Başka bir odada</string>
+    <string name="projects_voice_sounds">Sesli sohbet sesleri</string>
+
+    <string name="projects_voice_ring_calling">%1$s arıyor</string>
+    <string name="projects_voice_ring_others">Odadakiler: %1$s</string>
+    <string name="projects_voice_join">Katıl</string>
+    <string name="projects_voice_decline">Reddet</string>
+    <string name="projects_voice_missed">Cevapsız arama</string>
+    <string name="projects_voice_missed_from">%1$s aradı</string>
+    <string name="projects_voice_call_back">Geri ara</string>
+    <string name="projects_voice_in_voice">Sesli sohbette</string>
+
+    <string name="projects_voice_bar_label">Sesli sohbet: %1$s</string>
+    <string name="projects_voice_open_room">Odayı aç</string>
+    <string name="projects_voice_invite">Davet et</string>
+    <string name="projects_voice_leave">Ayrıl</string>
+    <string name="projects_voice_mic">Mikrofon</string>
+    <string name="projects_voice_deafen">Sağırlaştır</string>
+    <string name="projects_voice_mute_mic">Mikrofonu kapat</string>
+    <string name="projects_voice_unmute_mic">Mikrofonu aç</string>
+    <string name="projects_voice_deafen_on">Sağırlaştır</string>
+    <string name="projects_voice_deafen_off">Sağırlaştırmayı kaldır</string>
+    <string name="projects_voice_leader">Lider</string>
+    <string name="projects_voice_moderator">Moderatör</string>
+    <string name="projects_voice_you">Sen</string>
+    <plurals name="projects_voice_count">
+        <item quantity="one">%d kişi</item>
+        <item quantity="other">%d kişi</item>
+    </plurals>
+    <string name="projects_voice_rename">Adı değiştir</string>
+    <string name="projects_voice_name_hint">Oda adı</string>
+    <string name="projects_voice_save">Kaydet</string>
+    <string name="projects_voice_close">Odayı kapat</string>
+    <string name="projects_voice_close_ask">Oda herkes için kapanır.</string>
+    <string name="projects_voice_new_room">Yeni oda</string>
+    <string name="projects_voice_general">Genel</string>
+    <string name="projects_voice_numbered">Oda %1$s</string>
+    <string name="projects_voice_joining">Bağlanıyor…</string>
+    <string name="projects_voice_reconnecting">Yeniden bağlanıyor…</string>
+    <string name="projects_voice_failed">Bağlanamadı</string>
+    <string name="projects_voice_retry">Tekrar dene</string>
+    <string name="projects_voice_weak">Bağlantı zayıf</string>
+
+    <string name="projects_voice_volume">Ses seviyesi</string>
+    <string name="projects_voice_mute_for_me">Benim için sustur</string>
+    <string name="projects_voice_mute_for_all">Herkes için sustur</string>
+    <string name="projects_voice_unmute_for_all">Herkes için susturmayı kaldır</string>
+    <string name="projects_voice_kick">Odadan çıkar</string>
+    <string name="projects_voice_kicked_them">%1$s odadan çıkarıldı.</string>
+    <string name="projects_voice_undo">Geri al</string>
+    <string name="projects_voice_move">Taşı</string>
+    <string name="projects_voice_moved_them">%1$s başka odaya taşındı.</string>
+    <string name="projects_voice_make_mod">Moderatör yap</string>
+    <string name="projects_voice_unmake_mod">Moderatörlükten al</string>
+    <string name="projects_voice_mic_off">Mikrofonu kapalı</string>
+    <string name="projects_voice_deafened">Sağırlaştırılmış</string>
+    <string name="projects_voice_muted_for_all">Herkes için susturuldu</string>
+    <string name="projects_voice_muted_for_me">Senin için susturuldu</string>
+    <string name="projects_voice_their_weak">Bağlantısı zayıf</string>
+    <string name="projects_voice_speaking">Konuşuyor</string>
+
+    <string name="projects_voice_muted_by_mod">Bir moderatör seni susturdu.</string>
+    <string name="projects_voice_moved">Başka bir odaya taşındın.</string>
+    <string name="projects_voice_left_closed">Lider odayı kapattı.</string>
+    <string name="projects_voice_left_alone">Odada kimse kalmadı.</string>
+    <string name="projects_voice_left_elsewhere">Başka bir cihazda katıldın.</string>
+    <string name="projects_voice_left_kicked">Odadan çıkarıldın.</string>
+    <string name="projects_voice_left_crew">Ekip odasından çıktın.</string>
+    <string name="projects_voice_left_idle">Uzun süre hareketsiz kaldığın için ayrıldın.</string>
+    <string name="projects_voice_left_unavailable">Sesli sohbet şu an kullanılamıyor.</string>
+    <string name="projects_voice_left_failed">Bağlanamadı.</string>
+    <string name="projects_voice_left_restricted">Sesli sohbet kullanman kısıtlandı.</string>
+    <string name="projects_voice_left_restricted_until">Sesli sohbet kullanman %1$s tarihine kadar kısıtlandı.</string>
+
+    <string name="projects_voice_mic_denied">Mikrofona izin verilmedi.</string>
+    <string name="projects_voice_mic_settings">Ayarları aç</string>
+    <string name="projects_voice_mic_missing">Mikrofon bulunamadı.</string>
+
+    <string name="projects_voice_refused_off">Sesli sohbet şu an kullanılamıyor.</string>
+    <string name="projects_voice_refused_unreachable">%1$s şu an aranamıyor.</string>
+    <string name="projects_voice_refused_rate">Biraz bekleyip tekrar dene.</string>
+    <string name="projects_voice_refused_daily">Bugünlük arama hakkın doldu.</string>
+    <string name="projects_voice_refused_staff">Susturulduğun için şu an bunu yapamazsın.</string>
+    <string name="projects_voice_refused_full">Oda dolu.</string>
+    <string name="projects_voice_refused_rooms_full">Ekipte daha fazla oda açılamaz.</string>
+    <string name="projects_voice_refused_gone">Bu oda artık yok.</string>
+    <string name="projects_voice_refused_kicked">Bu odaya biraz sonra dönebilirsin.</string>
+    <string name="projects_voice_refused_not_member">Bu ekipte değilsin.</string>
+    <string name="projects_voice_refused_not_allowed">Bunu yapamazsın.</string>
+    <string name="projects_voice_refused_not_found">Bu oyuncu artık odada değil.</string>
+    <string name="projects_voice_refused_invalid_name">Oda adı 3 ile 24 karakter arasında olmalı.</string>
+    <string name="projects_voice_refused_name_rejected">Bu ad kullanılamaz.</string>
+    <string name="projects_voice_refused_failed">Bağlanamadı.</string>
+
+    <string name="projects_voice_invite_title">Davet et</string>
+    <string name="projects_voice_invite_search_friends">Arkadaşlarında ara</string>
+    <string name="projects_voice_invite_search_crew">Ekip arkadaşlarında ara</string>
+    <string name="projects_voice_invite_none">Şu an davet edebileceğin kimse yok.</string>
+    <string name="projects_voice_invite_no_match">Bu adla kimse yok.</string>
+
+    <string name="projects_voice_crew_title">Sesli</string>
+    <string name="projects_voice_crew_empty">Kimse yok</string>
+    <string name="projects_voice_room_count">%1$d/%2$d</string>
+
+    <string name="projects_voice_settings_enabled">Sesli sohbeti kullan</string>
+    <string name="projects_voice_settings_enabled_help">Kapalıyken kimse seni arayamaz.</string>
+
+    <!-- The phone's own: the channels and the notification of a stay. -->
+    <string name="projects_voice_channel_rings">Sesli aramalar</string>
+    <string name="projects_voice_channel_stay">Sesli sohbet</string>
+    <string name="projects_voice_stay_title">Sesli sohbette</string>
+    <string name="projects_voice_crew_room">%1$s, %2$s</string>
+</resources>

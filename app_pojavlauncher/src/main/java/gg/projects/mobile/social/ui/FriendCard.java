@@ -85,6 +85,22 @@ public final class FriendCard {
         });
 
         LinearLayout actions = view.findViewById(R.id.projects_card_actions);
+        // MOB-VOICE: "Sesli arama başlat" first (the desktop's card: the button is there while voice chat is on, dim with
+        // one sentence when the friend cannot be called now), "Odaya davet et" while the player is in a friend room.
+        gg.projects.mobile.voice.ui.VoiceUi.FriendAction voice = gg.projects.mobile.voice.ui.VoiceUi.friendAction(activity, friendId);
+        if (voice != gg.projects.mobile.voice.ui.VoiceUi.FriendAction.NONE) {
+            boolean invite = voice == gg.projects.mobile.voice.ui.VoiceUi.FriendAction.INVITE;
+            View call = CrewViews.actionRow(activity, invite ? R.drawable.projects_ic_voice_invite : R.drawable.projects_ic_voice_call,
+                    activity.getString(invite ? R.string.projects_voice_invite_to_room : R.string.projects_voice_call_action),
+                    R.color.projects_bone_100, v -> {
+                        dialog.dismiss();
+                        gg.projects.mobile.voice.ui.VoiceUi.friend(activity, friendId, profile.name());
+                    });
+            boolean off = voice == gg.projects.mobile.voice.ui.VoiceUi.FriendAction.CALL_OFF
+                    || voice == gg.projects.mobile.voice.ui.VoiceUi.FriendAction.TOGETHER;
+            if (off) call.setAlpha(0.45f);
+            actions.addView(call);
+        }
         if (profile.hasDiscord()) {
             // SOC-ID: only for a friend with a Discord linked.
             actions.addView(CrewViews.discordRow(activity, activity.getString(R.string.projects_social_message),

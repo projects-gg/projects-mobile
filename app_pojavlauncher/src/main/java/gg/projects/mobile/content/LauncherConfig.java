@@ -42,6 +42,8 @@ public final class LauncherConfig {
     public transient boolean teamsFeature;
     /** M20: {@code features.chat} (crew chat and direct messages, inside friends; the service's switch too). */
     public transient boolean chatFeature;
+    /** MOB-VOICE: {@code features.voice} (voice chat, inside friends; Studio's {@code voiceOn} decides beyond it). */
+    public transient boolean voiceFeature;
 
     /** Studio's events, hidden ones included (they take a feed event with their id off the card). */
     public transient List<EventCountdown> events = Collections.emptyList();
@@ -203,6 +205,7 @@ public final class LauncherConfig {
         config.friendsFeature = isTrue(features, "friends");
         config.teamsFeature = config.friendsFeature && isTrue(features, "teams");
         config.chatFeature = config.friendsFeature && isTrue(features, "chat");
+        config.voiceFeature = config.friendsFeature && isTrue(features, "voice");
         config.eventsJson = null;
         config.newsFeedJson = null;
         config.recommendedMinecraftVersionJson = null;

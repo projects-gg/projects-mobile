@@ -83,8 +83,15 @@ public final class SocialMenus {
         REMOVE_FROM_CREW,
         REMOVE_FRIEND,
         BLOCK, UNBLOCK,
-        REPORT
+        REPORT,
+        /** MOB-VOICE: "Sesli arama başlat" (dim when they cannot be called now). */
+        VOICE_CALL,
+        /** MOB-VOICE: "Odaya davet et" (the player is in a friend room). */
+        VOICE_INVITE
     }
+
+    /** MOB-VOICE: the row's voice action (the desktop's: first among "together"). */
+    public enum Voice { NONE, CALL, CALL_OFF, INVITE }
 
     /** What a row asks the player to answer, when it is about a request. */
     public enum Pending { NONE, FRIEND_REQUEST, JOIN_REQUEST, OUTGOING }
@@ -132,6 +139,8 @@ public final class SocialMenus {
         public boolean reports;
         /** The service takes a report about them (a friend, a crewmate, a request's sender, a join request's). */
         public boolean reportable;
+        /** MOB-VOICE: voice chat's action for them (friends only). */
+        public Voice voice = Voice.NONE;
     }
 
     public static List<Row<PersonAction>> person(PersonInput in) {
@@ -159,7 +168,10 @@ public final class SocialMenus {
                 break;
         }
         out.add(null);
-        // 2. Together.
+        // 2. Together. MOB-VOICE: the call first (the desktop's VOICE-CALL order).
+        if (in.friend && in.voice == Voice.CALL) out.add(row(PersonAction.VOICE_CALL));
+        if (in.friend && in.voice == Voice.CALL_OFF) out.add(row(PersonAction.VOICE_CALL, true));
+        if (in.friend && in.voice == Voice.INVITE) out.add(row(PersonAction.VOICE_INVITE));
         if (in.onProjects) out.add(row(PersonAction.JOIN));
         if (in.friend && in.chat && !in.inTheirConversation) out.add(row(PersonAction.MESSAGE));
         if ((in.friend || in.crewmate) && in.discord) out.add(row(PersonAction.DISCORD));

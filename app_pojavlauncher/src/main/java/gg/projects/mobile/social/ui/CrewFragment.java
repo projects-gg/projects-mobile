@@ -132,6 +132,8 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
     private static final int T_TAGS = 14;
     /** CHAT-CALM: the "Sohbet" box with "Yavaş mod" (the leader's and moderators'). */
     private static final int T_SLOW = 15;
+    /** MOB-VOICE: one of the crew's voice rooms, or "Yeni oda" ({@link gg.projects.mobile.voice.ui.VoiceCrewRows}). */
+    private static final int T_VOICE = 40;
     /** M21: a crew invite link ({@code XXXX-XXXX-XXXX}) to look up on "+" (a {@code projects://crew/} link). */
     public static final String ARG_LINK = "link";
 
@@ -350,6 +352,9 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         service.addListener(this);
         service.surfaceShown(SocialService.Surface.CREW, true);
         service.refresh(false);
+        // MOB-VOICE: the rooms' faces and "Katıl"/"Ayrıl" follow voice chat.
+        service.voice().addListener(mVoiceChanged);
+        gg.projects.mobile.voice.VoiceLink.get(requireContext()).watch(mVoiceWatch);
         render();
     }
 
@@ -359,8 +364,14 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         SocialService service = SocialService.get(requireContext());
         service.removeListener(this);
         service.surfaceShown(SocialService.Surface.CREW, false);
+        service.voice().removeListener(mVoiceChanged);
+        gg.projects.mobile.voice.VoiceLink.get(requireContext()).unwatch(mVoiceWatch);
         if (mList != null) mList.removeCallbacks(mTick);
     }
+
+    /** MOB-VOICE: voice chat changed (rooms, the player's stay). */
+    private final gg.projects.mobile.voice.VoiceHub.Listener mVoiceChanged = this::render;
+    private final gg.projects.mobile.voice.VoiceLink.Watcher mVoiceWatch = state -> render();
 
     @Override
     public void onDestroyView() {
@@ -895,6 +906,12 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
                         + "|" + ((left + 59) / 60) + "|" + call.crews + "|" + answersState(call.id), call));
             }
         }
+        // MOB-VOICE: "Sesli": the crew's voice rooms ("Genel" first), "Katıl", and "Yeni oda" while one may be opened.
+        List<gg.projects.mobile.voice.ui.VoiceCrewRows.Item> voice = gg.projects.mobile.voice.ui.VoiceCrewRows.items(requireContext(), team.id);
+        if (!voice.isEmpty()) {
+            rows.add(new Row(T_HEADER, "h-voice", getString(R.string.projects_voice_crew_title), getString(R.string.projects_voice_crew_title)));
+            for (gg.projects.mobile.voice.ui.VoiceCrewRows.Item item : voice) rows.add(new Row(T_VOICE, item.id(), item.key(), item));
+        }
         // M21 (TEAM5): join requests for whoever may answer them, at the top: they wait for an answer.
         if (gate.requests) {
             List<JoinRequest> requests = state.requests(team.id, now);
@@ -1139,6 +1156,9 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
                     view = frame;
                     break;
                 }
+                case T_VOICE:
+                    view = gg.projects.mobile.voice.ui.VoiceCrewRows.create(context);
+                    break;
                 case T_ACTION: {
                     FrameLayout frame = new FrameLayout(context);
                     int side = Math.round(12 * context.getResources().getDisplayMetrics().density);
@@ -1224,6 +1244,10 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
                     break;
                 case T_ACTION:
                     bindAction((FrameLayout) view, (Action) row.data);
+                    break;
+                case T_VOICE:
+                    gg.projects.mobile.voice.ui.VoiceCrewRows.bind((FrameLayout) view, requireActivity(),
+                            (gg.projects.mobile.voice.ui.VoiceCrewRows.Item) row.data);
                     break;
                 case T_NOTICE:
                 case T_TEXT:

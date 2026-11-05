@@ -120,7 +120,10 @@ public final class InGameSocial implements PresenceConnection.Listener, GameWher
         if (mStopped || mConnection != null) return;
         Log.i(TAG, "game socket opening");
         // The game reads no list, so it names no relations version (M048): its hello says none either.
-        mConnection = PresenceConnection.open(mApi, mToken, CAPS, null, this);
+        // MOB-VOICE: "voice1" while the player keeps voice chat on (friends may call them in the game).
+        List<String> caps = new java.util.ArrayList<>(CAPS);
+        gg.projects.mobile.voice.VoiceInGame.addCaps(mApp, mPrefs, caps);
+        mConnection = PresenceConnection.open(mApi, mToken, caps, null, this);
     }
 
     @MainThread
@@ -165,6 +168,9 @@ public final class InGameSocial implements PresenceConnection.Listener, GameWher
         if (connection != mConnection) return;
         long now = SocialService.nowSeconds();
         String type = Json.str(message, "t", "");
+        // MOB-VOICE: rings over the game (the hello's voice settings go on to the rest too).
+        if ((type.startsWith("voice_") || type.equals("hello"))
+                && gg.projects.mobile.voice.VoiceInGame.onFrame(mApp, message, mMe, mNames, gameIntent())) return;
         switch (type) {
             case "hello": {
                 mLive = true;

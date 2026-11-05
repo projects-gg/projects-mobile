@@ -29,6 +29,8 @@ public final class SocialRoutes {
     private SocialRoutes() {}
 
     public static final String FRIENDS = "friends";
+    /** MOB-VOICE: the room the player is in (the stay's notification): the friends screen with the room's sheet. */
+    public static final String VOICE = "voice";
     /** The crew page; M20: the argument is a crew id (that crew opens) or a call id (its first crew). */
     public static final String CREW = "crew";
     public static final String INVITE = "invite";
@@ -185,6 +187,12 @@ public final class SocialRoutes {
                 if (SocialService.get(activity).signedIn()) {
                     Tools.swapFragment(activity, gg.projects.mobile.social.ui.SocialSettingsFragment.class,
                             gg.projects.mobile.social.ui.SocialSettingsFragment.TAG, null);
+                }
+                break;
+            case VOICE:
+                Tools.swapFragment(activity, SocialFragment.class, SocialFragment.TAG, args);
+                if (gg.projects.mobile.voice.VoiceLink.get(activity).state() != null) {
+                    gg.projects.mobile.voice.ui.VoiceSheet.show(activity);
                 }
                 break;
             case FRIENDS:

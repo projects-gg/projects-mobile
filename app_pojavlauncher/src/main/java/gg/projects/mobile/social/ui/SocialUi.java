@@ -73,6 +73,11 @@ public final class SocialUi {
     public static String presenceText(Context context, Presence presence) {
         if (presence.playing()) return presence.withVersion(playingPlace(context, presence));
         if (presence.online()) {
+            // MOB-VOICE: "Sesli sohbette" in the launcher (the desktop's friend row; in the game the place says more).
+            gg.projects.mobile.voice.VoiceHub voice = gg.projects.mobile.voice.VoiceHub.instance();
+            if (!presence.dnd && voice != null && voice.available() && voice.rings().inVoice(presence.id)) {
+                return context.getString(R.string.projects_voice_in_voice);
+            }
             return context.getString(presence.dnd ? R.string.projects_social_presence_dnd : R.string.projects_social_presence_launcher);
         }
         String seen = lastSeenText(context, presence.lastSeen);
