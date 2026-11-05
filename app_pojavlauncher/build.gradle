@@ -346,6 +346,9 @@ dependencies {
     implementation platform('com.google.firebase:firebase-bom:33.16.0')
     implementation 'com.google.firebase:firebase-messaging'
     implementation 'com.google.zxing:core:3.3.3'
+    // MOB-VOICE: Google's libwebrtc for Android, the maintained open build LiveKit publishes (BSD-3, no dependencies,
+    // minSdk 21, 16 KB aligned): voice chat's audio through Cloudflare's SFU (docs/tasks/mob-voice.md).
+    implementation 'io.github.webrtc-sdk:android:144.7559.15'
     testImplementation 'junit:junit:4.13.2'
 }
 apply from: rootProject.file('gradle/prefab_bypass.gradle')

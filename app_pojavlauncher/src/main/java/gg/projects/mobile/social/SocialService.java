@@ -150,6 +150,8 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     private final SocialState mState = new SocialState();
     private final SignInFlow mSignIn = new SignInFlow();
     private final SocialChat mChat;
+    /** MOB-VOICE: voice chat in this process (rings, calls, crew rooms; the stay runs in the voice process). */
+    private final gg.projects.mobile.voice.VoiceHub mVoice;
     private final ExecutorService mIo = Executors.newFixedThreadPool(2);
     private final Handler mMain = new Handler(Looper.getMainLooper());
     private final List<Listener> mListeners = new ArrayList<>();
@@ -162,6 +164,8 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     private boolean mConfigFriends;
     private boolean mConfigTeams;
     private boolean mConfigChat;
+    /** MOB-VOICE: {@code features.voice} of the signed config (kept for a start before the config is read). */
+    private boolean mConfigVoice;
     private boolean mConfigKnown;
 
     @Nullable
@@ -275,7 +279,17 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         mConfigFriends = config[0];
         mConfigTeams = config[1];
         mConfigChat = config[2];
+        mConfigVoice = mPrefs.lastVoiceConfig();
         mChat = new SocialChat(new ChatHost());
+        mVoice = new gg.projects.mobile.voice.VoiceHub(app, new VoiceHost());
+        mVoice.setConfig(mConfigFriends && mConfigVoice);
+        gg.projects.mobile.voice.VoiceLink.get(app).watch(state -> {
+            // MOB-VOICE: the socket stayed for the stay (rings, and "Sesli sohbette" for friends); it goes once that ends.
+            if (state == null && mUiStarted == 0) {
+                mMain.removeCallbacks(mBackgroundClose);
+                mMain.postDelayed(mBackgroundClose, BACKGROUND_GRACE_MS);
+            }
+        });
         // CHAT2: the link rule table (a copy of the service's), read once off the main thread.
         final Context assets = app;
         ChatLinks.setSource(() -> assets.getAssets().open("social/chat-links.json"));
@@ -454,7 +468,66 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     }
 
     private void changed() {
+        mVoice.signedIn(mToken == null ? null : mState.myId());
         for (Listener listener : new ArrayList<>(mListeners)) listener.onSocialChanged();
+    }
+
+    /** MOB-VOICE: voice chat in this process. */
+    public gg.projects.mobile.voice.VoiceHub voice() {
+        return mVoice;
+    }
+
+    /** MOB-VOICE: what voice chat needs of the friends feature. */
+    private final class VoiceHost implements gg.projects.mobile.voice.VoiceHub.Host {
+        @Override
+        public boolean send(JsonObject message) {
+            PresenceConnection connection = mConnection;
+            return connection != null && mLiveSocket && connection.send(message);
+        }
+
+        @Override
+        public void request(JsonObject message, gg.projects.mobile.voice.VoiceHub.Answer answer) {
+            PresenceConnection connection = mConnection;
+            if (connection == null || !mLiveSocket) {
+                answer.onAnswer(null);
+                return;
+            }
+            connection.request(message, (PresenceConnection.Answer) answer::onAnswer);
+        }
+
+        @Override
+        public boolean foreground() {
+            return mUiStarted > 0;
+        }
+
+        @Override
+        public SocialApi api() {
+            return mApi;
+        }
+
+        @Nullable
+        @Override
+        public String myId() {
+            return mToken == null ? null : mState.myId();
+        }
+
+        @Nullable
+        @Override
+        public String nameOf(String id) {
+            if (id.startsWith("crew:")) {
+                Crew crew = mState.crew(id.substring(5));
+                return crew == null ? null : crew.team.name;
+            }
+            Profile profile = mState.profile(id);
+            if (profile != null) return profile.name();
+            return mPrefs.peopleNames().get(id);
+        }
+
+        @Override
+        public boolean doNotDisturb() {
+            Me me = mState.me();
+            return me != null && SocialModel.Status.DND.equals(me.status);
+        }
     }
 
     // ---- the signed config ----
@@ -466,6 +539,14 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         boolean teams = snapshot.config.teamsFeature;
         boolean chat = snapshot.config.chatFeature;
         boolean chatChanged = chat != mConfigChat;
+        // MOB-VOICE: voice chat came or went: the socket asks again with the right capabilities, as for chat.
+        boolean voice = snapshot.config.voiceFeature;
+        if (voice != mConfigVoice) {
+            mConfigVoice = voice;
+            mPrefs.setLastVoiceConfig(voice);
+            chatChanged = true;
+        }
+        mVoice.setConfig(friends && voice);
         boolean same = friends == mConfigFriends && teams == mConfigTeams && !chatChanged;
         if (mConfigKnown && same) return;
         mConfigKnown = true;
@@ -503,6 +584,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
             syncPush();
         }
         SocialNotifications.cancelSeen(mApp, mState, surfaceShown(Surface.FRIENDS), surfaceShown(Surface.CREW));
+        mVoice.foregroundChanged();
     }
 
     /** The launcher's activity came to the front (its notices go to its own line at the bottom). */
@@ -519,6 +601,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
             mUiActivity = null;
             mMain.removeCallbacks(mBackgroundClose);
             mMain.postDelayed(mBackgroundClose, BACKGROUND_GRACE_MS);
+            mVoice.foregroundChanged();
         }
     }
 
@@ -554,6 +637,8 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     /** No screen: the socket goes, the phone's notifications take over. */
     private void closeIfIdle() {
         if (mUiStarted > 0) return;
+        // MOB-VOICE: in a voice room the socket stays (friends see "Sesli sohbette", invites still ring).
+        if (gg.projects.mobile.voice.VoiceLink.get(mApp).state() != null) return;
         closeConnection();
         changed();
     }
@@ -613,6 +698,8 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         caps.add("marks2");
         // AFKPLUS-M: 7/24 Bulut's notices on the socket ("afk_notice"; a service without them ignores the name).
         caps.add("afk");
+        // MOB-VOICE: voice chat ("voice1"), while the signed config has it.
+        mVoice.addCaps(caps);
         return caps;
     }
 
@@ -735,6 +822,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         if (connection != null) connection.close();
         mState.setOffline();
         mChat.disconnected();
+        mVoice.socketEnded();
     }
 
     /** "Yeniden bağlan" after the account was opened on another device. */
@@ -763,6 +851,11 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
             return;
         }
         if (mChat.onFrame(message)) {
+            changed();
+            return;
+        }
+        // MOB-VOICE: rings, the crews' rooms, Studio's switch (the hello and presences go on to the rest too).
+        if (mVoice.onFrame(message)) {
             changed();
             return;
         }
@@ -831,6 +924,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         mLiveSocket = false;
         mState.setOffline();
         mChat.disconnected();
+        mVoice.socketEnded();
         switch (code) {
             case 4001: {
                 // Signed out, revoked, expired or (after "bye") restricted: sign in again, no reconnect.
@@ -1764,6 +1858,12 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         }
         // AFKPLUS-M: 7/24 Bulut's notices, once the service announces them (an older one does not know the kinds).
         if (mState.features().contains("afk")) kinds.addAll(gg.projects.mobile.cloud.CloudNotifications.wantedKinds(mApp));
+        // MOB-VOICE: rings while the app has no socket, once the service announces them ("voiceRing"; an older one does
+        // not know the kind) and the player keeps voice chat on.
+        if (mState.features().contains(gg.projects.mobile.voice.VoicePush.FEATURE) && mVoice.config() && mVoice.prefs().enabled()
+                && SocialNotifications.channelOn(mApp, gg.projects.mobile.voice.VoiceNotify.CHANNEL_RINGS)) {
+            kinds.add(gg.projects.mobile.voice.VoicePush.KIND);
+        }
         return kinds;
     }
 
@@ -2058,6 +2158,7 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         }, result, value -> {
             mState.block(profile);
             mPrefs.setFavourite(profile.id, false);
+            mVoice.blocked(profile.id);
         });
     }
 

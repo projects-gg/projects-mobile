@@ -198,6 +198,26 @@ public class SocialSettingsFragment extends Fragment implements SocialService.Li
             for (int i = firstSwitch; i < mList.getChildCount(); i++) mList.getChildAt(i).setAlpha(DIMMED);
         }
 
+        // MOB-VOICE: "Sesli sohbet" (the desktop's settings, the rows a phone has: no device, key or sensitivity choice;
+        // each person's volume is in the room).
+        final gg.projects.mobile.voice.VoiceHub voice = service.voice();
+        if (voice.available()) {
+            section(R.string.projects_voice_title);
+            toggle(R.string.projects_voice_settings_enabled, voice.prefs().enabled(), on -> {
+                voice.setEnabled(on);
+                mShown = "";
+                render();
+            });
+            mList.addView(text(getString(R.string.projects_voice_settings_enabled_help), R.color.projects_ash_400));
+            if (voice.prefs().enabled()) {
+                toggle(R.string.projects_voice_ask_first, voice.prefs().askBeforeCall(), voice.prefs()::setAskBeforeCall);
+                toggle(R.string.projects_voice_sounds, voice.prefs().soundsSaved(), on -> {
+                    voice.prefs().setSoundsSaved(on);
+                    gg.projects.mobile.voice.VoiceLink.get(requireContext()).setSounds(on);
+                });
+            }
+        }
+
         section(R.string.projects_social_blocked_title);
         if (service.state().blocked().isEmpty()) {
             mList.addView(text(getString(R.string.projects_social_blocked_empty), R.color.projects_ash_400));

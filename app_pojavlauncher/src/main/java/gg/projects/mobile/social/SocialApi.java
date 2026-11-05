@@ -529,6 +529,38 @@ public final class SocialApi {
         return require(send("POST", "v1/teams/" + segment(team) + "/founder", body, true, false));
     }
 
+    // ---- MOB-VOICE: voice chat's routes (README "Voice (VOICE-S1)", "Voice (VOICE-ROOMS)") ----
+
+    /** {@code POST /v1/voice/crew {"crew","room"?}}: {@code {room, name, ticket}} for a crew room (none: its "Genel"). */
+    @WorkerThread
+    public JsonObject voiceCrew(String crew, @Nullable String room) throws SocialProblem {
+        JsonObject body = new JsonObject();
+        body.addProperty("crew", segment(crew));
+        if (room != null) body.addProperty("room", room);
+        return require(send("POST", "v1/voice/crew", body, true, false));
+    }
+
+    /** {@code POST /v1/voice/crew/new {"crew"}}: a new room of the crew ({@code {room, name, ticket}}). */
+    @WorkerThread
+    public JsonObject voiceCrewNew(String crew) throws SocialProblem {
+        JsonObject body = new JsonObject();
+        body.addProperty("crew", segment(crew));
+        return require(send("POST", "v1/voice/crew/new", body, true, false));
+    }
+
+    /**
+     * MOB-VOICE: {@code POST /v1/voice/ring {"room","answer"}}: the answer to a ring that came as a push (it carries no
+     * ticket): {@code join} gets {@code {room, ticket}}, {@code decline} ends the ring on every device (204).
+     */
+    @Nullable
+    @WorkerThread
+    public JsonObject voiceRing(String room, boolean join) throws SocialProblem {
+        JsonObject body = new JsonObject();
+        body.addProperty("room", room);
+        body.addProperty("answer", join ? "join" : "decline");
+        return send("POST", "v1/voice/ring", body, true, false);
+    }
+
     // ---- plumbing ----
 
     private static JsonObject codeBody(String code) {
