@@ -141,12 +141,9 @@ public final class VoiceSheet implements VoiceLink.Listener {
         mState = link.state();
         if (mState == null) return;
         render();
-        mPanel = BottomPanel.of(mActivity, mRoot, 0.85f).onClosed(() -> {
-            link.detach(this);
-            link.setMeters(false);
-        });
+        // The speaking rings are the call bar's to ask for (it shows under the sheet the whole time).
+        mPanel = BottomPanel.of(mActivity, mRoot, 0.85f).onClosed(() -> link.detach(this));
         link.attach(this);
-        link.setMeters(true);
         mPanel.show();
     }
 

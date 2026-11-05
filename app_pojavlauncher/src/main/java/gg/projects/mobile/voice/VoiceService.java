@@ -153,7 +153,10 @@ public final class VoiceService extends Service implements VoiceEngine.Listener,
         mBase = debug.url.endsWith("/") ? debug.url : debug.url + "/";
         if (room == null || ticket == null || me == null || mToken == null || !me.equals(saved.userId)) {
             Log.i(TAG, "join refused: no session for it");
-            if (!mMachine.inRoom()) stopForegroundNow();
+            if (!mMachine.inRoom()) {
+                stopForegroundNow();
+                if (!mMachine.engineOpen()) stopSelf();
+            }
             return;
         }
         mPrefs.setSounds(intent.getBooleanExtra(VoiceLink.EXTRA_SOUNDS, true));
