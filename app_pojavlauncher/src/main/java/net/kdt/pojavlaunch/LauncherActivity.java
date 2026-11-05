@@ -411,7 +411,7 @@ public class LauncherActivity extends BaseActivity implements gg.projects.mobile
         );
         getWindow().setBackgroundDrawable(null);
         bindViews();
-        // Projects fork (MOB-PARITY): a gold ring on the focused control for a TV remote, a gamepad or a keyboard.
+        // Projects fork (MOB-PARITY): a gold ring on the focused control for a keyboard or a gamepad.
         gg.projects.mobile.ui.FocusRing.attach(this);
         // TABLET-M: registered here, not in onStart: a screen made again after a rotation or a resize creates its view
         // during onStart, before a registration there (each onStart also added one more copy).

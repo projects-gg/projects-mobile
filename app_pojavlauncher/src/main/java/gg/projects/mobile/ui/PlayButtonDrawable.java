@@ -68,7 +68,7 @@ public final class PlayButtonDrawable extends Drawable {
         mInk = ContextCompat.getColor(context, R.color.projects_ember_900);
         mFocusPaint.setStyle(Paint.Style.STROKE);
         mFocusPaint.setStrokeWidth(2 * mDensity);
-        // MOB-PARITY: the focus ring (a TV remote, a keyboard). gold-200 drawn on the face vanished into its gold top.
+        // MOB-PARITY: the focus ring (a keyboard, a gamepad). gold-200 drawn on the face vanished into its gold top.
         // OYNA rings its face in the socket's gap with gold-300 (design.md §8: 2 dp, 2 dp out); the socketless
         // "Projects'e katıl" has no room outside, so an ember ring sits inside its face.
         mFocusPaint.setColor(withSocket ? ContextCompat.getColor(context, R.color.projects_gold_300)

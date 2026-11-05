@@ -130,12 +130,6 @@ public class MainMenuFragment extends Fragment implements gg.projects.mobile.ui.
             Tools.swapFragment(requireActivity(), GamepadMapperFragment.class, GamepadMapperFragment.TAG, null);
             return true;
         });
-
-        // Projects fork (MOB-PARITY): on a TV the remote starts on OYNA, the screen's one loud action (else Android
-        // focuses the first control it finds, the top bar's).
-        if (savedInstanceState == null && gg.projects.mobile.ui.DeviceKind.isTv(requireContext())) {
-            mPlayButton.post(mPlayButton::requestFocus);
-        }
     }
 
     /**

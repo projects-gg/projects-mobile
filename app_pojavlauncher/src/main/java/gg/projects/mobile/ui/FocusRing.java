@@ -24,8 +24,8 @@ import androidx.core.content.ContextCompat;
 import net.kdt.pojavlaunch.R;
 
 /**
- * MOB-PARITY (Android TV, keyboards; design.md §8 "the focus ring belongs to the keyboard"): the launcher's focus ring.
- * With a remote's D-pad, a gamepad or a keyboard (Android's non-touch mode) the focused control gets a gold-300 ring,
+ * MOB-PARITY (keyboards and gamepads on tablets and Chromebooks; design.md §8 "the focus ring belongs to the
+ * keyboard"): the launcher's focus ring. With a keyboard or a gamepad's D-pad (Android's non-touch mode) the focused control gets a gold-300 ring,
  * 2 dp wide and 2 dp outside it, drawn in the window's overlay so every row, card and icon button has one without its
  * own drawable. Chamfered controls get a chamfered ring. Controls that already draw their own focus look (the
  * chamfered buttons and chips, OYNA, text fields) keep it. Touch hides the ring at once; nothing animates or runs while

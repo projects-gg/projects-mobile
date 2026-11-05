@@ -724,7 +724,7 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
         }
     }
 
-    /** MOB-PARITY: a category's header opens its menu (a tap, a long press, the remote's centre key). */
+    /** MOB-PARITY: a category's header opens its menu (a tap, a long press, a keyboard's Enter). */
     private void bindGroupHeader(TextView header, String rowId) {
         if (!rowId.startsWith("g-")) {
             header.setOnClickListener(null);

@@ -819,7 +819,7 @@ public final class SocialMenuSheet {
     private static void show(AlertDialog dialog, @Nullable View anchor) {
         if (dialog.getWindow() != null) dialog.getWindow().setWindowAnimations(R.style.ProjectsMenuSheetAnimation);
         dialog.show();
-        // MOB-PARITY: the gold focus ring for a TV remote or a keyboard in the sheet too.
+        // MOB-PARITY: the gold focus ring for a keyboard or a gamepad in the sheet too.
         gg.projects.mobile.ui.FocusRing.attach(dialog);
     }
 

@@ -346,7 +346,7 @@ public class MainActivity extends BaseActivity implements ControlButtonMenuListe
             Tools.showError(this, th);
         }
         mDrawerPullButton.setVisibility(mControlLayout.hasMenuButton() ? View.GONE : View.VISIBLE);
-        // Projects fork (MOB-PARITY): a TV or a Chromebook without a touch screen plays with a gamepad, a mouse and a
+        // Projects fork (MOB-PARITY): a Chromebook (or another device) without a touch screen plays with a gamepad, a mouse and a
         // keyboard (upstream's gamepad map applies by itself); on-screen keys nobody can touch would only cover the game.
         if (gg.projects.mobile.ui.DeviceKind.hasTouchScreen(this)) mControlLayout.toggleControlVisible();
         else mControlLayout.setControlVisible(false);
