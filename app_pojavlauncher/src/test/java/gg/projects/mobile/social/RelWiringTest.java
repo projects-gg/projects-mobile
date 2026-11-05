@@ -38,7 +38,9 @@ public class RelWiringTest {
     private static final Set<String> OTHERS = new TreeSet<>(Arrays.asList(
             "claim", "claimIdentity", "deleteAccount", "deletePushDevice", "friends", "health", "linkIdentity", "logout",
             "lookup", "lookupTeam", "lookupTeamByLink", "markCatalog", "me", "noticesSeen", "providers", "putPushDevice",
-            "report", "teamDetail", "teams", "unlinkIdentity"));
+            "report", "teamDetail", "teams", "unlinkIdentity",
+            // MOB-VOICE: voice chat's tickets and a ring's answer change no list.
+            "voiceCrew", "voiceCrewNew", "voiceRing"));
 
     @Test
     public void everyCallOfTheApiSaysWhetherItChangesTheLists() throws IOException {
