@@ -63,7 +63,15 @@ public final class FocusRing implements ViewTreeObserver.OnGlobalFocusChangeList
 
     /** Puts the ring on the activity's content; once per activity, after {@code setContentView}. */
     public static void attach(Activity activity) {
-        View content = activity.findViewById(android.R.id.content);
+        attach(activity.findViewById(android.R.id.content));
+    }
+
+    /** The same in a dialog's window (the action sheets), once it shows. */
+    public static void attach(android.app.Dialog dialog) {
+        attach(dialog.findViewById(android.R.id.content));
+    }
+
+    private static void attach(@Nullable View content) {
         if (!(content instanceof ViewGroup)) return;
         FocusRing ring = new FocusRing((ViewGroup) content);
         ViewTreeObserver observer = content.getViewTreeObserver();

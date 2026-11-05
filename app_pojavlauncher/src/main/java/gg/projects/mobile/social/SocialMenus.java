@@ -15,8 +15,8 @@ import java.util.List;
  *
  * <p>Different from the desktop on purpose (the phone does not do these at all): "Birlikte oyna" (the
  * launcher is not on a server while its screens show), "Çevrimiçi olunca bildir" (no socket in the
- * background), friend categories, naming moderators and editing the crew (they stay on the desktop,
- * M19), calling the crew (CALL1).
+ * background), calling the crew (CALL1). MOB-PARITY: friend categories ("Kategoriye taşı") and naming moderators
+ * ("Moderatör yap", "Moderatörlükten al") as the desktop has them.
  */
 public final class SocialMenus {
     private SocialMenus() {}
@@ -75,8 +75,12 @@ public final class SocialMenus {
         /** ...they asked the player first. */
         ACCEPT_REQUEST,
         FAVOURITE, UNFAVOURITE,
+        /** MOB-PARITY: "Kategoriye taşı" (the service has friend categories). */
+        MOVE_TO_GROUP,
         /** "Ekibe davet et" (several crews: which one). */
         CREW_INVITE,
+        /** MOB-PARITY: in a crew's context the player leads (and the service has roles): name or un-name a moderator. */
+        MAKE_MODERATOR, UNMAKE_MODERATOR,
         /** In a crew's context, the player leads it. */
         HAND_OVER,
         /** In a crew's context: the leader anyone, a moderator (as the crew lets them) plain members. */
@@ -128,6 +132,14 @@ public final class SocialMenus {
         public boolean leaderHere;
         /** In a crew's context: the player may remove them from it. */
         public boolean removableHere;
+        /** MOB-PARITY: the service has crew roles ({@code roles}): moderators can be named. */
+        public boolean rolesHere;
+        /** MOB-PARITY: in a crew's context, they are one of its moderators. */
+        public boolean moderatorHere;
+        /** MOB-PARITY: that crew has its four moderators ("Moderatör yap" shows dim). */
+        public boolean moderatorsFull;
+        /** MOB-PARITY: the service has friend categories. */
+        public boolean categories;
         /** Reports are on (MOD1). */
         public boolean reports;
         /** The service takes a report about them (a friend, a crewmate, a request's sender, a join request's). */
@@ -176,10 +188,14 @@ public final class SocialMenus {
         // 3. Friend.
         if (in.friend) {
             out.add(row(in.favourite ? PersonAction.UNFAVOURITE : PersonAction.FAVOURITE));
+            if (in.categories) out.add(row(PersonAction.MOVE_TO_GROUP));
             if (in.crewInvite != Invite.NONE) out.add(row(PersonAction.CREW_INVITE, in.crewInvite != Invite.OPEN));
         }
         out.add(null);
         // 4. The crew whose context the menu is in.
+        if (in.leaderHere && in.rolesHere) {
+            out.add(in.moderatorHere ? row(PersonAction.UNMAKE_MODERATOR) : row(PersonAction.MAKE_MODERATOR, in.moderatorsFull));
+        }
         if (in.leaderHere) out.add(row(PersonAction.HAND_OVER));
         if (in.removableHere) out.add(row(PersonAction.REMOVE_FROM_CREW));
         out.add(null);

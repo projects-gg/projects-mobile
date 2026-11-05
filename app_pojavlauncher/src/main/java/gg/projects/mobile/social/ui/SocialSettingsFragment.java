@@ -51,7 +51,8 @@ import gg.projects.mobile.ui.Press;
  * device), which notifications this phone gets ("Davetler", "Ekip çağrıları", "Arkadaşlık istekleri";
  * they also decide what the service sends it), the blocked players with "Engeli kaldır", SOC-ID's
  * "Bağlı hesaplar" (the account's ways in: link one more, remove one), and the account: "Çıkış yap" and
- * "Verilerimi sil" (the desktop's question and words).
+ * "Verilerimi sil" (the desktop's question and words). MOB-PARITY: "Profil fotoğrafı" and "Oturumlar" ({@link
+ * ParitySettings}).
  */
 public class SocialSettingsFragment extends Fragment implements SocialService.Listener {
     public static final String TAG = "ProjectsSocialSettingsFragment";
@@ -62,6 +63,11 @@ public class SocialSettingsFragment extends Fragment implements SocialService.Li
     private String mShown = "";
     /** BADGES: "Rozetler". */
     private final OwnMarks mOwnMarks = new OwnMarks();
+    /** MOB-PARITY: "Profil fotoğrafı" and "Oturumlar". */
+    private final ParitySettings mParity = new ParitySettings(() -> {
+        mShown = "";
+        render();
+    });
 
     public SocialSettingsFragment() {
         super(R.layout.fragment_projects_social_settings);
@@ -83,6 +89,8 @@ public class SocialSettingsFragment extends Fragment implements SocialService.Li
         service.addListener(this);
         // SOC-ID: whether Microsoft can be linked now ("Bağlı hesaplar").
         service.readSignInOptions(false);
+        // MOB-PARITY: "Oturumlar" is read each time the settings open (nothing keeps it).
+        mParity.readSessions(requireContext());
         mShown = "";
         render();
     }
@@ -111,7 +119,7 @@ public class SocialSettingsFragment extends Fragment implements SocialService.Li
         SocialGate gate = service.gate();
         StringBuilder key = new StringBuilder();
         // BADGES: changes only when "Rozetler" must be drawn again (an answer agreeing with its switches is not).
-        key.append(mOwnMarks.key(service, me)).append('|');
+        key.append(mOwnMarks.key(service, me)).append('|').append(mParity.key(me)).append('|');
         key.append(me == null ? "" : me.shareLastSeen + "|" + me.shareServer + "|" + me.shareRead + "|" + me.shareTyping + "|"
                 + me.chatPrivacy).append('|')
                 .append(SocialNotifications.canNotify(context)).append('|').append(gate.teams).append(gate.calls).append(gate.mute)
@@ -131,8 +139,11 @@ public class SocialSettingsFragment extends Fragment implements SocialService.Li
         mShown = key.toString();
         mList.removeAllViews();
 
-        // BADGES: "Rozetler" before "Gizlilik", the launcher's order (it follows "Profil fotoğrafı" there, which the
-        // phone has not), while the player holds a badge and the service keeps the choice.
+        // MOB-PARITY: "Profil fotoğrafı" first, as on the desktop.
+        if (me != null) mParity.addPhoto(requireActivity(), mList, me);
+
+        // BADGES: "Rozetler" before "Gizlilik", the launcher's order (after "Profil fotoğrafı"), while the player holds a
+        // badge and the service keeps the choice.
         if (mOwnMarks.shows(service, me)) {
             section(R.string.projects_marks_title);
             mOwnMarks.addRows(mList, service, () -> {
@@ -206,6 +217,9 @@ public class SocialSettingsFragment extends Fragment implements SocialService.Li
 
         // SOC-ID: "Bağlı hesaplar", while the service lists them (it links and removes then).
         if (me != null && me.identitiesListed) identities(context, service, me);
+
+        // MOB-PARITY: "Oturumlar", where the account is signed in.
+        mParity.addSessions(requireActivity(), mList);
 
         section(R.string.projects_social_account);
         mList.addView(CrewViews.actionRow(context, R.drawable.projects_ic_sign_out, getString(R.string.projects_social_sign_out),

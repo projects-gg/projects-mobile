@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- MOB-PARITY: what the phone gained to match the desktop launcher, in the desktop's words. -->
+<resources>
+    <!-- Profil fotoğrafı -->
+    <string name="projects_parity_photo_title">Profil fotoğrafı</string>
+    <string name="projects_parity_photo_discord">Discord fotoğrafı</string>
+    <string name="projects_parity_photo_minecraft">Minecraft kafası</string>
+    <string name="projects_parity_photo_changed">Profil fotoğrafın değişti</string>
+    <string name="projects_parity_avatar_golden_dragon">Altın Ejderha</string>
+    <string name="projects_parity_avatar_ninja">Ninja</string>
+    <string name="projects_parity_avatar_van_cat">Van Kedisi</string>
+    <string name="projects_parity_avatar_baby_dragon">Yavru Ejderha</string>
+    <string name="projects_parity_avatar_fox">Kurnaz Tilki</string>
+    <string name="projects_parity_avatar_knight">Şövalye</string>
+    <string name="projects_parity_avatar_panda">Panda</string>
+    <string name="projects_parity_avatar_frost_dragon">Buz Ejderhası</string>
+    <string name="projects_parity_avatar_inventor">Mucit</string>
+    <string name="projects_parity_avatar_owl">Bilge Baykuş</string>
+    <string name="projects_parity_avatar_wizard">Büyücü</string>
+    <string name="projects_parity_avatar_potion">İksir</string>
+    <string name="projects_parity_avatar_robot">Robot</string>
+    <string name="projects_parity_avatar_axolotl">Aksolotl</string>
+    <string name="projects_parity_avatar_ember_dragon">Kor Ejderhası</string>
+    <string name="projects_parity_avatar_pirate">Korsan Kaptan</string>
+    <string name="projects_parity_avatar_lantern">Fener</string>
+    <string name="projects_parity_avatar_wolf">Gümüş Kurt</string>
+    <string name="projects_parity_avatar_crystal">Zümrüt Kristal</string>
+    <string name="projects_parity_avatar_dwarf_miner">Cüce Madenci</string>
+    <string name="projects_parity_avatar_compass">Pusula</string>
+    <string name="projects_parity_avatar_bunny">Pilot Tavşan</string>
+    <string name="projects_parity_avatar_spellbook">Büyü Kitabı</string>
+    <string name="projects_parity_avatar_elf_ranger">Elf Okçu</string>
+
+    <!-- Oturumlar -->
+    <string name="projects_parity_sessions_title">Oturumlar</string>
+    <string name="projects_parity_session_this_device">Bu cihaz</string>
+    <string name="projects_parity_session_last_used">Son kullanım %1$s</string>
+    <string name="projects_parity_session_today">bugün</string>
+    <string name="projects_parity_session_yesterday">dün</string>
+    <string name="projects_parity_session_via_microsoft">%1$s, Microsoft ile girildi</string>
+    <string name="projects_parity_session_revoke">Çıkış yap</string>
+    <string name="projects_parity_session_revoke_label">%1$s cihazından çıkış yap</string>
+    <string name="projects_parity_session_revoke_others">Diğer cihazlardan çıkış yap</string>
+    <plurals name="projects_parity_session_revoked_others">
+        <item quantity="one">%d cihazdan çıkış yapıldı</item>
+        <item quantity="other">%d cihazdan çıkış yapıldı</item>
+    </plurals>
+    <string name="projects_parity_session_none_other">Başka cihazda oturum yok.</string>
+    <string name="projects_parity_sessions_failed">Oturumlar yüklenemedi.</string>
+    <string name="projects_parity_session_unknown_device">Bilinmeyen cihaz</string>
+
+    <!-- Arkadaş kategorileri -->
+    <string name="projects_parity_groups_rest">Arkadaşlar</string>
+    <string name="projects_parity_groups_new">Yeni kategori</string>
+    <string name="projects_parity_groups_new_menu">Yeni kategori…</string>
+    <string name="projects_parity_groups_name">Kategori adı</string>
+    <string name="projects_parity_groups_create">Ekle</string>
+    <string name="projects_parity_groups_save">Kaydet</string>
+    <string name="projects_parity_groups_move_to">Kategoriye taşı</string>
+    <string name="projects_parity_groups_rename">Yeniden adlandır</string>
+    <string name="projects_parity_groups_remove">Kategoriyi sil</string>
+    <string name="projects_parity_groups_removed">%1$s silindi</string>
+    <string name="projects_parity_groups_move_up">Yukarı taşı</string>
+    <string name="projects_parity_groups_move_down">Aşağı taşı</string>
+    <string name="projects_parity_groups_options">%1$s seçenekleri</string>
+    <string name="projects_parity_groups_moved">%1$s, %2$s kategorisine taşındı</string>
+    <string name="projects_parity_groups_moved_rest">%1$s, Arkadaşlar listesine taşındı</string>
+    <string name="projects_parity_groups_limit">En fazla 20 kategori olabilir.</string>
+    <string name="projects_parity_groups_failed">Kategoriler kaydedilemedi.</string>
+
+    <!-- Ekip düzenleme, yetkiler, moderatörler -->
+    <string name="projects_parity_crew_edit">Düzenle</string>
+    <string name="projects_parity_crew_edit_title">Ekibi düzenle</string>
+    <string name="projects_parity_crew_save">Kaydet</string>
+    <string name="projects_parity_crew_saved">Ekip güncellendi</string>
+    <string name="projects_parity_roles_title">Yetkiler</string>
+    <string name="projects_parity_roles_moderators">Moderatörler</string>
+    <string name="projects_parity_roles_members">Üyeler</string>
+    <string name="projects_parity_roles_invite">Davet edebilir</string>
+    <string name="projects_parity_roles_call">Ekibi çağırabilir</string>
+    <string name="projects_parity_roles_kick">Üye çıkarabilir</string>
+    <string name="projects_parity_roles_edit">Görünümü ve sloganı düzenleyebilir</string>
+    <string name="projects_parity_roles_admit">İstekleri ve bağlantıyı yönetebilir</string>
+    <string name="projects_parity_role_on">Açık</string>
+    <string name="projects_parity_role_off">Kapalı</string>
+    <string name="projects_parity_roles_saved">Yetkiler güncellendi</string>
+    <string name="projects_parity_make_moderator">Moderatör yap</string>
+    <string name="projects_parity_unmake_moderator">Moderatörlükten al</string>
+    <string name="projects_parity_made_moderator">%1$s artık moderatör</string>
+    <string name="projects_parity_unmade_moderator">%1$s artık üye</string>
+</resources>

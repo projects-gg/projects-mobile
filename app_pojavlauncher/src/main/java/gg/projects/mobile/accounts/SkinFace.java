@@ -100,6 +100,18 @@ public final class SkinFace {
      * The https address of a Mojang skin texture ({@code textures.minecraft.net/texture/<id>}, which
      * the profile API gives as http), or null for any other address.
      */
+    /**
+     * MOB-PARITY: the texture id of a Mojang skin address ({@code minecraft:<id>} as the friends service takes it: 40 to
+     * 64 hex characters, lowercase), or null.
+     */
+    @androidx.annotation.Nullable
+    public static String textureId(@androidx.annotation.Nullable String url) {
+        String https = mojangTextureUrl(url);
+        if (https == null) return null;
+        String id = https.substring(https.lastIndexOf('/') + 1).toLowerCase(Locale.ROOT);
+        return id.matches("[0-9a-f]{40,64}") ? id : null;
+    }
+
     public static String mojangTextureUrl(String url) {
         if (url == null) return null;
         try {

@@ -971,6 +971,15 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         if (gate.slow && leader != null && (leader.founder || leader.moderator)) {
             rows.add(new Row(T_SLOW, "slow", "slow|" + team.id + "|" + slowShown(team), team));
         }
+        // MOB-PARITY: "Düzenle" (the leader; whoever the crew lets edit its look) and the leader's "Yetkiler".
+        if (me != null && gg.projects.mobile.social.CrewRoleRules.mayEdit(team, me, gate.roles)) {
+            rows.add(new Row(T_ACTION, "edit", "edit", new Action("edit", R.drawable.projects_ic_pencil,
+                    R.string.projects_parity_crew_edit, R.color.projects_bone_100)));
+        }
+        if (gate.roles && leader != null && leader.founder) {
+            rows.add(new Row(T_ACTION, "roles", "roles", new Action("roles", R.drawable.projects_ic_sliders,
+                    R.string.projects_parity_roles_title, R.color.projects_bone_100)));
+        }
         if (me != null && team.allows(me, team.permissions.invite)) {
             rows.add(new Row(T_ACTION, "invite", "invite", new Action("invite", R.drawable.projects_ic_user_plus,
                     R.string.projects_crew_invite_title, R.color.projects_bone_100)));
@@ -1566,6 +1575,12 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         switch (action.kind) {
             case "invite":
                 CrewSheets.inviteFriends(activity, team.id);
+                break;
+            case "edit":
+                CrewCreateFragment.edit(activity, team.id);
+                break;
+            case "roles":
+                CrewRoles.show(activity, team.id);
                 break;
             case "report":
                 ReportDialog.crew(activity, team, null);

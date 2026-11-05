@@ -2827,4 +2827,112 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
     public List<Friend> friendsSnapshot() {
         return Collections.unmodifiableList(mState.friends());
     }
+
+    // ---- MOB-PARITY: profile photo, sessions, friend categories, crew editing ----
+
+    /** "Profil fotoğrafı": {@code discord}, {@code preset:<slug>} or {@code minecraft:<texture>}, at once. */
+    public void setAvatar(String avatar, Result<JsonObject> result) {
+        JsonObject body = new JsonObject();
+        body.addProperty("avatar", avatar);
+        patchMe(body, result);
+    }
+
+    /** "Oturumlar": the account's sessions, read when the settings open (nothing keeps them). */
+    public void readSessions(Result<JsonObject> result) {
+        run(mApi::sessions, result, null);
+    }
+
+    public void revokeSession(final String session, Result<Void> result) {
+        run(() -> {
+            mApi.revokeSession(session);
+            return null;
+        }, result, null);
+    }
+
+    /** "Diğer cihazlardan çıkış yap": how many devices signed out. */
+    public void revokeOtherSessions(Result<Integer> result) {
+        run(mApi::revokeOtherSessions, result, null);
+    }
+
+    /** The last categories the service confirmed (a failed save comes back to them). */
+    @Nullable
+    private FriendGroups mGroupsConfirmed;
+    /** The newest categories waiting for their save; one save is on its way at a time. */
+    @Nullable
+    private FriendGroups mGroupsWaiting;
+    private boolean mGroupsSaving;
+    @Nullable
+    private Result<Void> mGroupsResult;
+
+    /**
+     * Friend categories: the new document shows at once and is saved (the desktop's queue: one {@code PUT} at a time,
+     * only the newest waiting one goes next; a failure brings back the last one the service confirmed and says so).
+     */
+    public void saveGroups(FriendGroups next, Result<Void> result) {
+        FriendGroups current = mState.groups();
+        if (current == null) return;
+        Set<String> friends = new HashSet<>();
+        for (Friend f : mState.friends()) friends.add(f.profile.id);
+        FriendGroups pruned = next.pruned(friends);
+        if (!pruned.valid()) {
+            result.failed(new SocialProblem(SocialProblem.Kind.FAILED, 400, "invalid_groups", 0));
+            return;
+        }
+        if (!mGroupsSaving && mGroupsWaiting == null) mGroupsConfirmed = current;
+        mGroupsWaiting = pruned;
+        mGroupsResult = result;
+        mState.setGroups(pruned);
+        changed();
+        saveNextGroups();
+    }
+
+    private void saveNextGroups() {
+        if (mGroupsSaving || mGroupsWaiting == null) return;
+        final FriendGroups doc = mGroupsWaiting;
+        final Result<Void> result = mGroupsResult;
+        mGroupsWaiting = null;
+        mGroupsResult = null;
+        mGroupsSaving = true;
+        run(() -> mApi.saveFriendGroups(doc), new Result<Long>() {
+            @Override
+            public void ok(Long version) {
+                mGroupsSaving = false;
+                FriendGroups confirmed = doc.withVersion(Math.max(version, doc.version));
+                mGroupsConfirmed = confirmed;
+                if (mGroupsWaiting == null) {
+                    FriendGroups shown = mState.groups();
+                    if (shown == null || shown.version <= confirmed.version) mState.setGroups(confirmed);
+                    changed();
+                    if (result != null) result.ok(null);
+                } else {
+                    saveNextGroups();
+                }
+            }
+
+            @Override
+            public void failed(SocialProblem problem) {
+                mGroupsSaving = false;
+                Result<Void> later = mGroupsResult;
+                mGroupsWaiting = null;
+                mGroupsResult = null;
+                if (mGroupsConfirmed != null && mToken != null) mState.setGroups(mGroupsConfirmed);
+                changed();
+                if (result != null) result.failed(problem);
+                if (later != null && later != result) later.failed(problem);
+            }
+        }, null);
+    }
+
+    /** The leader names a moderator or takes it back; the crew is read again. */
+    public void setModerator(final String teamId, final String userId, final boolean moderator, Result<Void> result) {
+        change(() -> {
+            mApi.setModerator(teamId, userId, moderator);
+            return null;
+        }, result, value -> refreshTeam());
+    }
+
+    /** "Düzenle" and "Yetkiler": only the changed fields; {@code texts} when the name, tag or motto changes. */
+    public void editCrew(final String teamId, final JsonObject changes, final boolean texts, Result<JsonObject> result) {
+        change(() -> mApi.editTeam(teamId, changes, texts), result, this::applyTeamAnswer);
+    }
 }

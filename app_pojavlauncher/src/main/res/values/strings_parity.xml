@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- MOB-PARITY: what the phone gained to match the desktop launcher, in the desktop's words. -->
+<resources>
+    <!-- Profile picture -->
+    <string name="projects_parity_photo_title">Profile picture</string>
+    <string name="projects_parity_photo_discord">Discord picture</string>
+    <string name="projects_parity_photo_minecraft">Minecraft head</string>
+    <string name="projects_parity_photo_changed">Profile picture changed</string>
+    <string name="projects_parity_avatar_golden_dragon">Golden Dragon</string>
+    <string name="projects_parity_avatar_ninja">Ninja</string>
+    <string name="projects_parity_avatar_van_cat">Van Cat</string>
+    <string name="projects_parity_avatar_baby_dragon">Baby Dragon</string>
+    <string name="projects_parity_avatar_fox">Sly Fox</string>
+    <string name="projects_parity_avatar_knight">Knight</string>
+    <string name="projects_parity_avatar_panda">Panda</string>
+    <string name="projects_parity_avatar_frost_dragon">Frost Dragon</string>
+    <string name="projects_parity_avatar_inventor">Inventor</string>
+    <string name="projects_parity_avatar_owl">Wise Owl</string>
+    <string name="projects_parity_avatar_wizard">Wizard</string>
+    <string name="projects_parity_avatar_potion">Potion</string>
+    <string name="projects_parity_avatar_robot">Robot</string>
+    <string name="projects_parity_avatar_axolotl">Axolotl</string>
+    <string name="projects_parity_avatar_ember_dragon">Ember Dragon</string>
+    <string name="projects_parity_avatar_pirate">Pirate Captain</string>
+    <string name="projects_parity_avatar_lantern">Lantern</string>
+    <string name="projects_parity_avatar_wolf">Silver Wolf</string>
+    <string name="projects_parity_avatar_crystal">Emerald Crystal</string>
+    <string name="projects_parity_avatar_dwarf_miner">Dwarf Miner</string>
+    <string name="projects_parity_avatar_compass">Compass</string>
+    <string name="projects_parity_avatar_bunny">Pilot Bunny</string>
+    <string name="projects_parity_avatar_spellbook">Spellbook</string>
+    <string name="projects_parity_avatar_elf_ranger">Elf Ranger</string>
+
+    <!-- Sessions -->
+    <string name="projects_parity_sessions_title">Sessions</string>
+    <string name="projects_parity_session_this_device">This device</string>
+    <string name="projects_parity_session_last_used">Last used %1$s</string>
+    <string name="projects_parity_session_today">today</string>
+    <string name="projects_parity_session_yesterday">yesterday</string>
+    <string name="projects_parity_session_via_microsoft">%1$s, signed in with Microsoft</string>
+    <string name="projects_parity_session_revoke">Sign out</string>
+    <string name="projects_parity_session_revoke_label">Sign out of %1$s</string>
+    <string name="projects_parity_session_revoke_others">Sign out of other devices</string>
+    <plurals name="projects_parity_session_revoked_others">
+        <item quantity="one">Signed out of %d device</item>
+        <item quantity="other">Signed out of %d devices</item>
+    </plurals>
+    <string name="projects_parity_session_none_other">No sessions on other devices.</string>
+    <string name="projects_parity_sessions_failed">Couldn\'t load your sessions.</string>
+    <string name="projects_parity_session_unknown_device">Unknown device</string>
+
+    <!-- Friend categories -->
+    <string name="projects_parity_groups_rest">Friends</string>
+    <string name="projects_parity_groups_new">New category</string>
+    <string name="projects_parity_groups_new_menu">New category…</string>
+    <string name="projects_parity_groups_name">Category name</string>
+    <string name="projects_parity_groups_create">Add</string>
+    <string name="projects_parity_groups_save">Save</string>
+    <string name="projects_parity_groups_move_to">Move to category</string>
+    <string name="projects_parity_groups_rename">Rename</string>
+    <string name="projects_parity_groups_remove">Delete category</string>
+    <string name="projects_parity_groups_removed">%1$s deleted</string>
+    <string name="projects_parity_groups_move_up">Move up</string>
+    <string name="projects_parity_groups_move_down">Move down</string>
+    <string name="projects_parity_groups_options">%1$s options</string>
+    <string name="projects_parity_groups_moved">%1$s moved to %2$s</string>
+    <string name="projects_parity_groups_moved_rest">%1$s moved to Friends</string>
+    <string name="projects_parity_groups_limit">You can have up to 20 categories.</string>
+    <string name="projects_parity_groups_failed">Couldn\'t save your categories.</string>
+
+    <!-- Crew editing, permissions, moderators -->
+    <string name="projects_parity_crew_edit">Edit</string>
+    <string name="projects_parity_crew_edit_title">Edit crew</string>
+    <string name="projects_parity_crew_save">Save</string>
+    <string name="projects_parity_crew_saved">Crew updated</string>
+    <string name="projects_parity_roles_title">Permissions</string>
+    <string name="projects_parity_roles_moderators">Moderators</string>
+    <string name="projects_parity_roles_members">Members</string>
+    <string name="projects_parity_roles_invite">Can invite</string>
+    <string name="projects_parity_roles_call">Can call the crew</string>
+    <string name="projects_parity_roles_kick">Can remove members</string>
+    <string name="projects_parity_roles_edit">Can edit the look and motto</string>
+    <string name="projects_parity_roles_admit">Can manage requests and the link</string>
+    <string name="projects_parity_role_on">On</string>
+    <string name="projects_parity_role_off">Off</string>
+    <string name="projects_parity_roles_saved">Permissions updated</string>
+    <string name="projects_parity_make_moderator">Make moderator</string>
+    <string name="projects_parity_unmake_moderator">Remove as moderator</string>
+    <string name="projects_parity_made_moderator">%1$s is a moderator now</string>
+    <string name="projects_parity_unmade_moderator">%1$s is a member now</string>
+</resources>

@@ -167,6 +167,12 @@ public final class SocialMenuSheet {
         Member theirs = here == null ? null : here.team.member(id);
         in.leaderHere = mine != null && theirs != null && mine.founder && !in.self;
         in.removableHere = theirs != null && CrewSheets.mayRemove(here.team, mine, theirs, gate);
+        // MOB-PARITY: naming moderators and friend categories.
+        in.rolesHere = gate.roles;
+        in.moderatorHere = theirs != null && theirs.moderator;
+        in.moderatorsFull = here != null && gg.projects.mobile.social.CrewRoleRules.moderators(here.team)
+                >= gg.projects.mobile.social.CrewRoleRules.MAX_MODERATORS;
+        in.categories = state.groups() != null;
         in.reports = gate.reports;
         in.reportable = in.friend || in.crewmate || in.incoming || pending == SocialMenus.Pending.JOIN_REQUEST;
         List<SocialMenus.Row<SocialMenus.PersonAction>> rows = SocialMenus.person(in);
@@ -237,6 +243,9 @@ public final class SocialMenuSheet {
             case FAVOURITE: return R.drawable.projects_ic_star;
             case UNFAVOURITE: return R.drawable.projects_ic_star_fill;
             case CREW_INVITE: return R.drawable.projects_ic_crew;
+            case MOVE_TO_GROUP: return R.drawable.projects_ic_users;
+            case MAKE_MODERATOR:
+            case UNMAKE_MODERATOR: return R.drawable.projects_ic_user_circle;
             case HAND_OVER: return R.drawable.projects_ic_crown_fill;
             case REMOVE_FROM_CREW:
             case REMOVE_FRIEND: return R.drawable.projects_ic_user_minus;
@@ -262,6 +271,9 @@ public final class SocialMenuSheet {
             case UNFAVOURITE: return c.getString(R.string.projects_social_unfavorite);
             case CREW_INVITE: return c.getString(in.crewInvite == SocialMenus.Invite.INVITED ? R.string.projects_crew_invite_sent
                     : R.string.projects_crew_invite_to);
+            case MOVE_TO_GROUP: return c.getString(R.string.projects_parity_groups_move_to);
+            case MAKE_MODERATOR: return c.getString(R.string.projects_parity_make_moderator);
+            case UNMAKE_MODERATOR: return c.getString(R.string.projects_parity_unmake_moderator);
             case HAND_OVER: return c.getString(R.string.projects_crew_hand_over);
             case REMOVE_FROM_CREW: return c.getString(R.string.projects_crew_remove);
             case REMOVE_FRIEND: return c.getString(R.string.projects_social_remove);
@@ -350,6 +362,18 @@ public final class SocialMenuSheet {
             case HAND_OVER:
                 handOver(activity, crewId, profile);
                 break;
+            case MOVE_TO_GROUP:
+                FriendGroupSheets.moveTo(activity, profile);
+                break;
+            case MAKE_MODERATOR:
+            case UNMAKE_MODERATOR: {
+                if (crewId == null) break;
+                final boolean make = action == SocialMenus.PersonAction.MAKE_MODERATOR;
+                // The desktop asks nothing: the change is plain and one tap takes it back.
+                service.setModerator(crewId, id, make, FriendCard.done(activity, activity.getString(make
+                        ? R.string.projects_parity_made_moderator : R.string.projects_parity_unmade_moderator, name)));
+                break;
+            }
             case REMOVE_FROM_CREW:
                 if (crewId == null) break;
                 SocialUi.confirm(activity, activity.getString(R.string.projects_crew_remove),
@@ -795,6 +819,8 @@ public final class SocialMenuSheet {
     private static void show(AlertDialog dialog, @Nullable View anchor) {
         if (dialog.getWindow() != null) dialog.getWindow().setWindowAnimations(R.style.ProjectsMenuSheetAnimation);
         dialog.show();
+        // MOB-PARITY: the gold focus ring for a TV remote or a keyboard in the sheet too.
+        gg.projects.mobile.ui.FocusRing.attach(dialog);
     }
 
     /** Whether a profile is the signed-in player (no menu on one's own row). */
