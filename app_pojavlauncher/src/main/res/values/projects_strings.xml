@@ -89,6 +89,31 @@
     <string name="projects_mods_dropped_title">This version is no longer updated</string>
     <string name="projects_mods_dropped_body">You can keep playing with your installed mods.</string>
     <string name="projects_mods_dropped_recommended">Recommended version: %1$s.</string>
+    <!-- M053: the version picker (the desktop's version dialog) -->
+    <string name="projects_mods_version_change">Change version</string>
+    <string name="projects_mods_versions_title">Minecraft version</string>
+    <string name="projects_mods_versions_description">Each version keeps its own mods and settings.</string>
+    <string name="projects_mods_version_current">Current</string>
+    <string name="projects_mods_version_recommended">Recommended</string>
+    <string name="projects_mods_version_saved">Saved</string>
+    <string name="projects_mods_version_not_offered">No longer offered</string>
+    <string name="projects_mods_switch_title">Switch to Minecraft %1$s</string>
+    <plurals name="projects_mods_switch_parked">
+        <item quantity="one">The %1$s set is kept: %2$d mod and settings.</item>
+        <item quantity="other">The %1$s set is kept: %2$d mods and settings.</item>
+    </plurals>
+    <plurals name="projects_mods_switch_restored">
+        <item quantity="one">The %1$s set comes back: %2$d mod.</item>
+        <item quantity="other">The %1$s set comes back: %2$d mods.</item>
+    </plurals>
+    <string name="projects_mods_switch_first">First switch: your mod choices and settings come along.</string>
+    <string name="projects_mods_switch_not_synced">Mods download when you start the game.</string>
+    <string name="projects_mods_switch_confirm">Switch to %1$s</string>
+    <string name="projects_mods_switch_ready">Minecraft %1$s is ready</string>
+    <string name="projects_mods_switch_back">Minecraft %1$s is back</string>
+    <string name="projects_mods_switch_failed">Couldn\'t switch versions. Try again.</string>
+    <string name="projects_mods_switch_busy">A download is running. Try again when it\'s done.</string>
+    <string name="projects_mods_switch_pending">Apply or discard your changes first.</string>
     <string name="projects_mods_calculating">Calculating</string>
     <plurals name="projects_mods_added">
         <item quantity="one">%1$d mod will be added</item>

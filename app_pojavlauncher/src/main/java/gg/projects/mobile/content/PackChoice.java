@@ -56,6 +56,13 @@ public final class PackChoice {
     public static PackChoice choose(RootIndex index, String recommendedPack, PackState state) {
         if (index == null || index.packs == null || index.packs.isEmpty()) return new PackChoice(Kind.NONE, null, null, null);
         if (state == null || state.packId == null || state.packId.isEmpty()) {
+            // M053: a version switch's first visit as the desktop writes it (no pack yet, the family and the version
+            // named): that version's member, not the recommended pack.
+            if (state != null && state.family != null && !state.family.isEmpty() && state.minecraft != null
+                    && !state.minecraft.isEmpty()) {
+                RootIndex.PackRef member = index.familyMember(state.family, state.minecraft);
+                if (member != null) return new PackChoice(Kind.MEMBER, member, null, null);
+            }
             return new PackChoice(Kind.NEW_INSTALL, index.newInstallPack(recommendedPack), null, null);
         }
         RootIndex.PackRef recorded = index.pack(state.packId);

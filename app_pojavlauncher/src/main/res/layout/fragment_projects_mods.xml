@@ -66,6 +66,17 @@
             tools:text="Projects 2.3.0, Minecraft 1.21.1"
             tools:visibility="visible" />
 
+        <!-- M053: "Sürümü değiştir" (the version picker), a quiet bone link under the caption, its words in line
+             with it (ProjectsModsFragment adds it while another version is offered). -->
+        <FrameLayout
+            android:id="@+id/projects_mods_version_slot"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="42dp"
+            android:layout_marginTop="-6dp"
+            android:layout_marginBottom="-8dp"
+            android:visibility="gone" />
+
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"

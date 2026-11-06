@@ -204,6 +204,81 @@ public final class PackState {
         return copy;
     }
 
+    /** M053: a version switch's two states ({@link #switchVersion}). */
+    public static final class VersionSwitch {
+        /** This state as it is kept with the parked set of the version being left. */
+        public final PackState parked;
+        /** The state the game folder takes for the target version. */
+        public final PackState active;
+
+        VersionSwitch(PackState parked, PackState active) {
+            this.parked = parked;
+            this.active = active;
+        }
+    }
+
+    /**
+     * M053: the desktop's {@code PackState::switch_version} (sync.rs), line by line: the active set moves from
+     * {@code fromMinecraft} to {@code toMinecraft}; {@code returning} is the target set's parked state, null on the first
+     * visit.
+     * <ul>
+     * <li>The parked state keeps this state's records under {@code mods/} and {@code config/} and its choices.</li>
+     * <li>Returning: the active state takes the target's {@code mods/} and {@code config/} records, this state's other
+     * records (shared files stay where they are) and the target's choices.</li>
+     * <li>First visit: the choices carry over (items the target's pack has and this set never saw are new and stay off)
+     * with the {@code config/} records, which the switch copies; no {@code mods/} record carries over, so the next sync
+     * installs the target's mods. The state names no pack version until that sync.</li>
+     * </ul>
+     */
+    public VersionSwitch switchVersion(String fromMinecraft, String toMinecraft, PackState returning) {
+        Map<String, InstalledFile> parkedFiles = new TreeMap<>();
+        Map<String, InstalledFile> sharedFiles = new TreeMap<>();
+        for (Map.Entry<String, InstalledFile> e : files.entrySet()) {
+            (inDirs(e.getKey(), VersionSets.PARKED_DIRS) ? parkedFiles : sharedFiles).put(e.getKey(), e.getValue().copy());
+        }
+        PackState active;
+        if (returning != null) {
+            active = returning.copy();
+            active.files.clear();
+            for (Map.Entry<String, InstalledFile> e : returning.files.entrySet()) {
+                if (inDirs(e.getKey(), VersionSets.PARKED_DIRS)) active.files.put(e.getKey(), e.getValue().copy());
+            }
+            active.files.putAll(sharedFiles);
+            if (returning.family == null || returning.family.isEmpty()) active.family = family;
+            active.minecraft = toMinecraft;
+        } else {
+            active = new PackState();
+            active.family = family;
+            active.minecraft = toMinecraft;
+            for (Map.Entry<String, InstalledFile> e : parkedFiles.entrySet()) {
+                if (inDirs(e.getKey(), VersionSets.COPIED_DIRS)) active.files.put(e.getKey(), e.getValue().copy());
+            }
+            active.files.putAll(sharedFiles);
+            active.groups.putAll(groups);
+            active.items.putAll(items);
+            active.seenItems.addAll(seenItems);
+        }
+        PackState parked = new PackState();
+        parked.packId = packId;
+        parked.versionId = versionId;
+        parked.family = family;
+        parked.minecraft = fromMinecraft;
+        parked.files.putAll(parkedFiles);
+        parked.groups.putAll(groups);
+        parked.items.putAll(items);
+        parked.seenItems.addAll(seenItems);
+        parked.manual.putAll(manual);
+        return new VersionSwitch(parked, active);
+    }
+
+    /** The path's first folder is one of {@code dirs} (case ignored, as the desktop's {@code in_dirs}). */
+    static boolean inDirs(String path, String[] dirs) {
+        int slash = path.indexOf('/');
+        String first = slash < 0 ? path : path.substring(0, slash);
+        for (String dir : dirs) if (first.equalsIgnoreCase(dir)) return true;
+        return false;
+    }
+
     /** Same content (what the file would contain). */
     public boolean sameAs(PackState other) {
         return other != null && toJson().equals(other.toJson());

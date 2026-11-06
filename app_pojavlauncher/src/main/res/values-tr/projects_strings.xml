@@ -87,6 +87,31 @@
     <string name="projects_mods_dropped_title">Bu sürüm artık güncellenmiyor</string>
     <string name="projects_mods_dropped_body">Kurulu modlarınla oynamaya devam edebilirsin.</string>
     <string name="projects_mods_dropped_recommended">Önerilen sürüm: %1$s.</string>
+    <!-- M053: sürüm seçici (masaüstünün sürüm penceresi) -->
+    <string name="projects_mods_version_change">Sürümü değiştir</string>
+    <string name="projects_mods_versions_title">Minecraft sürümü</string>
+    <string name="projects_mods_versions_description">Her sürümün modları ve ayarları ayrı saklanır.</string>
+    <string name="projects_mods_version_current">Şu an</string>
+    <string name="projects_mods_version_recommended">Önerilen</string>
+    <string name="projects_mods_version_saved">Saklı</string>
+    <string name="projects_mods_version_not_offered">Artık sunulmuyor</string>
+    <string name="projects_mods_switch_title">Minecraft %1$s sürümüne geç</string>
+    <plurals name="projects_mods_switch_parked">
+        <item quantity="one">%1$s seti saklanır: %2$d mod ve ayarlar.</item>
+        <item quantity="other">%1$s seti saklanır: %2$d mod ve ayarlar.</item>
+    </plurals>
+    <plurals name="projects_mods_switch_restored">
+        <item quantity="one">%1$s seti geri gelir: %2$d mod.</item>
+        <item quantity="other">%1$s seti geri gelir: %2$d mod.</item>
+    </plurals>
+    <string name="projects_mods_switch_first">İlk geçiş: mod seçimlerin ve ayarların taşınır.</string>
+    <string name="projects_mods_switch_not_synced">Modlar oyunu açınca indirilir.</string>
+    <string name="projects_mods_switch_confirm">%1$s sürümüne geç</string>
+    <string name="projects_mods_switch_ready">Minecraft %1$s hazır</string>
+    <string name="projects_mods_switch_back">Minecraft %1$s geri geldi</string>
+    <string name="projects_mods_switch_failed">Sürüm değiştirilemedi. Tekrar dene.</string>
+    <string name="projects_mods_switch_busy">Şu an indirme sürüyor. Bitince tekrar dene.</string>
+    <string name="projects_mods_switch_pending">Önce değişiklikleri uygula ya da vazgeç.</string>
     <string name="projects_mods_calculating">Hesaplanıyor</string>
     <plurals name="projects_mods_added">
         <item quantity="one">%1$d mod eklenecek</item>

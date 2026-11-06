@@ -40,6 +40,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import net.kdt.pojavlaunch.R;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -97,6 +98,9 @@ public class ProjectsModsFragment extends Fragment implements ModsApply.Listener
     private OnBackPressedCallback mBackCallback;
 
     private ModsModel mModel;
+    /** M053: the version picker's link under the caption, and a switch running. */
+    private android.widget.FrameLayout mVersionSlot;
+    private boolean mSwitching;
     /** Pending choices (item id to selected), starting from the recorded ones. */
     private final Map<String, Boolean> mChoices = new HashMap<>();
     private final Set<String> mRevert = new HashSet<>();
@@ -140,6 +144,9 @@ public class ProjectsModsFragment extends Fragment implements ModsApply.Listener
         mBarProgress = view.findViewById(R.id.projects_mods_bar_progress);
         mDiscard = view.findViewById(R.id.projects_mods_discard);
         mApply = view.findViewById(R.id.projects_mods_apply);
+        mVersionSlot = view.findViewById(R.id.projects_mods_version_slot);
+        mVersionSlot.addView(gg.projects.mobile.cloud.ui.CloudUi.textButton(context, getString(R.string.projects_mods_version_change),
+                v -> openVersions()));
 
         // Wide screens (landscape, tablets): a centered column keeps names, notes and switches together.
         if (getResources().getConfiguration().screenWidthDp > MAX_COLUMN_DP) {
@@ -298,6 +305,174 @@ public class ProjectsModsFragment extends Fragment implements ModsApply.Listener
             showMessage(model);
             recompute();
         }
+        // M053: the picker's link while another version is offered (the dropped state has its own button).
+        mVersionSlot.setVisibility(model.status == ModsModel.Status.READY && offersVersions(model) ? View.VISIBLE : View.GONE);
+    }
+
+    private static boolean offersVersions(ModsModel model) {
+        for (gg.projects.mobile.content.PackVersions.Option o : model.versions) if (o.available) return true;
+        return false;
+    }
+
+    // ---- M053: the version picker ----
+
+    private void openVersions() {
+        if (mModel == null || mSwitching || getActivity() == null) return;
+        Context c = requireActivity();
+        if (locked() || gg.projects.mobile.join.ProjectsJoin.isBusy()) {
+            gg.projects.mobile.social.ui.SocialUi.toast(c, getString(R.string.projects_mods_switch_busy));
+            return;
+        }
+        if (mSelection != null) {
+            gg.projects.mobile.social.ui.SocialUi.toast(c, getString(R.string.projects_mods_switch_pending));
+            return;
+        }
+        android.widget.LinearLayout content = new android.widget.LinearLayout(c);
+        content.setOrientation(android.widget.LinearLayout.VERTICAL);
+        content.setPadding(dp(c, 16), 0, dp(c, 16), dp(c, 12));
+        TextView title = new TextView(c);
+        title.setText(R.string.projects_mods_versions_title);
+        title.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 18);
+        title.setTextColor(ContextCompat.getColor(c, R.color.projects_bone_100));
+        title.setTypeface(androidx.core.content.res.ResourcesCompat.getFont(c, R.font.tektur_semibold));
+        title.setPadding(dp(c, 4), 0, dp(c, 4), dp(c, 4));
+        if (android.os.Build.VERSION.SDK_INT >= 28) title.setAccessibilityHeading(true);
+        content.addView(title);
+        TextView description = new TextView(c);
+        description.setText(R.string.projects_mods_versions_description);
+        description.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 13.5f);
+        description.setTextColor(ContextCompat.getColor(c, R.color.projects_ash_300));
+        description.setTypeface(androidx.core.content.res.ResourcesCompat.getFont(c, R.font.figtree_regular));
+        description.setPadding(dp(c, 4), 0, dp(c, 4), dp(c, 10));
+        content.addView(description);
+        final gg.projects.mobile.social.ui.BottomPanel[] panel = new gg.projects.mobile.social.ui.BottomPanel[1];
+        for (final gg.projects.mobile.content.PackVersions.Option option : mModel.versions) {
+            content.addView(versionRow(c, option, v -> {
+                if (panel[0] != null) panel[0].dismiss();
+                askSwitch(option);
+            }));
+        }
+        android.widget.ScrollView scroll = new android.widget.ScrollView(c);
+        scroll.addView(content);
+        panel[0] = gg.projects.mobile.social.ui.BottomPanel.of(c, scroll, 0.8f);
+        panel[0].show();
+    }
+
+    /** One version: "Minecraft 1.21.4" and what it is ("Şu an", "Önerilen", "Saklı", "Artık sunulmuyor"). */
+    private View versionRow(Context c, gg.projects.mobile.content.PackVersions.Option option, View.OnClickListener click) {
+        android.widget.LinearLayout row = new android.widget.LinearLayout(c);
+        row.setOrientation(android.widget.LinearLayout.VERTICAL);
+        row.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        row.setMinimumHeight(dp(c, 56));
+        row.setPadding(dp(c, 12), dp(c, 8), dp(c, 12), dp(c, 8));
+        TextView name = new TextView(c);
+        name.setText("Minecraft " + option.minecraft);
+        name.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 15);
+        name.setTextColor(ContextCompat.getColor(c, R.color.projects_bone_100));
+        name.setTypeface(androidx.core.content.res.ResourcesCompat.getFont(c, R.font.figtree_semibold));
+        row.addView(name);
+        List<String> marks = new ArrayList<>();
+        if (option.current) marks.add(getString(R.string.projects_mods_version_current));
+        if (option.recommended) marks.add(getString(R.string.projects_mods_version_recommended));
+        if (option.hasSet) marks.add(getString(R.string.projects_mods_version_saved));
+        if (!option.current && option.packId == null) marks.add(getString(R.string.projects_mods_version_not_offered));
+        if (!marks.isEmpty()) {
+            TextView meta = new TextView(c);
+            meta.setText(android.text.TextUtils.join(" · ", marks));
+            meta.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 13);
+            meta.setTextColor(ContextCompat.getColor(c, R.color.projects_ash_300));
+            meta.setTypeface(androidx.core.content.res.ResourcesCompat.getFont(c, R.font.figtree_regular));
+            row.addView(meta);
+        }
+        android.widget.LinearLayout.LayoutParams lp = new android.widget.LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.bottomMargin = dp(c, 2);
+        row.setLayoutParams(lp);
+        if (option.current) {
+            // The installed version on the quiet plate (design.md §2: a chosen option is never gold).
+            android.graphics.drawable.GradientDrawable plate = new android.graphics.drawable.GradientDrawable();
+            plate.setCornerRadius(dp(c, 10));
+            plate.setColor(0x1FFFFFFF);
+            row.setBackground(plate);
+            row.setSelected(true);
+        } else if (option.available) {
+            row.setBackgroundResource(R.drawable.projects_row_ripple);
+            row.setClickable(true);
+            row.setFocusable(true);
+            row.setOnClickListener(click);
+            gg.projects.mobile.ui.Press.attach(row, gg.projects.mobile.ui.Press.Style.ROW);
+        } else {
+            row.setAlpha(0.55f);
+        }
+        return row;
+    }
+
+    /** What the switch keeps and brings, then "{v} sürümüne geç" (the counts read off the main thread). */
+    private void askSwitch(final gg.projects.mobile.content.PackVersions.Option option) {
+        final ModsModel model = mModel;
+        if (model == null || model.currentMinecraft == null || option.packId == null) return;
+        final String from = model.currentMinecraft;
+        WORKER.execute(() -> {
+            final int leaving = ModsModel.modCount(model.gameDir, null);
+            final int coming = option.hasSet ? ModsModel.modCount(model.gameDir, option.minecraft) : -1;
+            mMain.post(() -> {
+                if (!isAdded() || getActivity() == null) return;
+                StringBuilder message = new StringBuilder(getResources().getQuantityString(
+                        R.plurals.projects_mods_switch_parked, leaving, from, leaving));
+                if (coming >= 0) {
+                    message.append('\n').append(getResources().getQuantityString(
+                            R.plurals.projects_mods_switch_restored, coming, option.minecraft, coming));
+                } else {
+                    message.append('\n').append(getString(R.string.projects_mods_switch_first))
+                            .append('\n').append(getString(R.string.projects_mods_switch_not_synced));
+                }
+                gg.projects.mobile.ui.ConfirmDialog.show(requireActivity(),
+                        getString(R.string.projects_mods_switch_title, option.minecraft), message.toString(),
+                        getString(R.string.projects_mods_switch_confirm, option.minecraft), false,
+                        () -> switchTo(from, option.minecraft, option.packId, true));
+            });
+        });
+    }
+
+    /** Switches the set; with {@code offerUndo} the notice's "Geri al" switches straight back. */
+    private void switchTo(final String from, final String to, final String toPackId, final boolean offerUndo) {
+        if (mSwitching || mModel == null) return;
+        if (!gg.projects.mobile.join.ProjectsJoin.tryBeginWork()) {
+            gg.projects.mobile.social.ui.SocialUi.toast(requireActivity(), getString(R.string.projects_mods_switch_busy));
+            return;
+        }
+        mSwitching = true;
+        final File gameDir = mModel.gameDir;
+        WORKER.execute(() -> {
+            gg.projects.mobile.content.VersionSets.Journal done = null;
+            try {
+                done = ModsModel.switchVersion(gameDir, from, to, toPackId);
+            } catch (java.io.IOException | RuntimeException e) {
+                android.util.Log.w(TAG, "version switch failed", e);
+            } finally {
+                gg.projects.mobile.join.ProjectsJoin.endWork();
+            }
+            final gg.projects.mobile.content.VersionSets.Journal result = done;
+            mMain.post(() -> {
+                mSwitching = false;
+                if (!isAdded() || getActivity() == null) return;
+                if (result == null) {
+                    gg.projects.mobile.social.ui.SocialUi.toast(requireActivity(), getString(R.string.projects_mods_switch_failed));
+                    return;
+                }
+                load(false);
+                String words = getString(result.firstVisit ? R.string.projects_mods_switch_ready : R.string.projects_mods_switch_back, to);
+                final String backPack = result.fromPack;
+                if (offerUndo && backPack != null && !backPack.isEmpty()) {
+                    gg.projects.mobile.social.ui.SocialUi.toastAction(requireActivity(), words, getString(R.string.projects_undo),
+                            () -> {
+                                if (isAdded()) switchTo(to, from, backPack, false);
+                            });
+                } else {
+                    gg.projects.mobile.social.ui.SocialUi.toast(requireActivity(), words);
+                }
+            });
+        });
     }
 
     private static String displayName(PackManifest manifest) {
@@ -327,6 +502,8 @@ public class ProjectsModsFragment extends Fragment implements ModsApply.Listener
             case UNAVAILABLE:
                 mMessageTitle.setText(R.string.projects_mods_unavailable_title);
                 mMessageBody.setText(R.string.projects_mods_unavailable_body);
+                mRetry.setText(R.string.projects_retry);
+                mRetry.setOnClickListener(v -> load(false));
                 mRetry.setVisibility(View.VISIBLE);
                 break;
             case DROPPED:
@@ -336,6 +513,12 @@ public class ProjectsModsFragment extends Fragment implements ModsApply.Listener
                     body += " " + getString(R.string.projects_mods_dropped_recommended, model.recommendedMinecraft);
                 }
                 mMessageBody.setText(body);
+                // M053: as the desktop's banner, "Sürümü değiştir" opens the picker.
+                if (offersVersions(model)) {
+                    mRetry.setText(R.string.projects_mods_version_change);
+                    mRetry.setOnClickListener(v -> openVersions());
+                    mRetry.setVisibility(View.VISIBLE);
+                }
                 break;
             default:
                 mMessageTitle.setText(R.string.projects_mods_empty_title);

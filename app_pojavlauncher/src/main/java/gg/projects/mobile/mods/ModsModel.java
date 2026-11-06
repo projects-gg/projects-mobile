@@ -9,6 +9,7 @@ import androidx.annotation.WorkerThread;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 import gg.projects.mobile.ProjectsContent;
@@ -19,6 +20,8 @@ import gg.projects.mobile.content.PackManifest;
 import gg.projects.mobile.content.PackSelection;
 import gg.projects.mobile.content.PackState;
 import gg.projects.mobile.content.PackSyncPlanner;
+import gg.projects.mobile.content.PackVersions;
+import gg.projects.mobile.content.VersionSets;
 import gg.projects.mobile.content.Snapshot;
 import gg.projects.mobile.content.SodiumSupport;
 import gg.projects.mobile.join.ProjectsPacks;
@@ -60,6 +63,9 @@ public final class ModsModel {
     public final File gameDir;
     @Nullable public final String recommendedMinecraft;
     @Nullable public final Throwable error;
+    /** M053: the versions the picker offers (empty: no picker), and the installed one. */
+    public List<PackVersions.Option> versions = Collections.emptyList();
+    @Nullable public String currentMinecraft;
 
     private ModsModel(Status status, @Nullable PackManifest manifest, @Nullable PackSyncPlanner.Plan plan, File gameDir,
                       @Nullable String recommendedMinecraft, @Nullable Throwable error, @Nullable Sodium sodium) {
@@ -88,8 +94,48 @@ public final class ModsModel {
     public static ModsModel load(Context context) {
         File gameDir = ProjectsProfile.knownGameDir();
         try {
+            // M053: a version switch the phone interrupted is finished before anything reads the folder.
+            try {
+                new VersionSets(gameDir).resume();
+            } catch (IOException e) {
+                Log.w(TAG, "version switch not finished", e);
+            }
             Snapshot snapshot = ProjectsContent.latestBlocking(context);
             PackState state = PackState.load(gameDir);
+            ModsModel model = loadWith(context, gameDir, snapshot, state);
+            if (snapshot.index != null && state != null) {
+                model.currentMinecraft = PackVersions.current(snapshot.index, state);
+                String recommended = snapshot.config == null ? null : snapshot.config.recommendedMinecraft();
+                model.versions = PackVersions.options(snapshot.index, state, recommended, new VersionSets(gameDir).parked());
+            }
+            return model;
+        } catch (RuntimeException e) {
+            Log.w(TAG, "mods unavailable", e);
+            return new ModsModel(Status.UNAVAILABLE, null, null, gameDir, null, e, null);
+        }
+    }
+
+    /** M053: switches the Projects folder to {@code to} (its mods come with the next start). Worker thread. */
+    @WorkerThread
+    public static VersionSets.Journal switchVersion(File gameDir, String from, String to, String toPackId) throws IOException {
+        return new VersionSets(gameDir).switchTo(from, to, toPackId, System.currentTimeMillis());
+    }
+
+    /** M053: how many mod files a set has (the active {@code mods/}, or a parked set's). */
+    @WorkerThread
+    public static int modCount(File gameDir, @Nullable String parkedMinecraft) {
+        File mods = parkedMinecraft == null ? new File(gameDir, "mods")
+                : new File(new File(new File(new File(gameDir, gg.projects.mobile.content.ContentPaths.LAUNCHER_DIR),
+                VersionSets.SETS_DIR), VersionSets.folderName(parkedMinecraft)), "mods");
+        File[] files = mods.listFiles();
+        int n = 0;
+        if (files != null) for (File f : files) if (f.isFile() && f.getName().endsWith(".jar")) n++;
+        return n;
+    }
+
+    @WorkerThread
+    private static ModsModel loadWith(Context context, File gameDir, Snapshot snapshot, @Nullable PackState state) {
+        try {
             PackChoice choice = snapshot.packChoice(state);
             if (choice.kind == PackChoice.Kind.NONE) {
                 boolean published = snapshot.hasContent() || ProjectsUi.nothingPublished(snapshot);
