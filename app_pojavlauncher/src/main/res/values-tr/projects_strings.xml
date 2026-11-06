@@ -328,10 +328,9 @@
     <!-- MOB-NEXT: the editor's switch at the bottom between the keys the game shows in play and those it shows in menus. -->
     <string name="projects_ctrl_scene_game">Oyunda</string>
     <string name="projects_ctrl_scene_menus">Menülerde</string>
-    <!-- M053: tuş panelinin boyut alanları (sesli okunur) ve tuşsuz bir yuva -->
+    <!-- M053: tuş panelinin boyut alanları (sesli okunur) -->
     <string name="projects_ctrl_width">Genişlik</string>
     <string name="projects_ctrl_height">Yükseklik</string>
-    <string name="projects_ctrl_key_none">Yok</string>
     <!-- MOB-NEXT: the way a drawer's keys open (the key settings panel's "Yön"), in ControlDrawerData.Orientation's order. -->
     <string-array name="projects_ctrl_drawer_orientations">
         <item>Aşağı</item>

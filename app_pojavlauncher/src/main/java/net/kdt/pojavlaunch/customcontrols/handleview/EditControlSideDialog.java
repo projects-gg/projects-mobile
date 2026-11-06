@@ -27,6 +27,8 @@ import androidx.core.os.ConfigurationCompat;
 import com.kdt.SideDialogView;
 
 import gg.projects.mobile.controls.EditorRules;
+import gg.projects.mobile.controls.KeyNames;
+import gg.projects.mobile.language.LanguageManager;
 
 import net.kdt.pojavlaunch.EfficientAndroidLWJGLKeycode;
 import net.kdt.pojavlaunch.R;
@@ -300,15 +302,14 @@ public class EditControlSideDialog extends SideDialogView {
 
     private void loadAdapter() {
         //Initialize adapter for keycodes
-        // Projects fork (M053): the app's list rows; the empty slot says "Yok" instead of the code name "UNKNOWN".
+        // Projects fork (M053): the app's list rows, and keys named as a player reads them ("Sol Shift", "Sağ tık",
+        // "Yok") instead of Android's code names (KeyNames; the order and so the saved codes are upstream's).
         mAdapter = new ArrayAdapter<>(mDialogContent.getContext(), R.layout.item_centered_textview);
         mSpecialArray = ControlData.buildSpecialButtonArray();
 
-        mAdapter.addAll(mSpecialArray);
-        String none = mDialogContent.getResources().getString(R.string.projects_ctrl_key_none);
-        for (String name : EfficientAndroidLWJGLKeycode.generateKeyName()) {
-            mAdapter.add("UNKNOWN".equals(name) ? none : name);
-        }
+        boolean turkish = LanguageManager.isTurkish(mDialogContent.getContext());
+        for (String name : mSpecialArray) mAdapter.add(KeyNames.of(name, turkish));
+        for (String name : EfficientAndroidLWJGLKeycode.generateKeyName()) mAdapter.add(KeyNames.of(name, turkish));
         mAdapter.setDropDownViewResource(R.layout.item_projects_ctrl_choice);
 
         for (Spinner spinner : mKeycodeSpinners) {
