@@ -29,6 +29,8 @@ public final class VoiceRoom {
         public boolean changed;
         /** People's playback changed (who is in, who is muted for everyone). */
         public boolean playback;
+        /** M051 (SHARE-LIVE): someone else started a screen share just now (a new number in their {@code state.sh}). */
+        @Nullable public String streamStarted;
     }
 
     public final String id;
@@ -44,6 +46,8 @@ public final class VoiceRoom {
     public final Map<String, Person> people = new TreeMap<>();
     /** The player is muted for everyone (from {@code hello} and {@code state}). */
     public boolean mySm;
+    /** M051: the player's own screen shares (from the desktop: a share outlives the room socket that started it). */
+    public List<VoiceWire.Share> mySh = Collections.emptyList();
     /** The player's own invites that ring: person → until (Unix seconds). */
     public final Map<String, Long> ringing = new TreeMap<>();
 
@@ -65,6 +69,7 @@ public final class VoiceRoom {
         for (Person person : hello.people) {
             if (person.u.equals(me)) {
                 room.mySm = person.sm;
+                room.mySh = person.sh;
             } else {
                 room.people.put(person.u, person);
             }
@@ -119,10 +124,18 @@ public final class VoiceRoom {
                         applied.changed = message.sm != mySm;
                         mySm = message.sm;
                     }
+                    if (message.sh != null && !message.sh.equals(mySh)) {
+                        mySh = message.sh;
+                        applied.changed = true;
+                    }
                 } else {
                     Person before = people.get(u);
                     if (before != null) {
                         Person after = before.with(message.mute, message.deaf, message.sm, message.q);
+                        if (message.sh != null) {
+                            after = after.withShares(message.sh);
+                            if (startsShare(before.sh, message.sh)) applied.streamStarted = u;
+                        }
                         people.put(u, after);
                         applied.changed = !after.equals(before);
                         applied.playback = after.sm != before.sm;
@@ -155,6 +168,16 @@ public final class VoiceRoom {
                 break;
         }
         return applied;
+    }
+
+    /** Whether {@code now} holds a share number {@code before} did not (a stream went live; a closing one is not). */
+    static boolean startsShare(List<VoiceWire.Share> before, List<VoiceWire.Share> now) {
+        for (VoiceWire.Share s : now) {
+            boolean known = false;
+            for (VoiceWire.Share b : before) if (b.n == s.n) known = true;
+            if (!known) return true;
+        }
+        return false;
     }
 
     /** Rings past their time (the room ends them too; this keeps the sheet honest meanwhile). */

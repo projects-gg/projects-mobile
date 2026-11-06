@@ -117,6 +117,54 @@ public final class VoiceHub {
         return mPrefs;
     }
 
+    // ---- M051 (SHARE-LIVE): a share's last small picture ----
+
+    public interface ThumbDone {
+        /** On the main thread: the picture, or null (none yet, not allowed, or no answer). */
+        void done(@Nullable android.graphics.Bitmap picture);
+    }
+
+    /** Pictures kept 20 s (the service's own {@code max-age}), by room, person, share and picture time. */
+    private static final long THUMB_KEEP_MS = 20_000;
+    private final java.util.Map<String, Object[]> mThumbs = new java.util.LinkedHashMap<>();
+
+    /**
+     * The last picture of {@code user}'s share {@code n} in {@code room} ({@code th}: its time; 0 asks nothing, there is
+     * none yet). Only asked while a screen shows it; no polling (a new {@code th} asks again).
+     */
+    @MainThread
+    public void thumb(String room, String user, int n, long th, ThumbDone done) {
+        if (th <= 0) {
+            done.done(null);
+            return;
+        }
+        final String key = room + "|" + user + "|" + n + "|" + th;
+        long now = android.os.SystemClock.elapsedRealtime();
+        Object[] kept = mThumbs.get(key);
+        if (kept != null && now - (Long) kept[0] < THUMB_KEEP_MS) {
+            done.done((android.graphics.Bitmap) kept[1]);
+            return;
+        }
+        mIo.execute(() -> {
+            android.graphics.Bitmap picture = null;
+            try {
+                SocialApi.Thumb answer = mHost.api().voiceThumb(room, user, n);
+                if (answer.kind == SocialApi.Thumb.Kind.IMAGE && answer.jpeg != null) {
+                    picture = android.graphics.BitmapFactory.decodeByteArray(answer.jpeg, 0, answer.jpeg.length);
+                }
+            } catch (SocialProblem problem) {
+                // No picture: the card keeps its quiet plate.
+            }
+            final android.graphics.Bitmap got = picture;
+            mMain.post(() -> {
+                // A few at most: the oldest goes.
+                if (mThumbs.size() >= 4) mThumbs.remove(mThumbs.keySet().iterator().next());
+                if (got != null) mThumbs.put(key, new Object[] {android.os.SystemClock.elapsedRealtime(), got});
+                done.done(got);
+            });
+        });
+    }
+
     // ---- the friends feature's events ----
 
     /** The signed config's {@code features.voice}. */

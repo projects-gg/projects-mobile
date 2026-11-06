@@ -52,7 +52,15 @@ public final class VoiceMachine {
     // ---- what goes out ----
 
     /** One of voice chat's own short sounds (the desktop's {@code EngineSound}). */
-    public enum Sound { JOIN, LEAVE, MIC_OFF, MIC_ON, DEAF_ON, DEAF_OFF, CONNECTED, ENDED, LOST, WAITING, STOP }
+    /**
+     * One of voice chat's own short sounds (the desktop's {@code EngineSound}). M051: {@code STREAM_START}, someone else
+     * in the room went live; the phone neither shares nor watches, so the desktop's {@code shareStart}, {@code shareStop}
+     * and {@code streamEnd} (the end of a stream the player watched) never come here.
+     */
+    public enum Sound { JOIN, LEAVE, MIC_OFF, MIC_ON, DEAF_ON, DEAF_OFF, CONNECTED, ENDED, LOST, WAITING, STREAM_START, STOP }
+
+    /** The same share sound plays once a second at most (share-live.md §1). */
+    static final long STREAM_SOUND_GAP_MS = 1_000;
 
     /** Why the player's stay ended (the desktop's {@code VoiceLeftReason}). */
     public enum LeftReason { CLOSED, ALONE, NO_ANSWER, ELSEWHERE, KICKED, CREW, IDLE, UNAVAILABLE, FAILED, RESTRICTED }
@@ -388,6 +396,8 @@ public final class VoiceMachine {
     /** The screens show live speaking rings now (a room surface on screen). */
     private boolean meters;
     private boolean metersSent;
+    /** When {@code STREAM_START} last played (null: never). */
+    @Nullable private Long streamSoundAt;
 
     public VoiceMachine(Prefs prefs, Random random) {
         this.prefs = prefs;
@@ -713,6 +723,11 @@ public final class VoiceMachine {
                     }
                 }
                 out.add(send(generation, VoiceWire.set(mute, deaf)));
+                // M051: a watch this account left here from the desktop goes (the phone shows no stream; the room's
+                // budget would count it while nobody looks).
+                for (Map.Entry<String, List<Integer>> watched : message.watch.entrySet()) {
+                    for (int n : watched.getValue()) out.add(send(generation, VoiceWire.unwatch(watched.getKey(), n)));
+                }
                 boolean calling = s.calling != null;
                 if (calling && alone && attached) out.add(sound(Sound.WAITING));
                 if (answered && attached) out.add(sound(Sound.STOP));
@@ -822,6 +837,11 @@ public final class VoiceMachine {
                     cue(Sound.JOIN, out);
                 } else if (applied.left != null) {
                     cue(Sound.LEAVE, out);
+                }
+                // M051 (SHARE-LIVE): someone else went live (a new share number; never on hello or a reconnect).
+                if (applied.streamStarted != null && (streamSoundAt == null || now - streamSoundAt >= STREAM_SOUND_GAP_MS)) {
+                    streamSoundAt = now;
+                    cue(Sound.STREAM_START, out);
                 }
                 if (applied.mutedMe) {
                     Effect notice = new Effect(Effect.Kind.NOTICE);
@@ -1289,6 +1309,7 @@ public final class VoiceMachine {
         v.max = room.max;
         v.me.role = roleName(room.myRole);
         v.me.mutedByModerator = room.mySm;
+        v.me.sharing = !room.mySh.isEmpty();
         for (Person person : room.peopleInOrder()) {
             VoiceState.Person p = new VoiceState.Person();
             Role theirs = room.roleOf(person.u);
@@ -1308,6 +1329,14 @@ public final class VoiceMachine {
             // The screens list the crew's other rooms (they hold the crew's list).
             p.canMove = acts && room.crewRoom;
             p.canModerator = !room.crewRoom && room.myRole == Role.LEADER;
+            if (!person.sh.isEmpty()) {
+                VoiceWire.Share first = person.sh.get(0);
+                p.sharing = true;
+                p.shareN = first.n;
+                p.shareSrc = first.src;
+                p.shareWatchers = first.w;
+                p.shareTh = first.th;
+            }
             if (person.card != null) {
                 p.cardName = person.card.name;
                 p.cardAvatar = person.card.avatar;

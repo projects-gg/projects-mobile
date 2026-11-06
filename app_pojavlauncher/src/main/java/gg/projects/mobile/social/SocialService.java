@@ -840,6 +840,18 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         // The hub speaks first ("hello").
     }
 
+    /**
+     * Debug builds only (M051, {@code DebugFrameReceiver}): one presence socket frame as if the hub sent it now, so a
+     * screen whose data the local service cannot make (who shares their screen needs a live voice room) can be seen on an
+     * emulator. Release builds ignore it.
+     */
+    public void debugFrame(JsonObject message) {
+        if (!BuildConfig.DEBUG) return;
+        mMain.post(() -> {
+            if (mConnection != null) onMessage(mConnection, message);
+        });
+    }
+
     @Override
     public void onMessage(PresenceConnection connection, JsonObject message) {
         if (connection != mConnection) return;

@@ -965,7 +965,7 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
                 String mine = m.profile.id.equals(state.myId()) && state.me() != null ? state.me().status : "";
                 rows.add(new Row(T_MEMBER, "m-" + m.profile.id, m.profile.name() + m.profile.faceKey() + m.founder + m.moderator
                         + p.state + p.dnd + p.where + p.host + state.isFriend(m.profile.id) + mine + "|" + badgeKey(gate, m.profile.badge)
-                        + "|" + ProfileMarks.key(service, m.profile), m));
+                        + "|" + ProfileMarks.key(service, m.profile) + "|" + gg.projects.mobile.voice.ui.LiveTag.sharing(m.profile.id), m));
             }
         }
         if (!team.code.isEmpty()) rows.add(new Row(T_CODE, "code", team.code, team.code));
@@ -1658,6 +1658,7 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         avatar.setDimmed(false);
         ((TextView) view.findViewById(R.id.projects_person_name)).setText(request.from.name());
         ((CrewTagChip) view.findViewById(R.id.projects_person_tag)).setBadgeOf(null, null, CrewTagChip.Size.MD);
+        gg.projects.mobile.voice.ui.LiveTag.bindRow(view, false);
         // BADGES: who asks, with their first badge right of their name.
         ProfileMarks.inline(view.findViewById(R.id.projects_person_name), request.from, 14);
         view.findViewById(R.id.projects_person_badge).setVisibility(View.GONE);
@@ -2486,6 +2487,7 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         TextView line = view.findViewById(R.id.projects_person_line);
         Button join = view.findViewById(R.id.projects_person_action);
         join.setEnabled(true);
+        gg.projects.mobile.voice.ui.LiveTag.bindRow(view, false);
         if (me) {
             SocialModel.Me self = state.me();
             String status = self == null ? SocialModel.Status.ONLINE : self.status;
@@ -2502,6 +2504,8 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         SocialModel.Presence presence = state.presence(member.profile.id);
         avatar.setDot(SocialUi.dot(presence));
         avatar.setDimmed(!presence.online());
+        // M051 (SHARE-LIVE): "YAYINDA" after a crewmate's name while they share their screen in a voice room.
+        gg.projects.mobile.voice.ui.LiveTag.bindRow(view, gg.projects.mobile.voice.ui.LiveTag.sharing(member.profile.id));
         line.setText(SocialUi.presenceLine(context, presence));
         line.setTextColor(ContextCompat.getColor(context, presence.onProjects() ? R.color.projects_jade_400 : R.color.projects_ash_400));
         join.setVisibility(presence.onProjects() ? View.VISIBLE : View.GONE);

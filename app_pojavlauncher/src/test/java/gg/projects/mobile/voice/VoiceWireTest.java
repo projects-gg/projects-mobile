@@ -25,9 +25,9 @@ public class VoiceWireTest {
 
     @Test
     public void clientFramesAsTheContractWritesThem() {
-        assertEquals(json("{\"t\":\"join\",\"sdp\":\"v=0\",\"mid\":\"0\"}"), json(VoiceWire.join("v=0", "0")));
-        assertEquals(json("{\"t\":\"join\"}"), json(VoiceWire.join(null, null)));
-        assertEquals(json("{\"t\":\"sync\"}"), json(VoiceWire.sync()));
+        assertEquals(json("{\"t\":\"join\",\"sdp\":\"v=0\",\"mid\":\"0\",\"caps\":[\"share1\",\"live1\"]}"), json(VoiceWire.join("v=0", "0")));
+        assertEquals(json("{\"t\":\"join\",\"caps\":[\"share1\",\"live1\"]}"), json(VoiceWire.join(null, null)));
+        assertEquals(json("{\"t\":\"sync\",\"caps\":[\"share1\",\"live1\"]}"), json(VoiceWire.sync()));
         assertEquals(json("{\"t\":\"answer\",\"sdp\":\"v=0 a\"}"), json(VoiceWire.answer("v=0 a")));
         assertEquals(json("{\"t\":\"set\",\"mute\":true,\"deaf\":false}"), json(VoiceWire.set(true, false)));
         assertEquals(json("{\"t\":\"q\",\"v\":1}"), json(VoiceWire.qualityFrame(1)));

@@ -55,6 +55,8 @@ public final class VoiceState {
         public boolean talking;
         /** 0 good, 1 weak, 2 bad. */
         public int quality;
+        /** M051: a screen share of the player's (started on the desktop) is live here. */
+        public boolean sharing;
     }
 
     public static final class Person {
@@ -78,6 +80,15 @@ public final class VoiceState {
         @Nullable public String cardAvatar;
         @Nullable public String cardAvatarHash;
         @Nullable public String cardDiscordId;
+        /**
+         * M051 (SHARE-LIVE): they share their screen ("YAYINDA"); their first live share's number, what it shows
+         * ({@code game}, {@code window}, {@code screen}), how many watch it and its last picture's time (0: none yet).
+         */
+        public boolean sharing;
+        public int shareN;
+        @Nullable public String shareSrc;
+        public int shareWatchers;
+        public long shareTh;
     }
 
     public static final class OutRing {

@@ -5,6 +5,8 @@ package gg.projects.mobile.voice;
  * one family of soft sine notes with a little of their octave, a quick attack and a natural decay, quiet (peaks near
  * -12 dBFS and under), all in A major. Rising says "on" or "in", falling "off" or "out". {@code WAITING} is one cycle of
  * the caller's tone, looped until someone comes. The ring itself is {@link #ring} (the desktop's {@code ring-sound.ts}).
+ * M051 (SHARE-LIVE): {@code STREAM_START} lands on an open fifth, an octave under the player's own stream sound: someone
+ * else in the room went live.
  */
 public final class VoiceSounds {
     private VoiceSounds() {}
@@ -54,6 +56,8 @@ public final class VoiceSounds {
                 return 0.48;
             case WAITING:
                 return 3;
+            case STREAM_START:
+                return 0.4;
             default:
                 return 0.3;
         }
@@ -82,6 +86,8 @@ public final class VoiceSounds {
             case WAITING:
                 return new Note[] {new Note(new double[] {A4, CS5}, 0, 0.32, 0.16, 0),
                         new Note(new double[] {A4, CS5}, 0.45, 0.32, 0.16, 0)};
+            case STREAM_START:
+                return new Note[] {n(A4, 0, 0.11, 0.13, 0.045), new Note(new double[] {E5, A5}, 0.075, 0.3, 0.17, 0.09)};
             default:
                 return new Note[0];
         }
@@ -118,9 +124,13 @@ public final class VoiceSounds {
         return sound == VoiceMachine.Sound.WAITING;
     }
 
-    /** Sounds of the player's own state play while deafened too; someone coming, leaving and the caller's tone do not. */
+    /**
+     * Sounds of the player's own state play while deafened too; someone coming, leaving or going live and the caller's
+     * tone do not.
+     */
     public static boolean playsWhileDeaf(VoiceMachine.Sound sound) {
-        return sound != VoiceMachine.Sound.JOIN && sound != VoiceMachine.Sound.LEAVE && sound != VoiceMachine.Sound.WAITING;
+        return sound != VoiceMachine.Sound.JOIN && sound != VoiceMachine.Sound.LEAVE && sound != VoiceMachine.Sound.WAITING
+                && sound != VoiceMachine.Sound.STREAM_START;
     }
 
     /**

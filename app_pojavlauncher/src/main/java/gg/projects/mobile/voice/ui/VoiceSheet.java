@@ -50,6 +50,10 @@ import gg.projects.mobile.voice.VoiceWire;
  * at the bottom Mikrofon, Sağırlaştır and Ayrıl. A tap on someone opens their sheet: "Ses seviyesi" (0–200 %), "Benim için
  * sustur", and what the player's role may do to them (Herkes için sustur, Odadan çıkar with "Geri al", Taşı, Moderatör
  * yap). The leader renames and closes the room from "⋯".
+ *
+ * <p>M051 (SHARE-LIVE): "YAYINDA" after the name of whoever shares their screen (the desktop's room panel). The phone
+ * cannot watch a stream; in place of the desktop's hover card, the person's sheet starts with their stream's last small
+ * picture (asked only while that sheet is open, again when the room's picture time moves) and "Oyun, 2 kişi izliyor".
  */
 public final class VoiceSheet implements VoiceLink.Listener {
     private final FragmentActivity mActivity;
@@ -65,6 +69,8 @@ public final class VoiceSheet implements VoiceLink.Listener {
     private final float mDp;
     @Nullable private VoiceState mState;
     private BottomPanel mPanel;
+    /** The open person sheet's stream picture (M051), or null. */
+    @Nullable private Picture mPicture;
 
     public static void show(FragmentActivity activity) {
         new VoiceSheet(activity).open();
@@ -155,6 +161,7 @@ public final class VoiceSheet implements VoiceLink.Listener {
             return;
         }
         render();
+        if (mPicture != null) mPicture.update(state);
     }
 
     @Override
@@ -214,7 +221,8 @@ public final class VoiceSheet implements VoiceLink.Listener {
         face.avatar().setProfile(mine);
         face.setSpeaking(s.me.talking);
         row.addView(face, new LinearLayout.LayoutParams(dp(44), dp(44)));
-        row.addView(names(c, name, roleWord(c, s.me.role, true)), weight());
+        row.addView(names(c, name, roleWord(c, s.me.role, true), s.me.sharing), weight());
+        if (s.me.sharing) row.setContentDescription(LiveTag.spoken(c, name, true));
         if (s.me.mutedByModerator) row.addView(mark(c, R.drawable.projects_ic_voice_mic_slash, R.color.projects_flare_400,
                 R.string.projects_voice_muted_for_all));
         else if (s.me.mute || s.mic != null) row.addView(mark(c, R.drawable.projects_ic_voice_mic_slash, R.color.projects_ash_400,
@@ -232,7 +240,7 @@ public final class VoiceSheet implements VoiceLink.Listener {
         face.setSpeaking(p.speaking);
         row.addView(face, new LinearLayout.LayoutParams(dp(44), dp(44)));
         String name = VoiceUi.nameOf(c, p);
-        row.addView(names(c, name, roleWord(c, p.role, false)), weight());
+        row.addView(names(c, name, roleWord(c, p.role, false), p.sharing), weight());
         if (p.mutedByModerator) row.addView(mark(c, R.drawable.projects_ic_voice_mic_slash, R.color.projects_flare_400,
                 R.string.projects_voice_muted_for_all));
         else if (p.mute) row.addView(mark(c, R.drawable.projects_ic_voice_mic_slash, R.color.projects_ash_400, R.string.projects_voice_mic_off));
@@ -244,7 +252,8 @@ public final class VoiceSheet implements VoiceLink.Listener {
         row.setFocusable(true);
         row.setBackgroundResource(R.drawable.projects_row_ripple);
         row.setOnClickListener(v -> person(s, p.id, name));
-        row.setContentDescription(name + (p.speaking ? ", " + c.getString(R.string.projects_voice_speaking) : ""));
+        row.setContentDescription(LiveTag.spoken(c, name, p.sharing)
+                + (p.speaking ? ", " + c.getString(R.string.projects_voice_speaking) : ""));
         Press.attach(row, Press.Style.ROW);
         return row;
     }
@@ -284,9 +293,14 @@ public final class VoiceSheet implements VoiceLink.Listener {
         VoiceFace face = new VoiceFace(c, 48);
         face.setPerson(c, id, p);
         head.addView(face, new LinearLayout.LayoutParams(dp(48), dp(48)));
-        head.addView(names(c, name, roleWord(c, p.role, false)), weight());
+        head.addView(names(c, name, roleWord(c, p.role, false), p.sharing), weight());
         content.addView(head);
         final BottomPanel[] panel = new BottomPanel[1];
+        // M051: their stream's last picture, while they share.
+        final Picture picture = new Picture(c, s.room, id, name);
+        content.addView(picture.view);
+        picture.update(s);
+        mPicture = picture;
 
         // "Ses seviyesi": the value beside it (no notch), 0–200 % in steps of 10.
         LinearLayout volume = new LinearLayout(c);
@@ -374,8 +388,88 @@ public final class VoiceSheet implements VoiceLink.Listener {
                                 () -> mod(VoiceWire.ModAct.UNKICK, id, null, name, null)));
                     }));
         }
-        panel[0] = BottomPanel.of(c, content, 0.7f);
+        panel[0] = BottomPanel.of(c, content, 0.7f).onClosed(() -> {
+            if (mPicture == picture) mPicture = null;
+            picture.closed = true;
+        });
         panel[0].show();
+    }
+
+    /**
+     * M051: the person sheet's stream picture (16:9 on a quiet plate, the share's kind and watchers under it); gone while
+     * they do not share. Asks the service only for a picture time it has not shown, never polls.
+     */
+    private final class Picture {
+        final LinearLayout view;
+        private final String room;
+        private final String id;
+        private final android.widget.ImageView image;
+        private final TextView line;
+        private long shownTh = -1;
+        boolean closed;
+
+        Picture(Context c, String room, String id, String name) {
+            this.room = room;
+            this.id = id;
+            view = new LinearLayout(c);
+            view.setOrientation(LinearLayout.VERTICAL);
+            view.setPadding(0, dp(8), 0, dp(8));
+            image = new android.widget.ImageView(c) {
+                @Override
+                protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+                    int width = MeasureSpec.getSize(widthMeasureSpec);
+                    setMeasuredDimension(width, width * 9 / 16);
+                }
+            };
+            image.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
+            android.graphics.drawable.GradientDrawable plate = new android.graphics.drawable.GradientDrawable();
+            plate.setCornerRadius(dp(8));
+            plate.setColor(ContextCompat.getColor(c, R.color.projects_obsidian_800));
+            image.setBackground(plate);
+            image.setClipToOutline(true);
+            image.setContentDescription(c.getString(R.string.projects_voice_share_picture, name));
+            view.addView(image, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT));
+            line = text(c, 13, R.color.projects_ash_400, R.font.figtree_regular);
+            line.setPadding(dp(4), dp(6), dp(4), 0);
+            view.addView(line);
+        }
+
+        void update(VoiceState s) {
+            if (closed) return;
+            VoiceState.Person p = s.person(id);
+            boolean sharing = p != null && p.sharing && room.equals(s.room);
+            view.setVisibility(sharing ? View.VISIBLE : View.GONE);
+            if (!sharing) {
+                shownTh = -1;
+                image.setImageDrawable(null);
+                return;
+            }
+            Context c = mActivity;
+            String kind = c.getString("game".equals(p.shareSrc) ? R.string.projects_voice_share_game
+                    : "window".equals(p.shareSrc) ? R.string.projects_voice_share_window : R.string.projects_voice_share_screen);
+            line.setText(p.shareWatchers > 0
+                    ? c.getResources().getQuantityString(R.plurals.projects_voice_share_watchers, p.shareWatchers, kind, p.shareWatchers)
+                    : c.getString(R.string.projects_voice_share_nobody, kind));
+            final long th = p.shareTh;
+            if (th == shownTh) return;
+            shownTh = th;
+            VoiceHub hub = VoiceHub.instance();
+            if (hub == null || th <= 0) return;
+            hub.thumb(room, id, p.shareN, th, picture -> {
+                if (closed || shownTh != th || picture == null) return;
+                boolean first = image.getDrawable() == null;
+                image.setImageBitmap(picture);
+                // A new picture fades in (200 ms); nothing moves with animations off.
+                if (first && gg.projects.mobile.mods.Motion.enabled(mActivity)) {
+                    image.setImageAlpha(0);
+                    android.animation.ValueAnimator fade = android.animation.ValueAnimator.ofInt(0, 255);
+                    fade.setDuration(200);
+                    fade.addUpdateListener(a -> image.setImageAlpha((Integer) a.getAnimatedValue()));
+                    fade.start();
+                }
+            });
+        }
     }
 
     private List<VoiceRings.CrewRoom> otherRooms(VoiceState s) {
@@ -525,7 +619,7 @@ public final class VoiceSheet implements VoiceLink.Listener {
         for (final SocialModel.Profile profile : candidates) {
             LinearLayout row = row(c);
             AvatarHolder.face(c, row, profile, dp(40));
-            row.addView(names(c, profile.name(), null), weight());
+            row.addView(names(c, profile.name(), null, false), weight());
             final TextView go = text(c, 14, R.color.projects_bone_100, R.font.figtree_semibold);
             go.setText(R.string.projects_voice_invite);
             go.setGravity(Gravity.CENTER);
@@ -577,13 +671,25 @@ public final class VoiceSheet implements VoiceLink.Listener {
         return row;
     }
 
-    private LinearLayout names(Context c, String name, @Nullable String small) {
+    private LinearLayout names(Context c, String name, @Nullable String small, boolean live) {
         LinearLayout box = new LinearLayout(c);
         box.setOrientation(LinearLayout.VERTICAL);
         box.setPaddingRelative(dp(12), 0, dp(8), 0);
         TextView n = text(c, 15, R.color.projects_bone_100, R.font.figtree_semibold);
         n.setText(name);
-        box.addView(n);
+        if (live) {
+            // M051: "YAYINDA" right after the name; a long name gives way to it.
+            gg.projects.mobile.ui.NameLine line = new gg.projects.mobile.ui.NameLine(c);
+            line.addView(n, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+            TextView tag = LiveTag.make(c, false);
+            LiveTag.show(tag, true);
+            line.addView(tag, LiveTag.after(c));
+            box.addView(line, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT));
+        } else {
+            box.addView(n);
+        }
         if (small != null) {
             TextView s = text(c, 12, R.color.projects_ash_400, R.font.figtree_regular);
             s.setText(small);

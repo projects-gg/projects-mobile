@@ -719,7 +719,8 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
             Presence p = state.presence(f.profile.id);
             rows.add(new Row(T_PERSON, "f-" + f.profile.id, "f|" + f.profile.name() + f.profile.faceKey() + "|" + p.state + p.dnd + p.where
                     + p.host + "|" + f.lastSeen + "|" + favourites.contains(f.profile.id) + "|"
-                    + (tags && f.profile.badge != null ? f.profile.badge.key() : "") + "|" + ProfileMarks.key(service, f.profile),
+                    + (tags && f.profile.badge != null ? f.profile.badge.key() : "") + "|" + ProfileMarks.key(service, f.profile)
+                    + "|" + gg.projects.mobile.voice.ui.LiveTag.sharing(f.profile.id),
                     new Person("friend", f.profile, f)));
         }
     }
@@ -1357,6 +1358,10 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
         avatar.setDimmed(false);
         // TEAM6: a friend's tag before their name (the other rows show none).
         CrewTagChip tagChip = view.findViewById(R.id.projects_person_tag);
+        // M051 (SHARE-LIVE): "YAYINDA" after a friend's name while they share their screen in a voice room.
+        boolean sharing = "friend".equals(person.kind) && person.profile != null
+                && gg.projects.mobile.voice.ui.LiveTag.sharing(person.profile.id);
+        gg.projects.mobile.voice.ui.LiveTag.bindRow(view, sharing);
         if (!"friend".equals(person.kind)) {
             tagChip.setBadgeOf(null, null, CrewTagChip.Size.MD);
             name.setContentDescription(null);

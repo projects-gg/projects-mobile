@@ -561,6 +561,59 @@ public final class SocialApi {
         return send("POST", "v1/voice/ring", body, true, false);
     }
 
+    /** M051: the answer to {@link #voiceThumb}: a JPEG, "you may not see it" ({@code locked}), or nothing yet. */
+    public static final class Thumb {
+        public enum Kind { IMAGE, LOCKED, NONE }
+
+        public final Kind kind;
+        @Nullable public final byte[] jpeg;
+
+        Thumb(Kind kind, @Nullable byte[] jpeg) {
+            this.kind = kind;
+            this.jpeg = jpeg;
+        }
+    }
+
+    /** A share's picture is at most 24 KB; anything much larger is not one. */
+    private static final int MAX_THUMB = 64 * 1024;
+
+    /**
+     * M051 (SHARE-LIVE, share-live.md §3): {@code GET /v1/voice/thumb?room=&u=&n=}, the last small picture of {@code u}'s
+     * share {@code n} in {@code room}: 200 a JPEG, 403 {@code {"locked":true}}, 404 none (no share, no picture yet, a block,
+     * or a room the player cannot see). Ids never reach the log.
+     */
+    @WorkerThread
+    public Thumb voiceThumb(String room, String user, int n) throws SocialProblem {
+        if (!gg.projects.mobile.voice.VoiceWire.isRoomId(room) || n < 1 || n > 255) {
+            throw new SocialProblem(SocialProblem.Kind.FAILED, 0, "bad id", 0);
+        }
+        String token = mBoundToken.get() != null ? mBoundToken.get() : mToken;
+        if (token == null) throw new SocialProblem(SocialProblem.Kind.SIGNED_OUT, 401, "no session", 0);
+        Request request = new Request.Builder()
+                .url(mBase + "v1/voice/thumb?room=" + room + "&u=" + id(user) + "&n=" + n)
+                .header("User-Agent", mUserAgent)
+                .header("Accept", "image/jpeg")
+                .header("Authorization", "Bearer " + token)
+                .get()
+                .build();
+        try (Response response = mClient.newCall(request).execute()) {
+            int status = response.code();
+            if (status == 200) {
+                ResponseBody body = response.body();
+                byte[] bytes = body == null || body.contentLength() > MAX_THUMB ? null : body.bytes();
+                if (bytes == null || bytes.length == 0 || bytes.length > MAX_THUMB) return new Thumb(Thumb.Kind.NONE, null);
+                return new Thumb(Thumb.Kind.IMAGE, bytes);
+            }
+            if (status == 403) return new Thumb(Thumb.Kind.LOCKED, null);
+            if (status == 404) return new Thumb(Thumb.Kind.NONE, null);
+            String text = readBody(response.body());
+            Log.i(TAG, "GET v1/voice/thumb -> " + status);
+            throw SocialProblem.of(status, text, response.header("Retry-After"), false);
+        } catch (IOException e) {
+            throw SocialProblem.unavailable(e.getClass().getSimpleName());
+        }
+    }
+
     // ---- MOB-PARITY: sessions, friend categories, crew moderators and texts ----
 
     /** {@code GET /v1/sessions}: {@code {sessions: [{id, device, app, via, createdOn, lastUsedOn, current}]}}. */

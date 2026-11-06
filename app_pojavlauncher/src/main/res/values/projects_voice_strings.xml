@@ -134,4 +134,18 @@
     <string name="projects_voice_channel_stay">Voice chat</string>
     <string name="projects_voice_stay_title">In voice chat</string>
     <string name="projects_voice_crew_room">%1$s, %2$s</string>
+    <!-- M051 (SHARE-LIVE on the phone): the tag after the name of someone who shares their screen (the desktop's
+         share.tag, the one all-caps tag), its spoken word, and the person sheet's picture line ("Game, 2 people
+         watching"; after the comma in lower case). -->
+    <string name="projects_voice_live_tag">LIVE</string>
+    <string name="projects_voice_live_spoken">live</string>
+    <string name="projects_voice_share_game">Game</string>
+    <string name="projects_voice_share_window">Window</string>
+    <string name="projects_voice_share_screen">Screen</string>
+    <plurals name="projects_voice_share_watchers">
+        <item quantity="one">%1$s, %2$d person watching</item>
+        <item quantity="other">%1$s, %2$d people watching</item>
+    </plurals>
+    <string name="projects_voice_share_nobody">%1$s, nobody\'s watching</string>
+    <string name="projects_voice_share_picture">Latest picture from %1$s\'s stream</string>
 </resources>

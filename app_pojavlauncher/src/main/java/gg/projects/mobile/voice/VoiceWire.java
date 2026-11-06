@@ -83,16 +83,40 @@ public final class VoiceWire {
         }
     }
 
+    /**
+     * M051 (SHARE-LIVE on the phone): the room socket's capabilities. {@code share1} lets the phone hear who shares their
+     * screen ({@code state.sh}, {@code hello.people[].sh}), {@code live1} each share's picture time ({@code th}). The phone
+     * never shares or watches: it sends no share frame but {@link #unwatch} for a watch left over from the desktop.
+     */
+    static final String[] CAPS = {"share1", "live1"};
+
     /** {@code join}: {@code sdp} publishes the microphone (null: listen only), {@code mid} its m-line. */
     public static String join(@Nullable String sdp, @Nullable String mid) {
         JsonObject o = frame("join");
         if (sdp != null) o.addProperty("sdp", sdp);
         if (mid != null) o.addProperty("mid", mid);
+        o.add("caps", caps());
         return o.toString();
     }
 
     public static String sync() {
-        return frame("sync").toString();
+        JsonObject o = frame("sync");
+        o.add("caps", caps());
+        return o.toString();
+    }
+
+    /** {@code unwatch}: no longer watch {@code u}'s share {@code n} (the phone shows no stream). */
+    public static String unwatch(String u, int n) {
+        JsonObject o = frame("unwatch");
+        o.addProperty("u", u);
+        o.addProperty("n", n);
+        return o.toString();
+    }
+
+    private static JsonArray caps() {
+        JsonArray caps = new JsonArray();
+        for (String cap : CAPS) caps.add(cap);
+        return caps;
     }
 
     public static String answer(String sdp) {
@@ -169,8 +193,14 @@ public final class VoiceWire {
         /** VOICE-S2: their card (names a friend's friend), or null. */
         @Nullable
         public final Card card;
+        /** M051 (SHARE-LIVE): their screen shares now, by number (empty: none). */
+        public final List<Share> sh;
 
         public Person(String u, long j, boolean mute, boolean deaf, boolean sm, int q, @Nullable Card card) {
+            this(u, j, mute, deaf, sm, q, card, Collections.<Share>emptyList());
+        }
+
+        public Person(String u, long j, boolean mute, boolean deaf, boolean sm, int q, @Nullable Card card, List<Share> sh) {
             this.u = u;
             this.j = j;
             this.mute = mute;
@@ -178,11 +208,16 @@ public final class VoiceWire {
             this.sm = sm;
             this.q = q;
             this.card = card;
+            this.sh = sh;
         }
 
         public Person with(@Nullable Boolean mute, @Nullable Boolean deaf, @Nullable Boolean sm, @Nullable Integer q) {
             return new Person(u, j, mute == null ? this.mute : mute, deaf == null ? this.deaf : deaf,
-                    sm == null ? this.sm : sm, q == null ? this.q : q, card);
+                    sm == null ? this.sm : sm, q == null ? this.q : q, card, sh);
+        }
+
+        public Person withShares(List<Share> shares) {
+            return new Person(u, j, mute, deaf, sm, q, card, shares);
         }
 
         @Nullable
@@ -190,14 +225,15 @@ public final class VoiceWire {
             String u = Json.str(o, "u");
             if (u == null || u.isEmpty()) return null;
             return new Person(u, Json.num(o, "j", 0), Json.bool(o, "mute", false), Json.bool(o, "deaf", false),
-                    Json.bool(o, "sm", false), quality(Json.num(o, "q", 0)), Card.read(Json.obj(o, "card")));
+                    Json.bool(o, "sm", false), quality(Json.num(o, "q", 0)), Card.read(Json.obj(o, "card")),
+                    Share.list(Json.arr(o, "sh")));
         }
 
         @Override
         public boolean equals(Object other) {
             if (!(other instanceof Person)) return false;
             Person p = (Person) other;
-            return u.equals(p.u) && j == p.j && mute == p.mute && deaf == p.deaf && sm == p.sm && q == p.q;
+            return u.equals(p.u) && j == p.j && mute == p.mute && deaf == p.deaf && sm == p.sm && q == p.q && sh.equals(p.sh);
         }
 
         @Override
@@ -237,6 +273,58 @@ public final class VoiceWire {
             String display = Json.str(o, "displayName");
             return new Card(id, display == null || display.isEmpty() ? username : display, Json.str(o, "avatar"),
                     Json.str(o, "avatarHash"), Json.str(o, "discordId"));
+        }
+    }
+
+    /**
+     * M051 (SHARE-LIVE): one screen share as the room shows it ({@code sh}; share.md §4, share-live.md §2): its number,
+     * what it shows ({@code game}, {@code window}, {@code screen}), how many watch it and, with {@code live1}, its last
+     * picture's time (Unix seconds; 0: none yet). The rest of it is the desktop's.
+     */
+    public static final class Share {
+        public final int n;
+        public final String src;
+        public final int w;
+        public final long th;
+
+        public Share(int n, String src, int w, long th) {
+            this.n = n;
+            this.src = src;
+            this.w = w;
+            this.th = th;
+        }
+
+        @Nullable
+        static Share read(@Nullable JsonObject o) {
+            Long n = Json.numOrNull(o, "n");
+            if (n == null || n < 1 || n > 255) return null;
+            return new Share(n.intValue(), Json.str(o, "src", "screen"), (int) Math.max(0, Json.num(o, "w", 0)),
+                    Math.max(0, Json.num(o, "th", 0)));
+        }
+
+        /** Shares by number; one that does not read is left out, a list that does not read is none. */
+        static List<Share> list(@Nullable JsonArray array) {
+            if (array == null || array.size() == 0) return Collections.emptyList();
+            List<Share> out = new ArrayList<>();
+            for (JsonElement e : array) {
+                if (!e.isJsonObject()) continue;
+                Share s = read(e.getAsJsonObject());
+                if (s != null) out.add(s);
+            }
+            Collections.sort(out, (a, b) -> Integer.compare(a.n, b.n));
+            return out;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (!(other instanceof Share)) return false;
+            Share s = (Share) other;
+            return n == s.n && src.equals(s.src) && w == s.w && th == s.th;
+        }
+
+        @Override
+        public int hashCode() {
+            return n;
         }
     }
 
@@ -291,6 +379,8 @@ public final class VoiceWire {
         @Nullable public String sdp;
         @Nullable public String resume;
         @Nullable public Long now;
+        /** hello ({@code share1}): the shares this account watches here ({@code me.watch}: person → numbers). */
+        public Map<String, List<Integer>> watch = Collections.emptyMap();
         // offer
         public Map<String, String> mids = Collections.emptyMap();
         // joined
@@ -302,6 +392,8 @@ public final class VoiceWire {
         @Nullable public Boolean deaf;
         @Nullable public Boolean sm;
         @Nullable public Integer q;
+        /** state ({@code share1}): their shares now (null: the frame does not say). */
+        @Nullable public List<Share> sh;
         // ring, ring_end
         @Nullable public String to;
         public long until;
@@ -354,6 +446,19 @@ public final class VoiceWire {
                     m.sdp = Json.str(o, "sdp");
                     m.resume = Json.str(o, "resume");
                     m.now = Json.numOrNull(o, "now");
+                    Map<String, List<Integer>> watch = new TreeMap<>();
+                    for (JsonObject w : Json.objects(Json.obj(o, "me"), "watch")) {
+                        String wu = Json.str(w, "u");
+                        Long wn = Json.numOrNull(w, "n");
+                        if (wu == null || wn == null) continue;
+                        List<Integer> ns = watch.get(wu);
+                        if (ns == null) {
+                            ns = new ArrayList<>();
+                            watch.put(wu, ns);
+                        }
+                        ns.add(wn.intValue());
+                    }
+                    m.watch = watch;
                     m.kind = Kind.HELLO;
                     return m;
                 }
@@ -392,6 +497,8 @@ public final class VoiceWire {
                     m.sm = optBool(o, "sm");
                     Long q = Json.numOrNull(o, "q");
                     m.q = q == null ? null : quality(q);
+                    JsonElement sh = o.get("sh");
+                    if (sh != null && sh.isJsonArray()) m.sh = Share.list(sh.getAsJsonArray());
                     m.kind = Kind.STATE;
                     return m;
                 }

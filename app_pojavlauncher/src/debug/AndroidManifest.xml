@@ -11,5 +11,10 @@
             android:name="gg.projects.mobile.social.DebugPushReceiver"
             android:exported="true"
             android:permission="android.permission.DUMP" />
+        <!-- Debug builds only (M051): a presence socket frame sent from adb (DebugFrameReceiver), shell only. -->
+        <receiver
+            android:name="gg.projects.mobile.social.DebugFrameReceiver"
+            android:exported="true"
+            android:permission="android.permission.DUMP" />
     </application>
 </manifest>

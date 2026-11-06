@@ -128,13 +128,20 @@ public final class VoiceRings {
         public final int max;
         /** VOICE-ROOMS: the player opened it. */
         public final boolean own;
+        /** M051 (SHARE-LIVE): who in it shares their screen (share-live.md §4; empty while sharing is off). */
+        public final List<String> live;
 
         public CrewRoom(String id, String name, List<String> ids, int max, boolean own) {
+            this(id, name, ids, max, own, Collections.<String>emptyList());
+        }
+
+        public CrewRoom(String id, String name, List<String> ids, int max, boolean own, List<String> live) {
             this.id = id;
             this.name = name;
             this.ids = ids;
             this.max = max;
             this.own = own;
+            this.live = live;
         }
 
         public boolean general() {
@@ -145,8 +152,12 @@ public final class VoiceRings {
         static CrewRoom read(@Nullable JsonObject o) {
             String id = Json.str(o, "id");
             if (!VoiceWire.isRoomId(id)) return null;
-            return new CrewRoom(id, Json.str(o, "name", "Genel"), Json.strings(o, "ids"), (int) Json.num(o, "max", 0),
-                    Json.bool(o, "own", false));
+            List<String> ids = Json.strings(o, "ids");
+            // Only people the list shows (the hub leaves blocked ones out of both).
+            List<String> live = new ArrayList<>();
+            for (String u : Json.strings(o, "live")) if (ids.contains(u)) live.add(u);
+            return new CrewRoom(id, Json.str(o, "name", "Genel"), ids, (int) Json.num(o, "max", 0),
+                    Json.bool(o, "own", false), live);
         }
     }
 
@@ -198,6 +209,8 @@ public final class VoiceRings {
     private final Map<String, List<CrewRoom>> crews = new TreeMap<>();
     /** {@code presence.voice} of the people the player sees ({@code ready} or {@code in}). */
     private final Map<String, String> presence = new TreeMap<>();
+    /** M051 (SHARE-LIVE): friends whose presence says they share their screen in their room ({@code presence.live}). */
+    private final java.util.Set<String> livePresence = new java.util.TreeSet<>();
     private List<String> ignored = Collections.emptyList();
 
     // ---- switches ----
@@ -222,6 +235,7 @@ public final class VoiceRings {
             hubUp = false;
             crews.clear();
             presence.clear();
+            livePresence.clear();
             endRings(out);
             missed.clear();
         }
@@ -253,6 +267,7 @@ public final class VoiceRings {
         crews.clear();
         for (JsonObject crew : Json.objects(hello, "voiceRooms")) putCrew(crew);
         presence.clear();
+        livePresence.clear();
         // The hello's presences: friends, then crewmates.
         for (JsonObject p : Json.objects(hello, "friends")) readPresence(p);
         for (JsonObject p : Json.objects(hello, "team")) readPresence(p);
@@ -266,6 +281,7 @@ public final class VoiceRings {
     public List<Effect> hubDown() {
         hubUp = false;
         presence.clear();
+        livePresence.clear();
         List<Effect> out = new ArrayList<>();
         out.add(changed());
         return out;
@@ -338,6 +354,8 @@ public final class VoiceRings {
         String voice = Json.str(p, "voice");
         if ("ready".equals(voice) || "in".equals(voice)) presence.put(id, voice);
         else presence.remove(id);
+        if ("in".equals(voice) && Json.bool(p, "live", false)) livePresence.add(id);
+        else livePresence.remove(id);
     }
 
     // ---- rings ----
@@ -558,6 +576,19 @@ public final class VoiceRings {
     @Nullable
     public String presenceOf(String id) {
         return presence.get(id);
+    }
+
+    /**
+     * M051 (SHARE-LIVE): whether someone the player sees shares their screen in a voice room ("YAYINDA"): a friend's
+     * {@code presence.live}, or a crewmate on a crew room's {@code live} list.
+     */
+    public boolean sharing(String id) {
+        if (!available()) return false;
+        if (livePresence.contains(id)) return true;
+        for (List<CrewRoom> rooms : crews.values()) {
+            for (CrewRoom room : rooms) if (room.live.contains(id)) return true;
+        }
+        return false;
     }
 
     /** Whether someone the player sees is in a voice room (a friend's {@code in}, a crewmate in a crew room). */

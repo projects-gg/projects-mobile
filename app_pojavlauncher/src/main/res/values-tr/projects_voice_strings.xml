@@ -135,4 +135,17 @@
     <string name="projects_voice_channel_stay">Sesli sohbet</string>
     <string name="projects_voice_stay_title">Sesli sohbette</string>
     <string name="projects_voice_crew_room">%1$s, %2$s</string>
+    <!-- M051 (SHARE-LIVE telefonda): ekranını paylaşanın adından sonraki etiket (masaüstünün share.tag'i, tek büyük
+         harfli etiket), sesli okunuşu ve kişi sayfasındaki görüntünün satırı ("Oyun, 2 kişi izliyor"). -->
+    <string name="projects_voice_live_tag">YAYINDA</string>
+    <string name="projects_voice_live_spoken">yayında</string>
+    <string name="projects_voice_share_game">Oyun</string>
+    <string name="projects_voice_share_window">Pencere</string>
+    <string name="projects_voice_share_screen">Ekran</string>
+    <plurals name="projects_voice_share_watchers">
+        <item quantity="one">%1$s, %2$d kişi izliyor</item>
+        <item quantity="other">%1$s, %2$d kişi izliyor</item>
+    </plurals>
+    <string name="projects_voice_share_nobody">%1$s, kimse izlemiyor</string>
+    <string name="projects_voice_share_picture">%1$s yayınından son görüntü</string>
 </resources>

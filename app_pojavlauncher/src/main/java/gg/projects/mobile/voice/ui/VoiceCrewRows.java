@@ -33,7 +33,8 @@ import gg.projects.mobile.voice.VoiceState;
  * The crew page's "Sesli" (the desktop's crew voice section, VOICE-ROOMS): the crew's rooms, "Genel" always first (also
  * while empty: no explanation, just "Katıl"), each with the faces in it (as many as fit, then "+N"), "2/4" when the room
  * has its own limit, and "Katıl" (or "Ayrıl" for the room the player is in); under them "Yeni oda" while the crew may
- * open one. Managing rooms (rename, order, delete, dragging people) stays on the desktop.
+ * open one. Managing rooms (rename, order, delete, dragging people) stays on the desktop. M051 (SHARE-LIVE): "YAYINDA"
+ * after a room's faces and count while someone in it shares their screen (the desktop's crew page).
  */
 public final class VoiceCrewRows {
     private VoiceCrewRows() {}
@@ -53,7 +54,7 @@ public final class VoiceCrewRows {
         /** What the row shows, for the list's diff. */
         public String key() {
             if (room == null) return "new|" + crew;
-            return room.id + "|" + room.name + "|" + room.ids + "|" + room.max + "|" + mine;
+            return room.id + "|" + room.name + "|" + room.ids + "|" + room.max + "|" + mine + "|" + room.live;
         }
 
         public String id() {
@@ -145,6 +146,15 @@ public final class VoiceCrewRows {
             count.setPaddingRelative(0, 0, Math.round(8 * dp), 0);
             row.addView(count);
         }
+        boolean live = !room.live.isEmpty();
+        if (live) {
+            TextView tag = LiveTag.make(c, false);
+            LiveTag.show(tag, true);
+            LinearLayout.LayoutParams tagLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT);
+            tagLp.setMarginEnd(Math.round(8 * dp));
+            row.addView(tag, tagLp);
+        }
 
         TextView go = new TextView(c);
         go.setText(item.mine ? R.string.projects_voice_leave : R.string.projects_voice_join);
@@ -155,7 +165,7 @@ public final class VoiceCrewRows {
         go.setPadding(Math.round(14 * dp), 0, Math.round(14 * dp), 0);
         go.setBackground(item.mine ? ChamferDrawable.outlined(c) : ChamferDrawable.secondary(c));
         go.setContentDescription(c.getString(item.mine ? R.string.projects_voice_leave : R.string.projects_voice_join) + ", "
-                + name.getText());
+                + LiveTag.spoken(c, name.getText().toString(), live));
         go.setOnClickListener(v -> {
             Haptics.confirm(v);
             if (item.mine) VoiceLink.get(activity).leave();
