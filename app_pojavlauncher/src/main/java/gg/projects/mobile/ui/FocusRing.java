@@ -10,6 +10,7 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.InsetDrawable;
+import android.graphics.drawable.RippleDrawable;
 import android.graphics.drawable.StateListDrawable;
 import android.os.Build;
 import android.view.View;
@@ -115,7 +116,7 @@ public final class FocusRing implements ViewTreeObserver.OnGlobalFocusChangeList
         // in grey under the ring (the friends pill's 48 dp row showed a square behind its round ring).
         if (Build.VERSION.SDK_INT >= 26 && target.getDefaultFocusHighlightEnabled()) target.setDefaultFocusHighlightEnabled(false);
         Object tag = target.getTag(R.id.projects_focus_shape);
-        Shape shape = tag instanceof Shape ? (Shape) tag : null;
+        Shape shape = tag instanceof Shape ? (Shape) tag : roundShape(target);
         if (shape != null) mRect.inset(shape.insetHorizontal, shape.insetVertical);
         mRing.show(mRect, shape == null && chamfered(target), shape == null ? -1f : shape.radius);
     }
@@ -150,6 +151,22 @@ public final class FocusRing implements ViewTreeObserver.OnGlobalFocusChangeList
             // An old Android without the hidden accessors: the ring is drawn (a double ring beats none).
         }
         return false;
+    }
+
+    /**
+     * M051: a round icon button (a borderless ripple, {@code projects_icon_button_ripple}: the round Settings button, the
+     * sheets' icons) gets a round ring around its focused circle, not a square one around its 48 dp target (the grey
+     * circle and a square ring showed together). Null for every other control.
+     */
+    @Nullable
+    static Shape roundShape(View view) {
+        Drawable bg = view.getBackground();
+        if (!(bg instanceof RippleDrawable) || ((RippleDrawable) bg).getNumberOfLayers() > 0) return null;
+        int w = view.getWidth(), h = view.getHeight();
+        int half = Math.min(w, h) / 2;
+        int radius = Build.VERSION.SDK_INT >= 23 ? ((RippleDrawable) bg).getRadius() : -1;
+        if (radius <= 0 || radius > half) radius = half;
+        return new Shape(w / 2 - radius, h / 2 - radius, radius);
     }
 
     private static boolean chamfered(View view) {
