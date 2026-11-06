@@ -90,6 +90,16 @@ public final class LiveTag {
         return hub != null && hub.prefs().enabled() && hub.rings().sharing(id);
     }
 
+    /**
+     * What a person row shows of voice chat, for a list's diff: in a voice room ("Sesli sohbette") and sharing
+     * ("YAYINDA"). Without it a row kept its old line when only voice chat changed.
+     */
+    public static String key(String id) {
+        gg.projects.mobile.voice.VoiceHub hub = gg.projects.mobile.voice.VoiceHub.instance();
+        if (hub == null || !hub.prefs().enabled()) return "";
+        return (hub.rings().inVoice(id) ? "v" : "") + (hub.rings().sharing(id) ? "l" : "");
+    }
+
     private static final String ROW_TAG = "projects-live-tag";
 
     /** "Name, yayında" for a row's spoken label. */

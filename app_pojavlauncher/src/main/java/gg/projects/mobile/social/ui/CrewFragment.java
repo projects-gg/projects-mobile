@@ -965,7 +965,7 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
                 String mine = m.profile.id.equals(state.myId()) && state.me() != null ? state.me().status : "";
                 rows.add(new Row(T_MEMBER, "m-" + m.profile.id, m.profile.name() + m.profile.faceKey() + m.founder + m.moderator
                         + p.state + p.dnd + p.where + p.host + state.isFriend(m.profile.id) + mine + "|" + badgeKey(gate, m.profile.badge)
-                        + "|" + ProfileMarks.key(service, m.profile) + "|" + gg.projects.mobile.voice.ui.LiveTag.sharing(m.profile.id), m));
+                        + "|" + ProfileMarks.key(service, m.profile) + "|" + gg.projects.mobile.voice.ui.LiveTag.key(m.profile.id), m));
             }
         }
         if (!team.code.isEmpty()) rows.add(new Row(T_CODE, "code", team.code, team.code));

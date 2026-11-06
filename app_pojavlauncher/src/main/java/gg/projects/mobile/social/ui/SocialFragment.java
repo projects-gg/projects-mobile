@@ -723,7 +723,7 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
             rows.add(new Row(T_PERSON, "f-" + f.profile.id, "f|" + f.profile.name() + f.profile.faceKey() + "|" + p.state + p.dnd + p.where
                     + p.host + "|" + f.lastSeen + "|" + favourites.contains(f.profile.id) + "|"
                     + (tags && f.profile.badge != null ? f.profile.badge.key() : "") + "|" + ProfileMarks.key(service, f.profile)
-                    + "|" + gg.projects.mobile.voice.ui.LiveTag.sharing(f.profile.id),
+                    + "|" + gg.projects.mobile.voice.ui.LiveTag.key(f.profile.id),
                     new Person("friend", f.profile, f)));
         }
     }
