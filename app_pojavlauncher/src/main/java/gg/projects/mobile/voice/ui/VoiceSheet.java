@@ -265,7 +265,7 @@ public final class VoiceSheet implements VoiceLink.Listener {
         face.avatar().setProfile(VoiceFace.profileOf(c, to, null));
         face.setAlpha(0.55f);
         row.addView(face, new LinearLayout.LayoutParams(dp(44), dp(44)));
-        row.addView(names(c, VoiceUi.nameOf(c, to), c.getString(R.string.projects_voice_ringing)), weight());
+        row.addView(names(c, VoiceUi.nameOf(c, to), c.getString(R.string.projects_voice_ringing), false), weight());
         if (!call) {
             TextView cancel = text(c, 14, R.color.projects_ash_300, R.font.figtree_semibold);
             cancel.setText(R.string.projects_voice_cancel);
