@@ -1488,7 +1488,7 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
             bindAnswer(view.findViewById(R.id.projects_call_soon), call, "soon", mineAnswer);
             bindAnswer(view.findViewById(R.id.projects_call_no), call, "no", mineAnswer);
         }
-        line.setTextColor(ContextCompat.getColor(context, call.onProjects() ? R.color.projects_jade_400 : R.color.projects_gold_300));
+        line.setTextColor(ContextCompat.getColor(context, call.onProjects() ? R.color.projects_jade_400 : R.color.projects_ash_300));
         // FIX2: who answered opens in place; the caller holds their menu.
         AnswerList.bind(view, call.id, call.answers, gg.projects.mobile.social.AnswerPeople.CALL_ORDER,
                 new int[]{R.string.projects_crew_call_said_yes, R.string.projects_crew_call_said_soon, R.string.projects_crew_call_said_no},
@@ -1535,7 +1535,6 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
     private void bindAnswer(final Button button, final Call call, final String answer, @Nullable String current) {
         Context context = button.getContext();
         boolean chosen = answer.equals(current);
-        boolean leads = "yes".equals(answer) && (call.onProjects() || call.otherHost() != null);
         if (chosen) {
             button.setBackground(ChamferDrawable.primary(context));
             button.setTextColor(ContextCompat.getColor(context, R.color.projects_on_gold));
@@ -1543,8 +1542,6 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
             button.setBackground(ChamferDrawable.outlined(context));
             button.setTextColor(ContextCompat.getColor(context, R.color.projects_bone_100));
         }
-        // "Geliyorum" takes the player where the caller is: its text is gold until it is chosen.
-        if (leads && !chosen) button.setTextColor(ContextCompat.getColor(context, R.color.projects_gold_300));
         button.setSelected(chosen);
         button.setOnClickListener(v -> answer(button, call, answer));
     }
@@ -1821,9 +1818,8 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
             button.setTextColor(ContextCompat.getColor(context, R.color.projects_on_gold));
         } else {
             button.setBackground(ChamferDrawable.outlined(context));
-            // While it runs "Geliyorum" takes the player to Projects: gold until it is chosen.
-            button.setTextColor(ContextCompat.getColor(context, under && Plan.YES.equals(answer) ? R.color.projects_gold_300
-                    : R.color.projects_bone_100));
+            // M052: "Geliyorum" is a secondary button too (design.md: the crew call's answers are secondary).
+            button.setTextColor(ContextCompat.getColor(context, R.color.projects_bone_100));
         }
         button.setSelected(chosen);
         button.setEnabled(!busy);

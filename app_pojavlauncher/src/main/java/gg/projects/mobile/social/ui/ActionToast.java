@@ -29,7 +29,7 @@ import gg.projects.mobile.ui.Press;
  * MOB1: a short line with one action at the bottom of whatever screen is up (Android's own toasts
  * cannot carry a button): "GK etiketini taktın." with "Geri al", "Gece Kartalları ekibine katıldın"
  * with "Etiketi tak". The look of the home screen's undo bar (an opaque obsidian surface a step lighter
- * than the screen, a bone hairline, the action in gold); it rises 10 dp as it fades in, stays 5 s (a
+ * than the screen, a bone hairline, the action in bone semibold); it rises 10 dp as it fades in, stays 5 s (a
  * finger on it holds it) and leaves faster than it came. One at a time; a new one takes its place.
  */
 public final class ActionToast {
@@ -98,7 +98,7 @@ public final class ActionToast {
         if (action != null && onAction != null) {
             TextView button = new TextView(context);
             button.setText(action);
-            button.setTextColor(ContextCompat.getColor(context, R.color.projects_gold_300));
+            button.setTextColor(ContextCompat.getColor(context, R.color.projects_bone_100));
             button.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
             button.setGravity(Gravity.CENTER);
             button.setMinWidth(Math.round(64 * dp));

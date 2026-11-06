@@ -145,7 +145,7 @@
             android:gravity="center"
             android:paddingHorizontal="14dp"
             android:text="@string/projects_chat_jump"
-            android:textColor="@color/projects_gold_300"
+            android:textColor="@color/projects_bone_100"
             android:textSize="13sp"
             android:visibility="gone"
             tools:visibility="visible" />
@@ -212,7 +212,7 @@
                 android:ellipsize="end"
                 android:fontFamily="@font/figtree_semibold"
                 android:maxLines="1"
-                android:textColor="@color/projects_gold_300"
+                android:textColor="@color/projects_bone_100"
                 android:textSize="12sp"
                 tools:text="Yanıtlanıyor: Ayşe" />
 
@@ -278,7 +278,7 @@
                 android:layout_height="wrap_content"
                 android:fontFamily="@font/figtree_semibold"
                 android:text="@string/projects_chat_editing"
-                android:textColor="@color/projects_gold_300"
+                android:textColor="@color/projects_bone_100"
                 android:textSize="12sp" />
 
             <TextView

@@ -93,7 +93,7 @@
                 android:minHeight="48dp"
                 android:text="@string/projects_retry"
                 android:textAllCaps="false"
-                android:textColor="@color/projects_gold_300"
+                android:textColor="@color/projects_bone_100"
                 android:visibility="gone" />
         </LinearLayout>
 

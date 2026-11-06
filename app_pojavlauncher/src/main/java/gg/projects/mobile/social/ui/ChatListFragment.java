@@ -470,7 +470,7 @@ public class ChatListFragment extends Fragment implements SocialService.Listener
         }
         ChatBook.Summary s = row.summary;
         int unread = s == null ? 0 : s.unread;
-        // CHAT2: "yazıyor…" while someone writes there (gold), else the newest message.
+        // CHAT2: "yazıyor…" while someone writes there (bright, as an unread line), else the newest message.
         boolean typing = !service.chat().writers(row.conv).isEmpty();
         if (typing) {
             line.setText(R.string.projects_typing_list);
@@ -480,7 +480,7 @@ public class ChatListFragment extends Fragment implements SocialService.Listener
             // FIX2: a deleted newest message says so; CHAT2: a sticker says which.
             line.setText(ChatPreview.line(context, state, s.last, me, crewId != null));
         }
-        line.setTextColor(ContextCompat.getColor(context, typing ? R.color.projects_gold_300
+        line.setTextColor(ContextCompat.getColor(context, typing ? R.color.projects_bone_100
                 : unread > 0 ? R.color.projects_bone_100 : R.color.projects_ash_400));
         if (unread > 0) {
             badge.setVisibility(View.VISIBLE);

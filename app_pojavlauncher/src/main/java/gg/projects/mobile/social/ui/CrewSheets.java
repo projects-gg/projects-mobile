@@ -112,7 +112,7 @@ final class CrewSheets {
             if (notifications.mutedAt(now)) {
                 TextView state = new TextView(activity);
                 state.setText(mutedText(activity, notifications, now));
-                state.setTextColor(ContextCompat.getColor(activity, R.color.projects_gold_300));
+                state.setTextColor(ContextCompat.getColor(activity, R.color.projects_bone_100));
                 state.setTextSize(14);
                 state.setPadding(0, Math.round(10 * dp), 0, Math.round(4 * dp));
                 content.addView(state);

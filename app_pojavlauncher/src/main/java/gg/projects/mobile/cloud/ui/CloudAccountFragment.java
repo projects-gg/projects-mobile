@@ -283,10 +283,10 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
                 renewable ? v -> mService.openSite(requireActivity(), "/satin-al?hesap=" + a.id) : null);
         if (renewable) {
             mTimeRow.count.setText(getString(a.expired ? R.string.projects_cloud_reactivate : R.string.projects_cloud_renew));
-            // QA-TASTE: quiet until the last week, gold in it or once ended (the launcher's "Süreyi uzat"). Extending is
+            // QA-TASTE: quiet until the last week, bone in it or once ended (design.md: a card's link is bone). Extending is
             // open any time unless Studio's last-days window is on (the API's renewal.open; the sentence below then).
             boolean lastWeek = a.expired || a.expiresAt - mService.nowMs() / 1000 <= 7 * 86_400L;
-            mTimeRow.count.setTextColor(CloudUi.color(c, lastWeek ? R.color.projects_gold_300 : R.color.projects_ash_300));
+            mTimeRow.count.setTextColor(CloudUi.color(c, lastWeek ? R.color.projects_bone_100 : R.color.projects_ash_300));
             mTimeRow.count.setVisibility(View.VISIBLE);
         }
         time.addView(mTimeRow.view);
@@ -547,7 +547,7 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
         if (mTimeRow != null) {
             mTimeRow.title.setText(CloudWords.timeLeft(c, CloudStatus.timeLeft(a, mService.nowMs())));
             // MOB-POLISH (the launcher's SHEET-UX 31): the time stays bright and bold in the last week too;
-            // gold is only "Süreyi uzat" beside it (two gold words read as one).
+            // "Süreyi uzat" beside it is the brighter word (M052: bone, gold is OYNA's).
             mTimeRow.setLine(a.expired ? null : getString(R.string.projects_cloud_ends_on,
                     CloudWords.dayLocative(c, a.expiresAt, mService.nowMs() / 1000)), R.color.projects_ash_400);
         }

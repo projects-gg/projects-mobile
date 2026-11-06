@@ -110,7 +110,7 @@
                     android:ellipsize="end"
                     android:fontFamily="@font/figtree_semibold"
                     android:maxLines="1"
-                    android:textColor="@color/projects_gold_300"
+                    android:textColor="@color/projects_bone_100"
                     android:textSize="12sp"
                     tools:text="Ayşe" />
 

@@ -232,7 +232,7 @@ final class AnswerList {
                 more.setText(all ? context.getString(R.string.projects_answers_less)
                         : context.getResources().getQuantityString(R.plurals.projects_answers_more, group.hidden(), group.hidden()));
                 more.setTextSize(13);
-                more.setTextColor(ContextCompat.getColor(context, R.color.projects_gold_300));
+                more.setTextColor(ContextCompat.getColor(context, R.color.projects_bone_100));
                 more.setGravity(Gravity.CENTER_VERTICAL);
                 more.setMinHeight(Math.round(40 * dp));
                 more.setPadding(Math.round(4 * dp), 0, Math.round(8 * dp), 0);

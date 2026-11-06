@@ -283,7 +283,7 @@ public class SocialSettingsFragment extends Fragment implements SocialService.Li
         open.setContentDescription(getString(R.string.projects_social_notifications_turn_on_label));
         open.setAllCaps(false);
         open.setTextSize(14);
-        open.setTextColor(ContextCompat.getColor(context, R.color.projects_gold_300));
+        open.setTextColor(ContextCompat.getColor(context, R.color.projects_bone_100));
         try {
             open.setTypeface(ResourcesCompat.getFont(context, R.font.figtree_semibold));
         } catch (RuntimeException ignored) {

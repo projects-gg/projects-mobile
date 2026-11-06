@@ -183,7 +183,7 @@ public final class VoiceSheet implements VoiceLink.Listener {
         long now = System.currentTimeMillis() / 1000;
         mTitle.setText(VoiceUi.roomTitle(c, s));
         mLine.setText(s.oneToOne() && s.calling == null ? c.getString(R.string.projects_voice_call_kind) : VoiceUi.roomLine(c, s, now));
-        mLine.setTextColor(ContextCompat.getColor(c, s.reconnecting() ? R.color.projects_gold_300 : R.color.projects_ash_400));
+        mLine.setTextColor(ContextCompat.getColor(c, s.reconnecting() ? R.color.projects_bone_100 : R.color.projects_ash_400));
         mInvite.setVisibility(s.live() && s.calling == null ? View.VISIBLE : View.GONE);
         mMore.setVisibility(s.canRename || s.canClose ? View.VISIBLE : View.GONE);
         mMore.setContentDescription(c.getString(s.canRename ? R.string.projects_voice_rename : R.string.projects_voice_close));

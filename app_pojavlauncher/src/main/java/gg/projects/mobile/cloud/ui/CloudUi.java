@@ -343,14 +343,14 @@ public final class CloudUi {
 
     /** A quiet text action (gold-300), 48 dp tall. */
     /**
-     * The last row of a list's group that adds to the list (a command, a reply, a row to buy or sell): a gold plus and
-     * gold words, no caret (a sheet opens here). Inside the group, so the action sits where the list ends.
+     * The last row of a list's group that adds to the list (a command, a reply, a row to buy or sell): a bone plus and
+     * bone words (M052: gold is OYNA's), no caret (a sheet opens here). Inside the group, so the action sits where the list ends.
      */
     public static Row addRow(Context c, CharSequence title, View.OnClickListener click) {
         Row row = actionRow(c, R.drawable.projects_ic_plus, title, click);
-        row.title.setTextColor(color(c, R.color.projects_gold_300));
+        row.title.setTextColor(color(c, R.color.projects_bone_100));
         View glyph = row.view.getChildAt(0);
-        if (glyph instanceof ImageView) ((ImageView) glyph).setImageTintList(ColorStateList.valueOf(color(c, R.color.projects_gold_300)));
+        if (glyph instanceof ImageView) ((ImageView) glyph).setImageTintList(ColorStateList.valueOf(color(c, R.color.projects_bone_100)));
         return row;
     }
 

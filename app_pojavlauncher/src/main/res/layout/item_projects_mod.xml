@@ -42,7 +42,7 @@
                 android:fontFamily="@font/tektur_semibold"
                 android:gravity="center"
                 android:importantForAccessibility="no"
-                android:textColor="@color/projects_gold_300"
+                android:textColor="@color/projects_ash_300"
                 android:textSize="18sp"
                 tools:text="S" />
 

@@ -81,7 +81,7 @@ public final class UndoBar extends LinearLayout {
         addView(mText, text);
 
         mAction = new TextView(context);
-        mAction.setTextColor(ContextCompat.getColor(context, R.color.projects_gold_300));
+        mAction.setTextColor(ContextCompat.getColor(context, R.color.projects_bone_100));
         mAction.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
         mAction.setTypeface(ResourcesCompat.getFont(context, R.font.figtree_semibold));
         mAction.setGravity(Gravity.CENTER);

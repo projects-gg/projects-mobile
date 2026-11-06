@@ -267,7 +267,7 @@ public final class VoiceBar extends FrameLayout implements VoiceLink.Listener, V
         }
         mTitle.setText(VoiceUi.roomTitle(c, state));
         mLine.setText(VoiceUi.roomLine(c, state, System.currentTimeMillis() / 1000));
-        mLine.setTextColor(ContextCompat.getColor(c, state.reconnecting() ? R.color.projects_gold_300 : R.color.projects_ash_400));
+        mLine.setTextColor(ContextCompat.getColor(c, state.reconnecting() ? R.color.projects_bone_100 : R.color.projects_ash_400));
         boolean off = state.me.mute || state.me.deaf || state.me.mutedByModerator || state.mic != null;
         mMic.setImageResource(off ? R.drawable.projects_ic_voice_mic_slash : R.drawable.projects_ic_voice_mic);
         mMic.setImageTintList(ColorStateList.valueOf(ContextCompat.getColor(c, off ? R.color.projects_flare_400 : R.color.projects_bone_100)));

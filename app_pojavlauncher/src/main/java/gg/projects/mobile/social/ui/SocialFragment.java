@@ -1286,15 +1286,15 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
                 line.setText(gg.projects.mobile.ui.Apart.of(context,
                         getString(R.string.projects_crew_call_theirs, caller == null ? getString(R.string.projects_crew_someone) : caller.name()),
                         gg.projects.mobile.social.SocialNotifications.callPlace(context, call.place(), call.serverHost), R.color.projects_ash_300));
-                line.setTextColor(ContextCompat.getColor(context, R.color.projects_gold_300));
+                line.setTextColor(ContextCompat.getColor(context, R.color.projects_bone_100));
             } else if (own != null) {
                 line.setText(R.string.projects_crew_call_mine);
-                line.setTextColor(ContextCompat.getColor(context, R.color.projects_gold_300));
+                line.setTextColor(ContextCompat.getColor(context, R.color.projects_bone_100));
             } else if (service.gate().requests && !service.state().requests(team.id, now).isEmpty()) {
                 // M21: join requests wait for the player's answer.
                 int n = service.state().requests(team.id, now).size();
                 line.setText(context.getResources().getQuantityString(R.plurals.projects_requests_count, n, n));
-                line.setTextColor(ContextCompat.getColor(context, R.color.projects_gold_300));
+                line.setTextColor(ContextCompat.getColor(context, R.color.projects_bone_100));
             } else if (service.gate().plans && nextPlan(service.state(), crew, now) != null) {
                 // M21: the crew's next plan today or tomorrow ("Plan Bugün 22:00"; "Plan Başladı" while it runs), "Plan"
                 // quieter than its day (no middle dot in UI text).
@@ -1415,7 +1415,7 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
                         : invite.host != null ? invite.host : null;
                 line.setText(where == null ? getString(R.string.projects_social_invited_you)
                         : gg.projects.mobile.ui.Apart.of(context, getString(R.string.projects_social_invited_you), where, R.color.projects_ash_300));
-                line.setTextColor(ContextCompat.getColor(context, R.color.projects_gold_300));
+                line.setTextColor(ContextCompat.getColor(context, R.color.projects_bone_100));
                 avatar.setDot(person.profile == null ? AvatarView.Dot.NONE : SocialUi.dot(state.presence(person.profile.id)));
                 if (invite.onProjects()) {
                     primary.setVisibility(View.VISIBLE);

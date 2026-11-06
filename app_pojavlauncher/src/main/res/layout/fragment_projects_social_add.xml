@@ -52,7 +52,7 @@
                     android:layout_marginTop="4dp"
                     android:fontFamily="@font/tektur_semibold"
                     android:letterSpacing="0.06"
-                    android:textColor="@color/projects_gold_200"
+                    android:textColor="@color/projects_bone_100"
                     android:textIsSelectable="true"
                     android:textSize="26sp"
                     tools:text="PRJ-ABCD-EFGH" />

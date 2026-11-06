@@ -67,7 +67,7 @@ final class MuteSheet {
         if (state != null) {
             TextView muted = new TextView(activity);
             muted.setText(state);
-            muted.setTextColor(ContextCompat.getColor(activity, R.color.projects_gold_300));
+            muted.setTextColor(ContextCompat.getColor(activity, R.color.projects_bone_100));
             muted.setTextSize(14);
             muted.setPadding(0, Math.round(10 * dp), 0, Math.round(4 * dp));
             content.addView(muted);
