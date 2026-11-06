@@ -44,7 +44,7 @@ public class RelWiringTest {
             // MOB-PARITY: the sessions (not in the lists) and the leader's discover block (its own status).
             "discoverStatus", "revokeOtherSessions", "revokeSession", "sessions",
             // MOB-VOICE: voice chat's tickets and a ring's answer change no list.
-            "voiceCrew", "voiceCrewNew", "voiceRing"));
+            "voiceCrew", "voiceCrewNew", "voiceRing", "voiceThumb"));
 
     @Test
     public void everyCallOfTheApiSaysWhetherItChangesTheLists() throws IOException {
