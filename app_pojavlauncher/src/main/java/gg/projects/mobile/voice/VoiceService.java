@@ -160,6 +160,8 @@ public final class VoiceService extends Service implements VoiceEngine.Listener,
             return;
         }
         mPrefs.setSounds(intent.getBooleanExtra(VoiceLink.EXTRA_SOUNDS, true));
+        // M053: the ignore list as the launcher process last wrote it.
+        mPrefs.setIgnored(gg.projects.mobile.social.IgnoreList.forVoice(this));
         mMachine.setMe(me);
         VoiceMachine.Service service = new VoiceMachine.Service(intent.getIntExtra(VoiceLink.EXTRA_KBPS, 0),
                 intent.getIntExtra(VoiceLink.EXTRA_RING, 0), intent.getIntExtra(VoiceLink.EXTRA_IDLE, 0));
@@ -225,6 +227,12 @@ public final class VoiceService extends Service implements VoiceEngine.Listener,
             case VoiceLink.SOUNDS:
                 mPrefs.setSounds(msg.arg1 != 0);
                 break;
+            case VoiceLink.IGNORED: {
+                java.util.ArrayList<String> ids = data.getStringArrayList("ids");
+                mPrefs.setIgnored(ids == null ? java.util.Collections.<String>emptyList() : ids);
+                run(mMachine.replay());
+                break;
+            }
             default:
                 break;
         }

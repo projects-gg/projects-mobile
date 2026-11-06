@@ -49,6 +49,13 @@ public final class LauncherConfig {
      * says {@code true}; independent of friends.
      */
     public transient boolean phoneAfkFeature;
+    /** M053: {@code features.socNext} (the desktop's SOC-NEXT: here the ignore list, "Yok say"; inside friends). */
+    public transient boolean socNextFeature;
+    /**
+     * M053: {@code features.skins} (SKIN1: the Projects skin of player-name accounts and linking them, inside friends;
+     * the service's {@code skins}/{@code mcLink} switches decide beyond it).
+     */
+    public transient boolean skinsFeature;
 
     /** Studio's events, hidden ones included (they take a feed event with their id off the card). */
     public transient List<EventCountdown> events = Collections.emptyList();
@@ -212,6 +219,8 @@ public final class LauncherConfig {
         config.chatFeature = config.friendsFeature && isTrue(features, "chat");
         config.voiceFeature = config.friendsFeature && isTrue(features, "voice");
         config.phoneAfkFeature = isTrue(features, "phoneAfk");
+        config.socNextFeature = config.friendsFeature && isTrue(features, "socNext");
+        config.skinsFeature = config.friendsFeature && isTrue(features, "skins");
         config.eventsJson = null;
         config.newsFeedJson = null;
         config.recommendedMinecraftVersionJson = null;

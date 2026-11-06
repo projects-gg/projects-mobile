@@ -148,4 +148,33 @@
     </plurals>
     <string name="projects_voice_share_nobody">%1$s, nobody\'s watching</string>
     <string name="projects_voice_share_picture">Latest picture from %1$s\'s stream</string>
+
+    <!-- M053: managing crew rooms (the desktop's room menu), "Stop their share", the ignore list -->
+    <string name="projects_voice_room_more">%1$s options</string>
+    <string name="projects_voice_room_edit">Edit room</string>
+    <string name="projects_voice_room_up">Move up</string>
+    <string name="projects_voice_room_down">Move down</string>
+    <string name="projects_voice_room_remove">Delete room</string>
+    <string name="projects_voice_room_remove_title">Delete %1$s?</string>
+    <string name="projects_voice_room_remove_ask">Everyone inside moves to General.</string>
+    <string name="projects_voice_room_removed">%1$s was deleted.</string>
+    <string name="projects_voice_room_not_removed">Someone\'s in the room, so it wasn\'t deleted.</string>
+    <string name="projects_voice_room_ordered">Rooms reordered.</string>
+    <string name="projects_voice_room_limit">People limit</string>
+    <plurals name="projects_voice_room_limit_value">
+        <item quantity="one">%1$d person</item>
+        <item quantity="other">%1$d people</item>
+    </plurals>
+    <string name="projects_voice_room_fewer">Lower the limit</string>
+    <string name="projects_voice_room_more_people">Raise the limit</string>
+    <string name="projects_voice_room_save">Save</string>
+    <string name="projects_voice_room_cancel">Cancel</string>
+    <string name="projects_voice_unshare">Stop their share</string>
+    <string name="projects_ignore_action">Ignore</string>
+    <string name="projects_ignore_stop">Stop ignoring</string>
+    <string name="projects_ignore_done">You\'re ignoring %1$s. They won\'t know.</string>
+    <string name="projects_ignore_stopped">You\'re no longer ignoring %1$s</string>
+    <string name="projects_ignore_title">Ignored</string>
+    <string name="projects_ignore_empty">You\'re not ignoring anyone.</string>
+    <string name="projects_ignore_someone">Someone</string>
 </resources>

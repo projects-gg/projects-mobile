@@ -540,6 +540,47 @@ public final class SocialApi {
         return require(send("POST", "v1/voice/crew", body, true, false));
     }
 
+    /**
+     * M053: {@code POST /v1/voice/crew/room {"crew","room","name"?,"max"?}} (204): a crew room's new name and people limit
+     * ({@code max} null: no own limit; {@code keepMax} leaves it as it is).
+     */
+    @WorkerThread
+    public void voiceCrewRoom(String crew, String room, @Nullable String name, boolean keepMax, @Nullable Integer max) throws SocialProblem {
+        JsonObject body = new JsonObject();
+        body.addProperty("crew", segment(crew));
+        body.addProperty("room", room);
+        if (name != null) body.addProperty("name", name);
+        if (!keepMax) {
+            if (max == null) body.add("max", com.google.gson.JsonNull.INSTANCE);
+            else body.addProperty("max", max);
+        }
+        send("POST", "v1/voice/crew/room", body, true, false);
+    }
+
+    /** M053: {@code POST /v1/voice/crew/order {"crew","rooms":[…]}} (204): the crew's rooms in a new order ("Genel" first). */
+    @WorkerThread
+    public void voiceCrewOrder(String crew, List<String> rooms) throws SocialProblem {
+        JsonObject body = new JsonObject();
+        body.addProperty("crew", segment(crew));
+        com.google.gson.JsonArray ids = new com.google.gson.JsonArray();
+        for (String id : rooms) ids.add(id);
+        body.add("rooms", ids);
+        send("POST", "v1/voice/crew/order", body, true, false);
+    }
+
+    /**
+     * M053: {@code POST /v1/voice/crew/remove {"crew","room","empty"}} (204): deletes a crew room; with {@code empty} only
+     * while nobody is in it ({@code 409 room_not_empty}), else the people in it move to "Genel".
+     */
+    @WorkerThread
+    public void voiceCrewRemove(String crew, String room, boolean empty) throws SocialProblem {
+        JsonObject body = new JsonObject();
+        body.addProperty("crew", segment(crew));
+        body.addProperty("room", room);
+        body.addProperty("empty", empty);
+        send("POST", "v1/voice/crew/remove", body, true, false);
+    }
+
     /** {@code POST /v1/voice/crew/new {"crew"}}: a new room of the crew ({@code {room, name, ticket}}). */
     @WorkerThread
     public JsonObject voiceCrewNew(String crew) throws SocialProblem {

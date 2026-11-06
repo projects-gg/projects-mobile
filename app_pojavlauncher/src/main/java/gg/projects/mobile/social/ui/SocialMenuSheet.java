@@ -176,6 +176,8 @@ public final class SocialMenuSheet {
         in.reports = gate.reports;
         in.reportable = in.friend || in.crewmate || in.incoming || pending == SocialMenus.Pending.JOIN_REQUEST;
         in.voice = voiceOf(activity, id);
+        in.ignoreList = gg.projects.mobile.social.IgnoreList.on(activity);
+        in.ignored = in.ignoreList && gg.projects.mobile.social.IgnoreList.all(activity).contains(id);
         List<SocialMenus.Row<SocialMenus.PersonAction>> rows = SocialMenus.person(in);
         if (rows.isEmpty()) return;
 
@@ -263,6 +265,8 @@ public final class SocialMenuSheet {
             case HAND_OVER: return R.drawable.projects_ic_crown_fill;
             case REMOVE_FROM_CREW:
             case REMOVE_FRIEND: return R.drawable.projects_ic_user_minus;
+            case IGNORE: return R.drawable.projects_ic_team6_eye_slash;
+            case UNIGNORE: return R.drawable.projects_ic_team6_eye;
             case BLOCK:
             case UNBLOCK: return R.drawable.projects_ic_prohibit;
             case REPORT:
@@ -293,6 +297,8 @@ public final class SocialMenuSheet {
             case HAND_OVER: return c.getString(R.string.projects_crew_hand_over);
             case REMOVE_FROM_CREW: return c.getString(R.string.projects_crew_remove);
             case REMOVE_FRIEND: return c.getString(R.string.projects_social_remove);
+            case IGNORE: return c.getString(R.string.projects_ignore_action);
+            case UNIGNORE: return c.getString(R.string.projects_ignore_stop);
             case BLOCK: return c.getString(R.string.projects_social_block);
             case UNBLOCK: return c.getString(R.string.projects_social_unblock);
             case REPORT:
@@ -305,6 +311,8 @@ public final class SocialMenuSheet {
             case BLOCK:
             case REMOVE_FROM_CREW: return R.color.projects_flare_400;
             case REMOVE_FRIEND:
+            case IGNORE:
+            case UNIGNORE:
             case REPORT: return R.color.projects_ash_300;
             default: return R.color.projects_bone_100;
         }
@@ -416,6 +424,14 @@ public final class SocialMenuSheet {
             case UNBLOCK:
                 service.unblock(id, FriendCard.done(activity, activity.getString(R.string.projects_social_unblocked, name)));
                 break;
+            case IGNORE:
+            case UNIGNORE: {
+                // M053: no question (it is undone the same way), the desktop's words.
+                boolean ignore = action == SocialMenus.PersonAction.IGNORE;
+                gg.projects.mobile.social.IgnoreList.set(activity, id, ignore);
+                SocialUi.toast(activity, activity.getString(ignore ? R.string.projects_ignore_done : R.string.projects_ignore_stopped, name));
+                break;
+            }
             case REPORT:
             default:
                 ReportDialog.player(activity, profile);

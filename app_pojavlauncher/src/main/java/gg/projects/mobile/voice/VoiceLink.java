@@ -41,6 +41,8 @@ public final class VoiceLink {
     static final int METERS = 11;
     static final int SOUNDS = 12;
     static final int TOGGLE_MIC = 13;
+    /** M053: the ignore list ("ids"). */
+    static final int IGNORED = 14;
     // Voice → launcher.
     static final int STATE = 101;
     static final int NOTICE = 102;
@@ -342,6 +344,13 @@ public final class VoiceLink {
     public void setVolume(String person, int percent) {
         Message m = Message.obtain(null, VOLUME, percent, 0);
         m.getData().putString("person", person);
+        send(m);
+    }
+
+    /** M053: the ignore list changed: a running stay silences (or no longer silences) those people at once. */
+    public void setIgnored(java.util.List<String> ids) {
+        Message m = Message.obtain(null, IGNORED);
+        m.getData().putStringArrayList("ids", new java.util.ArrayList<>(ids));
         send(m);
     }
 

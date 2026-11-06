@@ -185,8 +185,9 @@ public final class VoiceSheet implements VoiceLink.Listener {
         mLine.setText(s.oneToOne() && s.calling == null ? c.getString(R.string.projects_voice_call_kind) : VoiceUi.roomLine(c, s, now));
         mLine.setTextColor(ContextCompat.getColor(c, s.reconnecting() ? R.color.projects_bone_100 : R.color.projects_ash_400));
         mInvite.setVisibility(s.live() && s.calling == null ? View.VISIBLE : View.GONE);
-        mMore.setVisibility(s.canRename || s.canClose ? View.VISIBLE : View.GONE);
-        mMore.setContentDescription(c.getString(s.canRename ? R.string.projects_voice_rename : R.string.projects_voice_close));
+        boolean canRename = canRename(s);
+        mMore.setVisibility(canRename || s.canClose ? View.VISIBLE : View.GONE);
+        mMore.setContentDescription(c.getString(canRename ? R.string.projects_voice_rename : R.string.projects_voice_close));
 
         mList.removeAllViews();
         mList.addView(meRow(s));
@@ -349,6 +350,17 @@ public final class VoiceSheet implements VoiceLink.Listener {
                     VoiceLink.get(mActivity).setMutedForMe(id, !p.mutedForMe);
                     panel[0].dismiss();
                 }));
+        // M053: "Yok say" as in the person menu (friends and crewmates, while the ignore list counts).
+        SocialState social = SocialService.get(c).state();
+        if (gg.projects.mobile.social.IgnoreList.on(c) && (social.isFriend(id) || !social.crewsOf(id).isEmpty())) {
+            final boolean ignored = gg.projects.mobile.social.IgnoreList.all(c).contains(id);
+            content.addView(CrewViews.actionRow(c, ignored ? R.drawable.projects_ic_team6_eye : R.drawable.projects_ic_team6_eye_slash,
+                    c.getString(ignored ? R.string.projects_ignore_stop : R.string.projects_ignore_action), R.color.projects_ash_300, v -> {
+                        panel[0].dismiss();
+                        gg.projects.mobile.social.IgnoreList.set(mActivity, id, !ignored);
+                        SocialUi.toast(mActivity, mActivity.getString(ignored ? R.string.projects_ignore_stopped : R.string.projects_ignore_done, name));
+                    }));
+        }
         if (p.canMute || p.canKick || p.canMove || p.canModerator) content.addView(CrewViews.divider(c));
         if (p.canMute) {
             final boolean muted = p.mutedByModerator;
@@ -376,6 +388,14 @@ public final class VoiceSheet implements VoiceLink.Listener {
                     v -> {
                         panel[0].dismiss();
                         mod(mod ? VoiceWire.ModAct.UNMOD : VoiceWire.ModAct.MOD, id, null, name, null);
+                    }));
+        }
+        if (p.canKick && p.sharing) {
+            // M053: "Paylaşımı durdur" (the desktop's leader and moderator action; the kick's rule). The sharer is told.
+            content.addView(CrewViews.actionRow(c, R.drawable.projects_ic_screencast, c.getString(R.string.projects_voice_unshare),
+                    R.color.projects_bone_100, v -> {
+                        panel[0].dismiss();
+                        mod(VoiceWire.ModAct.UNSHARE, id, null, name, null);
                     }));
         }
         if (p.canKick) {
@@ -502,6 +522,18 @@ public final class VoiceSheet implements VoiceLink.Listener {
         panel[0].show();
     }
 
+    /**
+     * M053: renaming as the desktop allows it ({@code machine.rs}): the voice process's rule, or the crew room's opener
+     * (the crew list's {@code own}; the room socket does not say who opened it).
+     */
+    private static boolean canRename(VoiceState s) {
+        if (s.canRename) return true;
+        VoiceHub hub = VoiceHub.instance();
+        if (hub == null || s.room == null || s.crew == null || !s.crewRoom) return false;
+        VoiceRings.CrewRoom room = hub.rings().crewRoom(s.room);
+        return room != null && room.own && !room.general();
+    }
+
     private void mod(VoiceWire.ModAct act, @Nullable String person, @Nullable String room, @Nullable String name,
                      @Nullable Runnable onDone) {
         VoiceLink.get(mActivity).moderate(act, person, room, act == VoiceWire.ModAct.NAME ? name : null, answer -> {
@@ -523,7 +555,7 @@ public final class VoiceSheet implements VoiceLink.Listener {
         content.setOrientation(LinearLayout.VERTICAL);
         content.setPadding(dp(16), 0, dp(16), dp(12));
         final BottomPanel[] panel = new BottomPanel[1];
-        if (s.canRename) {
+        if (canRename(s)) {
             content.addView(CrewViews.actionRow(c, R.drawable.projects_ic_pencil, c.getString(R.string.projects_voice_rename),
                     R.color.projects_bone_100, v -> {
                         panel[0].dismiss();

@@ -92,7 +92,15 @@ public final class VoiceHub {
         mPrefs = new VoicePrefs(mApp);
         mTone = new VoiceRingTone(mApp);
         mRings.setEnabled(mPrefs.enabled());
+        // M053: the ignore list's calls go straight to missed.
+        mRings.setIgnored(gg.projects.mobile.social.IgnoreList.effective(mApp));
         sInstance = this;
+    }
+
+    /** M053: the ignore list changed (or came on or off): a ringing call from someone on it ends as missed. */
+    @MainThread
+    public void setIgnored(List<String> ids) {
+        run(mRings.setIgnored(ids));
     }
 
     /** The launcher process's hub, once the friends feature made it (null before). */
@@ -361,6 +369,48 @@ public final class VoiceHub {
         crewTicket(crew, null, true, done);
     }
 
+    /** M053: "Odayı düzenle": a crew room's name ({@code name} null: unchanged) and people limit. */
+    @MainThread
+    public void editCrewRoom(final String crew, final String room, @Nullable final String name, final boolean keepMax,
+                             @Nullable final Integer max, final Done done) {
+        crewChange(done, () -> mHost.api().voiceCrewRoom(crew, room, name, keepMax, max));
+    }
+
+    /** M053: "Yukarı taşı" / "Aşağı taşı": the crew's rooms in a new order. */
+    @MainThread
+    public void orderCrewRooms(final String crew, final List<String> rooms, final Done done) {
+        crewChange(done, () -> mHost.api().voiceCrewOrder(crew, rooms));
+    }
+
+    /** M053: "Odayı sil" ({@code empty}: only while nobody is in it). */
+    @MainThread
+    public void removeCrewRoom(final String crew, final String room, final boolean empty, final Done done) {
+        crewChange(done, () -> mHost.api().voiceCrewRemove(crew, room, empty));
+    }
+
+    private interface Change {
+        void run() throws SocialProblem;
+    }
+
+    /** One of the crew room routes off the main thread; the answer on it. The hub's {@code voice_rooms} redraws. */
+    private void crewChange(final Done done, final Change change) {
+        if (!usable()) {
+            done.done(VoiceAnswer.refused(VoiceAnswer.Refusal.OFF));
+            return;
+        }
+        mIo.execute(() -> {
+            VoiceAnswer outcome;
+            try {
+                change.run();
+                outcome = VoiceAnswer.OK;
+            } catch (SocialProblem problem) {
+                outcome = refusal(problem);
+            }
+            final VoiceAnswer result = outcome;
+            mMain.post(() -> done.done(result));
+        });
+    }
+
     private void crewTicket(final String crew, @Nullable final String room, final boolean fresh, final Done done) {
         if (!usable()) {
             done.done(VoiceAnswer.refused(VoiceAnswer.Refusal.OFF));
@@ -489,6 +539,14 @@ public final class VoiceHub {
     /** A ring that came as a push while the app had no socket (the push decided it should ring). */
     public static void pushedRing(Context context, String room, String from, @Nullable String name, long at, long until) {
         VoiceHub hub = sInstance;
+        // M053: someone the player ignores: no notification (the rings keep it as missed, as the desktop).
+        if (gg.projects.mobile.social.IgnoreList.ignored(context, from)) {
+            if (hub != null) {
+                List<String> none = new ArrayList<>();
+                hub.run(hub.mRings.ring(new VoiceRings.Ring(room, from, at, until, null, none), false, now(), unix()));
+            }
+            return;
+        }
         if (hub != null && hub.mHost.foreground()) {
             // The app is up: its own socket brings the ring (with its ticket) if it has one.
             List<String> none = new ArrayList<>();

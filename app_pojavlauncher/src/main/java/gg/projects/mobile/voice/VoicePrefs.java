@@ -80,6 +80,19 @@ public final class VoicePrefs implements VoiceMachine.Prefs {
         return people().getBoolean("m:" + person, false);
     }
 
+    /** M053: the voice process's copy of the ignore list (the launcher process says when it changes). */
+    private final java.util.Set<String> mIgnored = new java.util.HashSet<>();
+
+    public void setIgnored(java.util.Collection<String> ids) {
+        mIgnored.clear();
+        mIgnored.addAll(ids);
+    }
+
+    @Override
+    public boolean ignored(String person) {
+        return mIgnored.contains(person);
+    }
+
     @Override
     public void setVolume(String person, int percent) {
         SharedPreferences.Editor edit = people().edit();

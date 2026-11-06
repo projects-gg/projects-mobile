@@ -76,7 +76,9 @@ public final class VoiceWire {
 
     /** {@code mod.act}. */
     public enum ModAct {
-        MUTE, UNMUTE, KICK, UNKICK, MOVE, MOD, UNMOD, NAME, CLOSE;
+        MUTE, UNMUTE, KICK, UNKICK, MOVE, MOD, UNMOD, NAME, CLOSE,
+        /** M053: "Paylaşımı durdur" (the leader or a moderator stops someone's screen share; the kick's rule). */
+        UNSHARE;
 
         public String wire() {
             return name().toLowerCase(java.util.Locale.ROOT);
@@ -164,6 +166,16 @@ public final class VoiceWire {
         if (to != null) o.addProperty("to", to);
         if (room != null) o.addProperty("room", room);
         if (name != null) o.addProperty("name", name);
+        o.addProperty("rid", rid);
+        return o.toString();
+    }
+
+    /** M053: {@code {"t":"mod","act":"unshare","to","n","rid"}}: stops share {@code n} of {@code to} (needs {@code share1}). */
+    public static String unshare(String to, int n, int rid) {
+        JsonObject o = frame("mod");
+        o.addProperty("act", ModAct.UNSHARE.wire());
+        o.addProperty("to", to);
+        o.addProperty("n", n);
         o.addProperty("rid", rid);
         return o.toString();
     }

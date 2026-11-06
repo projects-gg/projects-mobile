@@ -86,6 +86,8 @@ public final class SocialMenus {
         /** In a crew's context: the leader anyone, a moderator (as the crew lets them) plain members. */
         REMOVE_FROM_CREW,
         REMOVE_FRIEND,
+        /** M053: the ignore list ("Yok say"; the desktop's SOC-NEXT), for friends and crewmates. */
+        IGNORE, UNIGNORE,
         BLOCK, UNBLOCK,
         REPORT,
         /** MOB-VOICE: "Sesli arama başlat" (dim when they cannot be called now). */
@@ -153,6 +155,9 @@ public final class SocialMenus {
         public boolean reportable;
         /** MOB-VOICE: voice chat's action for them (friends only). */
         public Voice voice = Voice.NONE;
+        /** M053: the ignore list counts (the config's {@code socNext}); {@link #ignored}: they are on it. */
+        public boolean ignoreList;
+        public boolean ignored;
     }
 
     public static List<Row<PersonAction>> person(PersonInput in) {
@@ -213,6 +218,7 @@ public final class SocialMenus {
         out.add(null);
         // 5. Safety.
         if (in.friend) out.add(row(PersonAction.REMOVE_FRIEND));
+        if (in.ignoreList && (in.friend || in.crewmate)) out.add(row(in.ignored ? PersonAction.UNIGNORE : PersonAction.IGNORE));
         out.add(row(PersonAction.BLOCK));
         if (in.reports && in.reportable) out.add(row(PersonAction.REPORT));
         return tidy(out);

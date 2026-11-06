@@ -128,6 +128,9 @@ public class SocialSettingsFragment extends Fragment implements SocialService.Li
                 .append(gate.chat).append(service.prefs().wantsMessages()).append(gate.plans)
                 .append(service.prefs().wantsPlanReminders()).append('|');
         for (Profile p : service.state().blocked()) key.append(p.id).append(',');
+        // M053: the ignore list.
+        key.append('|').append(gg.projects.mobile.social.IgnoreList.on(context));
+        for (String id : gg.projects.mobile.social.IgnoreList.all(context)) key.append(id).append(',');
         // SOC-ID: the linked accounts, a link or a removal on its way, and whether Microsoft is offered.
         if (me != null) {
             key.append('|').append(me.identitiesListed).append(me.signInVia).append(me.discordNumber());
@@ -234,6 +237,14 @@ public class SocialSettingsFragment extends Fragment implements SocialService.Li
             mList.addView(text(getString(R.string.projects_social_blocked_empty), R.color.projects_ash_400));
         }
         for (final Profile blocked : service.state().blocked()) mList.addView(blockedRow(blocked));
+
+        // M053: "Yok saydıkların" (the desktop's SOC-NEXT section, after the blocked people).
+        if (gg.projects.mobile.social.IgnoreList.on(context)) {
+            section(R.string.projects_ignore_title);
+            java.util.List<String> ignored = gg.projects.mobile.social.IgnoreList.all(context);
+            if (ignored.isEmpty()) mList.addView(text(getString(R.string.projects_ignore_empty), R.color.projects_ash_400));
+            for (int i = ignored.size() - 1; i >= 0; i--) mList.addView(ignoredRow(ignored.get(i)));
+        }
 
         // SOC-ID: "Bağlı hesaplar", while the service lists them (it links and removes then).
         if (me != null && me.identitiesListed) identities(context, service, me);
@@ -361,6 +372,51 @@ public class SocialSettingsFragment extends Fragment implements SocialService.Li
                 SocialUi.toastProblem(getContext(), problem, null);
             }
         };
+    }
+
+    /** M053: someone on the ignore list: their picture and name (a friend's or crewmate's), "Yok saymayı bırak". */
+    private View ignoredRow(final String id) {
+        Context context = requireContext();
+        SocialService service = SocialService.get(context);
+        Profile profile = null;
+        for (gg.projects.mobile.social.SocialModel.Friend f : service.state().friends()) if (f.profile.id.equals(id)) profile = f.profile;
+        if (profile == null) {
+            for (gg.projects.mobile.social.SocialModel.Crew crew : service.state().crews()) {
+                gg.projects.mobile.social.SocialModel.Member m = crew.team.member(id);
+                if (m != null) profile = m.profile;
+            }
+        }
+        final String name = profile != null ? profile.name() : getString(R.string.projects_ignore_someone);
+        LinearLayout row = new LinearLayout(context);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setMinimumHeight(dp(56));
+        row.setPadding(dp(8), dp(4), dp(4), dp(4));
+        AvatarView avatar = new AvatarView(context);
+        if (profile != null) avatar.setProfile(profile);
+        row.addView(avatar, new LinearLayout.LayoutParams(dp(40), dp(40)));
+        TextView label = new TextView(context);
+        label.setText(name);
+        label.setTextSize(15);
+        label.setTextColor(ContextCompat.getColor(context, R.color.projects_bone_100));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        lp.setMarginStart(dp(12));
+        row.addView(label, lp);
+        Button stop = new Button(context, null, android.R.attr.borderlessButtonStyle);
+        stop.setText(R.string.projects_ignore_stop);
+        stop.setAllCaps(false);
+        stop.setTextColor(ContextCompat.getColor(context, R.color.projects_bone_100));
+        stop.setBackground(ChamferDrawable.outlined(context));
+        stop.setPadding(dp(14), 0, dp(14), 0);
+        Press.attach(stop, Press.Style.BUTTON);
+        final FragmentActivity activity = requireActivity();
+        stop.setOnClickListener(v -> {
+            gg.projects.mobile.social.IgnoreList.set(activity, id, false);
+            SocialUi.toast(activity, getString(R.string.projects_ignore_stopped, name));
+            render();
+        });
+        row.addView(stop);
+        return row;
     }
 
     private View blockedRow(final Profile blocked) {

@@ -547,6 +547,8 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
             chatChanged = true;
         }
         mVoice.setConfig(friends && voice);
+        // M053: the ignore list counts while the config has socNext (the desktop's SOC-NEXT flag).
+        IgnoreList.setOn(mApp, snapshot.config.socNextFeature);
         boolean same = friends == mConfigFriends && teams == mConfigTeams && !chatChanged;
         if (mConfigKnown && same) return;
         mConfigKnown = true;

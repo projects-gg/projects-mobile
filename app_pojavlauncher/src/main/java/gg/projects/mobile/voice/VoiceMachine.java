@@ -235,6 +235,21 @@ public final class VoiceMachine {
 
         /** "Sesli sohbet sesleri". */
         boolean sounds();
+
+        /**
+         * M053: on the player's ignore list ("Yok say"): silent for them, as the desktop's ignore mutes for them; kept
+         * apart from "Benim için sustur" so stopping the ignore never touches that choice.
+         */
+        default boolean ignored(String person) {
+            return false;
+        }
+    }
+
+    /** M053: the ignore list changed: how each person plays again. */
+    public List<Effect> replay() {
+        List<Effect> out = changed();
+        out.addAll(playback());
+        return out;
     }
 
     /** How a stay begins. */
@@ -903,6 +918,22 @@ public final class VoiceMachine {
             int chars = trimmed.codePointCount(0, trimmed.length());
             if (chars < 3 || chars > 24) return new Request(0, new ArrayList<>(), VoiceAnswer.refused(Refusal.INVALID_NAME));
         }
+        if (act == ModAct.UNSHARE) {
+            // M053: every share of theirs stops (the desktop sends one frame for each); the first one's answer is the
+            // request's.
+            VoiceRoom current = stay == null ? null : stay.room;
+            VoiceWire.Person them = current == null || person == null ? null : current.people.get(person);
+            if (them == null || them.sh.isEmpty()) {
+                return new Request(0, new ArrayList<>(), VoiceAnswer.refused(Refusal.NOT_FOUND));
+            }
+            final int firstN = them.sh.get(0).n;
+            Request first = request(Pending.MOD, rid -> VoiceWire.unshare(person, firstN, rid));
+            for (int i = 1; i < them.sh.size() && first.refused == null; i++) {
+                final int n = them.sh.get(i).n;
+                first.effects.addAll(request(Pending.MOD, rid -> VoiceWire.unshare(person, n, rid)).effects);
+            }
+            return first;
+        }
         final String finalName = trimmed;
         final String to = act == ModAct.NAME || act == ModAct.CLOSE ? null : person;
         final String target = act == ModAct.MOVE ? room : null;
@@ -1018,7 +1049,7 @@ public final class VoiceMachine {
         List<EnginePerson> people = new ArrayList<>();
         for (Person person : room.peopleInOrder()) {
             people.add(new EnginePerson(person.u, Math.max(0, Math.min(VOLUME_MAX, prefs.volume(person.u))),
-                    prefs.mutedForMe(person.u) || person.sm));
+                    prefs.mutedForMe(person.u) || prefs.ignored(person.u) || person.sm));
         }
         Command c = new Command(Command.Kind.PEOPLE);
         c.people = people;

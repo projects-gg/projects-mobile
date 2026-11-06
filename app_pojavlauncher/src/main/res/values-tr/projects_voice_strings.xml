@@ -148,4 +148,33 @@
     </plurals>
     <string name="projects_voice_share_nobody">%1$s, kimse izlemiyor</string>
     <string name="projects_voice_share_picture">%1$s yayınından son görüntü</string>
+
+    <!-- M053: ekip odalarını yönetmek (masaüstünün oda menüsü), "Paylaşımı durdur", yok sayma listesi -->
+    <string name="projects_voice_room_more">%1$s seçenekleri</string>
+    <string name="projects_voice_room_edit">Odayı düzenle</string>
+    <string name="projects_voice_room_up">Yukarı taşı</string>
+    <string name="projects_voice_room_down">Aşağı taşı</string>
+    <string name="projects_voice_room_remove">Odayı sil</string>
+    <string name="projects_voice_room_remove_title">%1$s silinsin mi?</string>
+    <string name="projects_voice_room_remove_ask">İçerideki herkes Genel\'e geçer.</string>
+    <string name="projects_voice_room_removed">%1$s silindi.</string>
+    <string name="projects_voice_room_not_removed">İçeride biri olduğu için oda silinmedi.</string>
+    <string name="projects_voice_room_ordered">Odalar yeniden sıralandı.</string>
+    <string name="projects_voice_room_limit">Kişi sınırı</string>
+    <plurals name="projects_voice_room_limit_value">
+        <item quantity="one">%1$d kişi</item>
+        <item quantity="other">%1$d kişi</item>
+    </plurals>
+    <string name="projects_voice_room_fewer">Sınırı azalt</string>
+    <string name="projects_voice_room_more_people">Sınırı artır</string>
+    <string name="projects_voice_room_save">Kaydet</string>
+    <string name="projects_voice_room_cancel">Vazgeç</string>
+    <string name="projects_voice_unshare">Paylaşımı durdur</string>
+    <string name="projects_ignore_action">Yok say</string>
+    <string name="projects_ignore_stop">Yok saymayı bırak</string>
+    <string name="projects_ignore_done">%1$s yok sayılıyor, haberi olmaz.</string>
+    <string name="projects_ignore_stopped">%1$s artık yok sayılmıyor</string>
+    <string name="projects_ignore_title">Yok saydıkların</string>
+    <string name="projects_ignore_empty">Kimseyi yok saymıyorsun.</string>
+    <string name="projects_ignore_someone">Biri</string>
 </resources>
