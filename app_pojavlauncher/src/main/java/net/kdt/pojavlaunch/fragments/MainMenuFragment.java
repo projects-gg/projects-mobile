@@ -43,6 +43,8 @@ public class MainMenuFragment extends Fragment implements gg.projects.mobile.ui.
     private gg.projects.mobile.social.ui.SocialHomeRow mSocialRow;
     // AFKPLUS-M: 7/24 Bulut's row (players with cloud accounts) or its menu entry.
     private gg.projects.mobile.cloud.ui.CloudHomeRow mCloudRow;
+    // AFK-M-UI: phone AFK's row (players with AFK accounts on this phone) or its menu entry.
+    private gg.projects.mobile.afk.ui.AfkHomeRow mAfkRow;
     // Projects fork: the event reminder's bell asks for the notification permission when it is tapped.
     private final ActivityResultLauncher<String> mNotificationPermission = registerForActivityResult(
             new ActivityResultContracts.RequestPermission(), granted -> {
@@ -77,7 +79,8 @@ public class MainMenuFragment extends Fragment implements gg.projects.mobile.ui.
         // button that deleted every Sodium-looking jar (pack files included) before starting; Sodium
         // is now held off where it cannot run, and a start it breaks is caught afterwards
         // (gg.projects.mobile.launch.SodiumFallback).
-        mPlayButton.setOnClickListener(v -> {
+        // AFK-M-UI: the chosen name AFK on this phone asks first ("AFK'yı durdur ve oyna", "AFK açık kalsın").
+        mPlayButton.setOnClickListener(v -> gg.projects.mobile.afk.ui.AfkPlayGate.check(this, mPlayButton, () -> {
             // Projects fork (M16): the Projects profile always starts through its join, like "Projects'e
             // katıl": the pack is installed and in step first, so OYNA never starts it as plain vanilla
             // (a profile that had not joined yet showed the newest release and started without the
@@ -91,7 +94,7 @@ public class MainMenuFragment extends Fragment implements gg.projects.mobile.ui.
             // profile) asks once whether Projects, which has the mods, was meant.
             if (mProjectsCard.offerProjectsInstead(mPlayButton)) return;
             ExtraCore.setValue(ExtraConstants.LAUNCH_GAME, true);
-        });
+        }));
         // Projects fork (M14): OYNA's gold face in its socket; the launch check confirms or rejects
         // the press (LauncherActivity). The tool rows are clipped to their rounded group.
         gg.projects.mobile.ui.PlayButtons.decoratePlay(mPlayButton);
@@ -112,6 +115,7 @@ public class MainMenuFragment extends Fragment implements gg.projects.mobile.ui.
         // Projects fork (M19): the "Arkadaşlar" row (friends on Projects, a crew call, an invite).
         mSocialRow = new gg.projects.mobile.social.ui.SocialHomeRow(this, view);
         mCloudRow = new gg.projects.mobile.cloud.ui.CloudHomeRow(this, view);
+        mAfkRow = new gg.projects.mobile.afk.ui.AfkHomeRow(this, view);
         // Projects fork: "Tekrar başlat" after Sodium kept the game from starting. FIX2: the game closed for
         // "Bağlan" while it ran: the start goes into that server.
         // The request goes to the home card, whose next resumed instance takes it: the launcher turns to portrait
@@ -155,6 +159,7 @@ public class MainMenuFragment extends Fragment implements gg.projects.mobile.ui.
         mProjectsCard.onResume();
         mSocialRow.onResume();
         mCloudRow.onResume();
+        mAfkRow.onResume();
     }
 
     @Override
@@ -163,5 +168,6 @@ public class MainMenuFragment extends Fragment implements gg.projects.mobile.ui.
         mProjectsCard.onPause();
         mSocialRow.onPause();
         mCloudRow.onPause();
+        mAfkRow.onPause();
     }
 }

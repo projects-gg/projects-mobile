@@ -1388,6 +1388,7 @@ public class mcAccountSpinner extends AppCompatSpinner implements AdapterView.On
             TextView textview = convertView.findViewById(R.id.account_item);
             ImageView headView = convertView.findViewById(R.id.projects_account_row_head);
             ImageView pinView = convertView.findViewById(R.id.projects_account_row_pin);
+            TextView afkView = convertView.findViewById(R.id.projects_account_row_afk);
             ImageView deleteButton = convertView.findViewById(R.id.delete_account_button);
             textview.setText(super.getItem(position));
             // SWIPE-M: no accessibility delegate on a row (no custom action, no compat state description): the list
@@ -1411,6 +1412,7 @@ public class mcAccountSpinner extends AppCompatSpinner implements AdapterView.On
                 textview.setTextColor(ContextCompat.getColor(parent.getContext(), R.color.projects_bone_100));
                 deleteButton.setVisibility(View.GONE);
                 pinView.setVisibility(View.GONE);
+                afkView.setVisibility(View.GONE);
             }
             else {
                 final String username = super.getItem(position);
@@ -1429,9 +1431,17 @@ public class mcAccountSpinner extends AppCompatSpinner implements AdapterView.On
                 // in the hold menu, which TalkBack reaches as the row's long press).
                 boolean pinned = mPinned.contains(username);
                 pinView.setVisibility(pinned ? View.VISIBLE : View.GONE);
+                // AFK-M-UI: the same name AFK on this phone reads "AFK'da" under it (the desktop's account mark).
+                boolean afk = gg.projects.mobile.afk.ui.AfkMarks.afk(getContext(), username);
+                afkView.setVisibility(afk ? View.VISIBLE : View.GONE);
                 if (active) {
-                    convertView.setContentDescription(parent.getContext().getString(
-                            pinned ? R.string.projects_account_row_active_pinned : R.string.projects_account_row_active, username));
+                    String selected = parent.getContext().getString(
+                            pinned ? R.string.projects_account_row_active_pinned : R.string.projects_account_row_active, username);
+                    convertView.setContentDescription(afk
+                            ? parent.getContext().getString(R.string.projects_afk_ui_mark_row, selected) : selected);
+                } else if (afk) {
+                    convertView.setContentDescription(parent.getContext().getString(pinned ? R.string.projects_afk_ui_mark_row_pinned
+                            : R.string.projects_afk_ui_mark_row, username));
                 } else if (pinned) {
                     convertView.setContentDescription(parent.getContext().getString(R.string.projects_account_row_pinned, username));
                 }

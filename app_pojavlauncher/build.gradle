@@ -145,6 +145,9 @@ android {
         versionName getProjectsVersionName()
         // APK-UPD: the app's own updater (gg.projects.mobile.update); off in the Play build.
         buildConfigField 'boolean', 'PROJECTS_UPDATER', 'true'
+        // PHONE-AFK: the phone's own AFK accounts (gg.projects.mobile.afk); off in the Play build, whose manifest
+        // removes the service (src/gplay/AndroidManifest.xml).
+        buildConfigField 'boolean', 'PROJECTS_PHONE_AFK', 'true'
         multiDexEnabled true //important
         resValue 'string', 'curseforge_api_key', getCFApiKey()
         externalNativeBuild {
@@ -215,6 +218,8 @@ android {
             // APK-UPD: Play forbids an app updating itself any other way: no updater, no install permissions
             // (src/gplay/AndroidManifest.xml removes them).
             buildConfigField 'boolean', 'PROJECTS_UPDATER', 'false'
+            // PHONE-AFK: no phone AFK on Play (wake lock and battery policy; docs/tasks/phone-afk.md §4).
+            buildConfigField 'boolean', 'PROJECTS_PHONE_AFK', 'false'
         }
     }
 
@@ -251,6 +256,12 @@ android {
             // and not properly link to source files, very smart android studio.
             keepDebugSymbols += ['**/libcutils.so']
             pickFirsts += ['**/libbytehook.so']
+        }
+        // Phone AFK: every Netty jar carries the same versions file and index; Java 9+ module descriptors and GraalVM
+        // native-image settings mean nothing on Android.
+        resources {
+            excludes += ['META-INF/io.netty.versions.properties', 'META-INF/INDEX.LIST',
+                         'META-INF/versions/*/module-info.class', 'META-INF/native-image/**']
         }
     }
 
@@ -329,7 +340,10 @@ dependencies {
 
     implementation 'top.fifthlight.touchcontroller:proxy-client-android:0.0.4'
 
-    implementation fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
+    // Phone AFK: MCProtocolLib's Gson and upstream's libs/gson-2.8.6.jar define the same classes: the app takes
+    // Maven's.
+    implementation fileTree(dir: 'libs', include: ['*.jar', '*.aar'], exclude: ['gson-2.8.6.jar'])
+    implementation 'com.google.code.gson:gson:2.13.2'
 
     // 5.17.0+ natives load on 16 KB page devices (same JNI interface 7.0.x as 5.14.0)
     implementation "net.java.dev.jna:jna:5.18.1@aar"
@@ -349,6 +363,20 @@ dependencies {
     // MOB-VOICE: Google's libwebrtc for Android, the maintained open build LiveKit publishes (BSD-3, no dependencies,
     // minSdk 21, 16 KB aligned): voice chat's audio through Cloudflare's SFU (docs/tasks/mob-voice.md).
     implementation 'io.github.webrtc-sdk:android:144.7559.15'
+    // PHONE-AFK: MCProtocolLib 26.3-2 (Minecraft 26.3, protocol 777), not as published: netty-all brings every Netty
+    // module plus epoll/io_uring/kqueue/QUIC natives for Linux, macOS and Windows; MinecraftAuth is Microsoft
+    // sign-in; checker-qual is annotations only; math's api jar repeats 57 classes of its immutable jar.
+    implementation('org.geysermc.mcprotocollib:protocol:26.3-2') {
+        exclude group: 'io.netty'
+        exclude group: 'net.raphimc', module: 'MinecraftAuth'
+        exclude group: 'org.checkerframework', module: 'checker-qual'
+        exclude group: 'org.cloudburstmc.math', module: 'api'
+    }
+    // Only what MCPL's client uses, on Netty 4.1: 4.2's VarHandle code (invoke-polymorphic) fails AGP's dexing below
+    // minSdk 26; MCPL falls back to 4.1's NioEventLoopGroup by itself (TransportHelper.NEW_NETTY).
+    implementation 'io.netty:netty-transport:4.1.139.Final'
+    implementation 'io.netty:netty-codec:4.1.139.Final'
+    implementation 'io.netty:netty-handler:4.1.139.Final'
     testImplementation 'junit:junit:4.13.2'
 }
 apply from: rootProject.file('gradle/prefab_bypass.gradle')

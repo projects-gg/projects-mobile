@@ -5,7 +5,9 @@
      switcher); the name gives way to it when it is long. Holding a row opens its menu. The remove
      button is clickable but not explicitly focusable: a ListView ignores a tap on a row that holds an
      explicitly focusable view (AbsListView.onTouchUp), which would leave the row's own tap, the
-     account pick, to nothing. -->
+     account pick, to nothing.
+     AFK-M-UI: a name AFK on this phone reads "AFK'da" under it (the desktop's account mark); without it
+     the name stays centred in the row. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -39,13 +41,29 @@
             android:textColor="@color/projects_bone_100"
             android:textSize="16sp"
             app:layout_constrainedWidth="true"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintBottom_toTopOf="@+id/projects_account_row_afk"
             app:layout_constraintEnd_toStartOf="@+id/projects_account_row_pin"
             app:layout_constraintHorizontal_bias="0"
             app:layout_constraintHorizontal_chainStyle="packed"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_chainStyle="packed"
             tools:text="Golge_Avci" />
+
+        <TextView
+            android:id="@+id/projects_account_row_afk"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/figtree_regular"
+            android:singleLine="true"
+            android:text="@string/projects_afk_ui_mark"
+            android:textColor="@color/projects_ash_400"
+            android:textSize="13sp"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/account_item"
+            tools:visibility="visible" />
 
         <ImageView
             android:id="@+id/projects_account_row_pin"
@@ -56,10 +74,10 @@
             android:src="@drawable/projects_ic_push_pin_fill"
             android:tint="@color/projects_ash_400"
             android:visibility="gone"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintBottom_toBottomOf="@+id/account_item"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/account_item"
-            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/account_item"
             tools:visibility="visible" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 

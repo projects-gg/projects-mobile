@@ -52,6 +52,9 @@
          without asking. The Play build removes both (src/gplay/AndroidManifest.xml). -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
+    <!-- PHONE-AFK: Android's own "run in the background without limits?" question for the phone's AFK accounts (the
+         battery guide asks it once). The Play build removes it with the AFK service (src/gplay/AndroidManifest.xml). -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <meta-data android:name="android.game_mode_config"
         android:resource="@xml/game_mode_config" />
     <!-- Projects fork: on 16 KB page devices (Android 16+) keep the page size compat mode on.
@@ -272,6 +275,32 @@
         <receiver
             android:name="gg.projects.mobile.voice.VoiceActionReceiver"
             android:exported="false" />
+
+        <!-- PHONE-AFK: the phone's own AFK accounts (gg.projects.mobile.afk) in a process of their own, so the game
+             and the screens come and go without them; started only by the player's tap, shown in an ongoing
+             notification until stopped. The Play build removes it (src/gplay/AndroidManifest.xml). -->
+        <service
+            android:name="gg.projects.mobile.afk.service.AfkService"
+            android:exported="false"
+            android:process=":afk"
+            android:foregroundServiceType="specialUse">
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Keeps the player's own Minecraft accounts connected to game servers the player chose (AFK), started by the player's tap and shown in an ongoing notification until the player stops it."/>
+        </service>
+        <!-- PHONE-AFK: the watchdog's alarm, in the AFK process (light: no launcher start-up there); it brings AFK
+             back or says the phone closed it. Never on boot. -->
+        <receiver
+            android:name="gg.projects.mobile.afk.service.AfkWatchdog"
+            android:exported="false"
+            android:process=":afk" />
+        <!-- PHONE-AFK: a tap on an AFK notification (the app's own notifications only). -->
+        <activity
+            android:name="gg.projects.mobile.afk.service.AfkOpenActivity"
+            android:exported="false"
+            android:taskAffinity=""
+            android:noHistory="true"
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.NoDisplay" />
 
         <!-- APK-UPD: the install session's answers (an explicit intent Android fills in) and the app's replacement. -->
         <receiver

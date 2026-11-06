@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- PHONE-AFK (AFK-M-CORE): the phone AFK engine's words: reasons, notifications, answers. The desktop launcher's
+     where the same thing is named (apps/launcher/src/locales/en.ts afk.failure, afk.refusal, afk.states). Short,
+     sentence case. The screens' own words are AFK-M-UI's (projects_afk_strings.xml). -->
+<resources>
+    <!-- Why an account dropped, waits or stopped (gg.projects.mobile.afk.api.AfkReason) -->
+    <string name="projects_afk_reason_kicked">Kicked from the server</string>
+    <string name="projects_afk_reason_login_rejected">The server refused the login</string>
+    <string name="projects_afk_reason_connection_lost">Connection lost</string>
+    <string name="projects_afk_reason_disconnected">Disconnected</string>
+    <string name="projects_afk_reason_unreachable">Can\'t reach the server</string>
+    <string name="projects_afk_reason_address_not_found">Server address not found</string>
+    <string name="projects_afk_reason_no_network">No connection</string>
+    <string name="projects_afk_reason_waiting_wifi">Waiting for Wi-Fi</string>
+    <string name="projects_afk_reason_error">Something went wrong</string>
+    <string name="projects_afk_reason_banned">Banned from the server</string>
+    <string name="projects_afk_reason_not_whitelisted">Not on the whitelist</string>
+    <string name="projects_afk_reason_wrong_password">Wrong login password</string>
+    <string name="projects_afk_reason_premium_only">The server only takes premium accounts</string>
+    <string name="projects_afk_reason_logged_in_elsewhere">Someone joined with this name elsewhere</string>
+    <string name="projects_afk_reason_already_connected">This name is already on the server</string>
+    <string name="projects_afk_reason_login_timeout">Login timed out</string>
+    <string name="projects_afk_reason_unsupported_version">This server doesn\'t accept the phone AFK\'s version</string>
+    <string name="projects_afk_reason_battery_low" formatted="false">Battery at 15%</string>
+    <string name="projects_afk_reason_too_hot">Phone too hot</string>
+    <string name="projects_afk_reason_process_ended">The phone closed AFK</string>
+    <string name="projects_afk_reason_app_updated">The app was updated</string>
+
+    <!-- An account's state line (AfkTexts.state) -->
+    <string name="projects_afk_state_stopped">Stopped</string>
+    <string name="projects_afk_state_connecting">Connecting</string>
+    <string name="projects_afk_state_in_game">In game</string>
+    <!-- %1$s: "45 s", "4 min" -->
+    <string name="projects_afk_state_waiting">Reconnecting in %1$s</string>
+    <string name="projects_afk_state_reconnecting">Reconnecting</string>
+    <string name="projects_afk_seconds">%1$d s</string>
+    <string name="projects_afk_minutes">%1$d min</string>
+
+    <!-- Draft problems (AfkProblem) -->
+    <string name="projects_afk_problem_name_invalid">The username must be 3 to 16 characters and contain only letters, digits or underscores.</string>
+    <string name="projects_afk_problem_name_taken">An AFK account with this name already exists.</string>
+    <string name="projects_afk_problem_address_missing">Enter the server address.</string>
+    <string name="projects_afk_problem_address_invalid">This server address isn\'t valid.</string>
+    <string name="projects_afk_problem_port_invalid">The port must be between 1 and 65535.</string>
+    <string name="projects_afk_problem_local_address">Servers on your local network aren\'t supported yet.</string>
+    <string name="projects_afk_problem_too_many_commands">You can add up to 5 login commands.</string>
+    <string name="projects_afk_problem_command_too_long">A login command can be up to 256 characters.</string>
+    <string name="projects_afk_problem_too_many_accounts">You can add up to 20 AFK accounts.</string>
+    <string name="projects_afk_problem_not_saved">Couldn\'t save. Try again.</string>
+
+    <!-- Start and send answers (AfkStartResult, AfkSendResult) -->
+    <string name="projects_afk_start_started">Starting</string>
+    <string name="projects_afk_start_already_running">Already AFK</string>
+    <string name="projects_afk_start_limit_reached">Up to 3 accounts can be AFK at once.</string>
+    <string name="projects_afk_start_not_available">AFK isn\'t available on this phone.</string>
+    <string name="projects_afk_start_no_account">This account no longer exists.</string>
+    <string name="projects_afk_start_not_allowed">AFK couldn\'t start. Open the app and try again.</string>
+    <string name="projects_afk_send_sent">Sent</string>
+    <string name="projects_afk_send_empty">Write something first.</string>
+    <string name="projects_afk_send_too_long">The message is too long.</string>
+    <string name="projects_afk_send_too_fast">You\'re sending too fast. Wait a moment.</string>
+    <string name="projects_afk_send_not_in_game">The account isn\'t in game.</string>
+    <string name="projects_afk_send_not_running">The account isn\'t AFK.</string>
+
+    <!-- Console notices (the app's own lines) -->
+    <string name="projects_afk_line_connecting">Connecting to %1$s</string>
+    <string name="projects_afk_line_joined">Joined the game</string>
+    <!-- %1$s: the reason; %2$s: when it tries again ("45 s") -->
+    <string name="projects_afk_line_dropped">%1$s. Reconnecting in %2$s.</string>
+    <string name="projects_afk_line_stopped">%1$s. AFK stopped.</string>
+    <string name="projects_afk_line_stopped_by_player">AFK stopped.</string>
+    <string name="projects_afk_line_transfer">The server moved the account to %1$s</string>
+    <string name="projects_afk_line_window">The server opened a window: %1$s</string>
+    <string name="projects_afk_line_window_untitled">The server opened a window</string>
+    <string name="projects_afk_line_respawn">The account died and came back</string>
+    <string name="projects_afk_line_login_commands">Login commands sent</string>
+    <string name="projects_afk_line_reconnect">Reconnecting with the new settings</string>
+
+    <!-- Notifications (the service) -->
+    <string name="projects_afk_channel_running">AFK accounts</string>
+    <string name="projects_afk_channel_alerts">AFK alerts</string>
+    <string name="projects_afk_notify_title">AFK accounts</string>
+    <plurals name="projects_afk_notify_in_game">
+        <item quantity="one">%1$d account in game</item>
+        <item quantity="other">%1$d accounts in game</item>
+    </plurals>
+    <string name="projects_afk_notify_starting">Starting</string>
+    <string name="projects_afk_notify_stop_all">Stop all</string>
+    <!-- An account line in the expanded notification: "SleepyFox_42: In game" -->
+    <string name="projects_afk_notify_account_line">%1$s: %2$s</string>
+    <string name="projects_afk_alert_dropped">%1$s is out of the game</string>
+    <string name="projects_afk_alert_dropped_text">%1$s. Still trying to reconnect.</string>
+    <string name="projects_afk_alert_stopped">%1$s stopped</string>
+    <string name="projects_afk_alert_mention">%1$s was mentioned in chat</string>
+    <string name="projects_afk_alert_private">%1$s got a private message</string>
+    <string name="projects_afk_alert_window">The server opened a window for %1$s</string>
+    <string name="projects_afk_alert_battery" formatted="false">Battery at 15%, AFK stopped. Plug your phone in to keep going.</string>
+    <string name="projects_afk_alert_hot">Your phone got too hot, AFK stopped. Let it cool down.</string>
+    <!-- The morning notification after the phone closed AFK. %1$s: the time ("03:12") -->
+    <string name="projects_afk_end_title">AFK stopped</string>
+    <string name="projects_afk_end_closed_by_phone">Your phone closed AFK at %1$s.</string>
+    <string name="projects_afk_end_low_memory">Your phone ran low on memory and closed AFK at %1$s.</string>
+    <string name="projects_afk_end_crashed">AFK closed unexpectedly at %1$s.</string>
+    <string name="projects_afk_end_app_updated">The app was updated at %1$s and AFK stopped.</string>
+    <string name="projects_afk_end_unknown">AFK stopped at %1$s.</string>
+    <string name="projects_afk_end_fix">Open settings</string>
+</resources>

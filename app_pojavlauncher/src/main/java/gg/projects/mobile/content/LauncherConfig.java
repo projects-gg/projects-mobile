@@ -44,6 +44,11 @@ public final class LauncherConfig {
     public transient boolean chatFeature;
     /** MOB-VOICE: {@code features.voice} (voice chat, inside friends; Studio's {@code voiceOn} decides beyond it). */
     public transient boolean voiceFeature;
+    /**
+     * PHONE-AFK: {@code features.phoneAfk} (the phone's own AFK accounts, gg.projects.mobile.afk). Off unless the config
+     * says {@code true}; independent of friends.
+     */
+    public transient boolean phoneAfkFeature;
 
     /** Studio's events, hidden ones included (they take a feed event with their id off the card). */
     public transient List<EventCountdown> events = Collections.emptyList();
@@ -206,6 +211,7 @@ public final class LauncherConfig {
         config.teamsFeature = config.friendsFeature && isTrue(features, "teams");
         config.chatFeature = config.friendsFeature && isTrue(features, "chat");
         config.voiceFeature = config.friendsFeature && isTrue(features, "voice");
+        config.phoneAfkFeature = isTrue(features, "phoneAfk");
         config.eventsJson = null;
         config.newsFeedJson = null;
         config.recommendedMinecraftVersionJson = null;

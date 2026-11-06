@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- PHONE-AFK (AFK-M-CORE): telefondaki AFK motorunun sözleri: nedenler, bildirimler, cevaplar. Aynı şeyin adı masaüstü
+     launcher'ın sözleri (apps/launcher/src/locales/tr.ts afk.failure, afk.refusal, afk.states). Kısa, cümle düzeni. Bir adın
+     ya da sayının sonuna ek gelmez ("%1$s:" ya da "için"); saatin eki koddan gelir (AfkTexts.timeAt: "03:12'de"). Ekranların
+     kendi sözleri AFK-M-UI'ın (projects_afk_strings.xml). -->
+<resources>
+    <!-- Hesap neden düştü, bekliyor ya da durdu (AfkReason) -->
+    <string name="projects_afk_reason_kicked">Sunucudan atıldı</string>
+    <string name="projects_afk_reason_login_rejected">Sunucu girişi reddetti</string>
+    <string name="projects_afk_reason_connection_lost">Bağlantı koptu</string>
+    <string name="projects_afk_reason_disconnected">Bağlantı kesildi</string>
+    <string name="projects_afk_reason_unreachable">Sunucuya ulaşılamadı</string>
+    <string name="projects_afk_reason_address_not_found">Sunucu adresi bulunamadı</string>
+    <string name="projects_afk_reason_no_network">Bağlantı yok</string>
+    <string name="projects_afk_reason_waiting_wifi">Wi-Fi bekleniyor</string>
+    <string name="projects_afk_reason_error">Bir sorun çıktı</string>
+    <string name="projects_afk_reason_banned">Sunucudan yasaklandı</string>
+    <string name="projects_afk_reason_not_whitelisted">Beyaz listede değil</string>
+    <string name="projects_afk_reason_wrong_password">Giriş şifresi yanlış</string>
+    <string name="projects_afk_reason_premium_only">Sunucu yalnız premium hesap kabul ediyor</string>
+    <string name="projects_afk_reason_logged_in_elsewhere">Bu adla başka yerden girildi</string>
+    <string name="projects_afk_reason_already_connected">Bu ad sunucuda zaten bağlı</string>
+    <string name="projects_afk_reason_login_timeout">Giriş süresi doldu</string>
+    <string name="projects_afk_reason_unsupported_version">Bu sunucu telefondaki AFK\'nın sürümünü kabul etmiyor</string>
+    <string name="projects_afk_reason_battery_low" formatted="false">Pil %15\'e düştü</string>
+    <string name="projects_afk_reason_too_hot">Telefon çok ısındı</string>
+    <string name="projects_afk_reason_process_ended">Telefon AFK\'yı kapattı</string>
+    <string name="projects_afk_reason_app_updated">Uygulama güncellendi</string>
+
+    <!-- Hesabın durum satırı (AfkTexts.state) -->
+    <string name="projects_afk_state_stopped">Durduruldu</string>
+    <string name="projects_afk_state_connecting">Bağlanıyor</string>
+    <string name="projects_afk_state_in_game">Oyunda</string>
+    <!-- %1$s: "45 saniye", "4 dakika" -->
+    <string name="projects_afk_state_waiting">%1$s sonra yeniden bağlanacak</string>
+    <string name="projects_afk_state_reconnecting">Yeniden bağlanıyor</string>
+    <string name="projects_afk_seconds">%1$d saniye</string>
+    <string name="projects_afk_minutes">%1$d dakika</string>
+
+    <!-- Taslak sorunları (AfkProblem) -->
+    <string name="projects_afk_problem_name_invalid">Oyuncu adı 3 ile 16 karakter arası olmalı ve yalnızca harf, rakam ya da alt çizgi içermeli.</string>
+    <string name="projects_afk_problem_name_taken">Bu adla bir AFK hesabı zaten var.</string>
+    <string name="projects_afk_problem_address_missing">Sunucu adresini yaz.</string>
+    <string name="projects_afk_problem_address_invalid">Bu sunucu adresi geçerli değil.</string>
+    <string name="projects_afk_problem_port_invalid">Port 1 ile 65535 arasında olmalı.</string>
+    <string name="projects_afk_problem_local_address">Yerel ağdaki sunucular henüz desteklenmiyor.</string>
+    <string name="projects_afk_problem_too_many_commands">En çok 5 giriş komutu ekleyebilirsin.</string>
+    <string name="projects_afk_problem_command_too_long">Bir giriş komutu en çok 256 karakter olabilir.</string>
+    <string name="projects_afk_problem_too_many_accounts">En çok 20 AFK hesabı ekleyebilirsin.</string>
+    <string name="projects_afk_problem_not_saved">Kaydedilemedi. Tekrar dene.</string>
+
+    <!-- Başlatma ve gönderme cevapları (AfkStartResult, AfkSendResult) -->
+    <string name="projects_afk_start_started">Başlatılıyor</string>
+    <string name="projects_afk_start_already_running">Zaten AFK\'da</string>
+    <string name="projects_afk_start_limit_reached">Aynı anda en çok 3 hesap AFK\'da kalabilir.</string>
+    <string name="projects_afk_start_not_available">Bu telefonda AFK kullanılamıyor.</string>
+    <string name="projects_afk_start_no_account">Bu hesap artık yok.</string>
+    <string name="projects_afk_start_not_allowed">AFK başlatılamadı. Uygulamayı açıp tekrar dene.</string>
+    <string name="projects_afk_send_sent">Gönderildi</string>
+    <string name="projects_afk_send_empty">Önce bir şey yaz.</string>
+    <string name="projects_afk_send_too_long">Mesaj çok uzun.</string>
+    <string name="projects_afk_send_too_fast">Çok hızlı gönderiyorsun. Biraz bekle.</string>
+    <string name="projects_afk_send_not_in_game">Hesap şu an oyunda değil.</string>
+    <string name="projects_afk_send_not_running">Hesap AFK\'da değil.</string>
+
+    <!-- Konsoldaki uygulama satırları -->
+    <string name="projects_afk_line_connecting">Bağlanıyor: %1$s</string>
+    <string name="projects_afk_line_joined">Oyuna girdi</string>
+    <!-- %1$s: neden; %2$s: ne zaman yeniden dener ("45 saniye") -->
+    <string name="projects_afk_line_dropped">%1$s. %2$s sonra yeniden bağlanacak.</string>
+    <string name="projects_afk_line_stopped">%1$s. AFK durdu.</string>
+    <string name="projects_afk_line_stopped_by_player">AFK durduruldu.</string>
+    <string name="projects_afk_line_transfer">Sunucu hesabı başka bir sunucuya aktardı: %1$s</string>
+    <string name="projects_afk_line_window">Sunucu bir pencere açtı: %1$s</string>
+    <string name="projects_afk_line_window_untitled">Sunucu bir pencere açtı</string>
+    <string name="projects_afk_line_respawn">Hesap öldü ve yeniden doğdu</string>
+    <string name="projects_afk_line_login_commands">Giriş komutları gönderildi</string>
+    <string name="projects_afk_line_reconnect">Yeni ayarlarla yeniden bağlanıyor</string>
+
+    <!-- Bildirimler (hizmet) -->
+    <string name="projects_afk_channel_running">AFK hesapları</string>
+    <string name="projects_afk_channel_alerts">AFK uyarıları</string>
+    <string name="projects_afk_notify_title">AFK hesapları</string>
+    <plurals name="projects_afk_notify_in_game">
+        <item quantity="one">%1$d hesap oyunda</item>
+        <item quantity="other">%1$d hesap oyunda</item>
+    </plurals>
+    <string name="projects_afk_notify_starting">Başlatılıyor</string>
+    <string name="projects_afk_notify_stop_all">Hepsini durdur</string>
+    <!-- Açılmış bildirimde hesap satırı: "SleepyFox_42: Oyunda" -->
+    <string name="projects_afk_notify_account_line">%1$s: %2$s</string>
+    <string name="projects_afk_alert_dropped">%1$s oyundan düştü</string>
+    <string name="projects_afk_alert_dropped_text">%1$s. Yeniden bağlanmaya çalışıyor.</string>
+    <string name="projects_afk_alert_stopped">%1$s: AFK durdu</string>
+    <string name="projects_afk_alert_mention">Sohbette adın geçti: %1$s</string>
+    <string name="projects_afk_alert_private">%1$s özel mesaj aldı</string>
+    <string name="projects_afk_alert_window">Sunucu %1$s için bir pencere açtı</string>
+    <string name="projects_afk_alert_battery" formatted="false">Pil %15\'e düştü, AFK durdu. Sürmesi için telefonu şarja tak.</string>
+    <string name="projects_afk_alert_hot">Telefon çok ısındı, AFK durdu. Biraz soğumasını bekle.</string>
+    <!-- Telefon AFK'yı kapattıktan sonraki sabah bildirimi. %1$s: saat ve eki ("03:12'de") -->
+    <string name="projects_afk_end_title">AFK durdu</string>
+    <string name="projects_afk_end_closed_by_phone">Telefonun AFK\'yı %1$s kapattı.</string>
+    <string name="projects_afk_end_low_memory">Telefonun belleği azaldı, AFK %1$s kapandı.</string>
+    <string name="projects_afk_end_crashed">AFK %1$s beklenmedik şekilde kapandı.</string>
+    <string name="projects_afk_end_app_updated">Uygulama %1$s güncellendi, AFK durdu.</string>
+    <string name="projects_afk_end_unknown">AFK %1$s durdu.</string>
+    <string name="projects_afk_end_fix">Ayarı aç</string>
+</resources>

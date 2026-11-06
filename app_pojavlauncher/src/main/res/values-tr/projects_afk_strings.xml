@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- PHONE-AFK (AFK-M-UI): AFK ekranlarının kendi sözleri. Aynı şeyin adı masaüstü launcher'ın sözleri
+     (apps/launcher/src/locales/tr.ts afk, afkSettings, afkClear, accounts.afkGuard); motorun nedenleri, durumları,
+     cevapları ve bildirimleri AFK-M-CORE'un (projects_afk_core_strings.xml). Kısa, cümle düzeni, kod yok. Bir adın ya da
+     sayının sonuna ek gelmez ("tanesi", "%1$s:" gibi ayrı sözlerle). -->
+<resources>
+    <string name="projects_afk_ui_title">AFK hesapları</string>
+
+    <!-- Ana menünün satırı: en önemli şey -->
+    <string name="projects_afk_ui_home_stopped_one">%1$s durdu</string>
+    <plurals name="projects_afk_ui_home_stopped_many">
+        <item quantity="one">%1$d AFK hesabı durdu</item>
+        <item quantity="other">%1$d AFK hesabı durdu</item>
+    </plurals>
+    <plurals name="projects_afk_ui_home_in_game">
+        <item quantity="one">%1$d hesap oyunda</item>
+        <item quantity="other">%1$d hesap oyunda</item>
+    </plurals>
+    <plurals name="projects_afk_ui_home_some_in_game">
+        <item quantity="one">%1$d hesap AFK\'da, %2$d tanesi oyunda</item>
+        <item quantity="other">%1$d hesap AFK\'da, %2$d tanesi oyunda</item>
+    </plurals>
+    <plurals name="projects_afk_ui_home_many_on_the_way">
+        <item quantity="one">%1$d hesap bağlanıyor</item>
+        <item quantity="other">%1$d hesap bağlanıyor</item>
+    </plurals>
+    <string name="projects_afk_ui_home_none_running">AFK\'da hesap yok</string>
+
+    <!-- Liste -->
+    <string name="projects_afk_ui_here">Bu telefonda</string>
+    <plurals name="projects_afk_ui_count">
+        <item quantity="one">%1$d hesap</item>
+        <item quantity="other">%1$d hesap</item>
+    </plurals>
+    <plurals name="projects_afk_ui_count_online">
+        <item quantity="one">%1$d hesap, %2$d tanesi oyunda</item>
+        <item quantity="other">%1$d hesap, %2$d tanesi oyunda</item>
+    </plurals>
+    <string name="projects_afk_ui_connect">Bağla</string>
+    <string name="projects_afk_ui_stop">Durdur</string>
+    <string name="projects_afk_ui_fix_password">Şifreyi düzelt</string>
+    <string name="projects_afk_ui_fix_login">Girişi düzelt</string>
+    <string name="projects_afk_ui_connect_all">Hepsini bağla</string>
+    <string name="projects_afk_ui_stop_all">Hepsini durdur</string>
+    <string name="projects_afk_ui_bulk_skipped">Sunucunun durdurduğu hesap toplu bağlanmaz. Önce kendi satırından düzelt.</string>
+    <string name="projects_afk_ui_add">Hesap ekle</string>
+    <string name="projects_afk_ui_empty_title">Henüz AFK hesabın yok</string>
+    <string name="projects_afk_ui_empty_body">Bir oyuncu adı ekle. Telefonun açıkken uygulama onu sunucuda tutar, düşerse yeniden bağlar.</string>
+    <!-- %1$s: ne kadar süredir ("2 saat 5 dakika") -->
+    <string name="projects_afk_ui_state_in_game">Oyunda, %1$s</string>
+    <!-- %1$s: neden ("Giriş şifresi yanlış") -->
+    <string name="projects_afk_ui_state_stopped_because">Durdu: %1$s</string>
+    <plurals name="projects_afk_ui_span_seconds">
+        <item quantity="one">%1$d saniye</item>
+        <item quantity="other">%1$d saniye</item>
+    </plurals>
+    <plurals name="projects_afk_ui_span_minutes">
+        <item quantity="one">%1$d dakika</item>
+        <item quantity="other">%1$d dakika</item>
+    </plurals>
+    <plurals name="projects_afk_ui_span_hours">
+        <item quantity="one">%1$d saat</item>
+        <item quantity="other">%1$d saat</item>
+    </plurals>
+    <plurals name="projects_afk_ui_span_days">
+        <item quantity="one">%1$d gün</item>
+        <item quantity="other">%1$d gün</item>
+    </plurals>
+    <string name="projects_afk_ui_reconnect">Yeniden bağlan</string>
+    <string name="projects_afk_ui_console">Konsol</string>
+    <string name="projects_afk_ui_settings">Ayarlar</string>
+    <string name="projects_afk_ui_delete">Sil</string>
+    <string name="projects_afk_ui_remove_title">%1$s silinsin mi?</string>
+    <string name="projects_afk_ui_remove_body">Hesabın ayarları ve kayıtlı giriş komutları bu telefondan silinir. Bu işlem geri alınamaz.</string>
+    <string name="projects_afk_ui_remove_confirm">Hesabı sil</string>
+    <string name="projects_afk_ui_removed">%1$s silindi</string>
+    <string name="projects_afk_ui_alert_mention">Sohbette adın geçti</string>
+    <string name="projects_afk_ui_alert_private">Özel mesaj geldi</string>
+    <string name="projects_afk_ui_cloud_line">Telefonun kapalıyken de oyunda kalmak için 7/24 Bulut.</string>
+    <string name="projects_afk_ui_cloud_link">7/24 Bulut\'u gör</string>
+
+    <!-- Telefonun kendi ayarları: pil ve bildirimler -->
+    <string name="projects_afk_ui_phone">Telefon</string>
+    <string name="projects_afk_ui_battery">Ekran kapalıyken de sürsün</string>
+    <string name="projects_afk_ui_notifications">Bildirimler</string>
+    <string name="projects_afk_ui_on">Açık</string>
+    <string name="projects_afk_ui_off">Kapalı</string>
+    <string name="projects_afk_ui_allow">İzin ver</string>
+    <string name="projects_afk_ui_battery_body">Telefonun AFK\'yı kapatmasın diye pil ayarından izin ver. Gece şarja takılı bırakmanı öneririz.</string>
+    <string name="projects_afk_ui_not_now">Şimdi değil</string>
+    <string name="projects_afk_ui_maker_title">Bir ayar daha</string>
+    <!-- %1$s: telefonun markası ("Xiaomi"); %2$s: uygulamanın adı -->
+    <string name="projects_afk_ui_maker_body">%1$s telefonlar uygulamaları arka planda kapatabiliyor. Açılan ayarda %2$s uygulamasına izin ver.</string>
+    <string name="projects_afk_ui_maker_open">Ayarı aç</string>
+
+    <!-- Hesap ekleme ve düzenleme -->
+    <!-- %1$s: hesabın adı -->
+    <string name="projects_afk_ui_settings_title">%1$s ayarları</string>
+    <string name="projects_afk_ui_name">Oyuncu adı</string>
+    <string name="projects_afk_ui_name_help">3 ile 16 karakter arası.</string>
+    <string name="projects_afk_ui_phone_names">Bu telefondaki adlar</string>
+    <string name="projects_afk_ui_connection">Bağlantı</string>
+    <string name="projects_afk_ui_address">Sunucu adresi</string>
+    <string name="projects_afk_ui_address_help">Boş bırakırsan play.projects.gg kullanılır.</string>
+    <string name="projects_afk_ui_commands">Komutlar</string>
+    <string name="projects_afk_ui_login">Giriş komutları</string>
+    <string name="projects_afk_ui_login_intro">Hesap oyuna girince sırayla yazdığı komutlar ya da sohbet mesajları.</string>
+    <!-- %1$d: komutun sırası -->
+    <string name="projects_afk_ui_login_line">%1$d. komut</string>
+    <string name="projects_afk_ui_login_placeholder">/kit ya da herkese merhaba</string>
+    <string name="projects_afk_ui_login_add">Komut ekle</string>
+    <string name="projects_afk_ui_login_remove">Komutu sil</string>
+    <string name="projects_afk_ui_secret_show">Göster</string>
+    <string name="projects_afk_ui_secret_hide">Gizle</string>
+    <string name="projects_afk_ui_secret_note">Kaydedince şifre gizlenir ve bu telefonda güvenle saklanır.</string>
+    <string name="projects_afk_ui_login_unreadable">Kayıtlı giriş komutları bu telefonda açılamadı. Yeniden yaz.</string>
+    <string name="projects_afk_ui_only_first">Yalnız ilk girişte çalıştır</string>
+    <string name="projects_afk_ui_only_first_help">Kapalıyken her girişte çalışır. Sunucu her girişte şifre istiyorsa kapalı bırak.</string>
+    <string name="projects_afk_ui_game">Oyun içi</string>
+    <string name="projects_afk_ui_sneak">AFK engelleme</string>
+    <string name="projects_afk_ui_sneak_help">Sunucunun seni AFK saymaması için arada bir eğilir.</string>
+    <string name="projects_afk_ui_mobile_data">Mobil veride sürsün</string>
+    <string name="projects_afk_ui_mobile_data_help">Kapalıyken yalnız Wi-Fi\'da bağlı kalır.</string>
+    <string name="projects_afk_ui_dirty">Kaydedilmemiş değişikliklerin var.</string>
+    <string name="projects_afk_ui_discard">Vazgeç</string>
+    <string name="projects_afk_ui_save">Kaydet</string>
+    <string name="projects_afk_ui_save_only">Yalnız kaydet</string>
+    <string name="projects_afk_ui_save_reconnect">Kaydet ve yeniden bağlan</string>
+    <string name="projects_afk_ui_reconnecting">%1$s yeniden bağlanıyor</string>
+    <string name="projects_afk_ui_fix_errors">Önce işaretli alanları düzelt.</string>
+    <string name="projects_afk_ui_saved">%1$s ayarları kaydedildi</string>
+    <string name="projects_afk_ui_added">%1$s eklendi</string>
+    <string name="projects_afk_ui_discard_title">Değişiklikler kaydedilmedi</string>
+    <string name="projects_afk_ui_discard_body">Kaydetmeden çıkarsan yaptığın değişiklikler silinir.</string>
+    <string name="projects_afk_ui_discard_confirm">Kaydetmeden çık</string>
+
+    <!-- Konsol -->
+    <string name="projects_afk_ui_console_title">%1$s konsolu</string>
+    <string name="projects_afk_ui_console_empty">Henüz mesaj yok.</string>
+    <string name="projects_afk_ui_console_input">Komut ya da sohbet mesajı</string>
+    <string name="projects_afk_ui_console_offline">Hesap bağlı değil</string>
+    <string name="projects_afk_ui_console_send">Gönder</string>
+    <string name="projects_afk_ui_console_new">Yeni mesajlar</string>
+    <string name="projects_afk_ui_console_secret">Şifre konsolda gizli kalır.</string>
+    <string name="projects_afk_ui_console_send_failed">Mesaj gönderilemedi.</string>
+    <string name="projects_afk_ui_console_accounts">Hesaplar</string>
+
+    <!-- Aynı ad AFK'dayken OYNA (masaüstünün afkGuard'ı) ve bellek denetimi -->
+    <string name="projects_afk_ui_guard_title">%1$s şu an AFK\'da</string>
+    <string name="projects_afk_ui_guard_body">AFK\'yı durdurursan oyun kapanınca yeniden başlar.</string>
+    <string name="projects_afk_ui_guard_stop">AFK\'yı durdur ve oyna</string>
+    <string name="projects_afk_ui_guard_keep">AFK açık kalsın</string>
+    <string name="projects_afk_ui_cancel">Vazgeç</string>
+    <string name="projects_afk_ui_restarted">%1$s yeniden AFK\'ya bağlanıyor</string>
+    <plurals name="projects_afk_ui_restarted_many">
+        <item quantity="one">%1$d hesap yeniden AFK\'ya bağlanıyor</item>
+        <item quantity="other">%1$d hesap yeniden AFK\'ya bağlanıyor</item>
+    </plurals>
+    <string name="projects_afk_ui_memory_title">Telefonunda boş bellek az</string>
+    <string name="projects_afk_ui_memory_body">Oyun açılırsa telefon AFK\'yı kapatabilir.</string>
+    <string name="projects_afk_ui_memory_play">Yine de oyna</string>
+
+    <!-- Hesap listesinde bu telefonda AFK'da olan adın yanındaki işaret -->
+    <string name="projects_afk_ui_mark">AFK\'da</string>
+    <string name="projects_afk_ui_mark_row">%1$s, AFK\'da</string>
+    <string name="projects_afk_ui_mark_row_pinned">%1$s, sabitlenmiş, AFK\'da</string>
+</resources>
