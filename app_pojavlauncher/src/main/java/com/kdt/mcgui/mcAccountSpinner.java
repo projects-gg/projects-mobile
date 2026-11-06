@@ -1124,6 +1124,22 @@ public class mcAccountSpinner extends AppCompatSpinner implements AdapterView.On
         LinearLayout list = sheet.findViewById(R.id.projects_actions_list);
         list.addView(accountHeader(context, name));
         final AlertDialog dialog = new AlertDialog.Builder(context).setView(sheet).create();
+        // M053 (SKIN1): "Görünüm", a player-name account's Projects skin, while the signed config has skins.
+        final androidx.fragment.app.FragmentActivity activity = activityOf(context);
+        if (activity != null && skinsOffered(name)) {
+            list.addView(CrewViews.actionRow(context, R.drawable.projects_ic_t_shirt, context.getString(R.string.projects_skin_menu),
+                    R.color.projects_bone_100, v -> {
+                        dialog.dismiss();
+                        // The list (a popup) closes first, as before a removal.
+                        onDetachedFromWindow();
+                        android.os.Bundle args = new android.os.Bundle();
+                        args.putString(gg.projects.mobile.accounts.ProjectsSkinFragment.ARG_ACCOUNT, name);
+                        if (!activity.getSupportFragmentManager().isStateSaved()) {
+                            Tools.swapFragment(activity, gg.projects.mobile.accounts.ProjectsSkinFragment.class,
+                                    gg.projects.mobile.accounts.ProjectsSkinFragment.TAG, args);
+                        }
+                    }));
+        }
         list.addView(CrewViews.actionRow(context, pinned ? R.drawable.projects_ic_push_pin_slash : R.drawable.projects_ic_push_pin,
                 context.getString(pinned ? R.string.projects_account_unpin : R.string.projects_account_pin),
                 R.color.projects_bone_100, v -> {
@@ -1140,6 +1156,24 @@ public class mcAccountSpinner extends AppCompatSpinner implements AdapterView.On
                 }));
         if (dialog.getWindow() != null) dialog.getWindow().setWindowAnimations(R.style.ProjectsMenuSheetAnimation);
         dialog.show();
+    }
+
+    /** M053: the Projects skin is for player-name accounts, while the signed config has {@code skins} (inside friends). */
+    private static boolean skinsOffered(String name) {
+        gg.projects.mobile.content.Snapshot snapshot = gg.projects.mobile.ProjectsContent.current();
+        if (snapshot == null || snapshot.config == null || !snapshot.config.skinsFeature) return false;
+        MinecraftAccount account = MinecraftAccount.load(name);
+        return account != null && account.isLocal();
+    }
+
+    @Nullable
+    private static androidx.fragment.app.FragmentActivity activityOf(Context context) {
+        Context at = context;
+        while (at instanceof android.content.ContextWrapper) {
+            if (at instanceof androidx.fragment.app.FragmentActivity) return (androidx.fragment.app.FragmentActivity) at;
+            at = ((android.content.ContextWrapper) at).getBaseContext();
+        }
+        return null;
     }
 
     /** The menu's top: whose menu it is (the head and the name), a heading for TalkBack. */

@@ -677,6 +677,11 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         if (mUiStarted > 0) refresh(false);
     }
 
+    /** M053: the presence socket is open and answering (the Görünüm screen then waits for its frames, not polling). */
+    public boolean socketLive() {
+        return mConnection != null && mLiveSocket;
+    }
+
     // ---- the presence socket ----
 
     /** What the socket says it understands (README "Capabilities"): older services ignore it. */
@@ -700,6 +705,8 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         caps.add("marks2");
         // AFKPLUS-M: 7/24 Bulut's notices on the socket ("afk_notice"; a service without them ignores the name).
         caps.add("afk");
+        // M053 (SKIN1): the Minecraft link's and the Projects skin's changes ("mc"; a service without them ignores it).
+        caps.add("mc");
         // MOB-VOICE: voice chat ("voice1"), while the signed config has it.
         mVoice.addCaps(caps);
         return caps;
@@ -859,6 +866,11 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         if (connection != mConnection) return;
         long now = nowSeconds();
         String type = Json.str(message, "t", "");
+        if (type.equals("mc")) {
+            // M053 (SKIN1): a job of the player's closed, or the link or skin changed: the Görünüm screen (if open) takes it.
+            gg.projects.mobile.accounts.ProjectsSkinHub.onFrame(message);
+            return;
+        }
         if (type.equals("afk_notice")) {
             // AFKPLUS-M: a 7/24 Bulut notice; the cloud side shows it (in the app's line when it is on screen).
             gg.projects.mobile.cloud.CloudService.get(mApp).onSocketNotice(message, uiActivity());
@@ -1881,7 +1893,8 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         return kinds;
     }
 
-    SocialApi api() {
+    /** M053: public for the Görünüm screen (SKIN1); the session token stays inside. */
+    public SocialApi api() {
         return mApi;
     }
 

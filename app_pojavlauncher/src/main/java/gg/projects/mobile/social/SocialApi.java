@@ -540,6 +540,50 @@ public final class SocialApi {
         return require(send("POST", "v1/voice/crew", body, true, false));
     }
 
+    // ---- M053: SKIN1, the Minecraft link and the Projects skin (README "Minecraft link and Projects skin") ----
+
+    /** {@code GET /v1/mc}: the link, the skin, the open jobs, the limits. */
+    @WorkerThread
+    public JsonObject mcState() throws SocialProblem {
+        return require(send("GET", "v1/mc", null, true, false));
+    }
+
+    /** {@code POST /v1/mc/link {"name","pin"}}: {@code {job}} (202). */
+    @WorkerThread
+    public JsonObject mcLink(String name, String pin) throws SocialProblem {
+        JsonObject body = new JsonObject();
+        body.addProperty("name", name);
+        body.addProperty("pin", pin);
+        return require(send("POST", "v1/mc/link", body, true, false));
+    }
+
+    /** {@code DELETE /v1/mc/link}: {@code {job}} (202). */
+    @WorkerThread
+    public JsonObject mcUnlink() throws SocialProblem {
+        return require(send("DELETE", "v1/mc/link", null, true, false));
+    }
+
+    /** {@code POST /v1/mc/link/check}: {@code {job}}, or {@code {link}} when the service knew it a moment ago. */
+    @WorkerThread
+    public JsonObject mcCheck() throws SocialProblem {
+        return require(send("POST", "v1/mc/link/check", new JsonObject(), true, false));
+    }
+
+    /** {@code PUT /v1/mc/skin {"name","source"}}: {@code {job}} (202). */
+    @WorkerThread
+    public JsonObject mcSkin(String name, JsonObject source) throws SocialProblem {
+        JsonObject body = new JsonObject();
+        body.addProperty("name", name);
+        body.add("source", source);
+        return require(send("PUT", "v1/mc/skin", body, true, false));
+    }
+
+    /** {@code GET /v1/mc/jobs/:id}: {@code {job}}. */
+    @WorkerThread
+    public JsonObject mcJob(String id) throws SocialProblem {
+        return require(send("GET", "v1/mc/jobs/" + segment(id), null, true, false));
+    }
+
     /**
      * M053: {@code POST /v1/voice/crew/room {"crew","room","name"?,"max"?}} (204): a crew room's new name and people limit
      * ({@code max} null: no own limit; {@code keepMax} leaves it as it is).

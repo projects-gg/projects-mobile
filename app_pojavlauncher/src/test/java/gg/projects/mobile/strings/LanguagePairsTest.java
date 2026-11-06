@@ -96,6 +96,9 @@ public class LanguagePairsTest {
         // CHAT-CALM: crew chat's slow mode and the crowded crew.
         english.putAll(texts(new File(RES, "values/strings_chat_calm.xml")));
         turkish.putAll(texts(new File(RES, "values-tr/strings_chat_calm.xml")));
+        // M053: the Projects skin (SKIN1).
+        english.putAll(texts(new File(RES, "values/strings_skin.xml")));
+        turkish.putAll(texts(new File(RES, "values-tr/strings_skin.xml")));
         TreeSet<String> missingTurkish = new TreeSet<>(english.keySet());
         missingTurkish.removeAll(turkish.keySet());
         TreeSet<String> missingEnglish = new TreeSet<>(turkish.keySet());
@@ -139,7 +142,7 @@ public class LanguagePairsTest {
     public void theEnglishInterfaceHasNoTurkishLeft() throws Exception {
         for (String file : new String[]{"values/projects_strings.xml", "values/projects_social_strings.xml", "values/projects_cloud_strings.xml",
                 "values/strings_cloud_feat.xml", "values/strings_cloud_plus.xml", "values/strings_app_update.xml", "values/strings.xml",
-                "values/strings_badges.xml", "values/strings_chat_calm.xml"}) {
+                "values/strings_badges.xml", "values/strings_chat_calm.xml", "values/strings_skin.xml"}) {
             for (Map.Entry<String, String> text : texts(new File(RES, file)).entrySet()) {
                 if (TURKISH_ON_PURPOSE.contains(text.getKey())) continue;
                 assertTrue(file + ": " + text.getKey() + " = " + text.getValue(), !TURKISH_LETTER.matcher(text.getValue()).find());
@@ -208,6 +211,11 @@ public class LanguagePairsTest {
             // names, vanilla's Turkish keys, a plugin's whisper form); none is interface text.
             if (file.getName().equals("AfkRestart.java") || file.getName().equals("AfkLineFilter.java")
                     || file.getName().equals("AfkComponents.java") || file.getName().equals("AfkChatRules.java")) continue;
+            // M053: the key panel's table of key names in both languages (as ControlLabels), the morning notice's Turkish
+            // day words beside TrGrammar's endings, and the Projects server's in-game link commands ("/discord eşle", the
+            // same in both languages, as the desktop's LINK_COMMAND).
+            if (file.getName().equals("KeyNames.java") || file.getName().equals("AfkWhen.java")
+                    || file.getName().equals("ProjectsSkinFragment.java")) continue;
             String code = withoutComments(new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8));
             Matcher literal = STRING_LITERAL.matcher(code);
             while (literal.find()) {

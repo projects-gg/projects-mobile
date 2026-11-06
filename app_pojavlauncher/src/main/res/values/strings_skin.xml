@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- M053 (SKIN1 on the phone): the Projects skin of a player-name account and linking it, in the desktop's words
+     (apps/launcher/src/locales/en-projects-skin.ts). -->
+<resources>
+    <string name="projects_skin_menu">Appearance</string>
+    <string name="projects_skin_title">Appearance</string>
+    <string name="projects_skin_subtitle">Only shows on Projects</string>
+    <string name="projects_skin_connect_title">Projects skins work with your Discord account</string>
+    <string name="projects_skin_session">Your Discord session ended. Sign in again.</string>
+    <string name="projects_skin_needs_discord">Link a Discord account to your account to use the Projects skin.</string>
+    <string name="projects_skin_off">Projects skins are off right now.</string>
+    <string name="projects_skin_unreachable">Can\'t connect right now. Try again in a moment.</string>
+    <string name="projects_skin_link_label">Discord link</string>
+    <string name="projects_skin_link_linked">Discord link · %1$s</string>
+    <string name="projects_skin_link_checking">Checking the link</string>
+    <string name="projects_skin_link_other">Your Discord is linked to %1$s.</string>
+    <string name="projects_skin_link_this">Link this account</string>
+    <string name="projects_skin_link_remove">Remove link</string>
+    <string name="projects_skin_link_remove_title">Remove the link?</string>
+    <string name="projects_skin_link_move_title">Remove the link to %1$s?</string>
+    <string name="projects_skin_link_remove_body">Your verified role on Discord goes. Your Projects skin stays.</string>
+    <string name="projects_skin_link_remove_confirm">Remove</string>
+    <string name="projects_skin_link_title">Link your account</string>
+    <!-- %1$s: the in-game command ("/discord eşle") -->
+    <string name="projects_skin_link_body">Type %1$s in game and enter the 6-digit code here.</string>
+    <string name="projects_skin_link_code">Link code, 6 digits</string>
+    <string name="projects_skin_linking">Linking</string>
+    <string name="projects_skin_pin_invalid">That code is wrong or belongs to another account.</string>
+    <string name="projects_skin_pin_expired">The code expired. Get a new one in game.</string>
+    <string name="projects_skin_tries">Too many tries. Try again later.</string>
+    <string name="projects_skin_link_failed">Linking isn\'t available right now. Try again later.</string>
+    <!-- %1$s: the in-game command ("/discord eşlemekaldır") -->
+    <string name="projects_skin_taken">This game account is linked to another Discord account. Type %1$s in game, then try again.</string>
+    <string name="projects_skin_source_png">Upload PNG</string>
+    <string name="projects_skin_source_name">Player name</string>
+    <string name="projects_skin_file_choose">Choose file</string>
+    <string name="projects_skin_file_help">64×64 or legacy 64×32 pixels, up to 1 MB.</string>
+    <string name="projects_skin_file_pending">Sent to Projects when you save.</string>
+    <string name="projects_skin_file_legacy">Old 64×32 skins have no slim arms.</string>
+    <string name="projects_skin_file_black">Parts of this skin may look black in game.</string>
+    <string name="projects_skin_file_not_png">This file isn\'t a PNG.</string>
+    <string name="projects_skin_file_dimensions">A skin must be 64×64 or 64×32.</string>
+    <string name="projects_skin_file_too_big">The file is too big.</string>
+    <string name="projects_skin_file_empty">This skin looks empty.</string>
+    <string name="projects_skin_file_read_failed">Couldn\'t open the file. Try another PNG file.</string>
+    <string name="projects_skin_name_label">Premium player name</string>
+    <string name="projects_skin_name_find">Find</string>
+    <string name="projects_skin_name_looking">Looking</string>
+    <string name="projects_skin_name_found">%1$s\'s skin</string>
+    <string name="projects_skin_name_no_account">No Minecraft account has this name.</string>
+    <string name="projects_skin_name_no_skin">This player uses Minecraft\'s default skin.</string>
+    <string name="projects_skin_name_unreachable">Can\'t look it up right now. Try again in a moment.</string>
+    <string name="projects_skin_model_title">Arm model</string>
+    <string name="projects_skin_model_classic">Classic</string>
+    <string name="projects_skin_model_slim">Slim</string>
+    <string name="projects_skin_chip_projects">On Projects</string>
+    <string name="projects_skin_chip_preview">Preview</string>
+    <string name="projects_skin_save">Save</string>
+    <string name="projects_skin_sending">Sending</string>
+    <string name="projects_skin_reset">Back to default</string>
+    <string name="projects_skin_quota">You\'ve used today\'s skin changes. Try again tomorrow.</string>
+    <string name="projects_skin_last_change">You have 1 change left today.</string>
+    <plurals name="projects_skin_limited">
+        <item quantity="one">Your Discord account is new, so you can\'t change skins yet. Opens in %1$d day.</item>
+        <item quantity="other">Your Discord account is new, so you can\'t change skins yet. Opens in %1$d days.</item>
+    </plurals>
+    <!-- %1$s: a date -->
+    <string name="projects_skin_blocked">Skin changes are off for you until %1$s.</string>
+    <string name="projects_skin_blocked_forever">Skin changes are off for you.</string>
+    <string name="projects_skin_server_away">Projects isn\'t answering right now. Your skin waits in line.</string>
+    <string name="projects_skin_long_wait">This is taking a while. It saves when ready, so you can close this.</string>
+    <string name="projects_skin_pending">Your last change is still being processed.</string>
+    <string name="projects_skin_save_failed">Couldn\'t save the skin. Try again.</string>
+    <string name="projects_skin_invalid_image">This skin couldn\'t be processed. Try another file.</string>
+    <string name="projects_skin_busy">It\'s very busy right now. Try again later.</string>
+    <string name="projects_skin_premium_invalid">Couldn\'t verify this skin. Pick it again.</string>
+    <string name="projects_skin_premium_disabled">This player\'s skin can\'t be used.</string>
+    <string name="projects_skin_restricted">Your account is restricted right now.</string>
+    <string name="projects_skin_saved">Your Projects skin is saved</string>
+    <string name="projects_skin_saved_default">Your Projects skin is back to default</string>
+    <string name="projects_skin_rejoin">You\'ll see it when you rejoin.</string>
+    <!-- %1$s: the linked Minecraft name -->
+    <string name="projects_skin_linked">Your Discord is linked to %1$s</string>
+    <string name="projects_skin_unlinked">Link removed</string>
+</resources>

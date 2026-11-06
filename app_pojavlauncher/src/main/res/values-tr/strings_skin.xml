@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- M053 (SKIN1, telefon): oyuncu adı hesabının Projects skini ve eşlemesi, masaüstünün sözleriyle
+     (apps/launcher/src/locales/tr-projects-skin.ts). -->
+<resources>
+    <string name="projects_skin_menu">Görünüm</string>
+    <string name="projects_skin_title">Görünüm</string>
+    <string name="projects_skin_subtitle">Yalnız Projects\'te görünür</string>
+    <string name="projects_skin_connect_title">Projects skini Discord hesabınla çalışır</string>
+    <string name="projects_skin_session">Discord oturumun kapandı. Yeniden giriş yap.</string>
+    <string name="projects_skin_needs_discord">Projects skini için hesabına bir Discord hesabı bağla.</string>
+    <string name="projects_skin_off">Projects skini şu an kapalı.</string>
+    <string name="projects_skin_unreachable">Şu an bağlanılamıyor. Biraz sonra tekrar dene.</string>
+    <string name="projects_skin_link_label">Discord eşlemesi</string>
+    <string name="projects_skin_link_linked">Discord eşlemesi · %1$s</string>
+    <string name="projects_skin_link_checking">Eşleme denetleniyor</string>
+    <string name="projects_skin_link_other">Discord hesabın %1$s hesabına eşli.</string>
+    <string name="projects_skin_link_this">Bu hesabı eşle</string>
+    <string name="projects_skin_link_remove">Eşlemeyi kaldır</string>
+    <string name="projects_skin_link_remove_title">Eşleme kaldırılsın mı?</string>
+    <string name="projects_skin_link_move_title">%1$s eşlemesi kaldırılsın mı?</string>
+    <string name="projects_skin_link_remove_body">Discord\'daki doğrulanmış rolün kalkar. Projects skinin aynen kalır.</string>
+    <string name="projects_skin_link_remove_confirm">Kaldır</string>
+    <string name="projects_skin_link_title">Hesabını eşle</string>
+    <!-- %1$s: oyundaki komut ("/discord eşle") -->
+    <string name="projects_skin_link_body">Oyunda %1$s yaz, çıkan 6 haneli kodu buraya gir.</string>
+    <string name="projects_skin_link_code">Eşleme kodu, 6 hane</string>
+    <string name="projects_skin_linking">Eşleniyor</string>
+    <string name="projects_skin_pin_invalid">Kod geçersiz ya da bu hesabın değil.</string>
+    <string name="projects_skin_pin_expired">Kodun süresi doldu. Oyunda yeni kod al.</string>
+    <string name="projects_skin_tries">Çok fazla deneme. Biraz sonra tekrar dene.</string>
+    <string name="projects_skin_link_failed">Eşleme şu an yapılamıyor. Biraz sonra tekrar dene.</string>
+    <!-- %1$s: oyundaki komut ("/discord eşlemekaldır") -->
+    <string name="projects_skin_taken">Bu oyun hesabı başka bir Discord hesabına eşli. Oyunda %1$s yazıp tekrar dene.</string>
+    <string name="projects_skin_source_png">PNG yükle</string>
+    <string name="projects_skin_source_name">Oyuncu adı</string>
+    <string name="projects_skin_file_choose">Dosya seç</string>
+    <string name="projects_skin_file_help">64×64 ya da eski 64×32 piksel, en fazla 1 MB.</string>
+    <string name="projects_skin_file_pending">Kaydettiğinde Projects\'e gönderilir.</string>
+    <string name="projects_skin_file_legacy">Eski 64×32 skinlerde ince kol yok.</string>
+    <string name="projects_skin_file_black">Skinin bazı yerleri oyunda siyah görünebilir.</string>
+    <string name="projects_skin_file_not_png">Bu dosya PNG değil.</string>
+    <string name="projects_skin_file_dimensions">Skin 64×64 ya da 64×32 olmalı.</string>
+    <string name="projects_skin_file_too_big">Dosya çok büyük.</string>
+    <string name="projects_skin_file_empty">Bu skin boş görünüyor.</string>
+    <string name="projects_skin_file_read_failed">Dosya açılamadı. Başka bir PNG dosyası dene.</string>
+    <string name="projects_skin_name_label">Premium oyuncu adı</string>
+    <string name="projects_skin_name_find">Bul</string>
+    <string name="projects_skin_name_looking">Aranıyor</string>
+    <string name="projects_skin_name_found">%1$s oyuncusunun skini</string>
+    <string name="projects_skin_name_no_account">Bu adda bir Minecraft hesabı yok.</string>
+    <string name="projects_skin_name_no_skin">Bu oyuncu Minecraft\'ın varsayılan skinini kullanıyor.</string>
+    <string name="projects_skin_name_unreachable">Şu an bakılamıyor. Biraz sonra tekrar dene.</string>
+    <string name="projects_skin_model_title">Kol modeli</string>
+    <string name="projects_skin_model_classic">Klasik</string>
+    <string name="projects_skin_model_slim">İnce</string>
+    <string name="projects_skin_chip_projects">Projects\'te</string>
+    <string name="projects_skin_chip_preview">Önizleme</string>
+    <string name="projects_skin_save">Kaydet</string>
+    <string name="projects_skin_sending">Gönderiliyor</string>
+    <string name="projects_skin_reset">Varsayılana dön</string>
+    <string name="projects_skin_quota">Bugünlük skin değiştirme hakkın bitti. Yarın tekrar dene.</string>
+    <string name="projects_skin_last_change">Bugün 1 değişiklik hakkın kaldı.</string>
+    <plurals name="projects_skin_limited">
+        <item quantity="one">Discord hesabın yeni olduğu için skin değiştiremezsin. %1$d gün sonra açılır.</item>
+        <item quantity="other">Discord hesabın yeni olduğu için skin değiştiremezsin. %1$d gün sonra açılır.</item>
+    </plurals>
+    <!-- %1$s: tarih -->
+    <string name="projects_skin_blocked">Skin değiştirmen %1$s tarihine kadar kapalı.</string>
+    <string name="projects_skin_blocked_forever">Skin değiştirmen kapatıldı.</string>
+    <string name="projects_skin_server_away">Projects şu an yanıt vermiyor. Skinin sırada bekler.</string>
+    <string name="projects_skin_long_wait">Biraz uzun sürüyor. Hazır olunca kaydedilir, ekranı kapatabilirsin.</string>
+    <string name="projects_skin_pending">Önceki değişiklik hâlâ işleniyor.</string>
+    <string name="projects_skin_save_failed">Skin kaydedilemedi. Tekrar dene.</string>
+    <string name="projects_skin_invalid_image">Bu skin işlenemedi. Başka bir dosya dene.</string>
+    <string name="projects_skin_busy">Şu an çok yoğun. Biraz sonra tekrar dene.</string>
+    <string name="projects_skin_premium_invalid">Bu skin doğrulanamadı. Yeniden seç.</string>
+    <string name="projects_skin_premium_disabled">Bu oyuncunun skini kullanılamaz.</string>
+    <string name="projects_skin_restricted">Hesabın şu an kısıtlı.</string>
+    <string name="projects_skin_saved">Skinin Projects\'te kaydedildi</string>
+    <string name="projects_skin_saved_default">Skinin Projects\'te varsayılana döndü</string>
+    <string name="projects_skin_rejoin">Yeniden girince görünür.</string>
+    <!-- %1$s: eşlenen Minecraft adı -->
+    <string name="projects_skin_linked">Discord hesabın %1$s ile eşlendi</string>
+    <string name="projects_skin_unlinked">Eşleme kaldırıldı</string>
+</resources>
