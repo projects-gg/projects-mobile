@@ -93,8 +93,15 @@ public class PojavApplication extends Application {
 		}
 	}
 
-	/** This process is the phone AFK's ({@code :afk}). */
+	/** This process is the phone AFK's ({@code :afk}); asked once. */
+	private static Boolean sAfkProcess;
+
 	private static boolean isAfkProcess() {
+		if (sAfkProcess == null) sAfkProcess = readAfkProcess();
+		return sAfkProcess;
+	}
+
+	private static boolean readAfkProcess() {
 		String name = null;
 		if (Build.VERSION.SDK_INT >= 28) {
 			name = Application.getProcessName();
@@ -116,6 +123,13 @@ public class PojavApplication extends Application {
 
 	@Override
     protected void attachBaseContext(Context base) {
+        // Projects fork (M053): the AFK process takes no part of the launcher's start-up here either. LocaleUtils loads
+        // LauncherPreferences and with it Tools, the launcher's largest class; on a cold phone that delayed the AFK
+        // service's startForeground (M052: 11.5 s). AFK's own texts take the app's language themselves.
+        if (isAfkProcess()) {
+            super.attachBaseContext(base);
+            return;
+        }
         // Projects fork: the context inside LocaleUtils' wrapper (base, or base in the app's
         // language). Android casts an application's base context to its own ContextImpl before it
         // delivers a broadcast to a manifest receiver (the event reminders' alarm), so a wrapper

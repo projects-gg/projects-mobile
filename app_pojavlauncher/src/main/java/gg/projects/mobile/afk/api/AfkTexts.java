@@ -138,9 +138,16 @@ public final class AfkTexts {
         return android.text.format.DateFormat.getTimeFormat(c).format(date);
     }
 
-    /** The morning sentence about an {@link AfkEnd} ("Telefonun AFK'yı 03:12'de kapattı."). */
+    /**
+     * The morning sentence about an {@link AfkEnd} ("Telefonun AFK'yı 03:12'de kapattı."; M053: from the next day on
+     * with "dün" or the date, {@link AfkWhen}).
+     */
     public static String end(Context c, AfkEnd end) {
-        String at = timeAt(c, end.at);
+        boolean turkish = LanguageManager.isTurkish(c);
+        Date date = new Date(end.at);
+        String clock = turkish ? new SimpleDateFormat("HH:mm", Locale.ROOT).format(date)
+                : android.text.format.DateFormat.getTimeFormat(c).format(date);
+        String at = AfkWhen.phrase(turkish, clock, end.at, System.currentTimeMillis(), java.util.TimeZone.getDefault());
         switch (end.kind) {
             case CLOSED_BY_PHONE: return c.getString(R.string.projects_afk_end_closed_by_phone, at);
             case LOW_MEMORY: return c.getString(R.string.projects_afk_end_low_memory, at);

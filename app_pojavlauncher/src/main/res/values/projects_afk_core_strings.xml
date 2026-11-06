@@ -96,12 +96,12 @@
     <string name="projects_afk_alert_window">The server opened a window for %1$s</string>
     <string name="projects_afk_alert_battery" formatted="false">Battery at 15%, AFK stopped. Plug your phone in to keep going.</string>
     <string name="projects_afk_alert_hot">Your phone got too hot, AFK stopped. Let it cool down.</string>
-    <!-- The morning notification after the phone closed AFK. %1$s: the time ("03:12") -->
+    <!-- The morning notification after the phone closed AFK. %1$s: when ("at 03:12", "yesterday at 03:12", "on 5 Nov at 03:12") -->
     <string name="projects_afk_end_title">AFK stopped</string>
-    <string name="projects_afk_end_closed_by_phone">Your phone closed AFK at %1$s.</string>
-    <string name="projects_afk_end_low_memory">Your phone ran low on memory and closed AFK at %1$s.</string>
-    <string name="projects_afk_end_crashed">AFK closed unexpectedly at %1$s.</string>
-    <string name="projects_afk_end_app_updated">The app was updated at %1$s and AFK stopped.</string>
-    <string name="projects_afk_end_unknown">AFK stopped at %1$s.</string>
+    <string name="projects_afk_end_closed_by_phone">Your phone closed AFK %1$s.</string>
+    <string name="projects_afk_end_low_memory">Your phone ran low on memory and closed AFK %1$s.</string>
+    <string name="projects_afk_end_crashed">AFK closed unexpectedly %1$s.</string>
+    <string name="projects_afk_end_app_updated">The app was updated %1$s and AFK stopped.</string>
+    <string name="projects_afk_end_unknown">AFK stopped %1$s.</string>
     <string name="projects_afk_end_fix">Open settings</string>
 </resources>

@@ -97,7 +97,7 @@
     <string name="projects_afk_alert_window">Sunucu %1$s için bir pencere açtı</string>
     <string name="projects_afk_alert_battery" formatted="false">Pil %15\'e düştü, AFK durdu. Sürmesi için telefonu şarja tak.</string>
     <string name="projects_afk_alert_hot">Telefon çok ısındı, AFK durdu. Biraz soğumasını bekle.</string>
-    <!-- Telefon AFK'yı kapattıktan sonraki sabah bildirimi. %1$s: saat ve eki ("03:12'de") -->
+    <!-- Telefon AFK'yı kapattıktan sonraki sabah bildirimi. %1$s: zaman ve eki ("03:12'de", "dün 03:12'de", "5 Kasım 03:12'de") -->
     <string name="projects_afk_end_title">AFK durdu</string>
     <string name="projects_afk_end_closed_by_phone">Telefonun AFK\'yı %1$s kapattı.</string>
     <string name="projects_afk_end_low_memory">Telefonun belleği azaldı, AFK %1$s kapandı.</string>
