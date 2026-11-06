@@ -78,6 +78,8 @@ public final class SocialPush {
                 } else if (PushMessage.CALL.equals(message.type)) {
                     showCall(app, prefs, message, decision.timeoutMs);
                 } else if (PushMessage.MESSAGE.equals(message.type)) {
+                    // M053: someone the player ignores: no notice (the desktop's rule).
+                    if (IgnoreList.quiet(app, message.sender)) break;
                     // Over the game it stays in the shade, without a heads-up.
                     boolean silent = SocialRoutes.gameRunning(app);
                     SocialNotifications.showMessage(app, message.conversation(signedIn), message.name, silent);

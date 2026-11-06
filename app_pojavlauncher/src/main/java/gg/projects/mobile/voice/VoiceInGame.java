@@ -51,6 +51,8 @@ public final class VoiceInGame {
             case "voice_ring": {
                 VoiceRings.Ring ring = VoiceRings.Ring.read(Json.obj(message, "ring"));
                 if (ring == null || sService == null || Json.bool(message, "quiet", false)) return true;
+                // M053: someone the player ignores rings nowhere (their call goes to missed in the launcher).
+                if (gg.projects.mobile.social.IgnoreList.quiet(context, ring.from)) return true;
                 // The room the player is in never rings (the hub rings no member of a room).
                 long left = Math.max(0, ring.until - VoiceHub.unix()) * 1000;
                 if (left <= 0 || ring.ticket == null) return true;

@@ -87,6 +87,8 @@ public class SocialSettingsFragment extends Fragment implements SocialService.Li
             return;
         }
         service.addListener(this);
+        // M053: the ignore list changes from the voice room's person sheet too.
+        gg.projects.mobile.social.IgnoreList.addListener(mIgnoreListener);
         // SOC-ID: whether Microsoft can be linked now ("Bağlı hesaplar").
         service.readSignInOptions(false);
         // MOB-PARITY: "Oturumlar" is read each time the settings open (nothing keeps it).
@@ -99,7 +101,10 @@ public class SocialSettingsFragment extends Fragment implements SocialService.Li
     public void onPause() {
         super.onPause();
         SocialService.get(requireContext()).removeListener(this);
+        gg.projects.mobile.social.IgnoreList.removeListener(mIgnoreListener);
     }
+
+    private final gg.projects.mobile.social.IgnoreList.Listener mIgnoreListener = this::render;
 
     @Override
     public void onSocialChanged() {

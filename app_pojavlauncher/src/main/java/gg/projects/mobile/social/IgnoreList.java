@@ -20,14 +20,17 @@ import java.util.List;
  * oldest first, at most {@link #MAX}. Only while the signed config's {@code socNext} is on (off: nobody counts as
  * ignored, the list stays).
  *
- * <p>The launcher process owns it ({@code projects_social}); the voice process reads the effective list
- * ({@link #KEY_VOICE}) when a stay starts and is told of changes while one runs ({@code VoiceLink.setIgnored}).
+ * <p>The launcher process owns it, in a file of its own ({@code projects_ignore}: the game process writes
+ * {@code projects_social} from a stale copy, which would bring an old list back); the voice process and the game read the
+ * effective list ({@link #KEY_VOICE}) from the file ({@link #quiet}, {@link #forVoice}); a running stay is told of changes
+ * ({@code VoiceLink.setIgnored}) and reads it again when a screen binds. Besides voice, the phone's notifications from an
+ * ignored person (friend requests, invites, direct messages, a call from them) stay quiet, as the desktop's notices.
  */
 public final class IgnoreList {
     private IgnoreList() {}
 
     public static final int MAX = 200;
-    private static final String FILE = "projects_social";
+    private static final String FILE = "projects_ignore";
     private static final String KEY = "ignored";
     /** The list as it counts now (empty while {@code socNext} is off), for the voice process. */
     static final String KEY_VOICE = "voice_ignored";
@@ -95,6 +98,14 @@ public final class IgnoreList {
         if (hub != null) hub.setIgnored(effective);
         gg.projects.mobile.voice.VoiceLink.get(context).setIgnored(effective);
         for (Listener l : new ArrayList<>(sListeners)) l.onIgnoreList();
+    }
+
+    /**
+     * M053: the person is on the effective list, read from the file (any process: the game's, the voice's, a push's):
+     * their notice stays quiet.
+     */
+    public static boolean quiet(Context context, @Nullable String id) {
+        return id != null && forVoice(context).contains(id);
     }
 
     /**

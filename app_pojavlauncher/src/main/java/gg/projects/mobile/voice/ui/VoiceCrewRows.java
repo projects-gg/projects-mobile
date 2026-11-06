@@ -422,7 +422,8 @@ public final class VoiceCrewRows {
         final android.widget.Button save = gg.projects.mobile.cloud.ui.CloudUi.button(c, c.getString(R.string.projects_voice_room_save), true, null);
         save.setOnClickListener(v -> {
             String typed = field.getText().toString().trim();
-            if (!VoiceRoomRules.nameFits(typed)) {
+            // Only a new name is checked (the desktop's form): a limit change keeps an old name as it is.
+            if (!typed.equals(startName) && !VoiceRoomRules.nameFits(typed)) {
                 error.setText(R.string.projects_voice_refused_invalid_name);
                 error.setVisibility(View.VISIBLE);
                 return;

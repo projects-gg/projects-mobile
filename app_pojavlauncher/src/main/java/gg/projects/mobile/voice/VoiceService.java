@@ -179,6 +179,9 @@ public final class VoiceService extends Service implements VoiceEngine.Listener,
         switch (msg.what) {
             case VoiceLink.REGISTER:
                 if (from != null && !mClients.contains(from)) mClients.add(from);
+                // M053: a change to the ignore list made while no screen was bound reaches the stay now.
+                mPrefs.setIgnored(gg.projects.mobile.social.IgnoreList.forVoice(this));
+                if (mMachine.inRoom()) run(mMachine.replay());
                 if (from != null) sendState(from);
                 break;
             case VoiceLink.UNREGISTER:

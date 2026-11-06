@@ -120,6 +120,7 @@ public final class SocialNotifications {
     }
 
     public static void showRequest(Context context, String sender, @Nullable String name) {
+        if (IgnoreList.quiet(context, sender)) return;
         Context c = LanguageManager.wrap(context);
         // Not a friend yet: "Biri" ("Someone"), not "Bir arkadaşın".
         String who = name == null || name.isEmpty() ? c.getString(R.string.projects_social_someone_unknown) : name;
@@ -130,6 +131,7 @@ public final class SocialNotifications {
 
     public static void showInvite(Context context, String sender, @Nullable String name, String inviteId,
                                   @Nullable String where, @Nullable String host, long timeoutMs) {
+        if (IgnoreList.quiet(context, sender)) return;
         Context c = LanguageManager.wrap(context);
         String who = name == null || name.isEmpty() ? c.getString(R.string.projects_social_someone) : name;
         String place = "projects".equals(where) ? c.getString(R.string.projects_social_server_projects)
@@ -139,6 +141,7 @@ public final class SocialNotifications {
     }
 
     public static void showCall(Context context, String callId, String caller, @Nullable String name, boolean join, long timeoutMs) {
+        if (IgnoreList.quiet(context, caller)) return;
         Context c = LanguageManager.wrap(context);
         showCall(c, callId, null, callTitle(c, name, java.util.Collections.<String>emptyList(), false),
                 c.getString(join ? R.string.projects_social_on_projects : R.string.projects_crew_call_ready), timeoutMs);
@@ -158,6 +161,7 @@ public final class SocialNotifications {
 
     /** A friend request while the game runs: the same words; a tap brings the game back. */
     public static void showRequestInGame(Context context, String sender, @Nullable String name, PendingIntent game) {
+        if (IgnoreList.quiet(context, sender)) return;
         Context c = LanguageManager.wrap(context);
         String who = name == null || name.isEmpty() ? c.getString(R.string.projects_social_someone_unknown) : name;
         post(c, CHANNEL_REQUESTS, requestTag(sender), ID_REQUEST, c.getString(R.string.projects_social_push_request, who), null,
@@ -167,6 +171,7 @@ public final class SocialNotifications {
     /** "Birlikte oyna" while the game runs, with "Bağlan" when it says where (asked over the game). */
     public static void showInviteInGame(Context context, String sender, @Nullable String name, @Nullable String where,
                                         @Nullable String host, long timeoutMs, PendingIntent open, @Nullable PendingIntent connect) {
+        if (IgnoreList.quiet(context, sender)) return;
         Context c = LanguageManager.wrap(context);
         post(c, CHANNEL_INVITES, inviteTag(sender), ID_INVITE, inviteTitle(c, name), invitePlace(c, where, host),
                 NotificationCompat.PRIORITY_HIGH, timeoutMs, open, connect);

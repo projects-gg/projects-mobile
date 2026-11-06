@@ -340,6 +340,8 @@ public final class SocialChat {
         SocialModel.Me me = mHost.state().me();
         if (me == null || SocialModel.Status.DND.equals(me.status) || !mHost.prefs().wantsMessages()) return;
         if (!mHost.state().isFriend(message.from)) return;
+        // M053: someone the player ignores: no notice.
+        if (IgnoreList.ignored(mHost.context(), message.from)) return;
         SocialModel.Profile from = mHost.state().profile(message.from);
         boolean silent = mBook != null && mBook.mutedAt(message.conv, SocialService.nowSeconds());
         SocialNotifications.showMessage(LanguageManager.wrap(mHost.context()), message.conv, from == null ? null : from.name(), silent);
