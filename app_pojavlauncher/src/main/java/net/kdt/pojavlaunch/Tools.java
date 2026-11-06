@@ -906,6 +906,15 @@ public final class Tools {
         }else{
             if (SDK_INT >= Build.VERSION_CODES.R) {
                 activity.getDisplay().getRealMetrics(displayMetrics);
+                // Projects fork (M053): a tablet held upright shows the landscape-locked controls editor letterboxed (a
+                // landscape window in the middle of the screen) and reports the whole screen here: the keys were laid
+                // out for a 1600 x 2560 window and the bottom ones fell outside. The window's own bounds, when smaller.
+                android.graphics.Rect bounds = activity.getWindowManager().getCurrentWindowMetrics().getBounds();
+                if (bounds.width() > 0 && bounds.height() > 0
+                        && (long) bounds.width() * bounds.height() < (long) displayMetrics.widthPixels * displayMetrics.heightPixels) {
+                    displayMetrics.widthPixels = bounds.width();
+                    displayMetrics.heightPixels = bounds.height();
+                }
             } else { // Removed the clause for devices with unofficial notch support, since it also ruins all devices with virtual nav bars before P
                 activity.getWindowManager().getDefaultDisplay().getRealMetrics(displayMetrics);
             }

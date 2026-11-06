@@ -10,7 +10,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.Button;
 import android.widget.TextView;
 
@@ -110,17 +109,23 @@ public abstract class SideDialogView {
         // Attach layouts
         mParent.addView(mDialogLayout);
 
-        mSideDialogAnimator = ObjectAnimator.ofFloat(mDialogLayout, "x", 0).setDuration(600);
-        mSideDialogAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+        // Projects fork (M053): a short glide that settles (upstream's 600 ms ease-in-out felt slow under a finger); the
+        // phone's animation scale still applies (off: at once).
+        mSideDialogAnimator = ObjectAnimator.ofFloat(mDialogLayout, "x", 0).setDuration(280);
+        mSideDialogAnimator.setInterpolator(new android.view.animation.PathInterpolator(0.2f, 0f, 0f, 1f));
 
         mDialogLayout.setElevation(10);
         mDialogLayout.setTranslationZ(10);
 
         mDialogLayout.setVisibility(View.VISIBLE);
-        mDialogLayout.setBackground(ResourcesCompat.getDrawable(mDialogLayout.getResources(), R.drawable.background_control_editor, null));
+        // Projects fork (M053): the app's panel (projects_ctrl_panel), as wide as fits beside the keys.
+        mDialogLayout.setBackground(ResourcesCompat.getDrawable(mDialogLayout.getResources(), R.drawable.projects_ctrl_panel, null));
+        int width = panelWidth();
+        ViewGroup.LayoutParams params = mDialogLayout.getLayoutParams();
+        params.width = width;
+        mDialogLayout.setLayoutParams(params);
 
-        //TODO offset better according to view width
-        mDialogLayout.setX(-mDialogLayout.getResources().getDimensionPixelOffset(R.dimen._280sdp));
+        mDialogLayout.setX(-width);
         mIsInstantiated = true;
 
         // Set up UI elements
@@ -248,12 +253,23 @@ public abstract class SideDialogView {
     @Nullable
     public final float[] restingSpan() {
         if (!isShownOrComing()) return null;
-        float width = mDialogLayout != null && mDialogLayout.getWidth() > 0 ? mDialogLayout.getWidth()
-                : mParent.getResources().getDimensionPixelOffset(R.dimen._280sdp);
+        float width = mDialogLayout != null && mDialogLayout.getWidth() > 0 ? mDialogLayout.getWidth() : panelWidth();
         if (!mFromRight) return new float[]{mMargin, mMargin + width};
         float scroll = mScrollView != null && mScrollView.getWidth() > 0 ? mScrollView.getWidth() : width;
         float left = currentDisplayMetrics.widthPixels - scroll - mMargin;
         return new float[]{left, left + width};
+    }
+
+    /**
+     * Projects fork (M053): the panel's width: 300dp, at most 46 % of the window (a phone held sideways at 640dp keeps
+     * room for the keys beside it), never under 240dp. Upstream's 280sdp grew with the screen (364dp on a phone).
+     */
+    private int panelWidth() {
+        int wanted = mParent.getResources().getDimensionPixelSize(R.dimen.projects_ctrl_panel_width);
+        int window = currentDisplayMetrics != null ? currentDisplayMetrics.widthPixels : 0;
+        if (window <= 0) return wanted;
+        int floor = Math.round(240 * mParent.getResources().getDisplayMetrics().density);
+        return Math.max(Math.min(wanted, Math.round(window * 0.46f)), Math.min(floor, wanted));
     }
 
     /** Projects fork (MOB-NEXT): a view at the top of the panel, above its scrolling content (a key's action row). */

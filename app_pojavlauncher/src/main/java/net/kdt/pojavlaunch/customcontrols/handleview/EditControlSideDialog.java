@@ -9,6 +9,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -54,14 +55,17 @@ public class EditControlSideDialog extends SideDialogView {
             if (internalChanges) return;
 
             internalChanges = true;
-            int width = (int) (safeParseFloat(mWidthEditText.getText().toString()));
-
-            if (width >= 0 && Math.abs(right - width) > 1) {
-                mWidthEditText.setText(String.valueOf(right - left));
+            // Projects fork (M053): the fields hold dp (the same number on every screen); a resize by the handle shows
+            // its new size there. Upstream compared the field with the right edge and wrote pixels.
+            float width = safeParseFloat(mWidthEditText.getText().toString());
+            int widthDp = Math.round(Tools.pxToDp(right - left));
+            if (width < 0 || Math.abs(widthDp - width) > 1) {
+                mWidthEditText.setText(EditorRules.sizeText(widthDp));
             }
-            int height = (int) (safeParseFloat(mHeightEditText.getText().toString()));
-            if (height >= 0 && Math.abs(bottom - height) > 1) {
-                mHeightEditText.setText(String.valueOf(bottom - top));
+            float height = safeParseFloat(mHeightEditText.getText().toString());
+            int heightDp = Math.round(Tools.pxToDp(bottom - top));
+            if (height < 0 || Math.abs(heightDp - height) > 1) {
+                mHeightEditText.setText(EditorRules.sizeText(heightDp));
             }
 
             internalChanges = false;
@@ -89,6 +93,8 @@ public class EditControlSideDialog extends SideDialogView {
     // Projects fork (MOB-NEXT, the lead's decision 2 Nov): the edited key's action row ("Sil", "Kopyala", "Tuş ekle")
     // lives in the panel's header while the panel is open, so it never covers a key.
     private ActionRow mHeaderRow;
+    // Projects fork (M053): the panel's row groups a key type hides as a whole.
+    private View mMappingGroup, mSizeRow, mCornerRadiusHead;
 
     public EditControlSideDialog(Context context, ViewGroup parent) {
         super(context, parent, R.layout.dialog_control_button_setting);
@@ -185,8 +191,9 @@ public class EditControlSideDialog extends SideDialogView {
         mNameEditText.setText(data.name);
         // Projects fork (MOB-NEXT): whole numbers, not the float's "121.00001" (loaded with internalChanges set: the
         // layout keeps its value until the player types one).
-        mWidthEditText.setText(EditorRules.sizeText(data.getWidth()));
-        mHeightEditText.setText(EditorRules.sizeText(data.getHeight()));
+        // M053: in dp, the same number on a phone and a tablet (upstream's pixels read 121 on one and 88 on another).
+        mWidthEditText.setText(EditorRules.sizeText(Tools.pxToDp(data.getWidth())));
+        mHeightEditText.setText(EditorRules.sizeText(Tools.pxToDp(data.getHeight())));
 
         mAlphaSeekbar.setProgress((int) (data.opacity * 100));
         mStrokeWidthSeekbar.setProgress((int) data.strokeWidth * 10);
@@ -202,6 +209,8 @@ public class EditControlSideDialog extends SideDialogView {
 
         mDisplayInGameCheckbox.setChecked(data.displayInGame);
         mDisplayInMenuCheckbox.setChecked(data.displayInMenu);
+
+        showSwatches(data);
 
         for (int i = 0; i < data.keycodes.length; i++) {
             if (data.keycodes[i] < 0) {
@@ -226,6 +235,7 @@ public class EditControlSideDialog extends SideDialogView {
             mKeycodeSpinners[i].setVisibility(GONE);
             mKeycodeTextviews[i].setVisibility(GONE);
         }
+        mMappingGroup.setVisibility(GONE);
 
         mOrientationTextView.setVisibility(VISIBLE);
         mOrientationSpinner.setVisibility(VISIBLE);
@@ -246,6 +256,8 @@ public class EditControlSideDialog extends SideDialogView {
             mKeycodeSpinners[i].setVisibility(GONE);
             mKeycodeTextviews[i].setVisibility(GONE);
         }
+        mMappingGroup.setVisibility(GONE);
+        mCornerRadiusHead.setVisibility(GONE);
 
         mNameTextView.setVisibility(GONE);
         mNameEditText.setVisibility(GONE);
@@ -277,6 +289,7 @@ public class EditControlSideDialog extends SideDialogView {
             mSizeXTextView.setVisibility(GONE);
             mWidthEditText.setVisibility(GONE);
             mHeightEditText.setVisibility(GONE);
+            mSizeRow.setVisibility(GONE);
         }
 
         // No conditional, already depends on the parent drawer visibility
@@ -287,12 +300,16 @@ public class EditControlSideDialog extends SideDialogView {
 
     private void loadAdapter() {
         //Initialize adapter for keycodes
+        // Projects fork (M053): the app's list rows; the empty slot says "Yok" instead of the code name "UNKNOWN".
         mAdapter = new ArrayAdapter<>(mDialogContent.getContext(), R.layout.item_centered_textview);
         mSpecialArray = ControlData.buildSpecialButtonArray();
 
         mAdapter.addAll(mSpecialArray);
-        mAdapter.addAll(EfficientAndroidLWJGLKeycode.generateKeyName());
-        mAdapter.setDropDownViewResource(android.R.layout.simple_list_item_single_choice);
+        String none = mDialogContent.getResources().getString(R.string.projects_ctrl_key_none);
+        for (String name : EfficientAndroidLWJGLKeycode.generateKeyName()) {
+            mAdapter.add("UNKNOWN".equals(name) ? none : name);
+        }
+        mAdapter.setDropDownViewResource(R.layout.item_projects_ctrl_choice);
 
         for (Spinner spinner : mKeycodeSpinners) {
             spinner.setAdapter(mAdapter);
@@ -300,23 +317,50 @@ public class EditControlSideDialog extends SideDialogView {
 
         // Orientation spinner. Projects fork (MOB-NEXT): the directions in the player's language, in
         // ControlDrawerData.Orientation's order (upstream showed the names in code: "Yön: FREE").
-        ArrayAdapter<CharSequence> adapter = new ArrayAdapter<>(mDialogContent.getContext(), android.R.layout.simple_spinner_item,
+        ArrayAdapter<CharSequence> adapter = new ArrayAdapter<>(mDialogContent.getContext(), R.layout.item_projects_ctrl_value,
                 mDialogContent.getResources().getTextArray(R.array.projects_ctrl_drawer_orientations));
-        adapter.setDropDownViewResource(android.R.layout.simple_list_item_single_choice);
+        adapter.setDropDownViewResource(R.layout.item_projects_ctrl_choice);
 
         mOrientationSpinner.setAdapter(adapter);
     }
 
     private void setDefaultVisibilitySetting() {
-        for (int i = 0; i < ((ViewGroup)mDialogContent).getChildCount(); ++i) {
-            ((ViewGroup)mDialogContent).getChildAt(i).setVisibility(VISIBLE);
-        }
+        // Projects fork (M053): the panel groups rows (size, keys, slider heads): every view in it shows again.
+        showAll((ViewGroup) mDialogContent);
         for(Spinner s : mKeycodeSpinners) {
             s.setVisibility(View.INVISIBLE);
         }
     }
 
+    private static void showAll(ViewGroup group) {
+        for (int i = 0; i < group.getChildCount(); ++i) {
+            View child = group.getChildAt(i);
+            child.setVisibility(VISIBLE);
+            if (child instanceof ViewGroup && !(child instanceof Spinner)) showAll((ViewGroup) child);
+        }
+    }
+
+    /** Projects fork (M053): each colour row ends in a swatch of the key's colour (round, with a hairline). */
+    private void showSwatches(ControlData data) {
+        swatch(mSelectBackgroundColor, data.bgColor);
+        swatch(mSelectStrokeColor, data.strokeColor);
+    }
+
+    private static void swatch(TextView row, int color) {
+        GradientDrawable dot = new GradientDrawable();
+        dot.setShape(GradientDrawable.OVAL);
+        dot.setColor(color);
+        float density = row.getResources().getDisplayMetrics().density;
+        dot.setStroke(Math.max(1, Math.round(density)), 0x33FFFFFF);
+        int size = Math.round(20 * density);
+        dot.setSize(size, size);
+        row.setCompoundDrawablesRelativeWithIntrinsicBounds(null, null, dot, null);
+    }
+
     private void bindLayout() {
+        mMappingGroup = mDialogContent.findViewById(R.id.projects_ctrl_mapping_group);
+        mSizeRow = mDialogContent.findViewById(R.id.projects_ctrl_size_row);
+        mCornerRadiusHead = mDialogContent.findViewById(R.id.projects_ctrl_corner_head);
         mNameEditText = mDialogContent.findViewById(R.id.editName_editText);
         mWidthEditText = mDialogContent.findViewById(R.id.editSize_editTextX);
         mHeightEditText = mDialogContent.findViewById(R.id.editSize_editTextY);
@@ -389,6 +433,7 @@ public class EditControlSideDialog extends SideDialogView {
 
             float width = safeParseFloat(s.toString());
             if (width >= 0) {
+                width = Tools.dpToPx(width); // M053: the field holds dp
                 float before = mCurrentlyEditedButton.getProperties().getWidth();
                 mCurrentlyEditedButton.getProperties().setWidth(width);
                 if (mCurrentlyEditedButton.getProperties() instanceof ControlJoystickData) {
@@ -405,6 +450,7 @@ public class EditControlSideDialog extends SideDialogView {
 
             float height = safeParseFloat(s.toString());
             if (height >= 0) {
+                height = Tools.dpToPx(height); // M053: the field holds dp
                 float before = mCurrentlyEditedButton.getProperties().getHeight();
                 mCurrentlyEditedButton.getProperties().setHeight(height);
                 if (mCurrentlyEditedButton.getProperties() instanceof ControlJoystickData) {
@@ -521,6 +567,7 @@ public class EditControlSideDialog extends SideDialogView {
                 if (mCurrentlyEditedButton.getProperties().strokeColor != color) changed();
                 mCurrentlyEditedButton.getProperties().strokeColor = color;
                 mCurrentlyEditedButton.setBackground();
+                swatch(mSelectStrokeColor, color);
             });
             appearColor(isAtRight(), mCurrentlyEditedButton.getProperties().strokeColor);
         });
@@ -531,6 +578,7 @@ public class EditControlSideDialog extends SideDialogView {
                 if (mCurrentlyEditedButton.getProperties().bgColor != color) changed();
                 mCurrentlyEditedButton.getProperties().bgColor = color;
                 mCurrentlyEditedButton.setBackground();
+                swatch(mSelectBackgroundColor, color);
             });
             appearColor(isAtRight(), mCurrentlyEditedButton.getProperties().bgColor);
         });

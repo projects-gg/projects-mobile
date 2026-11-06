@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- M053: a picker field's chosen value in the controls editor (the drawer's direction), with its caret. -->
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/text1"
+    android:layout_width="match_parent"
+    android:layout_height="44dp"
+    android:drawableEnd="@drawable/projects_ic_caret_down_small"
+    android:ellipsize="end"
+    android:fontFamily="@font/figtree_regular"
+    android:gravity="center_vertical|start"
+    android:paddingStart="12dp"
+    android:paddingEnd="12dp"
+    android:singleLine="true"
+    android:textColor="@color/projects_bone_100"
+    android:textSize="14sp" />

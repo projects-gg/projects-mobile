@@ -3,9 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
 
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="@dimen/_280sdp"
+    android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/background_control_editor"
     android:paddingHorizontal="@dimen/padding_moderate"
     android:paddingVertical="@dimen/padding_moderate"
     android:id="@+id/color_picker_layout"

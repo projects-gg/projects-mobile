@@ -53,4 +53,7 @@
     <dimen name="projects_article_cover_max">220dp</dimen>
     <!-- Dialogs on a phone keep AppCompat's widths (0: none fixed); a wide window fixes them (values-w600dp). -->
     <dimen name="projects_dialog_fixed_width">0dp</dimen>
+    <!-- M053: the controls editor's side panels (a key's settings, the colour picker); SideDialogView keeps them under
+         46 % of a narrow window. -->
+    <dimen name="projects_ctrl_panel_width">300dp</dimen>
 </resources>

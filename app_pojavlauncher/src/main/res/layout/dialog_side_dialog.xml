@@ -4,12 +4,12 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="@dimen/_280sdp"
+    android:layout_width="@dimen/projects_ctrl_panel_width"
     android:layout_marginVertical="@dimen/padding_heavy"
     android:orientation="vertical"
     android:layout_height="wrap_content"
     android:layout_gravity="center_vertical"
-    android:background="@drawable/background_control_editor">
+    android:background="@drawable/projects_ctrl_panel">
     <TextView
         android:id="@+id/side_dialog_title_textview"
         style="@style/TextAppearance.AppCompat.Large"
