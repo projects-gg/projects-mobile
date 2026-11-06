@@ -44,7 +44,9 @@ public class RelWiringTest {
             // MOB-PARITY: the sessions (not in the lists) and the leader's discover block (its own status).
             "discoverStatus", "revokeOtherSessions", "revokeSession", "sessions",
             // MOB-VOICE: voice chat's tickets and a ring's answer change no list.
-            "voiceCrew", "voiceCrewNew", "voiceRing", "voiceThumb"));
+            "voiceCrew", "voiceCrewNew", "voiceRing", "voiceThumb",
+            // M053: crew voice rooms (the hub says the change on voice_rooms), the Minecraft link and the Projects skin.
+            "voiceCrewOrder", "voiceCrewRemove", "voiceCrewRoom", "mcCheck", "mcJob", "mcLink", "mcSkin", "mcState", "mcUnlink"));
 
     @Test
     public void everyCallOfTheApiSaysWhetherItChangesTheLists() throws IOException {
