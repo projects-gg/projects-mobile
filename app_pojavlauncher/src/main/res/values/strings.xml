@@ -372,10 +372,10 @@
     <string name="preference_category_miscellaneous">Miscellaneous settings</string>
     <string name="preference_category_video">Video settings</string>
     <string name="notification_permission_dialog_title">Permission request</string>
-    <string name="notification_permission_dialog_text">The app needs to post notifications so downloads keep going after you leave it.</string>
+    <string name="notification_permission_dialog_text">Notifications keep downloads going after you leave the app and let voice calls ring.</string>
     <string name="notification_permission_toast">You can change this later in Settings.</string>
     <string name="preference_ask_for_notification_title">Allow notifications</string>
-    <string name="preference_ask_for_notification_description">Click to re-request the notification permission, required for game/modpack background downloads to work properly.</string>
+    <string name="preference_ask_for_notification_description">Needed for downloads in the background and for voice calls to ring. Tap to ask again.</string>
     <string name="preference_vsync_in_zink_title">Allow V-Sync with Zink</string>
     <string name="preference_vsync_in_zink_description">Allows the launcher to use internal system APIs to enable V-Sync for Zink. Turn this off if your launcher suddenly crashes with Zink after a system update.</string>
     <string name="exception_failed_to_unpack_jre17">Failed to install JRE 17</string>

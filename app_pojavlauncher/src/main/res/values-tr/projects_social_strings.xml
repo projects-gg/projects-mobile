@@ -75,7 +75,7 @@
     <string name="projects_social_presence_other">Başka sunucuda</string>
     <string name="projects_social_presence_other_host">%1$s sunucusunda</string>
     <string name="projects_social_presence_playing">Oyunda</string>
-    <string name="projects_social_presence_launcher">Launcher\'da</string>
+    <string name="projects_social_presence_launcher">Çevrimiçi</string>
     <string name="projects_social_presence_offline">Çevrimdışı</string>
     <string name="projects_social_presence_dnd">Rahatsız etmeyin</string>
     <string name="projects_social_seen_today">Bugün görüldü</string>

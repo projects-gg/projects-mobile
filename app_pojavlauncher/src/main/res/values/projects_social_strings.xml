@@ -80,7 +80,7 @@
     <string name="projects_social_presence_other">On another server</string>
     <string name="projects_social_presence_other_host">On %1$s</string>
     <string name="projects_social_presence_playing">In game</string>
-    <string name="projects_social_presence_launcher">In the launcher</string>
+    <string name="projects_social_presence_launcher">Online</string>
     <string name="projects_social_presence_offline">Offline</string>
     <string name="projects_social_presence_dnd">Do not disturb</string>
     <string name="projects_social_seen_today">Seen today</string>
@@ -803,9 +803,9 @@
     <string name="projects_welcome_say_hi">Say hi</string>
     <string name="projects_welcome_text">Welcome! 👋</string>
     <!-- MOB1 (TEAM6): crew tags, their card, hidden crews and requests from a tag (the desktop's en-team6.ts). -->
-    <string name="projects_badge_wear">Wear tag</string>
-    <string name="projects_badge_worn">Wearing tag</string>
-    <string name="projects_badge_take_off">Take off tag</string>
+    <string name="projects_badge_wear">Show crew tag</string>
+    <string name="projects_badge_worn">Crew tag shown</string>
+    <string name="projects_badge_take_off">Remove crew tag</string>
     <string name="projects_badge_wore">You put on the %1$s tag.</string>
     <string name="projects_badge_switched">Your tag is now %1$s.</string>
     <string name="projects_badge_off">You took off your tag.</string>

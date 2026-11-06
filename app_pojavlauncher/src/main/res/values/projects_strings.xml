@@ -37,8 +37,8 @@
     <!-- Mod screen -->
     <string name="projects_mods">Mods</string>
     <plurals name="projects_mods_on_count">
-        <item quantity="one">%1$d mod on</item>
-        <item quantity="other">%1$d mods on</item>
+        <item quantity="one">%1$d mod enabled</item>
+        <item quantity="other">%1$d mods enabled</item>
     </plurals>
     <string name="projects_mods_back">Back</string>
     <string name="projects_mods_pack_caption">%1$s %2$s, Minecraft %3$s</string>

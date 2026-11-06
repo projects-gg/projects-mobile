@@ -1406,8 +1406,9 @@ public class mcAccountSpinner extends AppCompatSpinner implements AdapterView.On
             // Handle the "Add account section"
             if(position == 0) {
                 headView.setImageResource(R.drawable.projects_ic_user_plus);
-                headView.setImageTintList(ContextCompat.getColorStateList(parent.getContext(), R.color.projects_gold_300));
-                textview.setTextColor(ContextCompat.getColor(parent.getContext(), R.color.projects_gold_200));
+                // M051: "Hesap ekle" in bone, as the chip says it (design.md §2: gold is OYNA's alone).
+                headView.setImageTintList(ContextCompat.getColorStateList(parent.getContext(), R.color.projects_bone_100));
+                textview.setTextColor(ContextCompat.getColor(parent.getContext(), R.color.projects_bone_100));
                 deleteButton.setVisibility(View.GONE);
                 pinView.setVisibility(View.GONE);
             }

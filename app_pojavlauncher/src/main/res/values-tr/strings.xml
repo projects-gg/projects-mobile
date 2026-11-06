@@ -321,10 +321,10 @@
     <string name="preference_category_miscellaneous">Çeşitli ayarlar</string>
     <string name="preference_category_video">Video ayarları</string>
     <string name="notification_permission_dialog_title">İzin isteği</string>
-    <string name="notification_permission_dialog_text">Uygulamadan çıkınca indirmeler durmasın diye bildirim izni gerekiyor.</string>
+    <string name="notification_permission_dialog_text">Bildirim izni, uygulamadan çıkınca indirmelerin sürmesi ve sesli aramaların çalması için gerekiyor.</string>
     <string name="notification_permission_toast">İzni sonra Ayarlar\'dan değiştirebilirsin.</string>
     <string name="preference_ask_for_notification_title">Bildirimlere izin ver</string>
-    <string name="preference_ask_for_notification_description">Arka planda oyun ve mod paketi indirebilmek için gerekir. İzni yeniden istemek için dokun.</string>
+    <string name="preference_ask_for_notification_description">Arka planda indirmek ve sesli aramaların çalması için gerekir. İzni yeniden istemek için dokun.</string>
     <string name="preference_vsync_in_zink_title">Zink ile V-Sync\'ye izin ver</string>
     <string name="preference_vsync_in_zink_description">Başlatıcının Zink için V-Sync\'i etkinleştirmek üzere dahili sistem API\'lerini kullanmasına izin verir. Bir sistem güncellemesinden sonra başlatıcınız Zink ile aniden çökerse bunu kapatın.</string>
     <string name="exception_failed_to_unpack_jre17">JRE 17 yüklenemedi</string>

@@ -174,6 +174,9 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
         mConsentRules.setOnClickListener(v -> SocialUi.openRules(requireActivity()));
         View cancel = view.findViewById(R.id.projects_consent_cancel);
         View privacy = view.findViewById(R.id.projects_consent_privacy);
+        // M051: the sign-in page's two links in the plain link look (bone, underlined; design.md §2: gold is OYNA's).
+        textLink(mConsentRules);
+        textLink(privacy);
         Drawable glyph = ContextCompat.getDrawable(view.getContext(), R.drawable.projects_ic_discord_glyph);
         if (glyph != null) {
             float dp = getResources().getDisplayMetrics().density;
@@ -1325,6 +1328,15 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
         } else {
             SocialMenuSheet.detach(view);
         }
+    }
+
+    /** M051: a text link: bone words and glyph, underlined (design.md §2, the launcher's {@code TEXT_LINK}). */
+    private static void textLink(@Nullable View view) {
+        if (!(view instanceof TextView)) return;
+        TextView link = (TextView) view;
+        link.setPaintFlags(link.getPaintFlags() | android.graphics.Paint.UNDERLINE_TEXT_FLAG);
+        androidx.core.widget.TextViewCompat.setCompoundDrawableTintList(link,
+                ContextCompat.getColorStateList(link.getContext(), R.color.projects_bone_100));
     }
 
     private void bindPerson(final View view, final Person person, Context context) {
