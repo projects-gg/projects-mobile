@@ -304,9 +304,28 @@ public final class CloudFragment extends CloudScreen {
         CloudService.Load load = mService.load();
         List<CloudModel.Account> accounts = mService.accounts();
         if (load == CloudService.Load.SIGNED_OUT) {
-            LinearLayout empty = CloudUi.empty(c, gg.projects.mobile.ui.PixelSprites.Sprite.CLOUD, getString(R.string.projects_cloud_signed_out));
+            // M053 (MOB-0410's P3): the ways in the friends service offers, as on Arkadaşlar: Discord, and Microsoft
+            // while it is on (its own dark button and mark; "Microsoft hesabını bağladıysan" over it while Microsoft
+            // only signs in accounts that linked it).
+            gg.projects.mobile.social.SignInOptions options = gg.projects.mobile.social.SocialService.get(c).signInOptions();
+            LinearLayout empty = CloudUi.empty(c, gg.projects.mobile.ui.PixelSprites.Sprite.CLOUD, getString(
+                    options.microsoftSignIn ? R.string.projects_cloud_signed_out_both : R.string.projects_cloud_signed_out));
             Button signIn = CloudUi.discordButton(c, getString(R.string.projects_social_sign_in), v -> mService.signIn(requireActivity()));
             empty.addView(centered(c, signIn));
+            if (options.microsoftSignIn) {
+                if (!options.equalWays()) {
+                    TextView linked = CloudUi.text(c, getString(R.string.projects_sign_in_linked), 13, R.color.projects_ash_300, false);
+                    linked.setGravity(Gravity.CENTER_HORIZONTAL);
+                    View box = centered(c, linked);
+                    ((FrameLayout.LayoutParams) linked.getLayoutParams()).topMargin = CloudUi.dp(c, 16);
+                    empty.addView(box);
+                }
+                Button microsoft = microsoftButton(c);
+                View box = centered(c, microsoft);
+                if (!options.equalWays()) ((FrameLayout.LayoutParams) microsoft.getLayoutParams()).topMargin = CloudUi.dp(c, 8);
+                else ((FrameLayout.LayoutParams) microsoft.getLayoutParams()).topMargin = CloudUi.dp(c, 10);
+                empty.addView(box);
+            }
             content.addView(empty);
             return;
         }
@@ -361,6 +380,27 @@ public final class CloudFragment extends CloudScreen {
         settings.addView(CloudUi.row(c, R.drawable.projects_ic_bell, getString(R.string.projects_cloud_notifications),
                 v -> open(CloudNotifyFragment.class, null)).view);
         content.addView(settings);
+    }
+
+    /** M053: "Microsoft ile giriş yap" as on Arkadaşlar (Microsoft's dark surface, its four-colour mark). */
+    private Button microsoftButton(Context c) {
+        Button button = new Button(c, null, android.R.attr.borderlessButtonStyle);
+        button.setText(R.string.projects_sign_in_microsoft);
+        button.setAllCaps(false);
+        button.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 16);
+        button.setTextColor(androidx.core.content.ContextCompat.getColor(c, R.color.projects_bone_100));
+        button.setTypeface(androidx.core.content.res.ResourcesCompat.getFont(c, R.font.figtree_semibold));
+        button.setBackgroundResource(R.drawable.projects_microsoft_button);
+        button.setMinHeight(CloudUi.dp(c, 48));
+        button.setMinimumHeight(CloudUi.dp(c, 48));
+        button.setPadding(CloudUi.dp(c, 20), 0, CloudUi.dp(c, 20), 0);
+        android.graphics.drawable.Drawable mark = gg.projects.mobile.social.ui.SocialFragment.microsoftMark(c, 18);
+        if (mark != null) button.setCompoundDrawablesRelative(mark, null, null, null);
+        button.setCompoundDrawablePadding(CloudUi.dp(c, 10));
+        gg.projects.mobile.ui.Press.attach(button, gg.projects.mobile.ui.Press.Style.BUTTON);
+        button.setOnClickListener(v -> gg.projects.mobile.social.SocialService.get(c)
+                .beginSignIn(requireActivity(), gg.projects.mobile.social.SignInFlow.MICROSOFT));
+        return button;
     }
 
     private static View centered(Context c, View child) {

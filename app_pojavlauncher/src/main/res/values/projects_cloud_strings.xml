@@ -31,6 +31,8 @@
 
     <!-- The account list -->
     <string name="projects_cloud_signed_out">Your 24/7 Cloud accounts open with your Discord account.</string>
+    <!-- M053: while Microsoft sign-in is on too -->
+    <string name="projects_cloud_signed_out_both">Your 24/7 Cloud accounts open with your Discord or Microsoft account.</string>
     <string name="projects_cloud_load_failed">Couldn\'t load your cloud accounts right now.</string>
     <string name="projects_cloud_maintenance">Under maintenance. Accounts come back by themselves when it\'s over.</string>
     <string name="projects_cloud_empty_title">No cloud account yet</string>

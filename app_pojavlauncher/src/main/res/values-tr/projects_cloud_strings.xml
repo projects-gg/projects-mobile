@@ -32,6 +32,8 @@
 
     <!-- Hesap listesi -->
     <string name="projects_cloud_signed_out">7/24 Bulut hesapların Discord hesabınla açılır.</string>
+    <!-- M053: Microsoft ile giriş de açıkken -->
+    <string name="projects_cloud_signed_out_both">7/24 Bulut hesapların Discord ya da Microsoft hesabınla açılır.</string>
     <string name="projects_cloud_load_failed">Bulut hesapların şu an yüklenemedi.</string>
     <string name="projects_cloud_maintenance">Bakımdayız. Hesaplar bakım bitince kendiliğinden döner.</string>
     <string name="projects_cloud_empty_title">Henüz bulut hesabın yok</string>

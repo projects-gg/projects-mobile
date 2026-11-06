@@ -230,7 +230,7 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
 
     /** SOC-ID: Microsoft's four-square mark, {@code sizeDp} square (never tinted). */
     @Nullable
-    static Drawable microsoftMark(Context context, int sizeDp) {
+    public static Drawable microsoftMark(Context context, int sizeDp) {
         Drawable mark = ContextCompat.getDrawable(context, R.drawable.projects_ic_microsoft_mark);
         if (mark == null) return null;
         mark = mark.mutate();
