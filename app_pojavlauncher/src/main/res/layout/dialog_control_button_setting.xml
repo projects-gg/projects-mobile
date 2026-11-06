@@ -173,7 +173,7 @@
         android:id="@+id/editOrientation_spinner"
         android:layout_width="match_parent"
         android:layout_height="44dp"
-        android:background="@drawable/projects_ctrl_select"
+        android:background="@drawable/projects_input_pressable"
         android:popupBackground="@drawable/projects_popup_background"
         android:spinnerMode="dropdown" />
 
