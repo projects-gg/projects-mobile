@@ -194,6 +194,9 @@ public class PlusTest {
         assertEquals("owner_order", PlusFormat.handoffWhy(java.util.Arrays.asList("owner_order")));
         assertFalse(PlusFormat.handoffStopped("owner_order"));
         assertTrue(PlusFormat.handoffStopped("halted"));
+        // The counterpart's side of the window was not the deal and stayed so (AFK-TRADE-W): a stop.
+        assertEquals("offer", PlusFormat.handoffWhy(java.util.Arrays.asList("later_code", "offer")));
+        assertTrue(PlusFormat.handoffStopped("offer"));
         assertEquals("cap", PlusFormat.handoffWhy(java.util.Arrays.asList("later_code", "cap")));
         assertNull(PlusFormat.handoffWhy(java.util.Collections.<String>emptyList()));
         assertNull(PlusFormat.handoffWhy(java.util.Arrays.asList("later_code")));

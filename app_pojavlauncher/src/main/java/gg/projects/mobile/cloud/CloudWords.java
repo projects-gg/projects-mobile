@@ -572,6 +572,7 @@ public final class CloudWords {
             case "pay": reason = c.getString(R.string.projects_handoff_why_pay); break;
             case "cap": reason = c.getString(R.string.projects_handoff_why_cap); break;
             case "window": reason = c.getString(R.string.projects_handoff_why_window); break;
+            case "offer": reason = c.getString(R.string.projects_handoff_why_offer); break;
             default: reason = c.getString(R.string.projects_handoff_why_other); break;
         }
         return PlusFormat.handoffStopped(code) ? c.getString(R.string.projects_handoff_stopped) + " " + reason : reason;

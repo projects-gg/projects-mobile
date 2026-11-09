@@ -94,8 +94,11 @@ public final class PlusFormat {
         }
     }
 
-    /** Why a handoff is the player's trade: the agent sends one of these as its {@code why}. */
-    private static final String[] HANDOFF_WHY = {"owner_order", "halted", "place", "server", "pay", "cap", "window", "other"};
+    /**
+     * Why a handoff is the player's trade: the agent sends one of these as its {@code why}. {@code offer}: the
+     * counterpart's side of the window was not the deal and stayed so after the bot's message.
+     */
+    private static final String[] HANDOFF_WHY = {"owner_order", "halted", "place", "server", "pay", "cap", "window", "offer", "other"};
 
     /**
      * The reason a handoff names: the first code known here. An older agent's empty list, or a code this app does
