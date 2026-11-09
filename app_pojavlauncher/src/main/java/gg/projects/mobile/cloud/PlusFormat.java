@@ -53,7 +53,7 @@ public final class PlusFormat {
 
     /** The assistant's state, as one short sentence's key. */
     public enum Ai {
-        ON, ON_NOTIFY_ONLY, UNKNOWN,
+        ON, ON_NOTIFY_ONLY, ON_TRADE_HALTED, UNKNOWN,
         PAUSED_BREAK, PAUSED_SCHEDULE, PAUSED_QUOTA, PAUSED_BUDGET, PAUSED_OUTAGE, PAUSED_HOST, PAUSED_SERVICE, PAUSED,
         OFF_PLAYER, OFF_STAFF, OFF_RESTRICTED, OFF_SERVICE, OFF_SERVER, OFF_GATE, OFF_MUTED, OFF_MODERATION, OFF
     }
@@ -63,6 +63,8 @@ public final class PlusFormat {
         String reason = ai.reason == null ? "" : ai.reason;
         switch (ai.state) {
             case "on":
+                // It saw a trade window it does not know and stopped trading on its own (the agent's halt).
+                if ("halted".equals(ai.tradeOff)) return Ai.ON_TRADE_HALTED;
                 return "notify".equals(ai.buy) ? Ai.ON_NOTIFY_ONLY : Ai.ON;
             case "paused":
                 switch (reason) {
@@ -90,6 +92,27 @@ public final class PlusFormat {
             default:
                 return Ai.UNKNOWN;
         }
+    }
+
+    /** Why a handoff is the player's trade: the agent sends one of these as its {@code why}. */
+    private static final String[] HANDOFF_WHY = {"owner_order", "halted", "place", "server", "pay", "cap", "window", "other"};
+
+    /**
+     * The reason a handoff names: the first code known here. An older agent's empty list, or a code this app does
+     * not know, names nothing.
+     */
+    @Nullable
+    public static String handoffWhy(@Nullable List<String> why) {
+        if (why == null) return null;
+        for (String reason : why) {
+            for (String known : HANDOFF_WHY) if (known.equals(reason)) return known;
+        }
+        return null;
+    }
+
+    /** "ProBot AI takası durdurdu." leads every handoff reason but the player's own choice for the order. */
+    public static boolean handoffStopped(String code) {
+        return !"owner_order".equals(code);
     }
 
     /** The player may start the AI again ("Yapay zekâyı başlat"): their own stop, the gate's or a server mute. */

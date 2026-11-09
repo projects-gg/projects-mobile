@@ -188,6 +188,16 @@ public class PlusTest {
         assertEquals(PlusFormat.Ai.OFF_SERVER, PlusFormat.ai(CloudModel.AiView.read(Vectors.json("{\"state\":\"off\",\"reason\":\"server\"}"))));
         assertEquals(PlusFormat.Ai.OFF, PlusFormat.ai(CloudModel.AiView.read(Vectors.json("{\"state\":\"off\",\"reason\":\"newer\"}"))));
         assertEquals(PlusFormat.Ai.UNKNOWN, PlusFormat.ai(null));
+        // It saw a trade window it does not know and stopped trading: said before notify-only.
+        assertEquals(PlusFormat.Ai.ON_TRADE_HALTED, PlusFormat.ai(CloudModel.AiView.read(Vectors.json("{\"state\":\"on\",\"trade\":{\"on\":false,\"off\":\"halted\",\"buy\":\"notify\"}}"))));
+        // A handoff's reason: the first known code; the player's own choice is no stop; nothing for an unknown one.
+        assertEquals("owner_order", PlusFormat.handoffWhy(java.util.Arrays.asList("owner_order")));
+        assertFalse(PlusFormat.handoffStopped("owner_order"));
+        assertTrue(PlusFormat.handoffStopped("halted"));
+        assertEquals("cap", PlusFormat.handoffWhy(java.util.Arrays.asList("later_code", "cap")));
+        assertNull(PlusFormat.handoffWhy(java.util.Collections.<String>emptyList()));
+        assertNull(PlusFormat.handoffWhy(java.util.Arrays.asList("later_code")));
+        assertNull(PlusFormat.handoffWhy(null));
         assertTrue(PlusFormat.playerCanResume(PlusFormat.Ai.OFF_PLAYER));
         assertFalse(PlusFormat.playerCanResume(PlusFormat.Ai.OFF_STAFF));
         CloudModel.AiView owner = CloudModel.AiView.read(Vectors.json("{\"state\":\"on\",\"trade\":{\"on\":true,\"by\":\"owner\",\"buy\":\"on\"}}"));

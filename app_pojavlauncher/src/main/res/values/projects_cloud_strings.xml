@@ -432,6 +432,7 @@
     <string name="projects_plus_assistant_switch">ProBot AI</string>
     <string name="projects_plus_ai_on">ProBot AI is on</string>
     <string name="projects_plus_ai_notify_only">You set no spending limit, so ProBot AI doesn\'t buy. It tells you what it finds.</string>
+    <string name="projects_plus_ai_trade_halted">ProBot AI stopped trading: it saw a trade window it didn\'t recognise. You make the trades for now.</string>
     <string name="projects_plus_ai_break">ProBot AI is on a break until %1$s</string>
     <string name="projects_plus_ai_break_plain">ProBot AI is on a break</string>
     <string name="projects_plus_ai_schedule">Outside working hours. Back at %1$s</string>

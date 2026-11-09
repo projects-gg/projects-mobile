@@ -247,6 +247,15 @@
     <string name="projects_handoff_no">Olmadı</string>
     <string name="projects_handoff_done">Takas kaydedildi</string>
     <string name="projects_handoff_not_done">Anlaşma kapatıldı</string>
+    <string name="projects_handoff_stopped">ProBot AI takası durdurdu.</string>
+    <string name="projects_handoff_why_owner_order">Bu siparişte takası senin yapmanı seçtin.</string>
+    <string name="projects_handoff_why_halted">Tanımadığı bir takas penceresi gördüğü için takasları şimdilik durdurdu.</string>
+    <string name="projects_handoff_why_place">Takas yapabileceği bir yerde değildi (örneğin lobide).</string>
+    <string name="projects_handoff_why_server">Bu sunucuda takası kendisi yapamıyor.</string>
+    <string name="projects_handoff_why_pay">Bu sunucunun takas penceresine para yazamıyor.</string>
+    <string name="projects_handoff_why_cap">Tutar, kendi başına yapabileceği takasların üstünde.</string>
+    <string name="projects_handoff_why_window">Takas penceresi tanıdığı gibi değildi, güvenlik için hiçbir şeye tıklamadı.</string>
+    <string name="projects_handoff_why_other">Bu takası kendisi yapamadı.</string>
     <plurals name="projects_handoff_hours_left">
         <item quantity="other">%d saat kaldı</item>
     </plurals>

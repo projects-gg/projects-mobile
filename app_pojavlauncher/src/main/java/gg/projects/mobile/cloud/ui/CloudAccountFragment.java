@@ -151,7 +151,7 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
                 .append(a.tier).append(mService.plusOn()).append(mBusy).append('|');
         if (a.moderation != null) key.append(a.moderation.caseId).append(a.moderation.step).append(a.moderation.appealState);
         if (a.ai != null) {
-            key.append('|').append(a.ai.state).append(a.ai.reason).append(a.ai.until).append(a.ai.pendingApprovals).append(a.ai.buy);
+            key.append('|').append(a.ai.state).append(a.ai.reason).append(a.ai.until).append(a.ai.pendingApprovals).append(a.ai.buy).append(a.ai.tradeOff);
             if (a.ai.quota != null) key.append(a.ai.quota.pct5).append(a.ai.quota.pctWeek).append(a.ai.quota.w5hResetAt)
                     .append(a.ai.quota.weekResetAt).append(a.ai.quota.giftsLeft).append(a.ai.quota.boughtLeft);
         }

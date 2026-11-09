@@ -435,6 +435,7 @@
     <string name="projects_plus_assistant_switch">ProBot AI</string>
     <string name="projects_plus_ai_on">ProBot AI çalışıyor</string>
     <string name="projects_plus_ai_notify_only">Harcama sınırı koymadığın için ProBot AI almıyor. Bulunca haber veriyor.</string>
+    <string name="projects_plus_ai_trade_halted">ProBot AI takasları durdurdu: tanımadığı bir takas penceresi gördü. Takasları şimdilik sen yaparsın.</string>
     <string name="projects_plus_ai_break">ProBot AI %1$s kadar molada</string>
     <string name="projects_plus_ai_break_plain">ProBot AI molada</string>
     <string name="projects_plus_ai_schedule">Çalışma saatleri dışında. %1$s döner</string>

@@ -499,6 +499,7 @@ public final class CloudWords {
         switch (ai) {
             case ON: return c.getString(R.string.projects_plus_ai_on);
             case ON_NOTIFY_ONLY: return c.getString(R.string.projects_plus_ai_notify_only);
+            case ON_TRADE_HALTED: return c.getString(R.string.projects_plus_ai_trade_halted);
             case PAUSED_BREAK:
                 return until == null ? c.getString(R.string.projects_plus_ai_break_plain)
                         : c.getString(R.string.projects_plus_ai_break, until(c, until, nowSeconds));
@@ -540,6 +541,8 @@ public final class CloudWords {
         }
     }
 
+    /** A deal approval's reason in words; null for one this app does not know (no guess). */
+    @Nullable
     public static String why(Context c, String reason) {
         switch (reason) {
             case "new_counterpart": return c.getString(R.string.projects_plus_why_new);
@@ -547,9 +550,31 @@ public final class CloudWords {
             case "price_unusual": return c.getString(R.string.projects_plus_why_price);
             case "budget": return c.getString(R.string.projects_plus_why_budget);
             case "daily": return c.getString(R.string.projects_plus_why_daily);
-            case "above":
-            default: return c.getString(R.string.projects_plus_why_above);
+            case "above": return c.getString(R.string.projects_plus_why_above);
+            default: return null;
         }
+    }
+
+    /**
+     * Why a handoff is the player's trade: "ProBot AI takası durdurdu." and the reason, or only the reason when the
+     * player chose it for the order; null when the agent named none this app knows.
+     */
+    @Nullable
+    public static String handoff(Context c, @Nullable List<String> why) {
+        String code = PlusFormat.handoffWhy(why);
+        if (code == null) return null;
+        String reason;
+        switch (code) {
+            case "owner_order": reason = c.getString(R.string.projects_handoff_why_owner_order); break;
+            case "halted": reason = c.getString(R.string.projects_handoff_why_halted); break;
+            case "place": reason = c.getString(R.string.projects_handoff_why_place); break;
+            case "server": reason = c.getString(R.string.projects_handoff_why_server); break;
+            case "pay": reason = c.getString(R.string.projects_handoff_why_pay); break;
+            case "cap": reason = c.getString(R.string.projects_handoff_why_cap); break;
+            case "window": reason = c.getString(R.string.projects_handoff_why_window); break;
+            default: reason = c.getString(R.string.projects_handoff_why_other); break;
+        }
+        return PlusFormat.handoffStopped(code) ? c.getString(R.string.projects_handoff_stopped) + " " + reason : reason;
     }
 
     /** A history change in words ("Elytra en fazla 40.000 yerine 45.000"). */

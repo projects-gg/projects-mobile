@@ -253,6 +253,15 @@
     <string name="projects_handoff_no">Didn\'t happen</string>
     <string name="projects_handoff_done">Trade recorded</string>
     <string name="projects_handoff_not_done">Deal closed</string>
+    <string name="projects_handoff_stopped">ProBot AI stopped the trade.</string>
+    <string name="projects_handoff_why_owner_order">You chose to make this order\'s trades yourself.</string>
+    <string name="projects_handoff_why_halted">It saw a trade window it didn\'t recognise, so it has stopped trading for now.</string>
+    <string name="projects_handoff_why_place">It wasn\'t somewhere it can trade (for example, in the lobby).</string>
+    <string name="projects_handoff_why_server">It can\'t make trades itself on this server.</string>
+    <string name="projects_handoff_why_pay">It can\'t enter money in this server\'s trade window.</string>
+    <string name="projects_handoff_why_cap">The amount is more than it trades on its own.</string>
+    <string name="projects_handoff_why_window">The trade window wasn\'t one it knows, so it clicked nothing to stay safe.</string>
+    <string name="projects_handoff_why_other">It couldn\'t make this trade itself.</string>
     <plurals name="projects_handoff_hours_left">
         <item quantity="one">%d hour left</item>
         <item quantity="other">%d hours left</item>

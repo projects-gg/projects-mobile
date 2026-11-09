@@ -333,6 +333,14 @@ public final class PlusApprovalsFragment extends CloudScreen implements CloudSer
             body.setLineSpacing(0, 1.15f);
             body.setPadding(0, CloudUi.dp(c, 12), 0, 0);
             card.addView(body);
+            // Why the trade is the player's: the bot stopped (and why), or the player chose it for the order.
+            String why = CloudWords.handoff(c, ap.why);
+            if (why != null) {
+                TextView reason = CloudUi.text(c, why, 13.5f, R.color.projects_ash_300, false);
+                reason.setLineSpacing(0, 1.15f);
+                reason.setPadding(0, CloudUi.dp(c, 6), 0, 0);
+                card.addView(reason);
+            }
             card.addView(buttons(c, ap, R.string.projects_handoff_yes, R.string.projects_handoff_no), CloudUi.matchWrap());
             return card;
         }
@@ -379,6 +387,8 @@ public final class PlusApprovalsFragment extends CloudScreen implements CloudSer
                 words = getString(R.string.projects_approval_why_ask);
             } else {
                 words = CloudWords.why(c, why);
+                // A reason from a newer service: no guess at a limit it may not be.
+                if (words == null) continue;
             }
             TextView reason = CloudUi.text(c, words, 13.5f, R.color.projects_ash_300, false);
             reason.setPadding(0, CloudUi.dp(c, 2), 0, 0);
