@@ -41,7 +41,7 @@
     </plurals>
     <string name="projects_crew_home_invite">Ekip daveti</string>
 
-    <string name="projects_social_consent_title">Arkadaşlarınla birlikte oyna</string>
+    <string name="projects_social_consent_title">Arkadaşlarınla Birlikte Oyna</string>
     <string name="projects_social_consent_body">Discord hesabınla giriş yaparsın. Arkadaşların senin adını, profil fotoğrafını ve ne oynadığını görür. E-postan ve şifren bize gelmez.</string>
     <string name="projects_social_privacy">Gizlilik</string>
     <string name="projects_social_privacy_url">https://projects.gg/gizlilik/#arkadaslar</string>
