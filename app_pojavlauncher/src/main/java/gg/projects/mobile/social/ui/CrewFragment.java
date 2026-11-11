@@ -75,6 +75,7 @@ import gg.projects.mobile.social.SocialNotifications;
 import gg.projects.mobile.social.SocialProblem;
 import gg.projects.mobile.social.SocialService;
 import gg.projects.mobile.social.SocialState;
+import gg.projects.mobile.social.PlayedTime;
 import gg.projects.mobile.ui.CardMotion;
 import gg.projects.mobile.ui.ChamferDrawable;
 import gg.projects.mobile.ui.Haptics;
@@ -474,6 +475,10 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
             } else {
                 // M21: a plan starts or ends with no message: the page looks again then (nothing ticks meanwhile).
                 long next = nextPlanChange(state.plans(now, crew.id()), hub);
+                // M054 (CREW-PLUS): a crewmate who is a friend says how long they have been playing; its words change
+                // with no message (at most once a minute).
+                long played = gg.projects.mobile.social.PlayedTime.nextTick(friendSessions(state, crew), hub);
+                if (played > 0 && (next <= 0 || played < next)) next = played;
                 if (next > 0) mList.postDelayed(mTick, Math.min(next, 3600) * 1000L + 500);
             }
         } else {
@@ -483,6 +488,26 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
     }
 
     /** Seconds until one of {@code plans} starts or is over by the hub's clock (0: none). */
+    /**
+     * M054 (CREW-PLUS, the launcher's withPlayed): a crewmate's play time only when they are a friend (only friends get
+     * it from the service), so the same person reads the same in the crew and in the friend list.
+     */
+    @Nullable
+    private static PlayedTime.Played playedOf(SocialState state, String userId, long hub) {
+        return state.isFriend(userId) ? PlayedTime.of(state.presence(userId), hub) : null;
+    }
+
+    /** M054: the game sessions of the crew's friends now playing (their rows' play time). */
+    private static List<Long> friendSessions(SocialState state, Crew crew) {
+        List<Long> sinces = new ArrayList<>();
+        for (Member m : crew.team.members) {
+            if (!state.isFriend(m.profile.id)) continue;
+            SocialModel.Presence p = state.presence(m.profile.id);
+            if (p.playing() && p.playingSince > 0) sinces.add(p.playingSince);
+        }
+        return sinces;
+    }
+
     private static long nextPlanChange(List<Plan> plans, long hub) {
         long next = 0;
         for (Plan p : plans) {
@@ -963,8 +988,10 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
                 SocialModel.Presence p = state.presence(m.profile.id);
                 // The player's own row shows their status (their presence is not sent to themselves).
                 String mine = m.profile.id.equals(state.myId()) && state.me() != null ? state.me().status : "";
+                PlayedTime.Played played = playedOf(state, m.profile.id, hub);
                 rows.add(new Row(T_MEMBER, "m-" + m.profile.id, m.profile.name() + m.profile.faceKey() + m.founder + m.moderator
-                        + p.state + p.dnd + p.where + p.host + state.isFriend(m.profile.id) + mine + "|" + badgeKey(gate, m.profile.badge)
+                        + p.state + p.dnd + p.where + p.host + p.ver + (played == null ? "" : played.key())
+                        + state.isFriend(m.profile.id) + mine + "|" + badgeKey(gate, m.profile.badge)
                         + "|" + ProfileMarks.key(service, m.profile) + "|" + gg.projects.mobile.voice.ui.LiveTag.key(m.profile.id), m));
             }
         }
@@ -2502,7 +2529,10 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         avatar.setDimmed(!presence.online());
         // M051 (SHARE-LIVE): "YAYINDA" after a crewmate's name while they share their screen in a voice room.
         gg.projects.mobile.voice.ui.LiveTag.bindRow(view, gg.projects.mobile.voice.ui.LiveTag.sharing(member.profile.id));
-        line.setText(SocialUi.presenceLine(context, presence));
+        // M054 (CREW-PLUS): a crewmate who is a friend reads as in the friend list, with their play time.
+        SocialState crewState = SocialService.get(context).state();
+        line.setText(SocialUi.presenceLine(context, presence, playedOf(crewState, member.profile.id,
+                crewState.hubNow(SocialService.nowSeconds()))));
         line.setTextColor(ContextCompat.getColor(context, presence.onProjects() ? R.color.projects_jade_400 : R.color.projects_ash_400));
         join.setVisibility(presence.onProjects() ? View.VISIBLE : View.GONE);
         join.setText(R.string.projects_social_join);
