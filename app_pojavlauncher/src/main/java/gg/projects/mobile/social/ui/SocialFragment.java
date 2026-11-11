@@ -357,6 +357,14 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
         // M21: a plan starts or ends with no message (the crew rows say "Plan Başladı").
         long hub = service.state().hubNow(now);
         for (SocialModel.Plan plan : service.state().plans(now)) next = Math.min(next, plan.at > hub ? plan.at - hub : plan.until - hub);
+        // CREW-PLUS: a friend's play time changes its words with no message (at most once a minute, only while on screen).
+        java.util.List<Long> sinces = new java.util.ArrayList<>();
+        for (Friend f : service.state().friends()) {
+            Presence p = service.state().presence(f.profile.id);
+            if (p.playing() && p.playingSince > 0) sinces.add(p.playingSince);
+        }
+        long played = gg.projects.mobile.social.PlayedTime.nextTick(sinces, hub);
+        if (played > 0) next = Math.min(next, played);
         if (next != Long.MAX_VALUE && next > 0) mList.postDelayed(mTick, Math.min(next, 3600) * 1000L + 500);
     }
 
@@ -718,10 +726,13 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
     private void addPeople(List<Row> rows, List<Friend> friends, SocialState state, Set<String> favourites) {
         boolean tags = SocialService.get(requireContext()).gate().badges;
         SocialService service = SocialService.get(requireContext());
+        long hub = state.hubNow(SocialService.nowSeconds());
         for (Friend f : friends) {
             Presence p = state.presence(f.profile.id);
+            // CREW-PLUS: the row binds again when its play time's text changes (in place: same row, no fade).
+            gg.projects.mobile.social.PlayedTime.Played played = gg.projects.mobile.social.PlayedTime.of(p, hub);
             rows.add(new Row(T_PERSON, "f-" + f.profile.id, "f|" + f.profile.name() + f.profile.faceKey() + "|" + p.state + p.dnd + p.where
-                    + p.host + "|" + f.lastSeen + "|" + favourites.contains(f.profile.id) + "|"
+                    + p.host + p.ver + (played == null ? "" : played.key()) + "|" + f.lastSeen + "|" + favourites.contains(f.profile.id) + "|"
                     + (tags && f.profile.badge != null ? f.profile.badge.key() : "") + "|" + ProfileMarks.key(service, f.profile)
                     + "|" + gg.projects.mobile.voice.ui.LiveTag.key(f.profile.id),
                     new Person("friend", f.profile, f)));
@@ -1386,7 +1397,9 @@ public class SocialFragment extends Fragment implements SocialService.Listener {
                 SocialModel.Badge worn = gg.projects.mobile.social.BadgeRules.shown(service.gate(), friend.profile.badge);
                 tagChip.setBadgeOf(friend.profile.id, worn, CrewTagChip.Size.MD);
                 CrewTagChip.labelName(name, worn);
-                line.setText(SocialUi.presenceLine(context, presence));
+                // CREW-PLUS: how long they have been playing, from a friend who shares it.
+                line.setText(SocialUi.presenceLine(context, presence, gg.projects.mobile.social.PlayedTime.of(presence,
+                        state.hubNow(SocialService.nowSeconds()))));
                 if (presence.onProjects()) line.setTextColor(ContextCompat.getColor(context, R.color.projects_jade_400));
                 avatar.setDot(SocialUi.dot(presence));
                 avatar.setDimmed(!presence.online());

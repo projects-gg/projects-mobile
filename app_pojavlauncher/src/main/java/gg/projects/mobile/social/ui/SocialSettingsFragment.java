@@ -126,7 +126,7 @@ public class SocialSettingsFragment extends Fragment implements SocialService.Li
         // BADGES: changes only when "Rozetler" must be drawn again (an answer agreeing with its switches is not).
         key.append(mOwnMarks.key(service, me)).append('|').append(mParity.key(me)).append('|');
         key.append(me == null ? "" : me.shareLastSeen + "|" + me.shareServer + "|" + me.shareRead + "|" + me.shareTyping + "|"
-                + me.chatPrivacy).append('|')
+                + me.chatPrivacy + "|" + me.sharePlayTime + me.playTimeListed).append('|')
                 .append(SocialNotifications.canNotify(context)).append('|').append(gate.teams).append(gate.calls).append(gate.mute)
                 .append('|').append(service.state().teamNotifications().calls).append(service.prefs().wantsInvites())
                 .append(service.prefs().wantsRequests()).append(service.prefs().wantsCallsLocally())
@@ -163,6 +163,14 @@ public class SocialSettingsFragment extends Fragment implements SocialService.Li
         section(R.string.projects_social_privacy);
         if (me != null) {
             toggle(R.string.projects_social_share_last_seen, me.shareLastSeen, on -> service.setPrivacy("shareLastSeen", on, privacyResult()));
+            // CREW-PLUS-HIDE: "Oynama Süremi Göster" right under it, as on the desktop, while the service has the switch;
+            // friends see the time only while both are on, so with "Son görülme" off one line says so.
+            if (me.playTimeListed) {
+                toggle(R.string.projects_privacy_play_time, me.sharePlayTime, on -> service.setPrivacy("sharePlayTime", on, privacyResult()));
+                if (!me.shareLastSeen) {
+                    mList.addView(text(getString(R.string.projects_privacy_play_time_needs_seen), R.color.projects_ash_400));
+                }
+            }
             toggle(R.string.projects_social_share_server, me.shareServer, on -> service.setPrivacy("shareServer", on, privacyResult()));
             // CHAT2: "Görüldü" and "yazıyor…" while the service offers them; both work both ways.
             if (me.chatPrivacy && gate.chat) {

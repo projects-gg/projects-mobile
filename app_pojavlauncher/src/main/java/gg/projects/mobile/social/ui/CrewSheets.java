@@ -434,16 +434,15 @@ final class CrewSheets {
             mark.setVisibility(View.VISIBLE);
             mark.setLook(team.emblem, team.color, team.frame);
             ((TextView) row.findViewById(R.id.projects_person_name)).setText(team.name);
-            ((TextView) row.findViewById(R.id.projects_person_line)).setText(limit > 0
-                    ? activity.getString(R.string.projects_crew_members, team.members.size(), limit)
-                    : activity.getResources().getQuantityString(R.plurals.projects_crew_member_count, team.members.size(), team.members.size()));
+            ((TextView) row.findViewById(R.id.projects_person_line)).setText(CrewViews.size(activity, team.members.size(),
+                    gg.projects.mobile.social.CrewRules.ownCap(team.maxMembers, limit)));
             final Button invite = row.findViewById(R.id.projects_person_action);
             invite.setVisibility(View.VISIBLE);
             invite.setBackground(ChamferDrawable.outlined(activity));
             Press.attach(invite, Press.Style.BUTTON);
             boolean member = team.member(friendId) != null;
             boolean invited = crew.invited.contains(friendId);
-            boolean full = limit > 0 && team.members.size() >= limit;
+            boolean full = gg.projects.mobile.social.CrewRules.ownFull(team.members.size(), team.maxMembers, limit);
             invite.setText(member ? R.string.projects_crews_in_crew : invited ? R.string.projects_crew_invite_sent
                     : full ? R.string.projects_crews_full : R.string.projects_crew_invite);
             invite.setEnabled(!member && !invited && !full);

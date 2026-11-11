@@ -69,6 +69,53 @@ public final class SocialUi {
         return line;
     }
 
+    /**
+     * CREW-PLUS: {@link #presenceLine} with how long a friend has been playing after it (the friend list and card): a
+     * small clock in ash, then "25 dk" in ash, as the launcher draws it (the clock says "for", where a bare "1 sa" could
+     * read as "1 saat önce"). A reader hears "25 dakikadır oyunda". Without a time it is the line as it was.
+     */
+    public static CharSequence presenceLine(Context context, Presence presence, @Nullable gg.projects.mobile.social.PlayedTime.Played played) {
+        CharSequence line = presenceLine(context, presence);
+        if (played == null) return line;
+        android.text.SpannableStringBuilder out = new android.text.SpannableStringBuilder(line);
+        int tail = out.length();
+        out.append(' ');
+        android.graphics.drawable.Drawable clock = androidx.core.content.ContextCompat.getDrawable(context, R.drawable.projects_ic_clock);
+        int ash = androidx.core.content.ContextCompat.getColor(context, R.color.projects_ash_400);
+        if (clock != null) {
+            clock = clock.mutate();
+            clock.setTint(ash);
+            float dp = context.getResources().getDisplayMetrics().density;
+            int size = Math.round(android.util.TypedValue.applyDimension(android.util.TypedValue.COMPLEX_UNIT_SP, 12,
+                    context.getResources().getDisplayMetrics()));
+            android.graphics.drawable.InsetDrawable inset = new android.graphics.drawable.InsetDrawable(clock, Math.round(2 * dp), 0,
+                    Math.round(2 * dp), 0);
+            inset.setBounds(0, 0, size + Math.round(4 * dp), size);
+            int at = out.length();
+            out.append(' ');
+            int align = android.os.Build.VERSION.SDK_INT >= 29 ? android.text.style.DynamicDrawableSpan.ALIGN_CENTER
+                    : android.text.style.DynamicDrawableSpan.ALIGN_BASELINE;
+            out.setSpan(new android.text.style.ImageSpan(inset, align), at, at + 1, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+        out.append(playedText(context, played));
+        out.setSpan(new android.text.style.ForegroundColorSpan(ash), tail, out.length(), android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        out.setSpan(new android.text.style.TtsSpan.TextBuilder(", " + playedSpoken(context, played)).build(), tail, out.length(),
+                android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        return out;
+    }
+
+    /** CREW-PLUS: "25 dk", "1 sa". */
+    public static String playedText(Context context, gg.projects.mobile.social.PlayedTime.Played played) {
+        return context.getString(played.unit == gg.projects.mobile.social.PlayedTime.Unit.MINUTES
+                ? R.string.projects_played_minutes : R.string.projects_played_hours, played.value);
+    }
+
+    /** CREW-PLUS: "25 dakikadır oyunda", for screen readers. */
+    public static String playedSpoken(Context context, gg.projects.mobile.social.PlayedTime.Played played) {
+        return context.getResources().getQuantityString(played.unit == gg.projects.mobile.social.PlayedTime.Unit.MINUTES
+                ? R.plurals.projects_played_spoken_minutes : R.plurals.projects_played_spoken_hours, played.value, played.value);
+    }
+
     /** Where a friend or crewmate is, in a few words; SOC9: in the game with the version after it ("Projects'te 1.21.4"). */
     public static String presenceText(Context context, Presence presence) {
         if (presence.playing()) return presence.withVersion(playingPlace(context, presence));

@@ -24,6 +24,16 @@ import gg.projects.mobile.ui.Press;
 
 /** Small view pieces the friends and crew screens share. */
 public final class CrewViews {
+    /**
+     * CREW-CAP: a crew's size as players read it, the launcher's {@code crewSize}: "12 üye", or once it is nearly full
+     * (90% of its cap) "92/100 üye". {@code cap} 0 (a service that does not say it) never shows a cap.
+     */
+    public static String size(Context context, int members, int cap) {
+        return gg.projects.mobile.social.CrewRules.nearlyFull(members, cap)
+                ? context.getString(R.string.projects_crew_members, members, cap)
+                : context.getResources().getQuantityString(R.plurals.projects_crew_member_count, members, members);
+    }
+
     private CrewViews() {}
 
     /** {@code [GKR]} beside a crew's name: the crew colour at 24 % under bone text (the desktop's TeamTag). */

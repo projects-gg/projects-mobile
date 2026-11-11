@@ -20,6 +20,28 @@ public final class CrewRules {
     public static final int TAG_MIN = 2;
     public static final int TAG_MAX = 4;
     public static final int MOTTO_MAX = 40;
+    /** CREW-CAP: a crew's cap when the service does not say it (its single cap before crew caps). */
+    public static final int CAP_BEFORE = 30;
+
+    /**
+     * CREW-CAP (the launcher's {@code nearlyFull}): a crew of {@code members} is nearly full from 90% of its cap (90 of
+     * 100, 27 of 30). Only then is the cap shown beside the count ("92/100 üye"); below it the count alone ("12 üye").
+     * Without a cap ({@code cap} 0: an older service's invite, card or listing) never.
+     */
+    public static boolean nearlyFull(int members, int cap) {
+        return cap > 0 && (long) members * 10 >= (long) cap * 9;
+    }
+
+    /** CREW-CAP: the cap of one of the player's own crews: its own, else the service's single one, else 30. */
+    public static int ownCap(int maxMembers, int serviceDefault) {
+        if (maxMembers > 0) return maxMembers;
+        return serviceDefault > 0 ? serviceDefault : CAP_BEFORE;
+    }
+
+    /** CREW-CAP: one of the player's crews takes nobody more (its own cap; unknown before the friend list said any). */
+    public static boolean ownFull(int members, int maxMembers, int serviceDefault) {
+        return (maxMembers > 0 || serviceDefault > 0) && members >= ownCap(maxMembers, serviceDefault);
+    }
 
     public enum Problem { NONE, NAME_SHORT, NAME_LONG, NAME_CHARS, TAG, MOTTO_LONG, MOTTO_CHARS, MOTTO_LETTERS }
 

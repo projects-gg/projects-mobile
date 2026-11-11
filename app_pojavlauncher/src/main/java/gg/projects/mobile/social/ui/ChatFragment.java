@@ -652,8 +652,10 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
             mHeader.setTitle(other == null ? getString(R.string.projects_chat_title) : other.name());
             // SOC-ID: "Discord'dan mesaj at" only with a friend whose Discord is linked.
             if (mDiscord != null) mDiscord.setVisibility(other != null && other.hasDiscord() ? View.VISIBLE : View.GONE);
+            // CREW-PLUS: a friend's play time too, as the launcher's message header says it.
             mHeader.setCaption(other == null || !state.isFriend(other.id) ? null
-                    : SocialUi.presenceText(context, state.presence(other.id)));
+                    : SocialUi.presenceLine(context, state.presence(other.id), gg.projects.mobile.social.PlayedTime.of(
+                            state.presence(other.id), state.hubNow(SocialService.nowSeconds()))));
             if (mHeaderTag != null) {
                 SocialModel.Badge badge = other == null ? null : BadgeRules.shown(service.gate(), other.badge);
                 mHeaderTag.setBadge(badge, CrewTagChip.Size.LG, true);

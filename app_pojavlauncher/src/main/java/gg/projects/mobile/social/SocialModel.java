@@ -218,9 +218,16 @@ public final class SocialModel {
         public final int members;
         /** The crew takes join requests from its tag now (README "Join requests from a tag"). */
         public final boolean requests;
+        /** CREW-CAP: the most members the crew may have; 0 from a service before crew caps. */
+        public final int maxMembers;
 
         public Badge(String crew, String tag, String color, String frame, String emblem, String name, String motto,
                      @Nullable String createdOn, int members, boolean requests) {
+            this(crew, tag, color, frame, emblem, name, motto, createdOn, members, requests, 0);
+        }
+
+        public Badge(String crew, String tag, String color, String frame, String emblem, String name, String motto,
+                     @Nullable String createdOn, int members, boolean requests, int maxMembers) {
             this.crew = crew;
             this.tag = tag;
             this.color = color;
@@ -231,6 +238,7 @@ public final class SocialModel {
             this.createdOn = createdOn;
             this.members = members;
             this.requests = requests;
+            this.maxMembers = Math.max(0, maxMembers);
         }
 
         /** The card, or null (none worn, or one the app cannot show: no crew id, tag or name). */
@@ -244,12 +252,13 @@ public final class SocialModel {
             String motto = Json.str(o, "motto", "").trim();
             return new Badge(crew, tag.trim(), CrewLook.color(Json.str(o, "color")), CrewLook.frame(Json.str(o, "frame")),
                     Json.str(o, "emblem", "shield"), name, motto, Json.str(o, "createdOn"),
-                    (int) Math.max(0, Json.num(o, "members", 0)), Json.bool(o, "requests", false));
+                    (int) Math.max(0, Json.num(o, "members", 0)), Json.bool(o, "requests", false), maxMembersOf(o));
         }
 
         /** What a change of the card means on screen (its look or words). */
         public String key() {
-            return crew + "|" + tag + "|" + color + "|" + frame + "|" + emblem + "|" + name + "|" + motto + "|" + members + "|" + requests;
+            return crew + "|" + tag + "|" + color + "|" + frame + "|" + emblem + "|" + name + "|" + motto + "|" + members + "|" + requests
+                    + "|" + maxMembers;
         }
     }
 
@@ -291,6 +300,13 @@ public final class SocialModel {
          */
         @Nullable
         public final String discordPhoto;
+        /**
+         * CREW-PLUS-HIDE: "Oynama Süremi Göster" (on by default): friends see how long the player has been playing only
+         * while this and "Son görülmemi göster" are both on (the service decides).
+         */
+        public final boolean sharePlayTime;
+        /** CREW-PLUS-HIDE: the service has the switch ({@code privacy.sharePlayTime}); an older one shows none. */
+        public final boolean playTimeListed;
 
         /** The name follows Discord's (every account before SOC-ID). */
         public static final String NAME_DISCORD = "discord";
@@ -315,13 +331,14 @@ public final class SocialModel {
                   boolean shareRead, boolean shareTyping, boolean chatPrivacy) {
             this(profile, friendCode, status, shareServer, shareLastSeen, createdOn, limited, notices, moderation, shareRead,
                     shareTyping, chatPrivacy, Collections.singletonList(Identity.discordOf(profile, createdOn)), false, null,
-                    NAME_DISCORD, null);
+                    NAME_DISCORD, null, true, false);
         }
 
         private Me(Profile profile, String friendCode, String status, boolean shareServer, boolean shareLastSeen,
                    @Nullable String createdOn, @Nullable Limited limited, List<ModNotice> notices, boolean moderation,
                    boolean shareRead, boolean shareTyping, boolean chatPrivacy, List<Identity> identities,
-                   boolean identitiesListed, @Nullable String signInVia, String nameSource, @Nullable String discordPhoto) {
+                   boolean identitiesListed, @Nullable String signInVia, String nameSource, @Nullable String discordPhoto,
+                   boolean sharePlayTime, boolean playTimeListed) {
             this.profile = profile;
             this.friendCode = friendCode;
             this.status = status;
@@ -339,6 +356,8 @@ public final class SocialModel {
             this.signInVia = signInVia;
             this.nameSource = nameSource;
             this.discordPhoto = discordPhoto;
+            this.sharePlayTime = sharePlayTime;
+            this.playTimeListed = playTimeListed;
         }
 
         @Nullable
@@ -384,7 +403,8 @@ public final class SocialModel {
                     Json.bool(privacy, "shareServer", false), Json.bool(privacy, "shareLastSeen", true),
                     createdOn, Limited.read(Json.obj(o, "limited")), notices, moderation,
                     Json.bool(privacy, "shareRead", true), Json.bool(privacy, "shareTyping", true), chatPrivacy,
-                    identities, listed, via, source, discordPhotoOf(Json.str(o, "discordAvatarUrl")));
+                    identities, listed, via, source, discordPhotoOf(Json.str(o, "discordAvatarUrl")),
+                    Json.bool(privacy, "sharePlayTime", true), privacy != null && privacy.has("sharePlayTime"));
         }
 
         /** Only a picture of Discord's own address, never its stand-in (the letter is shown instead, as everywhere). */
@@ -397,7 +417,7 @@ public final class SocialModel {
 
         public Me withStatus(String newStatus) {
             return new Me(profile, friendCode, newStatus, shareServer, shareLastSeen, createdOn, limited, notices, moderation,
-                    shareRead, shareTyping, chatPrivacy, identities, identitiesListed, signInVia, nameSource, discordPhoto);
+                    shareRead, shareTyping, chatPrivacy, identities, identitiesListed, signInVia, nameSource, discordPhoto, sharePlayTime, playTimeListed);
         }
 
         /** The same account without the notices the player has seen (they go from the service too). */
@@ -405,7 +425,7 @@ public final class SocialModel {
             List<ModNotice> left = new ArrayList<>();
             for (ModNotice n : notices) if (!seen.contains(n.id)) left.add(n);
             return new Me(profile, friendCode, status, shareServer, shareLastSeen, createdOn, limited, left, moderation,
-                    shareRead, shareTyping, chatPrivacy, identities, identitiesListed, signInVia, nameSource, discordPhoto);
+                    shareRead, shareTyping, chatPrivacy, identities, identitiesListed, signInVia, nameSource, discordPhoto, sharePlayTime, playTimeListed);
         }
 
         /** With a notice that came live ({@code {"t":"notice"}}), unless it is there already. */
@@ -414,13 +434,13 @@ public final class SocialModel {
             List<ModNotice> next = new ArrayList<>(notices);
             next.add(notice);
             return new Me(profile, friendCode, status, shareServer, shareLastSeen, createdOn, limited, next, true,
-                    shareRead, shareTyping, chatPrivacy, identities, identitiesListed, signInVia, nameSource, discordPhoto);
+                    shareRead, shareTyping, chatPrivacy, identities, identitiesListed, signInVia, nameSource, discordPhoto, sharePlayTime, playTimeListed);
         }
 
         /** TEAM6: the same account wearing another tag (null: none). */
         public Me withBadge(@Nullable Badge badge) {
             return new Me(profile.withBadge(badge), friendCode, status, shareServer, shareLastSeen, createdOn, limited, notices,
-                    moderation, shareRead, shareTyping, chatPrivacy, identities, identitiesListed, signInVia, nameSource, discordPhoto);
+                    moderation, shareRead, shareTyping, chatPrivacy, identities, identitiesListed, signInVia, nameSource, discordPhoto, sharePlayTime, playTimeListed);
         }
 
         /**
@@ -430,7 +450,7 @@ public final class SocialModel {
          */
         public Me withMarks(List<String> marks, @Nullable List<String> hidden) {
             return new Me(profile.withMarks(marks, hidden), friendCode, status, shareServer, shareLastSeen, createdOn, limited,
-                    notices, moderation, shareRead, shareTyping, chatPrivacy, identities, identitiesListed, signInVia, nameSource, discordPhoto);
+                    notices, moderation, shareRead, shareTyping, chatPrivacy, identities, identitiesListed, signInVia, nameSource, discordPhoto, sharePlayTime, playTimeListed);
         }
 
         /**
@@ -681,6 +701,11 @@ public final class SocialModel {
         /** SOC9: the Minecraft version they play ({@code game.ver}, {@link GameVersion}); null when not playing or not said. */
         @Nullable
         public final String ver;
+        /**
+         * CREW-PLUS: when their game session began (Unix seconds on the hub's clock, down to five minutes), only while they
+         * play, only from a friend who shares both "Son görülme" and "Oynama süresi" (the service decides); 0 otherwise.
+         */
+        public final long playingSince;
 
         public Presence(String id, String state, boolean dnd, @Nullable String where, @Nullable String host,
                         @Nullable String lastSeen) {
@@ -694,6 +719,12 @@ public final class SocialModel {
 
         public Presence(String id, String state, boolean dnd, @Nullable String where, @Nullable String host,
                         @Nullable String lastSeen, @Nullable String avatar, @Nullable String avatarHash, @Nullable String ver) {
+            this(id, state, dnd, where, host, lastSeen, avatar, avatarHash, ver, 0);
+        }
+
+        public Presence(String id, String state, boolean dnd, @Nullable String where, @Nullable String host,
+                        @Nullable String lastSeen, @Nullable String avatar, @Nullable String avatarHash, @Nullable String ver,
+                        long playingSince) {
             this.id = id;
             this.state = state;
             this.dnd = dnd;
@@ -703,6 +734,7 @@ public final class SocialModel {
             this.avatar = avatar;
             this.avatarHash = avatarHash;
             this.ver = PLAYING.equals(state) ? GameVersion.wire(ver) : null;
+            this.playingSince = PLAYING.equals(state) && playingSince > 0 ? playingSince : 0;
         }
 
         public static Presence offline(String id, @Nullable String lastSeen) {
@@ -720,7 +752,8 @@ public final class SocialModel {
             boolean playing = PLAYING.equals(state);
             return new Presence(id, state, "dnd".equals(Json.str(o, "status")), playing ? where : null,
                     playing ? Json.str(game, "host") : null, Json.str(o, "lastSeen"),
-                    Json.str(o, "avatar"), Json.str(o, "avatarHash"), playing ? Json.str(game, "ver") : null);
+                    Json.str(o, "avatar"), Json.str(o, "avatarHash"), playing ? Json.str(game, "ver") : null,
+                    playing ? Json.num(o, "playingSince", 0) : 0);
         }
 
         /**
@@ -748,7 +781,7 @@ public final class SocialModel {
         /** The same presence keeping {@code lastSeen} from {@code before} when this one has none. */
         public Presence keepingLastSeen(@Nullable Presence before) {
             if (lastSeen != null || before == null || before.lastSeen == null) return this;
-            return new Presence(id, state, dnd, where, host, before.lastSeen, avatar, avatarHash, ver);
+            return new Presence(id, state, dnd, where, host, before.lastSeen, avatar, avatarHash, ver, playingSince);
         }
     }
 
@@ -965,6 +998,11 @@ public final class SocialModel {
         public final int memberCount;
         /** {@link #JOIN_OPEN} or {@link #JOIN_APPROVAL} (an unknown value reads as approval: the careful side). */
         public final String join;
+        /**
+         * CREW-CAP: the most members the crew may have (its own cap from Studio, else the service's default); 0 from a
+         * service before crew caps (its cap was 30).
+         */
+        public final int maxMembers;
 
         public TeamSummary(String id, String name, String tag, String emblem, String color, String frame,
                            @Nullable String motto, int memberCount) {
@@ -973,6 +1011,11 @@ public final class SocialModel {
 
         public TeamSummary(String id, String name, String tag, String emblem, String color, String frame,
                            @Nullable String motto, int memberCount, String join) {
+            this(id, name, tag, emblem, color, frame, motto, memberCount, join, 0);
+        }
+
+        public TeamSummary(String id, String name, String tag, String emblem, String color, String frame,
+                           @Nullable String motto, int memberCount, String join, int maxMembers) {
             this.id = id;
             this.name = name;
             this.tag = tag;
@@ -982,6 +1025,7 @@ public final class SocialModel {
             this.motto = motto;
             this.memberCount = memberCount;
             this.join = join;
+            this.maxMembers = Math.max(0, maxMembers);
         }
 
         @Nullable
@@ -995,7 +1039,7 @@ public final class SocialModel {
                     ? o.getAsJsonArray("members").size() : (int) Json.num(o, "members", 0);
             return new TeamSummary(id, name, Json.str(o, "tag", ""), Json.str(o, "emblem", "shield"),
                     CrewLook.color(Json.str(o, "color")), CrewLook.frame(Json.str(o, "frame")), motto, members,
-                    joinOf(Json.str(o, "join")));
+                    joinOf(Json.str(o, "join")), maxMembersOf(o));
         }
 
         static String joinOf(@Nullable String join) {
@@ -1058,7 +1102,7 @@ public final class SocialModel {
         public Team(TeamSummary summary, String code, @Nullable String createdOn, List<Member> members, Permissions permissions,
                     @Nullable Long textLockedUntil, @Nullable String link, boolean hidden, boolean badgeRequests, int slow) {
             super(summary.id, summary.name, summary.tag, summary.emblem, summary.color, summary.frame, summary.motto,
-                    members.size(), summary.join);
+                    members.size(), summary.join, summary.maxMembers);
             this.code = code;
             this.createdOn = createdOn;
             this.members = Collections.unmodifiableList(members);
@@ -1388,6 +1432,12 @@ public final class SocialModel {
     /** A crew id as the API sends it (16 hex characters today; letters, digits, _ and - at most). */
     public static boolean isCrewId(@Nullable String id) {
         return id != null && id.matches("[A-Za-z0-9_-]{1,64}");
+    }
+
+    /** CREW-CAP: a crew's {@code maxMembers} (Studio's range is 2 to 100); 0 when absent or not a sane number. */
+    static int maxMembersOf(@Nullable JsonObject o) {
+        long cap = Json.num(o, "maxMembers", 0);
+        return cap >= 2 && cap <= 10_000 ? (int) cap : 0;
     }
 
     /**

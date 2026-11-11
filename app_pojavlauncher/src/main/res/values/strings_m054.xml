@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- M054 (0.5.3): play time and its switch (apps/launcher/src/locales/en-crew-plus.ts), the crew member cap
+     (en-discover.ts membersOf), the version picker's empty set, the Appearance screen's second section. -->
+<resources>
+    <string name="projects_privacy_play_time">Show My Play Time</string>
+    <string name="projects_privacy_play_time_needs_seen">Shows only while your last seen is on.</string>
+    <string name="projects_played_minutes">%1$d min</string>
+    <string name="projects_played_hours">%1$d h</string>
+    <plurals name="projects_played_spoken_minutes">
+        <item quantity="one">playing for %1$d minute</item>
+        <item quantity="other">playing for %1$d minutes</item>
+    </plurals>
+    <plurals name="projects_played_spoken_hours">
+        <item quantity="one">playing for %1$d hour</item>
+        <item quantity="other">playing for %1$d hours</item>
+    </plurals>
+    <plurals name="projects_discover_members_of">
+        <item quantity="one">%1$d/%2$d member</item>
+        <item quantity="other">%1$d/%2$d members</item>
+    </plurals>
+    <plurals name="projects_discover_members_of_active">
+        <item quantity="one">%1$d/%2$d member, active this week</item>
+        <item quantity="other">%1$d/%2$d members, active this week</item>
+    </plurals>
+    <string name="projects_mods_switch_parked_settings">The %1$s set\'s settings are kept.</string>
+    <string name="projects_skin_section">Skin</string>
+</resources>

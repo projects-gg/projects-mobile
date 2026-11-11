@@ -348,10 +348,11 @@ final class BadgeCard {
         StringBuilder out = new StringBuilder();
         String founded = foundedOn(context, badge.createdOn);
         if (founded != null) out.append(context.getString(R.string.projects_crew_founded, founded));
-        int limit = service.state().limits().teamMembers;
         boolean member = row == BadgeRules.Row.OWN || row == BadgeRules.Row.MEMBER;
-        String members = member && limit > 0 ? context.getString(R.string.projects_crew_members, badge.members, limit)
-                : context.getResources().getQuantityString(R.plurals.projects_crew_member_count, badge.members, badge.members);
+        // CREW-CAP: the cap only once the crew is nearly full; a member knows their crew's cap even from an older card.
+        int cap = member ? gg.projects.mobile.social.CrewRules.ownCap(badge.maxMembers, service.state().limits().teamMembers)
+                : badge.maxMembers;
+        String members = CrewViews.size(context, badge.members, cap);
         if (out.length() > 0) out.append(", ");
         out.append(members);
         return out.toString();

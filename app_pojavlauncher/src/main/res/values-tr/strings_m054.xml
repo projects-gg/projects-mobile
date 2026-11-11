@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- M054 (0.5.3): oynama süresi ve anahtarı (apps/launcher/src/locales/tr-crew-plus.ts), ekip üye sınırı
+     (tr-discover.ts membersOf), sürüm seçicinin boş seti, Görünüm ekranının ikinci bölümü. -->
+<resources>
+    <string name="projects_privacy_play_time">Oynama Süremi Göster</string>
+    <string name="projects_privacy_play_time_needs_seen">Son görülmen açıkken görünür.</string>
+    <string name="projects_played_minutes">%1$d dk</string>
+    <string name="projects_played_hours">%1$d sa</string>
+    <plurals name="projects_played_spoken_minutes">
+        <item quantity="one">%1$d dakikadır oyunda</item>
+        <item quantity="other">%1$d dakikadır oyunda</item>
+    </plurals>
+    <plurals name="projects_played_spoken_hours">
+        <item quantity="one">%1$d saattir oyunda</item>
+        <item quantity="other">%1$d saattir oyunda</item>
+    </plurals>
+    <plurals name="projects_discover_members_of">
+        <item quantity="one">%1$d/%2$d üye</item>
+        <item quantity="other">%1$d/%2$d üye</item>
+    </plurals>
+    <plurals name="projects_discover_members_of_active">
+        <item quantity="one">%1$d/%2$d üye, bu hafta aktif</item>
+        <item quantity="other">%1$d/%2$d üye, bu hafta aktif</item>
+    </plurals>
+    <string name="projects_mods_switch_parked_settings">%1$s setinin ayarları saklanır.</string>
+    <string name="projects_skin_section">Skin</string>
+</resources>

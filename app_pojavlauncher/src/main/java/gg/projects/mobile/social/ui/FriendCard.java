@@ -57,7 +57,8 @@ public final class FriendCard {
         username.setText(handle == null ? "" : handle);
         username.setVisibility(handle != null ? View.VISIBLE : View.GONE);
         TextView where = view.findViewById(R.id.projects_card_presence);
-        where.setText(SocialUi.presenceLine(activity, presence));
+        where.setText(SocialUi.presenceLine(activity, presence, gg.projects.mobile.social.PlayedTime.of(presence,
+                service.state().hubNow(SocialService.nowSeconds()))));
         if (presence.onProjects()) where.setTextColor(ContextCompat.getColor(activity, R.color.projects_jade_400));
         TextView since = view.findViewById(R.id.projects_card_since);
         String day = CrewViews.sinceDay(activity, friend.since);

@@ -888,7 +888,7 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         boolean main = gate.multi && state.crews().size() > 1 && state.crewIds().get(0).equals(team.id);
         long hub = state.hubNow(now);
         rows.add(new Row(T_CARD, "card", team.name + team.tag + team.motto + team.emblem + team.color + team.frame + team.members.size()
-                + "|" + state.limits().teamMembers + "|" + main + "|" + wearKey(service, team, hub), crew));
+                + "|" + state.limits().teamMembers + "|" + team.maxMembers + "|" + main + "|" + wearKey(service, team, hub), crew));
         if (team.textLocked(hub)) {
             String text = getString(R.string.projects_mod_crew_reset) + " " + getString(R.string.projects_mod_crew_locked_until,
                     SocialUi.day(requireContext(), team.textLockedUntil));
@@ -1308,9 +1308,9 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
         TextView motto = view.findViewById(R.id.projects_crew_card_motto);
         motto.setText(team.motto);
         motto.setVisibility(team.motto == null ? View.GONE : View.VISIBLE);
-        int limit = service.state().limits().teamMembers;
-        String members = limit > 0 ? getString(R.string.projects_crew_members, team.members.size(), limit)
-                : context.getResources().getQuantityString(R.plurals.projects_crew_member_count, team.members.size(), team.members.size());
+        // CREW-CAP: the cap beside the count only once the crew is nearly full.
+        String members = CrewViews.size(context, team.members.size(),
+                gg.projects.mobile.social.CrewRules.ownCap(team.maxMembers, service.state().limits().teamMembers));
         String founded = CrewViews.day(context, team.createdOn);
         // Facts in a list, with commas (no middle dot in UI text): "7/30 üye, kuruluş 20 Eylül 2026, ana ekip".
         String meta = founded == null ? members : members + ", " + getString(R.string.projects_crew_founded_after, founded);
@@ -2910,7 +2910,7 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
                 break;
             }
             default: {
-                String members = getResources().getQuantityString(R.plurals.projects_crew_member_count, team.memberCount, team.memberCount);
+                String members = CrewViews.size(requireContext(), team.memberCount, team.maxMembers);
                 if (sentAt >= 0) {
                     line = getString(R.string.projects_requests_pending) + ", "
                             + PlanViews.ago(requireContext(), sentAt, SocialService.nowSeconds());

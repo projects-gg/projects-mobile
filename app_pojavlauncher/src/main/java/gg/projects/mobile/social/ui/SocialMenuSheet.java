@@ -223,7 +223,7 @@ public final class SocialMenuSheet {
             if (!team.allows(me, team.permissions.invite) || team.member(friendId) != null) continue;
             if (crew.invited.contains(friendId)) {
                 invited = true;
-            } else if (limit > 0 && team.members.size() >= limit) {
+            } else if (gg.projects.mobile.social.CrewRules.ownFull(team.members.size(), team.maxMembers, limit)) {
                 full = true;
             } else {
                 return SocialMenus.Invite.OPEN;
@@ -504,7 +504,7 @@ public final class SocialMenuSheet {
         int limit = state.limits().teamMembers;
         boolean outside = false;
         for (SocialModel.Friend f : state.friends()) if (team.member(f.profile.id) == null) outside = true;
-        in.inviteDim = (limit > 0 && team.members.size() >= limit) || !outside;
+        in.inviteDim = gg.projects.mobile.social.CrewRules.ownFull(team.members.size(), team.maxMembers, limit) || !outside;
         List<String> order = state.crewIds();
         if (gate.multi && order.size() > 1) {
             int at = order.indexOf(crewId);
@@ -810,9 +810,8 @@ public final class SocialMenuSheet {
         mark.setLook(crew.team.emblem, crew.team.color, crew.team.frame);
         mark.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         row.addView(mark, new LinearLayout.LayoutParams(Math.round(36 * dp), Math.round(36 * dp)));
-        int limit = SocialService.get(context).state().limits().teamMembers;
-        String members = limit > 0 ? context.getString(R.string.projects_crew_members, crew.team.members.size(), limit)
-                : context.getResources().getQuantityString(R.plurals.projects_crew_member_count, crew.team.members.size(), crew.team.members.size());
+        String members = CrewViews.size(context, crew.team.members.size(), gg.projects.mobile.social.CrewRules.ownCap(
+                crew.team.maxMembers, SocialService.get(context).state().limits().teamMembers));
         row.addView(names(context, crew.team.name, members), namesParams(dp));
         ViewCompat.setAccessibilityHeading(row, true);
         return row;

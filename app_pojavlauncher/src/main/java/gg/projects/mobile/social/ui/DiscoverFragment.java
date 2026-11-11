@@ -407,8 +407,13 @@ public class DiscoverFragment extends Fragment implements SocialService.Listener
             title.addView(tag, tagLp);
         }
         names.addView(title);
-        names.addView(text(context, getResources().getQuantityString(crew.active ? R.plurals.projects_discover_members_active
-                : R.plurals.projects_discover_members, crew.members, crew.members), 13, R.color.projects_ash_400, false));
+        // CREW-CAP: the cap beside the count only once the crew is nearly full ("26/28 üye").
+        String size = gg.projects.mobile.social.CrewRules.nearlyFull(crew.members, crew.maxMembers)
+                ? getResources().getQuantityString(crew.active ? R.plurals.projects_discover_members_of_active
+                        : R.plurals.projects_discover_members_of, crew.members, crew.members, crew.maxMembers)
+                : getResources().getQuantityString(crew.active ? R.plurals.projects_discover_members_active
+                        : R.plurals.projects_discover_members, crew.members, crew.members);
+        names.addView(text(context, size, 13, R.color.projects_ash_400, false));
         LinearLayout.LayoutParams namesLp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
         namesLp.setMarginStart(dp(context, 12));
         head.addView(names, namesLp);

@@ -30,7 +30,7 @@ public final class DiscoverModel {
     public static final int MAX_TAGS = 3;
     /** A kept listing is asked again (with its ETag: a quick "unchanged") once it is this old. */
     public static final long REVALIDATE_MS = 15 * 60_000L;
-    /** A crew holds 30 (the service's limit). */
+    /** CREW-CAP: a crew's cap when the listing does not say it (a service before crew caps held 30). */
     public static final int FULL = 30;
 
     /** One listed crew. */
@@ -42,9 +42,16 @@ public final class DiscoverModel {
         public final int members;
         /** "Bu hafta aktif". */
         public final boolean active;
+        /** CREW-CAP: the crew's cap at the listing's wave (at most a day old); 0 when the listing does not say it. */
+        public final int maxMembers;
 
         Crew(String id, String name, String tag, String emblem, String color, String frame, String motto, String text,
              List<String> tags, String join, int members, boolean active) {
+            this(id, name, tag, emblem, color, frame, motto, text, tags, join, members, active, 0);
+        }
+
+        Crew(String id, String name, String tag, String emblem, String color, String frame, String motto, String text,
+             List<String> tags, String join, int members, boolean active, int maxMembers) {
             this.id = id;
             this.name = name;
             this.tag = tag;
@@ -57,6 +64,12 @@ public final class DiscoverModel {
             this.join = join;
             this.members = members;
             this.active = active;
+            this.maxMembers = Math.max(0, maxMembers);
+        }
+
+        /** The cap a join meets: the listing's, else the old 30 (the launcher's {@code CAP_BEFORE}). */
+        public int cap() {
+            return maxMembers > 0 ? maxMembers : FULL;
         }
 
         public boolean open() {
@@ -66,13 +79,13 @@ public final class DiscoverModel {
         /** The crew's look and name as the app's crew cards take them (report, crew mark). */
         public SocialModel.TeamSummary summary() {
             return new SocialModel.TeamSummary(id, name, tag, emblem, color, frame, motto.isEmpty() ? null : motto, members,
-                    open() ? SocialModel.TeamSummary.JOIN_OPEN : SocialModel.TeamSummary.JOIN_APPROVAL);
+                    open() ? SocialModel.TeamSummary.JOIN_OPEN : SocialModel.TeamSummary.JOIN_APPROVAL, maxMembers);
         }
 
         /** What a card shows: a change binds it again. */
         public String key() {
             return id + "|" + name + "|" + tag + "|" + emblem + color + frame + "|" + motto + "|" + text + "|" + tags + "|" + join
-                    + "|" + members + "|" + active;
+                    + "|" + members + "|" + active + "|" + maxMembers;
         }
     }
 
@@ -112,7 +125,7 @@ public final class DiscoverModel {
             String join = "open".equals(Json.str(c, "join")) ? "open" : "approval";
             crews.add(new Crew(id, name, Json.str(c, "tag", ""), Json.str(c, "emblem", "shield"), CrewLook.color(Json.str(c, "color")),
                     CrewLook.frame(Json.str(c, "frame")), Json.str(c, "motto", "").trim(), Json.str(c, "text", ""), tags, join,
-                    (int) Math.max(0, Json.num(c, "members", 0)), Json.bool(c, "active", false)));
+                    (int) Math.max(0, Json.num(c, "members", 0)), Json.bool(c, "active", false), SocialModel.maxMembersOf(c)));
         }
         return new Listing(Json.num(o, "ver", 0), Json.num(o, "at", 0), Json.num(o, "next", 0), crews);
     }
@@ -232,7 +245,7 @@ public final class DiscoverModel {
     public static Slot slot(Crew crew, boolean member, boolean waiting, boolean canAdd) {
         if (member) return Slot.MEMBER;
         if (waiting) return Slot.WAITING;
-        if (crew.members >= FULL) return Slot.FULL;
+        if (crew.members >= crew.cap()) return Slot.FULL;
         if (!canAdd) return Slot.LIMIT;
         return crew.open() ? Slot.JOIN : Slot.ASK;
     }
