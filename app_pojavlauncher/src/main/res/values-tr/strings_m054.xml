@@ -24,4 +24,20 @@
     </plurals>
     <string name="projects_mods_switch_parked_settings">%1$s setinin ayarları saklanır.</string>
     <string name="projects_skin_section">Skin</string>
+    <!-- M054 Başlık Düzeni: bir anahtar hem başlık/düğme hem cümle olarak kullanılıyordu; başlık hâli ayrı. -->
+    <string name="projects_feat_console_search_open">Konsolda Ara</string>
+    <string name="projects_voice_name_label">Oda Adı</string>
+    <string name="projects_pref_install_jar_title">Bir .jar Dosyası Çalıştır</string>
+    <string name="projects_plus_limit_title_perDealMax">Tek Anlaşmada En Fazla</string>
+    <string name="projects_plus_limit_title_dailySpendMax">Günlük Harcama Sınırı</string>
+    <string name="projects_plus_limit_title_totalBudget">Toplam Harcama Sınırı</string>
+    <string name="projects_plus_limit_title_balanceFloor">En Az Kalacak Bakiye</string>
+    <string name="projects_plus_limit_title_approvalAbove">Onay Sınırı</string>
+    <string name="projects_plus_limit_title_newCounterpartApprovalAbove">Yeni Oyuncuda Onay Sınırı</string>
+    <string name="projects_crew_invite_sent_toast">Davet edildi</string>
+    <string name="projects_join_preparing_button">Projects Hazırlanıyor</string>
+    <string name="projects_crew_section_playing">Oyunda</string>
+    <string name="projects_form_search_button">Eşya Ara</string>
+    <string name="projects_skin_link_title_head">Hesabını Eşle</string>
+    <string name="projects_crew_home_invite_title">Ekip Daveti</string>
 </resources>

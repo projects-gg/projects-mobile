@@ -11,8 +11,8 @@
     <string name="projects_social_on_projects">On Projects</string>
 
     <string name="projects_social_channel_invites">Invites</string>
-    <string name="projects_social_channel_calls">Crew calls</string>
-    <string name="projects_social_channel_requests">Friend requests</string>
+    <string name="projects_social_channel_calls">Crew Calls</string>
+    <string name="projects_social_channel_requests">Friend Requests</string>
     <string name="projects_social_push_request">%1$s wants to add you</string>
     <string name="projects_social_push_invite">%1$s invites you to play</string>
 
@@ -48,10 +48,10 @@
     <string name="projects_social_consent_body">You sign in with your Discord account. Your friends see your name, profile picture and what you\'re playing. Your email and password never reach us.</string>
     <string name="projects_social_privacy">Privacy</string>
     <string name="projects_social_privacy_url">https://projects.gg/gizlilik/#friends</string>
-    <string name="projects_social_sign_in">Sign in with Discord</string>
+    <string name="projects_social_sign_in">Sign In with Discord</string>
     <string name="projects_social_waiting">Approve Discord in your browser</string>
     <string name="projects_social_waiting_note">Once you approve, you\'ll continue here.</string>
-    <string name="projects_social_reopen">Open the browser again</string>
+    <string name="projects_social_reopen">Open the Browser Again</string>
     <string name="projects_social_cancel">Cancel</string>
     <string name="projects_social_signing_in">Signing in</string>
     <string name="projects_social_sign_in_failed">Couldn\'t finish signing in. Try again.</string>
@@ -61,10 +61,10 @@
     <!-- The list -->
     <string name="projects_social_invites">Invites</string>
     <string name="projects_social_requests">Requests</string>
-    <string name="projects_social_playing">In game</string>
+    <string name="projects_social_playing">In Game</string>
     <string name="projects_social_online">Online</string>
     <string name="projects_social_offline">Offline</string>
-    <string name="projects_social_sent">Sent requests</string>
+    <string name="projects_social_sent">Sent Requests</string>
     <string name="projects_social_empty_title">No friends yet</string>
     <string name="projects_social_empty_body">Share your code or enter a friend\'s code.</string>
     <string name="projects_social_wants_to_add">Wants to add you</string>
@@ -90,9 +90,9 @@
 
     <!-- The player's own status -->
     <string name="projects_social_status_online">Online</string>
-    <string name="projects_social_status_dnd">Do not disturb</string>
+    <string name="projects_social_status_dnd">Do Not Disturb</string>
     <string name="projects_social_status_invisible">Invisible</string>
-    <string name="projects_social_status_change">Change your status</string>
+    <string name="projects_social_status_change">Change Your Status</string>
     <string name="projects_social_status_failed">Couldn\'t change your status.</string>
 
     <!-- Actions -->
@@ -100,13 +100,13 @@
     <string name="projects_social_join_title">Open Minecraft?</string>
     <string name="projects_social_yes">Yes</string>
     <string name="projects_social_no">No</string>
-    <string name="projects_social_copy_address">Copy address</string>
+    <string name="projects_social_copy_address">Copy Address</string>
     <string name="projects_social_address_copied">Address copied</string>
     <string name="projects_social_message">Message on Discord</string>
-    <string name="projects_social_favorite">Add to favorites</string>
-    <string name="projects_social_unfavorite">Remove from favorites</string>
+    <string name="projects_social_favorite">Add to Favorites</string>
+    <string name="projects_social_unfavorite">Remove from Favorites</string>
     <string name="projects_social_favorite_mark">Favorite</string>
-    <string name="projects_social_remove">Remove friend</string>
+    <string name="projects_social_remove">Remove Friend</string>
     <string name="projects_social_remove_ask">Remove %1$s from your list?</string>
     <string name="projects_social_removed">%1$s removed from your friends</string>
     <string name="projects_social_block">Block</string>
@@ -117,25 +117,25 @@
     <string name="projects_social_unblocked">%1$s unblocked</string>
     <string name="projects_social_accept">Accept</string>
     <string name="projects_social_decline">Decline</string>
-    <string name="projects_social_cancel_request">Cancel request</string>
+    <string name="projects_social_cancel_request">Cancel Request</string>
     <string name="projects_social_dismiss">Dismiss</string>
     <string name="projects_social_friend_added">You and %1$s are now friends</string>
     <string name="projects_social_friends_since">Friends since %1$s</string>
 
     <!-- Add a friend -->
-    <string name="projects_social_add">Add friend</string>
-    <string name="projects_social_your_code">Your code</string>
-    <string name="projects_social_copy_code">Copy code</string>
+    <string name="projects_social_add">Add Friend</string>
+    <string name="projects_social_your_code">Your Code</string>
+    <string name="projects_social_copy_code">Copy Code</string>
     <string name="projects_social_copied">Copied</string>
     <string name="projects_social_share">Share</string>
     <string name="projects_social_share_text">Add me as a friend on Projects Launcher: %1$s</string>
     <string name="projects_social_qr">QR code for your code</string>
-    <string name="projects_social_rotate">Get a new code</string>
+    <string name="projects_social_rotate">Get a New Code</string>
     <string name="projects_social_rotate_ask">Your old code stops working.</string>
     <string name="projects_social_rotated">Your new code is ready</string>
-    <string name="projects_social_friend_code">Friend\'s code</string>
+    <string name="projects_social_friend_code">Friend\'s Code</string>
     <string name="projects_social_find">Find</string>
-    <string name="projects_social_send">Send request</string>
+    <string name="projects_social_send">Send Request</string>
     <string name="projects_social_sent_ok">Request sent</string>
     <string name="projects_social_now_friends">You\'re now friends</string>
     <string name="projects_social_invalid_code">Codes start with PRJ, followed by 8 letters or numbers.</string>
@@ -145,22 +145,22 @@
     <string name="projects_social_rel_self">That\'s your code</string>
 
     <!-- Friend settings -->
-    <string name="projects_social_settings">Friend settings</string>
-    <string name="projects_social_share_server">Show the address when I\'m on other servers</string>
-    <string name="projects_social_share_last_seen">Show when I was last seen</string>
+    <string name="projects_social_settings">Friend Settings</string>
+    <string name="projects_social_share_server">Show the Address When I\'m on Other Servers</string>
+    <string name="projects_social_share_last_seen">Show When I Was Last Seen</string>
     <string name="projects_social_notifications">Notifications</string>
     <string name="projects_social_notifications_off">Notifications are off on this phone.</string>
     <!-- MOB-POLISH: at the end of that line; it opens Android's notification settings for the app. -->
-    <string name="projects_social_notifications_turn_on">Turn on</string>
-    <string name="projects_social_notifications_turn_on_label">Turn on notifications</string>
+    <string name="projects_social_notifications_turn_on">Turn On</string>
+    <string name="projects_social_notifications_turn_on_label">Turn On Notifications</string>
     <string name="projects_social_blocked_title">Blocked</string>
     <string name="projects_social_blocked_empty">You haven\'t blocked anyone.</string>
     <string name="projects_social_account">Account</string>
-    <string name="projects_social_sign_out">Sign out</string>
-    <string name="projects_social_delete_data">Delete my data</string>
+    <string name="projects_social_sign_out">Sign Out</string>
+    <string name="projects_social_delete_data">Delete My Data</string>
     <string name="projects_social_delete_title">Delete your data?</string>
     <string name="projects_social_delete_body">Your friends list, requests and settings backup are permanently deleted.</string>
-    <string name="projects_social_delete_confirm">Delete permanently</string>
+    <string name="projects_social_delete_confirm">Delete Permanently</string>
     <string name="projects_social_deleted">Your data was deleted</string>
 
     <!-- Crews -->
@@ -180,13 +180,13 @@
     <string name="projects_crew_moderator">Moderator</string>
     <string name="projects_crew_you">You</string>
     <string name="projects_crew_privacy">Your crew sees your name, picture and what you play, never another server\'s address.</string>
-    <string name="projects_crew_row_none">Create or join a crew</string>
-    <string name="projects_crew_invite_to">Invite to crew</string>
+    <string name="projects_crew_row_none">Create or Join a Crew</string>
+    <string name="projects_crew_invite_to">Invite to Crew</string>
 
-    <string name="projects_crew_join_title">Join with a code or link</string>
-    <string name="projects_crew_code">Crew code</string>
+    <string name="projects_crew_join_title">Join with a Code or Link</string>
+    <string name="projects_crew_code">Crew Code</string>
     <string name="projects_crew_find">Find</string>
-    <string name="projects_crew_join">Join crew</string>
+    <string name="projects_crew_join">Join Crew</string>
     <string name="projects_crew_joined">You joined %1$s</string>
     <string name="projects_crew_not_code">That\'s not a crew code.</string>
     <string name="projects_crew_rel_member">You\'re already in this crew.</string>
@@ -194,15 +194,15 @@
     <string name="projects_crew_rel_blocked">You\'ve blocked someone in this crew.</string>
     <string name="projects_crew_rel_full">The crew is full.</string>
 
-    <string name="projects_crew_create">Create a crew</string>
-    <string name="projects_crew_name">Crew name</string>
+    <string name="projects_crew_create">Create a Crew</string>
+    <string name="projects_crew_name">Crew Name</string>
     <string name="projects_crew_tag">Tag</string>
     <string name="projects_crew_emblem">Emblem</string>
     <string name="projects_crew_color">Colour</string>
     <string name="projects_crew_frame">Frame</string>
     <string name="projects_crew_motto">Motto</string>
     <string name="projects_crew_motto_optional">Optional</string>
-    <string name="projects_crew_create_submit">Create crew</string>
+    <string name="projects_crew_create_submit">Create Crew</string>
     <string name="projects_crew_created">%1$s is ready</string>
     <string name="projects_crew_name_short">At least 3 letters or digits.</string>
     <string name="projects_crew_name_long">24 characters at most.</string>
@@ -213,7 +213,7 @@
     <string name="projects_crew_motto_letters">At least one letter or digit.</string>
     <string name="projects_crew_count">%1$d/%2$d</string>
 
-    <string name="projects_crew_invites">Crew invites</string>
+    <string name="projects_crew_invites">Crew Invites</string>
     <plurals name="projects_crew_invites_count">
         <item quantity="one">%d crew invite</item>
         <item quantity="other">%d crew invites</item>
@@ -224,28 +224,28 @@
     <string name="projects_crew_disbanded">%1$s was disbanded</string>
     <string name="projects_crew_copy">Copy</string>
     <string name="projects_crew_share_text">Join my crew on Projects Launcher with this code: %1$s</string>
-    <string name="projects_crew_invite_title">Invite friends</string>
+    <string name="projects_crew_invite_title">Invite Friends</string>
     <string name="projects_crew_invite">Invite</string>
     <string name="projects_crew_invite_sent">Invited</string>
     <string name="projects_crew_invite_none">No friends to invite.</string>
 
-    <string name="projects_crew_remove">Remove from crew</string>
+    <string name="projects_crew_remove">Remove from Crew</string>
     <string name="projects_crew_remove_ask">%1$s is removed from the crew and the crew code changes.</string>
     <string name="projects_crew_removed">%1$s removed from the crew</string>
-    <string name="projects_crew_hand_over">Hand over leadership</string>
+    <string name="projects_crew_hand_over">Hand Over Leadership</string>
     <string name="projects_crew_hand_over_ask">%1$s becomes the leader, and you become a member.</string>
     <string name="projects_crew_hand_over_ask_moderator">%1$s becomes the leader, and you become a moderator.</string>
     <string name="projects_crew_handed_over">%1$s is the leader now</string>
-    <string name="projects_crew_leave">Leave crew</string>
+    <string name="projects_crew_leave">Leave Crew</string>
     <string name="projects_crew_leave_ask">You\'ll need the crew code to come back.</string>
     <string name="projects_crew_left">You left the crew</string>
-    <string name="projects_crew_close">Close crew</string>
+    <string name="projects_crew_close">Close Crew</string>
     <string name="projects_crew_close_ask">The crew is deleted.</string>
-    <string name="projects_crew_disband">Disband crew</string>
+    <string name="projects_crew_disband">Disband Crew</string>
     <string name="projects_crew_disband_ask">The crew is deleted for everyone. This can\'t be undone.</string>
     <string name="projects_crew_disbanded_done">Crew disbanded</string>
 
-    <string name="projects_crew_call_start">Call the crew</string>
+    <string name="projects_crew_call_start">Call the Crew</string>
     <plurals name="projects_crew_call_wait">
         <item quantity="one">You can call again in %d min.</item>
         <item quantity="other">You can call again in %d min.</item>
@@ -263,18 +263,18 @@
     <string name="projects_crew_call_said_soon">Soon</string>
     <string name="projects_crew_call_said_no">Can\'t come</string>
 
-    <string name="projects_crew_notifications">Crew notifications</string>
-    <string name="projects_crew_calls">Crew calls</string>
+    <string name="projects_crew_notifications">Crew Notifications</string>
+    <string name="projects_crew_calls">Crew Calls</string>
     <string name="projects_crew_mute">Mute</string>
     <string name="projects_crew_unmute">Unmute</string>
     <string name="projects_crew_muted">Muted</string>
     <string name="projects_crew_muted_after">muted</string>
     <string name="projects_crew_muted_until">Muted until %1$s</string>
-    <string name="projects_crew_mute_hour">1 hour</string>
-    <string name="projects_crew_mute_eight">8 hours</string>
-    <string name="projects_crew_mute_morning">Until tomorrow morning</string>
-    <string name="projects_crew_mute_this_morning">Until morning</string>
-    <string name="projects_crew_mute_forever">Until I unmute</string>
+    <string name="projects_crew_mute_hour">1 Hour</string>
+    <string name="projects_crew_mute_eight">8 Hours</string>
+    <string name="projects_crew_mute_morning">Until Tomorrow Morning</string>
+    <string name="projects_crew_mute_this_morning">Until Morning</string>
+    <string name="projects_crew_mute_forever">Until I Unmute</string>
     <string name="projects_crew_today_at">Today %1$s</string>
     <string name="projects_crew_tomorrow_at">Tomorrow %1$s</string>
 
@@ -379,10 +379,10 @@
     </plurals>
     <string name="projects_crews_main">Main crew</string>
     <string name="projects_crews_main_after">main crew</string>
-    <string name="projects_crews_make_main">Make main crew</string>
+    <string name="projects_crews_make_main">Make Main Crew</string>
     <string name="projects_crews_made_main">%1$s is your main crew now</string>
-    <string name="projects_crews_move_left">Move left</string>
-    <string name="projects_crews_move_right">Move right</string>
+    <string name="projects_crews_move_left">Move Left</string>
+    <string name="projects_crews_move_right">Move Right</string>
     <string name="projects_crews_moved">%1$s is number %2$d now</string>
     <string name="projects_crews_call_one">%1$s is calling %2$s</string>
     <string name="projects_crews_call_two">%1$s is calling %2$s and %3$s</string>
@@ -395,16 +395,16 @@
         <item quantity="other">%d crewmates are on Projects</item>
     </plurals>
     <string name="projects_crews_full">Full</string>
-    <string name="projects_crews_in_crew">In the crew</string>
-    <string name="projects_crews_mute_all">Mute all</string>
-    <string name="projects_crews_unmute_all">Unmute all</string>
+    <string name="projects_crews_in_crew">In the Crew</string>
+    <string name="projects_crews_mute_all">Mute All</string>
+    <string name="projects_crews_unmute_all">Unmute All</string>
     <string name="projects_crews_this_crew">This crew</string>
     <string name="projects_crews_changed">Your crews changed. The list was updated.</string>
 
     <string name="projects_chat_channel">Messages</string>
     <string name="projects_chat_push">%1$s sent you a message</string>
     <string name="projects_chat_title">Messages</string>
-    <string name="projects_chat_crew">Crew chat</string>
+    <string name="projects_chat_crew">Crew Chat</string>
     <string name="projects_chat_message">Message</string>
     <string name="projects_chat_hint">Write a message</string>
     <string name="projects_chat_send">Send</string>
@@ -417,11 +417,11 @@
     <string name="projects_chat_copy">Copy</string>
     <string name="projects_chat_edit">Edit</string>
     <string name="projects_chat_editing">Editing a message</string>
-    <string name="projects_chat_delete">Delete for everyone</string>
+    <string name="projects_chat_delete">Delete for Everyone</string>
     <string name="projects_chat_delete_ask">Delete this message for everyone?</string>
     <string name="projects_chat_discard">Delete</string>
-    <string name="projects_chat_new">New messages</string>
-    <string name="projects_chat_jump">New message</string>
+    <string name="projects_chat_new">New Messages</string>
+    <string name="projects_chat_jump">New Message</string>
     <string name="projects_chat_today">Today</string>
     <string name="projects_chat_yesterday">Yesterday</string>
     <!-- CHAT-UX: the day line from two to six calendar days back. -->
@@ -451,7 +451,7 @@
     <string name="projects_chat_too_old">Messages older than 15 minutes can\'t be edited.</string>
     <string name="projects_chat_gone">This message is gone.</string>
     <string name="projects_chat_deleted">Message deleted</string>
-    <string name="projects_chat_clear">Clear history</string>
+    <string name="projects_chat_clear">Clear History</string>
     <string name="projects_chat_clear_ask">Clear this conversation\'s history from this phone?</string>
     <string name="projects_chat_cleared">History cleared</string>
     <string name="projects_chat_quick_five">5 min</string>
@@ -464,13 +464,13 @@
     <string name="projects_chat_consent">Chat messages stay on our server only to be delivered, for at most 7 days.</string>
 
     <string name="projects_report">Report</string>
-    <string name="projects_report_crew">Report crew</string>
+    <string name="projects_report_crew">Report Crew</string>
     <string name="projects_report_why">Why?</string>
-    <string name="projects_report_reason_name">Inappropriate name</string>
-    <string name="projects_report_reason_name_crew">Inappropriate name, tag or motto</string>
-    <string name="projects_report_reason_profile">Inappropriate profile picture</string>
-    <string name="projects_report_reason_harassment">Harassment or bullying</string>
-    <string name="projects_report_reason_inappropriate">Inappropriate message</string>
+    <string name="projects_report_reason_name">Inappropriate Name</string>
+    <string name="projects_report_reason_name_crew">Inappropriate Name, Tag or Motto</string>
+    <string name="projects_report_reason_profile">Inappropriate Profile Picture</string>
+    <string name="projects_report_reason_harassment">Harassment or Bullying</string>
+    <string name="projects_report_reason_inappropriate">Inappropriate Message</string>
     <string name="projects_report_reason_spam">Spam</string>
     <string name="projects_report_reason_scam">Scam</string>
     <string name="projects_report_reason_other">Other</string>
@@ -478,14 +478,14 @@
     <string name="projects_report_note_hint">Tell us briefly, if you like</string>
     <string name="projects_report_note_help">Only staff see it.</string>
     <string name="projects_report_private">Nobody is ever told who reported them.</string>
-    <string name="projects_report_inviter">Report who invited you</string>
-    <string name="projects_report_block">Block them too</string>
+    <string name="projects_report_inviter">Report Who Invited You</string>
+    <string name="projects_report_block">Block Them Too</string>
     <string name="projects_report_send">Send</string>
     <string name="projects_report_sent">Your report was sent.</string>
     <string name="projects_report_rate">You sent many reports today. Try again tomorrow.</string>
     <string name="projects_report_gone">This can\'t be reported any more.</string>
 
-    <string name="projects_limited_chip">Limited account</string>
+    <string name="projects_limited_chip">Limited Account</string>
     <string name="projects_limited_body">Because your Discord account is new, until %1$s:</string>
     <string name="projects_limited_crew_found">You can\'t create crews</string>
     <string name="projects_limited_crew_invites">You can send up to %1$d crew invites a day</string>
@@ -506,9 +506,9 @@
     <string name="projects_mod_profile_reset_title">Your profile picture was reset</string>
     <string name="projects_mod_reason">Reason: %1$s</string>
     <string name="projects_mod_profile_reset">Your profile picture was reset because it broke the community rules.</string>
-    <string name="projects_mod_rules">Community rules</string>
+    <string name="projects_mod_rules">Community Rules</string>
     <string name="projects_mod_rules_url">https://mc.projects.gg/sozlesme</string>
-    <string name="projects_mod_ok">Got it</string>
+    <string name="projects_mod_ok">Got It</string>
     <string name="projects_mod_crew_reset">Your crew\'s name and motto were reset because they broke the community rules.</string>
     <string name="projects_mod_crew_locked_until">They can\'t be changed until %1$s.</string>
     <string name="projects_mod_crew_disbanded">%1$s was closed for breaking the community rules.</string>
@@ -522,9 +522,9 @@
     <string name="projects_social_error_call_needs_server">Join a multiplayer server to call your crew.</string>
     <string name="projects_social_error_call_server_hidden">\"Show the address when I\'m on other servers\" is off.</string>
     <!-- M21 (TEAM5): join requests, invite links, the join setting and crew plans (the desktop's wording, team2.md Ek A) -->
-    <string name="projects_requests_title">Join requests</string>
-    <string name="projects_requests_mine">Your join requests</string>
-    <string name="projects_requests_send">Ask to join</string>
+    <string name="projects_requests_title">Join Requests</string>
+    <string name="projects_requests_mine">Your Join Requests</string>
+    <string name="projects_requests_send">Ask to Join</string>
     <string name="projects_requests_approval">You\'ll join once its leaders approve.</string>
     <string name="projects_requests_pending">Your request is waiting</string>
     <string name="projects_requests_withdraw">Withdraw</string>
@@ -556,24 +556,24 @@
         <item quantity="other">%d days ago</item>
     </plurals>
 
-    <string name="projects_link_title">Invite link</string>
-    <string name="projects_link_create">Make an invite link</string>
+    <string name="projects_link_title">Invite Link</string>
+    <string name="projects_link_create">Make an Invite Link</string>
     <string name="projects_link_ready">Invite link ready</string>
-    <string name="projects_link_copy">Copy link</string>
+    <string name="projects_link_copy">Copy Link</string>
     <string name="projects_link_copied">Link copied</string>
-    <string name="projects_link_share">Share link</string>
+    <string name="projects_link_share">Share Link</string>
     <string name="projects_link_share_text">Join my crew on Projects Launcher: %1$s</string>
-    <string name="projects_link_more">Link options</string>
-    <string name="projects_link_renew">New link</string>
+    <string name="projects_link_more">Link Options</string>
+    <string name="projects_link_renew">New Link</string>
     <string name="projects_link_renew_ask">The old link stops working at once.</string>
     <string name="projects_link_renewed">New link ready</string>
-    <string name="projects_link_off">Switch off the link</string>
+    <string name="projects_link_off">Switch Off the Link</string>
     <string name="projects_link_off_ask">The link stops working at once.</string>
     <string name="projects_link_closed">Link switched off</string>
-    <string name="projects_join_approve">Approve new members</string>
+    <string name="projects_join_approve">Approve New Members</string>
 
     <string name="projects_plans_title">Plans</string>
-    <string name="projects_plans_make">Make a plan</string>
+    <string name="projects_plans_make">Make a Plan</string>
     <string name="projects_plans_by">Planned by %1$s</string>
     <string name="projects_plans_by_you">Planned by you</string>
     <string name="projects_plans_started_line">Started</string>
@@ -590,8 +590,8 @@
     <string name="projects_plans_when">%1$s %2$s</string>
     <string name="projects_plans_made">%1$s made a plan: %2$s</string>
     <string name="projects_plans_made_crew">%1$s made a plan for %3$s: %2$s</string>
-    <string name="projects_plans_more">Plan options</string>
-    <string name="projects_plans_cancel">Delete plan</string>
+    <string name="projects_plans_more">Plan Options</string>
+    <string name="projects_plans_cancel">Delete Plan</string>
     <string name="projects_plans_cancel_ask">The plan is deleted for everyone.</string>
     <string name="projects_plans_cancelled">Plan deleted</string>
     <string name="projects_plans_day">Day</string>
@@ -599,7 +599,7 @@
     <string name="projects_plans_full">A crew can have 3 plans at most.</string>
     <string name="projects_plans_today_limit">You can make up to 5 plans a day.</string>
     <string name="projects_plans_answers_limit">You\'ve changed your answers too often today. Try again tomorrow.</string>
-    <string name="projects_plans_channel">Plan reminders</string>
+    <string name="projects_plans_channel">Plan Reminders</string>
     <plurals name="projects_plans_remind">
         <item quantity="one">Your %1$s plan starts in %2$d minute</item>
         <item quantity="other">Your %1$s plan starts in %2$d minutes</item>
@@ -630,11 +630,11 @@
     <string name="projects_social_error_plan_gone">This plan is gone.</string>
     <string name="projects_plans_made_you">You made a plan: %1$s</string>
     <!-- FIX2 (M22, 22 October 2026): plan notes, deleted messages, menus, the answers list, Connect -->
-    <string name="projects_plans_note">Plan note</string>
+    <string name="projects_plans_note">Plan Note</string>
     <string name="projects_plans_note_hint">Add a short note (optional)</string>
-    <string name="projects_plans_note_add">Add a note</string>
-    <string name="projects_plans_note_edit">Edit note</string>
-    <string name="projects_plans_note_remove">Remove note</string>
+    <string name="projects_plans_note_add">Add a Note</string>
+    <string name="projects_plans_note_edit">Edit Note</string>
+    <string name="projects_plans_note_remove">Remove Note</string>
     <string name="projects_plans_note_remove_ask">The note is removed for everyone.</string>
     <string name="projects_plans_note_removed">Note removed</string>
     <string name="projects_plans_note_saved">Note saved</string>
@@ -651,17 +651,17 @@
     <string name="projects_chat_deleted_leader">Deleted by the crew leader</string>
     <string name="projects_chat_deleted_moderator">Deleted by a crew moderator</string>
     <string name="projects_chat_deleted_staff">Removed by Projects moderators</string>
-    <string name="projects_menu_message">Send message</string>
-    <string name="projects_menu_request_sent">Request sent</string>
-    <string name="projects_menu_accept_request">Accept request</string>
-    <string name="projects_menu_open_crew">Open crew</string>
-    <string name="projects_menu_open_chat">Open chat</string>
-    <string name="projects_menu_copy_code">Copy crew code</string>
+    <string name="projects_menu_message">Send Message</string>
+    <string name="projects_menu_request_sent">Request Sent</string>
+    <string name="projects_menu_accept_request">Accept Request</string>
+    <string name="projects_menu_open_crew">Open Crew</string>
+    <string name="projects_menu_open_chat">Open Chat</string>
+    <string name="projects_menu_copy_code">Copy Crew Code</string>
     <string name="projects_menu_options">Options</string>
     <string name="projects_menu_options_for">Options for %1$s</string>
     <string name="projects_social_error_crewmate_gone">You can\'t send this player a request right now.</string>
-    <string name="projects_answers_expand">Show answers</string>
-    <string name="projects_answers_collapse">Hide answers</string>
+    <string name="projects_answers_expand">Show Answers</string>
+    <string name="projects_answers_collapse">Hide Answers</string>
     <string name="projects_answers_expanded">Expanded</string>
     <string name="projects_answers_collapsed">Collapsed</string>
     <string name="projects_social_pill_connect">Connect</string>
@@ -674,8 +674,8 @@
     <string name="projects_connect_closing">The game is closing. Once it closes, it\'ll reopen connected to %1$s.</string>
     <string name="projects_connect_overdue_title">The game hasn\'t closed</string>
     <string name="projects_connect_overdue_body">If you force it to close, unsaved singleplayer progress may be lost.</string>
-    <string name="projects_connect_wait">Keep waiting</string>
-    <string name="projects_connect_force">Force close</string>
+    <string name="projects_connect_wait">Keep Waiting</string>
+    <string name="projects_connect_force">Force Close</string>
     <string name="projects_connect_already">You\'re already on this server.</string>
     <plurals name="projects_social_pill_online">
         <item quantity="one">Friends, %d online</item>
@@ -687,37 +687,37 @@
     </plurals>
     <string name="projects_menu_request_sent_to">Friend request sent</string>
     <string name="projects_answers_toggle">Who\'s coming</string>
-    <string name="projects_answers_less">Show less</string>
+    <string name="projects_answers_less">Show Less</string>
     <string name="projects_report_plan">Plan: %1$s</string>
-    <string name="projects_report_reason_note">Inappropriate note</string>
+    <string name="projects_report_reason_note">Inappropriate Note</string>
     <plurals name="projects_answers_more">
-        <item quantity="one">%d more</item>
-        <item quantity="other">%d more</item>
+        <item quantity="one">%d More</item>
+        <item quantity="other">%d More</item>
     </plurals>
     <!-- MOB1 (CHAT2): the picker, stickers, replies, reactions, typing, "Seen" and links (the desktop's en-chat2.ts). -->
-    <string name="projects_picker_open">Emoji and stickers</string>
+    <string name="projects_picker_open">Emoji and Stickers</string>
     <string name="projects_picker_tab_emoji">Emoji</string>
     <string name="projects_picker_tab_stickers">Stickers</string>
     <string name="projects_picker_search">Search emoji</string>
-    <string name="projects_picker_recent">Recently used</string>
+    <string name="projects_picker_recent">Recently Used</string>
     <string name="projects_picker_empty">No emoji found</string>
-    <string name="projects_picker_tone">Skin tone</string>
+    <string name="projects_picker_tone">Skin Tone</string>
     <string name="projects_picker_tone_default">Default</string>
     <string name="projects_picker_tone_light">Light</string>
-    <string name="projects_picker_tone_medium_light">Medium-light</string>
+    <string name="projects_picker_tone_medium_light">Medium-Light</string>
     <string name="projects_picker_tone_medium">Medium</string>
-    <string name="projects_picker_tone_medium_dark">Medium-dark</string>
+    <string name="projects_picker_tone_medium_dark">Medium-Dark</string>
     <string name="projects_picker_tone_dark">Dark</string>
-    <string name="projects_picker_group_smileys">Smileys and emotion</string>
+    <string name="projects_picker_group_smileys">Smileys and Emotion</string>
     <string name="projects_picker_group_people">People</string>
-    <string name="projects_picker_group_nature">Animals and nature</string>
-    <string name="projects_picker_group_food">Food and drink</string>
-    <string name="projects_picker_group_travel">Travel and places</string>
+    <string name="projects_picker_group_nature">Animals and Nature</string>
+    <string name="projects_picker_group_food">Food and Drink</string>
+    <string name="projects_picker_group_travel">Travel and Places</string>
     <string name="projects_picker_group_activities">Activities</string>
     <string name="projects_picker_group_objects">Objects</string>
     <string name="projects_picker_group_symbols">Symbols</string>
     <string name="projects_picker_group_flags">Flags</string>
-    <string name="projects_stickers_label">%1$s sticker</string>
+    <string name="projects_stickers_label">%1$s Sticker</string>
     <string name="projects_stickers_unknown">Sticker</string>
     <string name="projects_stickers_preview">Sticker: %1$s</string>
     <string name="projects_stickers_preview_mine">You: Sticker, %1$s</string>
@@ -726,13 +726,13 @@
     <string name="projects_stickers_sent_mine">You sent a sticker: %1$s</string>
     <string name="projects_reply_action">Reply</string>
     <string name="projects_reply_replying">Replying to %1$s</string>
-    <string name="projects_reply_cancel">Remove reply</string>
+    <string name="projects_reply_cancel">Remove Reply</string>
     <string name="projects_reply_earlier">An earlier message</string>
     <string name="projects_reply_deleted">Message deleted</string>
     <string name="projects_reply_quoted">Replied message</string>
     <string name="projects_reply_you">You</string>
     <string name="projects_reactions_give">React with %1$s</string>
-    <string name="projects_reactions_more">Another emoji</string>
+    <string name="projects_reactions_more">Another Emoji</string>
     <plurals name="projects_reactions_chip">
         <item quantity="one">%1$s, %2$d person</item>
         <item quantity="other">%1$s, %2$d people</item>
@@ -743,8 +743,8 @@
         <item quantity="other">%1$s, you and %2$d more</item>
     </plurals>
     <string name="projects_reactions_you">You</string>
-    <string name="projects_reactions_me_too">Me too %1$s</string>
-    <string name="projects_reactions_remove">Remove my reaction</string>
+    <string name="projects_reactions_me_too">Me Too %1$s</string>
+    <string name="projects_reactions_remove">Remove My Reaction</string>
     <string name="projects_reactions_full">You can give a message at most 5 reactions.</string>
     <string name="projects_reactions_kinds">This message has no room for a new reaction.</string>
     <string name="projects_reactions_refused">This emoji can\'t be a reaction.</string>
@@ -762,7 +762,7 @@
     <string name="projects_links_open">Open</string>
     <string name="projects_links_cancel">Cancel</string>
     <string name="projects_links_refused">This link can\'t be opened.</string>
-    <string name="projects_links_copy">Copy link</string>
+    <string name="projects_links_copy">Copy Link</string>
     <string name="projects_links_copied">Link copied</string>
     <string name="projects_links_card">%1$s: %2$s, link</string>
     <string name="projects_links_card_plain">%1$s, link</string>
@@ -786,7 +786,7 @@
     <string name="projects_chat2_failure_links">You\'ve used up today\'s messages with links.</string>
     <string name="projects_chat2_feature_off">This is off right now.</string>
     <string name="projects_report_reaction">Reaction: %1$s</string>
-    <string name="projects_report_reason_reaction">Inappropriate reaction</string>
+    <string name="projects_report_reason_reaction">Inappropriate Reaction</string>
     <string name="projects_limited_chat_links">You can\'t send links in chat</string>
     <plurals name="projects_limited_chat_stickers">
         <item quantity="one">You can send up to %d sticker a day</item>
@@ -796,27 +796,27 @@
         <item quantity="one">You can give up to %d reaction a day</item>
         <item quantity="other">You can give up to %d reactions a day</item>
     </plurals>
-    <string name="projects_privacy_seen">Seen receipts</string>
-    <string name="projects_privacy_typing">Typing indicator</string>
+    <string name="projects_privacy_seen">Seen Receipts</string>
+    <string name="projects_privacy_typing">Typing Indicator</string>
     <string name="projects_privacy_both">Both work both ways: turn one off and you won\'t see it either.</string>
     <string name="projects_welcome_you">You joined the crew</string>
-    <string name="projects_welcome_say_hi">Say hi</string>
+    <string name="projects_welcome_say_hi">Say Hi</string>
     <string name="projects_welcome_text">Welcome! 👋</string>
     <!-- MOB1 (TEAM6): crew tags, their card, hidden crews and requests from a tag (the desktop's en-team6.ts). -->
-    <string name="projects_badge_wear">Show crew tag</string>
-    <string name="projects_badge_worn">Crew tag shown</string>
-    <string name="projects_badge_take_off">Remove crew tag</string>
+    <string name="projects_badge_wear">Show Crew Tag</string>
+    <string name="projects_badge_worn">Crew Tag Shown</string>
+    <string name="projects_badge_take_off">Remove Crew Tag</string>
     <string name="projects_badge_wore">You put on the %1$s tag.</string>
     <string name="projects_badge_switched">Your tag is now %1$s.</string>
     <string name="projects_badge_off">You took off your tag.</string>
     <string name="projects_badge_chip_label">Tag of %1$s</string>
     <string name="projects_badge_row_label">%1$s, tag %2$s</string>
-    <string name="projects_badge_hidden_chip">Hidden crew</string>
+    <string name="projects_badge_hidden_chip">Hidden Crew</string>
     <string name="projects_badge_hidden_why">The leader hid the crew.</string>
     <string name="projects_badge_hidden_toast">The leader hid the crew, so your tag came off.</string>
     <string name="projects_badge_locked_why">The tag can\'t be worn until %1$s.</string>
     <string name="projects_badge_locked_now">The tag can\'t be worn right now.</string>
-    <string name="projects_badge_locked_until">Locked until %1$s</string>
+    <string name="projects_badge_locked_until">Locked Until %1$s</string>
     <string name="projects_badge_error_name_rejected">This tag can\'t be worn. The leader needs to change the crew\'s name or tag.</string>
     <string name="projects_badge_error_gone">You\'re no longer in this crew.</string>
     <string name="projects_badge_error_off">Crew tags are off right now.</string>
@@ -837,23 +837,23 @@
         <item quantity="other">%d members will stop wearing the tag.</item>
     </plurals>
     <string name="projects_badge_visibility_hide">Hide</string>
-    <string name="projects_badge_requests_label">Requests from the tag</string>
+    <string name="projects_badge_requests_label">Requests from the Tag</string>
     <string name="projects_badge_requests_on_line">Members\' friends can ask to join from the tag\'s card.</string>
     <string name="projects_badge_requests_off_line">No join requests come from the tag\'s card.</string>
     <string name="projects_badge_settings_today">The crew\'s settings changed a lot today. Try again tomorrow.</string>
 
     <!-- SOC-ID: Microsoft beside Discord, the name step, linked accounts. -->
-    <string name="projects_sign_in_microsoft">Sign in with Microsoft</string>
+    <string name="projects_sign_in_microsoft">Sign In with Microsoft</string>
     <string name="projects_sign_in_linked">If you\'ve linked Microsoft</string>
     <string name="projects_sign_in_body_both">You sign in with your Discord or Microsoft account. Your friends see your name, profile picture and what you\'re playing. Your email and password never reach us.</string>
     <string name="projects_sign_in_waiting_microsoft">Sign in to Microsoft in your browser</string>
     <string name="projects_sign_in_waiting_microsoft_note">Once you\'re in, you\'ll continue here.</string>
     <string name="projects_sign_in_microsoft_safety">Only enter your password on Microsoft\'s own page.</string>
     <string name="projects_sign_in_provider_off">You can\'t sign in with %1$s right now. Try another way.</string>
-    <string name="projects_social_pill_sign_in">Sign in</string>
+    <string name="projects_social_pill_sign_in">Sign In</string>
     <string name="projects_social_pill_sign_in_label">Friends: Sign in</string>
     <string name="projects_name_title">What name should friends see?</string>
-    <string name="projects_name_label">Your name</string>
+    <string name="projects_name_label">Your Name</string>
     <string name="projects_name_continue">Continue</string>
     <string name="projects_name_empty">Type a name.</string>
     <string name="projects_name_chars">Use only English or Turkish letters, digits, spaces and underscores (_).</string>
@@ -861,14 +861,14 @@
     <string name="projects_name_rejected">You can\'t use this name.</string>
     <string name="projects_name_today">You can\'t change your name again today.</string>
     <string name="projects_discord_only">For now, this is only for accounts opened with Discord.</string>
-    <string name="projects_identity_title">Linked accounts</string>
+    <string name="projects_identity_title">Linked Accounts</string>
     <string name="projects_identity_linked_on">Linked on %1$s</string>
     <string name="projects_identity_remove">Remove</string>
     <string name="projects_identity_remove_title">Remove %1$s?</string>
     <string name="projects_identity_remove_discord_number">Your Discord photo, Projects skin and forum crew tag go too.</string>
     <string name="projects_identity_remove_discord">Your Discord photo, Projects skin and forum crew tag go too.</string>
-    <string name="projects_identity_link_discord">Link your Discord account</string>
-    <string name="projects_identity_link_microsoft">Link your Microsoft account</string>
+    <string name="projects_identity_link_discord">Link Your Discord Account</string>
+    <string name="projects_identity_link_microsoft">Link Your Microsoft Account</string>
     <string name="projects_identity_linking">Linking</string>
     <string name="projects_identity_removing">Removing</string>
     <string name="projects_identity_linked_toast">%1$s linked.</string>
@@ -886,7 +886,7 @@
     <string name="projects_identity_note_linked">%1$s was linked to your account.</string>
     <string name="projects_identity_note_removed">%1$s was removed from your account.</string>
     <string name="projects_identity_note_not_you">If it wasn\'t you, remove it.</string>
-    <string name="projects_identity_open">See linked accounts</string>
+    <string name="projects_identity_open">See Linked Accounts</string>
     <string name="projects_limited_body_account">Because your account is new, until %1$s:</string>
     <plurals name="projects_limited_no_crew_account">
         <item quantity="one">Because your account is new, you can\'t create a crew yet. It opens in %d day.</item>

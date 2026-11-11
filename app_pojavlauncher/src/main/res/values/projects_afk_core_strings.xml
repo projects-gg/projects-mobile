@@ -77,15 +77,15 @@
     <string name="projects_afk_line_reconnect">Reconnecting with the new settings</string>
 
     <!-- Notifications (the service) -->
-    <string name="projects_afk_channel_running">AFK accounts</string>
-    <string name="projects_afk_channel_alerts">AFK alerts</string>
+    <string name="projects_afk_channel_running">AFK Accounts</string>
+    <string name="projects_afk_channel_alerts">AFK Alerts</string>
     <string name="projects_afk_notify_title">AFK accounts</string>
     <plurals name="projects_afk_notify_in_game">
         <item quantity="one">%1$d account in game</item>
         <item quantity="other">%1$d accounts in game</item>
     </plurals>
     <string name="projects_afk_notify_starting">Starting</string>
-    <string name="projects_afk_notify_stop_all">Stop all</string>
+    <string name="projects_afk_notify_stop_all">Stop All</string>
     <!-- An account line in the expanded notification: "SleepyFox_42: In game" -->
     <string name="projects_afk_notify_account_line">%1$s: %2$s</string>
     <string name="projects_afk_alert_dropped">%1$s is out of the game</string>
@@ -103,5 +103,5 @@
     <string name="projects_afk_end_crashed">AFK closed unexpectedly %1$s.</string>
     <string name="projects_afk_end_app_updated">The app was updated %1$s and AFK stopped.</string>
     <string name="projects_afk_end_unknown">AFK stopped %1$s.</string>
-    <string name="projects_afk_end_fix">Open settings</string>
+    <string name="projects_afk_end_fix">Open Settings</string>
 </resources>

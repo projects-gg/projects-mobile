@@ -242,7 +242,7 @@ public final class CloudConsoleFragment extends CloudScreen implements CloudServ
         if (!mActionsAdded) {
             // Header actions: search the loaded lines, download the log (to share or save). Added once; hidden without kinds.
             mActionsAdded = true;
-            mHeader.addAction(R.drawable.projects_ic_magnifying_glass, R.string.projects_feat_console_search, v -> toggleSearch());
+            mHeader.addAction(R.drawable.projects_ic_magnifying_glass, R.string.projects_feat_console_search_open, v -> toggleSearch());
             mHeader.addAction(R.drawable.projects_ic_download_simple, R.string.projects_feat_console_export_open, v -> {
                 CloudModel.Account account = account();
                 if (account != null) ConsoleShare.open(this, account, lang());

@@ -250,7 +250,7 @@ public final class SocialHomeRow implements SocialService.Listener {
             }
             case CREW_INVITE: {
                 SocialModel.TeamInvite invite = line.teamInvite;
-                title = invite == null ? context.getString(R.string.projects_crew_home_invite)
+                title = invite == null ? context.getString(R.string.projects_crew_home_invite_title)
                         : context.getString(R.string.projects_crew_invited_you, invite.from.name(), invite.team.name);
                 text = context.getString(R.string.projects_crew_home_invite);
                 gold = true;

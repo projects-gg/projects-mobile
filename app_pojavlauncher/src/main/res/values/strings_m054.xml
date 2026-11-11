@@ -24,4 +24,20 @@
     </plurals>
     <string name="projects_mods_switch_parked_settings">The %1$s set\'s settings are kept.</string>
     <string name="projects_skin_section">Skin</string>
+    <!-- M054 Title Case: a key used both as a title or button and as a sentence; the title form apart. -->
+    <string name="projects_feat_console_search_open">Search the Console</string>
+    <string name="projects_voice_name_label">Room Name</string>
+    <string name="projects_pref_install_jar_title">Run a .jar File</string>
+    <string name="projects_plus_limit_title_perDealMax">At Most per Deal</string>
+    <string name="projects_plus_limit_title_dailySpendMax">Daily Spending Limit</string>
+    <string name="projects_plus_limit_title_totalBudget">Total Spending Limit</string>
+    <string name="projects_plus_limit_title_balanceFloor">Lowest Balance to Keep</string>
+    <string name="projects_plus_limit_title_approvalAbove">Approval Limit</string>
+    <string name="projects_plus_limit_title_newCounterpartApprovalAbove">Approval Limit with a New Player</string>
+    <string name="projects_crew_invite_sent_toast">Invited</string>
+    <string name="projects_join_preparing_button">Preparing Projects</string>
+    <string name="projects_crew_section_playing">In Game</string>
+    <string name="projects_form_search_button">Search Items</string>
+    <string name="projects_skin_link_title_head">Link Your Account</string>
+    <string name="projects_crew_home_invite_title">Crew Invite</string>
 </resources>

@@ -10,7 +10,7 @@
     <!-- Hides the card for 2 hours. -->
     <string name="projects_update_close">Close</string>
     <!-- Hides the card for 7 days. -->
-    <string name="projects_update_remind">Remind me in 7 days</string>
+    <string name="projects_update_remind">Remind Me in 7 Days</string>
     <string name="projects_update_stop">Stop</string>
     <string name="projects_update_downloading">Downloading the update</string>
     <string name="projects_update_percent">%1$d%%</string>
@@ -26,8 +26,8 @@
     <string name="projects_update_error_incompatible">This version does not work on your phone.</string>
     <string name="projects_update_error_failed">Android could not install the update. Try again.</string>
     <string name="projects_update_error_later">The update cannot be downloaded right now. Try again later.</string>
-    <string name="projects_update_auto_title">Check for updates automatically</string>
-    <string name="projects_update_now_title">Check for updates</string>
+    <string name="projects_update_auto_title">Check for Updates Automatically</string>
+    <string name="projects_update_now_title">Check for Updates</string>
     <string name="projects_update_now_summary">Version %1$s</string>
     <string name="projects_update_now_checking">Checking</string>
     <string name="projects_update_now_latest">You are on the latest version.</string>

@@ -38,7 +38,7 @@
     <string name="projects_cloud_empty_title">No cloud account yet</string>
     <string name="projects_cloud_empty_body">Your account stays on the server while your PC and phone are off.</string>
     <string name="projects_cloud_start_site">Start on afk.projects.gg</string>
-    <string name="projects_cloud_buy">Get a new account</string>
+    <string name="projects_cloud_buy">Get a New Account</string>
     <string name="projects_cloud_restricted">You\'re banned from 24/7 Cloud.</string>
     <string name="projects_cloud_restricted_until">You\'re banned from 24/7 Cloud until %1$s.</string>
     <string name="projects_cloud_plus_mark">AFK+</string>
@@ -93,7 +93,7 @@
     <string name="projects_cloud_hint_crash_loop">Check your settings, then start.</string>
     <string name="projects_cloud_hint_forbidden_target">Pick another server in Settings.</string>
     <string name="projects_cloud_hint_no_host">It starts by itself when a slot opens.</string>
-    <string name="projects_cloud_open_settings">Open settings</string>
+    <string name="projects_cloud_open_settings">Open Settings</string>
 
     <plurals name="projects_cloud_days_left">
         <item quantity="one">%d day left</item>
@@ -118,7 +118,7 @@
     <string name="projects_cloud_reconnect">Reconnect</string>
     <string name="projects_cloud_console">Console</string>
     <string name="projects_cloud_settings">Settings</string>
-    <string name="projects_cloud_renew">Extend time</string>
+    <string name="projects_cloud_renew">Extend Time</string>
     <string name="projects_cloud_reactivate">Reactivate</string>
     <string name="projects_cloud_open_site">Open on afk.projects.gg</string>
     <string name="projects_cloud_started">%1$s started</string>
@@ -127,7 +127,7 @@
     <string name="projects_cloud_failed">Couldn\'t do that. Try again.</string>
 
     <!-- The account screen -->
-    <string name="projects_cloud_time">Time left</string>
+    <string name="projects_cloud_time">Time Left</string>
     <string name="projects_cloud_ends_on">Ends on %1$s</string>
     <string name="projects_cloud_renew_opens">You can extend it from %1$s.</string>
     <string name="projects_cloud_site_more">Purchases, refunds and deleting the account are on afk.projects.gg.</string>
@@ -146,7 +146,7 @@
     <string name="projects_cloud_mod_overturned_other">Your appeal was accepted. The decision on %1$s was lifted.</string>
     <string name="projects_cloud_mod_lifted_suspend">%1$s is back, and the lost time was added.</string>
     <string name="projects_cloud_mod_lifted">The decision on %1$s was lifted.</string>
-    <string name="projects_cloud_report">Report this as a mistake</string>
+    <string name="projects_cloud_report">Report This as a Mistake</string>
     <string name="projects_cloud_report_sending">Sending</string>
     <string name="projects_cloud_report_sent">Thanks, a staff member will look at it. Meanwhile, you can fix the line and save.</string>
     <string name="projects_cloud_report_not_needed">This row can be saved now.</string>
@@ -170,12 +170,12 @@
     <string name="projects_cloud_console_send">Send</string>
     <string name="projects_cloud_console_offline">The account isn\'t in the game. Start it to type here.</string>
     <string name="projects_cloud_console_empty">No messages yet.</string>
-    <string name="projects_cloud_console_earlier">Earlier lines</string>
+    <string name="projects_cloud_console_earlier">Earlier Lines</string>
     <string name="projects_cloud_console_sealed">This line is encrypted before it\'s sent.</string>
     <string name="projects_cloud_console_connecting">Connecting to the console</string>
     <string name="projects_cloud_console_link_lost">The live connection dropped. Reconnecting.</string>
     <string name="projects_cloud_console_replaced">The console was opened somewhere else.</string>
-    <string name="projects_cloud_console_reopen">Open here</string>
+    <string name="projects_cloud_console_reopen">Open Here</string>
     <string name="projects_cloud_console_ended">Your session ended. Sign in with Discord again.</string>
     <string name="projects_cloud_console_refused">This account\'s console can\'t be opened right now.</string>
     <string name="projects_cloud_console_host_offline">The AFK server isn\'t connected right now. The account may still be running.</string>
@@ -185,42 +185,42 @@
         <item quantity="other">%d lines skipped</item>
     </plurals>
     <string name="projects_cloud_console_send_failed">Couldn\'t send the message.</string>
-    <string name="projects_cloud_console_new">New messages</string>
+    <string name="projects_cloud_console_new">New Messages</string>
 
     <!-- Settings -->
     <string name="projects_cloud_settings_general">General</string>
     <string name="projects_cloud_settings_commands">Commands</string>
-    <string name="projects_cloud_settings_replies">Auto-reply</string>
+    <string name="projects_cloud_settings_replies">Auto-Reply</string>
     <string name="projects_cloud_settings_load_failed">Couldn\'t load the settings.</string>
-    <string name="projects_cloud_settings_name">Player name</string>
-    <string name="projects_cloud_settings_host">Server address</string>
-    <string name="projects_cloud_settings_version">Game version</string>
+    <string name="projects_cloud_settings_name">Player Name</string>
+    <string name="projects_cloud_settings_host">Server Address</string>
+    <string name="projects_cloud_settings_version">Game Version</string>
     <string name="projects_cloud_settings_version_auto">Automatic</string>
     <string name="projects_cloud_settings_recommended">Recommended</string>
     <string name="projects_cloud_settings_version_search">Search versions</string>
     <string name="projects_cloud_settings_version_none">No version matches this search.</string>
-    <string name="projects_cloud_settings_lang">Console language</string>
+    <string name="projects_cloud_settings_lang">Console Language</string>
     <string name="projects_cloud_settings_server_changes">%1$d/%2$d server changes this hour</string>
     <string name="projects_cloud_settings_anti_afk">Anti-AFK</string>
     <string name="projects_cloud_settings_anti_afk_help">Sneaks now and then so the server doesn\'t count you as AFK.</string>
-    <string name="projects_cloud_settings_anti_afk_interval">Sneak interval</string>
-    <string name="projects_cloud_settings_at_least">At least</string>
-    <string name="projects_cloud_settings_at_most">At most</string>
-    <string name="projects_cloud_settings_owner">The name you play with</string>
+    <string name="projects_cloud_settings_anti_afk_interval">Sneak Interval</string>
+    <string name="projects_cloud_settings_at_least">At Least</string>
+    <string name="projects_cloud_settings_at_most">At Most</string>
+    <string name="projects_cloud_settings_owner">The Name You Play With</string>
     <string name="projects_cloud_settings_owner_help">Rules with \"Only reply to me\" turned on answer only this name.</string>
     <string name="projects_cloud_settings_section_connection">Connection</string>
     <string name="projects_cloud_settings_section_game">Gameplay</string>
     <string name="projects_cloud_settings_seconds">s</string>
-    <string name="projects_cloud_command_add">Add command</string>
+    <string name="projects_cloud_command_add">Add Command</string>
     <string name="projects_cloud_command_empty">No commands yet.</string>
     <string name="projects_cloud_command_count">%1$d/%2$d commands</string>
     <string name="projects_cloud_command_title">Command</string>
     <string name="projects_cloud_command_trigger">When</string>
-    <string name="projects_cloud_trigger_join">On every join</string>
-    <string name="projects_cloud_trigger_start">Only when started</string>
-    <string name="projects_cloud_trigger_reconnect">Only when reconnecting</string>
-    <string name="projects_cloud_trigger_interval">Every so often</string>
-    <string name="projects_cloud_trigger_daily">Every day at set times</string>
+    <string name="projects_cloud_trigger_join">On Every Join</string>
+    <string name="projects_cloud_trigger_start">Only When Started</string>
+    <string name="projects_cloud_trigger_reconnect">Only When Reconnecting</string>
+    <string name="projects_cloud_trigger_interval">Every So Often</string>
+    <string name="projects_cloud_trigger_daily">Every Day at Set Times</string>
     <string name="projects_cloud_trigger_join_short">On join, after %1$d s</string>
     <string name="projects_cloud_trigger_start_short">When started, after %1$d s</string>
     <string name="projects_cloud_trigger_reconnect_short">When reconnecting, after %1$d s</string>
@@ -230,37 +230,37 @@
     <string name="projects_cloud_command_delay">Wait</string>
     <string name="projects_cloud_command_times">Times</string>
     <string name="projects_cloud_command_times_help">Turkey time.</string>
-    <string name="projects_cloud_command_add_time">Add time</string>
+    <string name="projects_cloud_command_add_time">Add Time</string>
     <string name="projects_cloud_command_remove_time">Remove %1$s</string>
     <string name="projects_cloud_command_text">Command</string>
     <string name="projects_cloud_command_text_hint">/kit or hello</string>
-    <string name="projects_cloud_command_use">Use command</string>
-    <string name="projects_cloud_command_remove">Delete command</string>
-    <string name="projects_cloud_command_move_up">Move up</string>
-    <string name="projects_cloud_command_move_down">Move down</string>
-    <string name="projects_cloud_rule_add">Add rule</string>
+    <string name="projects_cloud_command_use">Use Command</string>
+    <string name="projects_cloud_command_remove">Delete Command</string>
+    <string name="projects_cloud_command_move_up">Move Up</string>
+    <string name="projects_cloud_command_move_down">Move Down</string>
+    <string name="projects_cloud_rule_add">Add Rule</string>
     <string name="projects_cloud_rule_empty">No rules yet.</string>
     <string name="projects_cloud_rule_count">%1$d/%2$d rules</string>
-    <string name="projects_cloud_rule_title">Auto-reply</string>
-    <string name="projects_cloud_rule_match">Phrase in the message</string>
-    <string name="projects_cloud_rule_pattern">Custom pattern</string>
+    <string name="projects_cloud_rule_title">Auto-Reply</string>
+    <string name="projects_cloud_rule_match">Phrase in the Message</string>
+    <string name="projects_cloud_rule_pattern">Custom Pattern</string>
     <string name="projects_cloud_rule_pattern_hint">(?i)^!invite \\w+$</string>
     <string name="projects_cloud_rule_pattern_help">A regular expression. Start it with (?i) so letter case doesn\'t matter.</string>
-    <string name="projects_cloud_rule_write_myself">I\'ll write the pattern myself</string>
-    <string name="projects_cloud_rule_to_plain">Back to a plain phrase</string>
+    <string name="projects_cloud_rule_write_myself">I\'ll Write the Pattern Myself</string>
+    <string name="projects_cloud_rule_to_plain">Back to a Plain Phrase</string>
     <string name="projects_cloud_rule_match_hint">hello</string>
     <string name="projects_cloud_rule_from">From</string>
     <string name="projects_cloud_rule_from_any">Anywhere</string>
-    <string name="projects_cloud_rule_from_player">Player chat</string>
-    <string name="projects_cloud_rule_from_private">Private messages</string>
-    <string name="projects_cloud_rule_from_server">Server message</string>
-    <string name="projects_cloud_rule_owner_only">Only reply to me</string>
+    <string name="projects_cloud_rule_from_player">Player Chat</string>
+    <string name="projects_cloud_rule_from_private">Private Messages</string>
+    <string name="projects_cloud_rule_from_server">Server Message</string>
+    <string name="projects_cloud_rule_owner_only">Only Reply to Me</string>
     <string name="projects_cloud_rule_owner_help">Works only when %1$s writes.</string>
-    <string name="projects_cloud_rule_cooldown">Time between replies</string>
+    <string name="projects_cloud_rule_cooldown">Time Between Replies</string>
     <string name="projects_cloud_rule_reply">Reply</string>
     <string name="projects_cloud_rule_reply_hint">I\'m away from the keyboard right now.</string>
-    <string name="projects_cloud_rule_use">Use rule</string>
-    <string name="projects_cloud_rule_remove">Delete rule</string>
+    <string name="projects_cloud_rule_use">Use Rule</string>
+    <string name="projects_cloud_rule_remove">Delete Rule</string>
     <string name="projects_cloud_rule_line">%1$s, %2$s apart</string>
     <string name="projects_cloud_secret_mark">Secret</string>
     <string name="projects_cloud_secret_help">Secret lines are encrypted on this phone before they\'re sent.</string>
@@ -282,11 +282,11 @@
     <string name="projects_cloud_settings_done">Done</string>
     <string name="projects_cloud_settings_saved">%1$s settings saved</string>
     <string name="projects_cloud_settings_conflict">The account changed somewhere else.</string>
-    <string name="projects_cloud_settings_load_latest">Load the latest</string>
+    <string name="projects_cloud_settings_load_latest">Load the Latest</string>
     <string name="projects_cloud_discard_title">Changes not saved</string>
     <string name="projects_cloud_discard_body">If you leave without saving, your changes are lost.</string>
-    <string name="projects_cloud_discard_keep">Keep editing</string>
-    <string name="projects_cloud_discard_confirm">Leave without saving</string>
+    <string name="projects_cloud_discard_keep">Keep Editing</string>
+    <string name="projects_cloud_discard_confirm">Leave Without Saving</string>
     <string name="projects_cloud_issue_empty">Type something or delete the line.</string>
     <string name="projects_cloud_issue_length">Up to 256 characters.</string>
     <string name="projects_cloud_issue_space">It can\'t start or end with a space.</string>
@@ -325,31 +325,31 @@
     <string name="projects_cloud_issue_other">Fix this field.</string>
 
     <!-- Notification settings -->
-    <string name="projects_cloud_notify_accounts">Cloud accounts</string>
-    <string name="projects_cloud_notify_stopped">An account stopped</string>
-    <string name="projects_cloud_notify_renewal">Time is running out</string>
-    <string name="projects_cloud_notify_expired">Time is up</string>
-    <string name="projects_cloud_notify_approval">Your approval is needed</string>
-    <string name="projects_cloud_notify_found">Something you want was found</string>
-    <string name="projects_cloud_notify_deal_done">Trade complete</string>
-    <string name="projects_cloud_notify_deal_failed">Trade not completed</string>
-    <string name="projects_cloud_notify_message">New message</string>
-    <string name="projects_cloud_notify_quota_full">Out of AI credits</string>
-    <string name="projects_cloud_notify_quota_80">Most AI credits used</string>
-    <string name="projects_cloud_notify_gift_ending">Gift AI credits ending</string>
-    <string name="projects_cloud_notify_summary">Daily summary</string>
-    <string name="projects_cloud_notify_weekly">Weekly report</string>
-    <string name="projects_cloud_notify_paused">ProBot AI paused</string>
-    <string name="projects_cloud_notify_incident">Suspicious message blocked</string>
-    <string name="projects_cloud_notify_quiet">Quiet hours</string>
+    <string name="projects_cloud_notify_accounts">Cloud Accounts</string>
+    <string name="projects_cloud_notify_stopped">An Account Stopped</string>
+    <string name="projects_cloud_notify_renewal">Time Is Running Out</string>
+    <string name="projects_cloud_notify_expired">Time Is Up</string>
+    <string name="projects_cloud_notify_approval">Your Approval Is Needed</string>
+    <string name="projects_cloud_notify_found">Something You Want Was Found</string>
+    <string name="projects_cloud_notify_deal_done">Trade Complete</string>
+    <string name="projects_cloud_notify_deal_failed">Trade Not Completed</string>
+    <string name="projects_cloud_notify_message">New Message</string>
+    <string name="projects_cloud_notify_quota_full">Out of AI Credits</string>
+    <string name="projects_cloud_notify_quota_80">Most AI Credits Used</string>
+    <string name="projects_cloud_notify_gift_ending">Gift AI Credits Ending</string>
+    <string name="projects_cloud_notify_summary">Daily Summary</string>
+    <string name="projects_cloud_notify_weekly">Weekly Report</string>
+    <string name="projects_cloud_notify_paused">ProBot AI Paused</string>
+    <string name="projects_cloud_notify_incident">Suspicious Message Blocked</string>
+    <string name="projects_cloud_notify_quiet">Quiet Hours</string>
     <string name="projects_cloud_notify_quiet_help">No phone notifications in quiet hours. What you missed comes in one notification when they end.</string>
     <string name="projects_cloud_notify_from">From</string>
     <string name="projects_cloud_notify_to">To</string>
     <string name="projects_cloud_notify_load_failed">Couldn\'t load your notification settings.</string>
     <string name="projects_cloud_channel_group">24/7 Cloud</string>
-    <string name="projects_cloud_channel_alerts">24/7 Cloud alerts</string>
-    <string name="projects_cloud_channel_deals">AFK+ approvals and deals</string>
-    <string name="projects_cloud_channel_info">AFK+ info</string>
+    <string name="projects_cloud_channel_alerts">24/7 Cloud Alerts</string>
+    <string name="projects_cloud_channel_deals">AFK+ Approvals and Deals</string>
+    <string name="projects_cloud_channel_info">AFK+ Info</string>
 
     <!-- Notifications (the device writes them; no counterpart's name or message text ever comes) -->
     <string name="projects_cloud_notice_stopped">%1$s stopped: %2$s.</string>
@@ -459,9 +459,9 @@
     <string name="projects_plus_ai_off">ProBot AI is off</string>
     <string name="projects_plus_ai_unknown">ProBot AI\'s state can\'t be read right now</string>
     <string name="projects_plus_set_limits">Set limits</string>
-    <string name="projects_plus_quota_5h">5-hour</string>
+    <string name="projects_plus_quota_5h">5-Hour</string>
     <string name="projects_plus_quota_week">Weekly</string>
-    <string name="projects_plus_quota_title">AI credits</string>
+    <string name="projects_plus_quota_title">AI Credits</string>
     <string name="projects_plus_quota_used">%1$s used</string>
     <string name="projects_plus_quota_used_up">Used up</string>
     <string name="projects_plus_quota_resets">Resets at %1$s</string>
@@ -470,14 +470,14 @@
     <string name="projects_plus_quota_gift">Gift AI credits until %1$s</string>
     <string name="projects_plus_quota_gift_open">You have gift AI credits</string>
     <string name="projects_plus_quota_frozen">Staff froze your AI credits.</string>
-    <string name="projects_plus_approvals">Waiting for you</string>
+    <string name="projects_plus_approvals">Waiting for You</string>
     <string name="projects_plus_rules">Orders</string>
     <string name="projects_plus_assistant">ProBot AI</string>
     <string name="projects_plus_schedule">Working hours</string>
     <string name="projects_plus_safety">Spending limits</string>
     <string name="projects_plus_activity">Activity</string>
     <string name="projects_plus_report">Summary</string>
-    <string name="projects_plus_history">Settings history</string>
+    <string name="projects_plus_history">Settings History</string>
     <string name="projects_plus_upgrade">Upgrade to AFK+</string>
     <string name="projects_plus_downgrade">Leave AFK+</string>
     <string name="projects_plus_downgrade_note">AFK+ ends, and your time left becomes 24/7 Cloud time.</string>
@@ -495,11 +495,11 @@
     <string name="projects_plus_minutes_short">%1$d min</string>
     <string name="projects_plus_left_under">Less than a minute left</string>
     <string name="projects_plus_approve">Approve</string>
-    <string name="projects_plus_lower">Lower the price</string>
+    <string name="projects_plus_lower">Lower the Price</string>
     <string name="projects_plus_lower_title">Pay at most</string>
     <string name="projects_plus_lower_help">ProBot AI haggles again up to this amount.</string>
-    <string name="projects_plus_lower_label">At most</string>
-    <string name="projects_plus_lower_go">Keep bargaining</string>
+    <string name="projects_plus_lower_label">At Most</string>
+    <string name="projects_plus_lower_go">Keep Bargaining</string>
     <string name="projects_plus_lower_range">Enter less than %1$s.</string>
     <string name="projects_plus_approved">Approved. The trade starts.</string>
     <string name="projects_plus_why_above">Above your approval limit</string>
@@ -519,7 +519,7 @@
     <string name="projects_plus_inbox_send">Send</string>
     <string name="projects_plus_inbox_first">When you write, ProBot AI stays quiet in this chat for 30 minutes.</string>
     <string name="projects_plus_inbox_quiet">ProBot AI is quiet in this chat until %1$s.</string>
-    <string name="projects_plus_inbox_hand_back">Hand back now</string>
+    <string name="projects_plus_inbox_hand_back">Hand Back Now</string>
     <string name="projects_plus_inbox_cannot">You can only reply to players who wrote to you in the last 24 hours.</string>
     <string name="projects_plus_inbox_rejected">Phone numbers, e-mail, bank details and links can\'t be shared.</string>
     <string name="projects_plus_inbox_too_long">Up to 200 characters.</string>
@@ -581,7 +581,7 @@
     <string name="projects_plus_row_use">Use</string>
     <string name="projects_plus_row_remove">Remove from the list</string>
     <string name="projects_plus_row_ten_times">At most is more than ten times the target. Is that right?</string>
-    <string name="projects_plus_row_ten_times_yes">Yes, keep it</string>
+    <string name="projects_plus_row_ten_times_yes">Yes, Keep It</string>
     <string name="projects_plus_problem_order_buy">At most can\'t be less than the target.</string>
     <string name="projects_plus_problem_order_sell">At least can\'t be more than the target.</string>
     <string name="projects_plus_problem_range">This value isn\'t accepted.</string>
@@ -591,7 +591,7 @@
     <!-- ProBot AI -->
     <string name="projects_plus_persona">Tone</string>
     <string name="projects_plus_preset_friendly">Friendly</string>
-    <string name="projects_plus_preset_brief">Short and clear</string>
+    <string name="projects_plus_preset_brief">Short and Clear</string>
     <string name="projects_plus_preset_polite">Polite</string>
     <string name="projects_plus_preset_playful">Playful</string>
     <string name="projects_plus_intro">Introduction</string>
@@ -603,25 +603,25 @@
     <string name="projects_plus_status_back_tomorrow">Back tomorrow</string>
     <string name="projects_plus_status_weekend">Around at the weekend</string>
     <string name="projects_plus_status_busy">Busy right now</string>
-    <string name="projects_plus_status_own">Write my own</string>
+    <string name="projects_plus_status_own">Write My Own</string>
     <string name="projects_plus_status_hint">Back at 8 tonight</string>
     <string name="projects_plus_small_talk">Chat a little in the conversations it answers</string>
     <string name="projects_plus_scope">Which messages should it answer?</string>
-    <string name="projects_plus_scope_all">Every private message</string>
-    <string name="projects_plus_scope_trade">Trade messages only</string>
-    <string name="projects_plus_scope_off">Answer every message with ready replies only</string>
-    <string name="projects_plus_away">Tell others you\'re away</string>
+    <string name="projects_plus_scope_all">Every Private Message</string>
+    <string name="projects_plus_scope_trade">Trade Messages Only</string>
+    <string name="projects_plus_scope_off">Answer Every Message with Ready Replies Only</string>
+    <string name="projects_plus_away">Tell Others You\'re Away</string>
     <string name="projects_plus_lang">Language</string>
-    <string name="projects_plus_lang_auto">Reply in their language</string>
+    <string name="projects_plus_lang_auto">Reply in Their Language</string>
     <string name="projects_plus_lang_tr">Turkish</string>
     <string name="projects_plus_lang_en">English</string>
-    <string name="projects_plus_saver">Keep chats short when AI credits run low</string>
-    <string name="projects_plus_saver_80" formatted="false">At 80% used</string>
-    <string name="projects_plus_saver_50" formatted="false">At 50% used</string>
+    <string name="projects_plus_saver">Keep Chats Short When AI Credits Run Low</string>
+    <string name="projects_plus_saver_80" formatted="false">At 80% Used</string>
+    <string name="projects_plus_saver_50" formatted="false">At 50% Used</string>
     <string name="projects_plus_saver_off">Off</string>
     <string name="projects_plus_proactive">Message the seller once when found</string>
-    <string name="projects_plus_summary_at">Daily summary at</string>
-    <string name="projects_plus_blocked">Blocked players</string>
+    <string name="projects_plus_summary_at">Daily Summary At</string>
+    <string name="projects_plus_blocked">Blocked Players</string>
     <string name="projects_plus_blocked_empty">You haven\'t blocked anyone.</string>
     <string name="projects_plus_blocked_add">Block</string>
     <string name="projects_plus_blocked_hint">Player name</string>
@@ -635,10 +635,10 @@
     <string name="projects_plus_text_length">Up to %1$d characters.</string>
 
     <!-- Working hours (QoL Q3) -->
-    <string name="projects_plus_schedule_switch">Only answer during these hours</string>
+    <string name="projects_plus_schedule_switch">Only Answer During These Hours</string>
     <string name="projects_plus_schedule_help">Outside these hours it only says you\'re away and starts no trades.</string>
-    <string name="projects_plus_schedule_add">Add hours</string>
-    <string name="projects_plus_schedule_remove">Remove these hours</string>
+    <string name="projects_plus_schedule_add">Add Hours</string>
+    <string name="projects_plus_schedule_remove">Remove These Hours</string>
     <string name="projects_plus_schedule_from">From</string>
     <string name="projects_plus_schedule_to">To</string>
     <string name="projects_plus_day_1">Mon</string>
@@ -648,10 +648,10 @@
     <string name="projects_plus_day_5">Fri</string>
     <string name="projects_plus_day_6">Sat</string>
     <string name="projects_plus_day_7">Sun</string>
-    <string name="projects_plus_break">Take a break</string>
+    <string name="projects_plus_break">Take a Break</string>
     <string name="projects_plus_break_until">Until</string>
     <string name="projects_plus_break_on">ProBot AI is on a break until %1$s.</string>
-    <string name="projects_plus_break_end">End the break</string>
+    <string name="projects_plus_break_end">End the Break</string>
 
     <!-- Spending limits -->
     <string name="projects_plus_limit_perDealMax">At most per deal</string>
@@ -665,14 +665,14 @@
     <string name="projects_plus_limit_timeout_help">After this many minutes it counts as a no.</string>
     <string name="projects_plus_limit_none">No limit</string>
     <string name="projects_plus_limit_order">The approval limit can\'t be above the per-deal maximum.</string>
-    <string name="projects_plus_reset_spent">Reset spending</string>
+    <string name="projects_plus_reset_spent">Reset Spending</string>
     <string name="projects_plus_reset_spent_body">What was used of the total limit goes back to zero. Today\'s spending stays.</string>
     <string name="projects_plus_reset_spent_done">Spending reset.</string>
 
     <!-- Activity (feed, trade history, weekly report; QoL Q4) -->
     <string name="projects_plus_feed">Live</string>
     <string name="projects_plus_trades">Trades</string>
-    <string name="projects_plus_week">Last week</string>
+    <string name="projects_plus_week">Last Week</string>
     <string name="projects_plus_week_buys">Buys</string>
     <string name="projects_plus_week_sales">Sales</string>
     <string name="projects_plus_week_trades">Trades</string>
@@ -703,18 +703,18 @@
     <string name="projects_plus_trade_review">Under review</string>
     <string name="projects_plus_trade_auto">Automatic</string>
     <string name="projects_plus_trade_approved">You approved</string>
-    <string name="projects_plus_week_pms">Messages answered</string>
+    <string name="projects_plus_week_pms">Messages Answered</string>
     <string name="projects_plus_week_spent">Spent</string>
     <string name="projects_plus_week_earned">Earned</string>
-    <string name="projects_plus_week_below">Saved by haggling</string>
-    <string name="projects_plus_week_above">Earned extra by haggling</string>
-    <string name="projects_plus_week_blocked">Suspicious messages blocked</string>
-    <string name="projects_plus_week_allowance">AI credits used</string>
+    <string name="projects_plus_week_below">Saved by Haggling</string>
+    <string name="projects_plus_week_above">Earned Extra by Haggling</string>
+    <string name="projects_plus_week_blocked">Suspicious Messages Blocked</string>
+    <string name="projects_plus_week_allowance">AI Credits Used</string>
     <string name="projects_plus_week_empty">No trades or replies on this account last week.</string>
 
     <!-- Settings history (QoL Q7) -->
     <string name="projects_plus_history_empty">No saved settings yet.</string>
-    <string name="projects_plus_history_restore">Go back to this</string>
+    <string name="projects_plus_history_restore">Go Back to This</string>
     <string name="projects_plus_history_restore_body">Your settings go back to this. Later changes stay in the history.</string>
     <string name="projects_plus_history_restored">Your settings went back.</string>
     <string name="projects_plus_history_by_restore">Went back</string>
@@ -748,21 +748,21 @@
     <string name="projects_plus_saved">AFK+ settings saved</string>
     <!-- Screens' extra words -->
     <string name="projects_cloud_open">Open</string>
-    <string name="projects_cloud_retry">Try again</string>
+    <string name="projects_cloud_retry">Try Again</string>
     <string name="projects_cloud_selected">Selected</string>
-    <string name="projects_cloud_notify_os_open">Turn on notifications</string>
-    <string name="projects_plus_break_1h">1 hour</string>
-    <string name="projects_plus_break_4h">4 hours</string>
-    <string name="projects_plus_break_morning">Until tomorrow morning</string>
-    <string name="projects_plus_break_pick">Pick a time</string>
+    <string name="projects_cloud_notify_os_open">Turn On Notifications</string>
+    <string name="projects_plus_break_1h">1 Hour</string>
+    <string name="projects_plus_break_4h">4 Hours</string>
+    <string name="projects_plus_break_morning">Until Tomorrow Morning</string>
+    <string name="projects_plus_break_pick">Pick a Time</string>
     <string name="projects_plus_row_none">No item matches this search.</string>
     <string name="projects_cloud_today_at">Today %1$s</string>
     <string name="projects_cloud_yesterday_at">Yesterday %1$s</string>
     <!-- MOB-POLISH: a command or rule turned off, before its usual line, apart by a gap (CloudSettingsFragment.offLine). -->
     <string name="projects_cloud_row_off">Off</string>
     <!-- QA-TASTE / AFK-CLEAR: a refused login password: one way on, the settings on the login line, "save and start". -->
-    <string name="projects_cloud_fix_password">Fix password</string>
-    <string name="projects_cloud_settings_save_start">Save and start</string>
+    <string name="projects_cloud_fix_password">Fix Password</string>
+    <string name="projects_cloud_settings_save_start">Save and Start</string>
     <string name="projects_cloud_settings_saved_starting">%1$s saved and starting.</string>
     <string name="projects_cloud_issue_wrong_password">The server didn\'t accept this password. Type the right one.</string>
     <string name="projects_cloud_issue_wrong_password_sealed">The server didn\'t accept this password. Press \"Change\" and type the right one.</string>

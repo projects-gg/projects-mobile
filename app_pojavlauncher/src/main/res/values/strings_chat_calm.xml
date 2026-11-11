@@ -15,7 +15,7 @@
     <string name="projects_chat_calm_slow_on">Slow mode is on.</string>
     <!-- The crew page's box of the chat's rules (the leader and moderators). -->
     <string name="projects_chat_calm_chat_title">Chat</string>
-    <string name="projects_chat_calm_slow_title">Slow mode</string>
+    <string name="projects_chat_calm_slow_title">Slow Mode</string>
     <string name="projects_chat_calm_slow_off">Off</string>
     <plurals name="projects_chat_calm_slow_span">
         <item quantity="one">%1$d second</item>

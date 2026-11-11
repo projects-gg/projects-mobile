@@ -401,7 +401,7 @@ final class PlusEditors {
         Context c = h.ctx();
         final PlusConfig e = h.edit();
         Long value = e.limit(key);
-        final PlusAmount amount = new PlusAmount(c, CloudWords.limitLabel(c, key), value == null ? 0 : value);
+        final PlusAmount amount = new PlusAmount(c, CloudWords.limitTitle(c, key), value == null ? 0 : value);
         if (hint != null) amount.field.input.setHint(hint);
         String unit = moneyName(h);
         if (unit != null) amount.field.unit(unit);
@@ -503,7 +503,7 @@ final class PlusEditors {
         if (setup) return;
         LinearLayout box = advanced(content, h, drawn, MONEY, openAdvanced);
         box.addView(limitField(h, drawn, "dailySpendMax", null, c.getString(R.string.projects_plus_limit_none)).field.view);
-        final PlusAmount floor = new PlusAmount(c, CloudWords.limitLabel(c, "balanceFloor"), e.balanceFloor());
+        final PlusAmount floor = new PlusAmount(c, CloudWords.limitTitle(c, "balanceFloor"), e.balanceFloor());
         floor.field.input.setHint("0");
         String floorUnit = moneyName(h);
         if (floorUnit != null) floor.field.unit(floorUnit);

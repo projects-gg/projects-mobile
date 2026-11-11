@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="projects_join">Projects\'e katıl</string>
-    <string name="projects_all_news">Tüm haberler</string>
-    <string name="projects_news_title">Projects haberleri</string>
-    <string name="projects_retry">Tekrar dene</string>
+    <string name="projects_join">Projects\'e Katıl</string>
+    <string name="projects_all_news">Tüm Haberler</string>
+    <string name="projects_news_title">Projects Haberleri</string>
+    <string name="projects_retry">Tekrar Dene</string>
     <string name="projects_close">Kapat</string>
     <string name="projects_news_empty_title">Henüz haber yok</string>
     <string name="projects_news_empty_body">Projects ekibinin duyuruları burada görünecek.</string>
@@ -16,9 +16,9 @@
     <string name="projects_category_update">Güncelleme</string>
     <string name="projects_category_event">Etkinlik</string>
     <string name="projects_category_announcement">Duyuru</string>
-    <string name="projects_category_patch_notes">Yama notları</string>
+    <string name="projects_category_patch_notes">Yama Notları</string>
     <string name="projects_category_community">Topluluk</string>
-    <string name="projects_maintenance_title">Bakım çalışması</string>
+    <string name="projects_maintenance_title">Bakım Çalışması</string>
     <string name="projects_join_busy">Projects zaten hazırlanıyor.</string>
     <string name="projects_join_preparing">Projects hazırlanıyor</string>
     <string name="projects_join_downloading">Projects paketi indiriliyor (%1$.1f MB / %2$.1f MB)</string>
@@ -27,10 +27,10 @@
     <string name="projects_join_failed_generic">Projects paketi hazırlanamadı. Tekrar dene. Sorun sürerse ayrıntıları destek ekibine gönder.</string>
     <string name="projects_join_finish_loader_title">Bir adım kaldı</string>
     <string name="projects_join_finish_loader">Mod yükleyicinin kurulumunu bildirimden tamamla, ardından Projects\'e katıl düğmesine yeniden dokun.</string>
-    <string name="projects_copy_details">Ayrıntıları kopyala</string>
+    <string name="projects_copy_details">Ayrıntıları Kopyala</string>
     <string name="projects_details_copied">Ayrıntılar kopyalandı</string>
     <string name="projects_based_on">Projects Launcher, Amethyst ve PojavLauncher tabanlıdır ve LGPLv3 lisansıyla açık kaynaktır.</string>
-    <string name="projects_about_title">Projects Launcher hakkında</string>
+    <string name="projects_about_title">Projects Launcher Hakkında</string>
 
     <!-- Mod ekranı -->
     <string name="projects_mods">Modlar</string>
@@ -41,7 +41,7 @@
     <string name="projects_mods_back">Geri</string>
     <string name="projects_mods_pack_caption">%1$s %2$s, Minecraft %3$s</string>
     <string name="projects_mods_badge_new">Yeni</string>
-    <string name="projects_mods_badge_update">Güncelleme var</string>
+    <string name="projects_mods_badge_update">Güncelleme Var</string>
     <string name="projects_mods_badge_modified">Değiştirildi</string>
     <string name="projects_mods_category_performance">Performans</string>
     <string name="projects_mods_category_visual">Görsel</string>
@@ -58,10 +58,10 @@
     <string name="projects_mods_disabled_back">Devre dışıydı, %1$s için yeniden açıldı.</string>
     <string name="projects_mods_enabled">Mod klasöründe yeniden açıldı.</string>
     <string name="projects_mods_modified">Dosyayı değiştirdin, üzerine yazılmaz.</string>
-    <string name="projects_mods_revert">Önerilene döndür</string>
+    <string name="projects_mods_revert">Önerilene Döndür</string>
     <string name="projects_mods_keep_mine">Vazgeç</string>
-    <string name="projects_mods_page">Mod sayfası</string>
-    <string name="projects_mods_page_for">%1$s mod sayfası</string>
+    <string name="projects_mods_page">Mod Sayfası</string>
+    <string name="projects_mods_page_for">%1$s Mod Sayfası</string>
     <string name="projects_mods_library_for">%1$s için</string>
     <string name="projects_mods_library_on">Kurulu</string>
     <string name="projects_mods_library_off">Kurulu değil</string>
@@ -74,7 +74,7 @@
         <item quantity="one">%1$d mod için güncelleme var; oyunu açınca kurulur.</item>
         <item quantity="other">%1$d mod için güncelleme var; oyunu açınca kurulur.</item>
     </plurals>
-    <string name="projects_mods_update_now">Şimdi güncelle</string>
+    <string name="projects_mods_update_now">Şimdi Güncelle</string>
     <string name="projects_mods_reset">Mod klasörü boş. Seçtiğin modlar oyunu açınca yeniden kurulacak.</string>
     <plurals name="projects_mods_issues_title">
         <item quantity="one">%1$d dosya okunamadı</item>
@@ -88,14 +88,14 @@
     <string name="projects_mods_dropped_body">Kurulu modlarınla oynamaya devam edebilirsin.</string>
     <string name="projects_mods_dropped_recommended">Önerilen sürüm: %1$s.</string>
     <!-- M053: sürüm seçici (masaüstünün sürüm penceresi) -->
-    <string name="projects_mods_version_change">Sürümü değiştir</string>
-    <string name="projects_mods_versions_title">Minecraft sürümü</string>
+    <string name="projects_mods_version_change">Sürümü Değiştir</string>
+    <string name="projects_mods_versions_title">Minecraft Sürümü</string>
     <string name="projects_mods_versions_description">Her sürümün modları ve ayarları ayrı saklanır.</string>
     <string name="projects_mods_version_current">Şu an</string>
     <string name="projects_mods_version_recommended">Önerilen</string>
     <string name="projects_mods_version_saved">Saklı</string>
     <string name="projects_mods_version_not_offered">Artık sunulmuyor</string>
-    <string name="projects_mods_switch_title">Minecraft %1$s sürümüne geç</string>
+    <string name="projects_mods_switch_title">Minecraft %1$s Sürümüne Geç</string>
     <plurals name="projects_mods_switch_parked">
         <item quantity="one">%1$s seti saklanır: %2$d mod ve ayarlar.</item>
         <item quantity="other">%1$s seti saklanır: %2$d mod ve ayarlar.</item>
@@ -106,7 +106,7 @@
     </plurals>
     <string name="projects_mods_switch_first">İlk geçiş: mod seçimlerin ve ayarların taşınır.</string>
     <string name="projects_mods_switch_not_synced">Modlar oyunu açınca indirilir.</string>
-    <string name="projects_mods_switch_confirm">%1$s sürümüne geç</string>
+    <string name="projects_mods_switch_confirm">%1$s Sürümüne Geç</string>
     <string name="projects_mods_switch_ready">Minecraft %1$s hazır</string>
     <string name="projects_mods_switch_back">Minecraft %1$s geri geldi</string>
     <string name="projects_mods_switch_failed">Sürüm değiştirilemedi. Tekrar dene.</string>
@@ -166,10 +166,10 @@
     <string name="projects_notice_issues">Bazı mod dosyaları okunamadı.</string>
     <string name="projects_notice_dropped">Projects paketi Minecraft %1$s sürümünü artık güncellemiyor.</string>
 
-    <string name="projects_patch_notes">Yama notları</string>
-    <string name="projects_patch_read">Tamamını oku</string>
-    <string name="projects_event_live">Süren etkinlik</string>
-    <string name="projects_event_next">Sıradaki etkinlik</string>
+    <string name="projects_patch_notes">Yama Notları</string>
+    <string name="projects_patch_read">Tamamını Oku</string>
+    <string name="projects_event_live">Süren Etkinlik</string>
+    <string name="projects_event_next">Sıradaki Etkinlik</string>
     <string name="projects_event_started">%1$s başladı</string>
     <string name="projects_event_started_on">%1$s başladı</string>
     <string name="projects_event_ends_in">%1$s kaldı</string>
@@ -181,7 +181,7 @@
         <item quantity="one">%1$d etkinlik daha</item>
         <item quantity="other">%1$d etkinlik daha</item>
     </plurals>
-    <string name="projects_events_other">Diğer etkinlikler</string>
+    <string name="projects_events_other">Diğer Etkinlikler</string>
     <plurals name="projects_words_days">
         <item quantity="one">%d gün</item>
         <item quantity="other">%d gün</item>
@@ -202,23 +202,23 @@
     <string name="projects_span_hours_minutes">%1$d sa %2$d dk</string>
     <string name="projects_span_minutes">%1$d dk</string>
     <string name="projects_span_seconds">%1$d sn</string>
-    <string name="projects_open_in_discord">Discord\'da aç</string>
+    <string name="projects_open_in_discord">Discord\'da Aç</string>
     <string name="projects_link_no_app">Bağlantıyı açacak bir uygulama yok.</string>
 
     <!-- Upstream screens: the account screen, settings, the profile editor and version lists. -->
     <!-- M16: the two ways in, said as what they do. "Çevrim dışı hesap" read as "can't play online",
          yet a name-only account plays on Projects (the server asks for its password, AuthMe). -->
-    <string name="projects_auth_microsoft">Microsoft ile giriş yap</string>
-    <string name="projects_auth_local">Oyuncu adıyla oyna</string>
+    <string name="projects_auth_microsoft">Microsoft ile Giriş Yap</string>
+    <string name="projects_auth_local">Oyuncu Adıyla Oyna</string>
     <string name="projects_login_started">Giriş yapılıyor…</string>
-    <string name="projects_pref_autojre_title">Otomatik Java seçimini kapat</string>
+    <string name="projects_pref_autojre_title">Otomatik Java Seçimini Kapat</string>
     <string name="projects_pref_autojre_summary">\"%1$s\" için Java sürümü otomatik seçilmez.</string>
-    <string name="projects_profile_custom_path">Oyun klasörü</string>
+    <string name="projects_profile_custom_path">Oyun Klasörü</string>
     <string name="projects_version_recommended">Önerilen</string>
 
     <!-- Offline accounts (0.1.3): no Microsoft account needed; the desktop's name rules and wording. -->
     <string name="projects_offline_add">Ekle</string>
-    <string name="projects_offline_switch">O hesaba geç</string>
+    <string name="projects_offline_switch">O Hesaba Geç</string>
     <string name="projects_offline_exists">Bu adla bir hesabın zaten var.</string>
     <string name="projects_offline_use_suggestion">%1$s kullan</string>
     <string name="projects_offline_added">%1$s eklendi</string>
@@ -246,14 +246,14 @@
         <item quantity="other">%1$s %2$d dakika sonra başlıyor</item>
     </plurals>
     <string name="projects_reminder_running_toast">%1$s sürüyor</string>
-    <string name="projects_reminder_channel">Etkinlik hatırlatmaları</string>
+    <string name="projects_reminder_channel">Etkinlik Hatırlatmaları</string>
     <string name="projects_reminder_channel_description">Hatırlat dediğin etkinlikler, başlamadan 5 dakika önce.</string>
     <string name="projects_reminder_notifications_off_title">Bildirimler kapalı</string>
     <string name="projects_reminder_notifications_off">Hatırlatabilmemiz için bildirimlere izin ver.</string>
     <string name="projects_reminder_needs_notifications">Hatırlatma için bildirimlere izin ver.</string>
-    <string name="projects_open_settings">Ayarları aç</string>
-    <string name="projects_not_now">Şimdi değil</string>
-    <string name="projects_status_page">Durum sayfası</string>
+    <string name="projects_open_settings">Ayarları Aç</string>
+    <string name="projects_not_now">Şimdi Değil</string>
+    <string name="projects_status_page">Durum Sayfası</string>
 
     <!-- 0.1.5: Android'de Sodium, oyunun kapanış mesajı ve uygulamanın dili. -->
     <string name="projects_mods_sodium_renderer">Seçili işleyiciyle çalışmaz.</string>
@@ -261,31 +261,31 @@
     <string name="projects_mods_sodium_offer">Sodium artık telefonunda da çalışıyor.</string>
     <string name="projects_mods_sodium_offer_body">Oyun onunla daha akıcı çalışır.</string>
     <string name="projects_mods_sodium_offer_on">Aç</string>
-    <string name="projects_mods_sodium_offer_keep">Kapalı kalsın</string>
+    <string name="projects_mods_sodium_offer_keep">Kapalı Kalsın</string>
     <string name="projects_sodium_crash_projects">Oyun Sodium yüzünden açılamadı, onu kapattık.</string>
     <string name="projects_sodium_crash_own">Oyun Sodium yüzünden açılamadı.</string>
-    <string name="projects_sodium_start_again">Tekrar başlat</string>
-    <string name="projects_sodium_disable_and_start">Sodium\'u kapatıp başlat</string>
+    <string name="projects_sodium_start_again">Tekrar Başlat</string>
+    <string name="projects_sodium_disable_and_start">Sodium\'u Kapatıp Başlat</string>
     <string name="projects_game_closed">Oyun beklenmedik şekilde kapandı.</string>
-    <string name="projects_share_log">Kaydı paylaş</string>
-    <string name="projects_modpack_browse">Mod paketi ara</string>
-    <string name="projects_modpack_import">Zip ya da mrpack içe aktar</string>
+    <string name="projects_share_log">Kaydı Paylaş</string>
+    <string name="projects_modpack_browse">Mod Paketi Ara</string>
+    <string name="projects_modpack_import">Zip ya da mrpack İçe Aktar</string>
     <string name="projects_control_button_name">Tuş adı</string>
     <string name="projects_language_title">Dil</string>
     <string name="projects_language_auto">Otomatik (%1$s)</string>
 
     <!-- 0.1.6 (M14): tasarım geçişi, basma tepkisi ve oyunun yükleme ekranı. -->
     <string name="projects_top_settings">Ayarlar</string>
-    <string name="projects_top_home">Ana sayfa</string>
+    <string name="projects_top_home">Ana Sayfa</string>
     <string name="projects_account_chip">Hesap: %1$s</string>
-    <string name="projects_account_remove">%1$s hesabını kaldır</string>
+    <string name="projects_account_remove">%1$s Hesabını Kaldır</string>
     <string name="projects_account_remove_question">%1$s hesabı bu telefondan kaldırılsın mı?</string>
     <!-- SWIPE-M: hesap çipini kaydırma ve listesinde hesap sabitleme. -->
     <string name="projects_account_swipe_hint">Hesaplar arasında geçmek için kaydır.</string>
-    <string name="projects_account_next">Sonraki hesap: %1$s</string>
-    <string name="projects_account_previous">Önceki hesap: %1$s</string>
+    <string name="projects_account_next">Sonraki Hesap: %1$s</string>
+    <string name="projects_account_previous">Önceki Hesap: %1$s</string>
     <string name="projects_account_pin">Sabitle</string>
-    <string name="projects_account_unpin">Sabitlemeyi kaldır</string>
+    <string name="projects_account_unpin">Sabitlemeyi Kaldır</string>
     <string name="projects_account_row_pinned">%1$s, sabitlenmiş</string>
     <!-- MOB-NEXT: the account in use in the list, as TalkBack hears its row. -->
     <string name="projects_account_row_active">%1$s, seçili</string>
@@ -293,10 +293,10 @@
     <string name="projects_account_pinned">%1$s sabitlendi</string>
     <string name="projects_account_unpinned">%1$s artık sabit değil</string>
     <string name="projects_settings_title">Ayarlar</string>
-    <string name="projects_haptics_title">Dokunma titreşimi</string>
+    <string name="projects_haptics_title">Dokunma Titreşimi</string>
     <string name="projects_or">ya da</string>
-    <string name="projects_profile_edit">Profili düzenle</string>
-    <string name="projects_profile_new">Yeni profil</string>
+    <string name="projects_profile_edit">Profili Düzenle</string>
+    <string name="projects_profile_new">Yeni Profil</string>
     <string name="projects_profile_default_name">Varsayılan</string>
     <string name="projects_launch_title">Oyun açılıyor</string>
     <string name="projects_launch_preparing">Hazırlanıyor</string>
@@ -305,8 +305,8 @@
     <string name="projects_launch_minecraft">Minecraft açılıyor</string>
     <string name="projects_launch_almost">Neredeyse hazır</string>
     <string name="projects_launch_slow">Bu biraz sürebilir.</string>
-    <string name="projects_launch_show_log">Kaydı göster</string>
-    <string name="projects_launch_close">Oyunu kapat</string>
+    <string name="projects_launch_show_log">Kaydı Göster</string>
+    <string name="projects_launch_close">Oyunu Kapat</string>
     <plurals name="projects_tasks_in_progress">
         <item quantity="one">%d işlem sürüyor</item>
         <item quantity="other">%d işlem sürüyor</item>
@@ -324,15 +324,15 @@
     <!-- M17: one tap fixes the mods' clashing keys an options.txt saved before 0.1.6 still has. -->
     <string name="projects_keyfix_title">Bazı mod tuşları çakışıyor</string>
     <string name="projects_keyfix_body">Bir tuşa basınca iki eylem birden çalışıyor.</string>
-    <string name="projects_keyfix_action">Tuş çakışmalarını düzelt</string>
+    <string name="projects_keyfix_action">Tuş Çakışmalarını Düzelt</string>
     <string name="projects_keyfix_done">Tuş çakışmaları düzeltildi</string>
     <string name="projects_keyfix_queued">Oyunu yeniden açınca düzelecek.</string>
     <string name="projects_keyfix_undone">Eski tuşların geri geldi.</string>
     <string name="projects_keyfix_failed">Tuşlar değiştirilemedi. Tekrar dene.</string>
-    <string name="projects_undo">Geri al</string>
+    <string name="projects_undo">Geri Al</string>
     <string name="projects_modkey_conflict_short">Bu tuşu oyunda başka bir eylem de kullanıyor.</string>
     <string name="projects_modkey_unbound_short">Bu eylemin oyunda tuşu yok.</string>
-    <string name="projects_keyfix_bind_action">Tuş ata</string>
+    <string name="projects_keyfix_bind_action">Tuş Ata</string>
     <string name="projects_keyfix_talk_title">Bas-konuş tuşu yok</string>
     <string name="projects_keyfix_talk_body">Sesli sohbette konuşmak için gerekli.</string>
     <string name="projects_keyfix_bound">Bas-konuş tuşu atandı</string>
@@ -341,8 +341,8 @@
     <string name="projects_ctrl_save">Kaydet</string>
     <string name="projects_ctrl_save_question">Değişiklikler kaydedilsin mi?</string>
     <string name="projects_ctrl_save_question_body">Kaydetmeden çıkarsan tuşlar eski hâline döner.</string>
-    <string name="projects_ctrl_save_leave">Kaydet ve çık</string>
-    <string name="projects_ctrl_leave_unsaved">Kaydetmeden çık</string>
+    <string name="projects_ctrl_save_leave">Kaydet ve Çık</string>
+    <string name="projects_ctrl_leave_unsaved">Kaydetmeden Çık</string>
     <!-- CTRL-SAVE: "Yükle" or "Varsayılan kontrolleri seç" with a change not saved yet. -->
     <string name="projects_ctrl_replace_body">Kaydetmezsen yaptığın değişiklikler silinir.</string>
     <string name="projects_ctrl_dont_save">Kaydetme</string>
@@ -370,21 +370,21 @@
     <string name="projects_files_failed_network">Oyun dosyaları indirilemedi. İnternet bağlantını kontrol edip tekrar dene.</string>
     <string name="projects_files_failed_generic">Oyun dosyaları hazırlanamadı. Tekrar dene. Sorun sürerse ayrıntıları destek ekibine gönder.</string>
     <!-- M17: Minecraft's own updates and the event card's "Join". -->
-    <string name="projects_minecraft_read">minecraft.net\'te oku</string>
+    <string name="projects_minecraft_read">minecraft.net\'te Oku</string>
     <string name="projects_event_join">Katıl</string>
     <!-- M17: Settings, under About: small and quiet. -->
     <string name="projects_not_affiliated">Resmî bir Minecraft ürünü değildir. Mojang veya Microsoft tarafından onaylanmamıştır ve onlarla bağlantılı değildir.</string>
     <!-- M18: the channel of "Projects hazır" and its failure (Android's notification settings). -->
-    <string name="projects_ready_channel">Projects hazır</string>
+    <string name="projects_ready_channel">Projects Hazır</string>
     <string name="projects_ready_channel_description">Projects oynamaya hazır olunca ya da hazırlanamayınca haber verir.</string>
     <string name="projects_notify_reason">Projects hazır olunca bildirimle haber verelim.</string>
     <string name="projects_notify_offer_title">İndirme bitince haber verelim mi?</string>
-    <string name="projects_notify_offer_allow">İzin ver</string>
+    <string name="projects_notify_offer_allow">İzin Ver</string>
     <!-- M18: Play on a profile of the player's own with a mod loader and no mods. -->
     <string name="projects_modless_title">Bu profilde mod yok</string>
     <string name="projects_modless_body">Projects modları yalnız Projects profilinde çalışır.</string>
-    <string name="projects_modless_play_projects">Projects ile oyna</string>
-    <string name="projects_modless_play_anyway">Yine de oyna</string>
+    <string name="projects_modless_play_projects">Projects ile Oyna</string>
+    <string name="projects_modless_play_anyway">Yine de Oyna</string>
     <!-- M18: another profile's game files could not be prepared (upstream's dialog showed its stack trace). -->
     <string name="projects_game_failed_title">Oyun hazırlanamadı</string>
 </resources>

@@ -4,7 +4,7 @@
      and tag settings, bought credits). The launcher's and the site's words (apps/launcher/src/locales/en-afkplus.ts):
      the three surfaces read as one product. The unit is "AI credits". -->
 <resources>
-    <string name="projects_plus_custom_item">Custom item</string>
+    <string name="projects_plus_custom_item">Custom Item</string>
     <string name="projects_ai_note">ProBot AI can make mistakes.</string>
 
     <!-- Orders -->
@@ -12,8 +12,8 @@
     <string name="projects_order_intake_hint">e.g. Buying an Elytra, 40k max</string>
     <string name="projects_order_check">Check</string>
     <string name="projects_order_reading">Reading</string>
-    <string name="projects_order_form">Add by hand</string>
-    <string name="projects_order_pick">Pick from inventory</string>
+    <string name="projects_order_form">Add by Hand</string>
+    <string name="projects_order_pick">Pick from Inventory</string>
     <plurals name="projects_order_left">
         <item quantity="one">%d check left today.</item>
         <item quantity="other">%d checks left today.</item>
@@ -70,9 +70,9 @@
     <string name="projects_order_pause">Pause</string>
     <string name="projects_order_resume">Resume</string>
     <string name="projects_order_extend">Extend</string>
-    <string name="projects_order_restart">Start again</string>
+    <string name="projects_order_restart">Start Again</string>
     <string name="projects_order_remove">Delete</string>
-    <string name="projects_order_to_approvals">Open what\'s waiting for you</string>
+    <string name="projects_order_to_approvals">Open What\'s Waiting for You</string>
     <string name="projects_order_saved">Order for %1$s saved.</string>
     <string name="projects_order_changed">Order for %1$s updated.</string>
     <string name="projects_order_removed">Order deleted.</string>
@@ -105,9 +105,9 @@
     <string name="projects_card_to_buy">To buy</string>
     <string name="projects_card_to_sell">To sell</string>
     <string name="projects_card_qty">Quantity</string>
-    <string name="projects_card_target">Target price</string>
-    <string name="projects_card_at_most">At most</string>
-    <string name="projects_card_at_least">At least</string>
+    <string name="projects_card_target">Target Price</string>
+    <string name="projects_card_at_most">At Most</string>
+    <string name="projects_card_at_least">At Least</string>
     <string name="projects_card_each_price">%1$s each</string>
     <string name="projects_card_for_item">In return: %1$s</string>
     <string name="projects_card_for_money">In return: money</string>
@@ -140,36 +140,36 @@
     <string name="projects_q_buying">Buying</string>
     <string name="projects_q_selling">Selling</string>
     <string name="projects_q_custom">\"%1$s\" isn\'t in the game. How should ProBot AI know it?</string>
-    <string name="projects_q_custom_pick">Pick from inventory</string>
-    <string name="projects_q_custom_first_seen">Ask me the first time it sees one</string>
-    <string name="projects_q_custom_fix">Fix the name</string>
+    <string name="projects_q_custom_pick">Pick from Inventory</string>
+    <string name="projects_q_custom_first_seen">Ask Me the First Time It Sees One</string>
+    <string name="projects_q_custom_fix">Fix the Name</string>
     <string name="projects_q_limit_buy">What\'s the most you\'ll pay?</string>
     <string name="projects_q_limit_sell">What\'s the least you\'ll take?</string>
     <string name="projects_q_other">Other</string>
-    <string name="projects_q_other_label">Another amount</string>
+    <string name="projects_q_other_label">Another Amount</string>
     <string name="projects_q_pay_buy">What will you give for it?</string>
     <string name="projects_q_pay_sell">What do you want for it?</string>
     <string name="projects_q_pay_money">Money</string>
     <string name="projects_q_pay_off_item">Item swaps are off in your settings. Turn them on?</string>
     <string name="projects_q_pay_off_money">Money deals are off in your settings. Turn them on?</string>
-    <string name="projects_q_turn_on">Turn on</string>
-    <string name="projects_q_use_money">Use money</string>
-    <string name="projects_q_use_item">Use an item</string>
+    <string name="projects_q_turn_on">Turn On</string>
+    <string name="projects_q_use_money">Use Money</string>
+    <string name="projects_q_use_item">Use an Item</string>
     <string name="projects_q_per">Is %1$s each or in total?</string>
     <string name="projects_q_each">Each</string>
-    <string name="projects_q_total">In total</string>
+    <string name="projects_q_total">In Total</string>
     <string name="projects_q_qty">How many?</string>
     <string name="projects_q_far">Is %1$s right as your top price? Your target is %2$s.</string>
-    <string name="projects_q_yes_right">Yes, that\'s right</string>
-    <string name="projects_q_fix">Fix it</string>
+    <string name="projects_q_yes_right">Yes, That\'s Right</string>
+    <string name="projects_q_fix">Fix It</string>
     <string name="projects_q_over_cap">This is over your per-deal limit (%1$s).</string>
-    <string name="projects_q_raise">Raise the per-deal limit to %1$s</string>
+    <string name="projects_q_raise">Raise the Per-Deal Limit to %1$s</string>
     <string name="projects_q_use_cap">Use %1$s</string>
 
     <!-- The order form -->
-    <string name="projects_form_new_title">New order</string>
-    <string name="projects_form_edit_title">Edit the order</string>
-    <string name="projects_form_side">Buy or sell</string>
+    <string name="projects_form_new_title">New Order</string>
+    <string name="projects_form_edit_title">Edit the Order</string>
+    <string name="projects_form_side">Buy or Sell</string>
     <string name="projects_form_buy">Buy</string>
     <string name="projects_form_sell">Sell</string>
     <string name="projects_form_item">Item</string>
@@ -178,8 +178,8 @@
     <string name="projects_form_custom_item">Custom item</string>
     <string name="projects_form_custom_typed">A custom item called \"%1$s\"</string>
     <string name="projects_form_data_failed">The item list can\'t load right now.</string>
-    <string name="projects_form_retry">Try again</string>
-    <string name="projects_form_custom_name">The item\'s name</string>
+    <string name="projects_form_retry">Try Again</string>
+    <string name="projects_form_custom_name">The Item\'s Name</string>
     <string name="projects_form_custom_known">ProBot AI calls this item by this name.</string>
     <string name="projects_form_custom_first_sight">ProBot AI asks you the first time it sees this item.</string>
     <string name="projects_form_qty">Quantity</string>
@@ -187,37 +187,37 @@
         <item quantity="one">%d stack</item>
         <item quantity="other">%d stacks</item>
     </plurals>
-    <string name="projects_form_in_return">In return</string>
+    <string name="projects_form_in_return">In Return</string>
     <string name="projects_form_money">Money</string>
     <string name="projects_form_pay_item">Item</string>
-    <string name="projects_form_pay_with">Paying item</string>
+    <string name="projects_form_pay_with">Paying Item</string>
     <string name="projects_form_unit">Price</string>
     <string name="projects_form_each">Each</string>
-    <string name="projects_form_total">In total</string>
-    <string name="projects_form_target">Target price</string>
-    <string name="projects_form_at_most">At most</string>
-    <string name="projects_form_at_least">At least</string>
-    <string name="projects_form_count_of">%1$s (%2$s count)</string>
+    <string name="projects_form_total">In Total</string>
+    <string name="projects_form_target">Target Price</string>
+    <string name="projects_form_at_most">At Most</string>
+    <string name="projects_form_at_least">At Least</string>
+    <string name="projects_form_count_of">%1$s (%2$s Count)</string>
     <string name="projects_form_money_bare">In-game money.</string>
     <string name="projects_form_style">Haggling</string>
-    <string name="projects_form_valid">Valid for</string>
-    <string name="projects_form_valid_keep">Keep as is</string>
+    <string name="projects_form_valid">Valid For</string>
+    <string name="projects_form_valid_keep">Keep as Is</string>
     <plurals name="projects_form_days">
-        <item quantity="one">%d day</item>
-        <item quantity="other">%d days</item>
+        <item quantity="one">%d Day</item>
+        <item quantity="other">%d Days</item>
     </plurals>
     <string name="projects_form_who">Who makes the trade?</string>
     <string name="projects_form_who_bot">ProBot AI</string>
     <string name="projects_form_who_me">Me</string>
     <string name="projects_form_conditions">Conditions for %1$s</string>
-    <string name="projects_form_durability">Minimum durability</string>
+    <string name="projects_form_durability">Minimum Durability</string>
     <string name="projects_form_enchantments">Enchantments</string>
-    <string name="projects_form_add_enchantment">Add an enchantment</string>
+    <string name="projects_form_add_enchantment">Add an Enchantment</string>
     <string name="projects_form_level_down">Lower %1$s</string>
     <string name="projects_form_level_up">Raise %1$s</string>
     <string name="projects_form_remove_enchantment">Remove %1$s</string>
-    <string name="projects_form_named">Can be anvil-renamed</string>
-    <string name="projects_form_cursed">Can be cursed</string>
+    <string name="projects_form_named">Can Be Anvil-Renamed</string>
+    <string name="projects_form_cursed">Can Be Cursed</string>
     <string name="projects_form_error_item">Pick an item.</string>
     <string name="projects_form_error_price">Add a price.</string>
     <string name="projects_form_error_amount">Enter an amount: e.g. 40,000 or 40k.</string>
@@ -245,12 +245,12 @@
     <string name="projects_pick_failed_inventory_off">The inventory view is off for this account.</string>
     <string name="projects_pick_failed_custom_off">Server-made items can\'t be picked right now.</string>
     <string name="projects_pick_offline">Our machine can\'t be reached right now.</string>
-    <string name="projects_items_unnamed">Unnamed item</string>
+    <string name="projects_items_unnamed">Unnamed Item</string>
 
     <!-- Approvals: your turn to trade, first sight -->
     <string name="projects_handoff_body">Deal with %1$s: %2$s. Make the trade in game, then mark it here.</string>
-    <string name="projects_handoff_yes">Trade done</string>
-    <string name="projects_handoff_no">Didn\'t happen</string>
+    <string name="projects_handoff_yes">Trade Done</string>
+    <string name="projects_handoff_no">Didn\'t Happen</string>
     <string name="projects_handoff_done">Trade recorded</string>
     <string name="projects_handoff_not_done">Deal closed</string>
     <string name="projects_handoff_stopped">ProBot AI stopped the trade.</string>
@@ -268,7 +268,7 @@
         <item quantity="other">%d hours left</item>
     </plurals>
     <string name="projects_firstsight_question">Is this the %1$s you\'re looking for?</string>
-    <string name="projects_firstsight_yes">Yes, that\'s it</string>
+    <string name="projects_firstsight_yes">Yes, That\'s It</string>
     <string name="projects_firstsight_no">No</string>
     <string name="projects_firstsight_yes_done">Item recognised</string>
     <string name="projects_firstsight_no_done">That item won\'t be accepted</string>
@@ -287,7 +287,7 @@
     <string name="projects_audit_filter_warnings">Refusals</string>
     <string name="projects_audit_today">Today</string>
     <string name="projects_audit_yesterday">Yesterday</string>
-    <string name="projects_audit_older">Earlier days</string>
+    <string name="projects_audit_older">Earlier Days</string>
     <string name="projects_audit_empty">Nothing yet. You\'ll see it here when ProBot AI gets a message.</string>
     <string name="projects_audit_not_started">Once you start ProBot AI, what it does shows here.</string>
     <string name="projects_audit_none_here">Nothing of this kind.</string>
@@ -387,14 +387,14 @@
     <string name="projects_audit_mr_gate">not allowed</string>
 
     <!-- Trade history: receipts -->
-    <string name="projects_receipt_tab">Trade history</string>
-    <string name="projects_receipt_period">Last 30 days</string>
+    <string name="projects_receipt_tab">Trade History</string>
+    <string name="projects_receipt_period">Last 30 Days</string>
     <string name="projects_receipt_trades">Trades</string>
     <string name="projects_receipt_per_item">Prices are per item.</string>
     <string name="projects_receipt_side_bought">Bought</string>
     <string name="projects_receipt_side_sold">Sold</string>
     <string name="projects_receipt_empty">No trades in the last 30 days.</string>
-    <string name="projects_receipt_more">Older trades</string>
+    <string name="projects_receipt_more">Older Trades</string>
     <string name="projects_receipt_bought">%1$s bought</string>
     <string name="projects_receipt_sold">%1$s sold</string>
     <string name="projects_receipt_paid_with">Paid with %1$s</string>
@@ -403,16 +403,16 @@
     <string name="projects_receipt_auto">Without asking you, as you set it</string>
     <string name="projects_receipt_approved">You approved</string>
     <string name="projects_receipt_owner">You made the trade and reported it</string>
-    <string name="projects_receipt_review">Under review</string>
+    <string name="projects_receipt_review">Under Review</string>
     <string name="projects_receipt_review_note">Staff are looking at this trade. It counts once settled.</string>
     <string name="projects_receipt_money_note">Amounts are in-game money. No real money changes hands.</string>
     <string name="projects_receipt_failed">Couldn\'t load the trade history.</string>
 
     <!-- Fine-tuning -->
     <string name="projects_plus_change_fine">Trade permissions changed</string>
-    <string name="projects_fine_reply">Only reply</string>
-    <string name="projects_fine_ask">Haggle, then ask me</string>
-    <string name="projects_fine_deal">Haggle and close the deal</string>
+    <string name="projects_fine_reply">Only Reply</string>
+    <string name="projects_fine_ask">Haggle, Then Ask Me</string>
+    <string name="projects_fine_deal">Haggle and Close the Deal</string>
     <string name="projects_fine_reply_help">Doesn\'t haggle. Passes offers on to you.</string>
     <string name="projects_fine_ask_help">Asks you before closing a deal.</string>
     <string name="projects_fine_deal_help">Closes deals within your limits without asking.</string>
@@ -422,11 +422,11 @@
     <string name="projects_fine_pay_money">Money</string>
     <string name="projects_fine_pay_items">Items</string>
     <string name="projects_fine_pay_both">Both</string>
-    <string name="projects_fine_who">Trade with</string>
+    <string name="projects_fine_who">Trade With</string>
     <string name="projects_fine_who_all">Everyone</string>
-    <string name="projects_fine_who_friends">Only my friends</string>
+    <string name="projects_fine_who_friends">Only My Friends</string>
     <string name="projects_fine_friends_hint">Player name</string>
-    <string name="projects_fine_friends_add">Add a name</string>
+    <string name="projects_fine_friends_add">Add a Name</string>
     <string name="projects_fine_friends_remove">Remove %1$s</string>
     <string name="projects_fine_friends_remove_short">Remove</string>
     <string name="projects_fine_friends_empty">With nobody on the list, ProBot AI talks trade with no one.</string>
@@ -440,9 +440,9 @@
     <string name="projects_fine_secret">ProBot AI never tells anyone your budget or limits.</string>
 
     <!-- Talk and tag -->
-    <string name="projects_talk_player">Talk like a player</string>
+    <string name="projects_talk_player">Talk Like a Player</string>
     <string name="projects_talk_player_help">Chats like a player instead of in formal language.</string>
-    <string name="projects_talk_on_topic">Stay on topic</string>
+    <string name="projects_talk_on_topic">Stay on Topic</string>
     <string name="projects_talk_plain_friendly">Hi, would 32,000 work?</string>
     <string name="projects_talk_plain_brief">32,000?</string>
     <string name="projects_talk_plain_polite">Hello, would 32,000 work for you?</string>
@@ -451,7 +451,7 @@
     <string name="projects_talk_sample_brief">32k?</string>
     <string name="projects_talk_sample_polite">hi, would 32k work?</string>
     <string name="projects_talk_sample_playful">32k and we shake on it? :D</string>
-    <string name="projects_tag_switch">Put a tag before its messages</string>
+    <string name="projects_tag_switch">Put a Tag Before Its Messages</string>
     <string name="projects_tag_label">Tag</string>
     <string name="projects_tag_error_empty">Write the tag or turn it off.</string>
     <string name="projects_tag_error_length">Up to %1$d characters.</string>
@@ -471,7 +471,7 @@
         <item quantity="other">About %d of them from the AI credits you bought</item>
     </plurals>
     <string name="projects_credits_bought_in_use">Now using the AI credits you bought.</string>
-    <string name="projects_credits_buy">Buy AI credits</string>
+    <string name="projects_credits_buy">Buy AI Credits</string>
     <string name="projects_credits_notice_bought">%1$s: You\'re out of AI credits. Your bought ones are in use now.</string>
 
     <!-- Notices of orders -->
@@ -485,12 +485,12 @@
     <!-- FREE-M 0.4.4: the settings as questions, the first setup, the chat ads, the money name (the site's words) -->
     <string name="projects_setup_change">Change</string>
     <string name="projects_setup_advanced">Advanced</string>
-    <string name="projects_setup_other">Other settings</string>
+    <string name="projects_setup_other">Other Settings</string>
     <string name="projects_setup_later">Later</string>
     <string name="projects_setup_back">Back</string>
     <string name="projects_setup_next">Next</string>
     <string name="projects_setup_count">%1$d / %2$d</string>
-    <string name="projects_setup_title">Set up ProBot AI</string>
+    <string name="projects_setup_title">Set Up ProBot AI</string>
     <string name="projects_setup_rail_foot">It messages no one until you start it.</string>
     <string name="projects_setup_start">Start</string>
     <string name="projects_setup_starting">Starting</string>
@@ -552,54 +552,54 @@
     <string name="projects_setup_adv_talk">Introduction, tag, language, staying on topic</string>
     <string name="projects_setup_chat_caption">How it looks in chat</string>
     <string name="projects_setup_pm_caption">How it looks in a private message</string>
-    <string name="projects_ads_switch">Post ads in chat</string>
-    <string name="projects_order_menu_switch">Check the order menu</string>
+    <string name="projects_ads_switch">Post Ads in Chat</string>
+    <string name="projects_order_menu_switch">Check the Order Menu</string>
     <string name="projects_order_menu_help">If the server has an order menu, it checks it now and then and fills matching requests from your sell orders.</string>
     <string name="projects_ads_how">How often?</string>
     <string name="projects_ads_every_30">30 min</string>
     <string name="projects_ads_every_45">45 min</string>
-    <string name="projects_ads_every_60">1 hour</string>
-    <string name="projects_ads_every_120">2 hours</string>
+    <string name="projects_ads_every_60">1 Hour</string>
+    <string name="projects_ads_every_120">2 Hours</string>
     <string name="projects_ads_floor">On this server ads can go out %1$s at most.</string>
     <string name="projects_ads_next">Next ad</string>
     <string name="projects_ads_next_at">Next ad at %1$s</string>
     <string name="projects_ads_tomorrow">tomorrow</string>
-    <string name="projects_ads_other">Another example</string>
+    <string name="projects_ads_other">Another Example</string>
     <string name="projects_ads_note">It words each ad a little differently so the server doesn\'t see spam, and posts less often after a warning.</string>
     <string name="projects_ads_empty">You have no active orders, so no ads for now.</string>
-    <string name="projects_ads_add_order">Add an order</string>
+    <string name="projects_ads_add_order">Add an Order</string>
     <string name="projects_ads_warned">The server warned about spam %1$s. For now it posts an ad %2$s.</string>
     <string name="projects_ads_stopped">The server warned it, so no ads until tomorrow.</string>
     <string name="projects_ads_today">today at %1$s</string>
     <string name="projects_ads_yesterday">yesterday at %1$s</string>
     <string name="projects_ads_names_pending">A sample ad shows once ProBot AI is in the game.</string>
-    <string name="projects_ads_scan">Watch chat for sale posts</string>
+    <string name="projects_ads_scan">Watch Chat for Sale Posts</string>
     <string name="projects_currency_label">Currency</string>
     <string name="projects_currency_help">Your server\'s money name.</string>
     <string name="projects_currency_fixed_help">The server sets this name.</string>
     <string name="projects_currency_refused">This name can\'t be used.</string>
     <string name="projects_limit_no_buy">Leave it empty and ProBot AI won\'t buy.</string>
     <string name="projects_limit_no_ask">Leave it empty and it won\'t ask.</string>
-    <string name="projects_limit_new_counterpart">Approval limit on a first deal</string>
+    <string name="projects_limit_new_counterpart">Approval Limit on a First Deal</string>
     <string name="projects_limit_new_counterpart_help">Buys above this from a player it has never dealt with wait for your OK.</string>
-    <string name="projects_to_limits">Go to limits</string>
-    <string name="projects_setup_buy">Let it buy</string>
+    <string name="projects_to_limits">Go to Limits</string>
+    <string name="projects_setup_buy">Let It Buy</string>
     <string name="projects_setup_buy_help">While it\'s off, it only tells you when it finds what you want.</string>
     <string name="projects_setup_total_help_settings">All purchases added up. When it\'s reached, buying stops.</string>
     <string name="projects_card_raised">Once saved, your per-deal limit becomes %1$s.</string>
     <string name="projects_card_first_which">First pick which one it is.</string>
     <string name="projects_card_first_min">First pick the lowest price.</string>
     <string name="projects_card_first_max">First pick the highest price.</string>
-    <string name="projects_to_approval_limit">Go to the approval limit</string>
+    <string name="projects_to_approval_limit">Go to the Approval Limit</string>
     <string name="projects_approval_why_ask">Asks you before closing a deal.</string>
     <string name="projects_limit_here">Here is that setting.</string>
     <string name="projects_ads_old_service">Chat ads turn on once 24/7 Cloud is updated.</string>
-    <string name="projects_ads_write_sellers">Write to the seller once when an item you want is for sale</string>
+    <string name="projects_ads_write_sellers">Write to the Seller Once When an Item You Want Is for Sale</string>
     <string name="projects_setup_a_writes">, writes once to the seller when an item you want is for sale.</string>
     <string name="projects_setup_total_help">All purchases added up. When it\'s reached, buying stops, and you reset it in Settings.</string>
     <string name="projects_setup_hide">Hide</string>
     <string name="projects_money_question">This looks like real money. ProBot AI doesn\'t trade for real money.</string>
-    <string name="projects_money_in_game">This is in-game money</string>
+    <string name="projects_money_in_game">This Is In-Game Money</string>
     <string name="projects_plus_ai_ready">ProBot AI hasn\'t been started yet.</string>
     <string name="projects_plus_begin">Start ProBot AI</string>
     <plurals name="projects_setup_a_orders">

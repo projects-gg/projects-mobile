@@ -10,8 +10,8 @@
     <string name="projects_social_on_projects">Projects\'te</string>
 
     <string name="projects_social_channel_invites">Davetler</string>
-    <string name="projects_social_channel_calls">Ekip çağrıları</string>
-    <string name="projects_social_channel_requests">Arkadaşlık istekleri</string>
+    <string name="projects_social_channel_calls">Ekip Çağrıları</string>
+    <string name="projects_social_channel_requests">Arkadaşlık İstekleri</string>
     <string name="projects_social_push_request">%1$s seni eklemek istiyor</string>
     <string name="projects_social_push_invite">%1$s seni oyuna çağırıyor</string>
 
@@ -45,10 +45,10 @@
     <string name="projects_social_consent_body">Discord hesabınla giriş yaparsın. Arkadaşların senin adını, profil fotoğrafını ve ne oynadığını görür. E-postan ve şifren bize gelmez.</string>
     <string name="projects_social_privacy">Gizlilik</string>
     <string name="projects_social_privacy_url">https://projects.gg/gizlilik/#arkadaslar</string>
-    <string name="projects_social_sign_in">Discord ile giriş yap</string>
+    <string name="projects_social_sign_in">Discord ile Giriş Yap</string>
     <string name="projects_social_waiting">Tarayıcıda Discord\'u onayla</string>
     <string name="projects_social_waiting_note">Onaylayınca burada devam edersin.</string>
-    <string name="projects_social_reopen">Tarayıcıyı yeniden aç</string>
+    <string name="projects_social_reopen">Tarayıcıyı Yeniden Aç</string>
     <string name="projects_social_cancel">Vazgeç</string>
     <string name="projects_social_signing_in">Giriş yapılıyor</string>
     <string name="projects_social_sign_in_failed">Giriş tamamlanamadı. Yeniden dene.</string>
@@ -60,7 +60,7 @@
     <string name="projects_social_playing">Oyunda</string>
     <string name="projects_social_online">Çevrimiçi</string>
     <string name="projects_social_offline">Çevrimdışı</string>
-    <string name="projects_social_sent">Gönderdiğin istekler</string>
+    <string name="projects_social_sent">Gönderdiğin İstekler</string>
     <string name="projects_social_empty_title">Henüz arkadaşın yok</string>
     <string name="projects_social_empty_body">Kodunu paylaş ya da bir arkadaşının kodunu gir.</string>
     <string name="projects_social_wants_to_add">Seni eklemek istiyor</string>
@@ -68,7 +68,7 @@
     <string name="projects_social_invited_you">Seni oyuna çağırdı</string>
     <string name="projects_social_service_unavailable">Arkadaşlar şu an kullanılamıyor.</string>
     <string name="projects_social_replaced">Hesabın başka bir cihazda açıldı.</string>
-    <string name="projects_social_reconnect">Yeniden bağlan</string>
+    <string name="projects_social_reconnect">Yeniden Bağlan</string>
     <string name="projects_social_notify_offer">Davetleri ve çağrıları bildirimle haber verelim mi?</string>
 
     <string name="projects_social_presence_singleplayer">Tek oyunculu</string>
@@ -84,50 +84,50 @@
     <string name="projects_social_seen_long">Uzun süredir yok</string>
 
     <string name="projects_social_status_online">Çevrimiçi</string>
-    <string name="projects_social_status_dnd">Rahatsız etmeyin</string>
+    <string name="projects_social_status_dnd">Rahatsız Etmeyin</string>
     <string name="projects_social_status_invisible">Görünmez</string>
-    <string name="projects_social_status_change">Durumunu değiştir</string>
+    <string name="projects_social_status_change">Durumunu Değiştir</string>
     <string name="projects_social_status_failed">Durum değiştirilemedi.</string>
 
     <string name="projects_social_join">Katıl</string>
     <string name="projects_social_join_title">Minecraft açılsın mı?</string>
     <string name="projects_social_yes">Evet</string>
     <string name="projects_social_no">Hayır</string>
-    <string name="projects_social_copy_address">Adresi kopyala</string>
+    <string name="projects_social_copy_address">Adresi Kopyala</string>
     <string name="projects_social_address_copied">Adres kopyalandı</string>
-    <string name="projects_social_message">Discord\'dan mesaj at</string>
-    <string name="projects_social_favorite">Favorilere ekle</string>
-    <string name="projects_social_unfavorite">Favorilerden çıkar</string>
+    <string name="projects_social_message">Discord\'dan Mesaj At</string>
+    <string name="projects_social_favorite">Favorilere Ekle</string>
+    <string name="projects_social_unfavorite">Favorilerden Çıkar</string>
     <string name="projects_social_favorite_mark">Favori</string>
-    <string name="projects_social_remove">Arkadaşlıktan çıkar</string>
+    <string name="projects_social_remove">Arkadaşlıktan Çıkar</string>
     <string name="projects_social_remove_ask">%1$s listenden çıkarılsın mı?</string>
     <string name="projects_social_removed">%1$s arkadaş listenden çıkarıldı</string>
     <string name="projects_social_block">Engelle</string>
     <string name="projects_social_block_title">%1$s engellensin mi?</string>
     <string name="projects_social_block_ask">Engellediğin kişi seni bulamaz, sana istek ya da davet gönderemez.</string>
     <string name="projects_social_blocked">%1$s engellendi</string>
-    <string name="projects_social_unblock">Engeli kaldır</string>
+    <string name="projects_social_unblock">Engeli Kaldır</string>
     <string name="projects_social_unblocked">%1$s engellenenlerden çıkarıldı</string>
-    <string name="projects_social_accept">Kabul et</string>
+    <string name="projects_social_accept">Kabul Et</string>
     <string name="projects_social_decline">Reddet</string>
-    <string name="projects_social_cancel_request">İsteği geri al</string>
+    <string name="projects_social_cancel_request">İsteği Geri Al</string>
     <string name="projects_social_dismiss">Kapat</string>
     <string name="projects_social_friend_added">%1$s ile artık arkadaşsınız</string>
     <string name="projects_social_friends_since">%1$s beri arkadaşsınız</string>
 
-    <string name="projects_social_add">Arkadaş ekle</string>
+    <string name="projects_social_add">Arkadaş Ekle</string>
     <string name="projects_social_your_code">Kodun</string>
-    <string name="projects_social_copy_code">Kodu kopyala</string>
+    <string name="projects_social_copy_code">Kodu Kopyala</string>
     <string name="projects_social_copied">Kopyalandı</string>
     <string name="projects_social_share">Paylaş</string>
     <string name="projects_social_share_text">Projects Launcher\'da beni arkadaş ekle: %1$s</string>
     <string name="projects_social_qr">Kodunun QR karesi</string>
-    <string name="projects_social_rotate">Yeni kod al</string>
+    <string name="projects_social_rotate">Yeni Kod Al</string>
     <string name="projects_social_rotate_ask">Eski kodun çalışmayı bırakır.</string>
     <string name="projects_social_rotated">Yeni kodun hazır</string>
-    <string name="projects_social_friend_code">Arkadaşının kodu</string>
+    <string name="projects_social_friend_code">Arkadaşının Kodu</string>
     <string name="projects_social_find">Bul</string>
-    <string name="projects_social_send">İstek gönder</string>
+    <string name="projects_social_send">İstek Gönder</string>
     <string name="projects_social_sent_ok">İstek gönderildi</string>
     <string name="projects_social_now_friends">Artık arkadaşsınız</string>
     <string name="projects_social_invalid_code">Kod PRJ ile başlar ve 8 harf ya da rakam içerir.</string>
@@ -136,21 +136,21 @@
     <string name="projects_social_rel_blocked">Bu kişiyi engellemişsin</string>
     <string name="projects_social_rel_self">Bu senin kodun</string>
 
-    <string name="projects_social_settings">Arkadaş ayarları</string>
-    <string name="projects_social_share_server">Başka sunuculardaysam adresini göster</string>
-    <string name="projects_social_share_last_seen">Son görülmemi göster</string>
+    <string name="projects_social_settings">Arkadaş Ayarları</string>
+    <string name="projects_social_share_server">Başka Sunuculardaysam Adresini Göster</string>
+    <string name="projects_social_share_last_seen">Son Görülmemi Göster</string>
     <string name="projects_social_notifications">Bildirimler</string>
     <string name="projects_social_notifications_off">Bu telefonda bildirimler kapalı.</string>
     <string name="projects_social_notifications_turn_on">Aç</string>
-    <string name="projects_social_notifications_turn_on_label">Bildirimleri aç</string>
+    <string name="projects_social_notifications_turn_on_label">Bildirimleri Aç</string>
     <string name="projects_social_blocked_title">Engellenenler</string>
     <string name="projects_social_blocked_empty">Kimseyi engellemedin.</string>
     <string name="projects_social_account">Hesap</string>
-    <string name="projects_social_sign_out">Çıkış yap</string>
-    <string name="projects_social_delete_data">Verilerimi sil</string>
+    <string name="projects_social_sign_out">Çıkış Yap</string>
+    <string name="projects_social_delete_data">Verilerimi Sil</string>
     <string name="projects_social_delete_title">Verilerin silinsin mi?</string>
     <string name="projects_social_delete_body">Arkadaş listen, istekler ve ayar yedeğin kalıcı olarak silinir.</string>
-    <string name="projects_social_delete_confirm">Kalıcı olarak sil</string>
+    <string name="projects_social_delete_confirm">Kalıcı Olarak Sil</string>
     <string name="projects_social_deleted">Verilerin silindi</string>
 
     <string name="projects_crew_title">Ekip</string>
@@ -169,13 +169,13 @@
     <string name="projects_crew_moderator">Moderatör</string>
     <string name="projects_crew_you">Sen</string>
     <string name="projects_crew_privacy">Ekibindekiler adını, fotoğrafını ve ne oynadığını görür. Başka sunucuların adresini görmez.</string>
-    <string name="projects_crew_row_none">Ekip kur ya da katıl</string>
-    <string name="projects_crew_invite_to">Ekibe davet et</string>
+    <string name="projects_crew_row_none">Ekip Kur ya da Katıl</string>
+    <string name="projects_crew_invite_to">Ekibe Davet Et</string>
 
-    <string name="projects_crew_join_title">Kodla ya da bağlantıyla katıl</string>
-    <string name="projects_crew_code">Ekip kodu</string>
+    <string name="projects_crew_join_title">Kodla ya da Bağlantıyla Katıl</string>
+    <string name="projects_crew_code">Ekip Kodu</string>
     <string name="projects_crew_find">Bul</string>
-    <string name="projects_crew_join">Ekibe katıl</string>
+    <string name="projects_crew_join">Ekibe Katıl</string>
     <string name="projects_crew_joined">%1$s ekibine katıldın</string>
     <string name="projects_crew_not_code">Bu bir ekip kodu değil.</string>
     <string name="projects_crew_rel_member">Zaten bu ekiptesin.</string>
@@ -183,15 +183,15 @@
     <string name="projects_crew_rel_blocked">Bu ekipte engellediğin biri var.</string>
     <string name="projects_crew_rel_full">Ekip dolu.</string>
 
-    <string name="projects_crew_create">Ekip kur</string>
-    <string name="projects_crew_name">Ekip adı</string>
+    <string name="projects_crew_create">Ekip Kur</string>
+    <string name="projects_crew_name">Ekip Adı</string>
     <string name="projects_crew_tag">Etiket</string>
     <string name="projects_crew_emblem">Amblem</string>
     <string name="projects_crew_color">Renk</string>
     <string name="projects_crew_frame">Çerçeve</string>
     <string name="projects_crew_motto">Slogan</string>
     <string name="projects_crew_motto_optional">İsteğe bağlı</string>
-    <string name="projects_crew_create_submit">Ekibi kur</string>
+    <string name="projects_crew_create_submit">Ekibi Kur</string>
     <string name="projects_crew_created">%1$s kuruldu</string>
     <string name="projects_crew_name_short">En az 3 harf ya da rakam.</string>
     <string name="projects_crew_name_long">En fazla 24 karakter.</string>
@@ -202,7 +202,7 @@
     <string name="projects_crew_motto_letters">En az bir harf ya da rakam.</string>
     <string name="projects_crew_count">%1$d/%2$d</string>
 
-    <string name="projects_crew_invites">Ekip davetleri</string>
+    <string name="projects_crew_invites">Ekip Davetleri</string>
     <plurals name="projects_crew_invites_count">
         <item quantity="one">%d ekip daveti</item>
         <item quantity="other">%d ekip daveti</item>
@@ -213,28 +213,28 @@
     <string name="projects_crew_disbanded">%1$s ekibi dağıtıldı</string>
     <string name="projects_crew_copy">Kopyala</string>
     <string name="projects_crew_share_text">Projects Launcher\'da bu kodla ekibime katıl: %1$s</string>
-    <string name="projects_crew_invite_title">Arkadaşlarını davet et</string>
-    <string name="projects_crew_invite">Davet et</string>
-    <string name="projects_crew_invite_sent">Davet edildi</string>
+    <string name="projects_crew_invite_title">Arkadaşlarını Davet Et</string>
+    <string name="projects_crew_invite">Davet Et</string>
+    <string name="projects_crew_invite_sent">Davet Edildi</string>
     <string name="projects_crew_invite_none">Davet edecek arkadaşın yok.</string>
 
-    <string name="projects_crew_remove">Ekipten çıkar</string>
+    <string name="projects_crew_remove">Ekipten Çıkar</string>
     <string name="projects_crew_remove_ask">%1$s ekipten çıkarılır ve ekip kodu yenilenir.</string>
     <string name="projects_crew_removed">%1$s ekipten çıkarıldı</string>
-    <string name="projects_crew_hand_over">Liderliği devret</string>
+    <string name="projects_crew_hand_over">Liderliği Devret</string>
     <string name="projects_crew_hand_over_ask">%1$s lider olur, sen üye olursun.</string>
     <string name="projects_crew_hand_over_ask_moderator">%1$s lider olur, sen moderatör olursun.</string>
     <string name="projects_crew_handed_over">%1$s artık lider</string>
-    <string name="projects_crew_leave">Ekipten ayrıl</string>
+    <string name="projects_crew_leave">Ekipten Ayrıl</string>
     <string name="projects_crew_leave_ask">Geri dönmek için ekip kodu gerekir.</string>
     <string name="projects_crew_left">Ekipten ayrıldın</string>
-    <string name="projects_crew_close">Ekibi kapat</string>
+    <string name="projects_crew_close">Ekibi Kapat</string>
     <string name="projects_crew_close_ask">Ekip silinir.</string>
-    <string name="projects_crew_disband">Ekibi dağıt</string>
+    <string name="projects_crew_disband">Ekibi Dağıt</string>
     <string name="projects_crew_disband_ask">Ekip herkes için silinir. Bu geri alınamaz.</string>
     <string name="projects_crew_disbanded_done">Ekip dağıtıldı</string>
 
-    <string name="projects_crew_call_start">Ekibi çağır</string>
+    <string name="projects_crew_call_start">Ekibi Çağır</string>
     <plurals name="projects_crew_call_wait">
         <item quantity="one">%d dk sonra yeniden çağırabilirsin.</item>
         <item quantity="other">%d dk sonra yeniden çağırabilirsin.</item>
@@ -252,18 +252,18 @@
     <string name="projects_crew_call_said_soon">Birazdan</string>
     <string name="projects_crew_call_said_no">Gelemiyor</string>
 
-    <string name="projects_crew_notifications">Ekip bildirimleri</string>
-    <string name="projects_crew_calls">Ekip çağrıları</string>
-    <string name="projects_crew_mute">Sessize al</string>
-    <string name="projects_crew_unmute">Sesi aç</string>
+    <string name="projects_crew_notifications">Ekip Bildirimleri</string>
+    <string name="projects_crew_calls">Ekip Çağrıları</string>
+    <string name="projects_crew_mute">Sessize Al</string>
+    <string name="projects_crew_unmute">Sesi Aç</string>
     <string name="projects_crew_muted">Sessizde</string>
     <string name="projects_crew_muted_after">sessizde</string>
     <string name="projects_crew_muted_until">%1$s kadar sessizde</string>
-    <string name="projects_crew_mute_hour">1 saat</string>
-    <string name="projects_crew_mute_eight">8 saat</string>
-    <string name="projects_crew_mute_morning">Yarın sabaha kadar</string>
+    <string name="projects_crew_mute_hour">1 Saat</string>
+    <string name="projects_crew_mute_eight">8 Saat</string>
+    <string name="projects_crew_mute_morning">Yarın Sabaha kadar</string>
     <string name="projects_crew_mute_this_morning">Sabaha kadar</string>
-    <string name="projects_crew_mute_forever">Ben açana kadar</string>
+    <string name="projects_crew_mute_forever">Ben Açana kadar</string>
     <string name="projects_crew_today_at">Bugün %1$s</string>
     <string name="projects_crew_tomorrow_at">Yarın %1$s</string>
 
@@ -335,7 +335,7 @@
     <string name="projects_crew_emblem_moon">Ay</string>
     <string name="projects_crew_emblem_star">Yıldız</string>
     <string name="projects_crew_emblem_planet">Gezegen</string>
-    <string name="projects_crew_emblem_snowflake">Kar tanesi</string>
+    <string name="projects_crew_emblem_snowflake">Kar Tanesi</string>
     <string name="projects_crew_emblem_waves">Dalga</string>
     <string name="projects_crew_emblem_leaf">Yaprak</string>
     <string name="projects_crew_emblem_tree">Ağaç</string>
@@ -353,7 +353,7 @@
     <string name="projects_crew_emblem_potion">İksir</string>
     <string name="projects_crew_emblem_wand">Asa</string>
     <string name="projects_crew_emblem_castle">Kale</string>
-    <string name="projects_crew_emblem_controller">Oyun kolu</string>
+    <string name="projects_crew_emblem_controller">Oyun Kolu</string>
     <string name="projects_crew_emblem_alien">Uzaylı</string>
     <string name="projects_crew_emblem_robot">Robot</string>
     <!-- M20 (SOC7): birden çok ekip, sunucudan çağrı, sohbet, rapor ve sınırlı hesap. Masaüstünün sözleri
@@ -366,10 +366,10 @@
     </plurals>
     <string name="projects_crews_main">Ana ekip</string>
     <string name="projects_crews_main_after">ana ekip</string>
-    <string name="projects_crews_make_main">Ana ekip yap</string>
+    <string name="projects_crews_make_main">Ana Ekip Yap</string>
     <string name="projects_crews_made_main">%1$s artık ana ekibin</string>
-    <string name="projects_crews_move_left">Sola taşı</string>
-    <string name="projects_crews_move_right">Sağa taşı</string>
+    <string name="projects_crews_move_left">Sola Taşı</string>
+    <string name="projects_crews_move_right">Sağa Taşı</string>
     <string name="projects_crews_moved">%1$s artık %2$d. sırada</string>
     <string name="projects_crews_call_one">%1$s, %2$s ekibini çağırıyor</string>
     <string name="projects_crews_call_two">%1$s, %2$s ve %3$s ekiplerini çağırıyor</string>
@@ -383,19 +383,19 @@
     </plurals>
     <string name="projects_crews_full">Dolu</string>
     <string name="projects_crews_in_crew">Ekipte</string>
-    <string name="projects_crews_mute_all">Hepsini sessize al</string>
-    <string name="projects_crews_unmute_all">Hepsinin sesini aç</string>
+    <string name="projects_crews_mute_all">Hepsini Sessize Al</string>
+    <string name="projects_crews_unmute_all">Hepsinin Sesini Aç</string>
     <string name="projects_crews_this_crew">Bu ekip</string>
     <string name="projects_crews_changed">Ekiplerin değişti. Liste yenilendi.</string>
 
     <string name="projects_chat_channel">Mesajlar</string>
     <string name="projects_chat_push">%1$s sana mesaj gönderdi</string>
     <string name="projects_chat_title">Mesajlar</string>
-    <string name="projects_chat_crew">Ekip sohbeti</string>
+    <string name="projects_chat_crew">Ekip Sohbeti</string>
     <string name="projects_chat_message">Mesaj</string>
     <string name="projects_chat_hint">Mesaj yaz</string>
     <string name="projects_chat_send">Gönder</string>
-    <string name="projects_chat_discord">Discord\'dan mesaj at</string>
+    <string name="projects_chat_discord">Discord\'dan Mesaj At</string>
     <string name="projects_chat_edited">düzenlendi</string>
     <string name="projects_chat_pending">Gönderiliyor</string>
     <string name="projects_chat_sent">Gönderildi</string>
@@ -404,11 +404,11 @@
     <string name="projects_chat_copy">Kopyala</string>
     <string name="projects_chat_edit">Düzenle</string>
     <string name="projects_chat_editing">Mesajı düzenliyorsun</string>
-    <string name="projects_chat_delete">Herkesten sil</string>
+    <string name="projects_chat_delete">Herkesten Sil</string>
     <string name="projects_chat_delete_ask">Bu mesaj herkesten silinsin mi?</string>
     <string name="projects_chat_discard">Sil</string>
-    <string name="projects_chat_new">Yeni mesajlar</string>
-    <string name="projects_chat_jump">Yeni mesaj</string>
+    <string name="projects_chat_new">Yeni Mesajlar</string>
+    <string name="projects_chat_jump">Yeni Mesaj</string>
     <string name="projects_chat_today">Bugün</string>
     <string name="projects_chat_yesterday">Dün</string>
     <string name="projects_chat_days_ago">%1$d gün önce</string>
@@ -437,7 +437,7 @@
     <string name="projects_chat_too_old">15 dakikadan eski mesaj düzenlenemez.</string>
     <string name="projects_chat_gone">Bu mesaj artık yok.</string>
     <string name="projects_chat_deleted">Mesaj silindi</string>
-    <string name="projects_chat_clear">Geçmişi temizle</string>
+    <string name="projects_chat_clear">Geçmişi Temizle</string>
     <string name="projects_chat_clear_ask">Bu konuşmanın geçmişi bu telefondan silinsin mi?</string>
     <string name="projects_chat_cleared">Geçmiş temizlendi</string>
     <string name="projects_chat_quick_five">5 dk</string>
@@ -449,14 +449,14 @@
     <string name="projects_chat_more">Diğer</string>
     <string name="projects_chat_consent">Sohbet mesajların yalnız iletilmek için sunucuda en çok 7 gün tutulur.</string>
 
-    <string name="projects_report">Rapor et</string>
-    <string name="projects_report_crew">Ekibi rapor et</string>
+    <string name="projects_report">Rapor Et</string>
+    <string name="projects_report_crew">Ekibi Rapor Et</string>
     <string name="projects_report_why">Neden?</string>
-    <string name="projects_report_reason_name">Uygunsuz ad</string>
-    <string name="projects_report_reason_name_crew">Uygunsuz ad, etiket ya da slogan</string>
-    <string name="projects_report_reason_profile">Uygunsuz profil resmi</string>
-    <string name="projects_report_reason_harassment">Taciz ya da zorbalık</string>
-    <string name="projects_report_reason_inappropriate">Uygunsuz mesaj</string>
+    <string name="projects_report_reason_name">Uygunsuz Ad</string>
+    <string name="projects_report_reason_name_crew">Uygunsuz Ad, Etiket ya da Slogan</string>
+    <string name="projects_report_reason_profile">Uygunsuz Profil Resmi</string>
+    <string name="projects_report_reason_harassment">Taciz ya da Zorbalık</string>
+    <string name="projects_report_reason_inappropriate">Uygunsuz Mesaj</string>
     <string name="projects_report_reason_spam">Spam</string>
     <string name="projects_report_reason_scam">Dolandırıcılık</string>
     <string name="projects_report_reason_other">Diğer</string>
@@ -464,14 +464,14 @@
     <string name="projects_report_note_hint">İstersen kısaca anlat</string>
     <string name="projects_report_note_help">Yalnız yetkililer görür.</string>
     <string name="projects_report_private">Kimin rapor ettiği hiçbir zaman söylenmez.</string>
-    <string name="projects_report_inviter">Davet edeni rapor et</string>
-    <string name="projects_report_block">Ayrıca engelle</string>
+    <string name="projects_report_inviter">Davet Edeni Rapor Et</string>
+    <string name="projects_report_block">Ayrıca Engelle</string>
     <string name="projects_report_send">Gönder</string>
     <string name="projects_report_sent">Raporun iletildi.</string>
     <string name="projects_report_rate">Bugün çok rapor gönderdin. Yarın yeniden dene.</string>
     <string name="projects_report_gone">Bu artık rapor edilemiyor.</string>
 
-    <string name="projects_limited_chip">Sınırlı hesap</string>
+    <string name="projects_limited_chip">Sınırlı Hesap</string>
     <string name="projects_limited_body">Discord hesabın yeni olduğu için %1$s tarihine kadar:</string>
     <string name="projects_limited_crew_found">Ekip kuramazsın</string>
     <string name="projects_limited_crew_invites">Günde en çok %1$d ekip daveti gönderebilirsin</string>
@@ -492,7 +492,7 @@
     <string name="projects_mod_profile_reset_title">Profil resmin sıfırlandı</string>
     <string name="projects_mod_reason">Neden: %1$s</string>
     <string name="projects_mod_profile_reset">Profil resmin topluluk kurallarına aykırı bulunduğu için sıfırlandı.</string>
-    <string name="projects_mod_rules">Topluluk kuralları</string>
+    <string name="projects_mod_rules">Topluluk Kuralları</string>
     <string name="projects_mod_rules_url">https://mc.projects.gg/sozlesme</string>
     <string name="projects_mod_ok">Anladım</string>
     <string name="projects_mod_crew_reset">Ekibin adı ve sloganı topluluk kurallarına aykırı bulunduğu için sıfırlandı.</string>
@@ -508,12 +508,12 @@
     <string name="projects_social_error_call_needs_server">Ekibini çağırmak için çok oyunculu bir sunucuda olmalısın.</string>
     <string name="projects_social_error_call_server_hidden">\"Başka sunuculardaysam adresini göster\" kapalı.</string>
     <!-- M21 (TEAM5): katılma istekleri, davet bağlantıları, katılma ayarı ve ekip planları (masaüstünün metinleri, team2.md Ek A) -->
-    <string name="projects_requests_title">Katılma istekleri</string>
-    <string name="projects_requests_mine">Katılma isteklerin</string>
-    <string name="projects_requests_send">Katılma isteği gönder</string>
+    <string name="projects_requests_title">Katılma İstekleri</string>
+    <string name="projects_requests_mine">Katılma İsteklerin</string>
+    <string name="projects_requests_send">Katılma İsteği Gönder</string>
     <string name="projects_requests_approval">Liderler onaylayınca katılırsın.</string>
     <string name="projects_requests_pending">İsteğin bekliyor</string>
-    <string name="projects_requests_withdraw">Geri çek</string>
+    <string name="projects_requests_withdraw">Geri Çek</string>
     <string name="projects_requests_withdrawn">İsteğin geri çekildi</string>
     <string name="projects_requests_sent">İsteğin gönderildi. Liderler onaylayınca katılırsın.</string>
     <string name="projects_requests_asked">%1$s istedi</string>
@@ -542,24 +542,24 @@
         <item quantity="other">%d gün önce</item>
     </plurals>
 
-    <string name="projects_link_title">Davet bağlantısı</string>
-    <string name="projects_link_create">Davet bağlantısı oluştur</string>
+    <string name="projects_link_title">Davet Bağlantısı</string>
+    <string name="projects_link_create">Davet Bağlantısı Oluştur</string>
     <string name="projects_link_ready">Davet bağlantısı hazır</string>
-    <string name="projects_link_copy">Bağlantıyı kopyala</string>
+    <string name="projects_link_copy">Bağlantıyı Kopyala</string>
     <string name="projects_link_copied">Bağlantı kopyalandı</string>
-    <string name="projects_link_share">Bağlantıyı paylaş</string>
+    <string name="projects_link_share">Bağlantıyı Paylaş</string>
     <string name="projects_link_share_text">Projects Launcher\'da ekibime katıl: %1$s</string>
-    <string name="projects_link_more">Bağlantı seçenekleri</string>
-    <string name="projects_link_renew">Yeni bağlantı</string>
+    <string name="projects_link_more">Bağlantı Seçenekleri</string>
+    <string name="projects_link_renew">Yeni Bağlantı</string>
     <string name="projects_link_renew_ask">Eski bağlantı hemen çalışmaz olur.</string>
     <string name="projects_link_renewed">Yeni bağlantı hazır</string>
-    <string name="projects_link_off">Bağlantıyı kapat</string>
+    <string name="projects_link_off">Bağlantıyı Kapat</string>
     <string name="projects_link_off_ask">Bağlantı hemen çalışmaz olur.</string>
     <string name="projects_link_closed">Bağlantı kapatıldı</string>
-    <string name="projects_join_approve">Yeni üyeleri onayla</string>
+    <string name="projects_join_approve">Yeni Üyeleri Onayla</string>
 
     <string name="projects_plans_title">Planlar</string>
-    <string name="projects_plans_make">Plan yap</string>
+    <string name="projects_plans_make">Plan Yap</string>
     <string name="projects_plans_by">%1$s planladı</string>
     <string name="projects_plans_by_you">Sen planladın</string>
     <string name="projects_plans_started_line">Başladı</string>
@@ -576,8 +576,8 @@
     <string name="projects_plans_when">%1$s %2$s</string>
     <string name="projects_plans_made">%1$s, %2$s için plan yaptı</string>
     <string name="projects_plans_made_crew">%1$s, %3$s ekibi için plan yaptı: %2$s</string>
-    <string name="projects_plans_more">Plan seçenekleri</string>
-    <string name="projects_plans_cancel">Planı sil</string>
+    <string name="projects_plans_more">Plan Seçenekleri</string>
+    <string name="projects_plans_cancel">Planı Sil</string>
     <string name="projects_plans_cancel_ask">Plan herkesten silinir.</string>
     <string name="projects_plans_cancelled">Plan silindi</string>
     <string name="projects_plans_day">Gün</string>
@@ -585,13 +585,13 @@
     <string name="projects_plans_full">Ekipte en çok 3 plan olabilir.</string>
     <string name="projects_plans_today_limit">Günde en çok 5 plan yapabilirsin.</string>
     <string name="projects_plans_answers_limit">Yanıtını bugün çok değiştirdin. Yarın yeniden dene.</string>
-    <string name="projects_plans_channel">Plan hatırlatmaları</string>
+    <string name="projects_plans_channel">Plan Hatırlatmaları</string>
     <plurals name="projects_plans_remind">
         <item quantity="one">%1$s planına %2$d dakika kaldı</item>
         <item quantity="other">%1$s planına %2$d dakika kaldı</item>
     </plurals>
     <string name="projects_plans_started">%1$s planı başladı</string>
-    <string name="projects_plans_home_title">%1$s planı</string>
+    <string name="projects_plans_home_title">%1$s Planı</string>
     <plurals name="projects_plans_coming">
         <item quantity="one">%d geliyor</item>
         <item quantity="other">%d geliyor</item>
@@ -616,11 +616,11 @@
     <string name="projects_social_error_plan_gone">Bu plan artık yok.</string>
     <string name="projects_plans_made_you">%1$s için plan yaptın</string>
     <!-- FIX2 (M22, 22 Ekim 2026): plan notu, silinen mesajlar, menüler, yanıt listesi, Bağlan -->
-    <string name="projects_plans_note">Plan notu</string>
+    <string name="projects_plans_note">Plan Notu</string>
     <string name="projects_plans_note_hint">Kısa bir not ekle (isteğe bağlı)</string>
-    <string name="projects_plans_note_add">Not ekle</string>
-    <string name="projects_plans_note_edit">Notu düzenle</string>
-    <string name="projects_plans_note_remove">Notu kaldır</string>
+    <string name="projects_plans_note_add">Not Ekle</string>
+    <string name="projects_plans_note_edit">Notu Düzenle</string>
+    <string name="projects_plans_note_remove">Notu Kaldır</string>
     <string name="projects_plans_note_remove_ask">Not herkesten kaldırılır.</string>
     <string name="projects_plans_note_removed">Not kaldırıldı</string>
     <string name="projects_plans_note_saved">Not kaydedildi</string>
@@ -637,17 +637,17 @@
     <string name="projects_chat_deleted_leader">Ekip lideri sildi</string>
     <string name="projects_chat_deleted_moderator">Ekip moderatörü sildi</string>
     <string name="projects_chat_deleted_staff">Projects moderatörleri kaldırdı</string>
-    <string name="projects_menu_message">Mesaj gönder</string>
-    <string name="projects_menu_request_sent">İstek gönderildi</string>
-    <string name="projects_menu_accept_request">İsteği kabul et</string>
-    <string name="projects_menu_open_crew">Ekibi aç</string>
-    <string name="projects_menu_open_chat">Sohbeti aç</string>
-    <string name="projects_menu_copy_code">Ekip kodunu kopyala</string>
+    <string name="projects_menu_message">Mesaj Gönder</string>
+    <string name="projects_menu_request_sent">İstek Gönderildi</string>
+    <string name="projects_menu_accept_request">İsteği Kabul Et</string>
+    <string name="projects_menu_open_crew">Ekibi Aç</string>
+    <string name="projects_menu_open_chat">Sohbeti Aç</string>
+    <string name="projects_menu_copy_code">Ekip Kodunu Kopyala</string>
     <string name="projects_menu_options">Seçenekler</string>
-    <string name="projects_menu_options_for">%1$s için seçenekler</string>
+    <string name="projects_menu_options_for">%1$s için Seçenekler</string>
     <string name="projects_social_error_crewmate_gone">Bu oyuncuya şu an istek gönderilemiyor.</string>
-    <string name="projects_answers_expand">Yanıtları göster</string>
-    <string name="projects_answers_collapse">Yanıtları gizle</string>
+    <string name="projects_answers_expand">Yanıtları Göster</string>
+    <string name="projects_answers_collapse">Yanıtları Gizle</string>
     <string name="projects_answers_expanded">Açık</string>
     <string name="projects_answers_collapsed">Kapalı</string>
     <string name="projects_social_pill_connect">Bağlan</string>
@@ -660,8 +660,8 @@
     <string name="projects_connect_closing">Oyun kapanıyor. Oyun kapanınca %1$s sunucusuna bağlanacak.</string>
     <string name="projects_connect_overdue_title">Oyun kapanmadı</string>
     <string name="projects_connect_overdue_body">Zorla kapatırsan kaydedilmemiş tek oyunculu ilerleme kaybolabilir.</string>
-    <string name="projects_connect_wait">Beklemeye devam et</string>
-    <string name="projects_connect_force">Zorla kapat</string>
+    <string name="projects_connect_wait">Beklemeye Devam Et</string>
+    <string name="projects_connect_force">Zorla Kapat</string>
     <string name="projects_connect_already">Zaten bu sunucudasın.</string>
     <plurals name="projects_social_pill_online">
         <item quantity="one">Arkadaşlar, %d çevrimiçi</item>
@@ -673,37 +673,37 @@
     </plurals>
     <string name="projects_menu_request_sent_to">Arkadaşlık isteği gönderildi</string>
     <string name="projects_answers_toggle">Kimler geliyor</string>
-    <string name="projects_answers_less">Daha az göster</string>
+    <string name="projects_answers_less">Daha Az Göster</string>
     <string name="projects_report_plan">Plan: %1$s</string>
-    <string name="projects_report_reason_note">Uygunsuz not</string>
+    <string name="projects_report_reason_note">Uygunsuz Not</string>
     <plurals name="projects_answers_more">
-        <item quantity="one">%d kişi daha</item>
-        <item quantity="other">%d kişi daha</item>
+        <item quantity="one">%d Kişi Daha</item>
+        <item quantity="other">%d Kişi Daha</item>
     </plurals>
     <!-- MOB1 (CHAT2): the picker, stickers, replies, reactions, typing, "Seen" and links (the desktop's tr-chat2.ts). -->
-    <string name="projects_picker_open">Emoji ve çıkartmalar</string>
+    <string name="projects_picker_open">Emoji ve Çıkartmalar</string>
     <string name="projects_picker_tab_emoji">Emoji</string>
     <string name="projects_picker_tab_stickers">Çıkartmalar</string>
     <string name="projects_picker_search">Emoji ara</string>
-    <string name="projects_picker_recent">Son kullanılanlar</string>
+    <string name="projects_picker_recent">Son Kullanılanlar</string>
     <string name="projects_picker_empty">Emoji bulunamadı</string>
-    <string name="projects_picker_tone">Cilt tonu</string>
+    <string name="projects_picker_tone">Cilt Tonu</string>
     <string name="projects_picker_tone_default">Varsayılan</string>
     <string name="projects_picker_tone_light">Açık</string>
-    <string name="projects_picker_tone_medium_light">Orta açık</string>
+    <string name="projects_picker_tone_medium_light">Orta Açık</string>
     <string name="projects_picker_tone_medium">Orta</string>
-    <string name="projects_picker_tone_medium_dark">Orta koyu</string>
+    <string name="projects_picker_tone_medium_dark">Orta Koyu</string>
     <string name="projects_picker_tone_dark">Koyu</string>
-    <string name="projects_picker_group_smileys">İfadeler ve duygular</string>
+    <string name="projects_picker_group_smileys">İfadeler ve Duygular</string>
     <string name="projects_picker_group_people">İnsanlar</string>
-    <string name="projects_picker_group_nature">Hayvanlar ve doğa</string>
-    <string name="projects_picker_group_food">Yiyecek ve içecek</string>
-    <string name="projects_picker_group_travel">Seyahat ve yerler</string>
+    <string name="projects_picker_group_nature">Hayvanlar ve Doğa</string>
+    <string name="projects_picker_group_food">Yiyecek ve İçecek</string>
+    <string name="projects_picker_group_travel">Seyahat ve Yerler</string>
     <string name="projects_picker_group_activities">Etkinlikler</string>
     <string name="projects_picker_group_objects">Nesneler</string>
     <string name="projects_picker_group_symbols">Semboller</string>
     <string name="projects_picker_group_flags">Bayraklar</string>
-    <string name="projects_stickers_label">%1$s çıkartması</string>
+    <string name="projects_stickers_label">%1$s Çıkartması</string>
     <string name="projects_stickers_unknown">Çıkartma</string>
     <string name="projects_stickers_preview">Çıkartma: %1$s</string>
     <string name="projects_stickers_preview_mine">Sen: Çıkartma, %1$s</string>
@@ -712,13 +712,13 @@
     <string name="projects_stickers_sent_mine">Bir çıkartma gönderdin: %1$s</string>
     <string name="projects_reply_action">Yanıtla</string>
     <string name="projects_reply_replying">Yanıtlanıyor: %1$s</string>
-    <string name="projects_reply_cancel">Yanıtı kaldır</string>
+    <string name="projects_reply_cancel">Yanıtı Kaldır</string>
     <string name="projects_reply_earlier">Önceki bir mesaj</string>
     <string name="projects_reply_deleted">Mesaj silindi</string>
     <string name="projects_reply_quoted">Yanıtlanan mesaj</string>
     <string name="projects_reply_you">Sen</string>
-    <string name="projects_reactions_give">%1$s ile tepki ver</string>
-    <string name="projects_reactions_more">Başka bir emoji</string>
+    <string name="projects_reactions_give">%1$s ile Tepki Ver</string>
+    <string name="projects_reactions_more">Başka Bir Emoji</string>
     <plurals name="projects_reactions_chip">
         <item quantity="one">%1$s, %2$d kişi</item>
         <item quantity="other">%1$s, %2$d kişi</item>
@@ -730,11 +730,11 @@
     </plurals>
     <string name="projects_reactions_you">Sen</string>
     <string name="projects_reactions_me_too">Ben de %1$s</string>
-    <string name="projects_reactions_remove">Tepkimi kaldır</string>
+    <string name="projects_reactions_remove">Tepkimi Kaldır</string>
     <string name="projects_reactions_full">Bir mesaja en çok 5 tepki verebilirsin.</string>
     <string name="projects_reactions_kinds">Bu mesajda yeni bir tepkiye yer yok.</string>
     <string name="projects_reactions_refused">Bu emoji tepki olarak verilemez.</string>
-    <string name="projects_reactions_list">Tepki verenler</string>
+    <string name="projects_reactions_list">Tepki Verenler</string>
     <string name="projects_reactions_all">Tümü %1$d</string>
     <string name="projects_typing_one">%1$s yazıyor</string>
     <string name="projects_typing_two">%1$s ve %2$s yazıyor</string>
@@ -748,7 +748,7 @@
     <string name="projects_links_open">Aç</string>
     <string name="projects_links_cancel">Vazgeç</string>
     <string name="projects_links_refused">Bu bağlantı açılamaz.</string>
-    <string name="projects_links_copy">Bağlantıyı kopyala</string>
+    <string name="projects_links_copy">Bağlantıyı Kopyala</string>
     <string name="projects_links_copied">Bağlantı kopyalandı</string>
     <string name="projects_links_card">%1$s: %2$s, bağlantı</string>
     <string name="projects_links_card_plain">%1$s, bağlantı</string>
@@ -772,7 +772,7 @@
     <string name="projects_chat2_failure_links">Bugünlük bağlantılı mesaj hakkın doldu.</string>
     <string name="projects_chat2_feature_off">Bu özellik şu an kapalı.</string>
     <string name="projects_report_reaction">Tepkisi: %1$s</string>
-    <string name="projects_report_reason_reaction">Uygunsuz tepki</string>
+    <string name="projects_report_reason_reaction">Uygunsuz Tepki</string>
     <string name="projects_limited_chat_links">Sohbette bağlantı gönderemezsin</string>
     <plurals name="projects_limited_chat_stickers">
         <item quantity="one">Günde en çok %d çıkartma gönderebilirsin</item>
@@ -782,27 +782,27 @@
         <item quantity="one">Günde en çok %d tepki verebilirsin</item>
         <item quantity="other">Günde en çok %d tepki verebilirsin</item>
     </plurals>
-    <string name="projects_privacy_seen">Görüldü bilgisi</string>
-    <string name="projects_privacy_typing">Yazıyor bilgisi</string>
+    <string name="projects_privacy_seen">Görüldü Bilgisi</string>
+    <string name="projects_privacy_typing">Yazıyor Bilgisi</string>
     <string name="projects_privacy_both">İkisi de karşılıklı: kapatırsan sen de göremezsin.</string>
     <string name="projects_welcome_you">Ekibe katıldın</string>
-    <string name="projects_welcome_say_hi">Selam ver</string>
+    <string name="projects_welcome_say_hi">Selam Ver</string>
     <string name="projects_welcome_text">Hoş geldin! 👋</string>
     <!-- MOB1 (TEAM6): crew tags, their card, hidden crews and requests from a tag (the desktop's tr-team6.ts). -->
-    <string name="projects_badge_wear">Etiketi tak</string>
-    <string name="projects_badge_worn">Etiket takılı</string>
-    <string name="projects_badge_take_off">Etiketi çıkar</string>
+    <string name="projects_badge_wear">Etiketi Tak</string>
+    <string name="projects_badge_worn">Etiket Takılı</string>
+    <string name="projects_badge_take_off">Etiketi Çıkar</string>
     <string name="projects_badge_wore">%1$s etiketini taktın.</string>
     <string name="projects_badge_switched">Etiketin %1$s oldu.</string>
     <string name="projects_badge_off">Etiketini çıkardın.</string>
-    <string name="projects_badge_chip_label">%1$s ekibinin etiketi</string>
+    <string name="projects_badge_chip_label">%1$s Ekibinin Etiketi</string>
     <string name="projects_badge_row_label">%1$s, etiket %2$s</string>
-    <string name="projects_badge_hidden_chip">Gizli ekip</string>
+    <string name="projects_badge_hidden_chip">Gizli Ekip</string>
     <string name="projects_badge_hidden_why">Lider ekibi gizledi.</string>
     <string name="projects_badge_hidden_toast">Lider ekibi gizledi, etiketin çıkarıldı.</string>
     <string name="projects_badge_locked_why">Etiket %1$s tarihine kadar takılamaz.</string>
     <string name="projects_badge_locked_now">Etiket şu an takılamaz.</string>
-    <string name="projects_badge_locked_until">%1$s tarihine kadar kilitli</string>
+    <string name="projects_badge_locked_until">%1$s Tarihine kadar Kilitli</string>
     <string name="projects_badge_error_name_rejected">Bu etiket takılamaz. Lider ekibin adını ya da etiketini değiştirmeli.</string>
     <string name="projects_badge_error_gone">Artık bu ekipte değilsin.</string>
     <string name="projects_badge_error_off">Ekip etiketleri şu an kapalı.</string>
@@ -823,38 +823,38 @@
         <item quantity="other">Etiketi takan %d üyenin etiketi çıkarılacak.</item>
     </plurals>
     <string name="projects_badge_visibility_hide">Gizle</string>
-    <string name="projects_badge_requests_label">Etiketten istek</string>
+    <string name="projects_badge_requests_label">Etiketten İstek</string>
     <string name="projects_badge_requests_on_line">Üyelerin arkadaşları etiketin kartından katılma isteği gönderebilir.</string>
     <string name="projects_badge_requests_off_line">Etiketin kartından katılma isteği gelmez.</string>
     <string name="projects_badge_settings_today">Ekibin ayarları bugün çok değişti. Yarın yeniden dene.</string>
 
     <!-- SOC-ID: Microsoft beside Discord, the name step, linked accounts ("Bağlı hesaplar"). -->
-    <string name="projects_sign_in_microsoft">Microsoft ile giriş yap</string>
+    <string name="projects_sign_in_microsoft">Microsoft ile Giriş Yap</string>
     <string name="projects_sign_in_linked">Microsoft hesabını bağladıysan</string>
     <string name="projects_sign_in_body_both">Discord ya da Microsoft hesabınla giriş yaparsın. Arkadaşların senin adını, profil fotoğrafını ve ne oynadığını görür. E-postan ve şifren bize gelmez.</string>
     <string name="projects_sign_in_waiting_microsoft">Tarayıcıda Microsoft\'a giriş yap</string>
     <string name="projects_sign_in_waiting_microsoft_note">Giriş yapınca burada devam edersin.</string>
     <string name="projects_sign_in_microsoft_safety">Şifreni yalnız Microsoft\'un kendi sayfasında gir.</string>
     <string name="projects_sign_in_provider_off">Şu an %1$s ile giriş yapılamıyor. Başka bir yolla dene.</string>
-    <string name="projects_social_pill_sign_in">Giriş yap</string>
+    <string name="projects_social_pill_sign_in">Giriş Yap</string>
     <string name="projects_social_pill_sign_in_label">Arkadaşlar: Giriş yap</string>
     <string name="projects_name_title">Arkadaşların seni hangi adla görsün?</string>
     <string name="projects_name_label">Adın</string>
-    <string name="projects_name_continue">Devam et</string>
+    <string name="projects_name_continue">Devam Et</string>
     <string name="projects_name_empty">Bir ad yaz.</string>
     <string name="projects_name_chars">Yalnız Türkçe ya da İngilizce harf, rakam, boşluk ve alt çizgi (_) kullanılabilir.</string>
     <string name="projects_name_letters">En az 2 harf ya da rakam olmalı.</string>
     <string name="projects_name_rejected">Bu ad kullanılamıyor.</string>
     <string name="projects_name_today">Bugün adını daha fazla değiştiremezsin.</string>
     <string name="projects_discord_only">Bu özellik şimdilik yalnız Discord ile açılmış hesaplarda var.</string>
-    <string name="projects_identity_title">Bağlı hesaplar</string>
+    <string name="projects_identity_title">Bağlı Hesaplar</string>
     <string name="projects_identity_linked_on">%1$s bağlandı</string>
     <string name="projects_identity_remove">Kaldır</string>
     <string name="projects_identity_remove_title">%1$s bağlantısı kaldırılsın mı?</string>
     <string name="projects_identity_remove_discord_number">Discord fotoğrafın, Projects skinin ve forumdaki ekip etiketin de kalkar.</string>
     <string name="projects_identity_remove_discord">Discord fotoğrafın, Projects skinin ve forumdaki ekip etiketin de kalkar.</string>
-    <string name="projects_identity_link_discord">Discord hesabını bağla</string>
-    <string name="projects_identity_link_microsoft">Microsoft hesabını bağla</string>
+    <string name="projects_identity_link_discord">Discord Hesabını Bağla</string>
+    <string name="projects_identity_link_microsoft">Microsoft Hesabını Bağla</string>
     <string name="projects_identity_linking">Bağlanıyor</string>
     <string name="projects_identity_removing">Kaldırılıyor</string>
     <string name="projects_identity_linked_toast">%1$s bağlandı.</string>
@@ -872,7 +872,7 @@
     <string name="projects_identity_note_linked">Hesabına %1$s bağlandı.</string>
     <string name="projects_identity_note_removed">Hesabından %1$s bağlantısı kaldırıldı.</string>
     <string name="projects_identity_note_not_you">Sen yapmadıysan kaldır.</string>
-    <string name="projects_identity_open">Bağlı hesaplara bak</string>
+    <string name="projects_identity_open">Bağlı Hesaplara Bak</string>
     <string name="projects_limited_body_account">Hesabın yeni olduğu için %1$s tarihine kadar:</string>
     <plurals name="projects_limited_no_crew_account">
         <item quantity="one">Hesabın yeni olduğu için ekip kuramazsın. %d gün sonra açılır.</item>

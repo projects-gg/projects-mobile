@@ -2,16 +2,16 @@
 <!-- Projects fork: Turkish for upstream's MobileGlues lists (upstream: "TODO: Make this translatable"). -->
 <resources>
     <string-array name="mg_renderer_names_angle">
-        <item>Mümkünse kapalı</item>
-        <item>Mümkünse açık</item>
+        <item>Mümkünse Kapalı</item>
+        <item>Mümkünse Açık</item>
         <item>Kapalı</item>
         <item>Açık</item>
     </string-array>
     <string-array name="mg_renderer_names_errorSetting">
         <item>Otomatik</item>
-        <item>Yok sayma</item>
-        <item>Shader ve program hatalarını yok say</item>
-        <item>Shader, program ve framebuffer hatalarını yok say</item>
+        <item>Yok Sayma</item>
+        <item>Shader ve Program Hatalarını Yok Say</item>
+        <item>Shader, Program ve Framebuffer Hatalarını Yok Say</item>
     </string-array>
     <string-array name="mg_renderer_names_fsr">
         <item>Kapalı</item>

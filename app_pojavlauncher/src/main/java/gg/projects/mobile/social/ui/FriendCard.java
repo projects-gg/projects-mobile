@@ -139,7 +139,7 @@ public final class FriendCard {
                             service.inviteToTeam(single.id(), friendId, new SocialService.Result<Void>() {
                                 @Override
                                 public void ok(Void value) {
-                                    SocialUi.toast(activity, activity.getString(R.string.projects_crew_invite_sent));
+                                    SocialUi.toast(activity, activity.getString(R.string.projects_crew_invite_sent_toast));
                                 }
 
                                 @Override

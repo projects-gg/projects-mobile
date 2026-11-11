@@ -10,12 +10,12 @@
     <string name="projects_skin_needs_discord">Link a Discord account to your account to use the Projects skin.</string>
     <string name="projects_skin_off">Projects skins are off right now.</string>
     <string name="projects_skin_unreachable">Can\'t connect right now. Try again in a moment.</string>
-    <string name="projects_skin_link_label">Discord link</string>
-    <string name="projects_skin_link_linked">Discord link · %1$s</string>
+    <string name="projects_skin_link_label">Discord Link</string>
+    <string name="projects_skin_link_linked">Discord Link · %1$s</string>
     <string name="projects_skin_link_checking">Checking the link</string>
     <string name="projects_skin_link_other">Your Discord is linked to %1$s.</string>
-    <string name="projects_skin_link_this">Link this account</string>
-    <string name="projects_skin_link_remove">Remove link</string>
+    <string name="projects_skin_link_this">Link This Account</string>
+    <string name="projects_skin_link_remove">Remove Link</string>
     <string name="projects_skin_link_remove_title">Remove the link?</string>
     <string name="projects_skin_link_move_title">Remove the link to %1$s?</string>
     <string name="projects_skin_link_remove_body">Your verified role on Discord goes. Your Projects skin stays.</string>
@@ -23,7 +23,7 @@
     <string name="projects_skin_link_title">Link your account</string>
     <!-- %1$s: the in-game command ("/discord eşle") -->
     <string name="projects_skin_link_body">Type %1$s in game and enter the 6-digit code here.</string>
-    <string name="projects_skin_link_code">Link code, 6 digits</string>
+    <string name="projects_skin_link_code">Link Code, 6 Digits</string>
     <string name="projects_skin_linking">Linking</string>
     <string name="projects_skin_pin_invalid">That code is wrong or belongs to another account.</string>
     <string name="projects_skin_pin_expired">The code expired. Get a new one in game.</string>
@@ -32,8 +32,8 @@
     <!-- %1$s: the in-game command ("/discord eşlemekaldır") -->
     <string name="projects_skin_taken">This game account is linked to another Discord account. Type %1$s in game, then try again.</string>
     <string name="projects_skin_source_png">Upload PNG</string>
-    <string name="projects_skin_source_name">Player name</string>
-    <string name="projects_skin_file_choose">Choose file</string>
+    <string name="projects_skin_source_name">Player Name</string>
+    <string name="projects_skin_file_choose">Choose File</string>
     <string name="projects_skin_file_help">64×64 or legacy 64×32 pixels, up to 1 MB.</string>
     <string name="projects_skin_file_pending">Sent to Projects when you save.</string>
     <string name="projects_skin_file_legacy">Old 64×32 skins have no slim arms.</string>
@@ -43,21 +43,21 @@
     <string name="projects_skin_file_too_big">The file is too big.</string>
     <string name="projects_skin_file_empty">This skin looks empty.</string>
     <string name="projects_skin_file_read_failed">Couldn\'t open the file. Try another PNG file.</string>
-    <string name="projects_skin_name_label">Premium player name</string>
+    <string name="projects_skin_name_label">Premium Player Name</string>
     <string name="projects_skin_name_find">Find</string>
     <string name="projects_skin_name_looking">Looking</string>
     <string name="projects_skin_name_found">%1$s\'s skin</string>
     <string name="projects_skin_name_no_account">No Minecraft account has this name.</string>
     <string name="projects_skin_name_no_skin">This player uses Minecraft\'s default skin.</string>
     <string name="projects_skin_name_unreachable">Can\'t look it up right now. Try again in a moment.</string>
-    <string name="projects_skin_model_title">Arm model</string>
+    <string name="projects_skin_model_title">Arm Model</string>
     <string name="projects_skin_model_classic">Classic</string>
     <string name="projects_skin_model_slim">Slim</string>
     <string name="projects_skin_chip_projects">On Projects</string>
     <string name="projects_skin_chip_preview">Preview</string>
     <string name="projects_skin_save">Save</string>
     <string name="projects_skin_sending">Sending</string>
-    <string name="projects_skin_reset">Back to default</string>
+    <string name="projects_skin_reset">Back to Default</string>
     <string name="projects_skin_quota">You\'ve used today\'s skin changes. Try again tomorrow.</string>
     <string name="projects_skin_last_change">You have 1 change left today.</string>
     <plurals name="projects_skin_limited">

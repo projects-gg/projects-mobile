@@ -3,7 +3,7 @@
      (apps/launcher/src/locales/en.ts afk, afkSettings, afkClear, accounts.afkGuard); the engine's reasons, states,
      answers and notifications are AFK-M-CORE's (projects_afk_core_strings.xml). Short, sentence case, no codes. -->
 <resources>
-    <string name="projects_afk_ui_title">AFK accounts</string>
+    <string name="projects_afk_ui_title">AFK Accounts</string>
 
     <!-- The main menu's row: what matters most -->
     <string name="projects_afk_ui_home_stopped_one">%1$s stopped</string>
@@ -26,7 +26,7 @@
     <string name="projects_afk_ui_home_none_running">No account is AFK</string>
 
     <!-- The list -->
-    <string name="projects_afk_ui_here">On this phone</string>
+    <string name="projects_afk_ui_here">On This Phone</string>
     <plurals name="projects_afk_ui_count">
         <item quantity="one">%1$d account</item>
         <item quantity="other">%1$d accounts</item>
@@ -37,12 +37,12 @@
     </plurals>
     <string name="projects_afk_ui_connect">Connect</string>
     <string name="projects_afk_ui_stop">Stop</string>
-    <string name="projects_afk_ui_fix_password">Fix password</string>
-    <string name="projects_afk_ui_fix_login">Fix login</string>
-    <string name="projects_afk_ui_connect_all">Connect all</string>
-    <string name="projects_afk_ui_stop_all">Stop all</string>
+    <string name="projects_afk_ui_fix_password">Fix Password</string>
+    <string name="projects_afk_ui_fix_login">Fix Login</string>
+    <string name="projects_afk_ui_connect_all">Connect All</string>
+    <string name="projects_afk_ui_stop_all">Stop All</string>
     <string name="projects_afk_ui_bulk_skipped">An account the server stopped isn\'t connected with the others. Fix it on its own row first.</string>
-    <string name="projects_afk_ui_add">Add account</string>
+    <string name="projects_afk_ui_add">Add Account</string>
     <string name="projects_afk_ui_empty_title">No AFK accounts yet</string>
     <string name="projects_afk_ui_empty_body">Add a username. While your phone is on, the app keeps it on the server and reconnects it if it drops.</string>
     <!-- %1$s: how long ("2 hours 5 minutes") -->
@@ -71,7 +71,7 @@
     <string name="projects_afk_ui_delete">Delete</string>
     <string name="projects_afk_ui_remove_title">Delete %1$s?</string>
     <string name="projects_afk_ui_remove_body">The account\'s settings and saved login commands are deleted from this phone. This can\'t be undone.</string>
-    <string name="projects_afk_ui_remove_confirm">Delete account</string>
+    <string name="projects_afk_ui_remove_confirm">Delete Account</string>
     <string name="projects_afk_ui_removed">%1$s deleted</string>
     <string name="projects_afk_ui_alert_mention">Your name came up in chat</string>
     <string name="projects_afk_ui_alert_private">New private message</string>
@@ -80,26 +80,26 @@
 
     <!-- The phone's own settings: battery and notifications -->
     <string name="projects_afk_ui_phone">Phone</string>
-    <string name="projects_afk_ui_battery">Keep going with the screen off</string>
+    <string name="projects_afk_ui_battery">Keep Going with the Screen Off</string>
     <string name="projects_afk_ui_notifications">Notifications</string>
     <string name="projects_afk_ui_on">On</string>
     <string name="projects_afk_ui_off">Off</string>
     <string name="projects_afk_ui_allow">Allow</string>
     <string name="projects_afk_ui_battery_body">Allow it in the battery setting so your phone doesn\'t close AFK. We suggest leaving it on the charger overnight.</string>
-    <string name="projects_afk_ui_not_now">Not now</string>
-    <string name="projects_afk_ui_maker_title">One more setting</string>
+    <string name="projects_afk_ui_not_now">Not Now</string>
+    <string name="projects_afk_ui_maker_title">One More Setting</string>
     <!-- %1$s: the phone's maker ("Xiaomi"); %2$s: the app's name -->
     <string name="projects_afk_ui_maker_body">%1$s phones can close apps in the background. Allow %2$s in the setting that opens.</string>
-    <string name="projects_afk_ui_maker_open">Open setting</string>
+    <string name="projects_afk_ui_maker_open">Open Setting</string>
 
     <!-- Adding and editing an account -->
     <!-- %1$s: the account's name -->
-    <string name="projects_afk_ui_settings_title">%1$s\'s settings</string>
+    <string name="projects_afk_ui_settings_title">%1$s\'s Settings</string>
     <string name="projects_afk_ui_name">Username</string>
     <string name="projects_afk_ui_name_help">3 to 16 characters.</string>
-    <string name="projects_afk_ui_phone_names">Names on this phone</string>
+    <string name="projects_afk_ui_phone_names">Names on This Phone</string>
     <string name="projects_afk_ui_connection">Connection</string>
-    <string name="projects_afk_ui_address">Server address</string>
+    <string name="projects_afk_ui_address">Server Address</string>
     <string name="projects_afk_ui_address_help">Leave empty to use play.projects.gg.</string>
     <string name="projects_afk_ui_commands">Commands</string>
     <string name="projects_afk_ui_login">Login commands</string>
@@ -107,39 +107,39 @@
     <!-- %1$d: the command's number -->
     <string name="projects_afk_ui_login_line">Command %1$d</string>
     <string name="projects_afk_ui_login_placeholder">/kit or hello everyone</string>
-    <string name="projects_afk_ui_login_add">Add command</string>
-    <string name="projects_afk_ui_login_remove">Remove command</string>
+    <string name="projects_afk_ui_login_add">Add Command</string>
+    <string name="projects_afk_ui_login_remove">Remove Command</string>
     <string name="projects_afk_ui_secret_show">Show</string>
     <string name="projects_afk_ui_secret_hide">Hide</string>
     <string name="projects_afk_ui_secret_note">Once saved, the password is hidden and kept safely on this phone.</string>
     <string name="projects_afk_ui_login_unreadable">The saved login commands couldn\'t be opened on this phone. Type them again.</string>
-    <string name="projects_afk_ui_only_first">Run on the first join only</string>
+    <string name="projects_afk_ui_only_first">Run on the First Join Only</string>
     <string name="projects_afk_ui_only_first_help">When off, they run on every join. Keep it off if the server asks for a password every time.</string>
     <string name="projects_afk_ui_game">Gameplay</string>
     <string name="projects_afk_ui_sneak">Anti-AFK</string>
     <string name="projects_afk_ui_sneak_help">Sneaks now and then so the server doesn\'t mark you AFK.</string>
-    <string name="projects_afk_ui_mobile_data">Keep going on mobile data</string>
+    <string name="projects_afk_ui_mobile_data">Keep Going on Mobile Data</string>
     <string name="projects_afk_ui_mobile_data_help">When off, it stays connected only on Wi-Fi.</string>
     <string name="projects_afk_ui_dirty">You have unsaved changes.</string>
     <string name="projects_afk_ui_discard">Discard</string>
     <string name="projects_afk_ui_save">Save</string>
-    <string name="projects_afk_ui_save_only">Save only</string>
-    <string name="projects_afk_ui_save_reconnect">Save and reconnect</string>
+    <string name="projects_afk_ui_save_only">Save Only</string>
+    <string name="projects_afk_ui_save_reconnect">Save and Reconnect</string>
     <string name="projects_afk_ui_reconnecting">%1$s is reconnecting</string>
     <string name="projects_afk_ui_fix_errors">Fix the marked fields first.</string>
     <string name="projects_afk_ui_saved">%1$s\'s settings saved</string>
     <string name="projects_afk_ui_added">%1$s added</string>
     <string name="projects_afk_ui_discard_title">Your changes aren\'t saved</string>
     <string name="projects_afk_ui_discard_body">If you leave without saving, your changes are lost.</string>
-    <string name="projects_afk_ui_discard_confirm">Leave without saving</string>
+    <string name="projects_afk_ui_discard_confirm">Leave Without Saving</string>
 
     <!-- The console -->
-    <string name="projects_afk_ui_console_title">%1$s\'s console</string>
+    <string name="projects_afk_ui_console_title">%1$s\'s Console</string>
     <string name="projects_afk_ui_console_empty">No messages yet.</string>
     <string name="projects_afk_ui_console_input">Command or chat message</string>
     <string name="projects_afk_ui_console_offline">The account isn\'t connected</string>
     <string name="projects_afk_ui_console_send">Send</string>
-    <string name="projects_afk_ui_console_new">New messages</string>
+    <string name="projects_afk_ui_console_new">New Messages</string>
     <string name="projects_afk_ui_console_secret">The password stays hidden in the console.</string>
     <string name="projects_afk_ui_console_send_failed">Couldn\'t send the message.</string>
     <string name="projects_afk_ui_console_accounts">Accounts</string>
@@ -147,8 +147,8 @@
     <!-- OYNA while the same name is AFK (the desktop's afkGuard), and the memory check -->
     <string name="projects_afk_ui_guard_title">%1$s is AFK right now</string>
     <string name="projects_afk_ui_guard_body">If you stop AFK, it starts again when you close the game.</string>
-    <string name="projects_afk_ui_guard_stop">Stop AFK and play</string>
-    <string name="projects_afk_ui_guard_keep">Keep AFK running</string>
+    <string name="projects_afk_ui_guard_stop">Stop AFK and Play</string>
+    <string name="projects_afk_ui_guard_keep">Keep AFK Running</string>
     <string name="projects_afk_ui_cancel">Cancel</string>
     <string name="projects_afk_ui_restarted">%1$s is going AFK again</string>
     <plurals name="projects_afk_ui_restarted_many">
@@ -157,7 +157,7 @@
     </plurals>
     <string name="projects_afk_ui_memory_title">Your phone is low on free memory</string>
     <string name="projects_afk_ui_memory_body">If the game opens, your phone may close AFK.</string>
-    <string name="projects_afk_ui_memory_play">Play anyway</string>
+    <string name="projects_afk_ui_memory_play">Play Anyway</string>
 
     <!-- The account list's mark beside a name that is AFK on this phone -->
     <string name="projects_afk_ui_mark">AFK</string>

@@ -2,9 +2,9 @@
 <!-- MOB-PARITY: what the phone gained to match the desktop launcher, in the desktop's words. -->
 <resources>
     <!-- Profile picture -->
-    <string name="projects_parity_photo_title">Profile picture</string>
-    <string name="projects_parity_photo_discord">Discord picture</string>
-    <string name="projects_parity_photo_minecraft">Minecraft head</string>
+    <string name="projects_parity_photo_title">Profile Picture</string>
+    <string name="projects_parity_photo_discord">Discord Picture</string>
+    <string name="projects_parity_photo_minecraft">Minecraft Head</string>
     <string name="projects_parity_photo_changed">Profile picture changed</string>
     <string name="projects_parity_avatar_golden_dragon">Golden Dragon</string>
     <string name="projects_parity_avatar_ninja">Ninja</string>
@@ -38,31 +38,31 @@
     <string name="projects_parity_session_today">today</string>
     <string name="projects_parity_session_yesterday">yesterday</string>
     <string name="projects_parity_session_via_microsoft">%1$s, signed in with Microsoft</string>
-    <string name="projects_parity_session_revoke">Sign out</string>
-    <string name="projects_parity_session_revoke_label">Sign out of %1$s</string>
-    <string name="projects_parity_session_revoke_others">Sign out of other devices</string>
+    <string name="projects_parity_session_revoke">Sign Out</string>
+    <string name="projects_parity_session_revoke_label">Sign Out of %1$s</string>
+    <string name="projects_parity_session_revoke_others">Sign Out of Other Devices</string>
     <plurals name="projects_parity_session_revoked_others">
         <item quantity="one">Signed out of %d device</item>
         <item quantity="other">Signed out of %d devices</item>
     </plurals>
     <string name="projects_parity_session_none_other">No sessions on other devices.</string>
     <string name="projects_parity_sessions_failed">Couldn\'t load your sessions.</string>
-    <string name="projects_parity_session_unknown_device">Unknown device</string>
+    <string name="projects_parity_session_unknown_device">Unknown Device</string>
 
     <!-- Friend categories -->
     <string name="projects_parity_groups_rest">Friends</string>
-    <string name="projects_parity_groups_new">New category</string>
-    <string name="projects_parity_groups_new_menu">New category…</string>
+    <string name="projects_parity_groups_new">New Category</string>
+    <string name="projects_parity_groups_new_menu">New Category…</string>
     <string name="projects_parity_groups_name">Category name</string>
     <string name="projects_parity_groups_create">Add</string>
     <string name="projects_parity_groups_save">Save</string>
-    <string name="projects_parity_groups_move_to">Move to category</string>
+    <string name="projects_parity_groups_move_to">Move to Category</string>
     <string name="projects_parity_groups_rename">Rename</string>
-    <string name="projects_parity_groups_remove">Delete category</string>
+    <string name="projects_parity_groups_remove">Delete Category</string>
     <string name="projects_parity_groups_removed">%1$s deleted</string>
-    <string name="projects_parity_groups_move_up">Move up</string>
-    <string name="projects_parity_groups_move_down">Move down</string>
-    <string name="projects_parity_groups_options">%1$s options</string>
+    <string name="projects_parity_groups_move_up">Move Up</string>
+    <string name="projects_parity_groups_move_down">Move Down</string>
+    <string name="projects_parity_groups_options">%1$s Options</string>
     <string name="projects_parity_groups_moved">%1$s moved to %2$s</string>
     <string name="projects_parity_groups_moved_rest">%1$s moved to Friends</string>
     <string name="projects_parity_groups_limit">You can have up to 20 categories.</string>
@@ -70,38 +70,38 @@
 
     <!-- Crew editing, permissions, moderators -->
     <string name="projects_parity_crew_edit">Edit</string>
-    <string name="projects_parity_crew_edit_title">Edit crew</string>
+    <string name="projects_parity_crew_edit_title">Edit Crew</string>
     <string name="projects_parity_crew_save">Save</string>
     <string name="projects_parity_crew_saved">Crew updated</string>
     <string name="projects_parity_roles_title">Permissions</string>
     <string name="projects_parity_roles_moderators">Moderators</string>
     <string name="projects_parity_roles_members">Members</string>
-    <string name="projects_parity_roles_invite">Can invite</string>
-    <string name="projects_parity_roles_call">Can call the crew</string>
-    <string name="projects_parity_roles_kick">Can remove members</string>
-    <string name="projects_parity_roles_edit">Can edit the look and motto</string>
-    <string name="projects_parity_roles_admit">Can manage requests and the link</string>
+    <string name="projects_parity_roles_invite">Can Invite</string>
+    <string name="projects_parity_roles_call">Can Call the Crew</string>
+    <string name="projects_parity_roles_kick">Can Remove Members</string>
+    <string name="projects_parity_roles_edit">Can Edit the Look and Motto</string>
+    <string name="projects_parity_roles_admit">Can Manage Requests and the Link</string>
     <string name="projects_parity_role_on">On</string>
     <string name="projects_parity_role_off">Off</string>
     <string name="projects_parity_roles_saved">Permissions updated</string>
-    <string name="projects_parity_make_moderator">Make moderator</string>
-    <string name="projects_parity_unmake_moderator">Remove as moderator</string>
+    <string name="projects_parity_make_moderator">Make Moderator</string>
+    <string name="projects_parity_unmake_moderator">Remove as Moderator</string>
     <string name="projects_parity_made_moderator">%1$s is a moderator now</string>
     <string name="projects_parity_unmade_moderator">%1$s is a member now</string>
     <!-- Find a crew (CREW-DISCOVER; the desktop's locales/en-discover.ts words) -->
-    <string name="projects_discover_title">Find a crew</string>
+    <string name="projects_discover_title">Find a Crew</string>
     <string name="projects_discover_entry_line">Browse listed crews and join one that fits you.</string>
     <string name="projects_discover_search">Search crews, tags or text</string>
     <string name="projects_discover_search_label">Search listed crews</string>
     <string name="projects_discover_filters">Filters</string>
     <string name="projects_discover_filters_count">Filters %1$d</string>
-    <string name="projects_discover_filter_open">Open to join now</string>
-    <string name="projects_discover_filter_active">Active this week</string>
-    <string name="projects_discover_size_any">Any size</string>
-    <string name="projects_discover_size_small">Small crews</string>
-    <string name="projects_discover_size_mid">Medium crews</string>
-    <string name="projects_discover_size_big">Big crews</string>
-    <string name="projects_discover_filters_clear">Clear filters</string>
+    <string name="projects_discover_filter_open">Open to Join Now</string>
+    <string name="projects_discover_filter_active">Active This Week</string>
+    <string name="projects_discover_size_any">Any Size</string>
+    <string name="projects_discover_size_small">Small Crews</string>
+    <string name="projects_discover_size_mid">Medium Crews</string>
+    <string name="projects_discover_size_big">Big Crews</string>
+    <string name="projects_discover_filters_clear">Clear Filters</string>
     <string name="projects_discover_tag_survival">Survival</string>
     <string name="projects_discover_tag_skyblock">SkyBlock</string>
     <string name="projects_discover_tag_smp">SMP</string>
@@ -110,8 +110,8 @@
     <string name="projects_discover_tag_build">Building</string>
     <string name="projects_discover_tag_events">Events</string>
     <string name="projects_discover_tag_chat">Chat</string>
-    <string name="projects_discover_tag_voice">Voice chat</string>
-    <string name="projects_discover_tag_newcomers">New players welcome</string>
+    <string name="projects_discover_tag_voice">Voice Chat</string>
+    <string name="projects_discover_tag_newcomers">New Players Welcome</string>
     <plurals name="projects_discover_members">
         <item quantity="one">%d member</item>
         <item quantity="other">%d members</item>
@@ -121,15 +121,15 @@
         <item quantity="other">%d members, active this week</item>
     </plurals>
     <string name="projects_discover_join">Join</string>
-    <string name="projects_discover_ask">Ask to join</string>
+    <string name="projects_discover_ask">Ask to Join</string>
     <string name="projects_discover_member">You\'re in this crew</string>
-    <string name="projects_discover_go_to">Go to crew</string>
+    <string name="projects_discover_go_to">Go to Crew</string>
     <string name="projects_discover_waiting">Your request is waiting</string>
     <string name="projects_discover_full">Crew is full</string>
     <string name="projects_discover_limit">You\'re at your crew limit</string>
-    <string name="projects_discover_menu">%1$s options</string>
-    <string name="projects_discover_report">Report crew</string>
-    <string name="projects_discover_report_reason">Inappropriate name or text</string>
+    <string name="projects_discover_menu">%1$s Options</string>
+    <string name="projects_discover_report">Report Crew</string>
+    <string name="projects_discover_report_reason">Inappropriate Name or Text</string>
     <string name="projects_discover_gone">This crew isn\'t listed any more.</string>
     <string name="projects_discover_empty_title">No crews listed yet</string>
     <string name="projects_discover_empty_body">The list refreshes every day. You can list your own crew too.</string>
@@ -142,12 +142,12 @@
     <string name="projects_discover_block_title">Discover</string>
     <string name="projects_discover_block_switch">Show in Find a crew</string>
     <string name="projects_discover_block_help">Your crew\'s name, tag, motto, member count and this text are public. Members aren\'t shown.</string>
-    <string name="projects_discover_block_text">Discover text</string>
+    <string name="projects_discover_block_text">Discover Text</string>
     <string name="projects_discover_block_placeholder">What do you play, and who are you looking for?</string>
     <string name="projects_discover_block_tags">Tags</string>
     <string name="projects_discover_block_tags_help">Pick up to 3.</string>
-    <string name="projects_discover_block_send">Send for listing</string>
-    <string name="projects_discover_block_send_change">Send change</string>
+    <string name="projects_discover_block_send">Send for Listing</string>
+    <string name="projects_discover_block_send_change">Send Change</string>
     <string name="projects_discover_block_waiting_today">We\'ll look at it today at %1$s.</string>
     <string name="projects_discover_block_waiting_tomorrow">We\'ll look at it tomorrow at %1$s.</string>
     <string name="projects_discover_block_listed">Showing in Find a crew.</string>
@@ -174,7 +174,7 @@
     </plurals>
     <string name="projects_discover_need_hidden">Hidden crews can\'t be listed.</string>
     <string name="projects_discover_off_ask">Your crew leaves the list now. If you add it again, it waits for approval again.</string>
-    <string name="projects_discover_off_confirm">Remove from list</string>
+    <string name="projects_discover_off_confirm">Remove from List</string>
     <string name="projects_discover_off_done">Your crew left the list.</string>
     <string name="projects_discover_block_failed">Couldn\'t load the discover settings.</string>
 </resources>

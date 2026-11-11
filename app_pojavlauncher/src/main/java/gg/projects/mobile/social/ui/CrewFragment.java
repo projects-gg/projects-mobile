@@ -951,7 +951,7 @@ public class CrewFragment extends Fragment implements SocialService.Listener {
             }
         }
         Map<SocialState.Place, List<Member>> roster = state.roster(team.id);
-        int[] titles = {R.string.projects_social_on_projects, R.string.projects_social_presence_playing,
+        int[] titles = {R.string.projects_social_on_projects, R.string.projects_crew_section_playing,
                 R.string.projects_social_presence_launcher, R.string.projects_social_presence_offline};
         int i = 0;
         for (Map.Entry<SocialState.Place, List<Member>> group : roster.entrySet()) {

@@ -53,8 +53,8 @@
     </string-array>
     <!--TODO: Make this translatable-->
     <string-array name="mg_renderer_names_angle">
-        <item>Disable if possible</item>
-        <item>Enable if possible</item>
+        <item>Disable If Possible</item>
+        <item>Enable If Possible</item>
         <item>Disabled</item>
         <item>Enabled</item>
     </string-array>
@@ -66,9 +66,9 @@
     </string-array>
     <string-array name="mg_renderer_names_errorSetting">
         <item>Auto</item>
-        <item>Don\'t ignore</item>
-        <item>Ignore shader/program errors</item>
-        <item>Ignore shader/program/framebuffer errors</item>
+        <item>Don\'t Ignore</item>
+        <item>Ignore Shader/Program Errors</item>
+        <item>Ignore Shader/Program/Framebuffer Errors</item>
     </string-array>
     <string-array name="mg_renderer_values_errorSetting">
         <item>0</item>

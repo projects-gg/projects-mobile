@@ -349,7 +349,7 @@ public final class VoiceCrewRows {
         font(title, R.font.tektur_semibold);
         content.addView(title);
 
-        content.addView(label(c, R.string.projects_voice_name_hint, 16));
+        content.addView(label(c, R.string.projects_voice_name_label, 16));
         final EditText field = new EditText(c);
         field.setSingleLine(true);
         field.setText(startName);

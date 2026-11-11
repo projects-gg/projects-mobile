@@ -829,7 +829,7 @@ public final class ProjectsSkinFragment extends Fragment implements ProjectsSkin
     /** The 6-digit code box: sends at the sixth digit; pasted text keeps its digits. */
     private void codeBox(Context c, ProjectsSkinState.State s) {
         // M054 (M053's P3): on the column, as the section above it.
-        TextView title = CloudUi.text(c, getString(R.string.projects_skin_link_title), 15, R.color.projects_bone_100, true);
+        TextView title = CloudUi.text(c, getString(R.string.projects_skin_link_title_head), 15, R.color.projects_bone_100, true);
         title.setPadding(CloudUi.dp(c, COLUMN_DP), 0, CloudUi.dp(c, COLUMN_DP), 0);
         mContent.addView(title);
         TextView body = CloudUi.note(c, getString(R.string.projects_skin_link_body, LINK_COMMAND));

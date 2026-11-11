@@ -658,6 +658,19 @@ public final class CloudWords {
         return prefs.itemName(ref, lang);
     }
 
+    /** M054: a limit's name as a field label (Title Case); {@link #limitLabel} is the part a history line embeds. */
+    public static String limitTitle(Context c, String key) {
+        switch (key) {
+            case "perDealMax": return c.getString(R.string.projects_plus_limit_title_perDealMax);
+            case "dailySpendMax": return c.getString(R.string.projects_plus_limit_title_dailySpendMax);
+            case "totalBudget": return c.getString(R.string.projects_plus_limit_title_totalBudget);
+            case "balanceFloor": return c.getString(R.string.projects_plus_limit_title_balanceFloor);
+            case "approvalAbove": return c.getString(R.string.projects_plus_limit_title_approvalAbove);
+            case "newCounterpartApprovalAbove": return c.getString(R.string.projects_plus_limit_title_newCounterpartApprovalAbove);
+            default: return limitLabel(c, key);
+        }
+    }
+
     public static String limitLabel(Context c, String key) {
         switch (key) {
             case "perDealMax": return c.getString(R.string.projects_plus_limit_perDealMax);

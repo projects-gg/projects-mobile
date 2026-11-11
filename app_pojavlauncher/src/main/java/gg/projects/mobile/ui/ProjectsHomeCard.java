@@ -603,11 +603,11 @@ public final class ProjectsHomeCard implements ProjectsContent.Listener, Project
             mSecondaryButton.setLayoutParams(secondary);
         }
         mJoinButton.setEnabled(!mJoining);
-        mJoinButton.setText(mJoining && !projects ? R.string.projects_join_preparing : R.string.projects_join);
+        mJoinButton.setText(mJoining && !projects ? R.string.projects_join_preparing_button : R.string.projects_join);
         hugStartMark(mJoinButton);
         if (mPlayButton instanceof TextView) {
             boolean onPlay = mJoining && projects;
-            ((TextView) mPlayButton).setText(onPlay ? R.string.projects_join_preparing : R.string.main_play);
+            ((TextView) mPlayButton).setText(onPlay ? R.string.projects_join_preparing_button : R.string.main_play);
             mPlayButton.setEnabled(!onPlay);
         }
     }

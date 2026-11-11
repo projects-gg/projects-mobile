@@ -2,9 +2,9 @@
 <!-- MOB-PARITY: what the phone gained to match the desktop launcher, in the desktop's words. -->
 <resources>
     <!-- Profil fotoğrafı -->
-    <string name="projects_parity_photo_title">Profil fotoğrafı</string>
-    <string name="projects_parity_photo_discord">Discord fotoğrafı</string>
-    <string name="projects_parity_photo_minecraft">Minecraft kafası</string>
+    <string name="projects_parity_photo_title">Profil Fotoğrafı</string>
+    <string name="projects_parity_photo_discord">Discord Fotoğrafı</string>
+    <string name="projects_parity_photo_minecraft">Minecraft Kafası</string>
     <string name="projects_parity_photo_changed">Profil fotoğrafın değişti</string>
     <string name="projects_parity_avatar_golden_dragon">Altın Ejderha</string>
     <string name="projects_parity_avatar_ninja">Ninja</string>
@@ -38,31 +38,31 @@
     <string name="projects_parity_session_today">bugün</string>
     <string name="projects_parity_session_yesterday">dün</string>
     <string name="projects_parity_session_via_microsoft">%1$s, Microsoft ile girildi</string>
-    <string name="projects_parity_session_revoke">Çıkış yap</string>
-    <string name="projects_parity_session_revoke_label">%1$s cihazından çıkış yap</string>
-    <string name="projects_parity_session_revoke_others">Diğer cihazlardan çıkış yap</string>
+    <string name="projects_parity_session_revoke">Çıkış Yap</string>
+    <string name="projects_parity_session_revoke_label">%1$s Cihazından Çıkış Yap</string>
+    <string name="projects_parity_session_revoke_others">Diğer Cihazlardan Çıkış Yap</string>
     <plurals name="projects_parity_session_revoked_others">
         <item quantity="one">%d cihazdan çıkış yapıldı</item>
         <item quantity="other">%d cihazdan çıkış yapıldı</item>
     </plurals>
     <string name="projects_parity_session_none_other">Başka cihazda oturum yok.</string>
     <string name="projects_parity_sessions_failed">Oturumlar yüklenemedi.</string>
-    <string name="projects_parity_session_unknown_device">Bilinmeyen cihaz</string>
+    <string name="projects_parity_session_unknown_device">Bilinmeyen Cihaz</string>
 
     <!-- Arkadaş kategorileri -->
     <string name="projects_parity_groups_rest">Arkadaşlar</string>
-    <string name="projects_parity_groups_new">Yeni kategori</string>
-    <string name="projects_parity_groups_new_menu">Yeni kategori…</string>
+    <string name="projects_parity_groups_new">Yeni Kategori</string>
+    <string name="projects_parity_groups_new_menu">Yeni Kategori…</string>
     <string name="projects_parity_groups_name">Kategori adı</string>
     <string name="projects_parity_groups_create">Ekle</string>
     <string name="projects_parity_groups_save">Kaydet</string>
-    <string name="projects_parity_groups_move_to">Kategoriye taşı</string>
-    <string name="projects_parity_groups_rename">Yeniden adlandır</string>
-    <string name="projects_parity_groups_remove">Kategoriyi sil</string>
+    <string name="projects_parity_groups_move_to">Kategoriye Taşı</string>
+    <string name="projects_parity_groups_rename">Yeniden Adlandır</string>
+    <string name="projects_parity_groups_remove">Kategoriyi Sil</string>
     <string name="projects_parity_groups_removed">%1$s silindi</string>
-    <string name="projects_parity_groups_move_up">Yukarı taşı</string>
-    <string name="projects_parity_groups_move_down">Aşağı taşı</string>
-    <string name="projects_parity_groups_options">%1$s seçenekleri</string>
+    <string name="projects_parity_groups_move_up">Yukarı Taşı</string>
+    <string name="projects_parity_groups_move_down">Aşağı Taşı</string>
+    <string name="projects_parity_groups_options">%1$s Seçenekleri</string>
     <string name="projects_parity_groups_moved">%1$s, %2$s kategorisine taşındı</string>
     <string name="projects_parity_groups_moved_rest">%1$s, Arkadaşlar listesine taşındı</string>
     <string name="projects_parity_groups_limit">En fazla 20 kategori olabilir.</string>
@@ -70,38 +70,38 @@
 
     <!-- Ekip düzenleme, yetkiler, moderatörler -->
     <string name="projects_parity_crew_edit">Düzenle</string>
-    <string name="projects_parity_crew_edit_title">Ekibi düzenle</string>
+    <string name="projects_parity_crew_edit_title">Ekibi Düzenle</string>
     <string name="projects_parity_crew_save">Kaydet</string>
     <string name="projects_parity_crew_saved">Ekip güncellendi</string>
     <string name="projects_parity_roles_title">Yetkiler</string>
     <string name="projects_parity_roles_moderators">Moderatörler</string>
     <string name="projects_parity_roles_members">Üyeler</string>
-    <string name="projects_parity_roles_invite">Davet edebilir</string>
-    <string name="projects_parity_roles_call">Ekibi çağırabilir</string>
-    <string name="projects_parity_roles_kick">Üye çıkarabilir</string>
-    <string name="projects_parity_roles_edit">Görünümü ve sloganı düzenleyebilir</string>
-    <string name="projects_parity_roles_admit">İstekleri ve bağlantıyı yönetebilir</string>
+    <string name="projects_parity_roles_invite">Davet Edebilir</string>
+    <string name="projects_parity_roles_call">Ekibi Çağırabilir</string>
+    <string name="projects_parity_roles_kick">Üye Çıkarabilir</string>
+    <string name="projects_parity_roles_edit">Görünümü ve Sloganı Düzenleyebilir</string>
+    <string name="projects_parity_roles_admit">İstekleri ve Bağlantıyı Yönetebilir</string>
     <string name="projects_parity_role_on">Açık</string>
     <string name="projects_parity_role_off">Kapalı</string>
     <string name="projects_parity_roles_saved">Yetkiler güncellendi</string>
-    <string name="projects_parity_make_moderator">Moderatör yap</string>
-    <string name="projects_parity_unmake_moderator">Moderatörlükten al</string>
+    <string name="projects_parity_make_moderator">Moderatör Yap</string>
+    <string name="projects_parity_unmake_moderator">Moderatörlükten Al</string>
     <string name="projects_parity_made_moderator">%1$s artık moderatör</string>
     <string name="projects_parity_unmade_moderator">%1$s artık üye</string>
     <!-- Ekip bul (CREW-DISCOVER; masaüstünün locales/tr-discover.ts sözleri) -->
-    <string name="projects_discover_title">Ekip bul</string>
+    <string name="projects_discover_title">Ekip Bul</string>
     <string name="projects_discover_entry_line">Keşifteki ekiplere göz at, sana uyana katıl.</string>
     <string name="projects_discover_search">Ekip, etiket ya da yazı ara</string>
     <string name="projects_discover_search_label">Keşifte ara</string>
     <string name="projects_discover_filters">Filtreler</string>
     <string name="projects_discover_filters_count">Filtreler %1$d</string>
-    <string name="projects_discover_filter_open">Hemen katılınabilenler</string>
-    <string name="projects_discover_filter_active">Bu hafta aktif olanlar</string>
-    <string name="projects_discover_size_any">Her büyüklükte</string>
-    <string name="projects_discover_size_small">Küçük ekipler</string>
-    <string name="projects_discover_size_mid">Orta ekipler</string>
-    <string name="projects_discover_size_big">Kalabalık ekipler</string>
-    <string name="projects_discover_filters_clear">Filtreleri temizle</string>
+    <string name="projects_discover_filter_open">Hemen Katılınabilenler</string>
+    <string name="projects_discover_filter_active">Bu Hafta Aktif Olanlar</string>
+    <string name="projects_discover_size_any">Her Büyüklükte</string>
+    <string name="projects_discover_size_small">Küçük Ekipler</string>
+    <string name="projects_discover_size_mid">Orta Ekipler</string>
+    <string name="projects_discover_size_big">Kalabalık Ekipler</string>
+    <string name="projects_discover_filters_clear">Filtreleri Temizle</string>
     <string name="projects_discover_tag_survival">Survival</string>
     <string name="projects_discover_tag_skyblock">SkyBlock</string>
     <string name="projects_discover_tag_smp">SMP</string>
@@ -110,8 +110,8 @@
     <string name="projects_discover_tag_build">Yapı</string>
     <string name="projects_discover_tag_events">Etkinlik</string>
     <string name="projects_discover_tag_chat">Sohbet</string>
-    <string name="projects_discover_tag_voice">Sesli sohbet</string>
-    <string name="projects_discover_tag_newcomers">Yeni oyunculara açık</string>
+    <string name="projects_discover_tag_voice">Sesli Sohbet</string>
+    <string name="projects_discover_tag_newcomers">Yeni Oyunculara Açık</string>
     <plurals name="projects_discover_members">
         <item quantity="one">%d üye</item>
         <item quantity="other">%d üye</item>
@@ -121,15 +121,15 @@
         <item quantity="other">%d üye, bu hafta aktif</item>
     </plurals>
     <string name="projects_discover_join">Katıl</string>
-    <string name="projects_discover_ask">Katılma isteği gönder</string>
+    <string name="projects_discover_ask">Katılma İsteği Gönder</string>
     <string name="projects_discover_member">Ekibindesin</string>
-    <string name="projects_discover_go_to">Ekibe git</string>
+    <string name="projects_discover_go_to">Ekibe Git</string>
     <string name="projects_discover_waiting">İsteğin bekliyor</string>
     <string name="projects_discover_full">Ekip dolu</string>
     <string name="projects_discover_limit">Ekip sınırındasın</string>
-    <string name="projects_discover_menu">%1$s seçenekleri</string>
-    <string name="projects_discover_report">Ekibi rapor et</string>
-    <string name="projects_discover_report_reason">Uygunsuz ad ya da yazı</string>
+    <string name="projects_discover_menu">%1$s Seçenekleri</string>
+    <string name="projects_discover_report">Ekibi Rapor Et</string>
+    <string name="projects_discover_report_reason">Uygunsuz Ad ya da Yazı</string>
     <string name="projects_discover_gone">Bu ekip artık keşifte değil.</string>
     <string name="projects_discover_empty_title">Keşifte henüz ekip yok</string>
     <string name="projects_discover_empty_body">Liste her gün yenilenir. Kendi ekibini de ekleyebilirsin.</string>
@@ -142,12 +142,12 @@
     <string name="projects_discover_block_title">Keşif</string>
     <string name="projects_discover_block_switch">Keşifte görün</string>
     <string name="projects_discover_block_help">Ekibin adı, etiketi, sloganı, üye sayısı ve bu yazı herkese görünür. Üyeler görünmez.</string>
-    <string name="projects_discover_block_text">Keşif yazısı</string>
+    <string name="projects_discover_block_text">Keşif Yazısı</string>
     <string name="projects_discover_block_placeholder">Ne oynuyorsunuz, nasıl oyuncular arıyorsunuz?</string>
     <string name="projects_discover_block_tags">Etiketler</string>
     <string name="projects_discover_block_tags_help">En çok 3 tane seç.</string>
-    <string name="projects_discover_block_send">Keşfe gönder</string>
-    <string name="projects_discover_block_send_change">Değişikliği gönder</string>
+    <string name="projects_discover_block_send">Keşfe Gönder</string>
+    <string name="projects_discover_block_send_change">Değişikliği Gönder</string>
     <string name="projects_discover_block_waiting_today">Bugün %1$s bakılacak.</string>
     <string name="projects_discover_block_waiting_tomorrow">Yarın %1$s bakılacak.</string>
     <string name="projects_discover_block_listed">Keşifte görünüyor.</string>
@@ -174,7 +174,7 @@
     </plurals>
     <string name="projects_discover_need_hidden">Gizli ekipler keşifte görünmez.</string>
     <string name="projects_discover_off_ask">Ekip keşiften hemen çıkar. Yeniden eklersen yine onay bekler.</string>
-    <string name="projects_discover_off_confirm">Keşiften çıkar</string>
+    <string name="projects_discover_off_confirm">Keşiften Çıkar</string>
     <string name="projects_discover_off_done">Ekip keşiften çıktı.</string>
     <string name="projects_discover_block_failed">Keşif bilgisi yüklenemedi.</string>
 </resources>

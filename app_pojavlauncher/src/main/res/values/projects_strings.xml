@@ -3,9 +3,9 @@
 <resources>
     <string name="projects_brand" translatable="false">Projects</string>
     <string name="projects_join">Join Projects</string>
-    <string name="projects_all_news">All news</string>
-    <string name="projects_news_title">Projects news</string>
-    <string name="projects_retry">Try again</string>
+    <string name="projects_all_news">All News</string>
+    <string name="projects_news_title">Projects News</string>
+    <string name="projects_retry">Try Again</string>
     <string name="projects_close">Close</string>
     <string name="projects_news_empty_title">No news yet</string>
     <string name="projects_news_empty_body">Announcements from the Projects team will show up here.</string>
@@ -18,7 +18,7 @@
     <string name="projects_category_update">Update</string>
     <string name="projects_category_event">Event</string>
     <string name="projects_category_announcement">Announcement</string>
-    <string name="projects_category_patch_notes">Patch notes</string>
+    <string name="projects_category_patch_notes">Patch Notes</string>
     <string name="projects_category_community">Community</string>
     <string name="projects_maintenance_title">Maintenance</string>
     <string name="projects_join_busy">Projects is already being prepared.</string>
@@ -29,7 +29,7 @@
     <string name="projects_join_failed_generic">The Projects pack could not be prepared. Try again. If it keeps happening, send the details to the support team.</string>
     <string name="projects_join_finish_loader_title">One more step</string>
     <string name="projects_join_finish_loader">Finish the mod loader installation from the notification, then tap Join Projects again.</string>
-    <string name="projects_copy_details">Copy details</string>
+    <string name="projects_copy_details">Copy Details</string>
     <string name="projects_details_copied">Details copied</string>
     <string name="projects_based_on">Projects Launcher is based on Amethyst and PojavLauncher and is open source under the LGPLv3.</string>
     <string name="projects_about_title">About Projects Launcher</string>
@@ -60,10 +60,10 @@
     <string name="projects_mods_disabled_back">It was disabled, so it was turned back on for %1$s.</string>
     <string name="projects_mods_enabled">Turned back on in the mods folder.</string>
     <string name="projects_mods_modified">You changed this file, so it will not be overwritten.</string>
-    <string name="projects_mods_revert">Restore recommended</string>
-    <string name="projects_mods_keep_mine">Keep mine</string>
-    <string name="projects_mods_page">Mod page</string>
-    <string name="projects_mods_page_for">%1$s mod page</string>
+    <string name="projects_mods_revert">Restore Recommended</string>
+    <string name="projects_mods_keep_mine">Keep Mine</string>
+    <string name="projects_mods_page">Mod Page</string>
+    <string name="projects_mods_page_for">%1$s Mod Page</string>
     <string name="projects_mods_library_for">For %1$s</string>
     <string name="projects_mods_library_on">Installed</string>
     <string name="projects_mods_library_off">Not installed</string>
@@ -76,7 +76,7 @@
         <item quantity="one">%1$d mod has an update; it installs when you play.</item>
         <item quantity="other">%1$d mods have updates; they install when you play.</item>
     </plurals>
-    <string name="projects_mods_update_now">Update now</string>
+    <string name="projects_mods_update_now">Update Now</string>
     <string name="projects_mods_reset">The mods folder is empty. Your mods will be reinstalled when you play.</string>
     <plurals name="projects_mods_issues_title">
         <item quantity="one">%1$d file could not be read</item>
@@ -90,8 +90,8 @@
     <string name="projects_mods_dropped_body">You can keep playing with your installed mods.</string>
     <string name="projects_mods_dropped_recommended">Recommended version: %1$s.</string>
     <!-- M053: the version picker (the desktop's version dialog) -->
-    <string name="projects_mods_version_change">Change version</string>
-    <string name="projects_mods_versions_title">Minecraft version</string>
+    <string name="projects_mods_version_change">Change Version</string>
+    <string name="projects_mods_versions_title">Minecraft Version</string>
     <string name="projects_mods_versions_description">Each version keeps its own mods and settings.</string>
     <string name="projects_mods_version_current">Current</string>
     <string name="projects_mods_version_recommended">Recommended</string>
@@ -169,13 +169,13 @@
     <string name="projects_notice_dropped">The Projects pack no longer updates Minecraft %1$s.</string>
 
     <!-- Home card: patch notes and events (also from the Discord news feed). -->
-    <string name="projects_patch_notes">Patch notes</string>
+    <string name="projects_patch_notes">Patch Notes</string>
     <string name="projects_pack_version" translatable="false">%1$s %2$s</string>
     <!-- MOB-POLISH: the desktop news column's words (HOME-TASTE): the patch notes' one link, the event's
          heading while it runs ("Live" read like a stream), its time as one sentence. -->
-    <string name="projects_patch_read">Read in full</string>
-    <string name="projects_event_live">Ongoing event</string>
-    <string name="projects_event_next">Next event</string>
+    <string name="projects_patch_read">Read in Full</string>
+    <string name="projects_event_live">Ongoing Event</string>
+    <string name="projects_event_next">Next Event</string>
     <string name="projects_event_started">Started %1$s</string>
     <string name="projects_event_started_on">Started on %1$s</string>
     <string name="projects_event_ends_in">%1$s left</string>
@@ -187,7 +187,7 @@
         <item quantity="one">%1$d more event</item>
         <item quantity="other">%1$d more events</item>
     </plurals>
-    <string name="projects_events_other">Other events</string>
+    <string name="projects_events_other">Other Events</string>
     <!-- Spans of time in a sentence: whole words, two units at most ("4 days 23 hours"). -->
     <plurals name="projects_words_days">
         <item quantity="one">%d day</item>
@@ -216,17 +216,17 @@
     <!-- Upstream screens: the account screen, settings, the profile editor and version lists. -->
     <!-- M16: the two ways in, said as what they do. "Offline/local account" read as "can't play online",
          yet a name-only account plays on Projects (the server asks for its password, AuthMe). -->
-    <string name="projects_auth_microsoft">Sign in with Microsoft</string>
-    <string name="projects_auth_local">Play with a username</string>
+    <string name="projects_auth_microsoft">Sign In with Microsoft</string>
+    <string name="projects_auth_local">Play with a Username</string>
     <string name="projects_login_started">Signing in…</string>
-    <string name="projects_pref_autojre_title">Disable automatic JRE selection</string>
+    <string name="projects_pref_autojre_title">Disable Automatic JRE Selection</string>
     <string name="projects_pref_autojre_summary">Stops automatic selection of which runtime to use in \"%1$s\"</string>
-    <string name="projects_profile_custom_path">Custom path</string>
+    <string name="projects_profile_custom_path">Custom Path</string>
     <string name="projects_version_recommended">Recommended</string>
 
     <!-- Offline accounts (0.1.3): no Microsoft account needed; the desktop's name rules and wording. -->
     <string name="projects_offline_add">Add</string>
-    <string name="projects_offline_switch">Switch to that account</string>
+    <string name="projects_offline_switch">Switch to That Account</string>
     <string name="projects_offline_exists">You already have an account with this name.</string>
     <string name="projects_offline_use_suggestion">Use %1$s</string>
     <string name="projects_offline_added">%1$s added</string>
@@ -242,7 +242,7 @@
     <!-- 0.1.4: the dot on unseen news, event reminders and the status page notice. -->
     <string name="projects_news_new">New</string>
     <string name="projects_all_news_new">All news, new posts</string>
-    <string name="projects_reminder_bell">Remind me</string>
+    <string name="projects_reminder_bell">Remind Me</string>
     <string name="projects_reminder_explained">We\'ll let you know 5 minutes before it starts.</string>
     <plurals name="projects_reminder_starts_in">
         <item quantity="one">Starts in %1$d minute.</item>
@@ -254,30 +254,30 @@
         <item quantity="other">%1$s starts in %2$d minutes</item>
     </plurals>
     <string name="projects_reminder_running_toast">%1$s is on</string>
-    <string name="projects_reminder_channel">Event reminders</string>
+    <string name="projects_reminder_channel">Event Reminders</string>
     <string name="projects_reminder_channel_description">Events you asked to be reminded of, 5 minutes before they start.</string>
     <string name="projects_reminder_notifications_off_title">Notifications are off</string>
     <string name="projects_reminder_notifications_off">Allow notifications so we can remind you.</string>
     <string name="projects_reminder_needs_notifications">Allow notifications to get reminders.</string>
-    <string name="projects_open_settings">Open settings</string>
-    <string name="projects_not_now">Not now</string>
-    <string name="projects_status_page">Status page</string>
+    <string name="projects_open_settings">Open Settings</string>
+    <string name="projects_not_now">Not Now</string>
+    <string name="projects_status_page">Status Page</string>
 
     <!-- 0.1.5: Sodium on Android, the game's exit message and the app's language. -->
     <string name="projects_mods_sodium_renderer">Doesn\'t work with the selected renderer.</string>
     <string name="projects_mods_sodium_crashed">It stopped the game from starting on this phone.</string>
     <string name="projects_mods_sodium_offer">Sodium now works on your phone too.</string>
     <string name="projects_mods_sodium_offer_body">The game runs smoother with it.</string>
-    <string name="projects_mods_sodium_offer_on">Turn on</string>
-    <string name="projects_mods_sodium_offer_keep">Keep off</string>
+    <string name="projects_mods_sodium_offer_on">Turn On</string>
+    <string name="projects_mods_sodium_offer_keep">Keep Off</string>
     <string name="projects_sodium_crash_projects">The game couldn\'t start because of Sodium, so we turned it off.</string>
     <string name="projects_sodium_crash_own">The game couldn\'t start because of Sodium.</string>
-    <string name="projects_sodium_start_again">Start again</string>
-    <string name="projects_sodium_disable_and_start">Turn off Sodium and start</string>
+    <string name="projects_sodium_start_again">Start Again</string>
+    <string name="projects_sodium_disable_and_start">Turn Off Sodium and Start</string>
     <string name="projects_game_closed">The game closed unexpectedly.</string>
-    <string name="projects_share_log">Share log</string>
-    <string name="projects_modpack_browse">Browse mod packs</string>
-    <string name="projects_modpack_import">Import a zip or mrpack</string>
+    <string name="projects_share_log">Share Log</string>
+    <string name="projects_modpack_browse">Browse Mod Packs</string>
+    <string name="projects_modpack_import">Import a Zip or mrpack</string>
     <string name="projects_control_button_name">Button name</string>
     <string name="projects_language_title">Language</string>
     <string name="projects_language_auto">Automatic (%1$s)</string>
@@ -293,8 +293,8 @@
     <string name="projects_account_remove_question">Remove %1$s from this phone?</string>
     <!-- SWIPE-M: swiping the account chip, and pinning accounts in its list. -->
     <string name="projects_account_swipe_hint">Swipe to switch accounts.</string>
-    <string name="projects_account_next">Next account: %1$s</string>
-    <string name="projects_account_previous">Previous account: %1$s</string>
+    <string name="projects_account_next">Next Account: %1$s</string>
+    <string name="projects_account_previous">Previous Account: %1$s</string>
     <string name="projects_account_pin">Pin</string>
     <string name="projects_account_unpin">Unpin</string>
     <string name="projects_account_row_pinned">%1$s, pinned</string>
@@ -304,10 +304,10 @@
     <string name="projects_account_pinned">%1$s pinned</string>
     <string name="projects_account_unpinned">%1$s is no longer pinned</string>
     <string name="projects_settings_title">Settings</string>
-    <string name="projects_haptics_title">Haptic feedback</string>
+    <string name="projects_haptics_title">Haptic Feedback</string>
     <string name="projects_or">or</string>
-    <string name="projects_profile_edit">Edit profile</string>
-    <string name="projects_profile_new">New profile</string>
+    <string name="projects_profile_edit">Edit Profile</string>
+    <string name="projects_profile_new">New Profile</string>
     <string name="projects_profile_default_name">Default</string>
     <string name="projects_launch_title">The game is starting</string>
     <string name="projects_launch_preparing">Getting ready</string>
@@ -316,8 +316,8 @@
     <string name="projects_launch_minecraft">Opening Minecraft</string>
     <string name="projects_launch_almost">Almost ready</string>
     <string name="projects_launch_slow">This can take a while.</string>
-    <string name="projects_launch_show_log">Show log</string>
-    <string name="projects_launch_close">Close the game</string>
+    <string name="projects_launch_show_log">Show Log</string>
+    <string name="projects_launch_close">Close the Game</string>
     <!-- M14: upstream's progresslayout_tasks_in_progress said "1 tasks in progress". -->
     <plurals name="projects_tasks_in_progress">
         <item quantity="one">%d task in progress</item>
@@ -337,7 +337,7 @@
          owner's decision): on the home card once, and on the MODLAR key that clashes. -->
     <string name="projects_keyfix_title">Some mod keys clash</string>
     <string name="projects_keyfix_body">One key press runs two actions at once.</string>
-    <string name="projects_keyfix_action">Fix key clashes</string>
+    <string name="projects_keyfix_action">Fix Key Clashes</string>
     <string name="projects_keyfix_done">Key clashes fixed</string>
     <string name="projects_keyfix_queued">Fixed when you open the game again.</string>
     <string name="projects_keyfix_undone">Your old keys are back.</string>
@@ -346,7 +346,7 @@
     <string name="projects_modkey_conflict_short">Another action in the game uses this key too.</string>
     <!-- M17, decision B: push-to-talk without a key gets one from the same one-tap fix. -->
     <string name="projects_modkey_unbound_short">This has no key in the game.</string>
-    <string name="projects_keyfix_bind_action">Set a key</string>
+    <string name="projects_keyfix_bind_action">Set a Key</string>
     <string name="projects_keyfix_talk_title">Push to talk has no key</string>
     <string name="projects_keyfix_talk_body">You need one to talk in voice chat.</string>
     <string name="projects_keyfix_bound">Push to talk key set</string>
@@ -356,18 +356,18 @@
     <string name="projects_ctrl_save">Save</string>
     <string name="projects_ctrl_save_question">Save your changes?</string>
     <string name="projects_ctrl_save_question_body">If you leave without saving, your controls go back to how they were.</string>
-    <string name="projects_ctrl_save_leave">Save and leave</string>
-    <string name="projects_ctrl_leave_unsaved">Leave without saving</string>
+    <string name="projects_ctrl_save_leave">Save and Leave</string>
+    <string name="projects_ctrl_leave_unsaved">Leave Without Saving</string>
     <!-- CTRL-SAVE: "Load" or "Select default controlmap" with a change not saved yet. -->
     <string name="projects_ctrl_replace_body">If you don\'t save, your changes are lost.</string>
-    <string name="projects_ctrl_dont_save">Don\'t save</string>
+    <string name="projects_ctrl_dont_save">Don\'t Save</string>
     <string name="projects_ctrl_saved">Controls saved.</string>
     <string name="projects_ctrl_undone">Your old controls are back.</string>
     <string name="projects_ctrl_save_failed">Couldn\'t save the controls. Try again.</string>
     <string name="projects_ctrl_undo_failed">Couldn\'t bring your old controls back.</string>
     <!-- MOB-NEXT: the editor's switch at the bottom between the keys the game shows in play and those it shows in menus. -->
-    <string name="projects_ctrl_scene_game">In game</string>
-    <string name="projects_ctrl_scene_menus">In menus</string>
+    <string name="projects_ctrl_scene_game">In Game</string>
+    <string name="projects_ctrl_scene_menus">In Menus</string>
     <!-- M053: the key panel's size fields (read aloud) -->
     <string name="projects_ctrl_width">Width</string>
     <string name="projects_ctrl_height">Height</string>
@@ -394,7 +394,7 @@
     <!-- M17: Settings, under About: small and quiet (the owner's decision of 18 October 2026). -->
     <string name="projects_not_affiliated">Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft.</string>
     <!-- M18: the channel of "Projects is ready" and its failure (Android's notification settings). -->
-    <string name="projects_ready_channel">Projects ready</string>
+    <string name="projects_ready_channel">Projects Ready</string>
     <string name="projects_ready_channel_description">Tells you when Projects is ready to play, or when it could not be set up.</string>
     <string name="projects_notify_reason">We\'ll send a notification when Projects is ready.</string>
     <string name="projects_notify_offer_title">Get a notification when downloads finish?</string>
@@ -403,7 +403,7 @@
     <string name="projects_modless_title">This profile has no mods</string>
     <string name="projects_modless_body">The Projects mods only run in the Projects profile.</string>
     <string name="projects_modless_play_projects">Play Projects</string>
-    <string name="projects_modless_play_anyway">Play anyway</string>
+    <string name="projects_modless_play_anyway">Play Anyway</string>
     <!-- M18: another profile's game files could not be prepared (upstream's dialog showed its stack trace). -->
     <string name="projects_game_failed_title">The game couldn\'t be prepared</string>
 </resources>

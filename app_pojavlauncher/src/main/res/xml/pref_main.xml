@@ -107,7 +107,7 @@
          their own panel here (PreferencePanels: keys projects_tool_*). LauncherPreferenceFragment runs them. -->
     <Preference
         android:key="projects_tool_jar"
-        android:title="@string/main_install_jar_file"
+        android:title="@string/projects_pref_install_jar_title"
         android:icon="@drawable/ic_menu_install_jar"
         />
     <Preference

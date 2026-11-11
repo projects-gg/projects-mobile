@@ -5,16 +5,16 @@
      afkplus-free.md §7.6), so the three surfaces read as one product. Short, sentence case, "sen"; no case ending after a
      player's name ("ile", "için" or a colon instead); amounts carry the game's money, never lira. -->
 <resources>
-    <string name="projects_plus_custom_item">Özel eşya</string>
+    <string name="projects_plus_custom_item">Özel Eşya</string>
     <string name="projects_ai_note">ProBot AI yapay zekâdır, hata yapabilir.</string>
 
     <!-- Siparişler -->
     <string name="projects_order_intake_label">Ne almak ya da satmak istiyorsun?</string>
     <string name="projects_order_intake_hint">Örnek: Elitra alırım, en fazla 40 bin</string>
-    <string name="projects_order_check">Kontrol et</string>
+    <string name="projects_order_check">Kontrol Et</string>
     <string name="projects_order_reading">Okunuyor</string>
-    <string name="projects_order_form">Elle ekle</string>
-    <string name="projects_order_pick">Envanterden seç</string>
+    <string name="projects_order_form">Elle Ekle</string>
+    <string name="projects_order_pick">Envanterden Seç</string>
     <plurals name="projects_order_left">
         <item quantity="other">Bugün %d kez daha kontrol edebilirsin.</item>
     </plurals>
@@ -67,14 +67,14 @@
     <string name="projects_order_edit">Düzenle</string>
     <string name="projects_order_pause">Durdur</string>
     <string name="projects_order_resume">Sürdür</string>
-    <string name="projects_order_extend">Süreyi uzat</string>
-    <string name="projects_order_restart">Yeniden başlat</string>
+    <string name="projects_order_extend">Süreyi Uzat</string>
+    <string name="projects_order_restart">Yeniden Başlat</string>
     <string name="projects_order_remove">Sil</string>
-    <string name="projects_order_to_approvals">Seni bekleyenleri aç</string>
+    <string name="projects_order_to_approvals">Seni Bekleyenleri Aç</string>
     <string name="projects_order_saved">%1$s siparişi kaydedildi.</string>
     <string name="projects_order_changed">%1$s siparişi güncellendi.</string>
     <string name="projects_order_removed">Sipariş silindi.</string>
-    <string name="projects_order_undo">Geri al</string>
+    <string name="projects_order_undo">Geri Al</string>
     <string name="projects_order_remove_deferred">Takas bitince silinir.</string>
     <plurals name="projects_order_extended">
         <item quantity="other">Sipariş %d gün uzatıldı.</item>
@@ -102,9 +102,9 @@
     <string name="projects_card_to_buy">Alınacak</string>
     <string name="projects_card_to_sell">Satılacak</string>
     <string name="projects_card_qty">Adet</string>
-    <string name="projects_card_target">Hedef fiyat</string>
-    <string name="projects_card_at_most">En fazla</string>
-    <string name="projects_card_at_least">En az</string>
+    <string name="projects_card_target">Hedef Fiyat</string>
+    <string name="projects_card_at_most">En Fazla</string>
+    <string name="projects_card_at_least">En Az</string>
     <string name="projects_card_each_price">tanesi %1$s</string>
     <string name="projects_card_for_item">Karşılığında %1$s</string>
     <string name="projects_card_for_money">Karşılığında para</string>
@@ -136,36 +136,36 @@
     <string name="projects_q_buying">Alıyorum</string>
     <string name="projects_q_selling">Satıyorum</string>
     <string name="projects_q_custom">\"%1$s\" oyunda yok. ProBot AI onu nasıl tanısın?</string>
-    <string name="projects_q_custom_pick">Envanterden seç</string>
-    <string name="projects_q_custom_first_seen">İlk görünce bana sor</string>
-    <string name="projects_q_custom_fix">Adı düzelt</string>
+    <string name="projects_q_custom_pick">Envanterden Seç</string>
+    <string name="projects_q_custom_first_seen">İlk Görünce Bana Sor</string>
+    <string name="projects_q_custom_fix">Adı Düzelt</string>
     <string name="projects_q_limit_buy">En fazla ne kadar verirsin?</string>
     <string name="projects_q_limit_sell">En az kaça satarsın?</string>
     <string name="projects_q_other">Başka</string>
-    <string name="projects_q_other_label">Başka bir tutar</string>
+    <string name="projects_q_other_label">Başka Bir Tutar</string>
     <string name="projects_q_pay_buy">Karşılığında ne vereceksin?</string>
     <string name="projects_q_pay_sell">Karşılığında ne istiyorsun?</string>
     <string name="projects_q_pay_money">Para</string>
     <string name="projects_q_pay_off_item">Eşyayla takas ayarlarında kapalı. Açılsın mı?</string>
     <string name="projects_q_pay_off_money">Parayla takas ayarlarında kapalı. Açılsın mı?</string>
     <string name="projects_q_turn_on">Aç</string>
-    <string name="projects_q_use_money">Parayla yap</string>
-    <string name="projects_q_use_item">Eşyayla yap</string>
+    <string name="projects_q_use_money">Parayla Yap</string>
+    <string name="projects_q_use_item">Eşyayla Yap</string>
     <string name="projects_q_per">%1$s adet başına mı, toplam mı?</string>
-    <string name="projects_q_each">Adet başına</string>
+    <string name="projects_q_each">Adet Başına</string>
     <string name="projects_q_total">Toplam</string>
     <string name="projects_q_qty">Kaç tane?</string>
     <string name="projects_q_far">En fazla %1$s doğru mu? Hedefin %2$s.</string>
-    <string name="projects_q_yes_right">Evet, doğru</string>
+    <string name="projects_q_yes_right">Evet, Doğru</string>
     <string name="projects_q_fix">Düzelt</string>
     <string name="projects_q_over_cap">Bu fiyat tek anlaşma sınırını (%1$s) aşıyor.</string>
-    <string name="projects_q_raise">Tek anlaşma sınırını %1$s yap</string>
-    <string name="projects_q_use_cap">Fiyatı %1$s yap</string>
+    <string name="projects_q_raise">Tek Anlaşma Sınırını %1$s Yap</string>
+    <string name="projects_q_use_cap">Fiyatı %1$s Yap</string>
 
     <!-- The order form -->
-    <string name="projects_form_new_title">Yeni sipariş</string>
-    <string name="projects_form_edit_title">Siparişi düzenle</string>
-    <string name="projects_form_side">Al ya da sat</string>
+    <string name="projects_form_new_title">Yeni Sipariş</string>
+    <string name="projects_form_edit_title">Siparişi Düzenle</string>
+    <string name="projects_form_side">Al ya da Sat</string>
     <string name="projects_form_buy">Al</string>
     <string name="projects_form_sell">Sat</string>
     <string name="projects_form_item">Eşya</string>
@@ -174,8 +174,8 @@
     <string name="projects_form_custom_item">Özel eşya</string>
     <string name="projects_form_custom_typed">\"%1$s\" adıyla özel eşya</string>
     <string name="projects_form_data_failed">Eşya listesi şu an yüklenemedi.</string>
-    <string name="projects_form_retry">Tekrar dene</string>
-    <string name="projects_form_custom_name">Eşyanın adı</string>
+    <string name="projects_form_retry">Tekrar Dene</string>
+    <string name="projects_form_custom_name">Eşyanın Adı</string>
     <string name="projects_form_custom_known">ProBot AI bu eşyayı bu adla anar.</string>
     <string name="projects_form_custom_first_sight">ProBot AI bu eşyayı ilk gördüğünde sana sorar.</string>
     <string name="projects_form_qty">Adet</string>
@@ -185,33 +185,33 @@
     <string name="projects_form_in_return">Karşılığında</string>
     <string name="projects_form_money">Para</string>
     <string name="projects_form_pay_item">Eşya</string>
-    <string name="projects_form_pay_with">Ödenecek eşya</string>
+    <string name="projects_form_pay_with">Ödenecek Eşya</string>
     <string name="projects_form_unit">Fiyat</string>
-    <string name="projects_form_each">Adet başına</string>
+    <string name="projects_form_each">Adet Başına</string>
     <string name="projects_form_total">Toplam</string>
-    <string name="projects_form_target">Hedef fiyat</string>
-    <string name="projects_form_at_most">En fazla</string>
-    <string name="projects_form_at_least">En az</string>
-    <string name="projects_form_count_of">%1$s (%2$s adedi)</string>
+    <string name="projects_form_target">Hedef Fiyat</string>
+    <string name="projects_form_at_most">En Fazla</string>
+    <string name="projects_form_at_least">En Az</string>
+    <string name="projects_form_count_of">%1$s (%2$s Adedi)</string>
     <string name="projects_form_money_bare">Oyundaki parayla.</string>
     <string name="projects_form_style">Pazarlık</string>
     <string name="projects_form_valid">Geçerlilik</string>
-    <string name="projects_form_valid_keep">Aynı kalsın</string>
+    <string name="projects_form_valid_keep">Aynı Kalsın</string>
     <plurals name="projects_form_days">
-        <item quantity="other">%d gün</item>
+        <item quantity="other">%d Gün</item>
     </plurals>
     <string name="projects_form_who">Takası kim yapsın?</string>
     <string name="projects_form_who_bot">ProBot AI</string>
     <string name="projects_form_who_me">Ben</string>
-    <string name="projects_form_conditions">%1$s için şartlar</string>
-    <string name="projects_form_durability">En az dayanıklılık</string>
+    <string name="projects_form_conditions">%1$s için Şartlar</string>
+    <string name="projects_form_durability">En Az Dayanıklılık</string>
     <string name="projects_form_enchantments">Büyüler</string>
-    <string name="projects_form_add_enchantment">Büyü ekle</string>
-    <string name="projects_form_level_down">%1$s seviyesini düşür</string>
-    <string name="projects_form_level_up">%1$s seviyesini artır</string>
-    <string name="projects_form_remove_enchantment">%1$s büyüsünü kaldır</string>
-    <string name="projects_form_named">Örsle ad verilmiş olabilir</string>
-    <string name="projects_form_cursed">Lanetli olabilir</string>
+    <string name="projects_form_add_enchantment">Büyü Ekle</string>
+    <string name="projects_form_level_down">%1$s Seviyesini Düşür</string>
+    <string name="projects_form_level_up">%1$s Seviyesini Artır</string>
+    <string name="projects_form_remove_enchantment">%1$s Büyüsünü Kaldır</string>
+    <string name="projects_form_named">Örsle Ad Verilmiş Olabilir</string>
+    <string name="projects_form_cursed">Lanetli Olabilir</string>
     <string name="projects_form_error_item">Eşya seç.</string>
     <string name="projects_form_error_price">Fiyat yaz.</string>
     <string name="projects_form_error_amount">Bir tutar yaz: örnek 40.000 ya da 40 bin.</string>
@@ -239,11 +239,11 @@
     <string name="projects_pick_failed_inventory_off">Envanter görünümü bu hesapta kapalı.</string>
     <string name="projects_pick_failed_custom_off">Sunucuya özel eşyalar şu an seçilemez.</string>
     <string name="projects_pick_offline">Makinemize şu an ulaşılamıyor.</string>
-    <string name="projects_items_unnamed">Adsız eşya</string>
+    <string name="projects_items_unnamed">Adsız Eşya</string>
 
     <!-- Onaylar: Takas sende, İlk görüş -->
     <string name="projects_handoff_body">%1$s ile anlaştın: %2$s. Takası oyunda yap, sonra burada işaretle.</string>
-    <string name="projects_handoff_yes">Takas oldu</string>
+    <string name="projects_handoff_yes">Takas Oldu</string>
     <string name="projects_handoff_no">Olmadı</string>
     <string name="projects_handoff_done">Takas kaydedildi</string>
     <string name="projects_handoff_not_done">Anlaşma kapatıldı</string>
@@ -261,7 +261,7 @@
         <item quantity="other">%d saat kaldı</item>
     </plurals>
     <string name="projects_firstsight_question">Aradığın %1$s bu mu?</string>
-    <string name="projects_firstsight_yes">Evet, bu</string>
+    <string name="projects_firstsight_yes">Evet, Bu</string>
     <string name="projects_firstsight_no">Hayır</string>
     <string name="projects_firstsight_yes_done">Eşya tanındı</string>
     <string name="projects_firstsight_no_done">Bu eşya kabul edilmeyecek</string>
@@ -280,7 +280,7 @@
     <string name="projects_audit_filter_warnings">Retler</string>
     <string name="projects_audit_today">Bugün</string>
     <string name="projects_audit_yesterday">Dün</string>
-    <string name="projects_audit_older">Önceki günler</string>
+    <string name="projects_audit_older">Önceki Günler</string>
     <string name="projects_audit_empty">Henüz bir şey yok. ProBot AI bir mesaj aldığında burada görürsün.</string>
     <string name="projects_audit_not_started">ProBot AI\'ı başlatınca yaptıkları burada görünür.</string>
     <string name="projects_audit_none_here">Bu türde bir şey yok.</string>
@@ -291,7 +291,7 @@
     <string name="projects_audit_search">Oyuncu ya da eşya ara</string>
     <string name="projects_audit_no_match">Bu aramayla eşleşen bir şey yok.</string>
     <string name="projects_audit_limited">Etkinlik çok sık yenilendi. Biraz sonra tekrar dene.</string>
-    <string name="projects_audit_answer">Cevap yaz</string>
+    <string name="projects_audit_answer">Cevap Yaz</string>
     <string name="projects_audit_wrote">%1$s sana yazdı</string>
     <plurals name="projects_audit_trades_today">
         <item quantity="one">Bugün %d takas</item>
@@ -380,14 +380,14 @@
     <string name="projects_audit_mr_gate">izin verilmedi</string>
 
     <!-- Takas geçmişi: receipts -->
-    <string name="projects_receipt_tab">Takas geçmişi</string>
-    <string name="projects_receipt_period">Son 30 gün</string>
+    <string name="projects_receipt_tab">Takas Geçmişi</string>
+    <string name="projects_receipt_period">Son 30 Gün</string>
     <string name="projects_receipt_trades">Takaslar</string>
     <string name="projects_receipt_per_item">Fiyatlar adet başına.</string>
     <string name="projects_receipt_side_bought">Alındı</string>
     <string name="projects_receipt_side_sold">Satıldı</string>
     <string name="projects_receipt_empty">Son 30 günde takas yok.</string>
-    <string name="projects_receipt_more">Daha eski takaslar</string>
+    <string name="projects_receipt_more">Daha Eski Takaslar</string>
     <string name="projects_receipt_bought">%1$s alındı</string>
     <string name="projects_receipt_sold">%1$s satıldı</string>
     <string name="projects_receipt_paid_with">%1$s ile ödendi</string>
@@ -403,9 +403,9 @@
 
     <!-- İnce ayar -->
     <string name="projects_plus_change_fine">Takas izinleri değişti</string>
-    <string name="projects_fine_reply">Yalnız cevap ver</string>
-    <string name="projects_fine_ask">Pazarlık et, bana sor</string>
-    <string name="projects_fine_deal">Pazarlık et ve tamamla</string>
+    <string name="projects_fine_reply">Yalnız Cevap Ver</string>
+    <string name="projects_fine_ask">Pazarlık Et, Bana Sor</string>
+    <string name="projects_fine_deal">Pazarlık Et ve Tamamla</string>
     <string name="projects_fine_reply_help">Pazarlık etmez, teklifleri sana iletir.</string>
     <string name="projects_fine_ask_help">Anlaşınca onayını bekler.</string>
     <string name="projects_fine_deal_help">Sınırlarının içinde sormadan tamamlar.</string>
@@ -417,10 +417,10 @@
     <string name="projects_fine_pay_both">İkisi de</string>
     <string name="projects_fine_who">Kimlerle</string>
     <string name="projects_fine_who_all">Herkes</string>
-    <string name="projects_fine_who_friends">Yalnız arkadaşlarım</string>
+    <string name="projects_fine_who_friends">Yalnız Arkadaşlarım</string>
     <string name="projects_fine_friends_hint">Oyuncu adı</string>
-    <string name="projects_fine_friends_add">Ad ekle</string>
-    <string name="projects_fine_friends_remove">%1$s adını çıkar</string>
+    <string name="projects_fine_friends_add">Ad Ekle</string>
+    <string name="projects_fine_friends_remove">%1$s Adını Çıkar</string>
     <string name="projects_fine_friends_remove_short">Çıkar</string>
     <string name="projects_fine_friends_empty">Listede kimse yokken ProBot AI kimseyle takas konuşmaz.</string>
     <string name="projects_fine_friends_format">3-16 karakter: harf, rakam ya da alt çizgi.</string>
@@ -432,9 +432,9 @@
     <string name="projects_fine_secret">ProBot AI bütçeni ve sınırlarını kimseye söylemez.</string>
 
     <!-- Sohbet ve etiket -->
-    <string name="projects_talk_player">Oyuncu gibi konuşsun</string>
+    <string name="projects_talk_player">Oyuncu gibi Konuşsun</string>
     <string name="projects_talk_player_help">Sohbette resmi dil yerine oyuncu gibi konuşur.</string>
-    <string name="projects_talk_on_topic">Konu dışına çıkmasın</string>
+    <string name="projects_talk_on_topic">Konu Dışına Çıkmasın</string>
     <string name="projects_talk_plain_friendly">Merhaba, 32.000 olur mu?</string>
     <string name="projects_talk_plain_brief">32.000?</string>
     <string name="projects_talk_plain_polite">Merhaba, 32.000 sizin için uygun olur mu?</string>
@@ -443,7 +443,7 @@
     <string name="projects_talk_sample_brief">32k?</string>
     <string name="projects_talk_sample_polite">merhaba, 32k olur mu?</string>
     <string name="projects_talk_sample_playful">32k\'ya anlaşalım mı xd</string>
-    <string name="projects_tag_switch">Mesajlarının başına etiket koysun</string>
+    <string name="projects_tag_switch">Mesajlarının Başına Etiket Koysun</string>
     <string name="projects_tag_label">Etiket</string>
     <string name="projects_tag_error_empty">Etiketi yaz ya da kapat.</string>
     <string name="projects_tag_error_length">En çok %1$d karakter olabilir.</string>
@@ -461,7 +461,7 @@
         <item quantity="other">Yaklaşık %d tanesi aldığın kontörden</item>
     </plurals>
     <string name="projects_credits_bought_in_use">Aldığın kontör şu an kullanılıyor.</string>
-    <string name="projects_credits_buy">Kontör al</string>
+    <string name="projects_credits_buy">Kontör Al</string>
     <string name="projects_credits_notice_bought">%1$s: Kontörün bitti, aldığın kontör kullanılıyor.</string>
 
     <!-- Notices of orders -->
@@ -475,12 +475,12 @@
     <!-- FREE-M 0.4.4: the settings as questions, the first setup, the chat ads, the money name (the site's words) -->
     <string name="projects_setup_change">Değiştir</string>
     <string name="projects_setup_advanced">Gelişmiş</string>
-    <string name="projects_setup_other">Diğer ayarlar</string>
-    <string name="projects_setup_later">Daha sonra</string>
+    <string name="projects_setup_other">Diğer Ayarlar</string>
+    <string name="projects_setup_later">Daha Sonra</string>
     <string name="projects_setup_back">Geri</string>
     <string name="projects_setup_next">Devam</string>
     <string name="projects_setup_count">%1$d / %2$d</string>
-    <string name="projects_setup_title">ProBot AI\'ı kur</string>
+    <string name="projects_setup_title">ProBot AI\'ı Kur</string>
     <string name="projects_setup_rail_foot">Başlatana kadar kimseye yazmaz.</string>
     <string name="projects_setup_start">Başlat</string>
     <string name="projects_setup_starting">Başlatılıyor</string>
@@ -542,56 +542,56 @@
     <string name="projects_setup_adv_talk">Tanıtım yazısı, mesaj etiketi, dil, konu sınırı</string>
     <string name="projects_setup_chat_caption">Sohbette böyle görünür</string>
     <string name="projects_setup_pm_caption">Özel mesajda böyle görünür</string>
-    <string name="projects_ads_switch">Sohbete ilan versin</string>
-    <string name="projects_order_menu_switch">Sipariş menüsünü kontrol etsin</string>
+    <string name="projects_ads_switch">Sohbete İlan Versin</string>
+    <string name="projects_order_menu_switch">Sipariş Menüsünü Kontrol Etsin</string>
     <string name="projects_order_menu_help">Sunucuda sipariş menüsü varsa arada bakar, satış siparişlerine uyan isteklere eşyanı teslim eder.</string>
     <string name="projects_ads_how">Ne sıklıkla?</string>
     <string name="projects_ads_every_30">30 dk</string>
     <string name="projects_ads_every_45">45 dk</string>
-    <string name="projects_ads_every_60">1 saat</string>
-    <string name="projects_ads_every_120">2 saat</string>
+    <string name="projects_ads_every_60">1 Saat</string>
+    <string name="projects_ads_every_120">2 Saat</string>
     <string name="projects_ads_floor">Bu sunucuda en sık %1$s bir ilan verilebilir.</string>
     <string name="projects_ads_next">Sıradaki ilan</string>
     <string name="projects_ads_next_at">Sıradaki ilan %1$s</string>
     <string name="projects_ads_tomorrow">yarın</string>
-    <string name="projects_ads_other">Başka örnek</string>
+    <string name="projects_ads_other">Başka Örnek</string>
     <string name="projects_ads_note">Sunucu spam saymasın diye her ilanı biraz farklı yazar, uyarı gelirse daha seyrek ilan verir.</string>
     <string name="projects_ads_empty">Etkin siparişin yok, şimdilik ilan vermez.</string>
-    <string name="projects_ads_add_order">Sipariş ekle</string>
+    <string name="projects_ads_add_order">Sipariş Ekle</string>
     <string name="projects_ads_warned">Sunucu %1$s spam uyarısı verdi. Şimdilik %2$s bir ilan verir.</string>
     <string name="projects_ads_stopped">Sunucu uyardığı için yarına kadar ilan vermez.</string>
     <string name="projects_ads_today">bugün %1$s</string>
     <string name="projects_ads_yesterday">dün %1$s</string>
     <string name="projects_ads_names_pending">Örnek ilan, ProBot AI oyuna girince görünür.</string>
-    <string name="projects_ads_scan">Sohbetteki satış ilanlarını tarasın</string>
-    <string name="projects_currency_label">Para birimi</string>
+    <string name="projects_ads_scan">Sohbetteki Satış İlanlarını Tarasın</string>
+    <string name="projects_currency_label">Para Birimi</string>
     <string name="projects_currency_help">Sunucundaki paranın adı.</string>
     <string name="projects_currency_fixed_help">Bu adı sunucu belirliyor.</string>
     <string name="projects_currency_refused">Bu ad kullanılamaz.</string>
     <string name="projects_limit_no_buy">Boş bırakırsan ProBot AI alım yapmaz.</string>
     <string name="projects_limit_no_ask">Boş bırakırsan sormaz.</string>
-    <string name="projects_limit_new_counterpart">İlk anlaşmada onay sınırı</string>
+    <string name="projects_limit_new_counterpart">İlk Anlaşmada Onay Sınırı</string>
     <string name="projects_limit_new_counterpart_help">İlk kez anlaştığı oyuncudan bunun üstündeki alımları önce sana sorar.</string>
-    <string name="projects_to_limits">Sınırlara git</string>
-    <string name="projects_setup_buy">Alım yapsın</string>
+    <string name="projects_to_limits">Sınırlara Git</string>
+    <string name="projects_setup_buy">Alım Yapsın</string>
     <string name="projects_setup_buy_help">Kapalıyken aradığını bulunca yalnız haber verir.</string>
     <string name="projects_setup_total_help_settings">Bütün alımların toplamı. Dolunca alım durur.</string>
     <string name="projects_card_raised">Kaydedince tek anlaşma sınırın %1$s olur.</string>
     <string name="projects_card_first_which">Önce hangisi olduğunu seç.</string>
     <string name="projects_card_first_min">Önce en az fiyatı seç.</string>
     <string name="projects_card_first_max">Önce en fazla fiyatı seç.</string>
-    <string name="projects_to_approval_limit">Onay sınırına git</string>
+    <string name="projects_to_approval_limit">Onay Sınırına Git</string>
     <string name="projects_approval_why_ask">Anlaşınca onayını bekler.</string>
     <string name="projects_limit_here">Aradığın ayar burada.</string>
     <string name="projects_ads_old_service">Sohbete ilan, 7/24 Bulut güncellenince açılır.</string>
-    <string name="projects_ads_write_sellers">Aradığın eşya satılığa çıkınca satıcıya bir kez yazsın</string>
+    <string name="projects_ads_write_sellers">Aradığın Eşya Satılığa Çıkınca Satıcıya Bir Kez Yazsın</string>
     <string name="projects_setup_a_writes">, aradığın eşya satılığa çıkınca satıcıya bir kez yazar.</string>
     <string name="projects_setup_total_help">Bütün alımların toplamı. Dolunca alım durur, Ayarlar\'dan sıfırlarsın.</string>
     <string name="projects_setup_hide">Gizle</string>
     <string name="projects_money_question">Bu, gerçek para gibi görünüyor. ProBot AI gerçek parayla alım satım yapmaz.</string>
-    <string name="projects_money_in_game">Bu oyun parası</string>
+    <string name="projects_money_in_game">Bu Oyun Parası</string>
     <string name="projects_plus_ai_ready">ProBot AI henüz başlatılmadı.</string>
-    <string name="projects_plus_begin">ProBot AI\'ı başlat</string>
+    <string name="projects_plus_begin">ProBot AI\'ı Başlat</string>
     <plurals name="projects_setup_a_orders">
         <item quantity="one">%1$d sipariş: %2$s</item>
         <item quantity="other">%1$d sipariş: %2$s</item>

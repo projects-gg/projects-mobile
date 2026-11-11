@@ -5,7 +5,7 @@
     <string name="projects_update_meta">Sürüm %1$s, %2$d MB</string>
     <string name="projects_update_action">Güncelle</string>
     <string name="projects_update_close">Kapat</string>
-    <string name="projects_update_remind">7 gün sonra hatırlat</string>
+    <string name="projects_update_remind">7 Gün Sonra Hatırlat</string>
     <string name="projects_update_stop">Durdur</string>
     <string name="projects_update_downloading">Güncelleme indiriliyor</string>
     <string name="projects_update_percent">%%%1$d</string>
@@ -21,8 +21,8 @@
     <string name="projects_update_error_incompatible">Bu sürüm telefonunla uyumlu değil.</string>
     <string name="projects_update_error_failed">Android güncellemeyi kuramadı. Tekrar dene.</string>
     <string name="projects_update_error_later">Güncelleme şu an indirilemiyor. Sonra tekrar dene.</string>
-    <string name="projects_update_auto_title">Güncellemeleri otomatik denetle</string>
-    <string name="projects_update_now_title">Güncellemeleri denetle</string>
+    <string name="projects_update_auto_title">Güncellemeleri Otomatik Denetle</string>
+    <string name="projects_update_now_title">Güncellemeleri Denetle</string>
     <string name="projects_update_now_summary">Sürüm %1$s</string>
     <string name="projects_update_now_checking">Denetleniyor</string>
     <string name="projects_update_now_latest">En yeni sürümü kullanıyorsun.</string>

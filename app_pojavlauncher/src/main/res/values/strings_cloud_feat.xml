@@ -11,13 +11,13 @@
     <!-- The inventory -->
     <string name="projects_feat_inv_equipment">Equipment</string>
     <string name="projects_feat_inv_menu">Menu</string>
-    <string name="projects_feat_inv_close_menu">Close menu</string>
+    <string name="projects_feat_inv_close_menu">Close Menu</string>
     <string name="projects_feat_inv_private">Only you can see your inventory.</string>
     <string name="projects_feat_inv_not_running">The inventory shows while the account is in game.</string>
     <string name="projects_feat_inv_off">Inventory view is off for this account.</string>
-    <string name="projects_feat_inv_turn_on">Turn on</string>
+    <string name="projects_feat_inv_turn_on">Turn On</string>
     <string name="projects_feat_inv_restart">The inventory turns on at the next connection.</string>
-    <string name="projects_feat_inv_reconnect_now">Reconnect now</string>
+    <string name="projects_feat_inv_reconnect_now">Reconnect Now</string>
     <string name="projects_feat_inv_version">The inventory isn\'t available on this Minecraft version.</string>
     <string name="projects_feat_inv_service">The inventory isn\'t available right now.</string>
     <string name="projects_feat_inv_trade">The inventory is locked during a trade.</string>
@@ -26,10 +26,10 @@
     <string name="projects_feat_inv_refused">The server didn\'t allow that move.</string>
     <string name="projects_feat_inv_unreachable">Can\'t reach the account right now.</string>
     <string name="projects_feat_inv_carry">Tap a slot to put it down.</string>
-    <string name="projects_feat_inv_put_back">Put back</string>
+    <string name="projects_feat_inv_put_back">Put Back</string>
     <string name="projects_feat_inv_fix_settings">Fix the marked field in the settings first.</string>
     <string name="projects_feat_inv_hand">In hand: %1$s</string>
-    <string name="projects_feat_inv_setting">Inventory view</string>
+    <string name="projects_feat_inv_setting">Inventory View</string>
     <string name="projects_feat_inv_setting_note">Takes effect at the next connection.</string>
 
     <!-- What a screen reader says for a slot -->
@@ -55,22 +55,22 @@
 
     <!-- A slot's actions (long press): the game's clicks by what they do; in a server's menu the clicks themselves -->
     <string name="projects_feat_inv_take">Take</string>
-    <string name="projects_feat_inv_take_half">Take half</string>
+    <string name="projects_feat_inv_take_half">Take Half</string>
     <string name="projects_feat_inv_place">Place</string>
     <string name="projects_feat_inv_swap">Swap</string>
-    <string name="projects_feat_inv_place_one">Place one</string>
-    <string name="projects_feat_inv_to_inventory">Move to inventory</string>
-    <string name="projects_feat_inv_to_hotbar">Move to hotbar</string>
-    <string name="projects_feat_inv_put_on">Put on</string>
-    <string name="projects_feat_inv_to_offhand">Move to off hand</string>
-    <string name="projects_feat_inv_click">Left click</string>
-    <string name="projects_feat_inv_right_click">Right click</string>
-    <string name="projects_feat_inv_shift_click">Shift+left click</string>
+    <string name="projects_feat_inv_place_one">Place One</string>
+    <string name="projects_feat_inv_to_inventory">Move to Inventory</string>
+    <string name="projects_feat_inv_to_hotbar">Move to Hotbar</string>
+    <string name="projects_feat_inv_put_on">Put On</string>
+    <string name="projects_feat_inv_to_offhand">Move to Off Hand</string>
+    <string name="projects_feat_inv_click">Left Click</string>
+    <string name="projects_feat_inv_right_click">Right Click</string>
+    <string name="projects_feat_inv_shift_click">Shift+Left Click</string>
     <string name="projects_feat_inv_hold">Hold</string>
     <string name="projects_feat_inv_use">Use</string>
     <string name="projects_feat_inv_drop">Drop</string>
-    <string name="projects_feat_inv_drop_one">Drop one</string>
-    <string name="projects_feat_inv_drop_stack">Drop stack</string>
+    <string name="projects_feat_inv_drop_one">Drop One</string>
+    <string name="projects_feat_inv_drop_stack">Drop Stack</string>
 
     <!-- What a screen reader hears after a move -->
     <string name="projects_feat_inv_picked_up">Picked up %1$s</string>
@@ -87,21 +87,21 @@
     <string name="projects_feat_console_chat">Chat</string>
     <string name="projects_feat_console_private">Private</string>
     <string name="projects_feat_console_server">Server</string>
-    <string name="projects_feat_console_mine">My commands</string>
+    <string name="projects_feat_console_mine">My Commands</string>
     <string name="projects_feat_console_connection">Connection</string>
     <string name="projects_feat_console_mentions">Mentions</string>
     <string name="projects_feat_console_search">Search the console</string>
-    <string name="projects_feat_console_search_close">Close search</string>
+    <string name="projects_feat_console_search_close">Close Search</string>
     <string name="projects_feat_console_none">No lines match your search.</string>
     <string name="projects_feat_console_none_kind">No lines of this kind.</string>
-    <string name="projects_feat_console_show_inventory">Show in inventory</string>
-    <string name="projects_feat_console_export">Download the console</string>
+    <string name="projects_feat_console_show_inventory">Show in Inventory</string>
+    <string name="projects_feat_console_export">Download the Console</string>
     <string name="projects_feat_console_export_open">Download</string>
-    <string name="projects_feat_console_hour">Last hour</string>
+    <string name="projects_feat_console_hour">Last Hour</string>
     <string name="projects_feat_console_today">Today</string>
-    <string name="projects_feat_console_days3">Last 3 days</string>
+    <string name="projects_feat_console_days3">Last 3 Days</string>
     <string name="projects_feat_console_share">Share</string>
-    <string name="projects_feat_console_save">Save to file</string>
+    <string name="projects_feat_console_save">Save to File</string>
     <string name="projects_feat_console_export_empty">No lines in this time range.</string>
     <string name="projects_feat_console_export_failed">Couldn\'t download the console.</string>
     <string name="projects_feat_console_saved">The console was saved.</string>
@@ -116,13 +116,13 @@
     <string name="projects_feat_console_strip">What the server keeps on screen</string>
 
     <!-- Reply placeholders -->
-    <string name="projects_feat_ph_sender">Sender\'s name</string>
+    <string name="projects_feat_ph_sender">Sender\'s Name</string>
     <string name="projects_feat_ph_part">Part %1$d</string>
-    <string name="projects_feat_ph_try">Try it</string>
+    <string name="projects_feat_ph_try">Try It</string>
     <string name="projects_feat_ph_sample">Sample message</string>
     <string name="projects_feat_ph_matches">Matches. Reply: %1$s</string>
     <string name="projects_feat_ph_no_match">No match.</string>
-    <string name="projects_feat_ph_add">Add to the reply</string>
+    <string name="projects_feat_ph_add">Add to the Reply</string>
     <string name="projects_feat_ph_fix_pattern">Fix the rule\'s phrase first.</string>
     <string name="projects_feat_ph_no_reply">Matches, but no reply goes out for it.</string>
     <string name="projects_feat_ph_rule">The reply goes out only when the parts are letters, digits or underscores.</string>
@@ -134,18 +134,18 @@
     <string name="projects_feat_ph_issue_command">This command can\'t use placeholders.</string>
     <string name="projects_feat_ph_issue_length">With its parts filled in, the reply could be too long.</string>
     <string name="projects_feat_legacy_rules">Your replies still match the old way. Save the settings once to match the server\'s chat format.</string>
-    <string name="projects_feat_legacy_save">Save now</string>
+    <string name="projects_feat_legacy_save">Save Now</string>
     <string name="projects_feat_rule_not_sent">This reply isn\'t being sent right now.</string>
 
     <!-- Several accounts at once -->
     <string name="projects_feat_bulk_select">Select</string>
-    <string name="projects_feat_bulk_select_all">Select all</string>
+    <string name="projects_feat_bulk_select_all">Select All</string>
     <string name="projects_feat_bulk_cancel">Cancel</string>
     <plurals name="projects_feat_bulk_selected">
         <item quantity="one">%1$d account selected</item>
         <item quantity="other">%1$d accounts selected</item>
     </plurals>
-    <string name="projects_feat_bulk_copy">Copy settings</string>
+    <string name="projects_feat_bulk_copy">Copy Settings</string>
     <plurals name="projects_feat_bulk_started">
         <item quantity="one">Started %1$d account.</item>
         <item quantity="other">Started %1$d accounts.</item>
@@ -192,16 +192,16 @@
     <string name="projects_feat_bulk_reason_conflict">changed elsewhere</string>
     <string name="projects_feat_bulk_reason_offline">can\'t be reached now</string>
     <string name="projects_feat_bulk_reason_other">something went wrong</string>
-    <string name="projects_feat_copy_title">Copy %1$s\'s settings</string>
+    <string name="projects_feat_copy_title">Copy %1$s\'s Settings</string>
     <string name="projects_feat_copy_from">From</string>
     <string name="projects_feat_copy_to">To: %1$s</string>
     <string name="projects_feat_copy_what">Anti-AFK, commands, auto-replies and your own in-game name are copied.</string>
-    <string name="projects_feat_copy_server">Also copy server and version</string>
-    <string name="projects_feat_copy_secret_each">Type for each account</string>
-    <string name="projects_feat_copy_secret_same">Use the same for all</string>
+    <string name="projects_feat_copy_server">Also Copy Server and Version</string>
+    <string name="projects_feat_copy_secret_each">Type for Each Account</string>
+    <string name="projects_feat_copy_secret_same">Use the Same for All</string>
     <string name="projects_feat_copy_secret_for">%1$s: %2$s</string>
     <string name="projects_feat_copy_secret_field">Password for %1$s</string>
-    <string name="projects_feat_copy_secrets">Secret lines</string>
+    <string name="projects_feat_copy_secrets">Secret Lines</string>
     <string name="projects_feat_copy_confirm">The chosen accounts\' settings change and they reconnect.</string>
     <string name="projects_feat_copy_go">Copy</string>
     <string name="projects_feat_copy_secret_missing">Type the password.</string>
@@ -215,9 +215,9 @@
     <string name="projects_feat_move_right">Right</string>
     <string name="projects_feat_move_jump">Jump</string>
     <string name="projects_feat_move_sneak">Sneak</string>
-    <string name="projects_feat_move_goto">Go to coordinates</string>
-    <string name="projects_feat_move_go_main">Go to your main account</string>
-    <string name="projects_feat_move_follow_main">Follow your main account</string>
+    <string name="projects_feat_move_goto">Go to Coordinates</string>
+    <string name="projects_feat_move_go_main">Go to Your Main Account</string>
+    <string name="projects_feat_move_follow_main">Follow Your Main Account</string>
     <string name="projects_feat_move_stop">Stop</string>
     <string name="projects_feat_move_far">It can go at most 256 blocks away.</string>
     <string name="projects_feat_move_not_near">Your main account isn\'t nearby.</string>
@@ -230,7 +230,7 @@
     <string name="projects_feat_move_following">Following %1$s</string>
     <string name="projects_feat_move_off">Movement is off for this account.</string>
     <string name="projects_feat_move_position">Position</string>
-    <string name="projects_feat_move_go_to_own">Go to</string>
+    <string name="projects_feat_move_go_to_own">Go To</string>
     <string name="projects_feat_move_follow_own">Follow</string>
     <string name="projects_feat_move_approaching">Walking to %1$s</string>
     <string name="projects_feat_move_facing">Facing: %1$s</string>
@@ -262,7 +262,7 @@
     <string name="projects_feat_move_sneaking">Sneaking.</string>
     <string name="projects_feat_move_machine_away">Can\'t reach our machine right now.</string>
     <string name="projects_feat_move_walk_main">Your main account</string>
-    <string name="projects_feat_move_walks_title">Your accounts</string>
+    <string name="projects_feat_move_walks_title">Your Accounts</string>
     <string name="projects_feat_move_not_in_game">Not in game</string>
     <string name="projects_feat_move_go_named">Go to %1$s</string>
     <string name="projects_feat_move_follow_named">Follow %1$s</string>

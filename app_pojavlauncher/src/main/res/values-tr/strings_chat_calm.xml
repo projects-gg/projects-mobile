@@ -9,7 +9,7 @@
     <string name="projects_chat_calm_slow_failure">Yavaş mod açık. Biraz bekle.</string>
     <string name="projects_chat_calm_slow_on">Yavaş mod açık.</string>
     <string name="projects_chat_calm_chat_title">Sohbet</string>
-    <string name="projects_chat_calm_slow_title">Yavaş mod</string>
+    <string name="projects_chat_calm_slow_title">Yavaş Mod</string>
     <string name="projects_chat_calm_slow_off">Kapalı</string>
     <plurals name="projects_chat_calm_slow_span">
         <item quantity="one">%1$d saniye</item>

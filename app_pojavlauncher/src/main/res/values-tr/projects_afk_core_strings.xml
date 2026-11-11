@@ -78,15 +78,15 @@
     <string name="projects_afk_line_reconnect">Yeni ayarlarla yeniden bağlanıyor</string>
 
     <!-- Bildirimler (hizmet) -->
-    <string name="projects_afk_channel_running">AFK hesapları</string>
-    <string name="projects_afk_channel_alerts">AFK uyarıları</string>
+    <string name="projects_afk_channel_running">AFK Hesapları</string>
+    <string name="projects_afk_channel_alerts">AFK Uyarıları</string>
     <string name="projects_afk_notify_title">AFK hesapları</string>
     <plurals name="projects_afk_notify_in_game">
         <item quantity="one">%1$d hesap oyunda</item>
         <item quantity="other">%1$d hesap oyunda</item>
     </plurals>
     <string name="projects_afk_notify_starting">Başlatılıyor</string>
-    <string name="projects_afk_notify_stop_all">Hepsini durdur</string>
+    <string name="projects_afk_notify_stop_all">Hepsini Durdur</string>
     <!-- Açılmış bildirimde hesap satırı: "SleepyFox_42: Oyunda" -->
     <string name="projects_afk_notify_account_line">%1$s: %2$s</string>
     <string name="projects_afk_alert_dropped">%1$s oyundan düştü</string>
@@ -104,5 +104,5 @@
     <string name="projects_afk_end_crashed">AFK %1$s beklenmedik şekilde kapandı.</string>
     <string name="projects_afk_end_app_updated">Uygulama %1$s güncellendi, AFK durdu.</string>
     <string name="projects_afk_end_unknown">AFK %1$s durdu.</string>
-    <string name="projects_afk_end_fix">Ayarı aç</string>
+    <string name="projects_afk_end_fix">Ayarı Aç</string>
 </resources>

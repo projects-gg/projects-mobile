@@ -270,7 +270,7 @@ final class PlusOrderSheet {
         }
 
         String nameOf(@Nullable String ref) {
-            if (ref == null || ref.isEmpty()) return c.getString(R.string.projects_form_search);
+            if (ref == null || ref.isEmpty()) return c.getString(R.string.projects_form_search_button);
             if (ref.startsWith("custom:")) {
                 JsonObject fresh = newCustom.get(ref.substring("custom:".length()));
                 if (fresh != null) {

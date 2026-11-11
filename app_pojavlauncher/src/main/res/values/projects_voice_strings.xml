@@ -2,29 +2,29 @@
 <!-- MOB-VOICE: voice chat on the phone. The desktop's words (apps/launcher/src/locales/en-voice.ts), British English;
      no explanations but the one before "Close room" and the two under settings. -->
 <resources>
-    <string name="projects_voice_title">Voice chat</string>
+    <string name="projects_voice_title">Voice Chat</string>
     <string name="projects_voice_someone">A player</string>
     <string name="projects_voice_just_you">Just you</string>
     <string name="projects_voice_names_more">%1$s and %2$d more</string>
 
-    <string name="projects_voice_call_action">Start voice call</string>
-    <string name="projects_voice_invite_to_room">Invite to room</string>
+    <string name="projects_voice_call_action">Start Voice Call</string>
+    <string name="projects_voice_invite_to_room">Invite to Room</string>
     <string name="projects_voice_ringing">Calling…</string>
     <string name="projects_voice_ringing_name">Calling %1$s…</string>
     <string name="projects_voice_cancel">Cancel</string>
-    <string name="projects_voice_cancel_label">Cancel the call</string>
+    <string name="projects_voice_cancel_label">Cancel the Call</string>
     <string name="projects_voice_no_answer">No answer</string>
-    <string name="projects_voice_call_again">Call again</string>
+    <string name="projects_voice_call_again">Call Again</string>
     <string name="projects_voice_ask">Call %1$s?</string>
     <string name="projects_voice_ask_yes">Call</string>
     <string name="projects_voice_ask_no">Cancel</string>
     <string name="projects_voice_ask_dnd">Do not disturb is on: no ring, they\'ll see it later.</string>
-    <string name="projects_voice_ask_first">Ask before calling</string>
+    <string name="projects_voice_ask_first">Ask Before Calling</string>
     <string name="projects_voice_unreachable">Can\'t be called right now.</string>
     <string name="projects_voice_together">Already in your room.</string>
-    <string name="projects_voice_call_kind">Voice call</string>
+    <string name="projects_voice_call_kind">Voice Call</string>
     <string name="projects_voice_elsewhere">In another room</string>
-    <string name="projects_voice_sounds">Voice chat sounds</string>
+    <string name="projects_voice_sounds">Voice Chat Sounds</string>
 
     <string name="projects_voice_ring_calling">%1$s is calling</string>
     <string name="projects_voice_ring_others">In the room: %1$s</string>
@@ -32,7 +32,7 @@
     <string name="projects_voice_decline">Decline</string>
     <string name="projects_voice_missed">Missed call</string>
     <string name="projects_voice_missed_from">%1$s called</string>
-    <string name="projects_voice_call_back">Call back</string>
+    <string name="projects_voice_call_back">Call Back</string>
     <string name="projects_voice_in_voice">In voice</string>
 
     <string name="projects_voice_bar_label">Voice chat: %1$s</string>
@@ -55,9 +55,9 @@
     <string name="projects_voice_rename">Rename</string>
     <string name="projects_voice_name_hint">Room name</string>
     <string name="projects_voice_save">Save</string>
-    <string name="projects_voice_close">Close room</string>
+    <string name="projects_voice_close">Close Room</string>
     <string name="projects_voice_close_ask">The room closes for everyone.</string>
-    <string name="projects_voice_new_room">New room</string>
+    <string name="projects_voice_new_room">New Room</string>
     <string name="projects_voice_general">General</string>
     <string name="projects_voice_numbered">Room %1$s</string>
     <string name="projects_voice_joining">Connecting…</string>
@@ -67,16 +67,16 @@
     <string name="projects_voice_weak">Weak connection</string>
 
     <string name="projects_voice_volume">Volume</string>
-    <string name="projects_voice_mute_for_me">Mute for me</string>
-    <string name="projects_voice_mute_for_all">Mute for everyone</string>
-    <string name="projects_voice_unmute_for_all">Unmute for everyone</string>
-    <string name="projects_voice_kick">Remove from room</string>
+    <string name="projects_voice_mute_for_me">Mute for Me</string>
+    <string name="projects_voice_mute_for_all">Mute for Everyone</string>
+    <string name="projects_voice_unmute_for_all">Unmute for Everyone</string>
+    <string name="projects_voice_kick">Remove from Room</string>
     <string name="projects_voice_kicked_them">%1$s was removed from the room.</string>
     <string name="projects_voice_undo">Undo</string>
     <string name="projects_voice_move">Move</string>
     <string name="projects_voice_moved_them">%1$s was moved to another room.</string>
-    <string name="projects_voice_make_mod">Make moderator</string>
-    <string name="projects_voice_unmake_mod">Remove as moderator</string>
+    <string name="projects_voice_make_mod">Make Moderator</string>
+    <string name="projects_voice_unmake_mod">Remove as Moderator</string>
     <string name="projects_voice_mic_off">Microphone off</string>
     <string name="projects_voice_deafened">Deafened</string>
     <string name="projects_voice_muted_for_all">Muted for everyone</string>
@@ -98,7 +98,7 @@
     <string name="projects_voice_left_restricted_until">Your voice chat is restricted until %1$s.</string>
 
     <string name="projects_voice_mic_denied">Microphone access is off.</string>
-    <string name="projects_voice_mic_settings">Open settings</string>
+    <string name="projects_voice_mic_settings">Open Settings</string>
     <string name="projects_voice_mic_missing">No microphone found.</string>
 
     <string name="projects_voice_refused_off">Voice chat isn\'t available right now.</string>
@@ -127,11 +127,11 @@
     <string name="projects_voice_crew_empty">Nobody here</string>
     <string name="projects_voice_room_count">%1$d/%2$d</string>
 
-    <string name="projects_voice_settings_enabled">Use voice chat</string>
+    <string name="projects_voice_settings_enabled">Use Voice Chat</string>
     <string name="projects_voice_settings_enabled_help">While it\'s off, nobody can call you.</string>
 
-    <string name="projects_voice_channel_rings">Voice calls</string>
-    <string name="projects_voice_channel_stay">Voice chat</string>
+    <string name="projects_voice_channel_rings">Voice Calls</string>
+    <string name="projects_voice_channel_stay">Voice Chat</string>
     <string name="projects_voice_stay_title">In voice chat</string>
     <string name="projects_voice_crew_room">%1$s, %2$s</string>
     <!-- M051 (SHARE-LIVE on the phone): the tag after the name of someone who shares their screen (the desktop's
@@ -150,28 +150,28 @@
     <string name="projects_voice_share_picture">Latest picture from %1$s\'s stream</string>
 
     <!-- M053: managing crew rooms (the desktop's room menu), "Stop their share", the ignore list -->
-    <string name="projects_voice_room_more">%1$s options</string>
-    <string name="projects_voice_room_edit">Edit room</string>
-    <string name="projects_voice_room_up">Move up</string>
-    <string name="projects_voice_room_down">Move down</string>
-    <string name="projects_voice_room_remove">Delete room</string>
+    <string name="projects_voice_room_more">%1$s Options</string>
+    <string name="projects_voice_room_edit">Edit Room</string>
+    <string name="projects_voice_room_up">Move Up</string>
+    <string name="projects_voice_room_down">Move Down</string>
+    <string name="projects_voice_room_remove">Delete Room</string>
     <string name="projects_voice_room_remove_title">Delete %1$s?</string>
     <string name="projects_voice_room_remove_ask">Everyone inside moves to General.</string>
     <string name="projects_voice_room_removed">%1$s was deleted.</string>
     <string name="projects_voice_room_not_removed">Someone\'s in the room, so it wasn\'t deleted.</string>
     <string name="projects_voice_room_ordered">Rooms reordered.</string>
-    <string name="projects_voice_room_limit">People limit</string>
+    <string name="projects_voice_room_limit">People Limit</string>
     <plurals name="projects_voice_room_limit_value">
         <item quantity="one">%1$d person</item>
         <item quantity="other">%1$d people</item>
     </plurals>
-    <string name="projects_voice_room_fewer">Lower the limit</string>
-    <string name="projects_voice_room_more_people">Raise the limit</string>
+    <string name="projects_voice_room_fewer">Lower the Limit</string>
+    <string name="projects_voice_room_more_people">Raise the Limit</string>
     <string name="projects_voice_room_save">Save</string>
     <string name="projects_voice_room_cancel">Cancel</string>
-    <string name="projects_voice_unshare">Stop their share</string>
+    <string name="projects_voice_unshare">Stop Their Share</string>
     <string name="projects_ignore_action">Ignore</string>
-    <string name="projects_ignore_stop">Stop ignoring</string>
+    <string name="projects_ignore_stop">Stop Ignoring</string>
     <string name="projects_ignore_done">You\'re ignoring %1$s. They won\'t know.</string>
     <string name="projects_ignore_stopped">You\'re no longer ignoring %1$s</string>
     <string name="projects_ignore_title">Ignored</string>
