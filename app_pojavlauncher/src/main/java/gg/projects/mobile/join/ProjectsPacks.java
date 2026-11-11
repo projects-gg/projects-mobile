@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.IOException;
 
 import gg.projects.mobile.ProjectsContent;
+import gg.projects.mobile.content.ModConfigs;
 import gg.projects.mobile.content.PackDownloader;
 import gg.projects.mobile.content.PackManifest;
 import gg.projects.mobile.content.PackSyncApplier;
@@ -39,11 +40,20 @@ public final class ProjectsPacks {
 
     /**
      * Applies a plan. Download progress goes to upstream's progress bar (so Play waits for it) and,
-     * when given, to {@code listener}.
+     * when given, to {@code listener}. M054: then the first settings files of the mods it put in place
+     * ({@link ModConfigs}, the desktop's table), where none exist; that never fails the sync.
      */
     @WorkerThread
-    public static PackSyncApplier.Report apply(File gameDir, PackSyncPlanner.Plan plan, @StringRes final int downloadingText,
+    public static PackSyncApplier.Report apply(File gameDir, PackSyncPlanner.Plan plan, PackManifest manifest,
+                                               @StringRes final int downloadingText,
                                                @Nullable final PackSyncApplier.Progress listener) throws IOException {
+        PackSyncApplier.Report report = applyFiles(gameDir, plan, downloadingText, listener);
+        ModConfigs.seedQuietly(gameDir, plan.placedMods(manifest));
+        return report;
+    }
+
+    private static PackSyncApplier.Report applyFiles(File gameDir, PackSyncPlanner.Plan plan, @StringRes final int downloadingText,
+                                                     @Nullable final PackSyncApplier.Progress listener) throws IOException {
         return PackSyncApplier.apply(gameDir, plan, PackDownloader.httpTransport(ProjectsContent.userAgent()),
                 new PackSyncApplier.Progress() {
                     private long lastPercent = -1;
@@ -62,7 +72,8 @@ public final class ProjectsPacks {
     }
 
     @WorkerThread
-    public static PackSyncApplier.Report apply(File gameDir, PackSyncPlanner.Plan plan, @StringRes int downloadingText) throws IOException {
-        return apply(gameDir, plan, downloadingText, null);
+    public static PackSyncApplier.Report apply(File gameDir, PackSyncPlanner.Plan plan, PackManifest manifest,
+                                               @StringRes int downloadingText) throws IOException {
+        return apply(gameDir, plan, manifest, downloadingText, null);
     }
 }

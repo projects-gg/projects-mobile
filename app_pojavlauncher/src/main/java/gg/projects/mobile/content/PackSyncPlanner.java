@@ -355,6 +355,27 @@ public final class PackSyncPlanner {
             return !changesFiles() && !stateChanged;
         }
 
+        /**
+         * M054 (the desktop's {@code SyncPlan::placed_mods}): the mods this plan puts in place (a file downloaded where
+         * there was none, or a disabled copy renamed back; not updates), by the Modrinth project of their item in
+         * {@code manifest} (else the item id), each once in plan order. Their first settings files are written where none
+         * exist ({@link ModConfigs}).
+         */
+        public List<String> placedMods(@androidx.annotation.Nullable PackManifest manifest) {
+            List<String> placed = new ArrayList<>();
+            List<String> items = new ArrayList<>();
+            for (Download d : downloads) if (d.category == FileCategory.MOD && d.action == Action.ADD && d.item != null) items.add(d.item);
+            for (Restore r : restores) if (r.category == FileCategory.MOD && r.item != null) items.add(r.item);
+            for (String id : items) {
+                PackManifest.PackItem item = manifest == null || manifest.projects == null ? null : manifest.projects.item(id);
+                if (item == null) continue;
+                String project = item.modrinth != null && item.modrinth.projectId != null && !item.modrinth.projectId.isEmpty()
+                        ? item.modrinth.projectId : item.id;
+                if (!placed.contains(project)) placed.add(project);
+            }
+            return placed;
+        }
+
         public ItemResolver.ItemStatus status(String id) {
             for (ItemResolver.ItemStatus status : items) if (status.id.equals(id)) return status;
             return null;

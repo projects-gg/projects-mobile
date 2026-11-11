@@ -98,7 +98,7 @@ public final class ModsApply {
                 // Any account may download (since 0.1.3; upstream kept modpack downloads for
                 // Microsoft accounts that own the game).
                 if (!gameDir.isDirectory() && !gameDir.mkdirs()) throw new IOException("cannot create " + gameDir);
-                PackSyncApplier.Report report = ProjectsPacks.apply(gameDir, plan, R.string.projects_mods_downloading,
+                PackSyncApplier.Report report = ProjectsPacks.apply(gameDir, plan, manifest, R.string.projects_mods_downloading,
                         (phase, done, total) -> progress(phase, total > 0 ? (float) done / total : -1));
                 Log.i(TAG, "mod selection applied: " + plan.summary().describe() + ", " + report.issues.size() + " issues");
                 result = new Result(Outcome.DONE, report.issues.size(), false, null);

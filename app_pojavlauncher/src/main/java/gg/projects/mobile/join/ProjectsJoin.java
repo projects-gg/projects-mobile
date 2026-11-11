@@ -213,7 +213,7 @@ public final class ProjectsJoin {
 
         PackSyncPlanner.Plan plan = PackSyncPlanner.plan(manifest, PackSyncPlanner.directoryProbe(gameDir),
                 PackState.load(gameDir), null, ProjectsPacks.syncOptions(app, manifest));
-        PackSyncApplier.Report report = ProjectsPacks.apply(gameDir, plan, R.string.projects_join_downloading);
+        PackSyncApplier.Report report = ProjectsPacks.apply(gameDir, plan, manifest, R.string.projects_join_downloading);
         Log.i(TAG, String.format(Locale.ROOT, "pack %s %s: %s; %d downloaded, %d restored, %d deleted, %d issues",
                 pack.id, manifest.versionId, plan.summary().describe(), report.downloaded, report.restored,
                 report.deleted, report.issues.size() + plan.issues.size()));
