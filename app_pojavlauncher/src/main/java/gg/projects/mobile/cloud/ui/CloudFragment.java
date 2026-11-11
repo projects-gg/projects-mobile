@@ -240,7 +240,7 @@ public final class CloudFragment extends CloudScreen {
 
     /** M054 (M053's P2): the friends service's ways in (Microsoft's button) arrive while the signed-out screen shows. */
     private final gg.projects.mobile.social.SocialService.Listener mSocialListener = () -> {
-        if (isResumed()) render();
+        if (isResumed() && mService.load() == CloudService.Load.SIGNED_OUT) render();
     };
 
     @Override

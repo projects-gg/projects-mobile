@@ -347,7 +347,7 @@
     <string name="controller_button_b">B</string>
     <string name="controller_button_x">X</string>
     <string name="controller_button_y">Y</string>
-    <string name="controller_button_start">Bașlat</string>
+    <string name="controller_button_start">Başlat</string>
     <string name="controller_button_select">Seç</string>
     <string name="controller_button_trigger_left">Sol Tetik</string>
     <string name="controller_button_trigger_right">Sağ Tetik</string>
@@ -369,8 +369,8 @@
     <string name="customctrl_visibility_title">Görünürlük</string>
     <string name="customctrl_visibility_ingame">Oyunda</string>
     <string name="customctrl_visibility_in_menus">Menülerde</string>
-    <string name="controller_remapper_expand_entry">Tuș Kodlarını Değiștirmek için Genişlet</string>
-    <string name="preference_remap_controller_title">Kontrolcü Tuș Atamalarını Değiştir</string>
+    <string name="controller_remapper_expand_entry">Tuş Kodlarını Değiştirmek için Genişlet</string>
+    <string name="preference_remap_controller_title">Kontrolcü Tuş Atamalarını Değiştir</string>
     <string name="preference_remap_controller_description">Her bir kontrolcü düğmesine atanmış klavye tuşlarını değiştirmenizi sağlar</string>
     <string name="mcl_button_discord">Discord</string>
     <string name="ltw_render_distance_warning_msg">Ekran kartın Sodium gibi bir mod olmadan 7\'den uzak görüş mesafesini çizemez. \"Tamam\"a basınca görüş mesafesi kendiliğinden düşer.</string>

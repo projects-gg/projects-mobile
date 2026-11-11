@@ -11,7 +11,6 @@
     <string name="projects_skin_off">Projects skini şu an kapalı.</string>
     <string name="projects_skin_unreachable">Şu an bağlanılamıyor. Biraz sonra tekrar dene.</string>
     <string name="projects_skin_link_label">Discord Eşlemesi</string>
-    <string name="projects_skin_link_linked">Discord Eşlemesi · %1$s</string>
     <string name="projects_skin_link_checking">Eşleme denetleniyor</string>
     <string name="projects_skin_link_other">Discord hesabın %1$s hesabına eşli.</string>
     <string name="projects_skin_link_this">Bu Hesabı Eşle</string>

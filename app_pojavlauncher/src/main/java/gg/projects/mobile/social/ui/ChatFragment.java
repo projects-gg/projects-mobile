@@ -634,6 +634,15 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
         if (crewId != null) {
             long greet = BadgeRules.nextGreetEnd(state.joins(crewId, now), state.myId(), now);
             if (greet > 0 && (next == 0 || greet - now < next)) next = greet - now;
+        } else {
+            // M054 (CREW-PLUS): the header's play time changes its words with no message (at most once a minute).
+            String other = ChatConv.other(mConv, state.myId());
+            SocialModel.Presence presence = other == null || !state.isFriend(other) ? null : state.presence(other);
+            if (presence != null && presence.playing() && presence.playingSince > 0) {
+                long played = gg.projects.mobile.social.PlayedTime.nextTick(
+                        java.util.Collections.singletonList(presence.playingSince), hubNow);
+                if (played > 0 && (next == 0 || played < next)) next = played;
+            }
         }
         if (next > 0) mList.postDelayed(mTick, next * 1000L + 500);
         watchNewest();

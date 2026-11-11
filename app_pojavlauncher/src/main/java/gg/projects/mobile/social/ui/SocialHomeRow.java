@@ -252,7 +252,8 @@ public final class SocialHomeRow implements SocialService.Listener {
                 SocialModel.TeamInvite invite = line.teamInvite;
                 title = invite == null ? context.getString(R.string.projects_crew_home_invite_title)
                         : context.getString(R.string.projects_crew_invited_you, invite.from.name(), invite.team.name);
-                text = context.getString(R.string.projects_crew_home_invite);
+                // M054: without the invite's words the title already says it (not "Ekip Daveti" over "Ekip daveti").
+                text = invite == null ? "" : context.getString(R.string.projects_crew_home_invite);
                 gold = true;
                 break;
             }

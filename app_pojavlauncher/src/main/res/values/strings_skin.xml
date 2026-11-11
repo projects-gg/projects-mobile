@@ -11,7 +11,6 @@
     <string name="projects_skin_off">Projects skins are off right now.</string>
     <string name="projects_skin_unreachable">Can\'t connect right now. Try again in a moment.</string>
     <string name="projects_skin_link_label">Discord Link</string>
-    <string name="projects_skin_link_linked">Discord Link · %1$s</string>
     <string name="projects_skin_link_checking">Checking the link</string>
     <string name="projects_skin_link_other">Your Discord is linked to %1$s.</string>
     <string name="projects_skin_link_this">Link This Account</string>

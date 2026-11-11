@@ -367,7 +367,7 @@ final class BadgeCard {
 
     private static SocialModel.TeamSummary summary(Badge badge) {
         return new SocialModel.TeamSummary(badge.crew, badge.name, badge.tag, badge.emblem, badge.color, badge.frame,
-                badge.motto.isEmpty() ? null : badge.motto, badge.members);
+                badge.motto.isEmpty() ? null : badge.motto, badge.members, SocialModel.TeamSummary.JOIN_OPEN, badge.maxMembers);
     }
 
     private static void openCrew(FragmentActivity activity, String crewId) {
