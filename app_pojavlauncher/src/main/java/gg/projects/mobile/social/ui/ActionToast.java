@@ -29,13 +29,15 @@ import gg.projects.mobile.ui.Press;
  * MOB1: a short line with one action at the bottom of whatever screen is up (Android's own toasts
  * cannot carry a button): "GK etiketini taktın." with "Geri al", "Gece Kartalları ekibine katıldın"
  * with "Etiketi tak". The look of the home screen's undo bar (an opaque obsidian surface a step lighter
- * than the screen, a bone hairline, the action in bone semibold); it rises 10 dp as it fades in, stays 5 s (a
+ * than the screen, a bone hairline, the action in bone semibold); it rises 10 dp as it fades in, stays 5 s (8 s with an action; a
  * finger on it holds it) and leaves faster than it came. One at a time; a new one takes its place.
  */
 public final class ActionToast {
     private ActionToast() {}
 
     private static final long STAY_MS = 5000;
+    /** M054 (M053's P3): a line with an action ("Geri Al") stays longer: 5 s was short to read it and reach the button. */
+    private static final long STAY_ACTION_MS = 8000;
 
     public static void show(Activity activity, CharSequence text, @Nullable String action, @Nullable final Runnable onAction) {
         View content = activity.findViewById(android.R.id.content);
@@ -49,6 +51,7 @@ public final class ActionToast {
         if (old instanceof View) leave((View) old, root, false);
         Context context = activity;
         float dp = context.getResources().getDisplayMetrics().density;
+        final long stay = action != null && onAction != null ? STAY_ACTION_MS : STAY_MS;
         final LinearLayout bar = new LinearLayout(context) {
             final Runnable mLeave = () -> leave(this, root, true);
 
@@ -56,14 +59,14 @@ public final class ActionToast {
             public boolean dispatchTouchEvent(MotionEvent event) {
                 int a = event.getActionMasked();
                 if (a == MotionEvent.ACTION_DOWN) removeCallbacks(mLeave);
-                else if (a == MotionEvent.ACTION_UP || a == MotionEvent.ACTION_CANCEL) postDelayed(mLeave, STAY_MS / 2);
+                else if (a == MotionEvent.ACTION_UP || a == MotionEvent.ACTION_CANCEL) postDelayed(mLeave, stay / 2);
                 return super.dispatchTouchEvent(event);
             }
 
             @Override
             protected void onAttachedToWindow() {
                 super.onAttachedToWindow();
-                postDelayed(mLeave, STAY_MS);
+                postDelayed(mLeave, stay);
             }
 
             @Override

@@ -238,11 +238,17 @@ public final class CloudFragment extends CloudScreen {
         return false;
     }
 
+    /** M054 (M053's P2): the friends service's ways in (Microsoft's button) arrive while the signed-out screen shows. */
+    private final gg.projects.mobile.social.SocialService.Listener mSocialListener = () -> {
+        if (isResumed()) render();
+    };
+
     @Override
     public void onResume() {
         mShape = "";
         super.onResume();
         mService.refresh(false);
+        gg.projects.mobile.social.SocialService.get(ctx()).addListener(mSocialListener);
         View view = getView();
         if (view != null) view.postDelayed(mRefresh, REFRESH_MS);
     }
@@ -250,6 +256,7 @@ public final class CloudFragment extends CloudScreen {
     @Override
     public void onPause() {
         super.onPause();
+        gg.projects.mobile.social.SocialService.get(ctx()).removeListener(mSocialListener);
         View view = getView();
         if (view != null) {
             view.removeCallbacks(mRefresh);
@@ -283,6 +290,10 @@ public final class CloudFragment extends CloudScreen {
         if (me != null) key.append(me.restricted).append(me.restrictedUntil).append(me.canBuy).append('|');
         if (offer != null) key.append(offer.salesNew).append('|');
         for (CloudModel.Account a : mService.accounts()) key.append(a.id).append(a.name).append(a.plus()).append(',');
+        // M054: signed out, the ways in decide the buttons (they are read when this screen shows, not from Arkadaşlar's cache).
+        if (mService.load() == CloudService.Load.SIGNED_OUT) {
+            key.append('|').append(gg.projects.mobile.social.SocialService.get(ctx()).signInOptions().encode());
+        }
         return key.toString();
     }
 
@@ -307,7 +318,11 @@ public final class CloudFragment extends CloudScreen {
             // M053 (MOB-0410's P3): the ways in the friends service offers, as on Arkadaşlar: Discord, and Microsoft
             // while it is on (its own dark button and mark; "Microsoft hesabını bağladıysan" over it while Microsoft
             // only signs in accounts that linked it).
-            gg.projects.mobile.social.SignInOptions options = gg.projects.mobile.social.SocialService.get(c).signInOptions();
+            // M054 (M053's P2): read them now (at most every few minutes); until then, the kept ones. Before, only an
+            // earlier visit to Arkadaşlar had read them, so Microsoft's button was missing on a first visit.
+            gg.projects.mobile.social.SocialService social = gg.projects.mobile.social.SocialService.get(c);
+            social.readSignInOptions(false);
+            gg.projects.mobile.social.SignInOptions options = social.signInOptions();
             LinearLayout empty = CloudUi.empty(c, gg.projects.mobile.ui.PixelSprites.Sprite.CLOUD, getString(
                     options.microsoftSignIn ? R.string.projects_cloud_signed_out_both : R.string.projects_cloud_signed_out));
             Button signIn = CloudUi.discordButton(c, getString(R.string.projects_social_sign_in), v -> mService.signIn(requireActivity()));

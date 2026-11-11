@@ -417,8 +417,10 @@ public class ProjectsModsFragment extends Fragment implements ModsApply.Listener
             final int coming = option.hasSet ? ModsModel.modCount(model.gameDir, option.minecraft) : -1;
             mMain.post(() -> {
                 if (!isAdded() || getActivity() == null) return;
-                StringBuilder message = new StringBuilder(getResources().getQuantityString(
-                        R.plurals.projects_mods_switch_parked, leaving, from, leaving));
+                // M054 (M053's P3): with no mods in the set, only its settings are kept ("0 mod ve ayarlar" read oddly).
+                StringBuilder message = new StringBuilder(leaving > 0
+                        ? getResources().getQuantityString(R.plurals.projects_mods_switch_parked, leaving, from, leaving)
+                        : getString(R.string.projects_mods_switch_parked_settings, from));
                 if (coming >= 0) {
                     message.append('\n').append(getResources().getQuantityString(
                             R.plurals.projects_mods_switch_restored, coming, option.minecraft, coming));

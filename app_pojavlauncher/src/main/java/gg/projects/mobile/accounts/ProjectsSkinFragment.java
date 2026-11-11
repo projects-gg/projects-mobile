@@ -715,7 +715,8 @@ public final class ProjectsSkinFragment extends Fragment implements ProjectsSkin
         LinearLayout linkRow = new LinearLayout(c);
         linkRow.setOrientation(LinearLayout.HORIZONTAL);
         linkRow.setGravity(Gravity.CENTER_VERTICAL);
-        TextView linked = CloudUi.text(c, getString(R.string.projects_skin_link_linked, s.link.name), 14, R.color.projects_bone_100, false);
+        // M054 (M053's P3): the section already says "Discord eşlemesi": the line is the linked name alone.
+        TextView linked = CloudUi.text(c, s.link.name, 14, R.color.projects_bone_100, false);
         linkRow.addView(linked, CloudUi.weight(1f));
         linkRow.addView(CloudUi.textButton(c, getString(R.string.projects_skin_link_remove), v -> ConfirmDialog.show(requireActivity(),
                 getString(R.string.projects_skin_link_remove_title), getString(R.string.projects_skin_link_remove_body),
@@ -724,7 +725,8 @@ public final class ProjectsSkinFragment extends Fragment implements ProjectsSkin
         mContent.addView(linkRow, CloudUi.matchWrap());
         if (mLinkNote != null) mContent.addView(CloudUi.note(c, mLinkNote));
 
-        mContent.addView(CloudUi.section(c, getString(R.string.projects_skin_title)));
+        // M054 (M053's P3): "Skin", not the screen's title again.
+        mContent.addView(CloudUi.section(c, getString(R.string.projects_skin_section)));
         mContent.addView(preview(c, s));
 
         CharSequence[] sources = {getString(R.string.projects_skin_source_png), getString(R.string.projects_skin_source_name)};
@@ -783,8 +785,8 @@ public final class ProjectsSkinFragment extends Fragment implements ProjectsSkin
         } else if (s.skinsLeft == 1 && s.skinsPerDay > 1) {
             holdText = getString(R.string.projects_skin_last_change);
         }
-        if (mNote != null) mContent.addView(CloudUi.notice(c, R.drawable.projects_ic_info, R.color.projects_ash_300, mNote));
-        else if (holdText != null) mContent.addView(CloudUi.notice(c, R.drawable.projects_ic_info, R.color.projects_ash_300, holdText));
+        if (mNote != null) mContent.addView(inColumn(c, CloudUi.notice(c, R.drawable.projects_ic_info, R.color.projects_ash_300, mNote)));
+        else if (holdText != null) mContent.addView(inColumn(c, CloudUi.notice(c, R.drawable.projects_ic_info, R.color.projects_ash_300, holdText)));
 
         boolean draft = (mSource == 0 && mPng != null && mPng.ok()) || (mSource == 1 && mPremium != null
                 && mPremium.kind == MojangSkinLookup.Kind.FOUND);
@@ -805,12 +807,31 @@ public final class ProjectsSkinFragment extends Fragment implements ProjectsSkin
         actions.addView(save, saveLp);
         LinearLayout.LayoutParams actionsLp = CloudUi.matchWrap();
         actionsLp.topMargin = CloudUi.dp(c, 16);
+        actionsLp.setMarginEnd(CloudUi.dp(c, COLUMN_DP));
         mContent.addView(actions, actionsLp);
+    }
+
+    /**
+     * M054 (M053's P3): the text column's edge (sections and notes are padded 8 dp): panels and buttons line up with it
+     * instead of standing out of it.
+     */
+    private static final int COLUMN_DP = 8;
+
+    private static View inColumn(Context c, View panel) {
+        LinearLayout.LayoutParams lp = panel.getLayoutParams() instanceof LinearLayout.LayoutParams
+                ? (LinearLayout.LayoutParams) panel.getLayoutParams() : CloudUi.matchWrap();
+        lp.setMarginStart(CloudUi.dp(c, COLUMN_DP));
+        lp.setMarginEnd(CloudUi.dp(c, COLUMN_DP));
+        panel.setLayoutParams(lp);
+        return panel;
     }
 
     /** The 6-digit code box: sends at the sixth digit; pasted text keeps its digits. */
     private void codeBox(Context c, ProjectsSkinState.State s) {
-        mContent.addView(CloudUi.text(c, getString(R.string.projects_skin_link_title), 15, R.color.projects_bone_100, true));
+        // M054 (M053's P3): on the column, as the section above it.
+        TextView title = CloudUi.text(c, getString(R.string.projects_skin_link_title), 15, R.color.projects_bone_100, true);
+        title.setPadding(CloudUi.dp(c, COLUMN_DP), 0, CloudUi.dp(c, COLUMN_DP), 0);
+        mContent.addView(title);
         TextView body = CloudUi.note(c, getString(R.string.projects_skin_link_body, LINK_COMMAND));
         mContent.addView(body);
         final CloudUi.Field field = CloudUi.field(c, getString(R.string.projects_skin_link_code), null, "000000",
@@ -916,7 +937,7 @@ public final class ProjectsSkinFragment extends Fragment implements ProjectsSkin
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
         lp.gravity = Gravity.START;
         lp.topMargin = CloudUi.dp(c, 8);
-        lp.setMarginStart(CloudUi.dp(c, 4));
+        lp.setMarginStart(CloudUi.dp(c, COLUMN_DP));
         box.addView(child, lp);
         box.setLayoutParams(CloudUi.matchWrap());
         return box;
