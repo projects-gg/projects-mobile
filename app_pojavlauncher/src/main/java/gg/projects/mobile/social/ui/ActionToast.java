@@ -168,13 +168,20 @@ public final class ActionToast {
     private static int aboveBar(FrameLayout root, int margin) {
         // The marker is a Space, which keeps itself INVISIBLE: whether the bar is on screen is its parent's.
         View playBar = root.findViewById(R.id.projects_play_bar_top);
-        if (playBar == null || !(playBar.getParent() instanceof View) || !((View) playBar.getParent()).isShown()
-                || playBar.getHeight() == 0 || root.getHeight() == 0) {
-            return 0;
-        }
+        int play = playBar == null || !(playBar.getParent() instanceof View) || !((View) playBar.getParent()).isShown()
+                ? 0 : above(root, playBar, margin);
+        // After 0.5.4 (the lead): the voice call bar too ("… artık moderatör" covered the room's name).
+        View voiceBar = root.findViewById(R.id.projects_voice_bar);
+        int voice = voiceBar == null || !voiceBar.isShown() ? 0 : above(root, voiceBar, margin);
+        return Math.max(play, voice);
+    }
+
+    /** {@code bar}'s top's distance from the root's bottom plus {@code margin}; 0 when not laid out or off the root. */
+    private static int above(FrameLayout root, View bar, int margin) {
+        if (bar.getHeight() == 0 || root.getHeight() == 0) return 0;
         int[] at = new int[2];
         int[] rootAt = new int[2];
-        playBar.getLocationInWindow(at);
+        bar.getLocationInWindow(at);
         root.getLocationInWindow(rootAt);
         int below = root.getHeight() - (at[1] - rootAt[1]);
         return below > 0 && below < root.getHeight() ? below + margin : 0;
