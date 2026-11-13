@@ -421,6 +421,15 @@ public final class VoiceSheet implements VoiceLink.Listener {
             link.setMinHeight(dp(48));
             link.setPadding(dp(12), 0, dp(4), 0);
             link.setBackgroundResource(R.drawable.projects_row_ripple);
+            // A caret after it says it goes somewhere (the emulator pass: plain ash words did not read as a link).
+            Drawable caret = ContextCompat.getDrawable(c, R.drawable.projects_ic_caret_right_small);
+            if (caret != null) {
+                caret = caret.mutate();
+                caret.setTint(ContextCompat.getColor(c, R.color.projects_ash_300));
+                caret.setBounds(0, 0, dp(14), dp(14));
+                link.setCompoundDrawablesRelative(null, null, caret, null);
+                link.setCompoundDrawablePadding(dp(2));
+            }
             link.setOnClickListener(v -> openConversation(ChatConv.crew(crew)));
             Press.attach(link, Press.Style.BUTTON);
             row.addView(link);

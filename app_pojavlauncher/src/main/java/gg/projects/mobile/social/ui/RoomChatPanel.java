@@ -324,6 +324,9 @@ public final class RoomChatPanel {
         InputMethodManager imm = (InputMethodManager) mActivity.getSystemService(Context.INPUT_METHOD_SERVICE);
         if (imm != null) imm.hideSoftInputFromWindow(mInput.getWindowToken(), 0);
         boolean stickers = SocialService.get(mActivity).chat().stickerSets().contains("pl1");
+        // The list keeps showing the newest messages while the picker takes room under it (the emulator pass saw it
+        // jump to the oldest once).
+        final boolean atEnd = !mList.canScrollVertically(1);
         mPickerOpen = true;
         EmojiSheet.inline(mActivity, stickers, new EmojiSheet.Pick() {
             @Override
@@ -349,6 +352,7 @@ public final class RoomChatPanel {
                 mPickerSlot.removeAllViews();
                 mPickerSlot.addView(panel);
                 mPickerSlot.setVisibility(View.VISIBLE);
+                if (atEnd) mList.post(() -> mList.scrollToPosition(Math.max(0, mAdapter.getItemCount() - 1)));
                 if (Motion.enabled(mActivity)) {
                     mPickerSlot.setAlpha(0f);
                     mPickerSlot.setTranslationY(12 * mDp);
