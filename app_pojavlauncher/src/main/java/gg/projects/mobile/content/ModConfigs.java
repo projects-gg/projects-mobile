@@ -93,11 +93,28 @@ public final class ModConfigs {
         for (Entry entry : configsFor(projects)) {
             if (!settingsPath(entry.path)) continue;
             File target = new File(gameDir, entry.path);
-            if (target.exists()) continue;
+            if (somethingAt(target)) continue;
             AtomicFiles.write(target, entry.contents());
             written.add(entry.path);
         }
         return written;
+    }
+
+    /**
+     * SQOL-M (m054 P3): whether anything is at {@code target}, a link included, the desktop's {@code symlink_metadata}.
+     * {@link File#exists()} follows links, so a broken link read as missing and the seed replaced the player's link with a
+     * file. No java.nio.file below Android 8: a broken link still shows in its folder's listing.
+     */
+    static boolean somethingAt(File target) {
+        if (target.exists()) return true;
+        File parent = target.getParentFile();
+        String[] names = parent == null ? null : parent.list();
+        if (names == null) return false;
+        String name = target.getName();
+        for (String entry : names) {
+            if (entry.equals(name)) return true;
+        }
+        return false;
     }
 
     /** {@link #seed} that never fails a sync or a start: a failure is logged. */

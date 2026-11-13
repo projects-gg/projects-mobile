@@ -74,6 +74,28 @@ public class ModConfigsTest {
         assertTrue(ModConfigs.seed(game, Collections.<String>emptyList()).isEmpty());
     }
 
+    /** SQOL-M (m054 P3): a broken link at the path is something there (the desktop's symlink_metadata), never replaced. */
+    @Test
+    public void aBrokenLinkCountsAsSomethingThere() throws Exception {
+        File game = tmp.newFolder("linked");
+        File dir = new File(game, "config/xaero/lib");
+        assertTrue(dir.mkdirs());
+        File link = new File(dir, "common.cfg");
+        try {
+            Files.createSymbolicLink(link.toPath(), new File(game, "gone/common.cfg").toPath());
+        } catch (UnsupportedOperationException | java.io.IOException e) {
+            // Windows without the right to make links: nothing to check here (Android and CI have it).
+            org.junit.Assume.assumeNoException(e);
+        }
+        assertFalse(link.exists());
+        assertTrue(ModConfigs.somethingAt(link));
+        assertTrue(ModConfigs.seed(game, Collections.singletonList(BETTER_PVP)).isEmpty());
+        assertTrue(Files.isSymbolicLink(link.toPath()));
+        // A plain missing file next to it is still missing.
+        assertFalse(ModConfigs.somethingAt(new File(dir, "other.cfg")));
+        assertFalse(ModConfigs.somethingAt(new File(game, "nowhere/at/all.cfg")));
+    }
+
     @Test
     public void placedModsAreNewFilesAndRenamedBackCopiesNotUpdates() {
         PackManifest manifest = new PackManifest();

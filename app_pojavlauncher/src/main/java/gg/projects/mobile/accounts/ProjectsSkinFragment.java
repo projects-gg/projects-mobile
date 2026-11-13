@@ -112,7 +112,9 @@ public final class ProjectsSkinFragment extends Fragment implements ProjectsSkin
         mAccount = args == null || args.getString(ARG_ACCOUNT) == null ? "" : args.getString(ARG_ACCOUNT);
         ScreenHeader header = view.findViewById(R.id.projects_afk_header);
         header.setTitle(getString(R.string.projects_skin_title));
-        header.setCaption(mAccount + " · " + getString(R.string.projects_skin_subtitle));
+        // SQOL-M (m054 P3): the account on its own line, the sentence under it (no middle dot between a name and a sentence).
+        header.setCaption(mAccount.isEmpty() ? getString(R.string.projects_skin_subtitle)
+                : mAccount + "\n" + getString(R.string.projects_skin_subtitle));
         mContent = view.findViewById(R.id.projects_afk_content);
         render();
         load();
