@@ -41,6 +41,9 @@ public final class BottomPanel {
     private boolean mClosed;
     @Nullable
     private Runnable mOnClosed;
+    /** SQOL: asked on "Geri" before the sheet goes. */
+    @Nullable
+    private java.util.concurrent.Callable<Boolean> mBack;
 
     private BottomPanel(Context context, float maxHeightFraction) {
         mDialog = new Dialog(context, R.style.ProjectsBottomPanel);
@@ -88,7 +91,7 @@ public final class BottomPanel {
         }
         mDialog.setOnKeyListener((d, keyCode, event) -> {
             if (keyCode == android.view.KeyEvent.KEYCODE_BACK && event.getAction() == android.view.KeyEvent.ACTION_UP) {
-                dismiss();
+                if (!ownBack()) dismiss();
                 return true;
             }
             return false;
@@ -120,6 +123,37 @@ public final class BottomPanel {
         panel.mContent.addView(content, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                 fixed ? ViewGroup.LayoutParams.MATCH_PARENT : ViewGroup.LayoutParams.WRAP_CONTENT));
         return panel;
+    }
+
+    /**
+     * SQOL: the content's own height from now on ({@code px}; 0: as tall as it is), as {@link #of} takes it from a content
+     * with a set height: the voice room's sheet takes its full height while it holds a chat (an open keyboard still
+     * shrinks it).
+     */
+    public void setContentHeight(int px) {
+        mContent.mPreferred = Math.max(0, px);
+        View child = mContent.getChildCount() > 0 ? mContent.getChildAt(0) : null;
+        if (child != null && child.getLayoutParams() instanceof FrameLayout.LayoutParams) {
+            FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) child.getLayoutParams();
+            lp.height = px > 0 ? ViewGroup.LayoutParams.MATCH_PARENT : ViewGroup.LayoutParams.WRAP_CONTENT;
+            child.setLayoutParams(lp);
+        }
+        mContent.requestLayout();
+    }
+
+    /** SQOL: "Geri" asks {@code back} first (true: it closed something of its own, the sheet stays). */
+    public BottomPanel onBack(@Nullable java.util.concurrent.Callable<Boolean> back) {
+        mBack = back;
+        return this;
+    }
+
+    private boolean ownBack() {
+        if (mBack == null) return false;
+        try {
+            return Boolean.TRUE.equals(mBack.call());
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private void closed() {

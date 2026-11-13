@@ -960,20 +960,25 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
 
     /** What a refused link says, by its rule ("https:// ile yaz." for a bare domain). */
     private String linkWords(@Nullable ChatLinks.Rule rule, String text) {
+        return linkWords(requireContext(), rule, text);
+    }
+
+    /** The same for any surface of the chat's (SQOL: the voice room's chat says a refused link the same way). */
+    static String linkWords(Context context, @Nullable ChatLinks.Rule rule, String text) {
         String key = rule == null ? "other" : rule.wire();
         if ("form".equals(key) && !text.toLowerCase(Locale.ROOT).contains("://")) key = "formHint";
         switch (gg.projects.mobile.social.ChatLinkUi.ruleWords(key)) {
-            case "off": return getString(R.string.projects_links_rule_off);
-            case "form": return getString(R.string.projects_links_rule_form);
-            case "formHint": return getString(R.string.projects_links_rule_form_hint);
-            case "count": return getString(R.string.projects_links_rule_count);
-            case "http": return getString(R.string.projects_links_rule_http);
-            case "long": return getString(R.string.projects_links_rule_long);
-            case "shortener": return getString(R.string.projects_links_rule_shortener);
-            case "lookalike": return getString(R.string.projects_links_rule_lookalike);
-            case "file": return getString(R.string.projects_links_rule_file);
-            case "invite": return getString(R.string.projects_links_rule_invite);
-            default: return getString(R.string.projects_links_rule_other);
+            case "off": return context.getString(R.string.projects_links_rule_off);
+            case "form": return context.getString(R.string.projects_links_rule_form);
+            case "formHint": return context.getString(R.string.projects_links_rule_form_hint);
+            case "count": return context.getString(R.string.projects_links_rule_count);
+            case "http": return context.getString(R.string.projects_links_rule_http);
+            case "long": return context.getString(R.string.projects_links_rule_long);
+            case "shortener": return context.getString(R.string.projects_links_rule_shortener);
+            case "lookalike": return context.getString(R.string.projects_links_rule_lookalike);
+            case "file": return context.getString(R.string.projects_links_rule_file);
+            case "invite": return context.getString(R.string.projects_links_rule_invite);
+            default: return context.getString(R.string.projects_links_rule_other);
         }
     }
 
@@ -2324,7 +2329,7 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
 
     /** Figtree as the layout sets it (a bubble that showed a tombstone's italic gets it back). */
     @Nullable
-    private static android.graphics.Typeface regularFace(Context context) {
+    static android.graphics.Typeface regularFace(Context context) {
         if (sRegular == null) {
             try {
                 sRegular = androidx.core.content.res.ResourcesCompat.getFont(context, R.font.figtree_regular);
@@ -2359,7 +2364,7 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
     }
 
     /** FIX2: a tombstone's bubble: the message's shape as a quiet dashed outline, no fill. */
-    private static Drawable deletedShape(Context context, boolean mine, boolean first, boolean last) {
+    static Drawable deletedShape(Context context, boolean mine, boolean first, boolean last) {
         GradientDrawable shape = (GradientDrawable) bubbleShape(context, mine, first, last, false);
         float dp = context.getResources().getDisplayMetrics().density;
         shape.setColor(android.graphics.Color.TRANSPARENT);
@@ -2368,7 +2373,7 @@ public class ChatFragment extends Fragment implements SocialService.Listener {
     }
 
     /** The bubble: rounded, with the corners toward the sender's side tighter where the group goes on. */
-    private static Drawable bubbleShape(Context context, boolean mine, boolean first, boolean last, boolean failed) {
+    static Drawable bubbleShape(Context context, boolean mine, boolean first, boolean last, boolean failed) {
         float dp = context.getResources().getDisplayMetrics().density;
         float big = 18 * dp;
         float small = 5 * dp;

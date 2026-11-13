@@ -8,6 +8,7 @@ import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.core.graphics.ColorUtils;
@@ -64,6 +65,30 @@ public final class LiveTag {
 
     public static void show(View tag, boolean live) {
         tag.setVisibility(live ? View.VISIBLE : View.GONE);
+    }
+
+    /**
+     * SQOL ({@code share2}'s {@code st}): a paused share says "DURAKLATILDI", a minimized shared window "KÜÇÜLTÜLDÜ",
+     * quiet (ash on ash); a live one "YAYINDA" in jade. Same size and place, no motion.
+     */
+    public static void state(TextView tag, @Nullable String st) {
+        Context c = tag.getContext();
+        boolean held = "hold".equals(st);
+        boolean min = "min".equals(st);
+        tag.setText(held ? R.string.projects_voice_paused_tag : min ? R.string.projects_voice_minimized_tag : R.string.projects_voice_live_tag);
+        int tone = ContextCompat.getColor(c, held || min ? R.color.projects_ash_300 : R.color.projects_jade_400);
+        tag.setTextColor(tone);
+        if (tag.getBackground() instanceof GradientDrawable) {
+            ((GradientDrawable) tag.getBackground().mutate()).setColor(ColorUtils.setAlphaComponent(tone, Math.round(255 * 0.15f)));
+        }
+    }
+
+    /** "Name, yayında" / "Name, yayın duraklatıldı" / "Name, paylaşılan pencere küçültüldü" for a row's spoken label. */
+    public static String spoken(Context c, String label, boolean live, @Nullable String st) {
+        if (!live) return label;
+        if ("hold".equals(st)) return label + ", " + c.getString(R.string.projects_voice_paused_spoken);
+        if ("min".equals(st)) return label + ", " + c.getString(R.string.projects_voice_minimized_spoken);
+        return spoken(c, label, true);
     }
 
     /**

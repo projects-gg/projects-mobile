@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SQOL (phone 0.5.4): the voice room's text chat, the people's fold, TalkBack's words in the room and a share's state
+     (the desktop's locales/en-room-chat.ts and en-share-view.ts). -->
+<resources>
+    <string name="projects_room_chat_title">Room Chat</string>
+    <string name="projects_room_chat_crew_link">Crew Chat</string>
+    <string name="projects_room_chat_dm_title">Messages</string>
+    <string name="projects_room_chat_dm_none">No messages yet.</string>
+    <string name="projects_room_chat_dm_open">Open Messages</string>
+    <string name="projects_room_chat_empty">What you write here is seen only by the people in this room and is deleted when the room closes.</string>
+    <string name="projects_room_chat_hint">Message the room</string>
+    <string name="projects_room_chat_people">In the Room · %1$d</string>
+    <string name="projects_room_chat_people_shown">expanded</string>
+    <string name="projects_room_chat_people_hidden">collapsed</string>
+    <string name="projects_room_chat_someone">Someone</string>
+    <string name="projects_room_chat_deleted_mod">Removed by the leader or a moderator</string>
+    <string name="projects_room_chat_not_allowed">You can\'t delete this message.</string>
+    <string name="projects_room_chat_delete_failed">The message could not be deleted.</string>
+    <string name="projects_room_chat_joined">%1$s joined the room.</string>
+    <string name="projects_room_chat_left">%1$s left the room.</string>
+    <string name="projects_room_chat_share_started">%1$s started sharing their screen.</string>
+    <string name="projects_room_chat_share_stopped">%1$s stopped sharing their screen.</string>
+    <plurals name="projects_room_chat_unread">
+        <item quantity="one">%d unread message</item>
+        <item quantity="other">%d unread messages</item>
+    </plurals>
+    <plurals name="projects_room_chat_new">
+        <item quantity="one">%d new message</item>
+        <item quantity="other">%d new messages</item>
+    </plurals>
+    <string name="projects_voice_paused_tag">PAUSED</string>
+    <string name="projects_voice_minimized_tag">MINIMIZED</string>
+    <string name="projects_voice_paused_spoken">stream paused</string>
+    <string name="projects_voice_minimized_spoken">shared window minimized</string>
+    <string name="projects_voice_share_paused">The stream is paused.</string>
+    <string name="projects_voice_share_minimized">The shared window is minimized.</string>
+    <string name="projects_voice_percent">%1$d%%</string>
+</resources>

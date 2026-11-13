@@ -50,6 +50,8 @@ public final class VoiceBar extends FrameLayout implements VoiceLink.Listener, V
     private final LinearLayout mFaces;
     private final TextView mTitle;
     private final TextView mLine;
+    /** SQOL: unread room chat messages. */
+    private final TextView mUnread;
     private final ImageButton mMic;
     private final ImageButton mLeave;
     private final TextView mDecline;
@@ -90,7 +92,9 @@ public final class VoiceBar extends FrameLayout implements VoiceLink.Listener, V
         mRow.setPaddingRelative(dp(12), 0, dp(6), 0);
         mRow.setBackgroundResource(R.drawable.projects_row_ripple);
         mRow.setOnClickListener(v -> openRoom());
-        addView(mRow, new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(64)));
+        // SQOL: a floor, never a ceiling: larger text makes the bar taller instead of cutting its lines.
+        mRow.setMinimumHeight(dp(64));
+        addView(mRow, new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         mFaces = new LinearLayout(context);
         mFaces.setOrientation(LinearLayout.HORIZONTAL);
@@ -106,6 +110,31 @@ public final class VoiceBar extends FrameLayout implements VoiceLink.Listener, V
         mLine = text(context, 13, R.color.projects_ash_400, R.font.figtree_regular);
         words.addView(mTitle);
         words.addView(mLine);
+
+        // SQOL: room chat messages that came while the room was closed (a quiet count, no notification, no sound).
+        mUnread = text(context, 12, R.color.projects_bone_100, R.font.tektur_semibold);
+        mUnread.setGravity(Gravity.CENTER);
+        mUnread.setMinWidth(dp(28));
+        mUnread.setMinHeight(dp(22));
+        mUnread.setPadding(dp(7), 0, dp(7), 0);
+        GradientDrawable pill = new GradientDrawable();
+        pill.setCornerRadius(dp(11));
+        pill.setColor(ContextCompat.getColor(context, R.color.projects_obsidian_700));
+        mUnread.setBackground(pill);
+        android.graphics.drawable.Drawable bubble = ContextCompat.getDrawable(context, R.drawable.projects_ic_chat);
+        if (bubble != null) {
+            bubble = bubble.mutate();
+            bubble.setTint(ContextCompat.getColor(context, R.color.projects_ash_300));
+            bubble.setBounds(0, 0, dp(13), dp(13));
+            mUnread.setCompoundDrawablesRelative(bubble, null, null, null);
+            mUnread.setCompoundDrawablePadding(dp(4));
+        }
+        mUnread.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
+        mUnread.setVisibility(GONE);
+        LinearLayout.LayoutParams unreadLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        unreadLp.setMarginStart(dp(8));
+        mRow.addView(mUnread, unreadLp);
 
         mMic = iconButton(context);
         mMic.setOnClickListener(v -> {
@@ -135,10 +164,11 @@ public final class VoiceBar extends FrameLayout implements VoiceLink.Listener, V
                 VoiceUi.answer((FragmentActivity) getContext(), mRingRoom);
             }
         });
-        LinearLayout.LayoutParams chipLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(40));
+        // SQOL: 48 dp targets (they were 40).
+        LinearLayout.LayoutParams chipLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(48));
         chipLp.setMarginStart(dp(8));
         mRow.addView(mDecline, chipLp);
-        LinearLayout.LayoutParams joinLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(40));
+        LinearLayout.LayoutParams joinLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(48));
         joinLp.setMarginStart(dp(8));
         joinLp.setMarginEnd(dp(6));
         mRow.addView(mJoin, joinLp);
@@ -232,6 +262,7 @@ public final class VoiceBar extends FrameLayout implements VoiceLink.Listener, V
                 : c.getString(R.string.projects_voice_ring_others, names(hub, ring.with)));
         mMic.setVisibility(GONE);
         mLeave.setVisibility(GONE);
+        mUnread.setVisibility(GONE);
         mDecline.setVisibility(VISIBLE);
         mJoin.setVisibility(VISIBLE);
         mRow.setClickable(false);
@@ -280,7 +311,13 @@ public final class VoiceBar extends FrameLayout implements VoiceLink.Listener, V
         mDecline.setVisibility(GONE);
         mJoin.setVisibility(GONE);
         mRow.setClickable(true);
-        setContentDescription(c.getString(R.string.projects_voice_bar_label, mTitle.getText()));
+        // SQOL: the room chat's unread count (the room sheet marks it read while it shows the chat).
+        int unread = state.chat ? state.chatUnread : 0;
+        mUnread.setVisibility(unread > 0 ? VISIBLE : GONE);
+        mUnread.setText(unread > 99 ? "99+" : String.valueOf(unread));
+        String label = c.getString(R.string.projects_voice_bar_label, mTitle.getText());
+        setContentDescription(unread > 0 ? label + ", " + c.getResources().getQuantityString(R.plurals.projects_room_chat_unread,
+                unread, unread) : label);
     }
 
     private LinearLayout.LayoutParams faceLp(int index) {
