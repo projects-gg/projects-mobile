@@ -45,6 +45,14 @@ public final class VoiceState {
     public int volumeMax = VoiceMachine.VOLUME_MAX;
     /** The microphone could not be had (the player listens only): {@code denied}, {@code missing}, or null. */
     @Nullable public String mic;
+    /** SQOL: the room offers its text chat ({@code hello.room.chat}); its messages come apart ({@link RoomChat.View}). */
+    public boolean chat;
+    /** SQOL: a friend room that once had three people or more (its chat is the room's, never the friend's messages). */
+    public boolean grew;
+    /** SQOL: room chat messages of others the player has not seen (the call bar's count while the room is closed). */
+    public int chatUnread;
+    /** SQOL: grows with every change of the room chat. */
+    public long chatVersion;
 
     public static final class Me {
         public String id = "";
@@ -89,6 +97,8 @@ public final class VoiceState {
         @Nullable public String shareSrc;
         public int shareWatchers;
         public long shareTh;
+        /** SQOL ({@code share2}): {@code hold} (paused), {@code min} (the shared window minimized), or null while live. */
+        @Nullable public String shareSt;
     }
 
     public static final class OutRing {

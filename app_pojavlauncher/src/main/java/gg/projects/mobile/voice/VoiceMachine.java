@@ -184,7 +184,8 @@ public final class VoiceMachine {
 
     /** What the caller does. */
     public static final class Effect {
-        public enum Kind { CONNECT, SEND, DISCONNECT, ENGINE_OPEN, ENGINE_CLOSE, ENGINE, NOTICE, SPEAKING, ANSWER, CHANGED }
+        /** SQOL: {@code CHAT}, the room chat changed ({@link #chatView}; the screens get it apart from the state). */
+        public enum Kind { CONNECT, SEND, DISCONNECT, ENGINE_OPEN, ENGINE_CLOSE, ENGINE, NOTICE, SPEAKING, ANSWER, CHANGED, CHAT }
 
         public final Kind kind;
         public long generation;
@@ -301,7 +302,8 @@ public final class VoiceMachine {
 
     private enum Link { CONNECTING, OPEN, WAITING }
 
-    private enum Pending { TURN, INVITE, CANCEL, MOD }
+    /** SQOL: {@code CHAT} a room chat send (its answer goes to the chat, not to a caller), {@code CHAT_DEL} a delete. */
+    private enum Pending { TURN, INVITE, CANCEL, MOD, CHAT, CHAT_DEL }
 
     /** The inactivity rule (the desktop's {@code idle.rs}). */
     static final class Idle {
@@ -362,10 +364,13 @@ public final class VoiceMachine {
         int quality;
         final Idle idle;
         @Nullable Long togetherSince;
+        /** SQOL: the room's text chat for this stay (nothing kept after it). */
+        final RoomChat chat;
 
         Stay(Start start, long generation, long now, long unix) {
             roomId = start.room;
             crew = !VoiceWire.isFriendRoom(start.room);
+            chat = new RoomChat(me);
             ticket = start.ticket;
             this.generation = generation;
             openedByMe = start.openedByMe;
@@ -501,6 +506,8 @@ public final class VoiceMachine {
         wantEngine(now, out);
         if (attached) askOffer(out);
         syncMeters(out);
+        // SQOL: a new stay's chat (empty) takes the place of the last room's on the screens.
+        out.add(new Effect(Effect.Kind.CHAT));
         out.add(new Effect(Effect.Kind.CHANGED));
         return out;
     }
@@ -693,6 +700,10 @@ public final class VoiceMachine {
         for (Iterator<Map.Entry<Integer, Pending>> it = pending.entrySet().iterator(); it.hasNext(); ) {
             if (it.next().getValue() == Pending.TURN) it.remove();
         }
+        // SQOL: a room chat send's answer never comes on another socket either: it shows as not sent ("Tekrar dene").
+        List<Integer> unsent = s.chat.failWaiting();
+        for (Integer rid : unsent) pending.remove(rid);
+        if (!unsent.isEmpty()) out.add(new Effect(Effect.Kind.CHAT));
         out.add(new Effect(Effect.Kind.CHANGED));
     }
 
@@ -729,6 +740,10 @@ public final class VoiceMachine {
                 if (answered) s.calling = null;
                 if (!alone && s.togetherSince == null) s.togetherSince = unix;
                 s.room = model;
+                // SQOL: whether the room offers its chat, and a friend room that had three people (its chat for good).
+                boolean chatChanged = s.chat.setOn(message.chat);
+                if (!model.crewRoom && (message.grew || model.people.size() >= 2)) chatChanged |= s.chat.setGrew();
+                if (chatChanged) out.add(new Effect(Effect.Kind.CHAT));
                 if (message.sdp != null) {
                     s.audioOk = false;
                     if (attached) {
@@ -814,6 +829,12 @@ public final class VoiceMachine {
                         // No credentials after all: as a lost connection.
                         audioLost(now, out);
                     }
+                } else if (p == Pending.CHAT) {
+                    // SQOL: the room's copy of the message (its cleaned text, id and seal) takes the send's place.
+                    if (s.chat.acked(message.rid, message.line)) {
+                        out.add(new Effect(Effect.Kind.CHAT));
+                        out.add(new Effect(Effect.Kind.CHANGED));
+                    }
                 } else if (p != null) {
                     out.add(answer(message.rid, VoiceAnswer.OK));
                 }
@@ -825,11 +846,34 @@ public final class VoiceMachine {
                 if (p == Pending.TURN) {
                     // `turn_unavailable` or `rate_limited`: no stay without a connection, so as lost.
                     audioLost(now, out);
+                } else if (p == Pending.CHAT) {
+                    // SQOL: the send stays, marked with the room's reason (the chat's own words on the screens).
+                    if (s.chat.failed(message.rid, message.code, message.reason, message.rule, message.errorUntil)) {
+                        out.add(new Effect(Effect.Kind.CHAT));
+                    }
                 } else if (p != null) {
                     out.add(answer(message.rid, VoiceAnswer.fromCode(message.code, message.retryAfter, message.errorUntil)));
                 }
                 break;
             }
+            case RCHAT:
+                if (s.chat.on() && s.chat.add(message.line)) {
+                    out.add(new Effect(Effect.Kind.CHAT));
+                    out.add(new Effect(Effect.Kind.CHANGED));
+                }
+                break;
+            case RCHAT_LOG:
+                if (s.chat.on() && s.chat.merge(message.lines)) {
+                    out.add(new Effect(Effect.Kind.CHAT));
+                    out.add(new Effect(Effect.Kind.CHANGED));
+                }
+                break;
+            case RCHAT_DELETED:
+                if (s.chat.deleted(message.chatId, message.chatBy)) {
+                    out.add(new Effect(Effect.Kind.CHAT));
+                    out.add(new Effect(Effect.Kind.CHANGED));
+                }
+                break;
             case UNKNOWN:
                 break;
             default: {
@@ -838,6 +882,13 @@ public final class VoiceMachine {
                 boolean micChosen = !mute && !deaf;
                 boolean cutBefore = room.mySm;
                 VoiceRoom.Applied applied = room.apply(message);
+                // SQOL: Studio switched the room chat (`room` says it each time), a friend room grew to three people.
+                boolean chatChanged = message.kind == VoiceWire.Kind.ROOM && s.chat.setOn(message.chat);
+                if (applied.joined != null && !room.crewRoom && room.people.size() >= 2) chatChanged |= s.chat.setGrew();
+                if (chatChanged) {
+                    out.add(new Effect(Effect.Kind.CHAT));
+                    out.add(new Effect(Effect.Kind.CHANGED));
+                }
                 boolean cut = room.mySm;
                 if (applied.left != null) s.speaking.remove(applied.left);
                 // VOICE-CALL: the call's timer starts with the first one to share the room.
@@ -938,6 +989,83 @@ public final class VoiceMachine {
         final String to = act == ModAct.NAME || act == ModAct.CLOSE ? null : person;
         final String target = act == ModAct.MOVE ? room : null;
         return request(Pending.MOD, rid -> VoiceWire.mod(act, to, target, finalName, rid));
+    }
+
+    // ---- SQOL: the room chat ----
+
+    /**
+     * Text (or a sticker) to the room: it shows at once, faded, and the room's answer settles it (no caller waits; a
+     * refusal stays on the message in the chat's own words). Nothing while the room offers no chat.
+     */
+    public List<Effect> chatSend(@Nullable final String text, @Nullable final String sticker) {
+        List<Effect> out = new ArrayList<>();
+        Stay s = stay;
+        if (s == null || !s.chat.on()) return out;
+        if (sticker == null && (text == null || text.trim().isEmpty())) return out;
+        Request request = request(Pending.CHAT, rid -> sticker != null ? VoiceWire.roomSticker(sticker, rid)
+                : VoiceWire.roomChat(text, rid));
+        if (request.refused != null) {
+            // The room is not reachable now: it shows as not sent at once ("Tekrar dene" once it is back).
+            int rid = rid();
+            s.chat.sending(rid, text, sticker);
+            s.chat.failed(rid, "failed", null, null, null);
+        } else {
+            s.chat.sending(request.rid, text, sticker);
+            out.addAll(request.effects);
+        }
+        out.add(new Effect(Effect.Kind.CHAT));
+        return out;
+    }
+
+    /** "Tekrar dene" on a send that did not go. */
+    public List<Effect> chatRetry(int rid) {
+        Stay s = stay;
+        if (s == null) return new ArrayList<>();
+        RoomChat.Line line = s.chat.outboxLine(rid);
+        if (line == null || !RoomChat.FAILED.equals(line.state)) return new ArrayList<>();
+        s.chat.discard(rid);
+        return chatSend(line.text, line.st);
+    }
+
+    /** "Sil" on a send that did not go (only this phone had it). */
+    public List<Effect> chatDiscard(int rid) {
+        List<Effect> out = new ArrayList<>();
+        Stay s = stay;
+        if (s != null && s.chat.discard(rid)) out.add(new Effect(Effect.Kind.CHAT));
+        return out;
+    }
+
+    /** Deletes a message of the room (the player's own, or as its leader or moderator; the room decides). */
+    public Request chatDelete(final String id) {
+        Stay s = stay;
+        RoomChat.Line line = s == null ? null : s.chat.line(id);
+        if (line == null || !line.sent()) return new Request(0, new ArrayList<>(), VoiceAnswer.refused(Refusal.NOT_FOUND));
+        return request(Pending.CHAT_DEL, rid -> VoiceWire.roomChatDelete(id, rid));
+    }
+
+    /** The player saw the chat up to {@code at} (the newest message on screen): the unread count follows. */
+    public List<Effect> chatSeen(long at) {
+        List<Effect> out = new ArrayList<>();
+        Stay s = stay;
+        if (s != null && s.chat.seen(at)) {
+            out.add(new Effect(Effect.Kind.CHAT));
+            out.add(new Effect(Effect.Kind.CHANGED));
+        }
+        return out;
+    }
+
+    /** The room chat as the screens show it, or null without a stay. */
+    @Nullable
+    public RoomChat.View chatView() {
+        Stay s = stay;
+        if (s == null) return null;
+        final VoiceRoom room = s.room;
+        return s.chat.view(s.roomId, u -> {
+            if (room == null) return false;
+            Role mine = room.myRole;
+            // The room's rule (mayAct): the leader takes anyone's message, a moderator a member's.
+            return mine == Role.LEADER || (mine == Role.MODERATOR && room.roleOf(u) == Role.MEMBER);
+        });
     }
 
     private interface FrameOf {
@@ -1333,6 +1461,11 @@ public final class VoiceMachine {
         v.me.deaf = deaf;
         v.me.talking = s.talking;
         v.me.quality = s.quality;
+        // SQOL: the room chat's state (its messages go to the screens apart: chatView).
+        v.chat = s.chat.on();
+        v.grew = s.chat.grew();
+        v.chatUnread = s.chat.unread();
+        v.chatVersion = s.chat.version();
         VoiceRoom room = s.room;
         if (room == null) return v;
         v.crew = room.crew;
@@ -1367,6 +1500,7 @@ public final class VoiceMachine {
                 p.shareSrc = first.src;
                 p.shareWatchers = first.w;
                 p.shareTh = first.th;
+                p.shareSt = first.st;
             }
             if (person.card != null) {
                 p.cardName = person.card.name;

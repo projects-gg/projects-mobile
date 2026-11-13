@@ -43,10 +43,18 @@ public final class VoiceLink {
     static final int TOGGLE_MIC = 13;
     /** M053: the ignore list ("ids"). */
     static final int IGNORED = 14;
+    /** SQOL: the room chat: a text ("text") or sticker ("sticker"), a delete ("id", answered), seen up to ("at"), a refused send's retry and discard (arg1). */
+    static final int CHAT_SEND = 15;
+    static final int CHAT_DELETE = 16;
+    static final int CHAT_SEEN = 17;
+    static final int CHAT_RETRY = 18;
+    static final int CHAT_DISCARD = 19;
     // Voice → launcher.
     static final int STATE = 101;
     static final int NOTICE = 102;
     static final int ANSWER = 103;
+    /** SQOL: the room chat as it is now ("json"; none: no stay). */
+    static final int CHAT = 104;
 
     // Intent actions and extras of the voice process.
     static final String ACTION_JOIN = "gg.projects.mobile.voice.JOIN";
@@ -73,6 +81,9 @@ public final class VoiceLink {
 
         /** The room turned the join down before it began (full, gone, removed, restricted). */
         void onVoiceRefused(VoiceAnswer answer);
+
+        /** SQOL: the room chat changed (null: no stay). Only the room's surfaces listen. */
+        default void onVoiceChat(@Nullable RoomChat.View chat) {}
     }
 
     /** A notice as it crosses the processes. */
@@ -135,6 +146,8 @@ public final class VoiceLink {
     private boolean mBound;
     private int mAttached;
     @Nullable private VoiceState mState;
+    /** SQOL: the room chat as the voice process last sent it. */
+    @Nullable private RoomChat.View mChat;
     private boolean mMeters;
     /** A stay was asked for and its first state has not come yet. */
     private boolean mJoining;
@@ -195,6 +208,7 @@ public final class VoiceLink {
         mAttached++;
         bindIfWanted();
         listener.onVoiceState(mState);
+        if (mChat != null) listener.onVoiceChat(mChat);
     }
 
     @MainThread
@@ -279,6 +293,13 @@ public final class VoiceLink {
             case STATE:
                 setState(VoiceState.read(msg.getData().getString("json")));
                 break;
+            case CHAT: {
+                RoomChat.View chat = RoomChat.View.read(msg.getData().getString("json"));
+                // A chat of another room than the state's (a move just now) waits for its own.
+                mChat = chat;
+                for (Listener l : new ArrayList<>(mListeners)) l.onVoiceChat(chat);
+                break;
+            }
             case NOTICE: {
                 Notice notice = new Notice(msg.getData());
                 for (Listener l : new ArrayList<>(mListeners)) l.onVoiceNotice(notice);
@@ -307,6 +328,11 @@ public final class VoiceLink {
     private void setState(@Nullable VoiceState state) {
         if (state != null) mJoining = false;
         mState = state;
+        if (state == null && mChat != null) {
+            // The stay's chat went with it.
+            mChat = null;
+            for (Listener l : new ArrayList<>(mListeners)) l.onVoiceChat(null);
+        }
         for (Listener l : new ArrayList<>(mListeners)) l.onVoiceState(state);
         for (Watcher w : new ArrayList<>(mWatchers)) w.onState(state);
         if (!wanted()) unbind();
@@ -371,6 +397,46 @@ public final class VoiceLink {
     public void moderate(VoiceWire.ModAct act, @Nullable String person, @Nullable String room, @Nullable String name,
                          Answered answered) {
         request(MOD, person, room, name, act, answered);
+    }
+
+    // ---- SQOL: the room chat ----
+
+    /** The room chat as it is now (null: no stay, or not heard yet). */
+    @Nullable
+    public RoomChat.View chat() {
+        return mChat;
+    }
+
+    /** Text to the room chat; the outcome shows on the message (the chat's own words), nothing answers here. */
+    public void chatSend(String text) {
+        Message m = Message.obtain(null, CHAT_SEND);
+        m.getData().putString("text", text);
+        send(m);
+    }
+
+    public void chatSticker(String sticker) {
+        Message m = Message.obtain(null, CHAT_SEND);
+        m.getData().putString("sticker", sticker);
+        send(m);
+    }
+
+    public void chatDelete(String id, Answered answered) {
+        request(CHAT_DELETE, id, null, null, null, answered);
+    }
+
+    /** The chat is on screen up to {@code at} (the newest message shown). */
+    public void chatSeen(long at) {
+        Message m = Message.obtain(null, CHAT_SEEN);
+        m.getData().putLong("at", at);
+        send(m);
+    }
+
+    public void chatRetry(int rid) {
+        send(Message.obtain(null, CHAT_RETRY, rid, 0));
+    }
+
+    public void chatDiscard(int rid) {
+        send(Message.obtain(null, CHAT_DISCARD, rid, 0));
     }
 
     /** A room surface is on screen: live speaking rings (only then is anything measured). */

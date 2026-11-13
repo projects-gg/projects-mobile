@@ -90,7 +90,33 @@ public final class VoiceWire {
      * screen ({@code state.sh}, {@code hello.people[].sh}), {@code live1} each share's picture time ({@code th}). The phone
      * never shares or watches: it sends no share frame but {@link #unwatch} for a watch left over from the desktop.
      */
-    static final String[] CAPS = {"share1", "live1"};
+    static final String[] CAPS = {"share1", "live1", "share2", "rchat1"};
+    // SQOL: share2 lets the phone hear a share's state ({@code st}: hold, min; it still sends no share frame), rchat1 the
+    // room's text chat ({@code rchat}, {@code rchat_log}, {@code rchat_deleted}; hello.room.chat and .grew).
+
+    /** SQOL: a text message to the room ({@code rchat}, 300 characters, the chat's own checks on the room's side). */
+    public static String roomChat(String text, int rid) {
+        JsonObject o = frame("rchat");
+        o.addProperty("rid", rid);
+        o.addProperty("text", text);
+        return o.toString();
+    }
+
+    /** SQOL: a sticker ({@code <set>/<id>}) to the room. */
+    public static String roomSticker(String sticker, int rid) {
+        JsonObject o = frame("rchat");
+        o.addProperty("rid", rid);
+        o.addProperty("st", sticker);
+        return o.toString();
+    }
+
+    /** SQOL: deletes a message of the room ({@code rchat_del}: the player's own, or as the room's leader or moderator). */
+    public static String roomChatDelete(String id, int rid) {
+        JsonObject o = frame("rchat_del");
+        o.addProperty("rid", rid);
+        o.addProperty("id", id);
+        return o.toString();
+    }
 
     /** {@code join}: {@code sdp} publishes the microphone (null: listen only), {@code mid} its m-line. */
     public static String join(@Nullable String sdp, @Nullable String mid) {
@@ -298,12 +324,19 @@ public final class VoiceWire {
         public final String src;
         public final int w;
         public final long th;
+        /** SQOL ({@code share2}): {@code hold} (paused) or {@code min} (the shared window minimized); null while live. */
+        @Nullable public final String st;
 
         public Share(int n, String src, int w, long th) {
+            this(n, src, w, th, null);
+        }
+
+        public Share(int n, String src, int w, long th, @Nullable String st) {
             this.n = n;
             this.src = src;
             this.w = w;
             this.th = th;
+            this.st = "hold".equals(st) || "min".equals(st) ? st : null;
         }
 
         @Nullable
@@ -311,7 +344,7 @@ public final class VoiceWire {
             Long n = Json.numOrNull(o, "n");
             if (n == null || n < 1 || n > 255) return null;
             return new Share(n.intValue(), Json.str(o, "src", "screen"), (int) Math.max(0, Json.num(o, "w", 0)),
-                    Math.max(0, Json.num(o, "th", 0)));
+                    Math.max(0, Json.num(o, "th", 0)), Json.str(o, "st"));
         }
 
         /** Shares by number; one that does not read is left out, a list that does not read is none. */
@@ -331,7 +364,7 @@ public final class VoiceWire {
         public boolean equals(Object other) {
             if (!(other instanceof Share)) return false;
             Share s = (Share) other;
-            return n == s.n && src.equals(s.src) && w == s.w && th == s.th;
+            return n == s.n && src.equals(s.src) && w == s.w && th == s.th && (st == null ? s.st == null : st.equals(s.st));
         }
 
         @Override
@@ -367,7 +400,9 @@ public final class VoiceWire {
     /** {@code ring_end.why} (to the one who invited); anything unknown reads like {@code no_answer}. */
     public enum RingEndWhy { JOINED, CANCELLED, NO_ANSWER }
 
-    public enum Kind { HELLO, OFFER, JOINED, LEFT, STATE, ROOM, ME, RING, RING_END, KICKED, MOVED, CLOSED, ACK, ERROR, UNKNOWN }
+    public enum Kind { HELLO, OFFER, JOINED, LEFT, STATE, ROOM, ME, RING, RING_END, KICKED, MOVED, CLOSED, ACK, ERROR, UNKNOWN,
+        /** SQOL: a room chat message, the room's last messages, a message taken away. */
+        RCHAT, RCHAT_LOG, RCHAT_DELETED }
 
     /**
      * One message from the room. Only the fields of its kind are set; a message the phone does not know reads as
@@ -421,6 +456,21 @@ public final class VoiceWire {
         @Nullable public String code;
         @Nullable public Long retryAfter;
         @Nullable public Long errorUntil;
+        // SQOL (rchat1)
+        /** hello, room: the room's chat is on (absent: off). */
+        public boolean chat;
+        /** hello: a friend room that once had three people or more. */
+        public boolean grew;
+        /** rchat, ack of a send: the message as the room keeps it. */
+        @Nullable public RoomChat.Line line;
+        /** rchat_log: the room's last messages, oldest first. */
+        public List<RoomChat.Line> lines = Collections.emptyList();
+        /** rchat_deleted: the message and who took it ({@code self}, {@code mod}, {@code staff}). */
+        @Nullable public String chatId;
+        @Nullable public String chatBy;
+        /** error of a send: {@code chat_rejected}'s reason ({@code link}, {@code phone}, {@code words}) and link rule. */
+        @Nullable public String reason;
+        @Nullable public String rule;
 
         @Override
         public String toString() {
@@ -447,6 +497,8 @@ public final class VoiceWire {
                     m.leader = Json.str(room, "leader");
                     m.mods = Json.strings(room, "mods");
                     m.max = (int) Json.num(room, "max", 0);
+                    m.chat = Json.bool(room, "chat", false);
+                    m.grew = Json.bool(room, "grew", false);
                     m.role = Role.of(Json.str(Json.obj(o, "me"), "role"));
                     m.people = people(Json.arr(o, "people"));
                     Map<String, Long> rings = new TreeMap<>();
@@ -520,6 +572,8 @@ public final class VoiceWire {
                     m.mods = Json.strings(o, "mods");
                     Long max = Json.numOrNull(o, "max");
                     m.max = max == null ? -1 : max.intValue();
+                    // SQOL: every `room` to an rchat1 socket says `chat` while it is on; without it the chat is off.
+                    m.chat = Json.bool(o, "chat", false);
                     m.kind = Kind.ROOM;
                     return m;
                 case "me":
@@ -562,6 +616,8 @@ public final class VoiceWire {
                     if (ice != null) {
                         m.ice = new Ice(Json.strings(ice, "urls"), Json.str(ice, "username", ""), Json.str(ice, "credential", ""));
                     }
+                    // SQOL: a room chat send's answer carries the message as the room keeps it.
+                    m.line = RoomChat.Line.read(Json.obj(o, "m"));
                     m.kind = Kind.ACK;
                     return m;
                 }
@@ -572,9 +628,32 @@ public final class VoiceWire {
                     m.rid = rid == null ? null : rid.intValue();
                     m.retryAfter = Json.numOrNull(o, "retryAfter");
                     m.errorUntil = Json.numOrNull(o, "until");
+                    m.reason = Json.str(o, "reason");
+                    m.rule = Json.str(o, "rule");
                     m.kind = Kind.ERROR;
                     return m;
                 }
+                case "rchat":
+                    m.line = RoomChat.Line.read(Json.obj(o, "m"));
+                    if (m.line != null) m.kind = Kind.RCHAT;
+                    return m;
+                case "rchat_log": {
+                    List<RoomChat.Line> lines = new ArrayList<>();
+                    for (JsonObject entry : Json.objects(o, "ms")) {
+                        RoomChat.Line line = RoomChat.Line.read(entry);
+                        // One that does not read is left out, oldest first as the room keeps them.
+                        if (line != null && (lines.isEmpty() || lines.get(lines.size() - 1).at <= line.at)) lines.add(line);
+                    }
+                    m.lines = lines;
+                    m.kind = Kind.RCHAT_LOG;
+                    return m;
+                }
+                case "rchat_deleted":
+                    m.chatId = Json.str(o, "id");
+                    if (!RoomChat.isId(m.chatId)) return m;
+                    m.chatBy = Json.str(o, "by", "self");
+                    m.kind = Kind.RCHAT_DELETED;
+                    return m;
                 default:
                     return m;
             }

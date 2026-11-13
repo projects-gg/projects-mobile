@@ -66,6 +66,8 @@ public final class VoiceService extends Service implements VoiceEngine.Listener,
     /** The machine's rid → [the screen that asked, its own rid]. */
     private final Map<Integer, Object[]> mAsked = new HashMap<>();
     private boolean mChanged;
+    /** SQOL: the room chat changed since it last went to the screens. */
+    private boolean mChatChanged;
     @Nullable private String mLastLine;
     @Nullable private Boolean mLastMicOff;
 
@@ -182,7 +184,10 @@ public final class VoiceService extends Service implements VoiceEngine.Listener,
                 // M053: a change to the ignore list made while no screen was bound reaches the stay now.
                 mPrefs.setIgnored(gg.projects.mobile.social.IgnoreList.forVoice(this));
                 if (mMachine.inRoom()) run(mMachine.replay());
-                if (from != null) sendState(from);
+                if (from != null) {
+                    sendState(from);
+                    sendChat(from);
+                }
                 break;
             case VoiceLink.UNREGISTER:
                 mClients.remove(from);
@@ -236,6 +241,23 @@ public final class VoiceService extends Service implements VoiceEngine.Listener,
                 run(mMachine.replay());
                 break;
             }
+            // SQOL: the room chat.
+            case VoiceLink.CHAT_SEND:
+                run(mMachine.chatSend(data.getString("text"), data.getString("sticker")));
+                break;
+            case VoiceLink.CHAT_DELETE:
+                // The message's id travels as the request's "person" (VoiceLink#request).
+                asked(from, msg.arg2, mMachine.chatDelete(data.getString("person", "")));
+                break;
+            case VoiceLink.CHAT_SEEN:
+                run(mMachine.chatSeen(data.getLong("at", 0)));
+                break;
+            case VoiceLink.CHAT_RETRY:
+                run(mMachine.chatRetry(msg.arg1));
+                break;
+            case VoiceLink.CHAT_DISCARD:
+                run(mMachine.chatDiscard(msg.arg1));
+                break;
             default:
                 break;
         }
@@ -270,6 +292,15 @@ public final class VoiceService extends Service implements VoiceEngine.Listener,
         Message m = Message.obtain(null, VoiceLink.STATE);
         VoiceState state = mMachine.view(now(), unix());
         if (state != null) m.getData().putString("json", state.json());
+        deliver(to, m);
+    }
+
+    /** SQOL: the room chat, apart from the state (the state goes out with every speaking ring; the chat only when it changes). */
+    private void sendChat(Messenger to) {
+        RoomChat.View chat = mMachine.chatView();
+        if (chat == null) return;
+        Message m = Message.obtain(null, VoiceLink.CHAT);
+        m.getData().putString("json", chat.json());
         deliver(to, m);
     }
 
@@ -322,6 +353,9 @@ public final class VoiceService extends Service implements VoiceEngine.Listener,
                 case CHANGED:
                     mChanged = true;
                     break;
+                case CHAT:
+                    mChatChanged = true;
+                    break;
                 case ANSWER:
                     if (e.answer == null) break;
                     if (e.rid == VoiceMachine.JOIN_RID) {
@@ -340,6 +374,11 @@ public final class VoiceService extends Service implements VoiceEngine.Listener,
     }
 
     private void flush() {
+        if (mChatChanged) {
+            // Before the state: a screen that reads the state's unread count has the messages already.
+            mChatChanged = false;
+            for (Messenger client : new ArrayList<>(mClients)) sendChat(client);
+        }
         if (mChanged) {
             mChanged = false;
             for (Messenger client : new ArrayList<>(mClients)) sendState(client);
