@@ -184,6 +184,14 @@ public final class StreamActivity extends AppCompatActivity implements VoiceLink
     private boolean mEnding;
     /** A stay was seen: a state of none after it is the stay's end. */
     private boolean mHadState;
+    /** The room this screen's stream is in (the first stay seen). */
+    @Nullable private String mRoom;
+    /** This screen's watch was in a state once (its going without a word ends the screen). */
+    private boolean mHadWatch;
+    /** The sound state picture-in-picture's button was last given (null: none yet). */
+    @Nullable private Boolean mPipMuted;
+    /** Android 12+: picture-in-picture pushed to the screen's edge (nothing of the picture shows). */
+    private boolean mPipStashed;
     private boolean mStarted;
     private int mNoticeSeen = -1;
     private long mStillSentAt;
@@ -298,6 +306,10 @@ public final class StreamActivity extends AppCompatActivity implements VoiceLink
         mMain.removeCallbacks(mFinish);
         mEnding = false;
         mWatch = null;
+        // The new stream has not been in a state yet; its sound state is its own.
+        mHadWatch = false;
+        mPipMuted = null;
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         mHeard = null;
         mFrameSeen = false;
         mPosterTh = -1;
@@ -327,8 +339,11 @@ public final class StreamActivity extends AppCompatActivity implements VoiceLink
         // yet says them when it is.
         mLink.watchShown(true);
         sendDuck();
-        mLink.watch(mPerson, mN, wantedLayer());
-        if (mSurface != null) mLink.watchSurface(mSurface);
+        // A screen showing a stream's end asks for nothing again (its word stays until it closes).
+        if (!mEnding) {
+            mLink.watch(mPerson, mN, wantedLayer());
+            if (mSurface != null) mLink.watchSurface(mSurface);
+        }
         mLink.attach(this);
         touched();
         scheduleHide();
@@ -372,6 +387,7 @@ public final class StreamActivity extends AppCompatActivity implements VoiceLink
     public void onPictureInPictureModeChanged(boolean inPip, Configuration config) {
         super.onPictureInPictureModeChanged(inPip, config);
         mInPip = inPip;
+        if (!inPip) mPipStashed = false;
         if (!inPip && !getLifecycle().getCurrentState().isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)) {
             // Picture-in-picture's X (the window went, the screen stopped first): watching ends.
             finishWatching();
@@ -383,6 +399,16 @@ public final class StreamActivity extends AppCompatActivity implements VoiceLink
         // The window may have taken its new size before this call: the picture's place and the layer by the mode now
         // (back from the small window, "Otomatik" asks for the full picture again).
         layoutPicture();
+        syncLayer();
+    }
+
+    @Override
+    public void onPictureInPictureUiStateChanged(android.app.PictureInPictureUiState state) {
+        super.onPictureInPictureUiStateChanged(state);
+        // Pushed to the screen's edge: nothing of the picture shows, the small layer is enough until it comes back.
+        boolean stashed = state.isStashed();
+        if (stashed == mPipStashed) return;
+        mPipStashed = stashed;
         syncLayer();
     }
 
@@ -423,6 +449,19 @@ public final class StreamActivity extends AppCompatActivity implements VoiceLink
             mNoticeSeen = state.watchNoticeSeq;
             // A word said before this screen came up is old news.
             if (!first && state.watchNotice != null) notice(state.watchNotice);
+        }
+        // The stream belongs to its room: a stay elsewhere (a join, a move) or a watch gone without a word ends the
+        // screen too (it never waits on "Bağlanıyor…" for a stream that is not coming).
+        if (mRoom == null) mRoom = state.room;
+        if (!mEnding && ((mRoom != null && !mRoom.equals(state.room)) || (mHadWatch && watch == null))) {
+            finishWatching();
+            return;
+        }
+        if (watch != null) mHadWatch = true;
+        // Picture-in-picture's sound button says the state the voice process has now (a tap changes it a moment later).
+        if (watch != null && (mPipMuted == null || mPipMuted != watch.muted)) {
+            mPipMuted = watch.muted;
+            if (Build.VERSION.SDK_INT >= 26 && pipAllowed()) updatePipParams();
         }
         if (watch != null) {
             // Every reading: the layer by the hold now, and its release counted from the first good one.
@@ -877,6 +916,8 @@ public final class StreamActivity extends AppCompatActivity implements VoiceLink
     // ---- the watch's last word ----
 
     private void notice(String code) {
+        // The stream is over: the screen may sleep again (with TalkBack this word stays until it is closed).
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         int words;
         long stay = NOTICE_MS;
         switch (code) {
@@ -1197,8 +1238,8 @@ public final class StreamActivity extends AppCompatActivity implements VoiceLink
         if (talkBack()) {
             mRoot.announceForAccessibility(getString(muted ? R.string.projects_stream_say_muted : R.string.projects_stream_say_unmuted));
         }
-        // Picture-in-picture's button follows at once (the state confirms it a moment later).
-        if (Build.VERSION.SDK_INT >= 26 && pipAllowed()) mMain.post(this::updatePipParams);
+        // Picture-in-picture's button follows the voice process's state when it comes (onVoiceState): built from the
+        // state still shown now, it would say the old one.
     }
 
     /** "Ses Odası": the room's sheet over the stream (the stream goes on behind it). */
@@ -1294,6 +1335,8 @@ public final class StreamActivity extends AppCompatActivity implements VoiceLink
     // ---- the layer ----
 
     private String wantedLayer() {
+        // A small window pushed to the screen's edge shows nothing of the picture: the small layer, whatever the choice.
+        if (mInPip && mPipStashed) return StreamView.SMALL;
         int width = Math.round(fit()[0] * mZoom.s);
         return StreamView.layerFor(mPrefs.streamQuality(), mInPip ? Math.min(width, StreamView.SMALL_VIEW_PX - 1) : width,
                 mMetered, mWeakHold.held(), mZoom.zoomed());

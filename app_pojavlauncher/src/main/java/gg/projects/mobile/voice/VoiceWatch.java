@@ -392,6 +392,8 @@ final class VoiceWatch {
             if (carried(kept, w)) {
                 w.rid = null;
                 w.askedAt = -1;
+                // Its layer again: one chosen while the socket was away never reached the room.
+                if (generation != null) out.add(send(generation, VoiceWire.layer(w.u, w.n, w.layer)));
             } else {
                 w.sent = false;
                 sendWatch(w, now, out);
@@ -447,7 +449,11 @@ final class VoiceWatch {
         }
     }
 
-    /** The stay ended: nothing is watched, the engine closes its connection. */
+    /**
+     * The stay ended: nothing is watched, the engine closes its connection. A watch there was ends with the screen's
+     * word ({@link #NOTICE_ENDED}): a move or a join elsewhere starts the next stay at once, so the stream screen hears no
+     * stay's end of its own.
+     */
     void end(List<VoiceMachine.Effect> out) {
         if (!watching.isEmpty() || connected || pendingOffer != null) out.add(watchEffect(Cmd.reset(false)));
         boolean had = !watching.isEmpty();
@@ -460,7 +466,7 @@ final class VoiceWatch {
         askingSince = -1;
         losses = 0;
         resetFacts();
-        if (had) out.add(changed());
+        if (had) notice(NOTICE_ENDED, out);
     }
 
     // ---- time ----

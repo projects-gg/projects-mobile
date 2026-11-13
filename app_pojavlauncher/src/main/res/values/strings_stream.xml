@@ -13,7 +13,7 @@
     <string name="projects_stream_ended">The stream ended.</string>
     <string name="projects_stream_gone">This stream has ended.</string>
     <string name="projects_stream_failed">Couldn\'t connect to the stream.</string>
-    <string name="projects_stream_full">This stream can\'t take more viewers.</string>
+    <string name="projects_stream_full">This stream has reached its viewer limit.</string>
     <string name="projects_stream_off">Screen sharing isn\'t available right now.</string>
     <string name="projects_stream_stopped">Watching stopped because the screen wasn\'t touched for a long time.</string>
     <string name="projects_stream_weak">Low Quality</string>

@@ -13,7 +13,7 @@
     <string name="projects_stream_ended">Yayın bitti.</string>
     <string name="projects_stream_gone">Bu yayın bitti.</string>
     <string name="projects_stream_failed">Yayına bağlanılamadı.</string>
-    <string name="projects_stream_full">Bu yayını izleyenlerin sayısı dolu.</string>
+    <string name="projects_stream_full">Bu yayının izleyici sınırı doldu.</string>
     <string name="projects_stream_off">Ekran paylaşımı şu an kullanılamıyor.</string>
     <string name="projects_stream_stopped">Uzun süre dokunulmadığı için izleme durdu.</string>
     <string name="projects_stream_weak">Düşük Kalite</string>

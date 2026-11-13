@@ -363,6 +363,8 @@ public class VoiceWatchTest {
         assertFalse(sent(effects).contains("watch"));
         assertFalse(sent(effects).contains("unwatch"));
         assertTrue(watchCmds(effects).isEmpty());
+        // Its layer again (one chosen while the socket was away would be lost otherwise).
+        assertEquals("f", frame(effects, "layer").get("layer").getAsString());
         // A hello whose session is new (nothing carried): the watch starts over there.
         effects = machine.socketMessage(next, hello(false, person("me", 1), sharing("friend", 5, 1)), 11_000, UNIX);
         assertEquals(Arrays.asList("set", "unwatch", "watch"), sent(effects));
@@ -370,6 +372,38 @@ public class VoiceWatchTest {
         // Stopping clears TURN with the connection.
         effects = machine.watchStop("friend", 1, 12_000);
         assertFalse(watchCmds(effects).get(0).keepTurn);
+    }
+
+    @Test
+    public void aLayerChosenWhileTheSocketWasAwayReachesTheRoomAfterTheReconnect() {
+        VoiceMachine machine = machine();
+        long generation = watching(machine);
+        machine.socketClosed(generation, 1006, 9_000);
+        // The small picture asked for while there is no socket: nothing can go yet.
+        assertTrue(sent(machine.watchLayer("friend", 1, "q")).isEmpty());
+        long next = VoiceMachineTest.connectGeneration(machine.tick(10_000, UNIX, 10_000));
+        machine.socketOpen(next, 10_100);
+        Message kept = VoiceWire.parse("{\"t\":\"hello\",\"room\":{\"id\":\"" + ROOM + "\",\"kind\":\"f\",\"leader\":\"me\",\"mods\":[],"
+                + "\"max\":10},\"me\":{\"role\":\"l\",\"watch\":[{\"u\":\"friend\",\"n\":1}]},\"people\":[" + person("me", 1) + ","
+                + sharing("friend", 5, 1) + "],\"rings\":[],\"resume\":\"r\",\"now\":" + UNIX + "}");
+        List<Effect> effects = machine.socketMessage(next, kept, 10_200, UNIX);
+        JsonObject layer = frame(effects, "layer");
+        assertEquals("friend", layer.get("u").getAsString());
+        assertEquals("q", layer.get("layer").getAsString());
+    }
+
+    @Test
+    public void joiningAnotherRoomWhileWatchingEndsTheWatchWithItsWord() {
+        VoiceMachine machine = machine();
+        watching(machine);
+        int seq = machine.view(3_000, UNIX).watchNoticeSeq;
+        // A move or a join elsewhere ends this stay and starts the next in one go: the stream screen gets its word.
+        machine.join(new VoiceMachine.Start("g0123456789abcdef", "t", null, false), VoiceMachineTest.SERVICE, 4_000, UNIX);
+        VoiceState view = machine.view(4_000, UNIX);
+        assertNotNull(view);
+        assertNull(view.watch);
+        assertEquals(seq + 1, view.watchNoticeSeq);
+        assertEquals(VoiceWatch.NOTICE_ENDED, view.watchNotice);
     }
 
     @Test
