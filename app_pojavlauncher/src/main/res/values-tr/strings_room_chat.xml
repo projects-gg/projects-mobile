@@ -5,7 +5,7 @@
     <string name="projects_room_chat_title">Oda Sohbeti</string>
     <string name="projects_room_chat_crew_link">Ekip Sohbeti</string>
     <string name="projects_room_chat_dm_title">Mesajlar</string>
-    <string name="projects_room_chat_dm_none">Henüz mesaj yok.</string>
+    <string name="projects_room_chat_dm_none">Henüz mesaj yok</string>
     <string name="projects_room_chat_dm_open">Mesajları Aç</string>
     <string name="projects_room_chat_empty">Burada yazdıkların yalnız bu odadakilere görünür ve oda kapanınca silinir.</string>
     <string name="projects_room_chat_hint">Odaya yaz</string>

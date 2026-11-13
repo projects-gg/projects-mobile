@@ -5,7 +5,7 @@
     <string name="projects_room_chat_title">Room Chat</string>
     <string name="projects_room_chat_crew_link">Crew Chat</string>
     <string name="projects_room_chat_dm_title">Messages</string>
-    <string name="projects_room_chat_dm_none">No messages yet.</string>
+    <string name="projects_room_chat_dm_none">No messages yet</string>
     <string name="projects_room_chat_dm_open">Open Messages</string>
     <string name="projects_room_chat_empty">What you write here is seen only by the people in this room and is deleted when the room closes.</string>
     <string name="projects_room_chat_hint">Message the room</string>

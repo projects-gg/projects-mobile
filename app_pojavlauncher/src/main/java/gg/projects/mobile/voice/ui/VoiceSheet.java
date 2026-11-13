@@ -385,9 +385,10 @@ public final class VoiceSheet implements VoiceLink.Listener {
                 mChatSlot.addView(mRoomChat.view(), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
             }
             mChatSlot.setVisibility(mode == ChatMode.NONE ? View.GONE : View.VISIBLE);
-            // With a chat the sheet takes its full height (the chat fills it); without, it is as tall as its people.
+            // With the room's chat the sheet takes its full height (the chat fills it); the friend's messages (three lines
+            // and a field) and no chat keep it as tall as what it shows (no empty band above the last messages).
             int full = Math.round(mActivity.getResources().getDisplayMetrics().heightPixels * 0.85f) - dp(20);
-            mPanel.setContentHeight(mode == ChatMode.NONE ? 0 : full);
+            mPanel.setContentHeight(mode == ChatMode.ROOM ? full : 0);
             if (mode != ChatMode.ROOM) mTyping = false;
         }
         layoutPeople();

@@ -79,6 +79,9 @@ public final class RoomChatPanel {
 
     /** The service's limit for one message; the field holds more and the chat's check says it. */
     private static final int FIELD_MAX = 1200;
+    /** An unsent text of the room's field and its room, kept while the app runs (the sheet closed with it). */
+    @Nullable private static String sDraftRoom;
+    @Nullable private static String sDraft;
     /** Messages of one sender this close together are one group (one name, one time). */
     private static final long GROUP_MS = 5 * 60_000L;
 
@@ -218,6 +221,12 @@ public final class RoomChatPanel {
         // The room's state comes with every speaking ring: nothing to do unless the chat or the connection changed.
         if (mUpdated && chat == mChat && live == mLive) return;
         mUpdated = true;
+        if (chat != null && (mChat == null || !chat.room.equals(mChat.room)) && chat.room.equals(sDraftRoom)
+                && mInput.getText().length() == 0 && sDraft != null && !sDraft.isEmpty()) {
+            // The text the player had typed when the sheet went (this room's, this run of the app).
+            mInput.setText(sDraft);
+            mInput.setSelection(mInput.getText().length());
+        }
         mChat = chat;
         mLive = live;
         mInput.setEnabled(live);
@@ -247,8 +256,11 @@ public final class RoomChatPanel {
         return true;
     }
 
-    /** The sheet goes: the keyboard and the picker go with it. */
+    /** The sheet goes: the keyboard and the picker go with it; an unsent text waits for the room's sheet to come back. */
     public void close() {
+        RoomChat.View chat = mChat;
+        sDraftRoom = chat == null ? null : chat.room;
+        sDraft = mInput.getText().toString();
         closePicker(false);
         InputMethodManager imm = (InputMethodManager) mActivity.getSystemService(Context.INPUT_METHOD_SERVICE);
         if (imm != null) imm.hideSoftInputFromWindow(mInput.getWindowToken(), 0);
