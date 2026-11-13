@@ -21,8 +21,13 @@ public final class Reports {
     /**
      * FIX2: {@code PLAN} is a plan's maker reported from its card (a player, with the plan as context).
      * CHAT2: {@code REACTION} is the player who gave a reaction, with the reaction as context.
+     * MOB-WATCH: {@code SHARE} is a player reported from a screen share they show in a voice room (the room's
+     * record and the viewer's still frame go with it; the desktop's "Yayını Rapor Et").
      */
-    public enum Target { PLAYER, CREW, MESSAGE, PLAN, REACTION }
+    public enum Target { PLAYER, CREW, MESSAGE, PLAN, REACTION, SHARE }
+
+    /** BAN-TYPES: a voice room's own reason ("Sesli Sohbet İhlali"), offered first for a report from a room. */
+    public static final String VOICE = "voice";
 
     public static final int NOTE_MAX = 200;
     /** Earlier messages a message report carries for context. */
@@ -48,6 +53,9 @@ public final class Reports {
                 // A player's reasons and, first, the note's or the emoji's: only a plan's or a reaction's report takes
                 // "inappropriate" for a player.
                 return Collections.unmodifiableList(Arrays.asList(INAPPROPRIATE, NAME, PROFILE, HARASSMENT, SPAM, SCAM, OTHER));
+            case SHARE:
+                // MOB-WATCH: as the desktop's player report from a voice room: "Sesli Sohbet İhlali" first.
+                return Collections.unmodifiableList(Arrays.asList(VOICE, NAME, PROFILE, HARASSMENT, SPAM, SCAM, OTHER));
             case PLAYER:
             default:
                 return Collections.unmodifiableList(Arrays.asList(NAME, PROFILE, HARASSMENT, SPAM, SCAM, OTHER));
@@ -94,6 +102,25 @@ public final class Reports {
         target.addProperty("kind", "player");
         target.addProperty("id", userId);
         return body(target, reason, note, block);
+    }
+
+    /**
+     * MOB-WATCH (SHARE-S): a player's screen share in a voice room: {@code voice: {room, share}} names it (the room keeps
+     * the record of who was there), {@code frame} the still the viewer saw (a JPEG of at most 60 KB, base64; none when the
+     * screen had no picture yet).
+     */
+    public static JsonObject share(String userId, String room, int share, @Nullable String frame, String reason,
+                                   @Nullable String note, boolean block) {
+        JsonObject target = new JsonObject();
+        target.addProperty("kind", "player");
+        target.addProperty("id", userId);
+        JsonObject voice = new JsonObject();
+        voice.addProperty("room", room);
+        voice.addProperty("share", share);
+        target.add("voice", voice);
+        JsonObject body = body(target, reason, note, block);
+        if (frame != null && !frame.isEmpty()) body.addProperty("frame", frame);
+        return body;
     }
 
     /**

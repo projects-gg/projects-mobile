@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- MOB-WATCH (phone 0.5.5): watching a stream in a voice room, "While Watching Streams" in the settings and reporting a
+     stream (the desktop's locales/en-share-view.ts and en-share.ts). Titles, buttons and setting names in Title Case;
+     states and sentences in sentence case. -->
+<resources>
+    <string name="projects_stream_watch">Watch</string>
+    <string name="projects_stream_watch_label">Watch %1$s\'s stream</string>
+    <string name="projects_stream_watch_item">Watch Stream</string>
+    <string name="projects_stream_label">%1$s\'s stream</string>
+    <string name="projects_stream_connecting">Connecting…</string>
+    <string name="projects_stream_ended">The stream ended.</string>
+    <string name="projects_stream_gone">This stream has ended.</string>
+    <string name="projects_stream_failed">Couldn\'t connect to the stream.</string>
+    <string name="projects_stream_full">This stream can\'t take more viewers.</string>
+    <string name="projects_stream_off">Screen sharing isn\'t available right now.</string>
+    <string name="projects_stream_stopped">Watching stopped because the screen wasn\'t touched for a long time.</string>
+    <string name="projects_stream_weak">Low Quality</string>
+    <string name="projects_stream_weak_hint">The connection is weak, so the picture is in low quality.</string>
+    <string name="projects_stream_volume">Stream Volume</string>
+    <string name="projects_stream_mute">Mute Stream</string>
+    <string name="projects_stream_unmute">Unmute Stream</string>
+    <string name="projects_stream_quality">Quality</string>
+    <string name="projects_stream_quality_auto">Automatic</string>
+    <string name="projects_stream_quality_high">High</string>
+    <string name="projects_stream_quality_saver">Data Saver</string>
+    <string name="projects_stream_room">Voice Room</string>
+    <plurals name="projects_stream_room_unread">
+        <item quantity="one">Voice Room, %d unread message</item>
+        <item quantity="other">Voice Room, %d unread messages</item>
+    </plurals>
+    <string name="projects_stream_more">Stream Options</string>
+    <string name="projects_stream_report">Report Stream</string>
+    <string name="projects_stream_report_subject">Screen share</string>
+    <string name="projects_stream_report_frame">The picture sent with the report</string>
+    <string name="projects_report_reason_voice">Voice Chat Violation</string>
+    <string name="projects_stream_stop">Stop Watching</string>
+    <string name="projects_stream_pip">Watch in a Small Window</string>
+    <string name="projects_stream_still_ask">Are you still watching?</string>
+    <string name="projects_stream_still_yes">Yes</string>
+    <string name="projects_stream_zoom_reset">Reset Zoom, %1$s</string>
+    <string name="projects_stream_cell_auto">On mobile data the stream comes in lower quality to use less data.</string>
+    <string name="projects_stream_cell_high">High quality uses a lot of mobile data.</string>
+    <string name="projects_stream_cell_switch">Switch to Data Saver</string>
+    <string name="projects_stream_ok">OK</string>
+    <string name="projects_stream_pip_mute">Mute</string>
+    <string name="projects_stream_pip_unmute">Unmute</string>
+
+    <!-- Said politely to the screen reader (not shown). -->
+    <string name="projects_stream_say_open">Stream on: %1$s</string>
+    <string name="projects_stream_say_hold">Stream paused: %1$s</string>
+    <string name="projects_stream_say_min">Shared window minimized: %1$s</string>
+    <string name="projects_stream_say_resume">Stream back: %1$s</string>
+    <string name="projects_stream_say_end">Stream ended: %1$s</string>
+    <string name="projects_stream_say_volume">Stream volume %1$s</string>
+    <string name="projects_stream_say_muted">Stream muted.</string>
+    <string name="projects_stream_say_unmuted">Stream unmuted.</string>
+
+    <!-- Settings → Friends → Voice chat: "While Watching Streams". -->
+    <string name="projects_stream_settings_title">While Watching Streams</string>
+    <string name="projects_stream_settings_quality">Stream Quality</string>
+    <string name="projects_stream_settings_duck">Lower Stream Volume When Someone Talks</string>
+    <string name="projects_stream_settings_duck_level">How Much Lower</string>
+    <string name="projects_stream_settings_duck_self">Also When I Talk</string>
+</resources>

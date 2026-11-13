@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- MOB-WATCH (telefon 0.5.5): ses odasında yayın izleme ekranı, ayarlardaki "Yayın İzlerken" ve yayını rapor etmek
+     (masaüstünün locales/tr-share-view.ts ve tr-share.ts'i). Başlık, düğme ve ayar adları her kelimesi büyük; durumlar ve
+     cümleler cümle düzeninde. Oyuncu adı ek almaz. -->
+<resources>
+    <string name="projects_stream_watch">İzle</string>
+    <string name="projects_stream_watch_label">%1$s yayınını izle</string>
+    <string name="projects_stream_watch_item">Yayını İzle</string>
+    <string name="projects_stream_label">%1$s yayını</string>
+    <string name="projects_stream_connecting">Bağlanıyor…</string>
+    <string name="projects_stream_ended">Yayın bitti.</string>
+    <string name="projects_stream_gone">Bu yayın bitti.</string>
+    <string name="projects_stream_failed">Yayına bağlanılamadı.</string>
+    <string name="projects_stream_full">Bu yayını izleyenlerin sayısı dolu.</string>
+    <string name="projects_stream_off">Ekran paylaşımı şu an kullanılamıyor.</string>
+    <string name="projects_stream_stopped">Uzun süre dokunulmadığı için izleme durdu.</string>
+    <string name="projects_stream_weak">Düşük Kalite</string>
+    <string name="projects_stream_weak_hint">Bağlantı zayıf olduğu için görüntü düşük kalitede.</string>
+    <string name="projects_stream_volume">Yayın Sesi</string>
+    <string name="projects_stream_mute">Yayını Sessize Al</string>
+    <string name="projects_stream_unmute">Yayının Sesini Aç</string>
+    <string name="projects_stream_quality">Kalite</string>
+    <string name="projects_stream_quality_auto">Otomatik</string>
+    <string name="projects_stream_quality_high">Yüksek</string>
+    <string name="projects_stream_quality_saver">Veri Tasarrufu</string>
+    <string name="projects_stream_room">Ses Odası</string>
+    <plurals name="projects_stream_room_unread">
+        <item quantity="one">Ses Odası, %d okunmamış mesaj</item>
+        <item quantity="other">Ses Odası, %d okunmamış mesaj</item>
+    </plurals>
+    <string name="projects_stream_more">Yayın Seçenekleri</string>
+    <string name="projects_stream_report">Yayını Rapor Et</string>
+    <string name="projects_stream_report_subject">Ekran paylaşımı</string>
+    <string name="projects_stream_report_frame">Rapora eklenen görüntü</string>
+    <string name="projects_report_reason_voice">Sesli Sohbet İhlali</string>
+    <string name="projects_stream_stop">İzlemeyi Bırak</string>
+    <string name="projects_stream_pip">Küçük Pencerede İzle</string>
+    <string name="projects_stream_still_ask">Hâlâ izliyor musun?</string>
+    <string name="projects_stream_still_yes">Evet</string>
+    <string name="projects_stream_zoom_reset">Yakınlaştırmayı Sıfırla, %1$s</string>
+    <string name="projects_stream_cell_auto">Mobil veride yayın, daha az veri harcamak için düşük kalitede gelir.</string>
+    <string name="projects_stream_cell_high">Yüksek kalite mobil veride çok veri harcar.</string>
+    <string name="projects_stream_cell_switch">Veri Tasarrufuna Geç</string>
+    <string name="projects_stream_ok">Tamam</string>
+    <string name="projects_stream_pip_mute">Sessize Al</string>
+    <string name="projects_stream_pip_unmute">Sesi Aç</string>
+
+    <!-- Ekran okuyucuya kibarca söylenenler (görünmez). -->
+    <string name="projects_stream_say_open">Yayın açıldı: %1$s</string>
+    <string name="projects_stream_say_hold">Yayın duraklatıldı: %1$s</string>
+    <string name="projects_stream_say_min">Paylaşılan pencere küçültüldü: %1$s</string>
+    <string name="projects_stream_say_resume">Yayın sürüyor: %1$s</string>
+    <string name="projects_stream_say_end">Yayın bitti: %1$s</string>
+    <string name="projects_stream_say_volume">Yayın sesi %1$s</string>
+    <string name="projects_stream_say_muted">Yayın sessize alındı.</string>
+    <string name="projects_stream_say_unmuted">Yayının sesi açıldı.</string>
+
+    <!-- Ayarlar → Arkadaşlar → Sesli sohbet: "Yayın İzlerken". -->
+    <string name="projects_stream_settings_title">Yayın İzlerken</string>
+    <string name="projects_stream_settings_quality">Yayın Kalitesi</string>
+    <string name="projects_stream_settings_duck">Biri Konuşunca Yayın Sesini Kıs</string>
+    <string name="projects_stream_settings_duck_level">Kısma Miktarı</string>
+    <string name="projects_stream_settings_duck_self">Ben Konuşunca da Kıs</string>
+</resources>

@@ -514,7 +514,32 @@ public final class VoiceSheet implements VoiceLink.Listener {
 
     private void openConversation(String conv) {
         if (mPanel != null) mPanel.dismiss();
+        // MOB-WATCH: over the stream screen the conversation opens in the launcher (the stream goes on in its window).
+        if (mActivity instanceof StreamActivity) {
+            ((StreamActivity) mActivity).openConversation(conv);
+            return;
+        }
         ChatFragment.show(mActivity, conv);
+    }
+
+    /** MOB-WATCH: "İzle" (48 dp, the quiet plate): the stream screen on their share. */
+    private TextView watchButton(Context c, final String id, final int n, String name) {
+        TextView watch = text(c, 14, R.color.projects_bone_100, R.font.figtree_semibold);
+        watch.setText(R.string.projects_stream_watch);
+        watch.setGravity(Gravity.CENTER);
+        watch.setMinHeight(dp(48));
+        watch.setMinWidth(dp(64));
+        watch.setPadding(dp(14), 0, dp(14), 0);
+        watch.setBackground(new ChamferDrawable(ContextCompat.getColor(c, R.color.projects_obsidian_700), dp(6), null));
+        watch.setContentDescription(c.getString(R.string.projects_stream_watch_label, name));
+        watch.setClickable(true);
+        watch.setFocusable(true);
+        watch.setOnClickListener(v -> StreamActivity.open(mActivity, id, n));
+        Press.attach(watch, Press.Style.BUTTON);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(48));
+        lp.setMarginStart(dp(8));
+        watch.setLayoutParams(lp);
+        return watch;
     }
 
     private TextView unreadPill(Context c, int unread) {
@@ -688,6 +713,8 @@ public final class VoiceSheet implements VoiceLink.Listener {
         if (p.mutedForMe) row.addView(mark(c, R.drawable.projects_ic_voice_speaker, R.color.projects_ash_400,
                 R.string.projects_voice_muted_for_me));
         if (p.quality > 0) row.addView(mark(c, R.drawable.projects_ic_voice_weak, R.color.projects_gold_300, R.string.projects_voice_their_weak));
+        // MOB-WATCH: "İzle" beside whoever shares (the desktop's row button).
+        if (p.sharing && p.shareN > 0) row.addView(watchButton(c, p.id, p.shareN, name));
         row.setClickable(true);
         row.setFocusable(true);
         row.setBackgroundResource(R.drawable.projects_row_ripple);
@@ -912,6 +939,17 @@ public final class VoiceSheet implements VoiceLink.Listener {
             line = text(c, 13, R.color.projects_ash_400, R.font.figtree_regular);
             line.setPadding(dp(4), dp(6), dp(4), 0);
             view.addView(line);
+            // MOB-WATCH: the picture opens the stream, and so does "Yayını İzle" under it (the share the room lists now).
+            View.OnClickListener open = v -> {
+                VoiceState now = mState;
+                VoiceState.Person them = now == null ? null : now.person(id);
+                if (them != null && them.sharing && them.shareN > 0) StreamActivity.open(mActivity, id, them.shareN);
+            };
+            image.setOnClickListener(open);
+            image.setContentDescription(c.getString(R.string.projects_stream_watch_label, name));
+            Press.attach(image, Press.Style.CARD);
+            view.addView(CrewViews.actionRow(c, R.drawable.projects_ic_play, c.getString(R.string.projects_stream_watch_item),
+                    R.color.projects_bone_100, open));
         }
 
         void update(VoiceState s) {

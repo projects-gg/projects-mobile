@@ -275,6 +275,21 @@
         <receiver
             android:name="gg.projects.mobile.voice.VoiceActionReceiver"
             android:exported="false" />
+        <!-- MOB-WATCH: the stream screen (a task of its own, so picture-in-picture takes it alone and the launcher stays
+             usable under it; it turns with the phone and never restarts for a size change). The picture comes from the
+             voice process, drawn into its surface. -->
+        <activity
+            android:name="gg.projects.mobile.voice.ui.StreamActivity"
+            android:exported="false"
+            android:theme="@style/AppTheme.Launcher"
+            android:taskAffinity="gg.projects.mobile.stream"
+            android:launchMode="singleTask"
+            android:excludeFromRecents="true"
+            android:autoRemoveFromRecents="true"
+            android:resizeableActivity="true"
+            android:supportsPictureInPicture="true"
+            android:screenOrientation="fullUser"
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|keyboard|keyboardHidden|navigation|uiMode|density" />
 
         <!-- PHONE-AFK: the phone's own AFK accounts (gg.projects.mobile.afk) in a process of their own, so the game
              and the screens come and go without them; started only by the player's tap, shown in an ongoing

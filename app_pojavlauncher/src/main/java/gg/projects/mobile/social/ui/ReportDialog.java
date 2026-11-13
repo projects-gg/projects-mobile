@@ -49,6 +49,17 @@ public final class ReportDialog {
         show(activity, Reports.Target.PLAYER, player, null, player.name(), null, null, null, null, null, null);
     }
 
+    /**
+     * MOB-WATCH: "Yayını Rapor Et" on the stream screen: the streamer, with the room and the share as context and the
+     * still the player saw ({@code frame}: a JPEG's base64 of at most 60 KB, or none; {@code still}: the same picture,
+     * shown in the dialog so the player sees what goes along).
+     */
+    public static void share(FragmentActivity activity, Profile player, String room, int n, @Nullable String frame,
+                             @Nullable android.graphics.Bitmap still) {
+        show(activity, Reports.Target.SHARE, player, null, player.name(), null, null, null, null, null, null,
+                new Object[]{room, n, frame, still});
+    }
+
     /** CHAT2: the player who gave a reaction, from the reactions' list ("Tepkisi: 🤮"; "Uygunsuz tepki" first). */
     public static void reaction(FragmentActivity activity, Profile player, String conv, long messageId, String emoji) {
         show(activity, Reports.Target.REACTION, player, null, player.name(), null, null, null, null, null,
@@ -104,6 +115,7 @@ public final class ReportDialog {
                     : R.string.projects_report_reason_inappropriate;
             case Reports.SPAM: return R.string.projects_report_reason_spam;
             case Reports.SCAM: return R.string.projects_report_reason_scam;
+            case Reports.VOICE: return R.string.projects_report_reason_voice;
             case Reports.OTHER:
             default: return R.string.projects_report_reason_other;
         }
@@ -131,6 +143,15 @@ public final class ReportDialog {
                              @Nullable final ChatMessage message, @Nullable final List<ChatMessage> before,
                              @Nullable final gg.projects.mobile.social.SocialModel.Plan plan, @Nullable final String via,
                              @Nullable final Object[] reaction) {
+        show(activity, target, player, crew, name, code, message, before, plan, via, reaction, null);
+    }
+
+    /** {@code share} (MOB-WATCH, {@link #share}): room, share number, frame (base64 or null), still (or null). */
+    private static void show(final FragmentActivity activity, final Reports.Target target, @Nullable final Profile player,
+                             @Nullable final TeamSummary crew, String name, @Nullable final String code,
+                             @Nullable final ChatMessage message, @Nullable final List<ChatMessage> before,
+                             @Nullable final gg.projects.mobile.social.SocialModel.Plan plan, @Nullable final String via,
+                             @Nullable final Object[] reaction, @Nullable final Object[] share) {
         float dp = activity.getResources().getDisplayMetrics().density;
         LinearLayout content = new LinearLayout(activity);
         content.setOrientation(LinearLayout.VERTICAL);
@@ -176,10 +197,35 @@ public final class ReportDialog {
             quote.setTextColor(ContextCompat.getColor(activity, R.color.projects_ash_400));
             names.addView(quote);
         }
+        if (share != null) {
+            // MOB-WATCH: what is reported (their screen share), and the still that goes along when there is one.
+            TextView subject = new TextView(activity);
+            subject.setText(R.string.projects_stream_report_subject);
+            subject.setTextSize(13);
+            subject.setTextColor(ContextCompat.getColor(activity, R.color.projects_ash_400));
+            names.addView(subject);
+        }
         LinearLayout.LayoutParams namesLp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
         namesLp.setMarginStart(Math.round(12 * dp));
         who.addView(names, namesLp);
         content.addView(who);
+        if (share != null && share[3] instanceof android.graphics.Bitmap) {
+            android.widget.ImageView still = new android.widget.ImageView(activity);
+            still.setImageBitmap((android.graphics.Bitmap) share[3]);
+            still.setScaleType(android.widget.ImageView.ScaleType.FIT_CENTER);
+            still.setAdjustViewBounds(true);
+            still.setMaxHeight(Math.round(140 * dp));
+            still.setContentDescription(activity.getString(R.string.projects_stream_report_frame));
+            android.graphics.drawable.GradientDrawable plate = new android.graphics.drawable.GradientDrawable();
+            plate.setCornerRadius(8 * dp);
+            plate.setColor(ContextCompat.getColor(activity, R.color.projects_obsidian_800));
+            still.setBackground(plate);
+            still.setClipToOutline(true);
+            LinearLayout.LayoutParams stillLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT);
+            stillLp.topMargin = Math.round(12 * dp);
+            content.addView(still, stillLp);
+        }
 
         TextView why = new TextView(activity);
         why.setText(R.string.projects_report_why);
@@ -312,6 +358,10 @@ public final class ReportDialog {
                         break;
                     case PLAN:
                         body = Reports.planMaker(player.id, plan.crew, plan.id, reason, note.getText().toString(), blocking);
+                        break;
+                    case SHARE:
+                        body = Reports.share(player.id, (String) share[0], (Integer) share[1], (String) share[2], reason,
+                                note.getText().toString(), blocking);
                         break;
                     case PLAYER:
                     default:

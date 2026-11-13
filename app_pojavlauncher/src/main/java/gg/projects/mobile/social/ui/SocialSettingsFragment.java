@@ -242,6 +242,7 @@ public class SocialSettingsFragment extends Fragment implements SocialService.Li
                     voice.prefs().setSoundsSaved(on);
                     gg.projects.mobile.voice.VoiceLink.get(requireContext()).setSounds(on);
                 });
+                streamSettings(voice.prefs());
             }
         }
 
@@ -327,6 +328,111 @@ public class SocialSettingsFragment extends Fragment implements SocialService.Li
         lp.bottomMargin = dp(4);
         panel.setLayoutParams(lp);
         return panel;
+    }
+
+    /**
+     * MOB-WATCH: "Yayın İzlerken" (the desktop's "İzlerken"): "Yayın Kalitesi", "Biri Konuşunca Yayın Sesini Kıs" and,
+     * while it is on, "Kısma Miktarı" and "Ben Konuşunca da Kıs". A running stay hears the duck's choices at once.
+     */
+    private void streamSettings(final gg.projects.mobile.voice.VoicePrefs prefs) {
+        final Context c = requireContext();
+        section(R.string.projects_stream_settings_title);
+        final String[] keys = {gg.projects.mobile.voice.StreamView.AUTO, gg.projects.mobile.voice.StreamView.HIGH,
+                gg.projects.mobile.voice.StreamView.SAVER};
+        final String[] labels = {getString(R.string.projects_stream_quality_auto), getString(R.string.projects_stream_quality_high),
+                getString(R.string.projects_stream_quality_saver)};
+        int chosen = java.util.Arrays.asList(keys).indexOf(prefs.streamQuality());
+        LinearLayout quality = new LinearLayout(c);
+        quality.setOrientation(LinearLayout.HORIZONTAL);
+        quality.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        quality.setMinimumHeight(dp(56));
+        quality.setPadding(dp(8), 0, dp(8), 0);
+        quality.setBackgroundResource(R.drawable.projects_row_ripple);
+        TextView label = new TextView(c);
+        label.setText(R.string.projects_stream_settings_quality);
+        label.setTextSize(16);
+        label.setTextColor(ContextCompat.getColor(c, R.color.projects_bone_100));
+        quality.addView(label, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        TextView value = new TextView(c);
+        value.setText(labels[Math.max(0, chosen)]);
+        value.setTextSize(14);
+        value.setTextColor(ContextCompat.getColor(c, R.color.projects_ash_400));
+        quality.addView(value);
+        quality.setContentDescription(getString(R.string.projects_stream_settings_quality) + ", " + labels[Math.max(0, chosen)]);
+        quality.setClickable(true);
+        quality.setFocusable(true);
+        gg.projects.mobile.ui.Press.attach(quality, gg.projects.mobile.ui.Press.Style.ROW);
+        quality.setOnClickListener(v -> new androidx.appcompat.app.AlertDialog.Builder(c)
+                .setTitle(R.string.projects_stream_settings_quality)
+                .setSingleChoiceItems(labels, Math.max(0, chosen), (dialog, which) -> {
+                    prefs.setStreamQuality(keys[which]);
+                    dialog.dismiss();
+                    mShown = "";
+                    render();
+                })
+                .setNegativeButton(R.string.projects_social_cancel, null)
+                .show());
+        mList.addView(quality, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        toggle(R.string.projects_stream_settings_duck, prefs.duck(), on -> {
+            prefs.setDuck(on);
+            gg.projects.mobile.voice.VoiceLink.get(c).setDuck(on, prefs.duckLevel(), prefs.duckSelf());
+            mShown = "";
+            render();
+        });
+        if (!prefs.duck()) return;
+        // "Kısma Miktarı": 20–90 % in steps of 5, the value beside it ("%60").
+        LinearLayout level = new LinearLayout(c);
+        level.setOrientation(LinearLayout.VERTICAL);
+        level.setPadding(dp(8), dp(8), dp(8), 0);
+        LinearLayout head = new LinearLayout(c);
+        head.setOrientation(LinearLayout.HORIZONTAL);
+        TextView levelLabel = new TextView(c);
+        levelLabel.setText(R.string.projects_stream_settings_duck_level);
+        levelLabel.setTextSize(16);
+        levelLabel.setTextColor(ContextCompat.getColor(c, R.color.projects_bone_100));
+        head.addView(levelLabel, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        final TextView levelValue = new TextView(c);
+        levelValue.setTextSize(14);
+        levelValue.setTextColor(ContextCompat.getColor(c, R.color.projects_ash_400));
+        levelValue.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        head.addView(levelValue);
+        level.addView(head);
+        final int min = gg.projects.mobile.voice.StreamSound.DUCK_LEVEL_MIN;
+        gg.projects.mobile.ui.TickSeekBar bar = new gg.projects.mobile.ui.TickSeekBar(c);
+        bar.setMax((gg.projects.mobile.voice.StreamSound.DUCK_LEVEL_MAX - min) / 5);
+        bar.setProgress((prefs.duckLevel() - min) / 5);
+        int bone = ContextCompat.getColor(c, R.color.projects_bone_100);
+        bar.setProgressTintList(android.content.res.ColorStateList.valueOf(bone));
+        bar.setThumbTintList(android.content.res.ColorStateList.valueOf(bone));
+        bar.setContentDescription(getString(R.string.projects_stream_settings_duck_level));
+        String start = getString(R.string.projects_voice_percent, prefs.duckLevel());
+        levelValue.setText(start);
+        androidx.core.view.ViewCompat.setStateDescription(bar, start);
+        bar.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(android.widget.SeekBar seekBar, int progress, boolean fromUser) {
+                int percent = min + progress * 5;
+                String words = getString(R.string.projects_voice_percent, percent);
+                levelValue.setText(words);
+                androidx.core.view.ViewCompat.setStateDescription(seekBar, words);
+                if (!fromUser) return;
+                prefs.setDuckLevel(percent);
+                gg.projects.mobile.voice.VoiceLink.get(c).setDuck(true, percent, prefs.duckSelf());
+            }
+
+            @Override
+            public void onStartTrackingTouch(android.widget.SeekBar seekBar) {}
+
+            @Override
+            public void onStopTrackingTouch(android.widget.SeekBar seekBar) {}
+        });
+        level.addView(bar, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48)));
+        mList.addView(level, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        toggle(R.string.projects_stream_settings_duck_self, prefs.duckSelf(), on -> {
+            prefs.setDuckSelf(on);
+            gg.projects.mobile.voice.VoiceLink.get(c).setDuck(prefs.duck(), prefs.duckLevel(), on);
+        });
     }
 
     private void section(int title) {

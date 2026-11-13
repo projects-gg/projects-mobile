@@ -102,6 +102,9 @@ public class LanguagePairsTest {
         // SQOL (0.5.4): the voice room's chat and a share's state.
         english.putAll(texts(new File(RES, "values/strings_room_chat.xml")));
         turkish.putAll(texts(new File(RES, "values-tr/strings_room_chat.xml")));
+        // MOB-WATCH (0.5.5): watching a stream.
+        english.putAll(texts(new File(RES, "values/strings_stream.xml")));
+        turkish.putAll(texts(new File(RES, "values-tr/strings_stream.xml")));
         TreeSet<String> missingTurkish = new TreeSet<>(english.keySet());
         missingTurkish.removeAll(turkish.keySet());
         TreeSet<String> missingEnglish = new TreeSet<>(turkish.keySet());
@@ -145,7 +148,8 @@ public class LanguagePairsTest {
     public void theEnglishInterfaceHasNoTurkishLeft() throws Exception {
         for (String file : new String[]{"values/projects_strings.xml", "values/projects_social_strings.xml", "values/projects_cloud_strings.xml",
                 "values/strings_cloud_feat.xml", "values/strings_cloud_plus.xml", "values/strings_app_update.xml", "values/strings.xml",
-                "values/strings_badges.xml", "values/strings_chat_calm.xml", "values/strings_skin.xml", "values/strings_room_chat.xml"}) {
+                "values/strings_badges.xml", "values/strings_chat_calm.xml", "values/strings_skin.xml", "values/strings_room_chat.xml",
+                "values/strings_stream.xml"}) {
             for (Map.Entry<String, String> text : texts(new File(RES, file)).entrySet()) {
                 if (TURKISH_ON_PURPOSE.contains(text.getKey())) continue;
                 assertTrue(file + ": " + text.getKey() + " = " + text.getValue(), !TURKISH_LETTER.matcher(text.getValue()).find());
