@@ -227,6 +227,8 @@ public final class VoiceHub {
     @MainThread
     public void blocked(String user) {
         run(mRings.blocked(user));
+        // After 0.5.4: a stay in the voice process hears it too (their room chat messages, a call of two with them).
+        VoiceLink.get(mApp).blocked(user);
     }
 
     // ---- what the screens may do ----

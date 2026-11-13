@@ -100,6 +100,8 @@ public final class RoomChatPanel {
     private final Adapter mAdapter = new Adapter();
     /** Sends shown the moment they go, and the rows' identity (after 0.5.4). */
     private final RoomChatEchoes mEchoes = new RoomChatEchoes();
+    /** People the player blocked: their messages leave the list at once (after 0.5.4; the room stops them too). */
+    private Set<String> mBlocked;
     @Nullable private RoomChat.View mChat;
     private boolean mLive;
     private boolean mUpdated;
@@ -113,6 +115,7 @@ public final class RoomChatPanel {
         mHost = host;
         Context c = activity;
         mDp = c.getResources().getDisplayMetrics().density;
+        mBlocked = blockedIds(activity);
         mRoot = new LinearLayout(c);
         mRoot.setOrientation(LinearLayout.VERTICAL);
 
@@ -241,6 +244,21 @@ public final class RoomChatPanel {
         redraw();
     }
 
+    /** The friends feature changed: someone blocked now leaves the list at once (after 0.5.4). */
+    public void socialChanged() {
+        Set<String> blocked = blockedIds(mActivity);
+        if (blocked.equals(mBlocked)) return;
+        mBlocked = blocked;
+        redraw();
+    }
+
+    /** The ids of the people the player blocked. */
+    public static Set<String> blockedIds(Context context) {
+        Set<String> out = new HashSet<>();
+        for (SocialModel.Profile p : SocialService.get(context).state().blocked()) out.add(p.id);
+        return out;
+    }
+
     /** A send shows at once as waiting (the voice process's copy takes its row about 200 ms later). */
     private void echo(@Nullable String text, @Nullable String sticker) {
         RoomChat.View chat = mChat;
@@ -254,7 +272,11 @@ public final class RoomChatPanel {
     /** The rows again: the chat as last heard, with the sends not answered yet (shown the moment they went). */
     private void redraw() {
         RoomChat.View chat = mChat;
-        List<Row> rows = rows(mEchoes.rows(chat, android.os.SystemClock.elapsedRealtime()));
+        List<RoomChat.Line> shown = new ArrayList<>();
+        for (RoomChat.Line l : mEchoes.rows(chat, android.os.SystemClock.elapsedRealtime())) {
+            if (l.mine || !mBlocked.contains(l.u)) shown.add(l);
+        }
+        List<Row> rows = rows(shown);
         mEmpty.setVisibility(rows.isEmpty() ? View.VISIBLE : View.GONE);
         boolean atEnd = !mList.canScrollVertically(1);
         boolean grew = mAdapter.submit(rows);
@@ -491,7 +513,10 @@ public final class RoomChatPanel {
      */
     private void report(RoomChat.View chat, RoomChat.Line line) {
         List<ChatMessage> before = new ArrayList<>();
-        for (RoomChat.Line l : chat.before(line)) before.add(message(chat.room, l));
+        for (RoomChat.Line l : chat.before(line)) {
+            // Never someone the player blocked (their lines left the list).
+            if (!mBlocked.contains(l.u)) before.add(message(chat.room, l));
+        }
         SocialModel.Profile sender = mHost.profile(line.u);
         ReportDialog.message(mActivity, message(chat.room, line), before, sender);
     }

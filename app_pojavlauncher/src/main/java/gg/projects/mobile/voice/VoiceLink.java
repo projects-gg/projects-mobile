@@ -49,19 +49,21 @@ public final class VoiceLink {
     static final int CHAT_SEEN = 17;
     static final int CHAT_RETRY = 18;
     static final int CHAT_DISCARD = 19;
+    /** After 0.5.4: the player blocked "person": their room chat messages go, a call of two with them ends. */
+    static final int BLOCKED = 20;
     /**
      * MOB-WATCH: the stream screen: watch ("person", arg1 the share, "layer"), stop watching ("person", arg1), another
      * layer, on screen or not (arg1), a touch, its surface ("surface"; none: gone), a streamer's sound ("person", arg1
      * volume, arg2 muted) and the duck's choices (arg1 on, arg2 level, "self").
      */
-    static final int WATCH = 20;
-    static final int UNWATCH = 21;
-    static final int WATCH_LAYER = 22;
-    static final int WATCH_SHOWN = 23;
-    static final int WATCH_STILL = 24;
-    static final int WATCH_SURFACE = 25;
-    static final int STREAM_SOUND = 26;
-    static final int DUCK = 27;
+    static final int WATCH = 21;
+    static final int UNWATCH = 22;
+    static final int WATCH_LAYER = 23;
+    static final int WATCH_SHOWN = 24;
+    static final int WATCH_STILL = 25;
+    static final int WATCH_SURFACE = 26;
+    static final int STREAM_SOUND = 27;
+    static final int DUCK = 28;
     // Voice → launcher.
     static final int STATE = 101;
     static final int NOTICE = 102;
@@ -457,6 +459,13 @@ public final class VoiceLink {
 
     public void chatDiscard(int rid) {
         send(Message.obtain(null, CHAT_DISCARD, rid, 0));
+    }
+
+    /** The player blocked {@code person} (a stay hears it at once; nothing without one). */
+    public void blocked(String person) {
+        Message m = Message.obtain(null, BLOCKED);
+        m.getData().putString("person", person);
+        send(m);
     }
 
     // ---- MOB-WATCH: the stream screen ----

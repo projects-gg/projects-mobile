@@ -7,8 +7,10 @@ import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import gg.projects.mobile.social.Json;
 
@@ -137,6 +139,8 @@ public final class RoomChat {
     private final String me;
     private final List<Line> lines = new ArrayList<>();
     private final List<Line> outbox = new ArrayList<>();
+    /** Senders the player blocked during the stay (their messages never come back into the list). */
+    private final Set<String> hidden = new HashSet<>();
     /** The room offers its chat now ({@code hello.room.chat}, {@code room.chat}). */
     private boolean on;
     /** A friend room that once had three people or more: its chat is the room's for good. */
@@ -203,7 +207,7 @@ public final class RoomChat {
 
     /** One new message ({@code rchat}); one the player has already is left as it is. */
     public boolean add(@Nullable Line line) {
-        if (line == null || indexOf(line.id) >= 0) return false;
+        if (line == null || indexOf(line.id) >= 0 || hidden.contains(line.u)) return false;
         int at = lines.size();
         while (at > 0 && lines.get(at - 1).at > line.at) at--;
         lines.add(at, line);
@@ -221,15 +225,31 @@ public final class RoomChat {
         boolean first = !primed;
         primed = true;
         if (log.isEmpty()) return false;
+        Set<String> before = new HashSet<>();
+        for (Line line : lines) before.add(line.id);
         long from = log.get(0).at;
         for (Iterator<Line> it = lines.iterator(); it.hasNext(); ) {
             if (it.next().at >= from) it.remove();
         }
         for (Line line : log) {
-            if (line != null && indexOf(line.id) < 0) lines.add(line);
+            if (line != null && indexOf(line.id) < 0 && !hidden.contains(line.u)) lines.add(line);
         }
         Collections.sort(lines, (a, b) -> Long.compare(a.at, b.at));
         trim();
+        // A send whose answer the lost connection took, which the room kept all the same: its copy came with this log,
+        // so the refused-looking send goes (no double). Each copy answers one send.
+        Set<String> used = new HashSet<>();
+        for (Iterator<Line> it = outbox.iterator(); it.hasNext(); ) {
+            Line send = it.next();
+            if (!FAILED.equals(send.state) || !"failed".equals(send.failure)) continue;
+            for (Line kept : lines) {
+                if (me.equals(kept.u) && !before.contains(kept.id) && !used.contains(kept.id) && same(send, kept)) {
+                    used.add(kept.id);
+                    it.remove();
+                    break;
+                }
+            }
+        }
         if (first) {
             for (Line line : lines) seenAt = Math.max(seenAt, line.at);
         }
@@ -268,14 +288,40 @@ public final class RoomChat {
     /** The room took the send of {@code rid}: its message as the room keeps it ({@code ack.m}) takes the send's place. */
     public boolean acked(int rid, @Nullable Line kept) {
         int index = outboxIndex(rid);
-        if (index < 0) return false;
-        outbox.remove(index);
+        if (index >= 0) outbox.remove(index);
+        // The room keeps it even when its send left the outbox's cap meanwhile: the player's own message never vanishes.
+        boolean added = false;
         if (kept != null) {
             kept.was = "p" + rid;
-            add(kept);
+            added = add(kept);
         }
+        if (index < 0 && !added) return false;
         changed();
         return true;
+    }
+
+    /**
+     * The player blocked {@code u} during the stay: their messages go at once and stay away (a later log of the room
+     * may still hold them until the room hears of the block). True when something went.
+     */
+    public boolean dropSender(@Nullable String u) {
+        if (u == null || u.isEmpty() || u.equals(me)) return false;
+        hidden.add(u);
+        boolean gone = false;
+        for (Iterator<Line> it = lines.iterator(); it.hasNext(); ) {
+            if (u.equals(it.next().u)) {
+                it.remove();
+                gone = true;
+            }
+        }
+        if (gone) changed();
+        return gone;
+    }
+
+    /** A send of the player's and a message of the room say the same (the room's cleaned text, or the same sticker). */
+    static boolean same(Line send, Line kept) {
+        if (send.st != null || kept.st != null) return send.st != null && send.st.equals(kept.st);
+        return gg.projects.mobile.social.ChatText.clean(send.text).equals(gg.projects.mobile.social.ChatText.clean(kept.text));
     }
 
     /** The room refused the send of {@code rid}: it stays, marked, with the room's reason (a lost answer: {@code failed}). */
@@ -384,6 +430,8 @@ public final class RoomChat {
         public boolean on;
         public boolean grew;
         public int unread;
+        /** Messages up to this moment were seen (the stay's first log among them): TalkBack reads only newer ones. */
+        public long seenAt;
         public long version;
         /** The room's messages, then the player's sends that wait or were refused. */
         public List<Line> lines = new ArrayList<>();
@@ -440,6 +488,7 @@ public final class RoomChat {
         v.on = on;
         v.grew = grew;
         v.unread = unread();
+        v.seenAt = seenAt;
         v.version = version;
         for (Line line : lines) {
             Line l = line.copy();

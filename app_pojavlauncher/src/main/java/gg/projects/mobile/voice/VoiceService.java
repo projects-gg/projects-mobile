@@ -291,6 +291,13 @@ public final class VoiceService extends Service implements VoiceEngine.Listener,
             case VoiceLink.CHAT_DISCARD:
                 run(mMachine.chatDiscard(msg.arg1));
                 break;
+            case VoiceLink.BLOCKED: {
+                // After 0.5.4: their room chat messages go at once; a call of two with them ends (machine.rs's rule).
+                String person = data.getString("person", "");
+                run(mMachine.chatBlocked(person));
+                run(mMachine.blocked(person, now()));
+                break;
+            }
             // MOB-WATCH: the stream screen.
             case VoiceLink.WATCH:
                 linkWatchOwner(from);

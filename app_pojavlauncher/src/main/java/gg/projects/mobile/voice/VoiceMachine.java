@@ -1128,6 +1128,17 @@ public final class VoiceMachine {
         return out;
     }
 
+    /** The player blocked {@code user}: their room chat messages go at once and stop counting (after 0.5.4). */
+    public List<Effect> chatBlocked(String user) {
+        List<Effect> out = new ArrayList<>();
+        Stay s = stay;
+        if (s != null && s.chat.dropSender(user)) {
+            out.add(new Effect(Effect.Kind.CHAT));
+            out.add(new Effect(Effect.Kind.CHANGED));
+        }
+        return out;
+    }
+
     /** The room chat as the screens show it, or null without a stay. */
     @Nullable
     public RoomChat.View chatView() {
