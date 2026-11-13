@@ -24,6 +24,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import net.kdt.pojavlaunch.R;
@@ -94,6 +95,8 @@ public final class VoiceSheet implements VoiceLink.Listener {
     private final CappedScroll mPeopleScroll;
     private final LinearLayout mList;
     private final LinearLayout mChatSlot;
+    /** Mikrofon, Sağırlaştır, Ayrıl (stepping aside while the keyboard is up for the chat). */
+    private final LinearLayout mControls;
     private final TextView mMic;
     private final TextView mDeaf;
     private final TextView mLeave;
@@ -112,6 +115,9 @@ public final class VoiceSheet implements VoiceLink.Listener {
     /** The player's choice for "Odadakiler" (open by default); folded for as long as the field has the focus. */
     private boolean mPeopleOpen = true;
     private boolean mTyping;
+    /** The window told whether its keyboard is up (Android 6+), and whether it is. */
+    private boolean mImeKnown;
+    private boolean mImeShown;
     private boolean mShowing;
     /** Names of everyone seen in the room this time (someone who left still names their messages). */
     private final Map<String, VoiceState.Person> mSeen = new HashMap<>();
@@ -202,6 +208,7 @@ public final class VoiceSheet implements VoiceLink.Listener {
         mRoot.addView(mChatSlot, chatLp);
 
         LinearLayout controls = new LinearLayout(c);
+        mControls = controls;
         controls.setOrientation(LinearLayout.HORIZONTAL);
         // A floor, never a ceiling: larger text grows the buttons instead of cutting their words.
         controls.setMinimumHeight(dp(64));
@@ -251,6 +258,22 @@ public final class VoiceSheet implements VoiceLink.Listener {
             SocialService.get(mActivity).removeListener(mSocial);
             link.detach(this);
         }).onBack(() -> mRoomChat != null && mRoomChat.back());
+        // After 0.5.4 (the lead): while the keyboard is up for the room's chat, the people fold and the controls row
+        // steps aside, so the field sits on the keyboard; the keyboard's own state, not the field's focus (a Back that
+        // closes the keyboard leaves the focus in the field).
+        // The window's own insets after every layout (the keyboard resizes the sheet's window): read even where a parent
+        // consumed them on the way down.
+        mRoot.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
+            if (android.os.Build.VERSION.SDK_INT < 23) return;
+            WindowInsetsCompat insets = ViewCompat.getRootWindowInsets(mRoot);
+            if (insets == null) return;
+            boolean ime = insets.isVisible(WindowInsetsCompat.Type.ime());
+            if (!mImeKnown || ime != mImeShown) {
+                mImeKnown = true;
+                mImeShown = ime;
+                layoutPeople();
+            }
+        });
         render();
         // The speaking rings are the call bar's to ask for (it shows under the sheet the whole time).
         link.attach(this);
@@ -385,9 +408,10 @@ public final class VoiceSheet implements VoiceLink.Listener {
                 mChatSlot.addView(mRoomChat.view(), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
             }
             mChatSlot.setVisibility(mode == ChatMode.NONE ? View.GONE : View.VISIBLE);
-            // With a chat the sheet takes its full height (the chat fills it); without, it is as tall as its people.
+            // With the room's chat the sheet takes its full height (the chat fills it); the friend's messages (three lines
+            // and a field) and no chat keep it as tall as what it shows (no empty band above the last messages).
             int full = Math.round(mActivity.getResources().getDisplayMetrics().heightPixels * 0.85f) - dp(20);
-            mPanel.setContentHeight(mode == ChatMode.NONE ? 0 : full);
+            mPanel.setContentHeight(mode == ChatMode.ROOM ? full : 0);
             if (mode != ChatMode.ROOM) mTyping = false;
         }
         layoutPeople();
@@ -420,6 +444,15 @@ public final class VoiceSheet implements VoiceLink.Listener {
             link.setMinHeight(dp(48));
             link.setPadding(dp(12), 0, dp(4), 0);
             link.setBackgroundResource(R.drawable.projects_row_ripple);
+            // A caret after it says it goes somewhere (the emulator pass: plain ash words did not read as a link).
+            Drawable caret = ContextCompat.getDrawable(c, R.drawable.projects_ic_caret_right_small);
+            if (caret != null) {
+                caret = caret.mutate();
+                caret.setTint(ContextCompat.getColor(c, R.color.projects_ash_300));
+                caret.setBounds(0, 0, dp(14), dp(14));
+                link.setCompoundDrawablesRelative(null, null, caret, null);
+                link.setCompoundDrawablePadding(dp(2));
+            }
             link.setOnClickListener(v -> openConversation(ChatConv.crew(crew)));
             Press.attach(link, Press.Style.BUTTON);
             row.addView(link);
@@ -564,7 +597,10 @@ public final class VoiceSheet implements VoiceLink.Listener {
         VoiceState s = mState;
         boolean chat = mMode != ChatMode.NONE;
         mPeopleHead.setVisibility(chat ? View.VISIBLE : View.GONE);
-        boolean open = !chat || (mPeopleOpen && !mTyping);
+        // Typing: the field has the focus and the keyboard is up (where the window tells its keyboard; else the focus).
+        boolean typing = mTyping && (!mImeKnown || mImeShown);
+        mControls.setVisibility(typing && mImeKnown ? View.GONE : View.VISIBLE);
+        boolean open = !chat || (mPeopleOpen && !typing);
         mPeopleScroll.setVisibility(open ? View.VISIBLE : View.GONE);
         mPeopleScroll.setShare(chat ? 0.3f : 0.5f);
         if (!chat || s == null) return;
@@ -686,7 +722,7 @@ public final class VoiceSheet implements VoiceLink.Listener {
         face.avatar().setProfile(mine);
         face.setSpeaking(s.me.talking);
         row.addView(face, new LinearLayout.LayoutParams(dp(44), dp(44)));
-        row.addView(names(c, name, roleWord(c, s.me.role, true), s.me.sharing, null), weight());
+        row.addView(names(c, name, roleWord(c, s.showsRoles() ? s.me.role : VoiceState.MEMBER, true), s.me.sharing, null), weight());
         if (s.me.sharing) row.setContentDescription(LiveTag.spoken(c, name, true));
         if (s.me.mutedByModerator) row.addView(mark(c, R.drawable.projects_ic_voice_mic_slash, R.color.projects_flare_400,
                 R.string.projects_voice_muted_for_all));
@@ -705,7 +741,7 @@ public final class VoiceSheet implements VoiceLink.Listener {
         face.setSpeaking(p.speaking);
         row.addView(face, new LinearLayout.LayoutParams(dp(44), dp(44)));
         String name = VoiceUi.nameOf(c, p);
-        row.addView(names(c, name, roleWord(c, p.role, false), p.sharing, p.shareSt), weight());
+        row.addView(names(c, name, roleWord(c, s.showsRoles() ? p.role : VoiceState.MEMBER, false), p.sharing, p.shareSt), weight());
         if (p.mutedByModerator) row.addView(mark(c, R.drawable.projects_ic_voice_mic_slash, R.color.projects_flare_400,
                 R.string.projects_voice_muted_for_all));
         else if (p.mute) row.addView(mark(c, R.drawable.projects_ic_voice_mic_slash, R.color.projects_ash_400, R.string.projects_voice_mic_off));
@@ -761,7 +797,7 @@ public final class VoiceSheet implements VoiceLink.Listener {
         VoiceFace face = new VoiceFace(c, 48);
         face.setPerson(c, id, p);
         head.addView(face, new LinearLayout.LayoutParams(dp(48), dp(48)));
-        head.addView(names(c, name, roleWord(c, p.role, false), p.sharing, p.shareSt), weight());
+        head.addView(names(c, name, roleWord(c, s.showsRoles() ? p.role : VoiceState.MEMBER, false), p.sharing, p.shareSt), weight());
         content.addView(head);
         final BottomPanel[] panel = new BottomPanel[1];
         // M051: their stream's last picture, while they share.

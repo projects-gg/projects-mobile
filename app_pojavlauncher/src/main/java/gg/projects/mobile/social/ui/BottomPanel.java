@@ -44,6 +44,8 @@ public final class BottomPanel {
     /** SQOL: asked on "Geri" before the sheet goes. */
     @Nullable
     private java.util.concurrent.Callable<Boolean> mBack;
+    /** SQOL-M: the sheet saw Back go down (a Back the keyboard took never reaches it). */
+    private boolean mBackDown;
 
     private BottomPanel(Context context, float maxHeightFraction) {
         mDialog = new Dialog(context, R.style.ProjectsBottomPanel);
@@ -90,8 +92,17 @@ public final class BottomPanel {
             window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         }
         mDialog.setOnKeyListener((d, keyCode, event) -> {
-            if (keyCode == android.view.KeyEvent.KEYCODE_BACK && event.getAction() == android.view.KeyEvent.ACTION_UP) {
-                if (!ownBack()) dismiss();
+            if (keyCode != android.view.KeyEvent.KEYCODE_BACK) return false;
+            // SQOL-M: only a Back the sheet saw go down counts: a press that closed the keyboard (the IME took its
+            // down) used to close the whole sheet on its up, and a draft with it.
+            if (event.getAction() == android.view.KeyEvent.ACTION_DOWN) {
+                if (event.getRepeatCount() == 0) mBackDown = true;
+                return true;
+            }
+            if (event.getAction() == android.view.KeyEvent.ACTION_UP) {
+                boolean ours = mBackDown && !event.isCanceled();
+                mBackDown = false;
+                if (ours && !ownBack()) dismiss();
                 return true;
             }
             return false;

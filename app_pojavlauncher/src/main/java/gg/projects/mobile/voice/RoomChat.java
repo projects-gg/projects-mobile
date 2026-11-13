@@ -59,6 +59,8 @@ public final class RoomChat {
         @Nullable public String rule;
         /** {@code chat_muted} and {@code limited}: Unix seconds. */
         public long until;
+        /** The player's send this message was before the room answered ({@code "p<rid>"}): the screens keep its place. */
+        @Nullable public String was;
         // Filled for the screens (RoomChat.View): the player's own, and whether the player may delete it.
         public boolean mine;
         public boolean canDelete;
@@ -80,6 +82,7 @@ public final class RoomChat {
             l.reason = reason;
             l.rule = rule;
             l.until = until;
+            l.was = was;
             l.mine = mine;
             l.canDelete = canDelete;
             return l;
@@ -267,7 +270,10 @@ public final class RoomChat {
         int index = outboxIndex(rid);
         if (index < 0) return false;
         outbox.remove(index);
-        if (kept != null) add(kept);
+        if (kept != null) {
+            kept.was = "p" + rid;
+            add(kept);
+        }
         changed();
         return true;
     }

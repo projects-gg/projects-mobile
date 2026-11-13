@@ -342,6 +342,18 @@ final class CrewSheets {
         if (mine != null && mine.founder) {
             powers = true;
             actions.addView(CrewViews.divider(activity));
+            if (service.gate().roles && !member.founder) {
+                // SQOL-M (0.5.4): the card names moderators too, as the person menu does (it was only behind a long press).
+                final boolean make = !member.moderator;
+                actions.addView(CrewViews.actionRow(activity, R.drawable.projects_ic_user_circle, activity.getString(make
+                                ? R.string.projects_parity_make_moderator : R.string.projects_parity_unmake_moderator),
+                        R.color.projects_bone_100, v -> {
+                            dialog.dismiss();
+                            service.setModerator(team.id, userId, make, FriendCard.done(activity, activity.getString(make
+                                    ? R.string.projects_parity_made_moderator : R.string.projects_parity_unmade_moderator,
+                                    member.profile.name())));
+                        }));
+            }
             actions.addView(CrewViews.actionRow(activity, R.drawable.projects_ic_crown_fill, activity.getString(R.string.projects_crew_hand_over),
                     R.color.projects_bone_100, v -> {
                         dialog.dismiss();

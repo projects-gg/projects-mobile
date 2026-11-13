@@ -51,6 +51,7 @@ import gg.projects.mobile.ui.HapticMap;
 import gg.projects.mobile.ui.Haptics;
 import gg.projects.mobile.ui.Press;
 import gg.projects.mobile.voice.RoomChat;
+import gg.projects.mobile.voice.RoomChatEchoes;
 import gg.projects.mobile.voice.VoiceLink;
 
 /**
@@ -79,6 +80,9 @@ public final class RoomChatPanel {
 
     /** The service's limit for one message; the field holds more and the chat's check says it. */
     private static final int FIELD_MAX = 1200;
+    /** An unsent text of the room's field and its room, kept while the app runs (the sheet closed with it). */
+    @Nullable private static String sDraftRoom;
+    @Nullable private static String sDraft;
     /** Messages of one sender this close together are one group (one name, one time). */
     private static final long GROUP_MS = 5 * 60_000L;
 
@@ -94,6 +98,8 @@ public final class RoomChatPanel {
     private final ImageButton mSend;
     private final FrameLayout mPickerSlot;
     private final Adapter mAdapter = new Adapter();
+    /** Sends shown the moment they go, and the rows' identity (after 0.5.4). */
+    private final RoomChatEchoes mEchoes = new RoomChatEchoes();
     @Nullable private RoomChat.View mChat;
     private boolean mLive;
     private boolean mUpdated;
@@ -218,13 +224,37 @@ public final class RoomChatPanel {
         // The room's state comes with every speaking ring: nothing to do unless the chat or the connection changed.
         if (mUpdated && chat == mChat && live == mLive) return;
         mUpdated = true;
+        if (chat != null && (mChat == null || !chat.room.equals(mChat.room)) && chat.room.equals(sDraftRoom)
+                && mInput.getText().length() == 0 && sDraft != null && !sDraft.isEmpty()) {
+            // The text the player had typed when the sheet went (this room's, this run of the app).
+            mInput.setText(sDraft);
+            mInput.setSelection(mInput.getText().length());
+        }
+        // A new room (a move): the last room's own sends do not carry over.
+        if (chat != null && mChat != null && !chat.room.equals(mChat.room)) mEchoes.clear();
         mChat = chat;
         mLive = live;
         mInput.setEnabled(live);
         mEmoji.setEnabled(live);
         mEmoji.setAlpha(live ? 1f : 0.5f);
         updateSend();
-        List<Row> rows = rows(chat);
+        redraw();
+    }
+
+    /** A send shows at once as waiting (the voice process's copy takes its row about 200 ms later). */
+    private void echo(@Nullable String text, @Nullable String sticker) {
+        RoomChat.View chat = mChat;
+        if (chat == null) return;
+        mEchoes.add(text, sticker, chat.me, android.os.SystemClock.elapsedRealtime());
+        redraw();
+        // An echo nothing answered goes (no stay to send it in).
+        mList.postDelayed(this::redraw, RoomChatEchoes.KEEP_MS + 100);
+    }
+
+    /** The rows again: the chat as last heard, with the sends not answered yet (shown the moment they went). */
+    private void redraw() {
+        RoomChat.View chat = mChat;
+        List<Row> rows = rows(mEchoes.rows(chat, android.os.SystemClock.elapsedRealtime()));
         mEmpty.setVisibility(rows.isEmpty() ? View.VISIBLE : View.GONE);
         boolean atEnd = !mList.canScrollVertically(1);
         boolean grew = mAdapter.submit(rows);
@@ -247,8 +277,11 @@ public final class RoomChatPanel {
         return true;
     }
 
-    /** The sheet goes: the keyboard and the picker go with it. */
+    /** The sheet goes: the keyboard and the picker go with it; an unsent text waits for the room's sheet to come back. */
     public void close() {
+        RoomChat.View chat = mChat;
+        sDraftRoom = chat == null ? null : chat.room;
+        sDraft = mInput.getText().toString();
         closePicker(false);
         InputMethodManager imm = (InputMethodManager) mActivity.getSystemService(Context.INPUT_METHOD_SERVICE);
         if (imm != null) imm.hideSoftInputFromWindow(mInput.getWindowToken(), 0);
@@ -280,6 +313,7 @@ public final class RoomChatPanel {
         switch (verdict.problem) {
             case NONE:
                 VoiceLink.get(c).chatSend(text.trim());
+                echo(text.trim(), null);
                 mInput.setText("");
                 mList.post(() -> mList.scrollToPosition(Math.max(0, mAdapter.getItemCount() - 1)));
                 return;
@@ -312,6 +346,9 @@ public final class RoomChatPanel {
         InputMethodManager imm = (InputMethodManager) mActivity.getSystemService(Context.INPUT_METHOD_SERVICE);
         if (imm != null) imm.hideSoftInputFromWindow(mInput.getWindowToken(), 0);
         boolean stickers = SocialService.get(mActivity).chat().stickerSets().contains("pl1");
+        // The list keeps showing the newest messages while the picker takes room under it (the emulator pass saw it
+        // jump to the oldest once).
+        final boolean atEnd = !mList.canScrollVertically(1);
         mPickerOpen = true;
         EmojiSheet.inline(mActivity, stickers, new EmojiSheet.Pick() {
             @Override
@@ -326,6 +363,7 @@ public final class RoomChatPanel {
                     return;
                 }
                 VoiceLink.get(mActivity).chatSticker(ref);
+                echo(null, ref);
                 EmojiStore.usedSticker(mActivity, ref);
                 Haptics.confirm(cell);
                 mList.post(() -> mList.scrollToPosition(Math.max(0, mAdapter.getItemCount() - 1)));
@@ -337,6 +375,7 @@ public final class RoomChatPanel {
                 mPickerSlot.removeAllViews();
                 mPickerSlot.addView(panel);
                 mPickerSlot.setVisibility(View.VISIBLE);
+                if (atEnd) mList.post(() -> mList.scrollToPosition(Math.max(0, mAdapter.getItemCount() - 1)));
                 if (Motion.enabled(mActivity)) {
                     mPickerSlot.setAlpha(0f);
                     mPickerSlot.setTranslationY(12 * mDp);
@@ -496,28 +535,29 @@ public final class RoomChatPanel {
 
     private static final class Row {
         final RoomChat.Line line;
+        /** The row's identity: one row from the echo through the waiting send to the room's copy (RoomChatEchoes). */
+        final String key;
         final boolean first;
         final boolean last;
         final String content;
 
-        Row(RoomChat.Line line, boolean first, boolean last) {
+        Row(RoomChat.Line line, String key, boolean first, boolean last) {
             this.line = line;
+            this.key = key;
             this.first = first;
             this.last = last;
-            content = line.state + "|" + line.text + "|" + line.st + "|" + line.by + "|" + line.failure + "|" + line.canDelete
-                    + "|" + first + "|" + last;
+            content = line.id + "|" + line.state + "|" + line.text + "|" + line.st + "|" + line.by + "|" + line.failure + "|"
+                    + line.canDelete + "|" + line.at + "|" + first + "|" + last;
         }
     }
 
-    private static List<Row> rows(@Nullable RoomChat.View chat) {
+    private List<Row> rows(List<RoomChat.Line> lines) {
         List<Row> out = new ArrayList<>();
-        if (chat == null) return out;
-        List<RoomChat.Line> lines = chat.lines;
         for (int i = 0; i < lines.size(); i++) {
             RoomChat.Line line = lines.get(i);
             boolean first = i == 0 || !together(lines.get(i - 1), line);
             boolean last = i == lines.size() - 1 || !together(line, lines.get(i + 1));
-            out.add(new Row(line, first, last));
+            out.add(new Row(line, mEchoes.key(line), first, last));
         }
         return out;
     }
@@ -547,12 +587,12 @@ public final class RoomChatPanel {
                 notifyDataSetChanged();
                 return !rows.isEmpty();
             }
-            String oldLast = old.get(old.size() - 1).line.id;
-            boolean grew = !rows.isEmpty() && !rows.get(rows.size() - 1).line.id.equals(oldLast);
+            String oldLast = old.get(old.size() - 1).key;
+            boolean grew = !rows.isEmpty() && !rows.get(rows.size() - 1).key.equals(oldLast);
             if (grew) {
                 Set<String> known = new HashSet<>();
-                for (Row r : old) known.add(r.line.id);
-                for (int i = rows.size() - 1; i >= 0 && !known.contains(rows.get(i).line.id); i--) mFresh.add(rows.get(i).line.id);
+                for (Row r : old) known.add(r.key);
+                for (int i = rows.size() - 1; i >= 0 && !known.contains(rows.get(i).key); i--) mFresh.add(rows.get(i).key);
             }
             DiffUtil.calculateDiff(new DiffUtil.Callback() {
                 @Override
@@ -567,7 +607,7 @@ public final class RoomChatPanel {
 
                 @Override
                 public boolean areItemsTheSame(int o, int n) {
-                    return old.get(o).line.id.equals(rows.get(n).line.id);
+                    return old.get(o).key.equals(rows.get(n).key);
                 }
 
                 @Override
@@ -580,7 +620,7 @@ public final class RoomChatPanel {
 
         @Override
         public long getItemId(int position) {
-            String id = mRows.get(position).line.id;
+            String id = mRows.get(position).key;
             Long stable = mIds.get(id);
             if (stable == null) {
                 stable = (long) mIds.size();
@@ -608,7 +648,7 @@ public final class RoomChatPanel {
         @Override
         public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
             Row row = mRows.get(position);
-            bind(holder.itemView, row, mFresh.remove(row.line.id));
+            bind(holder.itemView, row, mFresh.remove(row.key));
         }
     }
 
@@ -669,8 +709,9 @@ public final class RoomChatPanel {
             said = mine ? context.getString(R.string.projects_stickers_sent_mine, stickerName == null ? "" : stickerName)
                     : context.getString(R.string.projects_stickers_sent, who, stickerName == null ? "" : stickerName);
             stickerBox.setContentDescription(said);
-            boolean sameRow = e.id.equals(sticker.getTag(R.id.projects_chat_sticker_row));
-            sticker.setTag(R.id.projects_chat_sticker_row, e.id);
+            // The row's key, not the message's id: a send that the room answered is the same row (its motion goes on).
+            boolean sameRow = row.key.equals(sticker.getTag(R.id.projects_chat_sticker_row));
+            sticker.setTag(R.id.projects_chat_sticker_row, row.key);
             if (!sameRow) EmojiStore.stopSticker(sticker);
             if (fresh && res != 0) EmojiStore.playSticker(sticker, e.st, true);
         } else if (deleted) {
