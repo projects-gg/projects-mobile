@@ -101,6 +101,81 @@ public final class VoicePrefs implements VoiceMachine.Prefs {
         touched(edit, person).apply();
     }
 
+    // ---- MOB-WATCH: a streamer's sound (the voice process's, with each person's choices) ----
+
+    @Override
+    public int streamVolume(String person) {
+        return StreamSound.clampVolume(people().getInt("sv:" + person, StreamSound.VOLUME_DEFAULT));
+    }
+
+    @Override
+    public boolean streamMuted(String person) {
+        return people().getBoolean("sm:" + person, false);
+    }
+
+    @Override
+    public void setStream(String person, int volume, boolean muted) {
+        SharedPreferences.Editor edit = people().edit();
+        if (volume == StreamSound.VOLUME_DEFAULT) edit.remove("sv:" + person);
+        else edit.putInt("sv:" + person, StreamSound.clampVolume(volume));
+        if (muted) edit.putBoolean("sm:" + person, true);
+        else edit.remove("sm:" + person);
+        touched(edit, person).apply();
+    }
+
+    // ---- MOB-WATCH: "Yayın İzlerken" (the launcher process's; the voice process hears them through its link) ----
+
+    private static final String STREAM_QUALITY = "stream_quality";
+    private static final String DUCK = "duck";
+    private static final String DUCK_LEVEL = "duck_level";
+    private static final String DUCK_SELF = "duck_self";
+    private static final String CELL_HINT = "stream_cell_hint";
+
+    /** "Yayın Kalitesi": {@link StreamView#AUTO} (default), {@link StreamView#HIGH} or {@link StreamView#SAVER}. */
+    public String streamQuality() {
+        return StreamView.quality(mPrefs.getString(STREAM_QUALITY, StreamView.AUTO));
+    }
+
+    public void setStreamQuality(String quality) {
+        mPrefs.edit().putString(STREAM_QUALITY, StreamView.quality(quality)).apply();
+    }
+
+    /** "Biri Konuşunca Yayın Sesini Kıs" (off by default, the desktop's). */
+    public boolean duck() {
+        return mPrefs.getBoolean(DUCK, false);
+    }
+
+    public void setDuck(boolean on) {
+        mPrefs.edit().putBoolean(DUCK, on).apply();
+    }
+
+    /** "Kısma Miktarı" (percent, 20–90, 60 by default). */
+    public int duckLevel() {
+        return StreamSound.clampDuckLevel(mPrefs.getInt(DUCK_LEVEL, StreamSound.DUCK_LEVEL_DEFAULT));
+    }
+
+    public void setDuckLevel(int percent) {
+        mPrefs.edit().putInt(DUCK_LEVEL, StreamSound.clampDuckLevel(percent)).apply();
+    }
+
+    /** "Ben Konuşunca da Kıs". */
+    public boolean duckSelf() {
+        return mPrefs.getBoolean(DUCK_SELF, false);
+    }
+
+    public void setDuckSelf(boolean on) {
+        mPrefs.edit().putBoolean(DUCK_SELF, on).apply();
+    }
+
+    /** The one sentence about mobile data was shown (once per install). */
+    public boolean cellHintShown() {
+        return mPrefs.getBoolean(CELL_HINT, false);
+    }
+
+    public void setCellHintShown() {
+        mPrefs.edit().putBoolean(CELL_HINT, true).apply();
+    }
+
     @Override
     public void setMutedForMe(String person, boolean on) {
         SharedPreferences.Editor edit = people().edit();
@@ -126,7 +201,9 @@ public final class VoicePrefs implements VoiceMachine.Prefs {
                 oldest = id;
             }
         }
-        if (people >= PEOPLE_MAX && oldest != null) edit.remove("t:" + oldest).remove("v:" + oldest).remove("m:" + oldest);
+        if (people >= PEOPLE_MAX && oldest != null) {
+            edit.remove("t:" + oldest).remove("v:" + oldest).remove("m:" + oldest).remove("sv:" + oldest).remove("sm:" + oldest);
+        }
         return edit;
     }
 }

@@ -88,7 +88,8 @@ public final class VoiceWire {
     /**
      * M051 (SHARE-LIVE on the phone): the room socket's capabilities. {@code share1} lets the phone hear who shares their
      * screen ({@code state.sh}, {@code hello.people[].sh}), {@code live1} each share's picture time ({@code th}). The phone
-     * never shares or watches: it sends no share frame but {@link #unwatch} for a watch left over from the desktop.
+     * never shares. MOB-WATCH: it watches ({@link #watch}, {@link #layer}, {@link #unwatch}, {@link #wanswer} and the
+     * room's {@code woffer}; share.md §4).
      */
     static final String[] CAPS = {"share1", "live1", "share2", "rchat1"};
     // SQOL: share2 lets the phone hear a share's state ({@code st}: hold, min; it still sends no share frame), rchat1 the
@@ -133,11 +134,37 @@ public final class VoiceWire {
         return o.toString();
     }
 
-    /** {@code unwatch}: no longer watch {@code u}'s share {@code n} (the phone shows no stream). */
+    /** {@code unwatch}: no longer watch {@code u}'s share {@code n}. */
     public static String unwatch(String u, int n) {
         JsonObject o = frame("unwatch");
         o.addProperty("u", u);
         o.addProperty("n", n);
+        return o.toString();
+    }
+
+    /** MOB-WATCH: {@code watch}: watch {@code u}'s share {@code n} at {@code layer} ({@code f}, {@code q}); its offer follows. */
+    public static String watch(String u, int n, String layer, int rid) {
+        JsonObject o = frame("watch");
+        o.addProperty("u", u);
+        o.addProperty("n", n);
+        o.addProperty("layer", StreamView.layer(layer));
+        o.addProperty("rid", rid);
+        return o.toString();
+    }
+
+    /** MOB-WATCH: {@code layer}: another layer of a share watched now (never answered). */
+    public static String layer(String u, int n, String layer) {
+        JsonObject o = frame("layer");
+        o.addProperty("u", u);
+        o.addProperty("n", n);
+        o.addProperty("layer", StreamView.layer(layer));
+        return o.toString();
+    }
+
+    /** MOB-WATCH: {@code wanswer}: the watch connection's answer to the room's {@code woffer}. */
+    public static String wanswer(String sdp) {
+        JsonObject o = frame("wanswer");
+        o.addProperty("sdp", sdp);
         return o.toString();
     }
 
@@ -391,6 +418,36 @@ public final class VoiceWire {
         }
     }
 
+    /** MOB-WATCH: one m-line of the room's watch offer ({@code woffer.mids[mid]}): whose share, and its picture or sound. */
+    public static final class WatchMid {
+        public final String u;
+        public final int n;
+        public final boolean video;
+
+        public WatchMid(String u, int n, boolean video) {
+            this.u = u;
+            this.n = n;
+            this.video = video;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (!(other instanceof WatchMid)) return false;
+            WatchMid w = (WatchMid) other;
+            return u.equals(w.u) && n == w.n && video == w.video;
+        }
+
+        @Override
+        public int hashCode() {
+            return u.hashCode() * 31 + n * 2 + (video ? 1 : 0);
+        }
+
+        @Override
+        public String toString() {
+            return (video ? "v" : "a") + n;
+        }
+    }
+
     /** {@code left.why}: someone else left. */
     public enum LeftWhy { GONE, KICKED, MOVED, LEFT }
 
@@ -402,7 +459,9 @@ public final class VoiceWire {
 
     public enum Kind { HELLO, OFFER, JOINED, LEFT, STATE, ROOM, ME, RING, RING_END, KICKED, MOVED, CLOSED, ACK, ERROR, UNKNOWN,
         /** SQOL: a room chat message, the room's last messages, a message taken away. */
-        RCHAT, RCHAT_LOG, RCHAT_DELETED }
+        RCHAT, RCHAT_LOG, RCHAT_DELETED,
+        /** MOB-WATCH: the SFU's offer for the player's watch session. */
+        WOFFER }
 
     /**
      * One message from the room. Only the fields of its kind are set; a message the phone does not know reads as
@@ -471,6 +530,11 @@ public final class VoiceWire {
         /** error of a send: {@code chat_rejected}'s reason ({@code link}, {@code phone}, {@code words}) and link rule. */
         @Nullable public String reason;
         @Nullable public String rule;
+        // MOB-WATCH (woffer; its SDP is {@link #sdp})
+        /** woffer: each m-line it names (mid → whose share, picture or sound); the session's earlier ones stay. */
+        public Map<String, WatchMid> watchMids = Collections.emptyMap();
+        /** woffer: the first offer of a new watch session (a new peer connection). */
+        public boolean fresh;
 
         @Override
         public String toString() {
@@ -654,6 +718,27 @@ public final class VoiceWire {
                     m.chatBy = Json.str(o, "by", "self");
                     m.kind = Kind.RCHAT_DELETED;
                     return m;
+                case "woffer": {
+                    m.sdp = Json.str(o, "sdp");
+                    if (m.sdp == null) return m;
+                    Map<String, WatchMid> mids = new TreeMap<>();
+                    JsonObject raw = Json.obj(o, "mids");
+                    if (raw != null) {
+                        for (Map.Entry<String, JsonElement> e : raw.entrySet()) {
+                            if (!e.getValue().isJsonObject()) continue;
+                            JsonObject w = e.getValue().getAsJsonObject();
+                            String wu = Json.str(w, "u");
+                            Long wn = Json.numOrNull(w, "n");
+                            // One that does not read is left out (its m-line is answered and never shown).
+                            if (wu == null || wn == null) continue;
+                            mids.put(e.getKey(), new WatchMid(wu, wn.intValue(), !"a".equals(Json.str(w, "k", "v"))));
+                        }
+                    }
+                    m.watchMids = mids;
+                    m.fresh = Json.bool(o, "fresh", false);
+                    m.kind = Kind.WOFFER;
+                    return m;
+                }
                 default:
                     return m;
             }

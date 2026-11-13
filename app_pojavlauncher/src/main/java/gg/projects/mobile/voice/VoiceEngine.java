@@ -101,6 +101,7 @@ public final class VoiceEngine {
 
     private static boolean sInitialized;
     @Nullable private PeerConnectionFactory mFactory;
+    @Nullable private VoiceWatchEngine.Egl mEgl;
     @Nullable private JavaAudioDeviceModule mAdm;
     @Nullable private AudioSource mSource;
     @Nullable private AudioTrack mLocal;
@@ -143,6 +144,8 @@ public final class VoiceEngine {
         mAdm = JavaAudioDeviceModule.builder(mContext)
                 .setUseHardwareAcousticEchoCanceler(true)
                 .setUseHardwareNoiseSuppressor(true)
+                // MOB-WATCH: a watched stream's sound is stereo (voices stay mono, played on both sides).
+                .setUseStereoOutput(true)
                 // Muted, alone or deafened: the microphone is not held at all.
                 .setStopRecordingOnMute(true)
                 .setAudioAttributes(new AudioAttributes.Builder()
@@ -167,8 +170,12 @@ public final class VoiceEngine {
                     }
                 })
                 .createAudioDeviceModule();
+        mEgl = new VoiceWatchEngine.Egl();
         mFactory = PeerConnectionFactory.builder()
                 .setAudioDeviceModule(mAdm)
+                // MOB-WATCH: screen shares are watched on this factory, so their sound shares voice chat's path (the
+                // echo canceller hears it); the decoders' EGL context comes only with the first watch.
+                .setVideoDecoderFactory(new VoiceWatchEngine.Decoders(mEgl))
                 .createPeerConnectionFactory();
     }
 
@@ -180,10 +187,26 @@ public final class VoiceEngine {
             mFactory.dispose();
             mFactory = null;
         }
+        if (mEgl != null) {
+            mEgl.release();
+            mEgl = null;
+        }
         if (mAdm != null) {
             mAdm.release();
             mAdm = null;
         }
+    }
+
+    /** MOB-WATCH: the factory the watch connection shares (null: the engine is closed). */
+    @Nullable
+    PeerConnectionFactory factory() {
+        return mFactory;
+    }
+
+    /** MOB-WATCH: the root EGL context of the watch's decoders and renderer. */
+    @Nullable
+    VoiceWatchEngine.Egl watchEgl() {
+        return mEgl;
     }
 
     // ---- commands ----

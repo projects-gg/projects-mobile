@@ -41,9 +41,14 @@ public final class SocialDebug {
      */
     @Nullable
     public final String pushToken;
+    /**
+     * MOB-WATCH: {@code watchStillSeconds}: "Hâlâ izliyor musun?" after this many seconds instead of half an hour (the
+     * emulator pass's screenshot of the question; 0: the real half hour).
+     */
+    public final int watchStillSeconds;
 
     private SocialDebug(String url, boolean forceFriends, boolean forceTeams, boolean forceChat, boolean logBrowser,
-                        boolean override, @Nullable String pushToken) {
+                        boolean override, @Nullable String pushToken, int watchStillSeconds) {
         this.url = url;
         this.forceFriends = forceFriends;
         this.forceTeams = forceTeams;
@@ -51,10 +56,11 @@ public final class SocialDebug {
         this.logBrowser = logBrowser;
         this.override = override;
         this.pushToken = pushToken;
+        this.watchStillSeconds = watchStillSeconds;
     }
 
     public static SocialDebug read(Context context) {
-        SocialDebug production = new SocialDebug(PRODUCTION_URL, false, false, false, false, false, null);
+        SocialDebug production = new SocialDebug(PRODUCTION_URL, false, false, false, false, false, null, 0);
         if (!BuildConfig.DEBUG) return production;
         File dir = context.getExternalFilesDir(null);
         File file = dir == null ? null : new File(dir, "projects-debug.json");
@@ -67,7 +73,7 @@ public final class SocialDebug {
             if (pushToken != null && !pushToken.matches("[A-Za-z0-9_:-]{32,1024}")) pushToken = null;
             SocialDebug debug = new SocialDebug(url == null ? PRODUCTION_URL : url, Json.bool(social, "friends", false),
                     Json.bool(social, "teams", false), Json.bool(social, "chat", false), "log".equals(Json.str(social, "browser")),
-                    true, pushToken);
+                    true, pushToken, (int) Math.max(0, Math.min(3_600, Json.num(social, "watchStillSeconds", 0))));
             Log.w(TAG, "debug friends override in use: " + debug.url + " friends=" + debug.forceFriends
                     + " teams=" + debug.forceTeams + " chat=" + debug.forceChat + " browser=" + (debug.logBrowser ? "log" : "open"));
             return debug;

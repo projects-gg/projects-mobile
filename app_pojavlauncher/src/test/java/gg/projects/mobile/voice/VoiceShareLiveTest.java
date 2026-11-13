@@ -59,8 +59,8 @@ public class VoiceShareLiveTest {
         assertEquals(1, odd.sh.size());
         assertEquals("screen", odd.sh.get(0).src);
         assertEquals(0L, odd.sh.get(0).th);
-        // The desktop's frames for publishers and watchers change nothing here.
-        assertEquals(Kind.UNKNOWN, VoiceWire.parse("{\"t\":\"woffer\",\"sdp\":\"v=0\",\"mids\":{}}").kind);
+        // MOB-WATCH: the phone reads the watch session's offer; a publisher's frames change nothing here.
+        assertEquals(Kind.WOFFER, VoiceWire.parse("{\"t\":\"woffer\",\"sdp\":\"v=0\",\"mids\":{}}").kind);
         assertEquals(Kind.UNKNOWN, VoiceWire.parse("{\"t\":\"watchers\",\"n\":1,\"ids\":[]}").kind);
         assertEquals(Kind.UNKNOWN, VoiceWire.parse("{\"t\":\"share_closed\",\"n\":1,\"why\":\"idle\"}").kind);
         JsonObject unwatch = JsonParser.parseString(VoiceWire.unwatch("u1", 2)).getAsJsonObject();

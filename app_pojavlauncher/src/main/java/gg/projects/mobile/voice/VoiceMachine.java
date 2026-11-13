@@ -54,10 +54,11 @@ public final class VoiceMachine {
     /** One of voice chat's own short sounds (the desktop's {@code EngineSound}). */
     /**
      * One of voice chat's own short sounds (the desktop's {@code EngineSound}). M051: {@code STREAM_START}, someone else
-     * in the room went live; the phone neither shares nor watches, so the desktop's {@code shareStart}, {@code shareStop}
-     * and {@code streamEnd} (the end of a stream the player watched) never come here.
+     * in the room went live. MOB-WATCH: {@code STREAM_END}, the stream the player watched ended (never their own "İzlemeyi
+     * Bırak"). The phone does not share, so the desktop's {@code shareStart} and {@code shareStop} never come here.
      */
-    public enum Sound { JOIN, LEAVE, MIC_OFF, MIC_ON, DEAF_ON, DEAF_OFF, CONNECTED, ENDED, LOST, WAITING, STREAM_START, STOP }
+    public enum Sound { JOIN, LEAVE, MIC_OFF, MIC_ON, DEAF_ON, DEAF_OFF, CONNECTED, ENDED, LOST, WAITING, STREAM_START, STOP,
+        STREAM_END }
 
     /** The same share sound plays once a second at most (share-live.md §1). */
     static final long STREAM_SOUND_GAP_MS = 1_000;
@@ -184,8 +185,12 @@ public final class VoiceMachine {
 
     /** What the caller does. */
     public static final class Effect {
-        /** SQOL: {@code CHAT}, the room chat changed ({@link #chatView}; the screens get it apart from the state). */
-        public enum Kind { CONNECT, SEND, DISCONNECT, ENGINE_OPEN, ENGINE_CLOSE, ENGINE, NOTICE, SPEAKING, ANSWER, CHANGED, CHAT }
+        /**
+         * SQOL: {@code CHAT}, the room chat changed ({@link #chatView}; the screens get it apart from the state).
+         * MOB-WATCH: {@code WATCH}, a command for the watch engine ({@link #watch}).
+         */
+        public enum Kind { CONNECT, SEND, DISCONNECT, ENGINE_OPEN, ENGINE_CLOSE, ENGINE, NOTICE, SPEAKING, ANSWER, CHANGED, CHAT,
+            WATCH }
 
         public final Kind kind;
         public long generation;
@@ -197,6 +202,7 @@ public final class VoiceMachine {
         public boolean meSpeaking;
         public int rid;
         @Nullable public VoiceAnswer answer;
+        @Nullable public VoiceWatch.Cmd watch;
 
         Effect(Kind kind) {
             this.kind = kind;
@@ -205,6 +211,8 @@ public final class VoiceMachine {
         @Override
         public String toString() {
             switch (kind) {
+                case WATCH:
+                    return "WATCH " + watch;
                 case ENGINE:
                     return "ENGINE " + command;
                 case NOTICE:
@@ -244,6 +252,18 @@ public final class VoiceMachine {
         default boolean ignored(String person) {
             return false;
         }
+
+        /** MOB-WATCH: a streamer's "Yayın Sesi" on this phone (percent, 100 by default). */
+        default int streamVolume(String person) {
+            return StreamSound.VOLUME_DEFAULT;
+        }
+
+        /** MOB-WATCH: "Yayını Sessize Al" for a streamer. */
+        default boolean streamMuted(String person) {
+            return false;
+        }
+
+        default void setStream(String person, int volume, boolean muted) {}
     }
 
     /** M053: the ignore list changed: how each person plays again. */
@@ -418,10 +438,46 @@ public final class VoiceMachine {
     private boolean metersSent;
     /** When {@code STREAM_START} last played (null: never). */
     @Nullable private Long streamSoundAt;
+    /** MOB-WATCH: watching a screen share (its own part; it shares the stay's socket, requests and sounds). */
+    private final VoiceWatch watch;
+    /** The last moment the machine heard of (for calls that carry none, such as the engine's arrival). */
+    private long clock;
 
     public VoiceMachine(Prefs prefs, Random random) {
         this.prefs = prefs;
         this.random = random;
+        this.watch = new VoiceWatch(new WatchHost());
+    }
+
+    /** MOB-WATCH: what watching needs of the stay. */
+    private final class WatchHost implements VoiceWatch.Host {
+        @Nullable
+        @Override
+        public Long openGeneration() {
+            return VoiceMachine.this.openGeneration();
+        }
+
+        @Override
+        public int rid() {
+            return VoiceMachine.this.rid();
+        }
+
+        @Override
+        public String me() {
+            return me;
+        }
+
+        @Override
+        public List<VoiceWire.Share> shares(String u) {
+            VoiceRoom room = stay == null ? null : stay.room;
+            Person person = room == null ? null : room.people.get(u);
+            return person == null ? Collections.<VoiceWire.Share>emptyList() : person.sh;
+        }
+
+        @Override
+        public void cue(Sound sound, List<Effect> out) {
+            VoiceMachine.this.cue(sound, out);
+        }
     }
 
     public void setBackoff(Backoff backoff) {
@@ -484,6 +540,7 @@ public final class VoiceMachine {
     /** Joins a room with a ticket (a call's, a ring's, a crew room's, a move's). A stay elsewhere ends first, quietly. */
     public List<Effect> join(Start start, Service service, long now, long unix) {
         List<Effect> out = new ArrayList<>();
+        clock = now;
         if (me.isEmpty() || !VoiceWire.isRoomId(start.room)) {
             out.add(answer(JOIN_RID, VoiceAnswer.refused(Refusal.OFF)));
             return out;
@@ -565,6 +622,8 @@ public final class VoiceMachine {
         }
         for (Integer rid : new ArrayList<>(pending.keySet())) out.add(answer(rid, VoiceAnswer.refused(Refusal.NOTHING)));
         pending.clear();
+        // MOB-WATCH: nothing is watched any more (the room's leave lets the watch session go there).
+        watch.end(out);
         if (attached) {
             // The stay's end is heard before the engine closes it; never for a join refused before it began.
             if (s.welcomed) cue(Sound.ENDED, out);
@@ -700,6 +759,7 @@ public final class VoiceMachine {
         for (Iterator<Map.Entry<Integer, Pending>> it = pending.entrySet().iterator(); it.hasNext(); ) {
             if (it.next().getValue() == Pending.TURN) it.remove();
         }
+        watch.socketAway();
         // SQOL: a room chat send's answer never comes on another socket either: it shows as not sent ("Tekrar dene").
         List<Integer> unsent = s.chat.failWaiting();
         for (Integer rid : unsent) pending.remove(rid);
@@ -710,6 +770,7 @@ public final class VoiceMachine {
     /** A message from the room on {@code generation}'s socket. */
     public List<Effect> socketMessage(long generation, Message message, long now, long unix) {
         List<Effect> out = new ArrayList<>();
+        clock = now;
         if (current(generation) == null) return out;
         Stay s = stay;
         switch (message.kind) {
@@ -753,11 +814,9 @@ public final class VoiceMachine {
                     }
                 }
                 out.add(send(generation, VoiceWire.set(mute, deaf)));
-                // M051: a watch this account left here from the desktop goes (the phone shows no stream; the room's
-                // budget would count it while nobody looks).
-                for (Map.Entry<String, List<Integer>> watched : message.watch.entrySet()) {
-                    for (int n : watched.getValue()) out.add(send(generation, VoiceWire.unwatch(watched.getKey(), n)));
-                }
+                // MOB-WATCH: what the room's watch session still carries goes on if the phone watches it; the rest
+                // (M051: a watch left from the desktop) goes, so the budget never counts a stream nobody looks at.
+                watch.hello(message.watch, now, out);
                 boolean calling = s.calling != null;
                 if (calling && alone && attached) out.add(sound(Sound.WAITING));
                 if (answered && attached) out.add(sound(Sound.STOP));
@@ -817,8 +876,15 @@ public final class VoiceMachine {
                 out.add(notice);
                 break;
             }
+            case WOFFER:
+                watch.offer(message, out);
+                break;
             case ACK: {
                 if (message.rid == null) break;
+                if (watch.owns(message.rid)) {
+                    watch.ack(message.rid, message.ice, now, out);
+                    break;
+                }
                 Pending p = pending.remove(message.rid);
                 if (p == Pending.TURN) {
                     if (attached && message.ice != null && !message.ice.urls.isEmpty()) {
@@ -842,6 +908,10 @@ public final class VoiceMachine {
             }
             case ERROR: {
                 if (message.rid == null) break;
+                if (watch.owns(message.rid)) {
+                    watch.error(message.rid, message.code, now, out);
+                    break;
+                }
                 Pending p = pending.remove(message.rid);
                 if (p == Pending.TURN) {
                     // `turn_unavailable` or `rate_limited`: no stay without a connection, so as lost.
@@ -891,6 +961,10 @@ public final class VoiceMachine {
                 }
                 boolean cut = room.mySm;
                 if (applied.left != null) s.speaking.remove(applied.left);
+                // MOB-WATCH: a watched share the room no longer lists ended (its sound, the screen's "Yayın bitti.").
+                if ((message.kind == VoiceWire.Kind.STATE && message.sh != null) || applied.left != null) {
+                    watch.sharesChanged(now, out);
+                }
                 // VOICE-CALL: the call's timer starts with the first one to share the room.
                 if (applied.joined != null && s.togetherSince == null) s.togetherSince = unix;
                 // Someone came: the call is answered.
@@ -1210,6 +1284,8 @@ public final class VoiceMachine {
         Command configure = new Command(Command.Kind.CONFIGURE);
         configure.kbps = service.kbps;
         out.add(engine(configure));
+        // MOB-WATCH: the watch engine lives with the voice engine.
+        watch.engine(true, clock, out);
         if (stay != null) {
             out.add(engine(flag(Command.Kind.DEAF, deaf)));
             // A new engine means a new peer connection.
@@ -1364,6 +1440,121 @@ public final class VoiceMachine {
         return out;
     }
 
+    // ---- MOB-WATCH: watching a screen share ----
+
+    /** "İzle" ({@code layer}: what the stream screen asks for first); a share the room no longer lists says so. */
+    public List<Effect> watchStart(String u, int n, String layer, long now) {
+        List<Effect> out = new ArrayList<>();
+        clock = now;
+        Stay s = stay;
+        if (s == null) return out;
+        // Someone who watches is no idle player (the desktop's rule).
+        if (watch.watch(u, n, layer, now, out)) s.idle.spoke(now);
+        return out;
+    }
+
+    /** "İzlemeyi Bırak" (the stream screen closed). */
+    public List<Effect> watchStop(String u, int n, long now) {
+        List<Effect> out = new ArrayList<>();
+        clock = now;
+        watch.unwatch(u, n, out);
+        return out;
+    }
+
+    /** The layer the stream screen asks for now. */
+    public List<Effect> watchLayer(String u, int n, String layer) {
+        List<Effect> out = new ArrayList<>();
+        watch.setLayer(u, n, layer, out);
+        return out;
+    }
+
+    /** The stream screen went out of sight or came back. */
+    public List<Effect> watchVisible(boolean on, long now) {
+        List<Effect> out = new ArrayList<>();
+        clock = now;
+        watch.visible(on, now, out);
+        return out;
+    }
+
+    /** A touch of the stream screen, or "Evet" on "Hâlâ izliyor musun?". */
+    public List<Effect> watchStill(long now) {
+        List<Effect> out = new ArrayList<>();
+        clock = now;
+        watch.still(now, out);
+        if (stay != null && watch.active()) stay.idle.spoke(now);
+        return out;
+    }
+
+    /** The stream screen's process went away (the game took its place): watching stops, nothing to say. */
+    public List<Effect> watchGone(long now) {
+        List<Effect> out = new ArrayList<>();
+        clock = now;
+        watch.quit(out);
+        return out;
+    }
+
+    /** The watch engine's report ({@code sdp}: its answer). */
+    public List<Effect> watchReport(VoiceWatch.Report report, @Nullable String sdp, long now) {
+        List<Effect> out = new ArrayList<>();
+        clock = now;
+        if (stay == null) return out;
+        watch.report(report, sdp, now, out);
+        return out;
+    }
+
+    /** What the watch engine sees of the picture (a weak connection, its size, the first frame). */
+    public List<Effect> watchFacts(boolean weak, int width, int height, boolean playing) {
+        List<Effect> out = new ArrayList<>();
+        watch.facts(weak, width, height, playing, out);
+        return out;
+    }
+
+    /** A streamer's "Yayın Sesi" (percent) and "Yayını Sessize Al", kept on this phone. */
+    public List<Effect> setStreamSound(String person, int volume, boolean muted) {
+        int value = StreamSound.clampVolume(volume);
+        if (prefs.streamVolume(person) == value && prefs.streamMuted(person) == muted) return new ArrayList<>();
+        prefs.setStream(person, value, muted);
+        return changed();
+    }
+
+    /** A debug build's emulator pass: "Hâlâ izliyor musun?" after {@code ms} (0: the real half hour). */
+    public void debugStillAsk(long ms) {
+        watch.stillAskMs(ms);
+    }
+
+    /** A share is watched and not let go: its sound plays. */
+    public boolean watchLive() {
+        return stay != null && watch.live();
+    }
+
+    /** Whom the player watches now (null: nobody), and which of their shares. */
+    @Nullable
+    public String watchedPerson() {
+        return watch.watchedPerson();
+    }
+
+    public int watchedN() {
+        return watch.watchedN();
+    }
+
+    /** The watched stream's gain now ({@link StreamSound#gain}): 0 while muted, deafened or let go. */
+    public double streamGain() {
+        String u = watch.watchedPerson();
+        if (u == null || !watchLive()) return 0;
+        return StreamSound.gain(prefs.streamVolume(u), prefs.streamMuted(u), deaf);
+    }
+
+    /** People the player does not hear (muted for them, ignored, muted for everyone): never a reason to duck. */
+    public List<String> silent() {
+        List<String> out = new ArrayList<>();
+        VoiceRoom room = stay == null ? null : stay.room;
+        if (room == null) return out;
+        for (Person person : room.people.values()) {
+            if (person.sm || prefs.mutedForMe(person.u) || prefs.ignored(person.u)) out.add(person.u);
+        }
+        return out;
+    }
+
     // ---- time ----
 
     /** The moment the machine wants {@link #tick}, or null ({@code lastInput}: the phone's last touch). */
@@ -1378,19 +1569,25 @@ public final class VoiceMachine {
             if (s.rejoinAt != null) next = min(next, s.rejoinAt);
             if (s.awaySince != null && !s.awayShown) next = min(next, s.awaySince + RECONNECTING_SHOWN_MS);
             if (s.welcomed) next = min(next, s.idle.deadline(lastInput));
+            long watching = watch.deadline();
+            if (watching >= 0) next = min(next, watching);
         }
         return next;
     }
 
     public List<Effect> tick(long now, long unix, long lastInput) {
         List<Effect> out = new ArrayList<>();
+        clock = now;
         if (engineCloseAt != null && now >= engineCloseAt && !engineWanted) {
             engineCloseAt = null;
             engineOpen = false;
             attached = false;
             metersSent = false;
+            watch.engine(false, now, out);
             out.add(new Effect(Effect.Kind.ENGINE_CLOSE));
         }
+        // MOB-WATCH: the watch's own times (out of sight, an offer that never came, "Hâlâ izliyor musun?").
+        if (stay != null) watch.tick(now, out);
         LeftReason end = null;
         Long reconnectGeneration = null;
         String reconnectTicket = null;
@@ -1466,6 +1663,11 @@ public final class VoiceMachine {
         v.grew = s.chat.grew();
         v.chatUnread = s.chat.unread();
         v.chatVersion = s.chat.version();
+        // MOB-WATCH: the watched share and watching's last word for the stream screen.
+        v.watchNotice = watch.notice();
+        v.watchNoticeSeq = watch.noticeSeq();
+        String watched = watch.watchedPerson();
+        if (watched != null) v.watch = watch.view(prefs.streamVolume(watched), prefs.streamMuted(watched));
         VoiceRoom room = s.room;
         if (room == null) return v;
         v.crew = room.crew;

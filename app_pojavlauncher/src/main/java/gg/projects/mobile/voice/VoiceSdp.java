@@ -19,17 +19,37 @@ public final class VoiceSdp {
 
     /** {@code sdp} with every Opus format's parameters set (other parameters and lines kept). */
     public static String tuneOpus(String sdp, int bitrate, boolean dtx, boolean fec) {
+        Map<String, String> wanted = new LinkedHashMap<>();
+        wanted.put("stereo", "0");
+        wanted.put("sprop-stereo", "0");
+        wanted.put("maxaveragebitrate", String.valueOf(bitrate));
+        wanted.put("usedtx", dtx ? "1" : "0");
+        wanted.put("useinbandfec", fec ? "1" : "0");
+        return setOpus(sdp, wanted);
+    }
+
+    /**
+     * MOB-WATCH: the phone's own answer for a watched stream: Opus received in stereo ({@code stereo=1} in the receiver's
+     * description keeps both channels of a stream's sound; voice keeps its mono descriptions).
+     */
+    public static String stereoOpus(String sdp) {
+        Map<String, String> wanted = new LinkedHashMap<>();
+        wanted.put("stereo", "1");
+        return setOpus(sdp, wanted);
+    }
+
+    private static String setOpus(String sdp, Map<String, String> wanted) {
         String newline = sdp.contains("\r\n") ? "\r\n" : "\n";
         List<String> out = new ArrayList<>();
         List<String> section = new ArrayList<>();
         for (String line : sdp.split(newline, -1)) {
             if (line.startsWith("m=")) {
-                out.addAll(tuneSection(section, bitrate, dtx, fec));
+                out.addAll(tuneSection(section, wanted));
                 section = new ArrayList<>();
             }
             section.add(line);
         }
-        out.addAll(tuneSection(section, bitrate, dtx, fec));
+        out.addAll(tuneSection(section, wanted));
         StringBuilder text = new StringBuilder();
         for (int i = 0; i < out.size(); i++) {
             if (i > 0) text.append(newline);
@@ -38,18 +58,12 @@ public final class VoiceSdp {
         return text.toString();
     }
 
-    private static List<String> tuneSection(List<String> lines, int bitrate, boolean dtx, boolean fec) {
+    private static List<String> tuneSection(List<String> lines, Map<String, String> wanted) {
         List<String> payloads = new ArrayList<>();
         for (String line : lines) {
             Matcher m = RTPMAP.matcher(line);
             if (m.find()) payloads.add(m.group(1));
         }
-        Map<String, String> wanted = new LinkedHashMap<>();
-        wanted.put("stereo", "0");
-        wanted.put("sprop-stereo", "0");
-        wanted.put("maxaveragebitrate", String.valueOf(bitrate));
-        wanted.put("usedtx", dtx ? "1" : "0");
-        wanted.put("useinbandfec", fec ? "1" : "0");
         for (String payload : payloads) {
             String prefix = "a=fmtp:" + payload + " ";
             int at = -1;

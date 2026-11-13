@@ -49,6 +49,19 @@ public final class VoiceLink {
     static final int CHAT_SEEN = 17;
     static final int CHAT_RETRY = 18;
     static final int CHAT_DISCARD = 19;
+    /**
+     * MOB-WATCH: the stream screen: watch ("person", arg1 the share, "layer"), stop watching ("person", arg1), another
+     * layer, on screen or not (arg1), a touch, its surface ("surface"; none: gone), a streamer's sound ("person", arg1
+     * volume, arg2 muted) and the duck's choices (arg1 on, arg2 level, "self").
+     */
+    static final int WATCH = 20;
+    static final int UNWATCH = 21;
+    static final int WATCH_LAYER = 22;
+    static final int WATCH_SHOWN = 23;
+    static final int WATCH_STILL = 24;
+    static final int WATCH_SURFACE = 25;
+    static final int STREAM_SOUND = 26;
+    static final int DUCK = 27;
     // Voice → launcher.
     static final int STATE = 101;
     static final int NOTICE = 102;
@@ -263,6 +276,13 @@ public final class VoiceLink {
             mService = new Messenger(binder);
             send(Message.obtain(null, REGISTER));
             if (mMeters) sendFlag(METERS, true);
+            // MOB-WATCH: a stream screen that came up before the link was bound says what it wants now.
+            sendDuck();
+            if (mWatchU != null) {
+                sendFlag(WATCH_SHOWN, mWatchShown);
+                sendWatch();
+                if (mWatchSurface != null) sendSurface();
+            }
         }
 
         @Override
@@ -437,6 +457,96 @@ public final class VoiceLink {
 
     public void chatDiscard(int rid) {
         send(Message.obtain(null, CHAT_DISCARD, rid, 0));
+    }
+
+    // ---- MOB-WATCH: the stream screen ----
+
+    @Nullable private String mWatchU;
+    private int mWatchN;
+    private String mWatchLayer = StreamView.FULL;
+    private boolean mWatchShown;
+    @Nullable private android.view.Surface mWatchSurface;
+
+    /** "İzle": {@code person}'s share {@code n}, asked at {@code layer} (the stream screen's first choice). */
+    public void watch(String person, int n, String layer) {
+        mWatchU = person;
+        mWatchN = n;
+        mWatchLayer = StreamView.layer(layer);
+        sendWatch();
+    }
+
+    /** "İzlemeyi Bırak" (the stream screen closes). */
+    public void stopWatching(String person, int n) {
+        if (person.equals(mWatchU) && n == mWatchN) {
+            mWatchU = null;
+            mWatchSurface = null;
+        }
+        Message m = Message.obtain(null, UNWATCH, n, 0);
+        m.getData().putString("person", person);
+        send(m);
+    }
+
+    /** The layer the stream screen asks for now ({@code f}, {@code q}). */
+    public void watchLayer(String person, int n, String layer) {
+        if (person.equals(mWatchU) && n == mWatchN) mWatchLayer = StreamView.layer(layer);
+        Message m = Message.obtain(null, WATCH_LAYER, n, 0);
+        m.getData().putString("person", person);
+        m.getData().putString("layer", StreamView.layer(layer));
+        send(m);
+    }
+
+    /** The stream screen is on screen (picture-in-picture counts) or not. */
+    public void watchShown(boolean shown) {
+        mWatchShown = shown;
+        sendFlag(WATCH_SHOWN, shown);
+    }
+
+    /** A touch of the stream screen, or "Evet" on "Hâlâ izliyor musun?". */
+    public void watchStill() {
+        send(Message.obtain(null, WATCH_STILL));
+    }
+
+    /** The stream screen's surface for the picture (null: it went). */
+    public void watchSurface(@Nullable android.view.Surface surface) {
+        mWatchSurface = surface;
+        sendSurface();
+    }
+
+    /** A streamer's "Yayın Sesi" (percent) and "Yayını Sessize Al" on this phone. */
+    public void setStreamSound(String person, int volume, boolean muted) {
+        Message m = Message.obtain(null, STREAM_SOUND, StreamSound.clampVolume(volume), muted ? 1 : 0);
+        m.getData().putString("person", person);
+        send(m);
+    }
+
+    /** "Biri Konuşunca Yayın Sesini Kıs", "Kısma Miktarı" (percent), "Ben Konuşunca da Kıs". */
+    public void setDuck(boolean on, int level, boolean self) {
+        mDuck = new Object[]{on, StreamSound.clampDuckLevel(level), self};
+        sendDuck();
+    }
+
+    /** The duck's choices as last said (sent again when the link binds), or null. */
+    @Nullable private Object[] mDuck;
+
+    private void sendDuck() {
+        if (mDuck == null) return;
+        Message m = Message.obtain(null, DUCK, (Boolean) mDuck[0] ? 1 : 0, (Integer) mDuck[1]);
+        m.getData().putBoolean("self", (Boolean) mDuck[2]);
+        send(m);
+    }
+
+    private void sendWatch() {
+        if (mWatchU == null) return;
+        Message m = Message.obtain(null, WATCH, mWatchN, 0);
+        m.getData().putString("person", mWatchU);
+        m.getData().putString("layer", mWatchLayer);
+        send(m);
+    }
+
+    private void sendSurface() {
+        Message m = Message.obtain(null, WATCH_SURFACE);
+        if (mWatchSurface != null && mWatchSurface.isValid()) m.getData().putParcelable("surface", mWatchSurface);
+        send(m);
     }
 
     /** A room surface is on screen: live speaking rings (only then is anything measured). */

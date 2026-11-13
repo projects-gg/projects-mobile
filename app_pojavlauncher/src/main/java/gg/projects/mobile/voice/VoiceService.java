@@ -70,6 +70,28 @@ public final class VoiceService extends Service implements VoiceEngine.Listener,
     private boolean mChatChanged;
     @Nullable private String mLastLine;
     @Nullable private Boolean mLastMicOff;
+    /** MOB-WATCH: the watch connection (it lives with the voice engine) and the stream screen's binder (its process may end). */
+    @Nullable private VoiceWatchEngine mWatch;
+    private boolean mDestroyed;
+    @Nullable private IBinder mWatchOwner;
+    /** MOB-WATCH: the duck's choices (the launcher process's; it says them when they change) and who speaks now. */
+    private boolean mDuck;
+    private int mDuckLevel = StreamSound.DUCK_LEVEL_DEFAULT;
+    private boolean mDuckSelf;
+    private List<String> mSpeaking = new ArrayList<>();
+    private boolean mMeTalking;
+    private final VoiceWatchEngine.Listener mWatchListener = new VoiceWatchEngine.Listener() {
+        @Override
+        public void onWatchReport(VoiceWatch.Report report, @Nullable String sdp) {
+            run(mMachine.watchReport(report, sdp, now()));
+        }
+
+        @Override
+        public void onWatchFacts(boolean weak, int width, int height, boolean playing) {
+            run(mMachine.watchFacts(weak, width, height, playing));
+        }
+    };
+    private final IBinder.DeathRecipient mWatchDeath = () -> mMain.post(this::watchOwnerGone);
 
     private final Messenger mMessenger = new Messenger(new Handler(Looper.getMainLooper()) {
         @Override
@@ -94,6 +116,10 @@ public final class VoiceService extends Service implements VoiceEngine.Listener,
         mPrefs = new VoicePrefs(this);
         mMachine = new VoiceMachine(mPrefs, new SecureRandom());
         mScreenOffAt = now();
+        // MOB-WATCH: the duck's choices as the launcher process last saved them (it says changes through the link).
+        mDuck = mPrefs.duck();
+        mDuckLevel = mPrefs.duckLevel();
+        mDuckSelf = mPrefs.duckSelf();
         IntentFilter filter = new IntentFilter();
         filter.addAction(Intent.ACTION_SCREEN_OFF);
         filter.addAction(Intent.ACTION_SCREEN_ON);
@@ -102,6 +128,8 @@ public final class VoiceService extends Service implements VoiceEngine.Listener,
 
     @Override
     public void onDestroy() {
+        // Callbacks already posted (the socket's, the engines') may still arrive: they open nothing any more.
+        mDestroyed = true;
         mMain.removeCallbacks(mTick);
         try {
             unregisterReceiver(mScreen);
@@ -110,6 +138,9 @@ public final class VoiceService extends Service implements VoiceEngine.Listener,
         }
         if (mSocket != null) mSocket.close();
         mSocket = null;
+        unlinkWatchOwner();
+        if (mWatch != null) mWatch.release();
+        mWatch = null;
         if (mEngine != null) mEngine.close();
         mEngine = null;
         releaseWake();
@@ -162,6 +193,8 @@ public final class VoiceService extends Service implements VoiceEngine.Listener,
             return;
         }
         mPrefs.setSounds(intent.getBooleanExtra(VoiceLink.EXTRA_SOUNDS, true));
+        // MOB-WATCH: a debug build may shorten "Hâlâ izliyor musun?" for the emulator pass (release builds never read it).
+        mMachine.debugStillAsk(debug.watchStillSeconds * 1_000L);
         // M053: the ignore list as the launcher process last wrote it.
         mPrefs.setIgnored(gg.projects.mobile.social.IgnoreList.forVoice(this));
         mMachine.setMe(me);
@@ -258,9 +291,99 @@ public final class VoiceService extends Service implements VoiceEngine.Listener,
             case VoiceLink.CHAT_DISCARD:
                 run(mMachine.chatDiscard(msg.arg1));
                 break;
+            // MOB-WATCH: the stream screen.
+            case VoiceLink.WATCH:
+                linkWatchOwner(from);
+                run(mMachine.watchStart(data.getString("person", ""), msg.arg1, data.getString("layer", StreamView.FULL), now()));
+                break;
+            case VoiceLink.UNWATCH:
+                run(mMachine.watchStop(data.getString("person", ""), msg.arg1, now()));
+                if (mMachine.watchedPerson() == null) unlinkWatchOwner();
+                break;
+            case VoiceLink.WATCH_LAYER:
+                run(mMachine.watchLayer(data.getString("person", ""), msg.arg1, data.getString("layer", StreamView.FULL)));
+                break;
+            case VoiceLink.WATCH_SHOWN:
+                run(mMachine.watchVisible(msg.arg1 != 0, now()));
+                break;
+            case VoiceLink.WATCH_STILL:
+                run(mMachine.watchStill(now()));
+                break;
+            case VoiceLink.WATCH_SURFACE:
+                watchSurface(from, surfaceOf(data));
+                break;
+            case VoiceLink.STREAM_SOUND:
+                run(mMachine.setStreamSound(data.getString("person", ""), msg.arg1, msg.arg2 != 0));
+                break;
+            case VoiceLink.DUCK:
+                mDuck = msg.arg1 != 0;
+                mDuckLevel = StreamSound.clampDuckLevel(msg.arg2);
+                mDuckSelf = data.getBoolean("self", false);
+                syncMeters();
+                syncWatch();
+                break;
             default:
                 break;
         }
+    }
+
+    // ---- MOB-WATCH: the stream screen ----
+
+    @Nullable
+    @SuppressWarnings("deprecation")
+    private static android.view.Surface surfaceOf(Bundle data) {
+        try {
+            return data.getParcelable("surface");
+        } catch (RuntimeException e) {
+            return null;
+        }
+    }
+
+    /** The stream screen's surface (null: it went). */
+    private void watchSurface(@Nullable Messenger from, @Nullable android.view.Surface surface) {
+        if (surface != null) linkWatchOwner(from);
+        if (mWatch != null) mWatch.setSurface(surface);
+    }
+
+    /** The stream screen's process: when it ends (the game took the launcher's place) watching lets go. */
+    private void linkWatchOwner(@Nullable Messenger from) {
+        IBinder owner = from == null ? null : from.getBinder();
+        if (owner == null || owner == mWatchOwner) return;
+        unlinkWatchOwner();
+        try {
+            owner.linkToDeath(mWatchDeath, 0);
+            mWatchOwner = owner;
+        } catch (RemoteException e) {
+            // Gone already: the next message settles it.
+        }
+    }
+
+    private void unlinkWatchOwner() {
+        IBinder owner = mWatchOwner;
+        mWatchOwner = null;
+        if (owner == null) return;
+        try {
+            owner.unlinkToDeath(mWatchDeath, 0);
+        } catch (RuntimeException ignored) {
+            // Never linked.
+        }
+    }
+
+    /** The stream screen's process ended (the game took the launcher's place): nothing is watched any more. */
+    private void watchOwnerGone() {
+        if (mWatchOwner != null && mWatchOwner.isBinderAlive()) return;
+        mWatchOwner = null;
+        if (mWatch != null) mWatch.setSurface(null);
+        run(mMachine.watchGone(now()));
+    }
+
+    /** The watch engine follows the machine: the share it shows, the stream's gain and duck. */
+    private void syncWatch() {
+        if (mWatch == null) return;
+        boolean live = mMachine.watchLive();
+        mWatch.setTarget(live ? mMachine.watchedPerson() : null, mMachine.watchedN());
+        boolean others = StreamSound.othersSpeaking(mSpeaking, mMachine.me(), mMachine.silent());
+        mWatch.setSound(mMachine.streamGain(), StreamSound.duck(mDuck, mDuckLevel, others, mDuckSelf, mMeTalking));
     }
 
     private void asked(@Nullable Messenger from, int clientRid, VoiceMachine.Request request) {
@@ -285,7 +408,10 @@ public final class VoiceService extends Service implements VoiceEngine.Listener,
     private void syncMeters() {
         boolean on = false;
         for (Boolean wanted : mMeters.values()) on |= wanted;
-        run(mMachine.setMeters(on));
+        // MOB-WATCH: "Biri Konuşunca Yayın Sesini Kıs" hears who speaks while a stream plays.
+        on |= mDuck && mMachine.watchLive();
+        List<VoiceMachine.Effect> effects = mMachine.setMeters(on);
+        if (!effects.isEmpty()) run(effects);
     }
 
     private void sendState(Messenger to) {
@@ -316,6 +442,7 @@ public final class VoiceService extends Service implements VoiceEngine.Listener,
     // ---- the machine's effects ----
 
     private void run(List<VoiceMachine.Effect> effects) {
+        if (mDestroyed) return;
         for (VoiceMachine.Effect e : effects) {
             switch (e.kind) {
                 case CONNECT:
@@ -337,14 +464,21 @@ public final class VoiceService extends Service implements VoiceEngine.Listener,
                         mEngine = new VoiceEngine(this, this);
                         mEngine.open();
                     }
+                    // MOB-WATCH: the watch connection lives on the voice engine's factory.
+                    if (mWatch == null) mWatch = new VoiceWatchEngine(mEngine, mWatchListener);
                     run(mMachine.engineAttached());
                     break;
                 case ENGINE_CLOSE:
+                    if (mWatch != null) mWatch.release();
+                    mWatch = null;
                     if (mEngine != null) mEngine.close();
                     mEngine = null;
                     break;
                 case ENGINE:
                     if (mEngine != null && e.command != null) mEngine.run(e.command);
+                    break;
+                case WATCH:
+                    if (mWatch != null && e.watch != null) mWatch.run(e.watch);
                     break;
                 case NOTICE:
                     if (e.notice != null) notice(e.notice);
@@ -374,6 +508,9 @@ public final class VoiceService extends Service implements VoiceEngine.Listener,
     }
 
     private void flush() {
+        // MOB-WATCH: the watch engine and the duck's measuring follow what the machine watches now.
+        syncWatch();
+        syncMeters();
         if (mChatChanged) {
             // Before the state: a screen that reads the state's unread count has the messages already.
             mChatChanged = false;
@@ -488,6 +625,9 @@ public final class VoiceService extends Service implements VoiceEngine.Listener,
 
     @Override
     public void onSpeaking(List<String> ids, boolean me) {
+        // MOB-WATCH: the duck hears it at once (the machine's view follows).
+        mSpeaking = new ArrayList<>(ids);
+        mMeTalking = me;
         run(mMachine.engineSpeaking(ids, me, now()));
     }
 

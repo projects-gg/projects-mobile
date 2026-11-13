@@ -53,6 +53,54 @@ public final class VoiceState {
     public int chatUnread;
     /** SQOL: grows with every change of the room chat. */
     public long chatVersion;
+    /** MOB-WATCH: the share the player watches (null: none). */
+    @Nullable public Watch watch;
+    /**
+     * MOB-WATCH: watching's last word for the stream screen: {@code ended} (the share ended), {@code failed} (no
+     * connection), {@code stopped} ("Hâlâ izliyor musun?" went unanswered), or the room's refusal ({@code watch_full},
+     * {@code budget}, {@code share_off}, {@code limited}, {@code not_found}, {@code gone}); {@link #watchNoticeSeq} grows
+     * with each, so a screen says each once.
+     */
+    @Nullable public String watchNotice;
+    public int watchNoticeSeq;
+
+    /** MOB-WATCH: a share the player watches. */
+    public static final class Watch {
+        public static final String CONNECTING = "connecting";
+        public static final String LIVE = "live";
+        /** Let go while the stream screen is out of sight (asked for again when it is back). */
+        public static final String HELD = "held";
+
+        public String u = "";
+        public int n;
+        /** {@code f} or {@code q}. */
+        public String layer = StreamView.FULL;
+        public String phase = CONNECTING;
+        /** "Hâlâ izliyor musun?" is asked now. */
+        public boolean asking;
+        /** The connection is weak ("Düşük Kalite"). */
+        public boolean weak;
+        /** The picture's size as it arrives (0: none yet). */
+        public int width;
+        public int height;
+        /** A picture is on its way to the screen (the first frame came). */
+        public boolean playing;
+        /** The streamer's "Yayın Sesi" on this phone (percent) and "Yayını Sessize Al". */
+        public int volume = StreamSound.VOLUME_DEFAULT;
+        public boolean muted;
+        /** What it shows ({@code game}, {@code window}, {@code screen}), how many watch, and {@code hold} / {@code min}. */
+        @Nullable public String src;
+        public int watchers;
+        @Nullable public String st;
+
+        public boolean live() {
+            return LIVE.equals(phase);
+        }
+
+        public boolean held() {
+            return HELD.equals(phase);
+        }
+    }
 
     public static final class Me {
         public String id = "";

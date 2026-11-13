@@ -58,6 +58,8 @@ public final class VoiceSounds {
                 return 3;
             case STREAM_START:
                 return 0.4;
+            case STREAM_END:
+                return 0.36;
             default:
                 return 0.3;
         }
@@ -88,6 +90,9 @@ public final class VoiceSounds {
                         new Note(new double[] {A4, CS5}, 0.45, 0.32, 0.16, 0)};
             case STREAM_START:
                 return new Note[] {n(A4, 0, 0.11, 0.13, 0.045), new Note(new double[] {E5, A5}, 0.075, 0.3, 0.17, 0.09)};
+            case STREAM_END:
+                // MOB-WATCH: the softest, the fifth back down: the stream the player watched ended.
+                return new Note[] {new Note(new double[] {E5, A5}, 0, 0.1, 0.12, 0.04), n(A4, 0.075, 0.26, 0.11, 0.08)};
             default:
                 return new Note[0];
         }
@@ -130,7 +135,7 @@ public final class VoiceSounds {
      */
     public static boolean playsWhileDeaf(VoiceMachine.Sound sound) {
         return sound != VoiceMachine.Sound.JOIN && sound != VoiceMachine.Sound.LEAVE && sound != VoiceMachine.Sound.WAITING
-                && sound != VoiceMachine.Sound.STREAM_START;
+                && sound != VoiceMachine.Sound.STREAM_START && sound != VoiceMachine.Sound.STREAM_END;
     }
 
     /**
