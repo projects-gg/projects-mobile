@@ -129,7 +129,11 @@ public final class VoiceSheet implements VoiceLink.Listener {
     private int mNewMessages;
     @Nullable private String mOneMessage;
     private final Runnable mSay = this::say;
-    private final SocialService.Listener mSocial = this::renderChat;
+    private final SocialService.Listener mSocial = () -> {
+        // After 0.5.4: someone blocked now leaves the room's chat at once.
+        if (mRoomChat != null) mRoomChat.socialChanged();
+        renderChat();
+    };
 
     public static void show(FragmentActivity activity) {
         new VoiceSheet(activity).open();
@@ -358,16 +362,16 @@ public final class VoiceSheet implements VoiceLink.Listener {
      * mutual friend, with chat on: that friend's messages; otherwise the room's chat when it offers one; else none.
      */
     private ChatMode chatMode(VoiceState s) {
-        mDmFriend = null;
-        if (!s.crewRoom && !s.grew) {
-            String other = s.people.size() == 1 ? s.people.get(0).id : s.people.isEmpty() ? s.calling : null;
-            SocialService service = SocialService.get(mActivity);
-            if (other != null && service.state().isFriend(other) && service.chat().available() && service.state().myId() != null) {
-                mDmFriend = other;
-                return ChatMode.DM;
-            }
-        }
-        return s.chat ? ChatMode.ROOM : ChatMode.NONE;
+        // After 0.5.4 (the lead): sticky per room like the desktop's; a gap in the friends feature never flips it.
+        SocialService service = SocialService.get(mActivity);
+        String other = s.crewRoom ? null : s.people.size() == 1 ? s.people.get(0).id : s.people.isEmpty() ? s.calling : null;
+        boolean ready = service.connection() == SocialService.Connection.LIVE && service.state().myId() != null;
+        String choice = gg.projects.mobile.voice.RoomChatChoice.decide(gg.projects.mobile.voice.RoomChatChoice.kept(s.room),
+                s.crewRoom, s.grew, other, other != null && service.state().isFriend(other), service.chat().available(), s.chat, ready);
+        gg.projects.mobile.voice.RoomChatChoice.keep(s.room, choice, ready || s.crewRoom || s.grew);
+        mDmFriend = gg.projects.mobile.voice.RoomChatChoice.friendOf(choice);
+        if (mDmFriend != null) return ChatMode.DM;
+        return gg.projects.mobile.voice.RoomChatChoice.ROOM.equals(choice) ? ChatMode.ROOM : ChatMode.NONE;
     }
 
     private void renderChat() {
@@ -600,6 +604,9 @@ public final class VoiceSheet implements VoiceLink.Listener {
 
     /** Who came, who went, who started or stopped sharing (never on the sheet's first look). */
     private void hearState(VoiceState s) {
+        // After 0.5.4: the first look is the room's first live state (people already there never read as joining);
+        // nothing is said while joining or reconnecting.
+        if (!s.live()) return;
         Set<String> people = new HashSet<>();
         Set<String> sharing = new HashSet<>();
         for (VoiceState.Person p : s.people) {
@@ -638,8 +645,10 @@ public final class VoiceSheet implements VoiceLink.Listener {
         mHeardLines = lines;
         if (before == null || chat == null || mMode != ChatMode.ROOM || !talkBack()) return;
         Context c = mActivity;
+        Set<String> blocked = RoomChatPanel.blockedIds(c);
         for (RoomChat.Line l : chat.lines) {
-            if (before.contains(l.id) || l.mine || !l.sent()) continue;
+            // After 0.5.4: never the room's past (seen; the first log among it) nor someone blocked.
+            if (before.contains(l.id) || l.mine || !l.sent() || l.at <= chat.seenAt || blocked.contains(l.u)) continue;
             mNewMessages++;
             String who = nameOf(l.u);
             mOneMessage = who + ": " + (l.sticker() ? c.getString(R.string.projects_stickers_unknown) : l.text);
