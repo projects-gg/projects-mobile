@@ -703,7 +703,7 @@
     <string name="projects_picker_group_objects">Nesneler</string>
     <string name="projects_picker_group_symbols">Semboller</string>
     <string name="projects_picker_group_flags">Bayraklar</string>
-    <string name="projects_stickers_label">%1$s Çıkartması</string>
+    <string name="projects_stickers_label">%1$s çıkartması</string>
     <string name="projects_stickers_unknown">Çıkartma</string>
     <string name="projects_stickers_preview">Çıkartma: %1$s</string>
     <string name="projects_stickers_preview_mine">Sen: Çıkartma, %1$s</string>

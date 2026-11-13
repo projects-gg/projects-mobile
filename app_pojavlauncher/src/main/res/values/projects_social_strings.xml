@@ -717,7 +717,7 @@
     <string name="projects_picker_group_objects">Objects</string>
     <string name="projects_picker_group_symbols">Symbols</string>
     <string name="projects_picker_group_flags">Flags</string>
-    <string name="projects_stickers_label">%1$s Sticker</string>
+    <string name="projects_stickers_label">%1$s sticker</string>
     <string name="projects_stickers_unknown">Sticker</string>
     <string name="projects_stickers_preview">Sticker: %1$s</string>
     <string name="projects_stickers_preview_mine">You: Sticker, %1$s</string>
