@@ -49,6 +49,8 @@ public final class VoiceLink {
     static final int CHAT_SEEN = 17;
     static final int CHAT_RETRY = 18;
     static final int CHAT_DISCARD = 19;
+    /** After 0.5.4: the player blocked "person": their room chat messages go, a call of two with them ends. */
+    static final int BLOCKED = 20;
     // Voice → launcher.
     static final int STATE = 101;
     static final int NOTICE = 102;
@@ -437,6 +439,13 @@ public final class VoiceLink {
 
     public void chatDiscard(int rid) {
         send(Message.obtain(null, CHAT_DISCARD, rid, 0));
+    }
+
+    /** The player blocked {@code person} (a stay hears it at once; nothing without one). */
+    public void blocked(String person) {
+        Message m = Message.obtain(null, BLOCKED);
+        m.getData().putString("person", person);
+        send(m);
     }
 
     /** A room surface is on screen: live speaking rings (only then is anything measured). */
