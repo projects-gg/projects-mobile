@@ -457,6 +457,13 @@ public final class VoiceEngine {
     /** One SFU session's connection (the desktop's {@code Call}). */
     private final class Call implements PeerConnection.Observer {
         final PeerConnection pc;
+        /**
+         * The microphone's transceiver and its sender as addTransceiver handed them out, kept for the call: its mid is
+         * read from here. Never ask the connection for its transceivers, senders or receivers: org.webrtc's
+         * getTransceivers()/getSenders()/getReceivers() dispose every wrapper they handed out before, these too, and the
+         * next use throws "RtpSender has been disposed" (0.5.3's crash on every join with the microphone; SQOL-M).
+         */
+        @Nullable final RtpTransceiver transceiver;
         @Nullable final RtpSender sender;
         final boolean withTurn;
         boolean answered;
@@ -484,13 +491,12 @@ public final class VoiceEngine {
             config.sdpSemantics = PeerConnection.SdpSemantics.UNIFIED_PLAN;
             config.continualGatheringPolicy = PeerConnection.ContinualGatheringPolicy.GATHER_ONCE;
             pc = factory.createPeerConnection(config, this);
-            RtpSender s = null;
+            RtpTransceiver t = null;
             if (local != null && pc != null) {
-                RtpTransceiver t = pc.addTransceiver(local,
-                        new RtpTransceiver.RtpTransceiverInit(RtpTransceiver.RtpTransceiverDirection.SEND_ONLY));
-                s = t.getSender();
+                t = pc.addTransceiver(local, new RtpTransceiver.RtpTransceiverInit(RtpTransceiver.RtpTransceiverDirection.SEND_ONLY));
             }
-            sender = s;
+            transceiver = t;
+            sender = t == null ? null : t.getSender();
         }
 
         boolean connected() {
@@ -499,7 +505,7 @@ public final class VoiceEngine {
 
         /** The join offer: one send-only audio m-line (no sender: listen only, no SDP). */
         void offer() {
-            if (sender == null) {
+            if (sender == null || transceiver == null) {
                 mListener.onOffer(null, null);
                 return;
             }
@@ -511,10 +517,8 @@ public final class VoiceEngine {
                         public void onSetSuccess() {
                             mMain.post(() -> {
                                 if (done) return;
-                                String mid = null;
-                                for (RtpTransceiver t : pc.getTransceivers()) {
-                                    if (t.getSender() != null && sender != null && t.getSender().id().equals(sender.id())) mid = t.getMid();
-                                }
+                                // The mid of our own transceiver (set by setLocalDescription); no getTransceivers() (see the field).
+                                String mid = transceiver == null ? null : transceiver.getMid();
                                 SessionDescription local = pc.getLocalDescription();
                                 mListener.onOffer(local == null ? null : local.description, mid);
                             });
