@@ -6,6 +6,8 @@
     <string name="projects_stream_watch">İzle</string>
     <string name="projects_stream_watch_label">%1$s yayınını izle</string>
     <string name="projects_stream_watch_item">Yayını İzle</string>
+    <string name="projects_stream_back">Yayına Dön</string>
+    <string name="projects_stream_back_label">%1$s yayınına dön</string>
     <string name="projects_stream_label">%1$s yayını</string>
     <string name="projects_stream_connecting">Bağlanıyor…</string>
     <string name="projects_stream_ended">Yayın bitti.</string>

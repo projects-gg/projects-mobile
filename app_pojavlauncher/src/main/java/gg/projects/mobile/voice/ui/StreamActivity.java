@@ -116,13 +116,17 @@ public final class StreamActivity extends AppCompatActivity implements VoiceLink
     private static final int VOLUME_STEP = 5;
     /** A link that has not said a stay by then has none (the stream screen goes). */
     private static final long NO_STAY_MS = 4_000;
+    /** After this screen switches the layer, the picture's own hiccup is no sign of a weak connection. */
+    private static final long LAYER_SETTLE_MS = 4_000;
 
     /** "İzle": opens the stream screen on {@code person}'s share {@code n} (or switches the open one to it). */
     public static void open(Activity from, String person, int n) {
         Intent intent = new Intent(from, StreamActivity.class)
                 .putExtra(EXTRA_PERSON, person)
                 .putExtra(EXTRA_N, n)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                // The picture comes up at once: the system's slide between tasks showed a light band beside it (and a
+                // custom animation is not honoured for another task's start on Android 14 and newer).
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NO_ANIMATION);
         from.startActivity(intent);
     }
 
@@ -185,7 +189,9 @@ public final class StreamActivity extends AppCompatActivity implements VoiceLink
     private long mStillSentAt;
     private boolean mMetered;
     @Nullable private Object mNetCallback;
-    private final StreamView.WeakHold mWeakHold = new StreamView.WeakHold();
+    private StreamView.WeakHold mWeakHold = new StreamView.WeakHold();
+    /** When this screen last asked for another layer (its switch may stall the picture a moment). */
+    private long mLayerAt;
     @Nullable private String mLayerSent;
     // TalkBack: what was said last about the stream.
     @Nullable private String mHeard;
@@ -197,7 +203,13 @@ public final class StreamActivity extends AppCompatActivity implements VoiceLink
         mHidePending = false;
         if (mayHide()) setControls(false, true);
     };
-    private final Runnable mLayerCheck = this::syncLayer;
+    /** The weak hold's time is up (no new state may come): it lets the full layer back, the chip goes. */
+    private final Runnable mLayerCheck = () -> {
+        VoiceState.Watch w = mWatch;
+        if (w != null) mWeakHold.step(weakNow(w), SystemClock.elapsedRealtime());
+        syncLayer();
+        render();
+    };
     private final Runnable mFinish = this::finishWatching;
     private final Runnable mHideHint = () -> showHint(false);
     private final Runnable mNoStay = () -> {
@@ -239,6 +251,8 @@ public final class StreamActivity extends AppCompatActivity implements VoiceLink
             lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
             getWindow().setAttributes(lp);
         }
+        // Android 14 and newer: closing goes at once too (the system's slide between tasks showed a light band).
+        if (Build.VERSION.SDK_INT >= 34) overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, 0, 0);
         buildViews();
         setContentView(mRoot);
         hideSystemBars();
@@ -289,6 +303,8 @@ public final class StreamActivity extends AppCompatActivity implements VoiceLink
         mPosterTh = -1;
         mPoster.setImageDrawable(null);
         mLayerSent = null;
+        mMain.removeCallbacks(mLayerCheck);
+        mWeakHold = new StreamView.WeakHold();
         // 16:9 until the new picture says its size.
         mPictureW = 0;
         mPictureH = 0;
@@ -340,7 +356,8 @@ public final class StreamActivity extends AppCompatActivity implements VoiceLink
         } catch (IllegalArgumentException ignored) {
             // Never registered (finished in onCreate).
         }
-        if (mPerson.length() > 0 && !mEnding) stopWatching();
+        // A recreation (text size, language) comes straight back on the same stream: only a real end lets go.
+        if (mPerson.length() > 0 && !mEnding && !isChangingConfigurations()) stopWatching();
         super.onDestroy();
     }
 
@@ -363,6 +380,10 @@ public final class StreamActivity extends AppCompatActivity implements VoiceLink
         closePanel();
         render();
         setControls(!inPip, false);
+        // The window may have taken its new size before this call: the picture's place and the layer by the mode now
+        // (back from the small window, "Otomatik" asks for the full picture again).
+        layoutPicture();
+        syncLayer();
     }
 
     @Override
@@ -404,7 +425,9 @@ public final class StreamActivity extends AppCompatActivity implements VoiceLink
             if (!first && state.watchNotice != null) notice(state.watchNotice);
         }
         if (watch != null) {
-            if (mWeakHold.step(watch.weak, SystemClock.elapsedRealtime())) syncLayer();
+            // Every reading: the layer by the hold now, and its release counted from the first good one.
+            mWeakHold.step(weakNow(watch), SystemClock.elapsedRealtime());
+            syncLayer();
             if (watch.width > 0 && watch.height > 0 && (watch.width != mPictureW || watch.height != mPictureH)) {
                 mPictureW = watch.width;
                 mPictureH = watch.height;
@@ -621,7 +644,9 @@ public final class StreamActivity extends AppCompatActivity implements VoiceLink
         mWeakChip.setVisibility(View.GONE);
         mTop.addView(mWeakChip, chipLp());
         mZoomChip = chip(c, "");
-        mZoomChip.setTypeface(font(R.font.tektur_semibold));
+        // Figtree's own "%" (Tektur's reads as a slanted mark), its figures of one width while the zoom moves.
+        mZoomChip.setTypeface(font(R.font.figtree_semibold));
+        mZoomChip.setFontFeatureSettings("tnum");
         mZoomChip.setOnClickListener(v -> animateZoom(StreamView.none(fit()[0], fit()[1], mVideo.getWidth(), mVideo.getHeight())));
         mZoomChip.setVisibility(View.GONE);
         mTop.addView(mZoomChip, chipLp());
@@ -736,7 +761,9 @@ public final class StreamActivity extends AppCompatActivity implements VoiceLink
         mSoundButton.setContentDescription(getString(R.string.projects_stream_volume) + ", "
                 + (muted ? getString(R.string.projects_stream_say_muted) : percent(w != null ? w.volume : StreamSound.VOLUME_DEFAULT)));
 
-        boolean weak = w != null && w.weak && w.live();
+        // "Düşük Kalite" while the weak hold keeps the small picture ("Otomatik" only: the other choices ignore it).
+        boolean weak = w != null && w.live() && mWeakHold.held()
+                && StreamView.AUTO.equals(StreamView.quality(mPrefs.streamQuality()));
         mWeakChip.setVisibility(weak && !mInPip ? View.VISIBLE : View.GONE);
         mZoomChip.setVisibility(mZoom.zoomed() && !mInPip ? View.VISIBLE : View.GONE);
         if (mZoom.zoomed()) {
@@ -757,7 +784,8 @@ public final class StreamActivity extends AppCompatActivity implements VoiceLink
                 mStillSentAt = SystemClock.elapsedRealtime();
                 Haptics.confirm(v);
             });
-            veil(0f);
+            // The picture goes on behind the question, dimmed: the words stay readable over any picture.
+            veil(0.72f);
         } else if (hold) {
             center(getString(R.string.projects_voice_share_paused), mPerson, 0, null);
             veil(1f);
@@ -941,12 +969,17 @@ public final class StreamActivity extends AppCompatActivity implements VoiceLink
 
     /** A touch anywhere on the screen: the controls stay a while longer, "Hâlâ izliyor musun?" counts from here. */
     private void touched() {
+        stillHere();
+        if (mControls) scheduleHide();
+    }
+
+    /** The player is here (a touch of this screen or of the room's sheet over it): "Hâlâ izliyor musun?" counts from now. */
+    void stillHere() {
         long now = SystemClock.elapsedRealtime();
         if (mStillSentAt == 0 || now - mStillSentAt >= STILL_GAP_MS) {
             mStillSentAt = now;
             mLink.watchStill();
         }
-        if (mControls) scheduleHide();
     }
 
     private void hideSystemBars() {
@@ -1037,7 +1070,8 @@ public final class StreamActivity extends AppCompatActivity implements VoiceLink
         TextView title = text(14, R.color.projects_bone_100, R.font.figtree_semibold);
         title.setText(R.string.projects_stream_volume);
         head.addView(title, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        final TextView value = text(14, R.color.projects_ash_300, R.font.tektur_semibold);
+        final TextView value = text(14, R.color.projects_ash_300, R.font.figtree_semibold);
+        value.setFontFeatureSettings("tnum");
         value.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         head.addView(value);
         head.setPadding(dp(4), 0, dp(4), 0);
@@ -1241,7 +1275,8 @@ public final class StreamActivity extends AppCompatActivity implements VoiceLink
         stopWatching();
         mEnding = true;
         finish();
-        if (!Motion.enabled(this)) overridePendingTransition(0, 0);
+        // As it came: at once (no band from the system's slide between tasks).
+        if (Build.VERSION.SDK_INT < 34) overridePendingTransition(0, 0);
     }
 
     private void stopWatching() {
@@ -1262,16 +1297,26 @@ public final class StreamActivity extends AppCompatActivity implements VoiceLink
                 mMetered, mWeakHold.held(), mZoom.zoomed());
     }
 
+    /** A weak reading counts unless this screen's own layer switch (moments ago) explains the stall. */
+    private boolean weakNow(VoiceState.Watch w) {
+        return w.weak && SystemClock.elapsedRealtime() - mLayerAt >= LAYER_SETTLE_MS;
+    }
+
     /** Asks the voice process for the layer the screen wants now (only when it changes). */
     private void syncLayer() {
         mMain.removeCallbacks(mLayerCheck);
         String layer = wantedLayer();
         if (!layer.equals(mLayerSent)) {
             mLayerSent = layer;
+            mLayerAt = SystemClock.elapsedRealtime();
             mLink.watchLayer(mPerson, mN, layer);
         }
-        long back = mWeakHold.backAt();
-        if (back >= 0) mMain.postDelayed(mLayerCheck, Math.max(0, back - SystemClock.elapsedRealtime()) + 50);
+        // Looked at again when the hold may let go, and when a switch's settling time is over (a weak reading then counts).
+        long now = SystemClock.elapsedRealtime();
+        long next = mWeakHold.backAt();
+        long settled = mLayerAt + LAYER_SETTLE_MS;
+        if (settled > now && (next < 0 || settled < next)) next = settled;
+        if (next >= 0) mMain.postDelayed(mLayerCheck, Math.max(0, next - now) + 50);
     }
 
     private void readMetered() {

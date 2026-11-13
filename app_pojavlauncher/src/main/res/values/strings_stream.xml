@@ -6,6 +6,8 @@
     <string name="projects_stream_watch">Watch</string>
     <string name="projects_stream_watch_label">Watch %1$s\'s stream</string>
     <string name="projects_stream_watch_item">Watch Stream</string>
+    <string name="projects_stream_back">Back to Stream</string>
+    <string name="projects_stream_back_label">Back to %1$s\'s stream</string>
     <string name="projects_stream_label">%1$s\'s stream</string>
     <string name="projects_stream_connecting">Connecting…</string>
     <string name="projects_stream_ended">The stream ended.</string>

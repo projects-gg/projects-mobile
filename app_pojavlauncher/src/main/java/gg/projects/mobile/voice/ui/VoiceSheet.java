@@ -7,6 +7,7 @@ import android.text.InputFilter;
 import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.Gravity;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.accessibility.AccessibilityManager;
@@ -143,7 +144,17 @@ public final class VoiceSheet implements VoiceLink.Listener {
         mActivity = activity;
         Context c = activity;
         mDp = c.getResources().getDisplayMetrics().density;
-        mRoot = new LinearLayout(c);
+        mRoot = new LinearLayout(c) {
+            @Override
+            public boolean onInterceptTouchEvent(MotionEvent event) {
+                // MOB-WATCH: over the stream screen, using the room's sheet is being there (the still question counts
+                // it); the touch itself goes on to the sheet's views.
+                if (event.getActionMasked() == MotionEvent.ACTION_DOWN && mActivity instanceof StreamActivity) {
+                    ((StreamActivity) mActivity).stillHere();
+                }
+                return false;
+            }
+        };
         mRoot.setOrientation(LinearLayout.VERTICAL);
         mRoot.setPadding(dp(16), 0, dp(16), dp(16));
 
@@ -289,6 +300,12 @@ public final class VoiceSheet implements VoiceLink.Listener {
     public void onVoiceState(@Nullable VoiceState state) {
         mState = state;
         if (state == null) {
+            if (mPanel != null) mPanel.dismiss();
+            return;
+        }
+        // MOB-WATCH: "Hâlâ izliyor musun?" and a stream's end are the stream screen's own words: the sheet over it steps
+        // aside so they are seen (the question answered before watching stops; the screen closes after its end).
+        if (mActivity instanceof StreamActivity && (state.watch == null || state.watch.asking)) {
             if (mPanel != null) mPanel.dismiss();
             return;
         }
@@ -562,16 +579,26 @@ public final class VoiceSheet implements VoiceLink.Listener {
     /** MOB-WATCH: "İzle" (48 dp, the quiet plate): the stream screen on their share. */
     private TextView watchButton(Context c, final String id, final int n, String name) {
         TextView watch = text(c, 14, R.color.projects_bone_100, R.font.figtree_semibold);
-        watch.setText(R.string.projects_stream_watch);
+        // The share this phone already watches: "Yayına Dön" (over the stream screen the sheet goes; elsewhere the
+        // stream screen comes back from its small window).
+        VoiceState.Watch watching = mState == null ? null : mState.watch;
+        boolean watched = watching != null && watching.u.equals(id) && watching.n == n;
+        watch.setText(watched ? R.string.projects_stream_back : R.string.projects_stream_watch);
         watch.setGravity(Gravity.CENTER);
         watch.setMinHeight(dp(48));
         watch.setMinWidth(dp(64));
         watch.setPadding(dp(14), 0, dp(14), 0);
         watch.setBackground(new ChamferDrawable(ContextCompat.getColor(c, R.color.projects_obsidian_700), dp(6), null));
-        watch.setContentDescription(c.getString(R.string.projects_stream_watch_label, name));
+        watch.setContentDescription(c.getString(watched ? R.string.projects_stream_back_label : R.string.projects_stream_watch_label, name));
         watch.setClickable(true);
         watch.setFocusable(true);
-        watch.setOnClickListener(v -> StreamActivity.open(mActivity, id, n));
+        watch.setOnClickListener(v -> {
+            if (watched && mActivity instanceof StreamActivity) {
+                if (mPanel != null) mPanel.dismiss();
+                return;
+            }
+            StreamActivity.open(mActivity, id, n);
+        });
         Press.attach(watch, Press.Style.BUTTON);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(48));
         lp.setMarginStart(dp(8));
