@@ -24,6 +24,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import net.kdt.pojavlaunch.R;
@@ -94,6 +95,8 @@ public final class VoiceSheet implements VoiceLink.Listener {
     private final CappedScroll mPeopleScroll;
     private final LinearLayout mList;
     private final LinearLayout mChatSlot;
+    /** Mikrofon, Sağırlaştır, Ayrıl (stepping aside while the keyboard is up for the chat). */
+    private final LinearLayout mControls;
     private final TextView mMic;
     private final TextView mDeaf;
     private final TextView mLeave;
@@ -112,6 +115,9 @@ public final class VoiceSheet implements VoiceLink.Listener {
     /** The player's choice for "Odadakiler" (open by default); folded for as long as the field has the focus. */
     private boolean mPeopleOpen = true;
     private boolean mTyping;
+    /** The window told whether its keyboard is up (Android 6+), and whether it is. */
+    private boolean mImeKnown;
+    private boolean mImeShown;
     private boolean mShowing;
     /** Names of everyone seen in the room this time (someone who left still names their messages). */
     private final Map<String, VoiceState.Person> mSeen = new HashMap<>();
@@ -202,6 +208,7 @@ public final class VoiceSheet implements VoiceLink.Listener {
         mRoot.addView(mChatSlot, chatLp);
 
         LinearLayout controls = new LinearLayout(c);
+        mControls = controls;
         controls.setOrientation(LinearLayout.HORIZONTAL);
         // A floor, never a ceiling: larger text grows the buttons instead of cutting their words.
         controls.setMinimumHeight(dp(64));
@@ -251,6 +258,22 @@ public final class VoiceSheet implements VoiceLink.Listener {
             SocialService.get(mActivity).removeListener(mSocial);
             link.detach(this);
         }).onBack(() -> mRoomChat != null && mRoomChat.back());
+        // After 0.5.4 (the lead): while the keyboard is up for the room's chat, the people fold and the controls row
+        // steps aside, so the field sits on the keyboard; the keyboard's own state, not the field's focus (a Back that
+        // closes the keyboard leaves the focus in the field).
+        // The window's own insets after every layout (the keyboard resizes the sheet's window): read even where a parent
+        // consumed them on the way down.
+        mRoot.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
+            if (android.os.Build.VERSION.SDK_INT < 23) return;
+            WindowInsetsCompat insets = ViewCompat.getRootWindowInsets(mRoot);
+            if (insets == null) return;
+            boolean ime = insets.isVisible(WindowInsetsCompat.Type.ime());
+            if (!mImeKnown || ime != mImeShown) {
+                mImeKnown = true;
+                mImeShown = ime;
+                layoutPeople();
+            }
+        });
         render();
         // The speaking rings are the call bar's to ask for (it shows under the sheet the whole time).
         link.attach(this);
@@ -549,7 +572,10 @@ public final class VoiceSheet implements VoiceLink.Listener {
         VoiceState s = mState;
         boolean chat = mMode != ChatMode.NONE;
         mPeopleHead.setVisibility(chat ? View.VISIBLE : View.GONE);
-        boolean open = !chat || (mPeopleOpen && !mTyping);
+        // Typing: the field has the focus and the keyboard is up (where the window tells its keyboard; else the focus).
+        boolean typing = mTyping && (!mImeKnown || mImeShown);
+        mControls.setVisibility(typing && mImeKnown ? View.GONE : View.VISIBLE);
+        boolean open = !chat || (mPeopleOpen && !typing);
         mPeopleScroll.setVisibility(open ? View.VISIBLE : View.GONE);
         mPeopleScroll.setShare(chat ? 0.3f : 0.5f);
         if (!chat || s == null) return;
