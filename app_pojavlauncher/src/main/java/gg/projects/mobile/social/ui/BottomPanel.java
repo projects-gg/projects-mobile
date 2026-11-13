@@ -55,11 +55,25 @@ public final class BottomPanel {
         mSheet = new LinearLayout(context);
         mSheet.setOrientation(LinearLayout.VERTICAL);
         mSheet.setClickable(true);
-        GradientDrawable surface = new GradientDrawable();
         float r = 16 * dp;
-        surface.setCornerRadii(new float[]{r, r, r, r, 0, 0, 0, 0});
-        surface.setColor(ContextCompat.getColor(context, R.color.projects_obsidian_900));
-        surface.setStroke(Math.max(1, Math.round(dp)), ContextCompat.getColor(context, R.color.projects_hairline));
+        float[] radii = {r, r, r, r, 0, 0, 0, 0};
+        // The fill under the whole sheet, the hairline over it: a GradientDrawable fills only inside half its stroke, so a
+        // see-through hairline let the screen behind show along the edges (a strip of a stream beside the room's sheet).
+        GradientDrawable fill = new GradientDrawable();
+        fill.setCornerRadii(radii);
+        fill.setColor(ContextCompat.getColor(context, R.color.projects_obsidian_900));
+        GradientDrawable line = new GradientDrawable();
+        line.setCornerRadii(radii);
+        line.setColor(Color.TRANSPARENT);
+        int hairline = Math.max(1, Math.round(dp));
+        line.setStroke(hairline, ContextCompat.getColor(context, R.color.projects_hairline));
+        android.graphics.drawable.LayerDrawable surface = new android.graphics.drawable.LayerDrawable(
+                new android.graphics.drawable.Drawable[]{fill, line});
+        // A sheet as wide as the screen keeps its hairline on top only (no lines down the screen's edges).
+        if (context.getResources().getDimensionPixelSize(R.dimen.projects_sheet_max)
+                >= context.getResources().getDisplayMetrics().widthPixels) {
+            surface.setLayerInset(1, -hairline, 0, -hairline, -hairline);
+        }
         mSheet.setBackground(surface);
         mSheet.setElevation(12 * dp);
         // The handle: a drag here pulls the sheet down.

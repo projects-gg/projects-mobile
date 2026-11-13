@@ -126,6 +126,36 @@ public final class AvatarView extends View {
         invalidate();
     }
 
+    /** Whether the face sits in the middle of its box (a face that never shows a dot keeps no room for one). */
+    private boolean mCentered;
+
+    /** The face in the middle of its box (voice chat's faces carry no dot; their speaking ring goes round the face). */
+    public void setCentered(boolean centered) {
+        if (centered == mCentered) return;
+        mCentered = centered;
+        invalidate();
+    }
+
+    /** Where the face is drawn in this view (its rounded square; empty before a layout). */
+    public void tileRect(RectF out) {
+        float w = getWidth() - getPaddingLeft() - getPaddingRight();
+        float h = getHeight() - getPaddingTop() - getPaddingBottom();
+        // The dot hangs a third of itself over the corner: room for it is kept on the right and bottom.
+        float size = (Math.min(w, h) - 2 * mDp) / 1.1f;
+        if (size <= 0) {
+            out.setEmpty();
+            return;
+        }
+        float left = getPaddingLeft() + (mCentered ? (w - size) / 2f : 0f);
+        float top = getPaddingTop() + (mCentered ? (h - size) / 2f : 0f);
+        out.set(left, top, left + size, top + size);
+    }
+
+    /** The corner radius of the face's rounded square in {@link #tileRect}. */
+    public float tileRadius(RectF tile) {
+        return tile.width() * 0.2f;
+    }
+
     /** Offline faces dim (the desktop's 55 % and 45 % less colour). */
     public void setDimmed(boolean dimmed) {
         if (dimmed == mDimmed) return;
@@ -142,15 +172,12 @@ public final class AvatarView extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        float w = getWidth() - getPaddingLeft() - getPaddingRight();
-        float h = getHeight() - getPaddingTop() - getPaddingBottom();
-        // The dot hangs a third of itself over the corner: room for it is kept on the right and bottom.
-        float size = (Math.min(w, h) - 2 * mDp) / 1.1f;
-        if (size <= 0) return;
-        float left = getPaddingLeft();
-        float top = getPaddingTop();
-        float radius = size * 0.2f;
-        mRect.set(left, top, left + size, top + size);
+        tileRect(mRect);
+        if (mRect.isEmpty()) return;
+        float size = mRect.width();
+        float left = mRect.left;
+        float top = mRect.top;
+        float radius = tileRadius(mRect);
         int alpha = mDimmed ? 140 : 255;
         if (mBitmap != null) {
             float scale = Math.max(size / mBitmap.getWidth(), size / mBitmap.getHeight());

@@ -19,14 +19,17 @@ import gg.projects.mobile.social.ui.AvatarView;
 import gg.projects.mobile.voice.VoiceState;
 
 /**
- * A face in voice chat with its speaking ring: a thin jade ring in the gap around the face (it never grows outside the
- * face's box, so neighbouring rows never merge), fading in and out on opacity alone (the desktop's ring, 120 ms in,
- * 220 ms out). Nothing animates while nobody speaks.
+ * A face in voice chat with its speaking ring: a thin jade rounded square in the gap around the face, the face's own
+ * shape with the face in its middle (it never grows outside the face's box, so neighbouring rows never merge), fading in
+ * and out on opacity alone (the desktop's ring, 120 ms in, 220 ms out). Nothing animates while nobody speaks.
  */
 public final class VoiceFace extends FrameLayout {
     private final AvatarView mAvatar;
     private final Paint mRing = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final android.graphics.RectF mTile = new android.graphics.RectF();
     private final float mStroke;
+    /** The gap between the face and its ring. */
+    private final float mGap;
     private float mRingAlpha;
     private boolean mSpeaking;
     @Nullable private android.animation.ValueAnimator mFade;
@@ -35,9 +38,12 @@ public final class VoiceFace extends FrameLayout {
         super(context);
         float dp = context.getResources().getDisplayMetrics().density;
         mStroke = Math.max(2f, 2 * dp);
+        mGap = 2 * dp;
         int inset = Math.round(4 * dp);
         mAvatar = new AvatarView(context);
         mAvatar.setSurfaceColor(ContextCompat.getColor(context, R.color.projects_obsidian_800));
+        // No dot here: the face sits in the middle of its box, the ring round it (the dot's room put it off centre).
+        mAvatar.setCentered(true);
         LayoutParams lp = new LayoutParams(Math.round(sizeDp * dp) - 2 * inset, Math.round(sizeDp * dp) - 2 * inset, Gravity.CENTER);
         addView(mAvatar, lp);
         mRing.setStyle(Paint.Style.STROKE);
@@ -80,8 +86,14 @@ public final class VoiceFace extends FrameLayout {
         super.dispatchDraw(canvas);
         if (mRingAlpha <= 0f) return;
         mRing.setAlpha(Math.round(255 * mRingAlpha));
-        float r = Math.min(getWidth(), getHeight()) / 2f - mStroke / 2f;
-        canvas.drawCircle(getWidth() / 2f, getHeight() / 2f, r, mRing);
+        // Round the face itself: its rounded square, a gap wider, the stroke's middle on that line.
+        mAvatar.tileRect(mTile);
+        if (mTile.isEmpty()) return;
+        float faceRadius = mAvatar.tileRadius(mTile);
+        mTile.offset(mAvatar.getLeft(), mAvatar.getTop());
+        float out = mGap + mStroke / 2f;
+        mTile.inset(-out, -out);
+        canvas.drawRoundRect(mTile, faceRadius + out, faceRadius + out, mRing);
     }
 
     /** Someone's profile for a face: the friends feature's, else built from the room's card. */
