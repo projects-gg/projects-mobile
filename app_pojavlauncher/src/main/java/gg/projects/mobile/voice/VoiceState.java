@@ -120,6 +120,14 @@ public final class VoiceState {
         return null;
     }
 
+    /**
+     * Whether the room's rows say "Lider"/"Moderatör" (the lead, 13 Nov): a friend room of two (or still calling) has no
+     * visible roles, as the desktop's call stage; from three people on, and in crew rooms always, they show.
+     */
+    public boolean showsRoles() {
+        return crewRoom || people.size() >= 2;
+    }
+
     /** A two-person call (a friend room with one other person, or still calling one): the call's own look. */
     public boolean oneToOne() {
         return !crewRoom && (calling != null ? people.isEmpty() : people.size() == 1);

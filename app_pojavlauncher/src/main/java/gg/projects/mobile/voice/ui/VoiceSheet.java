@@ -671,7 +671,7 @@ public final class VoiceSheet implements VoiceLink.Listener {
         face.avatar().setProfile(mine);
         face.setSpeaking(s.me.talking);
         row.addView(face, new LinearLayout.LayoutParams(dp(44), dp(44)));
-        row.addView(names(c, name, roleWord(c, s.me.role, true), s.me.sharing, null), weight());
+        row.addView(names(c, name, roleWord(c, s.showsRoles() ? s.me.role : VoiceState.MEMBER, true), s.me.sharing, null), weight());
         if (s.me.sharing) row.setContentDescription(LiveTag.spoken(c, name, true));
         if (s.me.mutedByModerator) row.addView(mark(c, R.drawable.projects_ic_voice_mic_slash, R.color.projects_flare_400,
                 R.string.projects_voice_muted_for_all));
@@ -690,7 +690,7 @@ public final class VoiceSheet implements VoiceLink.Listener {
         face.setSpeaking(p.speaking);
         row.addView(face, new LinearLayout.LayoutParams(dp(44), dp(44)));
         String name = VoiceUi.nameOf(c, p);
-        row.addView(names(c, name, roleWord(c, p.role, false), p.sharing, p.shareSt), weight());
+        row.addView(names(c, name, roleWord(c, s.showsRoles() ? p.role : VoiceState.MEMBER, false), p.sharing, p.shareSt), weight());
         if (p.mutedByModerator) row.addView(mark(c, R.drawable.projects_ic_voice_mic_slash, R.color.projects_flare_400,
                 R.string.projects_voice_muted_for_all));
         else if (p.mute) row.addView(mark(c, R.drawable.projects_ic_voice_mic_slash, R.color.projects_ash_400, R.string.projects_voice_mic_off));
@@ -744,7 +744,7 @@ public final class VoiceSheet implements VoiceLink.Listener {
         VoiceFace face = new VoiceFace(c, 48);
         face.setPerson(c, id, p);
         head.addView(face, new LinearLayout.LayoutParams(dp(48), dp(48)));
-        head.addView(names(c, name, roleWord(c, p.role, false), p.sharing, p.shareSt), weight());
+        head.addView(names(c, name, roleWord(c, s.showsRoles() ? p.role : VoiceState.MEMBER, false), p.sharing, p.shareSt), weight());
         content.addView(head);
         final BottomPanel[] panel = new BottomPanel[1];
         // M051: their stream's last picture, while they share.
