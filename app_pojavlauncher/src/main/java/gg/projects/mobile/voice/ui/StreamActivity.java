@@ -620,7 +620,8 @@ public final class StreamActivity extends AppCompatActivity implements VoiceLink
         mTop.setOrientation(LinearLayout.HORIZONTAL);
         mTop.setGravity(Gravity.CENTER_VERTICAL);
         mTop.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
-                new int[]{withAlpha(R.color.projects_obsidian_950, 0.88f), withAlpha(R.color.projects_obsidian_950, 0f)}));
+                new int[]{withAlpha(R.color.projects_obsidian_950, 0.9f), withAlpha(R.color.projects_obsidian_950, 0.78f),
+                        withAlpha(R.color.projects_obsidian_950, 0f)}));
         mPipButton = iconButton(c, R.drawable.projects_ic_picture_in_picture, R.string.projects_stream_pip);
         mPipButton.setOnClickListener(v -> enterPip());
         mPipButton.setVisibility(pipAllowed() ? View.VISIBLE : View.GONE);
@@ -659,7 +660,8 @@ public final class StreamActivity extends AppCompatActivity implements VoiceLink
         mBottom.setOrientation(LinearLayout.HORIZONTAL);
         mBottom.setGravity(Gravity.CENTER_VERTICAL);
         mBottom.setBackground(new GradientDrawable(GradientDrawable.Orientation.BOTTOM_TOP,
-                new int[]{withAlpha(R.color.projects_obsidian_950, 0.88f), withAlpha(R.color.projects_obsidian_950, 0f)}));
+                new int[]{withAlpha(R.color.projects_obsidian_950, 0.9f), withAlpha(R.color.projects_obsidian_950, 0.78f),
+                        withAlpha(R.color.projects_obsidian_950, 0f)}));
         mSoundButton = iconButton(c, R.drawable.projects_ic_voice_speaker, R.string.projects_stream_volume);
         mSoundButton.setOnClickListener(v -> togglePanel(Panel.SOUND, v));
         mBottom.addView(mSoundButton, new LinearLayout.LayoutParams(dp(48), dp(48)));
@@ -1518,8 +1520,9 @@ public final class StreamActivity extends AppCompatActivity implements VoiceLink
         PendingIntent pi = PendingIntent.getBroadcast(this, 1, mute, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         String title = getString(muted ? R.string.projects_stream_pip_unmute : R.string.projects_stream_pip_mute);
         List<RemoteAction> actions = new ArrayList<>();
-        actions.add(new RemoteAction(Icon.createWithResource(this, muted ? R.drawable.projects_ic_voice_speaker
-                : R.drawable.projects_ic_speaker_slash), title, title, pi));
+        // The icon says the sound's state, as the stream screen's own button does; its words say the action.
+        actions.add(new RemoteAction(Icon.createWithResource(this, muted ? R.drawable.projects_ic_speaker_slash
+                : R.drawable.projects_ic_voice_speaker), title, title, pi));
         b.setActions(actions);
         if (Build.VERSION.SDK_INT >= 31) b.setAutoEnterEnabled(!mEnding);
         return b.build();
