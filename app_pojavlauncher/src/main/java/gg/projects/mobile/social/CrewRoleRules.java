@@ -76,12 +76,5 @@ public final class CrewRoleRules {
         return roles && Permissions.allows(team.permissions.edit, false, m.moderator);
     }
 
-    /** At most four moderators besides the leader (the service's {@code limit_team_moderators}). */
-    public static final int MAX_MODERATORS = 4;
-
-    public static int moderators(SocialModel.Team team) {
-        int n = 0;
-        for (SocialModel.Member m : team.members) if (m.moderator && !m.founder) n++;
-        return n;
-    }
+    // CREW-MODS (0.5.4): a leader names as many moderators as they like; the service no longer has a cap.
 }

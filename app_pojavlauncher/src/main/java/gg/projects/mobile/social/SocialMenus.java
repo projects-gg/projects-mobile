@@ -145,8 +145,6 @@ public final class SocialMenus {
         public boolean rolesHere;
         /** MOB-PARITY: in a crew's context, they are one of its moderators. */
         public boolean moderatorHere;
-        /** MOB-PARITY: that crew has its four moderators ("Moderatör yap" shows dim). */
-        public boolean moderatorsFull;
         /** MOB-PARITY: the service has friend categories. */
         public boolean categories;
         /** Reports are on (MOD1). */
@@ -211,7 +209,8 @@ public final class SocialMenus {
         out.add(null);
         // 4. The crew whose context the menu is in.
         if (in.leaderHere && in.rolesHere) {
-            out.add(in.moderatorHere ? row(PersonAction.UNMAKE_MODERATOR) : row(PersonAction.MAKE_MODERATOR, in.moderatorsFull));
+            // CREW-MODS: no cap on moderators, so "Moderatör Yap" is never dim.
+            out.add(in.moderatorHere ? row(PersonAction.UNMAKE_MODERATOR) : row(PersonAction.MAKE_MODERATOR));
         }
         if (in.leaderHere) out.add(row(PersonAction.HAND_OVER));
         if (in.removableHere) out.add(row(PersonAction.REMOVE_FROM_CREW));

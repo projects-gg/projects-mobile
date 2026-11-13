@@ -274,7 +274,6 @@ public class ParityTest {
         assertFalse(CrewRoleRules.mayEdit(open, B, false));
         assertFalse(CrewRoleRules.mayEdit(open, C, true));
         assertFalse(CrewRoleRules.mayEdit(open, "100000000000000009", true));
-        assertEquals(1, CrewRoleRules.moderators(open));
     }
 
     @Test
@@ -296,10 +295,15 @@ public class ParityTest {
         in.moderatorHere = true;
         assertTrue(actions(SocialMenus.person(in)).contains(SocialMenus.PersonAction.UNMAKE_MODERATOR));
         in.moderatorHere = false;
-        in.moderatorsFull = true;
+        // CREW-MODS (0.5.4): no cap on moderators, "Moderatör Yap" is never dim.
+        boolean offered = false;
         for (SocialMenus.Row<SocialMenus.PersonAction> r : SocialMenus.person(in)) {
-            if (r != null && r.action == SocialMenus.PersonAction.MAKE_MODERATOR) assertTrue(r.disabled);
+            if (r != null && r.action == SocialMenus.PersonAction.MAKE_MODERATOR) {
+                offered = true;
+                assertFalse(r.disabled);
+            }
         }
+        assertTrue(offered);
         // Not the leader: no moderator rows.
         in.leaderHere = false;
         assertFalse(actions(SocialMenus.person(in)).contains(SocialMenus.PersonAction.MAKE_MODERATOR));

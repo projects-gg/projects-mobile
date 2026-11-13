@@ -345,11 +345,8 @@ final class CrewSheets {
             actions.addView(CrewViews.actionRow(activity, R.drawable.projects_ic_crown_fill, activity.getString(R.string.projects_crew_hand_over),
                     R.color.projects_bone_100, v -> {
                         dialog.dismiss();
-                        // The old leader becomes a moderator while the crew has room for one (at most 4).
-                        int moderators = 0;
-                        for (Member m : team.members) if (m.moderator && !m.profile.id.equals(userId)) moderators++;
-                        boolean room = moderators < 4;
-                        String ask = activity.getString(service.gate().roles && room ? R.string.projects_crew_hand_over_ask_moderator
+                        // CREW-MODS: with crew roles the old leader always stays a moderator (no cap any more).
+                        String ask = activity.getString(service.gate().roles ? R.string.projects_crew_hand_over_ask_moderator
                                 : R.string.projects_crew_hand_over_ask, member.profile.name());
                         SocialUi.confirm(activity, activity.getString(R.string.projects_crew_hand_over), ask,
                                 activity.getString(R.string.projects_crew_hand_over), () -> service.handOver(team.id, userId,

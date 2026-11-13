@@ -170,8 +170,6 @@ public final class SocialMenuSheet {
         // MOB-PARITY: naming moderators and friend categories.
         in.rolesHere = gate.roles;
         in.moderatorHere = theirs != null && theirs.moderator;
-        in.moderatorsFull = here != null && gg.projects.mobile.social.CrewRoleRules.moderators(here.team)
-                >= gg.projects.mobile.social.CrewRoleRules.MAX_MODERATORS;
         in.categories = state.groups() != null;
         in.reports = gate.reports;
         in.reportable = in.friend || in.crewmate || in.incoming || pending == SocialMenus.Pending.JOIN_REQUEST;
@@ -473,10 +471,8 @@ public final class SocialMenuSheet {
         final SocialService service = SocialService.get(activity);
         Crew crew = service.state().crew(crewId);
         if (crew == null) return;
-        // The old leader becomes a moderator while the crew has room for one (at most 4).
-        int moderators = 0;
-        for (Member m : crew.team.members) if (m.moderator && !m.profile.id.equals(profile.id)) moderators++;
-        String ask = activity.getString(service.gate().roles && moderators < 4 ? R.string.projects_crew_hand_over_ask_moderator
+        // CREW-MODS: with crew roles the old leader always stays a moderator (no cap any more).
+        String ask = activity.getString(service.gate().roles ? R.string.projects_crew_hand_over_ask_moderator
                 : R.string.projects_crew_hand_over_ask, profile.name());
         SocialUi.confirm(activity, activity.getString(R.string.projects_crew_hand_over), ask, activity.getString(R.string.projects_crew_hand_over),
                 () -> service.handOver(crew.id(), profile.id, json(activity, activity.getString(R.string.projects_crew_handed_over, profile.name()))));
