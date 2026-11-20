@@ -209,6 +209,14 @@ final class AutoSettingsBlock {
         group.addView(sw);
         content.addView(group);
         block.sw = sw;
+        // A refused save's words right under the switch they are about (not under the note, where they read as the next
+        // control's).
+        String problem = h.issue(mode);
+        if (problem != null) {
+            TextView error = CloudRowSheet.error(c);
+            CloudRowSheet.show(error, problem);
+            content.addView(error);
+        }
         if (feature.limited != null) {
             content.addView(CloudUi.note(c, Auto.limited(c, mode, feature.limited)));
             android.widget.Button see = CloudUi.siteLink(c, c.getString(R.string.projects_auto_limited_see), v -> h.openLimited());
@@ -225,12 +233,6 @@ final class AutoSettingsBlock {
         block.exclusive = exclusive;
         // The owner's note under every mode switch (20 Nov 2026): one quiet line like the ones above it (the site's, no mark).
         content.addView(CloudUi.note(c, c.getString(R.string.projects_auto_disclaimer)));
-        String problem = h.issue(mode);
-        if (problem != null) {
-            TextView error = CloudRowSheet.error(c);
-            CloudRowSheet.show(error, problem);
-            content.addView(error);
-        }
     }
 
     /** "Envanter Dolunca": wait, keep going, or a command (the text rule; never a secret). */
@@ -293,7 +295,7 @@ final class AutoSettingsBlock {
             for (final AutoSettings.Choice choice : AutoSettings.MINING_CHOICES) {
                 if (!group.equals(choice.group)) continue;
                 final String first = choice.ids.get(0);
-                final LinearLayout chip = chip(c);
+                final ToggleChip chip = chip(c);
                 View art = CloudItemArt.tile(c, first, 24);
                 art.setBackground(null);
                 chip.addView(art, new LinearLayout.LayoutParams(CloudUi.dp(c, 24), CloudUi.dp(c, 24)));
@@ -303,6 +305,7 @@ final class AutoSettingsBlock {
                 LinearLayout.LayoutParams llp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
                 llp.setMarginStart(CloudUi.dp(c, 8));
                 chip.addView(label, llp);
+                chip.addMark();
                 labels.add(label);
                 chipViews.add(chip);
                 choices.add(choice);
@@ -373,11 +376,12 @@ final class AutoSettingsBlock {
                 R.string.projects_auto_idle_step};
         for (int i = 0; i < words.length; i++) {
             final int which = i;
-            final LinearLayout chip = chip(c);
+            final ToggleChip chip = chip(c);
             TextView label = CloudUi.text(c, c.getString(words[i]), 14, R.color.projects_ash_300, true);
             label.setDuplicateParentStateEnabled(true);
             label.setTextColor(chipText(c));
             chip.addView(label);
+            chip.addMark();
             chip.setActivated(which == 0 ? idle.look : which == 1 ? idle.sneak : which == 2 ? idle.jump : idle.step);
             chip.setOnClickListener(v -> {
                 boolean on = !v.isActivated();
@@ -443,13 +447,20 @@ final class AutoSettingsBlock {
             changed.run();
         });
         box.addView(keep.view);
-        box.addView(CloudUi.gap(c, 8));
-        LinearLayout group = CloudUi.group(c);
-        group.addView(CloudUi.toggle(c, c.getString(fish ? R.string.projects_auto_rod_switch : R.string.projects_auto_tool_switch), tool.change, on -> {
+        // A plain row in the folded card, under a hairline: a card inside a card is not ours.
+        View line = new View(c);
+        line.setBackgroundColor(CloudUi.color(c, R.color.projects_obsidian_700));
+        LinearLayout.LayoutParams lineLp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, Math.max(1, CloudUi.dp(c, 1)));
+        lineLp.topMargin = CloudUi.dp(c, 12);
+        lineLp.setMarginStart(CloudUi.dp(c, 8));
+        lineLp.setMarginEnd(CloudUi.dp(c, 8));
+        box.addView(line, lineLp);
+        SwitchCompat change = CloudUi.toggle(c, c.getString(fish ? R.string.projects_auto_rod_switch : R.string.projects_auto_tool_switch), tool.change, on -> {
             tool.change = on;
             changed.run();
-        }));
-        box.addView(group);
+        });
+        change.setPadding(CloudUi.dp(c, 8), 0, CloudUi.dp(c, 6), 0);
+        box.addView(change);
         box.addView(CloudUi.note(c, c.getString(fish ? R.string.projects_auto_rod_switch_line : R.string.projects_auto_tool_switch_line)));
     }
 
@@ -491,8 +502,8 @@ final class AutoSettingsBlock {
     }
 
     /** A quiet chip of a few that may all be on: chamfered, pressed in while on (the site's toggle chip), 44 dp tall. */
-    private static LinearLayout chip(Context c) {
-        LinearLayout chip = new LinearLayout(c);
+    private static ToggleChip chip(Context c) {
+        ToggleChip chip = new ToggleChip(c);
         chip.setOrientation(LinearLayout.HORIZONTAL);
         chip.setGravity(Gravity.CENTER_VERTICAL);
         chip.setMinimumHeight(CloudUi.dp(c, 44));
@@ -503,6 +514,38 @@ final class AutoSettingsBlock {
         chip.setAccessibilityDelegate(TOGGLE);
         Press.attach(chip, Press.Style.BUTTON);
         return chip;
+    }
+
+    /**
+     * A chip of a few that may all be on: a chosen one says so with a bone check after its words as well as its plate
+     * (the site's toggle chip; the plate alone is too quiet a difference).
+     */
+    static final class ToggleChip extends LinearLayout {
+        @Nullable
+        private ImageView mMark;
+
+        ToggleChip(Context c) {
+            super(c);
+        }
+
+        /** The check, after the words: added once they are in. */
+        void addMark() {
+            Context c = getContext();
+            ImageView mark = new ImageView(c);
+            mark.setImageDrawable(CloudUi.tinted(c, R.drawable.projects_ic_check, R.color.projects_bone_100, 14));
+            mark.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(CloudUi.dp(c, 14), CloudUi.dp(c, 14));
+            lp.setMarginStart(CloudUi.dp(c, 6));
+            addView(mark, lp);
+            mMark = mark;
+            mark.setVisibility(isActivated() ? View.VISIBLE : View.GONE);
+        }
+
+        @Override
+        public void setActivated(boolean activated) {
+            super.setActivated(activated);
+            if (mMark != null) mMark.setVisibility(activated ? View.VISIBLE : View.GONE);
+        }
     }
 
     private static ColorStateList chipText(Context c) {
