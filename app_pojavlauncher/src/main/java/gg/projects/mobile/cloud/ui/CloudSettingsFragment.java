@@ -1034,7 +1034,9 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
         // Only an auto mode's parts changed, not whether it is on: the running client takes them without a reconnect.
         boolean onlyAutoParts = general && mConfig.onlyAutoPartsDiffer(mOriginal, mBase.config);
         mBar.setSaveLabel(stoppedOnPassword() ? getString(R.string.projects_cloud_settings_save_start) : null);
-        mBar.set(dirty || mSaving, mSaving, getString(onlyInventory ? R.string.projects_feat_inv_setting_note
+        // Marked fields (a refused or unchecked save): the bar's own line says to fix them first, covering nothing.
+        mBar.set(dirty || mSaving, mSaving, getString(!mIssues.isEmpty() ? R.string.projects_cloud_settings_fix_first
+                : onlyInventory ? R.string.projects_feat_inv_setting_note
                 : CloudStatus.inGame(mBase) && !onlyAutoParts ? R.string.projects_cloud_settings_restart_note : R.string.projects_cloud_settings_dirty));
     }
 
@@ -1130,7 +1132,8 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
         draw();
         bar();
         Haptics.reject(saveButton());
-        toast(getString(R.string.projects_cloud_settings_fix_first));
+        // No app-wide message here: it covered "Vazgeç" and "Kaydet". The marked fields say what is wrong and the bar's own
+        // line says to fix them (bar()).
     }
 
     @Nullable
