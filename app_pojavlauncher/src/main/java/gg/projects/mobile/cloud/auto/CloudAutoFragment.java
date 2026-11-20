@@ -414,11 +414,11 @@ public final class CloudAutoFragment extends CloudScreen implements CloudService
         warnLp.topMargin = Math.max(0, (state.getLineHeight() - CloudUi.dp(c, 15)) / 2);
         warnLp.setMarginEnd(CloudUi.dp(c, 6));
         stateRow.addView(warn, warnLp);
-        stateRow.addView(state, CloudUi.weight(1f));
-        words.addView(stateRow, CloudUi.matchWrap());
-        mStateText = state;
-        mWarn = warn;
-        // The state in two weights: what happened in bold, what comes next quieter (as mining's block line under it).
+        // The state in two weights: what happened in bold, what comes next quieter (as mining's block line under it); the
+        // quiet line keeps the bold one's edge, after the mark.
+        LinearLayout stateText = new LinearLayout(c);
+        stateText.setOrientation(LinearLayout.VERTICAL);
+        stateText.addView(state);
         TextView detail = CloudUi.text(c, "", 13.5f, R.color.projects_ash_300, false);
         detail.setPadding(0, CloudUi.dp(c, 2), 0, 0);
         detail.setLineSpacing(0, 1.1f);
@@ -426,7 +426,11 @@ public final class CloudAutoFragment extends CloudScreen implements CloudService
         // TalkBack reads the whole sentence once, from the bold line.
         detail.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         detail.setVisibility(View.GONE);
-        words.addView(detail);
+        stateText.addView(detail);
+        stateRow.addView(stateText, CloudUi.weight(1f));
+        words.addView(stateRow, CloudUi.matchWrap());
+        mStateText = state;
+        mWarn = warn;
         mDetailText = detail;
         if (!fishing()) {
             TextView target = CloudUi.text(c, "", 13.5f, R.color.projects_ash_300, false);
