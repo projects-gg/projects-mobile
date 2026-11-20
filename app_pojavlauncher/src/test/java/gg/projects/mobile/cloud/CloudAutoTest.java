@@ -463,6 +463,17 @@ public class CloudAutoTest {
     }
 
     @Test
+    public void statesThatWaitOnThePlayerCarryTheMark() {
+        // The site's needsPlayer: a moved account, and every wait but an empty spot in front (a full inventory too).
+        assertTrue(gg.projects.mobile.cloud.auto.Auto.needsPlayer(state("{\"state\":\"paused\",\"reason\":\"moved\"}")));
+        assertFalse(gg.projects.mobile.cloud.auto.Auto.needsPlayer(state("{\"state\":\"paused\",\"reason\":\"player\"}")));
+        assertTrue(gg.projects.mobile.cloud.auto.Auto.needsPlayer(state("{\"state\":\"waiting\",\"reason\":\"full\"}")));
+        assertTrue(gg.projects.mobile.cloud.auto.Auto.needsPlayer(state("{\"state\":\"waiting\",\"reason\":\"no_water\"}")));
+        assertFalse(gg.projects.mobile.cloud.auto.Auto.needsPlayer(state("{\"state\":\"waiting\",\"reason\":\"no_target\"}")));
+        assertFalse(gg.projects.mobile.cloud.auto.Auto.needsPlayer(state("{\"state\":\"on\"}")));
+    }
+
+    @Test
     public void pausedStatesSayWhoGoesOn() {
         assertTrue(state("{\"state\":\"paused\",\"reason\":\"player\"}").waitsForPlayer());
         assertTrue(state("{\"state\":\"paused\",\"reason\":\"moved\"}").waitsForPlayer());

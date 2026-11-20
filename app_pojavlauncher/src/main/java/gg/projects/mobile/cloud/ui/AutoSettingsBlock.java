@@ -221,12 +221,8 @@ final class AutoSettingsBlock {
         exclusive.setVisibility(View.GONE);
         content.addView(exclusive);
         block.exclusive = exclusive;
-        // The owner's note under every mode switch (20 Nov 2026), with the quiet info mark.
-        TextView disclaimer = CloudUi.note(c, c.getString(R.string.projects_auto_disclaimer));
-        disclaimer.setCompoundDrawablesRelative(CloudUi.tinted(c, R.drawable.projects_ic_info, R.color.projects_ash_400, 15), null, null, null);
-        disclaimer.setCompoundDrawablePadding(CloudUi.dp(c, 8));
-        disclaimer.setGravity(Gravity.TOP);
-        content.addView(disclaimer);
+        // The owner's note under every mode switch (20 Nov 2026): one quiet line like the ones above it (the site's, no mark).
+        content.addView(CloudUi.note(c, c.getString(R.string.projects_auto_disclaimer)));
         String problem = h.issue(mode);
         if (problem != null) {
             TextView error = CloudRowSheet.error(c);

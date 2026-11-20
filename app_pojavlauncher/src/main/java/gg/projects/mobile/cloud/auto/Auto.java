@@ -112,12 +112,13 @@ public final class Auto {
     }
 
     /**
-     * A state that waits on the player (resume a moved account, give a rod or a pickaxe, turn it to the water): its
-     * sentence carries the warning's small mark (the site's {@code needsPlayer}).
+     * A state that waits on the player (resume a moved account, make room in a full inventory, give a rod or a pickaxe,
+     * turn it to the water): its sentence carries the warning's small mark (the site's {@code needsPlayer}: every wait but
+     * an empty spot in front, which ends by itself).
      */
     public static boolean needsPlayer(AutoFrames.State s) {
         if (s.paused()) return "moved".equals(s.reason);
-        if (s.waiting()) return !"full".equals(s.reason) && !"no_target".equals(s.reason);
+        if (s.waiting()) return !"no_target".equals(s.reason);
         return false;
     }
 

@@ -7,7 +7,6 @@ import android.graphics.RectF;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.text.format.DateFormat;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,7 +21,6 @@ import androidx.annotation.Nullable;
 import net.kdt.pojavlaunch.R;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -761,13 +759,12 @@ public final class CloudAutoFragment extends CloudScreen implements CloudService
         box.addView(CloudUi.section(c, getString(R.string.projects_auto_last)));
         LinearLayout group = CloudUi.group(c);
         List<View> rows = new ArrayList<>();
-        java.text.DateFormat clock = DateFormat.getTimeFormat(c);
-        for (AutoFrames.Catch each : last) rows.add(catchRow(c, each, clock));
+        for (AutoFrames.Catch each : last) rows.add(catchRow(c, each));
         CloudUi.fillFigures(group, rows);
         box.addView(group);
     }
 
-    private View catchRow(Context c, AutoFrames.Catch each, java.text.DateFormat clock) {
+    private View catchRow(Context c, AutoFrames.Catch each) {
         LinearLayout row = new LinearLayout(c);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
@@ -790,7 +787,8 @@ public final class CloudAutoFragment extends CloudScreen implements CloudService
             row.addView(mark);
             words += ", " + getString(R.string.projects_auto_treasure);
         }
-        String at = each.at > 0 ? clock.format(new Date(each.at * 1000L)) : "";
+        // 24 hours in both languages ("19:05"), as everywhere in the app (design.md, Copy).
+        String at = each.at > 0 ? gg.projects.mobile.ui.AppDates.time(each.at * 1000L) : "";
         if (!at.isEmpty()) {
             TextView time = CloudUi.time(c, 13, R.color.projects_ash_400);
             time.setText(at);
