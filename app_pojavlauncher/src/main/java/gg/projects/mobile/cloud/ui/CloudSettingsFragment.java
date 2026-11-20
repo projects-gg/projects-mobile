@@ -638,9 +638,38 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
         }
         // One mode at a time per account (the service refuses the second): the two switches turn each other off.
         if (fishingBlock != null && miningBlock != null) AutoSettingsBlock.pair(fishingBlock, miningBlock);
+        mFishingDrawn = fishingBlock != null;
+        mMiningDrawn = miningBlock != null;
     }
 
     private boolean mNamesAsked;
+    /** The latest blocks' wish for the game's names (a redraw while they load asks again: that one is answered). */
+    @Nullable
+    private Runnable mNamesReady;
+    /** Which auto blocks the Genel tab shows (a mode off for the service has none). */
+    private boolean mFishingDrawn;
+    private boolean mMiningDrawn;
+
+    /**
+     * One mode at a time per account: the other mode's setting stored on while its switch is not offered here (off for
+     * the service) goes off in the same save as this one's turning on, else the service refuses it ("other"); back as
+     * stored when this one goes off again.
+     */
+    private void hiddenOther(String other, boolean on) {
+        CloudModel.Account a = mBase;
+        if (a == null) return;
+        if (AutoSettings.MINING.equals(other)) {
+            if (mMiningDrawn || a.features.mining == null || a.config.mining == null || !a.config.mining.enabled) return;
+            AutoSettings.Mining off = a.config.mining.copy();
+            off.enabled = false;
+            mConfig.mining = on ? off : null;
+        } else {
+            if (mFishingDrawn || a.features.fishing == null || a.config.fishing == null || !a.config.fishing.enabled) return;
+            AutoSettings.Fishing off = a.config.fishing.copy();
+            off.enabled = false;
+            mConfig.fishing = on ? off : null;
+        }
+    }
 
     /** The auto blocks' side of this screen: issues, item names, the limited servers page, and their changes. */
     private AutoSettingsBlock.Host autoHost() {
@@ -671,6 +700,7 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
                 if (mBase == null) return;
                 AutoSettings.Fishing base = mBase.config.fishing != null ? mBase.config.fishing : AutoSettings.Fishing.defaults();
                 mConfig.fishing = edited.same(base) ? null : edited;
+                hiddenOther(AutoSettings.MINING, edited.enabled);
                 bar();
             }
 
@@ -679,6 +709,7 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
                 if (mBase == null) return;
                 AutoSettings.Mining base = mBase.config.mining != null ? mBase.config.mining : AutoSettings.Mining.defaults();
                 mConfig.mining = edited.same(base) ? null : edited;
+                hiddenOther(AutoSettings.FISHING, edited.enabled);
                 bar();
             }
 
@@ -691,12 +722,15 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
                     ready.run();
                     return;
                 }
+                mNamesReady = ready;
                 if (mNamesAsked) return;
                 mNamesAsked = true;
                 mService.itemData(mc, new CloudService.Result<gg.projects.mobile.cloud.items.ItemData>() {
                     @Override
                     public void ok(gg.projects.mobile.cloud.items.ItemData value) {
-                        if (alive()) ready.run();
+                        Runnable latest = mNamesReady;
+                        mNamesReady = null;
+                        if (alive() && latest != null) latest.run();
                     }
 
                     @Override

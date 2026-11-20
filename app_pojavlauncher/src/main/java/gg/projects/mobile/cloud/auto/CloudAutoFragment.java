@@ -589,7 +589,7 @@ public final class CloudAutoFragment extends CloudScreen implements CloudService
         if (mDirRow != null) enableRow(mDirRow, !away);
         if (mTiltRow != null) enableRow(mTiltRow, aimed && !away);
         if (mAimHelp != null) {
-            String help = getString(R.string.projects_auto_aim_help);
+            String help = getString(fishing() ? R.string.projects_auto_aim_help_fishing : R.string.projects_auto_aim_help_mining);
             mAimHelp.setText(aimed ? help : help + " " + getString(R.string.projects_auto_aim_pick_first));
         }
     }

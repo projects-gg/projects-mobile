@@ -478,6 +478,30 @@ public class CloudAutoTest {
     }
 
     @Test
+    public void blockChoicesAreTheSitesAndCoverTheListOnce() {
+        int stone = 0;
+        int ore = 0;
+        List<String> seen = new ArrayList<>();
+        for (AutoSettings.Choice choice : AutoSettings.MINING_CHOICES) {
+            if ("stone".equals(choice.group)) stone++;
+            else if ("ore".equals(choice.group)) ore++;
+            for (String id : choice.ids) {
+                assertTrue(id, AutoSettings.MINING_BLOCKS.contains(id));
+                assertFalse(id, seen.contains(id));
+                seen.add(id);
+            }
+        }
+        assertEquals(14, stone);
+        assertEquals(11, ore);
+        assertEquals(AutoSettings.MINING_BLOCKS.size(), seen.size());
+        // An ore and its deepslate twin are one choice.
+        AutoSettings.Choice coal = AutoSettings.MINING_CHOICES.get(14);
+        assertEquals(Arrays.asList("minecraft:coal_ore", "minecraft:deepslate_coal_ore"), coal.ids);
+        assertTrue(coal.in(Collections.singletonList("minecraft:deepslate_coal_ore")));
+        assertFalse(coal.in(null));
+    }
+
+    @Test
     public void slotsCountAsPlayersWrite() {
         assertEquals("72", gg.projects.mobile.cloud.auto.Auto.slotCount(72, true));
         assertEquals("999", gg.projects.mobile.cloud.auto.Auto.slotCount(999, true));

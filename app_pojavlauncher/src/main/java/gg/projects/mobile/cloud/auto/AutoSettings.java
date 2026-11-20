@@ -76,6 +76,42 @@ public final class AutoSettings {
             "minecraft:nether_quartz_ore",
             "minecraft:ancient_debris"));
 
+    /** One choice of the blocks: a stone kind, an ore with its deepslate twin, or a Nether ore. */
+    public static final class Choice {
+        public final String group;
+        public final List<String> ids;
+
+        Choice(String group, String... ids) {
+            this.group = group;
+            this.ids = Collections.unmodifiableList(Arrays.asList(ids));
+        }
+
+        /** Shown as chosen: any of its blocks is. */
+        public boolean in(@Nullable List<String> blocks) {
+            if (blocks == null) return false;
+            for (String id : ids) if (blocks.contains(id)) return true;
+            return false;
+        }
+    }
+
+    /**
+     * The blocks as the site offers them ({@code MINING_CHOICES}): a stone kind alone, an ore with its deepslate twin
+     * (both go, or neither), the Nether's ores alone; in two groups, {@code stone} and {@code ore}.
+     */
+    public static final List<Choice> MINING_CHOICES;
+
+    static {
+        List<Choice> choices = new ArrayList<>();
+        for (int i = 0; i < 14; i++) choices.add(new Choice("stone", MINING_BLOCKS.get(i)));
+        for (String ore : new String[]{"coal", "copper", "iron", "gold", "redstone", "lapis", "diamond", "emerald"}) {
+            choices.add(new Choice("ore", "minecraft:" + ore + "_ore", "minecraft:deepslate_" + ore + "_ore"));
+        }
+        for (String id : new String[]{"minecraft:nether_gold_ore", "minecraft:nether_quartz_ore", "minecraft:ancient_debris"}) {
+            choices.add(new Choice("ore", id));
+        }
+        MINING_CHOICES = Collections.unmodifiableList(choices);
+    }
+
     /**
      * A problem of a mode's settings: {@code field} is {@code <mode>.keep}, {@code <mode>.command}, {@code mining.blocks} or
      * {@code mining.every}; {@code problem} the service's reason ({@code range}, or the text rule's for a command).

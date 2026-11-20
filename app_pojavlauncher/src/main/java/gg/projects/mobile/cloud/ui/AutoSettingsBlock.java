@@ -70,7 +70,7 @@ final class AutoSettingsBlock {
         final Context c = h.ctx();
         final AutoSettings.Fishing work = shown.copy();
         final LinearLayout details = column(c);
-        final Block block = new Block();
+        final Block block = new Block(AutoSettings.FISHING);
         modeSwitch(content, h, AutoSettings.FISHING, feature, stored, work.enabled, block, on -> {
             work.enabled = on;
             details.setVisibility(on && feature.limited == null || partIssue(h, AutoSettings.FISHING) ? View.VISIBLE : View.GONE);
@@ -98,12 +98,19 @@ final class AutoSettingsBlock {
      * and a muted line under a switch says why while the other one is on.
      */
     static final class Block {
+        final String mode;
         @Nullable
         SwitchCompat sw;
         @Nullable
         TextView exclusive;
         @Nullable
         Block other;
+        /** Turning this one on turned the other one off (until saved): said under this switch (the site's "did"). */
+        boolean did;
+
+        Block(String mode) {
+            this.mode = mode;
+        }
 
         boolean on() {
             return sw != null && sw.isChecked();
@@ -115,13 +122,28 @@ final class AutoSettingsBlock {
         }
 
         void changed(boolean on) {
-            if (on && other != null) other.turnOff();
+            if (on && other != null && other.on()) {
+                other.turnOff();
+                did = true;
+            }
+            if (!on) did = false;
             refresh();
             if (other != null) other.refresh();
         }
 
+        /** While the other one is on: what turning this one on does; after it did: that the other went off. */
         void refresh() {
-            if (exclusive != null) exclusive.setVisibility(other != null && other.on() ? View.VISIBLE : View.GONE);
+            if (exclusive == null) return;
+            boolean fish = AutoSettings.FISHING.equals(mode);
+            if (other != null && other.on()) {
+                exclusive.setText(fish ? R.string.projects_auto_one_job_will_fishing : R.string.projects_auto_one_job_will_mining);
+                exclusive.setVisibility(View.VISIBLE);
+            } else if (did) {
+                exclusive.setText(fish ? R.string.projects_auto_one_job_did_fishing : R.string.projects_auto_one_job_did_mining);
+                exclusive.setVisibility(View.VISIBLE);
+            } else {
+                exclusive.setVisibility(View.GONE);
+            }
         }
     }
 
@@ -147,7 +169,7 @@ final class AutoSettingsBlock {
         final Context c = h.ctx();
         final AutoSettings.Mining work = shown.copy();
         final LinearLayout details = column(c);
-        final Block block = new Block();
+        final Block block = new Block(AutoSettings.MINING);
         modeSwitch(content, h, AutoSettings.MINING, feature, stored, work.enabled, block, on -> {
             work.enabled = on;
             details.setVisibility(on && feature.limited == null || partIssue(h, AutoSettings.MINING) ? View.VISIBLE : View.GONE);
@@ -195,7 +217,7 @@ final class AutoSettingsBlock {
             content.addView(CloudUi.note(c, noSlot ? Auto.slot(c, mode, feature.slot) : c.getString(Auto.line(mode))));
         }
         // One mode at a time: said while the other one is on (turning this one on turns that one off).
-        TextView exclusive = CloudUi.note(c, c.getString(R.string.projects_auto_one_job));
+        TextView exclusive = CloudUi.note(c, "");
         exclusive.setVisibility(View.GONE);
         content.addView(exclusive);
         block.exclusive = exclusive;
@@ -251,45 +273,59 @@ final class AutoSettingsBlock {
         show.run();
     }
 
-    /** "Hangi Blokları Kırsın?": every block of the list, or the ones chosen (chips with the game's art). */
+    /** "Kıracağı Bloklar": every block of the list, or the ones chosen (the site's chips: stone kinds and ores, with the game's art). */
     private static void blocks(LinearLayout into, final Host h, final AutoSettings.Mining work, final Runnable changed) {
         final Context c = h.ctx();
         into.addView(CloudRowSheet.label(c, c.getString(R.string.projects_auto_blocks_label)));
         final List<String> lastChosen = new ArrayList<>(work.blocks != null && !work.blocks.isEmpty() ? work.blocks : FIRST_CHOSEN);
         final TextView allHelp = CloudUi.note(c, c.getString(R.string.projects_auto_blocks_all_help));
-        final WrapLayout chips = new WrapLayout(c);
-        chips.setGap(CloudUi.dp(c, 6));
-        chips.setPadding(CloudUi.dp(c, 8), CloudUi.dp(c, 6), CloudUi.dp(c, 8), CloudUi.dp(c, 4));
-        chips.setContentDescription(c.getString(R.string.projects_auto_blocks_pick));
+        final LinearLayout groups = column(c);
+        groups.setContentDescription(c.getString(R.string.projects_auto_blocks_pick));
         final List<TextView> labels = new ArrayList<>();
         final List<LinearLayout> chipViews = new ArrayList<>();
-        for (final String id : AutoSettings.MINING_BLOCKS) {
-            final LinearLayout chip = chip(c);
-            View art = CloudItemArt.tile(c, id, 24);
-            art.setBackground(null);
-            chip.addView(art, new LinearLayout.LayoutParams(CloudUi.dp(c, 24), CloudUi.dp(c, 24)));
-            TextView label = CloudUi.text(c, h.itemName(id), 14, R.color.projects_ash_300, true);
-            label.setDuplicateParentStateEnabled(true);
-            label.setTextColor(chipText(c));
-            LinearLayout.LayoutParams llp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-            llp.setMarginStart(CloudUi.dp(c, 8));
-            chip.addView(label, llp);
-            labels.add(label);
-            chipViews.add(chip);
-            chip.setOnClickListener(v -> {
-                List<String> now = work.blocks == null ? new ArrayList<String>() : new ArrayList<>(work.blocks);
-                if (now.contains(id)) now.remove(id);
-                else now.add(id);
-                work.blocks = AutoSettings.ordered(now);
-                if (!work.blocks.isEmpty()) {
-                    lastChosen.clear();
-                    lastChosen.addAll(work.blocks);
-                }
-                v.setActivated(work.blocks.contains(id));
-                Haptics.tick(v);
-                changed.run();
-            });
-            chips.addView(chip);
+        final List<AutoSettings.Choice> choices = new ArrayList<>();
+        for (String group : new String[]{"stone", "ore"}) {
+            TextView heading = CloudUi.text(c, c.getString("stone".equals(group) ? R.string.projects_auto_blocks_stone : R.string.projects_auto_blocks_ore),
+                    12.5f, R.color.projects_ash_400, true);
+            heading.setPadding(CloudUi.dp(c, 8), CloudUi.dp(c, 8), CloudUi.dp(c, 8), 0);
+            groups.addView(heading);
+            WrapLayout chips = new WrapLayout(c);
+            chips.setGap(CloudUi.dp(c, 6));
+            chips.setPadding(CloudUi.dp(c, 8), CloudUi.dp(c, 6), CloudUi.dp(c, 8), CloudUi.dp(c, 4));
+            for (final AutoSettings.Choice choice : AutoSettings.MINING_CHOICES) {
+                if (!group.equals(choice.group)) continue;
+                final String first = choice.ids.get(0);
+                final LinearLayout chip = chip(c);
+                View art = CloudItemArt.tile(c, first, 24);
+                art.setBackground(null);
+                chip.addView(art, new LinearLayout.LayoutParams(CloudUi.dp(c, 24), CloudUi.dp(c, 24)));
+                TextView label = CloudUi.text(c, h.itemName(first), 14, R.color.projects_ash_300, true);
+                label.setDuplicateParentStateEnabled(true);
+                label.setTextColor(chipText(c));
+                LinearLayout.LayoutParams llp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                llp.setMarginStart(CloudUi.dp(c, 8));
+                chip.addView(label, llp);
+                labels.add(label);
+                chipViews.add(chip);
+                choices.add(choice);
+                // An ore and its deepslate twin are one choice: both go, or neither.
+                chip.setOnClickListener(v -> {
+                    List<String> now = work.blocks == null ? new ArrayList<String>() : new ArrayList<>(work.blocks);
+                    boolean on = !choice.in(now);
+                    now.removeAll(choice.ids);
+                    if (on) now.addAll(choice.ids);
+                    work.blocks = AutoSettings.ordered(now);
+                    if (!work.blocks.isEmpty()) {
+                        lastChosen.clear();
+                        lastChosen.addAll(work.blocks);
+                    }
+                    v.setActivated(on);
+                    Haptics.tick(v);
+                    changed.run();
+                });
+                chips.addView(chip);
+            }
+            groups.addView(chips, CloudUi.matchWrap());
         }
         final TextView error = CloudRowSheet.error(c);
         String blocksIssue = h.issue("mining.blocks");
@@ -297,9 +333,9 @@ final class AutoSettingsBlock {
         final Runnable show = () -> {
             boolean all = work.blocks == null;
             allHelp.setVisibility(all ? View.VISIBLE : View.GONE);
-            chips.setVisibility(all ? View.GONE : View.VISIBLE);
+            groups.setVisibility(all ? View.GONE : View.VISIBLE);
             if (all) error.setVisibility(View.GONE);
-            for (int i = 0; i < chipViews.size(); i++) chipViews.get(i).setActivated(!all && work.blocks.contains(AutoSettings.MINING_BLOCKS.get(i)));
+            for (int i = 0; i < chipViews.size(); i++) chipViews.get(i).setActivated(!all && choices.get(i).in(work.blocks));
         };
         CharSequence[] words = {c.getString(R.string.projects_auto_blocks_all), c.getString(R.string.projects_auto_blocks_chosen)};
         into.addView(CloudUi.segmented(c, words, work.blocks == null ? 0 : 1, i -> {
@@ -311,20 +347,20 @@ final class AutoSettingsBlock {
                 work.blocks = null;
             } else if (work.blocks == null) {
                 work.blocks = new ArrayList<>(lastChosen);
-                h.needNames(() -> relabel(h, labels));
+                h.needNames(() -> relabel(h, labels, choices));
             }
             show.run();
             changed.run();
         }));
         into.addView(allHelp);
-        into.addView(chips, CloudUi.matchWrap());
+        into.addView(groups, CloudUi.matchWrap());
         into.addView(error);
         show.run();
-        if (work.blocks != null) h.needNames(() -> relabel(h, labels));
+        if (work.blocks != null) h.needNames(() -> relabel(h, labels, choices));
     }
 
-    private static void relabel(Host h, List<TextView> labels) {
-        for (int i = 0; i < labels.size(); i++) labels.get(i).setText(h.itemName(AutoSettings.MINING_BLOCKS.get(i)));
+    private static void relabel(Host h, List<TextView> labels, List<AutoSettings.Choice> choices) {
+        for (int i = 0; i < labels.size(); i++) labels.get(i).setText(h.itemName(choices.get(i).ids.get(0)));
     }
 
     /** "Arada Hareket Etsin": the small moves as chips that may all be on, and how often once one is. */

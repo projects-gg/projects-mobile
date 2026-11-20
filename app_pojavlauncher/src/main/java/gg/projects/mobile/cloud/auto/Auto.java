@@ -87,8 +87,8 @@ public final class Auto {
                     case "tool_low": return c.getString(R.string.projects_auto_waiting_tool_low);
                     case "no_target": return c.getString(R.string.projects_auto_waiting_no_target);
                     // One mode at a time per account: the other one is still on (a fallback; the switches prevent it).
-                    case "other": return c.getString(fishing(mode) ? R.string.projects_auto_waiting_other_mining
-                            : R.string.projects_auto_waiting_other_fishing);
+                    case "other": return c.getString(fishing(mode) ? R.string.projects_auto_waiting_other_fishing
+                            : R.string.projects_auto_waiting_other_mining);
                     default: return c.getString(R.string.projects_auto_waiting_other);
                 }
             default:
@@ -177,7 +177,9 @@ public final class Auto {
             case "": {
                 if ("off".equals(problem)) return off(c, mode, "service");
                 if ("limited".equals(problem)) return off(c, mode, "limited");
-                if ("other".equals(problem)) return c.getString(R.string.projects_auto_one_job);
+                if ("other".equals(problem)) {
+                    return c.getString(fishing(mode) ? R.string.projects_auto_other_first_fishing : R.string.projects_auto_other_first_mining);
+                }
                 if (problem.startsWith("player/")) {
                     long max;
                     try {
