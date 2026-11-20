@@ -71,7 +71,7 @@ public class CloudAutoTest {
         AutoSettings.Fishing f = AutoSettings.Fishing.defaults();
         assertEquals("{\"enabled\":false,\"rod\":{\"switch\":true,\"keep\":5},\"full\":{\"do\":\"wait\"},\"look\":false}", f.json().toString());
         AutoSettings.Mining m = AutoSettings.Mining.defaults();
-        assertEquals("{\"enabled\":false,\"tool\":{\"switch\":true,\"keep\":5},\"full\":{\"do\":\"wait\"},"
+        assertEquals("{\"enabled\":false,\"blocks\":null,\"tool\":{\"switch\":true,\"keep\":5},\"full\":{\"do\":\"wait\"},"
                 + "\"idle\":{\"look\":false,\"sneak\":false,\"jump\":false,\"step\":false,\"every\":{\"min\":60,\"max\":180}}}", m.json().toString());
         assertEquals(33, m.count());
         assertTrue(m.breaks("minecraft:ancient_debris"));
@@ -126,7 +126,7 @@ public class CloudAutoTest {
         m.blocks = new ArrayList<>(AutoSettings.MINING_BLOCKS);
         assertEquals(33, m.json().getAsJsonArray("blocks").size());
         m.blocks = new ArrayList<>();
-        assertEquals("[mining.blocks:empty]", String.valueOf(m.problems()));
+        assertEquals("[mining.blocks:range]", String.valueOf(m.problems()));
         // The same choice in another order is the same setting.
         AutoSettings.Mining a = AutoSettings.Mining.defaults();
         AutoSettings.Mining b = AutoSettings.Mining.defaults();
@@ -156,7 +156,7 @@ public class CloudAutoTest {
         assertEquals("[mining.every:range]", String.valueOf(m.problems()));
         m.idle.min = 200;
         m.idle.max = 100;
-        assertEquals("[mining.every:order]", String.valueOf(m.problems()));
+        assertEquals("[mining.every:range]", String.valueOf(m.problems()));
         m.idle.min = 20;
         m.idle.max = 3601;
         assertEquals("[mining.every:range]", String.valueOf(m.problems()));

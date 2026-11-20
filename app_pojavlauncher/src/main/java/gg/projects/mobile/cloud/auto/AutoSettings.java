@@ -76,7 +76,10 @@ public final class AutoSettings {
             "minecraft:nether_quartz_ore",
             "minecraft:ancient_debris"));
 
-    /** A problem of a mode's settings: {@code field} is {@code <mode>.keep}, {@code <mode>.command}, {@code mining.blocks} or {@code mining.every}. */
+    /**
+     * A problem of a mode's settings: {@code field} is {@code <mode>.keep}, {@code <mode>.command}, {@code mining.blocks} or
+     * {@code mining.every}; {@code problem} the service's reason ({@code range}, or the text rule's for a command).
+     */
     public static final class Problem {
         public final String field;
         public final String problem;
@@ -302,12 +305,14 @@ public final class AutoSettings {
         public JsonObject json() {
             JsonObject o = new JsonObject();
             o.addProperty("enabled", enabled);
-            // All of them is the default: left out rather than sent as null.
+            // Every part, as the service stores it: null is all of the list.
             List<String> chosen = ordered(blocks);
             if (chosen != null) {
                 JsonArray a = new JsonArray();
                 for (String id : chosen) a.add(id);
                 o.add("blocks", a);
+            } else {
+                o.add("blocks", com.google.gson.JsonNull.INSTANCE);
             }
             o.add("tool", tool.json());
             o.add("full", full.json());
@@ -345,14 +350,11 @@ public final class AutoSettings {
         public List<Problem> problems() {
             List<Problem> out = new ArrayList<>();
             List<String> chosen = ordered(blocks);
-            if (chosen != null && chosen.isEmpty()) out.add(new Problem("mining.blocks", "empty"));
+            // The service's reasons: an empty choice is out of range, as an interval the wrong way round.
+            if (chosen != null && chosen.isEmpty()) out.add(new Problem("mining.blocks", "range"));
             checkTool(MINING, tool, out);
             checkFull(MINING, full, out);
-            if (idle.min < EVERY_MIN || idle.max > EVERY_MAX || idle.max < EVERY_MIN || idle.min > EVERY_MAX) {
-                out.add(new Problem("mining.every", "range"));
-            } else if (idle.min > idle.max) {
-                out.add(new Problem("mining.every", "order"));
-            }
+            if (idle.min < EVERY_MIN || idle.max > EVERY_MAX || idle.min > idle.max) out.add(new Problem("mining.every", "range"));
             return out;
         }
     }
