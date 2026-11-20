@@ -2,16 +2,20 @@ package gg.projects.mobile.cloud.auto;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.ColorMatrix;
+import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
 import android.graphics.RectF;
-import android.graphics.drawable.GradientDrawable;
+import android.os.Build;
 import android.os.Bundle;
+import android.text.Layout;
 import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -35,7 +39,6 @@ import gg.projects.mobile.cloud.ui.CloudScreen;
 import gg.projects.mobile.cloud.ui.CloudSettingsFragment;
 import gg.projects.mobile.cloud.ui.CloudUi;
 import gg.projects.mobile.mods.Motion;
-import gg.projects.mobile.social.ui.WrapLayout;
 import gg.projects.mobile.ui.Haptics;
 
 /**
@@ -79,6 +82,9 @@ public final class CloudAutoFragment extends CloudScreen implements CloudService
     private TextView mStateText;
     @Nullable
     private TextView mTargetText;
+    /** The warning's small mark before the sentence, on its first line (a state that waits on the player). */
+    @Nullable
+    private ImageView mWarn;
     @Nullable
     private TextView mRefusalText;
     @Nullable
@@ -264,6 +270,7 @@ public final class CloudAutoFragment extends CloudScreen implements CloudService
         mStateText = null;
         mTargetText = null;
         mRefusalText = null;
+        mWarn = null;
         mToggle = null;
         mToolBox = null;
         mToolKey = "";
@@ -389,8 +396,24 @@ public final class CloudAutoFragment extends CloudScreen implements CloudService
         TextView state = CloudUi.text(c, "", 15.5f, R.color.projects_bone_100, true);
         state.setLineSpacing(0, 1.1f);
         state.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
-        words.addView(state);
+        // Even lines: no last word left alone on a line of its own.
+        if (Build.VERSION.SDK_INT >= 23) state.setBreakStrategy(Layout.BREAK_STRATEGY_BALANCED);
+        // The warning's small mark sits on the sentence's first line, not across the middle of two or three.
+        LinearLayout stateRow = new LinearLayout(c);
+        stateRow.setOrientation(LinearLayout.HORIZONTAL);
+        stateRow.setGravity(Gravity.TOP);
+        ImageView warn = new ImageView(c);
+        warn.setImageDrawable(CloudUi.tinted(c, R.drawable.projects_ic_warning, R.color.projects_gold_300, 15));
+        warn.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        warn.setVisibility(View.GONE);
+        LinearLayout.LayoutParams warnLp = new LinearLayout.LayoutParams(CloudUi.dp(c, 15), CloudUi.dp(c, 15));
+        warnLp.topMargin = Math.max(0, (state.getLineHeight() - CloudUi.dp(c, 15)) / 2);
+        warnLp.setMarginEnd(CloudUi.dp(c, 6));
+        stateRow.addView(warn, warnLp);
+        stateRow.addView(state, CloudUi.weight(1f));
+        words.addView(stateRow, CloudUi.matchWrap());
         mStateText = state;
+        mWarn = warn;
         if (!fishing()) {
             TextView target = CloudUi.text(c, "", 13.5f, R.color.projects_ash_300, false);
             target.setPadding(0, CloudUi.dp(c, 2), 0, 0);
@@ -420,13 +443,15 @@ public final class CloudAutoFragment extends CloudScreen implements CloudService
         tool.setGravity(Gravity.CENTER_VERTICAL);
         tool.setMinimumHeight(CloudUi.dp(c, 56));
         tool.setPadding(CloudUi.dp(c, 8), CloudUi.dp(c, 8), CloudUi.dp(c, 8), CloudUi.dp(c, 4));
-        // Nothing in hand: an empty slot, quieter (the site's), and the sentence.
-        View emptySlot = new View(c);
-        GradientDrawable emptyBg = new GradientDrawable();
-        emptyBg.setCornerRadius(CloudUi.dp(c, 8));
-        emptyBg.setColor(CloudUi.color(c, R.color.projects_obsidian_800));
-        emptySlot.setBackground(emptyBg);
-        emptySlot.setAlpha(0.6f);
+        // Nothing in hand: the slot shows the tool's faint grey outline, as the game's empty equipment slots do, and the
+        // sentence (a bare dark square read as a picture that failed to load).
+        View emptySlot = CloudItemArt.tile(c, fishing() ? "minecraft:fishing_rod" : "minecraft:diamond_pickaxe", 40);
+        ColorMatrix grey = new ColorMatrix();
+        grey.setSaturation(0f);
+        Paint ghost = new Paint();
+        ghost.setColorFilter(new ColorMatrixColorFilter(grey));
+        emptySlot.setLayerType(View.LAYER_TYPE_HARDWARE, ghost);
+        emptySlot.setAlpha(0.35f);
         tool.addView(emptySlot, new LinearLayout.LayoutParams(CloudUi.dp(c, 40), CloudUi.dp(c, 40)));
         mToolEmptySlot = emptySlot;
         FrameLayout slot = new FrameLayout(c);
@@ -560,7 +585,7 @@ public final class CloudAutoFragment extends CloudScreen implements CloudService
         Context c = ctx();
         String mode = mode();
         mStateText.setText(Auto.state(c, mode, s));
-        CloudUi.warnMark(mStateText, Auto.needsPlayer(s));
+        if (mWarn != null) mWarn.setVisibility(Auto.needsPlayer(s) ? View.VISIBLE : View.GONE);
         if (mTargetText != null) {
             AutoFrames.Target target = mMine == null ? null : mMine.target;
             mTargetText.setText(target == null ? "" : getString(R.string.projects_auto_target, itemName(target.id)));
@@ -650,15 +675,14 @@ public final class CloudAutoFragment extends CloudScreen implements CloudService
             AutoFrames.Fish f = (AutoFrames.Fish) s;
             int[] values = {f.catches, f.fish, f.treasure, f.junk};
             for (int i = 0; i < 4; i++) setFigure(c, i, values[i]);
-            mFigures[2].setTextColor(CloudUi.color(c, f.treasure > 0 ? R.color.projects_gold_300 : R.color.projects_bone_50));
             mPace.setText(f.perHour == null ? "" : getString(R.string.projects_auto_per_hour, Auto.rate(c, f.perHour)));
-            drawItems(c, f.items, f.last, getString(R.string.projects_auto_caught_today), getString(R.string.projects_auto_no_catch));
+            drawItems(c, f.items, getString(R.string.projects_auto_caught_today), getString(R.string.projects_auto_no_catch));
             drawLast(c, f.last);
         } else if (s instanceof AutoFrames.Mine) {
             AutoFrames.Mine m = (AutoFrames.Mine) s;
             setFigure(c, 0, m.blocks);
             mPace.setText(m.perMinute == null ? "" : getString(R.string.projects_auto_per_minute, Auto.rate(c, m.perMinute)));
-            drawItems(c, m.items, null, getString(R.string.projects_auto_broken_today), getString(R.string.projects_auto_no_blocks));
+            drawItems(c, m.items, getString(R.string.projects_auto_broken_today), getString(R.string.projects_auto_no_blocks));
         }
     }
 
@@ -671,25 +695,21 @@ public final class CloudAutoFragment extends CloudScreen implements CloudService
         cell.setContentDescription(label.getText() + ": " + Auto.count(c, value));
     }
 
-    /** The game's fishing treasure that never comes as anything else (a bow or a rod may be junk); the site's set. */
-    private static final java.util.Set<String> ALWAYS_TREASURE = new java.util.HashSet<>(java.util.Arrays.asList(
-            "minecraft:enchanted_book", "minecraft:name_tag", "minecraft:nautilus_shell", "minecraft:saddle"));
-
-    /** Items in the game's slots with their counts, most first; treasure gets a gold edge. */
-    private void drawItems(Context c, List<AutoFrames.Count> items, @Nullable List<AutoFrames.Catch> last, String title, String none) {
+    /**
+     * Items in the game's slots with their counts, most first. Treasure is not marked here: the last catches say it in
+     * words, and gold stays off the grid (one gold per screen, design.md).
+     */
+    private void drawItems(Context c, List<AutoFrames.Count> items, String title, String none) {
         LinearLayout box = mItemsBox;
         if (box == null) return;
         StringBuilder key = new StringBuilder();
         for (AutoFrames.Count item : items) key.append(item.id).append(':').append(item.n).append(',');
-        if (last != null) for (AutoFrames.Catch each : last) if (each.treasure()) key.append('*').append(each.id);
         String k = key.length() == 0 ? "-" : key.toString();
         if (k.equals(mItemsKey)) return;
         mItemsKey = k;
-        java.util.Set<String> treasure = new java.util.HashSet<>(fishing() ? ALWAYS_TREASURE : java.util.Collections.<String>emptySet());
-        if (last != null) for (AutoFrames.Catch each : last) if (each.treasure()) treasure.add(each.id);
         // The same items in the same order: only their counts change, in place (no new slots, TalkBack keeps its place).
         List<String> ids = new ArrayList<>();
-        for (AutoFrames.Count item : items) ids.add(item.id + (treasure.contains(item.id) ? "*" : ""));
+        for (AutoFrames.Count item : items) ids.add(item.id);
         if (!items.isEmpty() && ids.equals(mSlotIds) && mSlotCounts.size() == items.size()) {
             for (int i = 0; i < items.size(); i++) count(c, mSlotCounts.get(i), mSlotCells.get(i), items.get(i));
             return;
@@ -705,10 +725,9 @@ public final class CloudAutoFragment extends CloudScreen implements CloudService
             return;
         }
         box.addView(CloudUi.section(c, title));
-        WrapLayout grid = new WrapLayout(c);
-        grid.setGap(CloudUi.dp(c, 8));
+        SlotGrid grid = new SlotGrid(c, CloudUi.dp(c, 8), CloudUi.dp(c, 48));
         grid.setPadding(CloudUi.dp(c, 8), 0, CloudUi.dp(c, 8), CloudUi.dp(c, 4));
-        for (AutoFrames.Count item : items) grid.addView(slot(c, item, treasure.contains(item.id)));
+        for (AutoFrames.Count item : items) grid.addView(slot(c, item));
         mSlotIds.addAll(ids);
         box.addView(grid, CloudUi.matchWrap());
     }
@@ -721,14 +740,12 @@ public final class CloudAutoFragment extends CloudScreen implements CloudService
     }
 
     /** One item in its slot: the game's picture, its count at the corner as the game draws it, named for TalkBack. */
-    private View slot(Context c, AutoFrames.Count item, boolean treasure) {
+    private View slot(Context c, AutoFrames.Count item) {
         FrameLayout cell = new FrameLayout(c);
         int size = CloudUi.dp(c, 48);
         View tile = CloudItemArt.tile(c, item.id, 48);
-        if (treasure && tile.getBackground() instanceof GradientDrawable) {
-            ((GradientDrawable) tile.getBackground()).setStroke(Math.max(1, CloudUi.dp(c, 1)), CloudUi.color(c, R.color.projects_gold_300));
-        }
-        cell.addView(tile, new FrameLayout.LayoutParams(size, size));
+        // The grid sizes the slot (the row's whole width); the picture keeps whole pixels in its middle.
+        cell.addView(tile, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         TextView n = CloudUi.figure(c, "", 12.5f, R.color.projects_bone_50);
         n.setShadowLayer(0.01f, CloudUi.dp(c, 1), CloudUi.dp(c, 1), 0xF20A090C);
         FrameLayout.LayoutParams nlp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -774,7 +791,8 @@ public final class CloudAutoFragment extends CloudScreen implements CloudService
         String name = itemName(each.id);
         String shown = Auto.enchantedMark(each.id, each.ench) ? getString(R.string.projects_auto_enchanted, name) : name;
         boolean treasure = each.treasure();
-        TextView title = CloudUi.text(c, shown, 14.5f, treasure ? R.color.projects_gold_200 : R.color.projects_bone_100, treasure);
+        // Treasure in weight and in words, not in gold (one gold per screen, design.md).
+        TextView title = CloudUi.text(c, shown, 14.5f, R.color.projects_bone_100, treasure);
         title.setSingleLine(true);
         title.setEllipsize(TextUtils.TruncateAt.END);
         LinearLayout.LayoutParams tlp = CloudUi.weight(1f);
@@ -782,7 +800,7 @@ public final class CloudAutoFragment extends CloudScreen implements CloudService
         row.addView(title, tlp);
         String words = shown;
         if (treasure) {
-            TextView mark = CloudUi.text(c, getString(R.string.projects_auto_treasure), 12.5f, R.color.projects_gold_300, false);
+            TextView mark = CloudUi.text(c, getString(R.string.projects_auto_treasure), 12.5f, R.color.projects_ash_300, false);
             mark.setPaddingRelative(CloudUi.dp(c, 8), 0, 0, 0);
             row.addView(mark);
             words += ", " + getString(R.string.projects_auto_treasure);
@@ -987,4 +1005,55 @@ public final class CloudAutoFragment extends CloudScreen implements CloudService
         }
     }
 
+    /**
+     * The day's items in equal square slots across the whole width (six to a row on a phone), so the grid lines up with
+     * the tool line and the figures above it instead of stopping short of the right edge.
+     */
+    static final class SlotGrid extends ViewGroup {
+        private final int mGap;
+        private final int mMin;
+
+        SlotGrid(Context c, int gapPx, int minPx) {
+            super(c);
+            mGap = gapPx;
+            mMin = minPx;
+        }
+
+        /** As many slots of at least the smallest size as the row holds. */
+        private int columns(int width) {
+            return Math.max(1, (width + mGap) / (mMin + mGap));
+        }
+
+        private int size(int width, int columns) {
+            return Math.max(mMin, (width - mGap * (columns - 1)) / columns);
+        }
+
+        @Override
+        protected void onMeasure(int widthSpec, int heightSpec) {
+            int outer = MeasureSpec.getSize(widthSpec);
+            int width = outer - getPaddingLeft() - getPaddingRight();
+            int columns = columns(width);
+            int size = size(width, columns);
+            int exact = MeasureSpec.makeMeasureSpec(size, MeasureSpec.EXACTLY);
+            int n = getChildCount();
+            for (int i = 0; i < n; i++) getChildAt(i).measure(exact, exact);
+            int rows = (n + columns - 1) / columns;
+            int height = rows == 0 ? 0 : rows * size + (rows - 1) * mGap;
+            setMeasuredDimension(outer, height + getPaddingTop() + getPaddingBottom());
+        }
+
+        @Override
+        protected void onLayout(boolean changed, int l, int t, int r, int b) {
+            int width = r - l - getPaddingLeft() - getPaddingRight();
+            int columns = columns(width);
+            int size = size(width, columns);
+            boolean rtl = getLayoutDirection() == View.LAYOUT_DIRECTION_RTL;
+            for (int i = 0; i < getChildCount(); i++) {
+                int column = i % columns;
+                int x = rtl ? r - l - getPaddingRight() - size - column * (size + mGap) : getPaddingLeft() + column * (size + mGap);
+                int y = getPaddingTop() + (i / columns) * (size + mGap);
+                getChildAt(i).layout(x, y, x + size, y + size);
+            }
+        }
+    }
 }
