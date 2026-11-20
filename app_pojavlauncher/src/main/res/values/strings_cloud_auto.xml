@@ -32,6 +32,7 @@
     <string name="projects_auto_command_hint" translatable="false">/sell all</string>
     <string name="projects_auto_command_empty">Type the command.</string>
     <string name="projects_auto_command_secret">This command can\'t contain a password.</string>
+    <string name="projects_auto_command_paused">This command is being reviewed. For now it waits when the inventory is full.</string>
     <string name="projects_auto_look_label">Look Around Now and Then</string>
     <string name="projects_auto_look_line">Between casts it turns its head a little and back, so the server doesn\'t mark you AFK.</string>
     <string name="projects_auto_blocks_label">Which Blocks?</string>
@@ -76,6 +77,9 @@
     <string name="projects_auto_waiting_tool_low">The pickaxe is nearly worn out. It goes on when it gets another.</string>
     <string name="projects_auto_waiting_no_target">Nothing to break in front of it. It goes on when a block appears.</string>
     <string name="projects_auto_waiting_other">Waiting.</string>
+    <string name="projects_auto_waiting_other_fishing">Fishing has to stop first.</string>
+    <string name="projects_auto_waiting_other_mining">Mining has to stop first.</string>
+    <string name="projects_auto_one_job">An account does one job at a time: it doesn\'t mine while fishing.</string>
     <string name="projects_auto_fishing_off_service">Auto-fishing is off right now.</string>
     <string name="projects_auto_fishing_off_setting">Auto-fishing is off for this account.</string>
     <string name="projects_auto_fishing_off_restart">Auto-fishing starts on the next reconnect.</string>

@@ -88,6 +88,27 @@ public final class CloudAutoFragment extends CloudScreen implements CloudService
     @Nullable
     private LinearLayout mToolBox;
     private String mToolKey = "";
+    /** The tool line's parts, kept so a change of durability moves the bar from where it was (no rebuild). */
+    @Nullable
+    private FrameLayout mToolSlot;
+    @Nullable
+    private String mToolItem;
+    @Nullable
+    private TextView mToolTitle;
+    @Nullable
+    private TextView mToolValue;
+    @Nullable
+    private DurabilityBar mToolBar;
+    @Nullable
+    private View mToolEmptySlot;
+    @Nullable
+    private TextView mToolEmpty;
+    @Nullable
+    private LinearLayout mToolRight;
+    /** The item grid's slots by id, in order (a change of counts only updates them in place). */
+    private final List<String> mSlotIds = new ArrayList<>();
+    private final List<TextView> mSlotCounts = new ArrayList<>();
+    private final List<View> mSlotCells = new ArrayList<>();
     @Nullable
     private TextView mPace;
     @Nullable
@@ -175,12 +196,22 @@ public final class CloudAutoFragment extends CloudScreen implements CloudService
     /** The stream runs only while the mode can say something: on for the account, not limited, wanted running, a machine. */
     private void syncWatch(@Nullable CloudModel.Account a, @Nullable CloudModel.AutoFeature feature) {
         boolean want = a != null && feature != null && feature.mode && feature.on && feature.limited == null && a.host != null && wantedRunning(a);
-        if (want && mHandle == null) {
-            mHandle = mService.watchAuto(a.id, this, this);
+        if (want && mHandle == null && !mOpening) {
+            // The service tells the socket's state to the new watch before it returns (liveState, then render): that
+            // render must not open a second watch.
+            mOpening = true;
+            try {
+                mHandle = mService.watchAuto(a.id, this, this);
+            } finally {
+                mOpening = false;
+            }
         } else if (!want && mHandle != null) {
             closeWatch();
         }
     }
+
+    /** A watch is being opened: its own synchronous callbacks draw, but never open another. */
+    private boolean mOpening;
 
     private void closeWatch() {
         if (mHandle != null) mHandle.close();
@@ -238,6 +269,17 @@ public final class CloudAutoFragment extends CloudScreen implements CloudService
         mToggle = null;
         mToolBox = null;
         mToolKey = "";
+        mToolSlot = null;
+        mToolItem = null;
+        mToolTitle = null;
+        mToolValue = null;
+        mToolBar = null;
+        mToolEmptySlot = null;
+        mToolEmpty = null;
+        mToolRight = null;
+        mSlotIds.clear();
+        mSlotCounts.clear();
+        mSlotCells.clear();
         mPace = null;
         mFigures = null;
         mItemsBox = null;
@@ -380,6 +422,49 @@ public final class CloudAutoFragment extends CloudScreen implements CloudService
         tool.setGravity(Gravity.CENTER_VERTICAL);
         tool.setMinimumHeight(CloudUi.dp(c, 56));
         tool.setPadding(CloudUi.dp(c, 8), CloudUi.dp(c, 8), CloudUi.dp(c, 8), CloudUi.dp(c, 4));
+        // Nothing in hand: an empty slot, quieter (the site's), and the sentence.
+        View emptySlot = new View(c);
+        GradientDrawable emptyBg = new GradientDrawable();
+        emptyBg.setCornerRadius(CloudUi.dp(c, 8));
+        emptyBg.setColor(CloudUi.color(c, R.color.projects_obsidian_800));
+        emptySlot.setBackground(emptyBg);
+        emptySlot.setAlpha(0.6f);
+        tool.addView(emptySlot, new LinearLayout.LayoutParams(CloudUi.dp(c, 40), CloudUi.dp(c, 40)));
+        mToolEmptySlot = emptySlot;
+        FrameLayout slot = new FrameLayout(c);
+        tool.addView(slot, new LinearLayout.LayoutParams(CloudUi.dp(c, 40), CloudUi.dp(c, 40)));
+        mToolSlot = slot;
+        TextView empty = CloudUi.text(c, getString(fishing() ? R.string.projects_auto_no_rod : R.string.projects_auto_no_pickaxe), 14,
+                R.color.projects_ash_300, false);
+        LinearLayout.LayoutParams emptyLp = CloudUi.weight(1f);
+        emptyLp.setMarginStart(CloudUi.dp(c, 12));
+        tool.addView(empty, emptyLp);
+        mToolEmpty = empty;
+        LinearLayout right = new LinearLayout(c);
+        right.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout top = new LinearLayout(c);
+        top.setOrientation(LinearLayout.HORIZONTAL);
+        top.setBaselineAligned(true);
+        TextView title = CloudUi.text(c, "", 14.5f, R.color.projects_bone_100, true);
+        title.setSingleLine(true);
+        title.setEllipsize(TextUtils.TruncateAt.END);
+        top.addView(title, CloudUi.weight(1f));
+        mToolTitle = title;
+        TextView value = CloudUi.text(c, "", 13, R.color.projects_ash_400, false);
+        tabular(value);
+        value.setPaddingRelative(CloudUi.dp(c, 12), 0, 0, 0);
+        top.addView(value);
+        mToolValue = value;
+        right.addView(top, CloudUi.matchWrap());
+        DurabilityBar bar = new DurabilityBar(c);
+        LinearLayout.LayoutParams barLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, CloudUi.dp(c, 6));
+        barLp.topMargin = CloudUi.dp(c, 8);
+        right.addView(bar, barLp);
+        mToolBar = bar;
+        LinearLayout.LayoutParams rightLp = CloudUi.weight(1f);
+        rightLp.setMarginStart(CloudUi.dp(c, 12));
+        tool.addView(right, rightLp);
+        mToolRight = right;
         content.addView(tool, CloudUi.matchWrap());
         mToolBox = tool;
 
@@ -519,57 +604,37 @@ public final class CloudAutoFragment extends CloudScreen implements CloudService
         LinearLayout box = mToolBox;
         if (box == null) return;
         AutoFrames.Tool tool = s instanceof AutoFrames.Fish ? ((AutoFrames.Fish) s).rod : s instanceof AutoFrames.Mine ? ((AutoFrames.Mine) s).tool : null;
+        if (mToolSlot == null || mToolTitle == null || mToolValue == null || mToolBar == null || mToolEmpty == null || mToolRight == null
+                || mToolEmptySlot == null) return;
         int keep = keep();
         String key = tool == null ? "none" : tool.item + "|" + tool.dur + "|" + tool.max + "|" + keep;
         if (key.equals(mToolKey)) return;
-        boolean first = mToolKey.isEmpty();
+        boolean first = mToolKey.isEmpty() || "none".equals(mToolKey);
         mToolKey = key;
-        box.removeAllViews();
-        if (tool == null || tool.max <= 0) {
-            // An empty slot, quieter (the site's): nothing in hand.
-            View slot = new View(c);
-            GradientDrawable bg = new GradientDrawable();
-            bg.setCornerRadius(CloudUi.dp(c, 8));
-            bg.setColor(CloudUi.color(c, R.color.projects_obsidian_800));
-            slot.setBackground(bg);
-            slot.setAlpha(0.6f);
-            box.addView(slot, new LinearLayout.LayoutParams(CloudUi.dp(c, 40), CloudUi.dp(c, 40)));
-            TextView empty = CloudUi.text(c, getString(fishing() ? R.string.projects_auto_no_rod : R.string.projects_auto_no_pickaxe), 14,
-                    R.color.projects_ash_300, false);
-            LinearLayout.LayoutParams lp = CloudUi.weight(1f);
-            lp.setMarginStart(CloudUi.dp(c, 12));
-            box.addView(empty, lp);
+        boolean held = tool != null && tool.max > 0;
+        mToolEmptySlot.setVisibility(held ? View.GONE : View.VISIBLE);
+        mToolEmpty.setVisibility(held ? View.GONE : View.VISIBLE);
+        mToolSlot.setVisibility(held ? View.VISIBLE : View.GONE);
+        mToolRight.setVisibility(held ? View.VISIBLE : View.GONE);
+        if (!held) {
+            box.setContentDescription(mToolEmpty.getText());
             return;
         }
-        box.addView(CloudItemArt.tile(c, tool.item, 40), new LinearLayout.LayoutParams(CloudUi.dp(c, 40), CloudUi.dp(c, 40)));
-        LinearLayout right = new LinearLayout(c);
-        right.setOrientation(LinearLayout.VERTICAL);
-        LinearLayout top = new LinearLayout(c);
-        top.setOrientation(LinearLayout.HORIZONTAL);
-        top.setBaselineAligned(true);
+        // The picture changes only with the item; the name, the figures and the bar change in place (the bar moves
+        // from where it was).
+        if (!tool.item.equals(mToolItem)) {
+            mToolItem = tool.item;
+            mToolSlot.removeAllViews();
+            mToolSlot.addView(CloudItemArt.tile(c, tool.item, 40), new FrameLayout.LayoutParams(CloudUi.dp(c, 40), CloudUi.dp(c, 40)));
+        }
         String name = itemName(tool.item);
-        TextView title = CloudUi.text(c, name.isEmpty() ? getString(fishing() ? R.string.projects_auto_rod : R.string.projects_auto_pickaxe) : name,
-                14.5f, R.color.projects_bone_100, true);
-        title.setSingleLine(true);
-        title.setEllipsize(TextUtils.TruncateAt.END);
-        top.addView(title, CloudUi.weight(1f));
+        mToolTitle.setText(name.isEmpty() ? getString(fishing() ? R.string.projects_auto_rod : R.string.projects_auto_pickaxe) : name);
         String figures = Auto.count(c, tool.dur) + " / " + Auto.count(c, tool.max);
-        TextView value = CloudUi.text(c, figures, 13, R.color.projects_ash_400, false);
-        tabular(value);
-        value.setPaddingRelative(CloudUi.dp(c, 12), 0, 0, 0);
-        top.addView(value);
-        right.addView(top, CloudUi.matchWrap());
-        DurabilityBar bar = new DurabilityBar(c);
+        mToolValue.setText(figures);
         float left = tool.left();
         @ColorRes int tone = tool.dur <= keep ? R.color.projects_flare_400 : left <= 0.25f ? R.color.projects_gold_300 : R.color.projects_jade_400;
-        bar.set(left, CloudUi.color(c, tone), !first);
-        LinearLayout.LayoutParams barLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, CloudUi.dp(c, 6));
-        barLp.topMargin = CloudUi.dp(c, 8);
-        right.addView(bar, barLp);
-        LinearLayout.LayoutParams rightLp = CloudUi.weight(1f);
-        rightLp.setMarginStart(CloudUi.dp(c, 12));
-        box.addView(right, rightLp);
-        box.setContentDescription(title.getText() + ", " + getString(R.string.projects_auto_durability) + " " + figures);
+        mToolBar.set(left, CloudUi.color(c, tone), !first);
+        box.setContentDescription(mToolTitle.getText() + ", " + getString(R.string.projects_auto_durability) + " " + figures);
         box.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_YES);
     }
 
@@ -622,6 +687,18 @@ public final class CloudAutoFragment extends CloudScreen implements CloudService
         String k = key.length() == 0 ? "-" : key.toString();
         if (k.equals(mItemsKey)) return;
         mItemsKey = k;
+        java.util.Set<String> treasure = new java.util.HashSet<>(fishing() ? ALWAYS_TREASURE : java.util.Collections.<String>emptySet());
+        if (last != null) for (AutoFrames.Catch each : last) if (each.treasure()) treasure.add(each.id);
+        // The same items in the same order: only their counts change, in place (no new slots, TalkBack keeps its place).
+        List<String> ids = new ArrayList<>();
+        for (AutoFrames.Count item : items) ids.add(item.id + (treasure.contains(item.id) ? "*" : ""));
+        if (!items.isEmpty() && ids.equals(mSlotIds) && mSlotCounts.size() == items.size()) {
+            for (int i = 0; i < items.size(); i++) count(c, mSlotCounts.get(i), mSlotCells.get(i), items.get(i));
+            return;
+        }
+        mSlotIds.clear();
+        mSlotCounts.clear();
+        mSlotCells.clear();
         box.removeAllViews();
         if (items.isEmpty()) {
             TextView empty = CloudUi.text(c, none, 14, R.color.projects_ash_300, false);
@@ -629,14 +706,20 @@ public final class CloudAutoFragment extends CloudScreen implements CloudService
             box.addView(empty);
             return;
         }
-        java.util.Set<String> treasure = new java.util.HashSet<>(fishing() ? ALWAYS_TREASURE : java.util.Collections.<String>emptySet());
-        if (last != null) for (AutoFrames.Catch each : last) if (each.treasure()) treasure.add(each.id);
         box.addView(CloudUi.section(c, title));
         WrapLayout grid = new WrapLayout(c);
         grid.setGap(CloudUi.dp(c, 8));
         grid.setPadding(CloudUi.dp(c, 8), 0, CloudUi.dp(c, 8), CloudUi.dp(c, 4));
         for (AutoFrames.Count item : items) grid.addView(slot(c, item, treasure.contains(item.id)));
+        mSlotIds.addAll(ids);
         box.addView(grid, CloudUi.matchWrap());
+    }
+
+    /** A slot's count as the game draws it (none for one), and its spoken name. */
+    private void count(Context c, TextView n, View cell, AutoFrames.Count item) {
+        n.setText(Auto.slotCount(c, item.n));
+        n.setVisibility(item.n > 1 ? View.VISIBLE : View.GONE);
+        cell.setContentDescription(getString(R.string.projects_auto_count, item.n, itemName(item.id)));
     }
 
     /** One item in its slot: the game's picture, its count at the corner as the game draws it, named for TalkBack. */
@@ -648,17 +731,17 @@ public final class CloudAutoFragment extends CloudScreen implements CloudService
             ((GradientDrawable) tile.getBackground()).setStroke(Math.max(1, CloudUi.dp(c, 1)), CloudUi.color(c, R.color.projects_gold_300));
         }
         cell.addView(tile, new FrameLayout.LayoutParams(size, size));
-        if (item.n > 1) {
-            TextView n = CloudUi.figure(c, Auto.count(c, item.n), 12.5f, R.color.projects_bone_50);
-            n.setShadowLayer(0.01f, CloudUi.dp(c, 1), CloudUi.dp(c, 1), 0xF20A090C);
-            FrameLayout.LayoutParams nlp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
-                    Gravity.BOTTOM | Gravity.END);
-            nlp.setMarginEnd(CloudUi.dp(c, 4));
-            nlp.bottomMargin = CloudUi.dp(c, 2);
-            n.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-            cell.addView(n, nlp);
-        }
-        cell.setContentDescription(getString(R.string.projects_auto_count, item.n, itemName(item.id)));
+        TextView n = CloudUi.figure(c, "", 12.5f, R.color.projects_bone_50);
+        n.setShadowLayer(0.01f, CloudUi.dp(c, 1), CloudUi.dp(c, 1), 0xF20A090C);
+        FrameLayout.LayoutParams nlp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
+                Gravity.BOTTOM | Gravity.END);
+        nlp.setMarginEnd(CloudUi.dp(c, 4));
+        nlp.bottomMargin = CloudUi.dp(c, 2);
+        n.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        cell.addView(n, nlp);
+        count(c, n, cell, item);
+        mSlotCounts.add(n);
+        mSlotCells.add(cell);
         cell.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_YES);
         cell.setLayoutParams(new ViewGroup.LayoutParams(size, size));
         return cell;

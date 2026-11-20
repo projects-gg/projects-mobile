@@ -66,14 +66,16 @@ final class AutoSettingsBlock {
     private static final List<String> FIRST_CHOSEN = Arrays.asList("minecraft:cobblestone", "minecraft:stone");
 
     /** "Otomatik Balık Tutma". */
-    static void fishing(LinearLayout content, final Host h, CloudModel.AutoFeature feature, boolean stored, AutoSettings.Fishing shown) {
+    static Block fishing(LinearLayout content, final Host h, final CloudModel.AutoFeature feature, boolean stored, AutoSettings.Fishing shown) {
         final Context c = h.ctx();
         final AutoSettings.Fishing work = shown.copy();
         final LinearLayout details = column(c);
-        modeSwitch(content, h, AutoSettings.FISHING, feature, stored, work.enabled, on -> {
+        final Block block = new Block();
+        modeSwitch(content, h, AutoSettings.FISHING, feature, stored, work.enabled, block, on -> {
             work.enabled = on;
-            details.setVisibility(on ? View.VISIBLE : View.GONE);
+            details.setVisibility(on && feature.limited == null || partIssue(h, AutoSettings.FISHING) ? View.VISIBLE : View.GONE);
             h.fishing(work.copy());
+            block.changed(on);
         });
         full(details, h, AutoSettings.FISHING, work.full, () -> h.fishing(work.copy()));
         details.addView(CloudUi.gap(c, 12));
@@ -85,26 +87,80 @@ final class AutoSettingsBlock {
         details.addView(lookGroup);
         details.addView(CloudUi.note(c, c.getString(R.string.projects_auto_look_line)));
         care(details, h, AutoSettings.FISHING, work.rod, () -> h.fishing(work.copy()));
-        details.setVisibility(work.enabled && feature.limited == null ? View.VISIBLE : View.GONE);
+        details.setVisibility(work.enabled && feature.limited == null || partIssue(h, AutoSettings.FISHING) ? View.VISIBLE : View.GONE);
         content.addView(details, CloudUi.matchWrap());
+        return block;
+    }
+
+    /**
+     * One mode's switch as the other mode's block sees it (the head agent, 20 Nov 2026: one mode at a time per account;
+     * the service refuses turning one on while the other is on): turning one on turns the other off in the same draft,
+     * and a muted line under a switch says why while the other one is on.
+     */
+    static final class Block {
+        @Nullable
+        SwitchCompat sw;
+        @Nullable
+        TextView exclusive;
+        @Nullable
+        Block other;
+
+        boolean on() {
+            return sw != null && sw.isChecked();
+        }
+
+        /** Off in the draft (also when its switch waits disabled: the service needs the other one off). */
+        void turnOff() {
+            if (sw != null && sw.isChecked()) sw.setChecked(false);
+        }
+
+        void changed(boolean on) {
+            if (on && other != null) other.turnOff();
+            refresh();
+            if (other != null) other.refresh();
+        }
+
+        void refresh() {
+            if (exclusive != null) exclusive.setVisibility(other != null && other.on() ? View.VISIBLE : View.GONE);
+        }
+    }
+
+    /** The two modes of one account: one at a time. */
+    static void pair(Block a, Block b) {
+        a.other = b;
+        b.other = a;
+        a.refresh();
+        b.refresh();
+    }
+
+    /**
+     * A refused save marked one of the mode's parts: its choices show even with the switch off (the service checks every
+     * part of what it is sent), so the mark is never hidden.
+     */
+    private static boolean partIssue(Host h, String mode) {
+        return h.issue(mode + ".keep") != null || h.issue(mode + ".command") != null || h.issue(mode + ".blocks") != null
+                || h.issue(mode + ".every") != null;
     }
 
     /** "Otomatik Kazma". */
-    static void mining(LinearLayout content, final Host h, CloudModel.AutoFeature feature, boolean stored, AutoSettings.Mining shown) {
+    static Block mining(LinearLayout content, final Host h, final CloudModel.AutoFeature feature, boolean stored, AutoSettings.Mining shown) {
         final Context c = h.ctx();
         final AutoSettings.Mining work = shown.copy();
         final LinearLayout details = column(c);
-        modeSwitch(content, h, AutoSettings.MINING, feature, stored, work.enabled, on -> {
+        final Block block = new Block();
+        modeSwitch(content, h, AutoSettings.MINING, feature, stored, work.enabled, block, on -> {
             work.enabled = on;
-            details.setVisibility(on ? View.VISIBLE : View.GONE);
+            details.setVisibility(on && feature.limited == null || partIssue(h, AutoSettings.MINING) ? View.VISIBLE : View.GONE);
             h.mining(work.copy());
+            block.changed(on);
         });
         blocks(details, h, work, () -> h.mining(work.copy()));
         full(details, h, AutoSettings.MINING, work.full, () -> h.mining(work.copy()));
         idle(details, h, work.idle, () -> h.mining(work.copy()));
         care(details, h, AutoSettings.MINING, work.tool, () -> h.mining(work.copy()));
-        details.setVisibility(work.enabled && feature.limited == null ? View.VISIBLE : View.GONE);
+        details.setVisibility(work.enabled && feature.limited == null || partIssue(h, AutoSettings.MINING) ? View.VISIBLE : View.GONE);
         content.addView(details, CloudUi.matchWrap());
+        return block;
     }
 
     private static LinearLayout column(Context c) {
@@ -115,7 +171,7 @@ final class AutoSettingsBlock {
 
     /** The switch, its line or why it cannot be turned on, the per-server note, and a refused save's words. */
     private static void modeSwitch(LinearLayout content, final Host h, String mode, CloudModel.AutoFeature feature, boolean stored,
-                                   boolean checked, CloudUi.Toggle toggle) {
+                                   boolean checked, Block block, CloudUi.Toggle toggle) {
         Context c = h.ctx();
         content.addView(CloudUi.gap(c, 16));
         LinearLayout group = CloudUi.group(c);
@@ -128,6 +184,7 @@ final class AutoSettingsBlock {
         if (disabled) sw.setAlpha(0.55f);
         group.addView(sw);
         content.addView(group);
+        block.sw = sw;
         if (feature.limited != null) {
             content.addView(CloudUi.note(c, Auto.limited(c, mode, feature.limited)));
             android.widget.Button see = CloudUi.siteLink(c, c.getString(R.string.projects_auto_limited_see), v -> h.openLimited());
@@ -137,6 +194,11 @@ final class AutoSettingsBlock {
         } else {
             content.addView(CloudUi.note(c, noSlot ? Auto.slot(c, mode, feature.slot) : c.getString(Auto.line(mode))));
         }
+        // One mode at a time: said while the other one is on (turning this one on turns that one off).
+        TextView exclusive = CloudUi.note(c, c.getString(R.string.projects_auto_one_job));
+        exclusive.setVisibility(View.GONE);
+        content.addView(exclusive);
+        block.exclusive = exclusive;
         // The owner's note under every mode switch (20 Nov 2026), with the quiet info mark.
         TextView disclaimer = CloudUi.note(c, c.getString(R.string.projects_auto_disclaimer));
         disclaimer.setCompoundDrawablesRelative(CloudUi.tinted(c, R.drawable.projects_ic_info, R.color.projects_ash_400, 15), null, null, null);
@@ -166,7 +228,9 @@ final class AutoSettingsBlock {
         command.input.setFilters(new InputFilter[]{new InputFilter.LengthFilter(256)});
         String commandIssue = h.issue(mode + ".command");
         command.setError(commandIssue);
-        command.setHelp(commandIssue == null ? c.getString(R.string.projects_auto_full_command_help) : null);
+        // Moderation paused the stored command: said plainly under it (the mode waits on a full inventory meanwhile).
+        command.setHelp(commandIssue != null ? null : c.getString(full.paused ? R.string.projects_auto_command_paused
+                : R.string.projects_auto_full_command_help));
         watch(command.input, s -> {
             full.command = s;
             changed.run();

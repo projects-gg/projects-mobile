@@ -31,6 +31,7 @@
     <string name="projects_auto_command_label">Komut</string>
     <string name="projects_auto_command_empty">Komutu yaz.</string>
     <string name="projects_auto_command_secret">Bu komutta şifre olamaz.</string>
+    <string name="projects_auto_command_paused">Bu komut inceleniyor. Şimdilik envanter dolunca bekler.</string>
     <string name="projects_auto_look_label">Arada Etrafına Baksın</string>
     <string name="projects_auto_look_line">Atışlar arasında başını biraz çevirip geri döner. Sunucu seni AFK saymaz.</string>
     <string name="projects_auto_blocks_label">Hangi Blokları Kırsın?</string>
@@ -75,6 +76,9 @@
     <string name="projects_auto_waiting_tool_low">Kazmanın dayanıklılığı azaldı. Başka kazma gelince devam eder.</string>
     <string name="projects_auto_waiting_no_target">Önünde kıracak blok yok. Blok gelince devam eder.</string>
     <string name="projects_auto_waiting_other">Bekliyor.</string>
+    <string name="projects_auto_waiting_other_fishing">Önce balık tutma bitmeli.</string>
+    <string name="projects_auto_waiting_other_mining">Önce kazma bitmeli.</string>
+    <string name="projects_auto_one_job">Hesap aynı anda tek iş yapar: balık tutarken kazmaz.</string>
     <string name="projects_auto_fishing_off_service">Otomatik balık tutma şu an kapalı.</string>
     <string name="projects_auto_fishing_off_setting">Otomatik balık tutma bu hesapta kapalı.</string>
     <string name="projects_auto_fishing_off_restart">Otomatik balık tutma bir sonraki bağlanmada açılır.</string>

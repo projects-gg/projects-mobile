@@ -86,6 +86,9 @@ public final class Auto {
                     case "no_tool": return c.getString(R.string.projects_auto_waiting_no_tool);
                     case "tool_low": return c.getString(R.string.projects_auto_waiting_tool_low);
                     case "no_target": return c.getString(R.string.projects_auto_waiting_no_target);
+                    // One mode at a time per account: the other one is still on (a fallback; the switches prevent it).
+                    case "other": return c.getString(fishing(mode) ? R.string.projects_auto_waiting_other_mining
+                            : R.string.projects_auto_waiting_other_fishing);
                     default: return c.getString(R.string.projects_auto_waiting_other);
                 }
             default:
@@ -174,6 +177,7 @@ public final class Auto {
             case "": {
                 if ("off".equals(problem)) return off(c, mode, "service");
                 if ("limited".equals(problem)) return off(c, mode, "limited");
+                if ("other".equals(problem)) return c.getString(R.string.projects_auto_one_job);
                 if (problem.startsWith("player/")) {
                     long max;
                     try {
@@ -207,6 +211,22 @@ public final class Auto {
         f.setMaximumFractionDigits(value < 10 ? 1 : 0);
         f.setMinimumFractionDigits(0);
         return f.format(value);
+    }
+
+    /**
+     * A count short enough for a slot (the full number is read out), as the site and players write it: "72", "1,1k" /
+     * "1.1k", "12k".
+     */
+    public static String slotCount(long n, boolean turkish) {
+        if (n < 1000) return String.valueOf(n);
+        long tenths = n / 100;
+        long whole = tenths / 10;
+        long part = tenths % 10;
+        return part != 0 && whole < 100 ? whole + (turkish ? "," : ".") + part + "k" : whole + "k";
+    }
+
+    public static String slotCount(Context c, long n) {
+        return slotCount(n, !"en".equals(CloudWords.lang(c)));
     }
 
     /** A count in the app's language ("1.250"). */

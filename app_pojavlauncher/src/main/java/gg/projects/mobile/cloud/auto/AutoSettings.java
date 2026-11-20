@@ -132,16 +132,28 @@ public final class AutoSettings {
     public static final class Full {
         public String what;
         public String command;
+        /**
+         * The view's mark: moderation paused the command (the mode waits on a full inventory meanwhile). Read only: the
+         * service accepts it written back and never stores it; a changed command or choice is checked again.
+         */
+        public final boolean paused;
 
         public Full(String what, String command) {
+            this(what, command, false);
+        }
+
+        Full(String what, String command, boolean paused) {
             this.what = what;
             this.command = command;
+            this.paused = paused;
         }
 
         static Full read(@Nullable JsonObject o) {
             String what = Json.str(o, "do", FULL_WAIT);
             if (!FULL_KEEP.equals(what) && !FULL_COMMAND.equals(what)) what = FULL_WAIT;
-            return new Full(what, Json.str(o, "command", ""));
+            // Moderation's mark is an object ({case, category}), as a paused row's; a plain true reads the same.
+            boolean paused = Json.obj(o, "paused") != null || Json.bool(o, "paused", false);
+            return new Full(what, Json.str(o, "command", ""), paused);
         }
 
         JsonObject json() {
@@ -153,7 +165,7 @@ public final class AutoSettings {
         }
 
         Full copy() {
-            return new Full(what, command);
+            return new Full(what, command, paused);
         }
 
         boolean same(Full o) {

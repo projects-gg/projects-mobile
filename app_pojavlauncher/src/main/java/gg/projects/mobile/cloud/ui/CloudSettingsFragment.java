@@ -622,18 +622,22 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
         // Auto-fishing and auto-mining (README "Auto switches", "Auto settings"): each while the service and the account's
         // machine have it, in the site's words and order. The screen keeps a mode's setting only while it differs from
         // what is stored, and a save sends it whole.
+        AutoSettingsBlock.Block fishingBlock = null;
+        AutoSettingsBlock.Block miningBlock = null;
         CloudModel.AutoFeature fishing = a.features.fishing;
         if (fishing != null && fishing.mode) {
             AutoSettings.Fishing stored = a.config.fishing;
             AutoSettings.Fishing shown = mConfig.fishing != null ? mConfig.fishing : stored != null ? stored : AutoSettings.Fishing.defaults();
-            AutoSettingsBlock.fishing(content, autoHost(), fishing, stored != null && stored.enabled, shown);
+            fishingBlock = AutoSettingsBlock.fishing(content, autoHost(), fishing, stored != null && stored.enabled, shown);
         }
         CloudModel.AutoFeature mining = a.features.mining;
         if (mining != null && mining.mode) {
             AutoSettings.Mining stored = a.config.mining;
             AutoSettings.Mining shown = mConfig.mining != null ? mConfig.mining : stored != null ? stored : AutoSettings.Mining.defaults();
-            AutoSettingsBlock.mining(content, autoHost(), mining, stored != null && stored.enabled, shown);
+            miningBlock = AutoSettingsBlock.mining(content, autoHost(), mining, stored != null && stored.enabled, shown);
         }
+        // One mode at a time per account (the service refuses the second): the two switches turn each other off.
+        if (fishingBlock != null && miningBlock != null) AutoSettingsBlock.pair(fishingBlock, miningBlock);
     }
 
     private boolean mNamesAsked;

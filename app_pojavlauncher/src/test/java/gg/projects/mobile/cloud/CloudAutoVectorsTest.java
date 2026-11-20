@@ -64,7 +64,8 @@ public class CloudAutoVectorsTest {
             assertEquals(name, stored, written);
             n++;
         }
-        assertEquals(14, n);
+        // The view's moderation mark on a full inventory's command is read, never written back (the service drops it).
+        assertEquals(15, n);
     }
 
     @Test

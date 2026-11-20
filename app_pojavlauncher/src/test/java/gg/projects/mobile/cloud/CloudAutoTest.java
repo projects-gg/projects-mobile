@@ -249,6 +249,9 @@ public class CloudAutoTest {
                 "{\"error\":{\"code\":\"invalid_config\",\"field\":\"fishing.enabled\",\"reason\":\"limited\"}}", null))));
         assertEquals("[general.mining:off]", String.valueOf(CloudEdit.fromRefusal(CloudProblem.of(400,
                 "{\"error\":{\"code\":\"invalid_config\",\"field\":\"mining.enabled\",\"reason\":\"off\"}}", null))));
+        // One mode at a time per account: the other one is on.
+        assertEquals("[general.mining:other]", String.valueOf(CloudEdit.fromRefusal(CloudProblem.of(400,
+                "{\"error\":{\"code\":\"invalid_config\",\"field\":\"mining.enabled\",\"reason\":\"other\"}}", null))));
         assertEquals("[general.fishing.command:secret]", String.valueOf(CloudEdit.fromRefusal(CloudProblem.of(400,
                 "{\"error\":{\"code\":\"invalid_command\",\"field\":\"fishing.full.command\",\"reason\":\"secret\"}}", null))));
         assertEquals("[general.mining.every:range]", String.valueOf(CloudEdit.fromRefusal(CloudProblem.of(400,
@@ -472,6 +475,27 @@ public class CloudAutoTest {
 
     private static AutoFrames.Fish state(String json) {
         return AutoFrames.Update.read(Vectors.json("{\"fishing\":" + json + "}")).fishing;
+    }
+
+    @Test
+    public void slotsCountAsPlayersWrite() {
+        assertEquals("72", gg.projects.mobile.cloud.auto.Auto.slotCount(72, true));
+        assertEquals("999", gg.projects.mobile.cloud.auto.Auto.slotCount(999, true));
+        assertEquals("1k", gg.projects.mobile.cloud.auto.Auto.slotCount(1000, true));
+        assertEquals("1,1k", gg.projects.mobile.cloud.auto.Auto.slotCount(1150, true));
+        assertEquals("1.1k", gg.projects.mobile.cloud.auto.Auto.slotCount(1150, false));
+        assertEquals("12,3k", gg.projects.mobile.cloud.auto.Auto.slotCount(12345, true));
+        assertEquals("123k", gg.projects.mobile.cloud.auto.Auto.slotCount(123456, true));
+    }
+
+    @Test
+    public void aPausedCommandIsReadAndNeverWritten() {
+        AutoSettings.Fishing f = AutoSettings.Fishing.read(Vectors.json("{\"enabled\":true,\"full\":{\"do\":\"command\",\"command\":\"/sell all\","
+                + "\"paused\":{\"case\":\"mc_01M7V41F00ABCDEFGHJKMNPQRS\",\"category\":\"advertising\"}}}"));
+        assertTrue(f.full.paused);
+        assertEquals("{\"do\":\"command\",\"command\":\"/sell all\"}", f.json().getAsJsonObject("full").toString());
+        assertTrue(f.copy().full.paused);
+        assertFalse(AutoSettings.Fishing.read(Vectors.json(FISHING)).full.paused);
     }
 
     @Test
