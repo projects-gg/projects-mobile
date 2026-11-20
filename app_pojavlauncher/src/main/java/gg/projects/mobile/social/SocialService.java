@@ -1882,11 +1882,14 @@ public final class SocialService implements ProjectsContent.Listener, PresenceCo
         if (gate.chat && mPrefs.wantsMessages() && SocialNotifications.channelOn(mApp, SocialNotifications.CHANNEL_MESSAGES)) {
             kinds.add(PushMessage.MESSAGE);
         }
+        // A friend list without "features" (a service from before pushes: SocialState's null) names none of them.
+        java.util.Set<String> features = mState.features();
+        if (features == null) features = java.util.Collections.emptySet();
         // AFKPLUS-M: 7/24 Bulut's notices, once the service announces them (an older one does not know the kinds).
-        if (mState.features().contains("afk")) kinds.addAll(gg.projects.mobile.cloud.CloudNotifications.wantedKinds(mApp));
+        if (features.contains("afk")) kinds.addAll(gg.projects.mobile.cloud.CloudNotifications.wantedKinds(mApp));
         // MOB-VOICE: rings while the app has no socket, once the service announces them ("voiceRing"; an older one does
         // not know the kind) and the player keeps voice chat on.
-        if (mState.features().contains(gg.projects.mobile.voice.VoicePush.FEATURE) && mVoice.config() && mVoice.prefs().enabled()
+        if (features.contains(gg.projects.mobile.voice.VoicePush.FEATURE) && mVoice.config() && mVoice.prefs().enabled()
                 && SocialNotifications.channelOn(mApp, gg.projects.mobile.voice.VoiceNotify.CHANNEL_RINGS)) {
             kinds.add(gg.projects.mobile.voice.VoicePush.KIND);
         }
