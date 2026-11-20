@@ -186,9 +186,13 @@ public final class CloudService implements SocialService.Listener {
         return mOffer != null ? mOffer.features : CloudModel.OfferFeatures.none();
     }
 
-    /** The save checks an account's switches ask for: placeholders by its own features, the service's command list. */
+    /**
+     * The save checks an account's switches ask for: placeholders by its own features, the service's command list, and
+     * the auto modes the account's features name (only then does a mode's setting go out at all).
+     */
     public CloudEdit.Checks checks(@Nullable Account account) {
-        return new CloudEdit.Checks(account != null && account.features.placeholders, features().placeholderCommands);
+        return new CloudEdit.Checks(account != null && account.features.placeholders, features().placeholderCommands,
+                account != null && account.features.fishing != null, account != null && account.features.mining != null);
     }
 
     public boolean signedIn() {
@@ -1275,6 +1279,16 @@ public final class CloudService implements SocialService.Listener {
         void answered(@Nullable gg.projects.mobile.cloud.movement.MoveFrames.Error error);
     }
 
+    /** Auto-fishing and auto-mining: what a "Balık" or "Kazma" screen gets (only while it watches with auto). Main thread. */
+    public interface AutoListener {
+        void autoState(gg.projects.mobile.cloud.auto.AutoFrames.Update update);
+    }
+
+    /** The answer to one auto operation: {@code error} null when the machine did it. Main thread, once. */
+    public interface AutoAnswer {
+        void answered(@Nullable gg.projects.mobile.cloud.auto.AutoFrames.Error error);
+    }
+
     public enum Live { CONNECTING, LIVE, LOST, REPLACED, SIGNED_OUT, HOST_OFFLINE, REFUSED }
 
     /** A screen's watch of one account; {@link #close()} when the screen goes. */
@@ -1286,14 +1300,28 @@ public final class CloudService implements SocialService.Listener {
         final InventoryListener inventory;
         @Nullable
         final MovementListener movement;
+        @Nullable
+        final AutoListener auto;
         private boolean mClosed;
 
-        LiveHandle(String acct, boolean ai, LiveListener listener, @Nullable InventoryListener inventory, @Nullable MovementListener movement) {
+        LiveHandle(String acct, boolean ai, LiveListener listener, @Nullable InventoryListener inventory, @Nullable MovementListener movement,
+                   @Nullable AutoListener auto) {
             this.acct = acct;
             this.ai = ai;
             this.listener = listener;
             this.inventory = inventory;
             this.movement = movement;
+            this.auto = auto;
+        }
+
+        /**
+         * Sends one auto operation of this account (pause, resume, aim); {@code answer} comes once, on the main thread
+         * (also when the socket cannot carry it: {@code host_offline}).
+         */
+        @MainThread
+        public void autoOp(gg.projects.mobile.cloud.auto.AutoOp op, AutoAnswer answer) {
+            if (mClosed) return;
+            sendAutoOp(this, op, answer);
         }
 
         /**
@@ -1352,6 +1380,7 @@ public final class CloudService implements SocialService.Listener {
             for (LiveHandle h : handles) live.watch(h.acct, h.ai);
             for (LiveHandle h : handles) if (h.inventory != null) live.inventory(h.acct, true);
             for (LiveHandle h : handles) if (h.movement != null) live.movement(h.acct, true);
+            for (LiveHandle h : handles) if (h.auto != null) live.auto(h.acct, true);
         }
 
         /** Whether any screen still wants {@code acct}'s inventory. */
@@ -1364,6 +1393,24 @@ public final class CloudService implements SocialService.Listener {
         boolean wantsMovement(String acct) {
             for (LiveHandle h : handles) if (h.acct.equals(acct) && h.movement != null) return true;
             return false;
+        }
+
+        /** Whether any screen still wants {@code acct}'s auto modes. */
+        boolean wantsAuto(String acct) {
+            for (LiveHandle h : handles) if (h.acct.equals(acct) && h.auto != null) return true;
+            return false;
+        }
+
+        @Override
+        public void autoState(String acct, gg.projects.mobile.cloud.auto.AutoFrames.Update update) {
+            for (LiveHandle h : of(acct)) if (h.auto != null) h.auto.autoState(update);
+        }
+
+        @Override
+        public void autoResult(String id, @Nullable gg.projects.mobile.cloud.auto.AutoFrames.Error error) {
+            mAutoOpHosts.remove(id);
+            AutoAnswer answer = mAutoOps.remove(id);
+            if (answer != null) answer.answered(error);
         }
 
         @Override
@@ -1545,6 +1592,9 @@ public final class CloudService implements SocialService.Listener {
     /** Movement operations waiting for their {@code movres}, by id, and the machine they went to. */
     private final Map<String, MoveAnswer> mMoveOps = new HashMap<>();
     private final Map<String, String> mMoveOpHosts = new HashMap<>();
+    /** Auto operations waiting for their {@code autores}, by id, and the machine they went to. */
+    private final Map<String, AutoAnswer> mAutoOps = new HashMap<>();
+    private final Map<String, String> mAutoOpHosts = new HashMap<>();
 
     /**
      * Streams one account while a screen shows it ({@code ai}: its AI feed and approvals too). Null when the account
@@ -1571,6 +1621,20 @@ public final class CloudService implements SocialService.Listener {
     @Nullable
     public LiveHandle watch(String acct, boolean ai, LiveListener listener, @Nullable InventoryListener inventory,
                             @Nullable MovementListener movement) {
+        return watch(acct, ai, listener, inventory, movement, null);
+    }
+
+    /** {@link #watch(String, boolean, LiveListener)} with the auto modes: only while a "Balık" or "Kazma" screen is visible. */
+    @MainThread
+    @Nullable
+    public LiveHandle watchAuto(String acct, LiveListener listener, AutoListener auto) {
+        return watch(acct, false, listener, null, null, auto);
+    }
+
+    @MainThread
+    @Nullable
+    private LiveHandle watch(String acct, boolean ai, LiveListener listener, @Nullable InventoryListener inventory,
+                             @Nullable MovementListener movement, @Nullable AutoListener auto) {
         Account account = account(acct);
         if (account == null || account.host == null) return null;
         HostSocket socket = mSockets.get(account.host);
@@ -1579,16 +1643,38 @@ public final class CloudService implements SocialService.Listener {
             mSockets.put(account.host, socket);
         }
         mMain.removeCallbacks(socket.closeIdle);
-        LiveHandle handle = new LiveHandle(acct, ai, listener, inventory, movement);
+        LiveHandle handle = new LiveHandle(acct, ai, listener, inventory, movement, auto);
         socket.handles.add(handle);
         if (socket.live == null) socket.connect();
         else {
             socket.live.watch(acct, ai);
             if (inventory != null) socket.live.inventory(acct, true);
             if (movement != null) socket.live.movement(acct, true);
+            if (auto != null) socket.live.auto(acct, true);
             listener.liveState(socket.state);
         }
         return handle;
+    }
+
+    private void sendAutoOp(LiveHandle handle, gg.projects.mobile.cloud.auto.AutoOp op, final AutoAnswer answer) {
+        Account account = account(handle.acct);
+        HostSocket socket = account == null || account.host == null ? null : mSockets.get(account.host);
+        mMoveCounter = (mMoveCounter + 1) % 1_000_000_000L;
+        // Its own prefix: ids are unique among a socket's pending operations of every kind.
+        String id = "f" + Long.toString(mMoveCounter, 36);
+        if (socket == null || socket.live == null || !socket.live.send(op.frame(handle.acct, id))) {
+            mMain.post(() -> answer.answered(gg.projects.mobile.cloud.auto.AutoFrames.Error.of("host_offline")));
+            return;
+        }
+        mAutoOps.put(id, answer);
+        mAutoOpHosts.put(id, socket.host);
+        // No answer within the contract's 3 seconds and a little: the machine is out of reach.
+        mMain.postDelayed(() -> {
+            if (!mAutoOpHosts.containsKey(id)) return;
+            mAutoOpHosts.remove(id);
+            AutoAnswer late = mAutoOps.remove(id);
+            if (late != null) late.answered(gg.projects.mobile.cloud.auto.AutoFrames.Error.of("host_offline"));
+        }, MOVE_ANSWER_MS);
     }
 
     private void sendMoveOp(LiveHandle handle, gg.projects.mobile.cloud.movement.MoveOp op, final MoveAnswer answer) {
@@ -1640,6 +1726,12 @@ public final class CloudService implements SocialService.Listener {
             MoveAnswer answer = mMoveOps.remove(id);
             if (answer != null) answer.answered(gg.projects.mobile.cloud.movement.MoveFrames.Error.of("host_offline"));
         }
+        for (String id : new ArrayList<>(mAutoOpHosts.keySet())) {
+            if (!host.equals(mAutoOpHosts.get(id))) continue;
+            mAutoOpHosts.remove(id);
+            AutoAnswer answer = mAutoOps.remove(id);
+            if (answer != null) answer.answered(gg.projects.mobile.cloud.auto.AutoFrames.Error.of("host_offline"));
+        }
     }
 
     /** "Burada aç" after the console was opened elsewhere: this phone takes it back. */
@@ -1658,9 +1750,10 @@ public final class CloudService implements SocialService.Listener {
             boolean stillWatched = !socket.of(handle.acct).isEmpty();
             if (!stillWatched && socket.live != null) socket.live.unwatch(handle.acct);
             else if (socket.live != null) {
-                // The console stays; the inventory and movement streams stop with the last view that wanted them.
+                // The console stays; the inventory, movement and auto streams stop with the last view that wanted them.
                 if (handle.inventory != null && !socket.wantsInventory(handle.acct)) socket.live.inventory(handle.acct, false);
                 if (handle.movement != null && !socket.wantsMovement(handle.acct)) socket.live.movement(handle.acct, false);
+                if (handle.auto != null && !socket.wantsAuto(handle.acct)) socket.live.auto(handle.acct, false);
             }
             if (socket.handles.isEmpty()) mMain.postDelayed(socket.closeIdle, LIVE_GRACE_MS);
         }

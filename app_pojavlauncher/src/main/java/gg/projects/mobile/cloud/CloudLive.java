@@ -47,6 +47,8 @@ public final class CloudLive {
     private final Map<String, Boolean> mInventory = new LinkedHashMap<>();
     /** Account → whether its movement streams (absent: never asked), as the inventory. */
     private final Map<String, Boolean> mMovement = new LinkedHashMap<>();
+    /** Account → whether its auto modes stream (absent: never asked), as the inventory. */
+    private final Map<String, Boolean> mAuto = new LinkedHashMap<>();
     private boolean mHello;
     private boolean mEnded;
     private volatile long mRetryAfter;
@@ -152,7 +154,7 @@ public final class CloudLive {
         if ("hello".equals(Json.str(message, "t"))) {
             mHello = true;
             for (Map.Entry<String, Boolean> w : mWatching.entrySet()) {
-                // After a reconnect the inventory and movement streams are asked for again only while a screen wants them.
+                // After a reconnect the inventory, movement and auto streams are asked for again only while a screen wants them.
                 mSocket.send(watchFrame(w.getKey(), w.getValue(), true).toString());
             }
         }
@@ -181,11 +183,13 @@ public final class CloudLive {
     private JsonObject watchFrame(String acct, boolean ai, boolean fresh) {
         Boolean inv = mInventory.get(acct);
         Boolean move = mMovement.get(acct);
+        Boolean auto = mAuto.get(acct);
         if (fresh) {
             inv = inv != null && inv ? Boolean.TRUE : null;
             move = move != null && move ? Boolean.TRUE : null;
+            auto = auto != null && auto ? Boolean.TRUE : null;
         }
-        return CloudLiveFrames.watch(acct, ai, inv, move);
+        return CloudLiveFrames.watch(acct, ai, inv, move, auto);
     }
 
     /**
@@ -215,6 +219,21 @@ public final class CloudLive {
         if (mHello && !mEnded) mSocket.send(watchFrame(acct, ai, false).toString());
     }
 
+    /**
+     * Switches {@code acct}'s auto stream on or off (only while its "Balık" or "Kazma" screen is visible), as
+     * {@link #inventory}: the first {@code autost} after it names every mode the account has.
+     */
+    @MainThread
+    public void auto(String acct, boolean on) {
+        Boolean ai = mWatching.get(acct);
+        if (ai == null) return;
+        Boolean before = mAuto.get(acct);
+        if (before != null && before == on) return;
+        if (before == null && !on) return;
+        mAuto.put(acct, on);
+        if (mHello && !mEnded) mSocket.send(watchFrame(acct, ai, false).toString());
+    }
+
     /** Sends one client frame (a move); false when the socket cannot carry it now. */
     @MainThread
     public boolean send(JsonObject frame) {
@@ -226,6 +245,7 @@ public final class CloudLive {
     public void unwatch(String acct) {
         mInventory.remove(acct);
         mMovement.remove(acct);
+        mAuto.remove(acct);
         if (mWatching.remove(acct) == null) return;
         if (mHello && !mEnded) mSocket.send(CloudLiveFrames.unwatch(acct).toString());
     }

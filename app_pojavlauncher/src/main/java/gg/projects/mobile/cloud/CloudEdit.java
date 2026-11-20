@@ -186,6 +186,16 @@ public final class CloudEdit {
          */
         @Nullable
         public Boolean movement;
+        /**
+         * Auto-fishing and auto-mining (README "Auto settings"): the whole setting the player changed on the settings
+         * screen, else null. Never echoed from the view: a {@code PATCH} that carries a mode carries all of it, one that
+         * leaves it out keeps what the service has, so a save elsewhere (the inventory's "Aç", a new server's seals, a bulk
+         * copy) never sends one.
+         */
+        @Nullable
+        public gg.projects.mobile.cloud.auto.AutoSettings.Fishing fishing;
+        @Nullable
+        public gg.projects.mobile.cloud.auto.AutoSettings.Mining mining;
 
         public Config(String owner, boolean antiAfk, int delayMin, int delayMax) {
             this.owner = owner;
@@ -200,6 +210,8 @@ public final class CloudEdit {
             for (Rule rule : rules) c.rules.add(rule.copy());
             c.inventory = inventory;
             c.movement = movement;
+            c.fishing = fishing == null ? null : fishing.copy();
+            c.mining = mining == null ? null : mining.copy();
             return c;
         }
 
@@ -210,10 +222,25 @@ public final class CloudEdit {
             return same.same(other) && !same(other);
         }
 
+        /**
+         * Only a mode's parts changed, not whether it is on ({@code stored}: the account's view): the running client takes
+         * that without a restart (README "Auto settings").
+         */
+        public boolean onlyAutoPartsDiffer(Config other, ConfigView stored) {
+            Config same = copy();
+            same.fishing = other.fishing == null ? null : other.fishing.copy();
+            same.mining = other.mining == null ? null : other.mining.copy();
+            if (!same.same(other) || same(other)) return false;
+            if (fishing != null && fishing.enabled != (stored.fishing != null && stored.fishing.enabled)) return false;
+            return mining == null || mining.enabled == (stored.mining != null && stored.mining.enabled);
+        }
+
         /** The same settings as {@code other} (the save bar shows while they differ). */
         public boolean same(Config other) {
             if (inventory == null ? other.inventory != null : !inventory.equals(other.inventory)) return false;
             if (movement == null ? other.movement != null : !movement.equals(other.movement)) return false;
+            if (fishing == null ? other.fishing != null : !fishing.same(other.fishing)) return false;
+            if (mining == null ? other.mining != null : !mining.same(other.mining)) return false;
             if (!owner.equals(other.owner) || antiAfk != other.antiAfk || delayMin != other.delayMin || delayMax != other.delayMax) return false;
             if (commands.size() != other.commands.size() || rules.size() != other.rules.size()) return false;
             for (int i = 0; i < commands.size(); i++) if (!commands.get(i).same(other.commands.get(i))) return false;
@@ -295,7 +322,30 @@ public final class CloudEdit {
                 return row(place, index, field, problem);
             }
             if (head.equals("commands") || head.equals("rules")) return new Issue(head, -1, "count", problem);
+            if (head.equals("fishing") || head.equals("mining")) return general(autoField(head, rest), problem);
             return general(head.split("[.\\[]", 2)[0], problem);
+        }
+
+        /**
+         * A mode's refused part as the settings screen marks it: the switch ({@code fishing.enabled} and the mode itself:
+         * {@code fishing}), the rod's or pickaxe's rule ({@code <mode>.keep}), the full inventory's command
+         * ({@code <mode>.command}), mining's blocks ({@code mining.blocks}) and its idle moves ({@code mining.every}).
+         */
+        static String autoField(String mode, String rest) {
+            String part = rest.split("[.\\[]", 2)[0];
+            switch (part) {
+                case "rod":
+                case "tool":
+                    return mode + ".keep";
+                case "full":
+                    return mode + ".command";
+                case "blocks":
+                    return mode + ".blocks";
+                case "idle":
+                    return mode + ".every";
+                default:
+                    return mode;
+            }
         }
 
         @Override
@@ -337,10 +387,19 @@ public final class CloudEdit {
         public static final Checks NONE = new Checks(false, CloudModel.DEFAULT_PLACEHOLDER_COMMANDS);
         public final boolean placeholders;
         public final List<String> commands;
+        /** The service names the mode in the account's features: only then is its setting sent at all. */
+        public final boolean fishing;
+        public final boolean mining;
 
         public Checks(boolean placeholders, List<String> commands) {
+            this(placeholders, commands, false, false);
+        }
+
+        public Checks(boolean placeholders, List<String> commands, boolean fishing, boolean mining) {
             this.placeholders = placeholders;
             this.commands = commands;
+            this.fishing = fishing;
+            this.mining = mining;
         }
     }
 
@@ -414,6 +473,13 @@ public final class CloudEdit {
                 Issue p = placeholderIssue(rule, i, checks);
                 if (p != null) issues.add(p);
             }
+        }
+        // A mode's setting the player changed (README "Auto settings"), checked as the service checks it.
+        if (config.fishing != null) {
+            for (gg.projects.mobile.cloud.auto.AutoSettings.Problem p : config.fishing.problems()) issues.add(Issue.general(p.field, p.problem));
+        }
+        if (config.mining != null) {
+            for (gg.projects.mobile.cloud.auto.AutoSettings.Problem p : config.mining.problems()) issues.add(Issue.general(p.field, p.problem));
         }
         return issues;
     }
@@ -660,6 +726,9 @@ public final class CloudEdit {
             movement.addProperty("enabled", config.movement);
             out.add("movement", movement);
         }
+        // A mode goes whole, only as the player changed it and only to a service that names it in the account's features.
+        if (config.fishing != null && checks.fishing) out.add("fishing", config.fishing.json());
+        if (config.mining != null && checks.mining) out.add("mining", config.mining.json());
         return new Built(out, issues);
     }
 
@@ -742,6 +811,13 @@ public final class CloudEdit {
                 // No movement slot: for the player ("player/<max>") or on the machine ("host").
                 String scope = problem.string("scope");
                 out.add(Issue.general("movement", "player".equals(scope) ? "player/" + problem.number("max", 1) : "host"));
+                break;
+            }
+            case "limit_fishing":
+            case "limit_mining": {
+                // No slot for the mode, as movement's: the player's own ("player/<max>") or the machine's ("host").
+                String scope = problem.string("scope");
+                out.add(Issue.general(code.substring("limit_".length()), "player".equals(scope) ? "player/" + problem.number("max", 1) : "host"));
                 break;
             }
             default:

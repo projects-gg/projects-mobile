@@ -185,6 +185,9 @@ public final class CloudModel {
         public final List<String> placeholderCommands;
         /** Movement (README "Movement switches"): pages that tell about it, only while on. */
         public final boolean movement;
+        /** Auto-fishing and auto-mining (README "Auto switches"): a page tells about a mode only while it is on. */
+        public final boolean fishing;
+        public final boolean mining;
         /**
          * The service names its features at all (a phase-1 Worker): bulk management, which has no switch of its own
          * ("nothing new on the Worker"), shows from then on (the launcher's rule, FEAT-L).
@@ -192,13 +195,15 @@ public final class CloudModel {
         public final boolean present;
 
         OfferFeatures(String inventory, boolean consoleKinds, boolean placeholders, List<String> placeholderCommands, boolean movement,
-                      boolean present) {
+                      boolean fishing, boolean mining, boolean present) {
             this.present = present;
             this.inventory = inventory;
             this.consoleKinds = consoleKinds;
             this.placeholders = placeholders;
             this.placeholderCommands = Collections.unmodifiableList(placeholderCommands);
             this.movement = movement;
+            this.fishing = fishing;
+            this.mining = mining;
         }
 
         static OfferFeatures read(@Nullable JsonObject o) {
@@ -209,7 +214,8 @@ public final class CloudModel {
             }
             if (commands.isEmpty()) commands.addAll(DEFAULT_PLACEHOLDER_COMMANDS);
             return new OfferFeatures(inventoryMode(Json.str(o, "inventory", "off")), Json.bool(o, "consoleKinds", false),
-                    Json.bool(o, "placeholders", false), commands, Json.bool(o, "movement", false), o != null);
+                    Json.bool(o, "placeholders", false), commands, Json.bool(o, "movement", false), Json.bool(o, "fishing", false),
+                    Json.bool(o, "mining", false), o != null);
         }
 
         public static OfferFeatures none() {
@@ -239,22 +245,51 @@ public final class CloudModel {
         /** Movement (README "Movement switches"); null from a service without it (then {@code config.movement} is never sent). */
         @Nullable
         public final MovementFeatures movement;
+        /**
+         * Auto-fishing and auto-mining (README "Auto switches"); null from a service without them (then
+         * {@code config.fishing} and {@code config.mining} are never sent).
+         */
+        @Nullable
+        public final AutoFeature fishing;
+        @Nullable
+        public final AutoFeature mining;
 
         AccountFeatures(String inventoryMode, boolean inventoryOn, boolean consoleKinds, boolean placeholders, boolean legacyRules,
-                        @Nullable MovementFeatures movement) {
+                        @Nullable MovementFeatures movement, @Nullable AutoFeature fishing, @Nullable AutoFeature mining) {
             this.inventoryMode = inventoryMode;
             this.inventoryOn = inventoryOn;
             this.consoleKinds = consoleKinds;
             this.placeholders = placeholders;
             this.legacyRules = legacyRules;
             this.movement = movement;
+            this.fishing = fishing;
+            this.mining = mining;
         }
 
         static AccountFeatures read(@Nullable JsonObject o) {
             JsonObject inv = Json.obj(o, "inventory");
             return new AccountFeatures(inventoryMode(Json.str(inv, "mode", "off")), Json.bool(inv, "on", false),
                     Json.bool(o, "consoleKinds", false), Json.bool(o, "placeholders", false), Json.bool(o, "legacyRules", false),
-                    MovementFeatures.read(Json.obj(o, "movement")));
+                    MovementFeatures.read(Json.obj(o, "movement")), AutoFeature.read(Json.obj(o, "fishing")),
+                    AutoFeature.read(Json.obj(o, "mining")));
+        }
+
+        /** {@code fishing} or {@code mining}; null for any other name or from a service without it. */
+        @Nullable
+        public AutoFeature auto(String mode) {
+            return "fishing".equals(mode) ? fishing : "mining".equals(mode) ? mining : null;
+        }
+
+        /** The account's settings offer the mode's switch (the service and its machine have it: {@code mode} on). */
+        public boolean autoSwitch(String mode) {
+            AutoFeature f = auto(mode);
+            return f != null && f.mode;
+        }
+
+        /** The mode's row and screen show: the mode there and switched on for this account. */
+        public boolean autoPanel(String mode) {
+            AutoFeature f = auto(mode);
+            return f != null && f.mode && f.on;
         }
 
         /** The account's settings offer the "Hareket" switch (the service and its machine have movement). */
@@ -319,6 +354,43 @@ public final class CloudModel {
             return new MovementFeatures("on".equals(Json.str(o, "mode", "off")), Json.bool(o, "on", false),
                     "player".equals(slot) || "host".equals(slot) ? slot : null,
                     gg.projects.mobile.cloud.movement.MoveOp.nameOk(main) ? main : null, own);
+        }
+    }
+
+    /**
+     * {@code Account.features.fishing} and {@code .mining} (README "Auto switches"): {@code mode} (the service's switch while
+     * the account's machine can), {@code on} (the account's own setting), {@code slot} (only while it is on for the service
+     * and off here: why it cannot be turned on now, {@code player} or {@code host}) and {@code limited} (the account's server
+     * is limited for the mode: Studio's public reason; the setting stays, the mode does not run there).
+     */
+    public static final class AutoFeature {
+        /** {@code mode} {@code "on"}. */
+        public final boolean mode;
+        public final boolean on;
+        @Nullable
+        public final String slot;
+        @Nullable
+        public final Localized limited;
+
+        AutoFeature(boolean mode, boolean on, @Nullable String slot, @Nullable Localized limited) {
+            this.mode = mode;
+            this.on = on;
+            this.slot = slot;
+            this.limited = limited;
+        }
+
+        @Nullable
+        static AutoFeature read(@Nullable JsonObject o) {
+            if (o == null) return null;
+            boolean mode = "on".equals(Json.str(o, "mode", "off"));
+            String slot = Json.str(o, "slot");
+            return new AutoFeature(mode, Json.bool(o, "on", false), mode && ("player".equals(slot) || "host".equals(slot)) ? slot : null,
+                    mode ? Localized.read(Json.obj(o, "limited")) : null);
+        }
+
+        /** The switch cannot be changed now: the server is limited for the mode, or no slot (with the setting off). */
+        public boolean blocked() {
+            return limited != null || (!on && slot != null);
         }
     }
 
@@ -714,10 +786,18 @@ public final class CloudModel {
         /** Movement: the player's own choice ({@code movement.enabled}); null when not stored (absent means off). */
         @Nullable
         public final Boolean movement;
+        /** Auto-fishing as stored, every part there (README "Auto settings"); null when not stored (then it is off). */
+        @Nullable
+        public final gg.projects.mobile.cloud.auto.AutoSettings.Fishing fishing;
+        /** Auto-mining as stored; null when not stored. */
+        @Nullable
+        public final gg.projects.mobile.cloud.auto.AutoSettings.Mining mining;
 
         private ConfigView(@Nullable JsonObject o) {
             inventory = enabled(Json.obj(o, "inventory"));
             movement = enabled(Json.obj(o, "movement"));
+            fishing = gg.projects.mobile.cloud.auto.AutoSettings.Fishing.read(Json.obj(o, "fishing"));
+            mining = gg.projects.mobile.cloud.auto.AutoSettings.Mining.read(Json.obj(o, "mining"));
             owner = Json.str(o, "owner", "");
             JsonObject anti = Json.obj(o, "antiAfk");
             antiAfk = Json.bool(anti, "enabled", true);

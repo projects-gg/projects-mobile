@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 
 import java.util.List;
 
+import gg.projects.mobile.cloud.auto.AutoFrames;
 import gg.projects.mobile.cloud.console.Bars;
 import gg.projects.mobile.cloud.inventory.InvFrames;
 import gg.projects.mobile.cloud.movement.MoveFrames;
@@ -68,6 +69,12 @@ public final class CloudLiveFrames {
 
         /** The answer to a movement operation ({@code movres}); {@code error} null: the account started it. */
         default void moveResult(String id, @Nullable MoveFrames.Error error) {}
+
+        /** Auto-fishing and auto-mining: what the modes do ({@code autost}; a mode it leaves out did not change). */
+        default void autoState(String acct, AutoFrames.Update update) {}
+
+        /** The answer to an auto operation ({@code autores}); {@code error} null: the machine did it. */
+        default void autoResult(String id, @Nullable AutoFrames.Error error) {}
     }
 
     /** Hands one message to {@code listener}; false for one it does not know (ignored, the contract's rule). */
@@ -168,6 +175,18 @@ public final class CloudLiveFrames {
                         : MoveFrames.Error.read(error == null ? new JsonObject() : error));
                 return true;
             }
+            case "autost":
+                if (acct == null) return false;
+                listener.autoState(acct, AutoFrames.Update.read(message));
+                return true;
+            case "autores": {
+                String id = Json.str(message, "id");
+                if (id == null) return false;
+                JsonObject error = Json.obj(message, "error");
+                listener.autoResult(id, error == null && Json.bool(message, "ok", false) ? null
+                        : AutoFrames.Error.read(error == null ? new JsonObject() : error));
+                return true;
+            }
             default:
                 return false;
         }
@@ -211,12 +230,18 @@ public final class CloudLiveFrames {
 
     /** {@code watch} with the movement stream too ({@code move}: true on, false off, null left out), as {@code inv}. */
     public static JsonObject watch(String acct, boolean ai, @Nullable Boolean inv, @Nullable Boolean move) {
+        return watch(acct, ai, inv, move, null);
+    }
+
+    /** {@code watch} with the auto stream too ({@code auto}: true on, false off, null left out), as {@code inv}. */
+    public static JsonObject watch(String acct, boolean ai, @Nullable Boolean inv, @Nullable Boolean move, @Nullable Boolean auto) {
         JsonObject o = new JsonObject();
         o.addProperty("t", "watch");
         o.addProperty("acct", acct);
         if (ai) o.addProperty("ai", true);
         if (inv != null) o.addProperty("inv", inv);
         if (move != null) o.addProperty("move", move);
+        if (auto != null) o.addProperty("auto", auto);
         return o;
     }
 
