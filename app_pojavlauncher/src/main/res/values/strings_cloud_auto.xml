@@ -13,7 +13,7 @@
     <string name="projects_auto_fishing_line">It casts where it stands, reels in when a fish bites and casts again. Leave your account at the water\'s edge, facing the water.</string>
     <string name="projects_auto_mining_line">It breaks the blocks that appear in front of it, where it stands. Made for cobblestone generators.</string>
     <string name="projects_auto_limited_see">Limited Servers</string>
-    <string name="projects_auto_limited_stored_on">It doesn\'t work on this server. %1$s</string>
+    <string name="projects_auto_limited_stored_on">It doesn\'t run on this server. %1$s</string>
     <string name="projects_auto_limited_short">Off on this server</string>
     <string name="projects_auto_slot_player">It\'s on for your other accounts. Turn it off on one of them to turn it on here.</string>
     <string name="projects_auto_fishing_no_slot">No room for auto-fishing right now.</string>
