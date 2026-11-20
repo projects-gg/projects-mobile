@@ -218,7 +218,10 @@ final class AutoSettingsBlock {
             content.addView(error);
         }
         if (feature.limited != null) {
-            content.addView(CloudUi.note(c, Auto.limited(c, mode, feature.limited)));
+            // Stored on: the setting stays but the mode does not run here, said before Studio's reason; stored off: the
+            // reason alone (the lead, 20 Nov 2026).
+            String reason = Auto.limited(c, mode, feature.limited);
+            content.addView(CloudUi.note(c, stored ? c.getString(R.string.projects_auto_limited_stored_on, reason) : reason));
             android.widget.Button see = CloudUi.siteLink(c, c.getString(R.string.projects_auto_limited_see), v -> h.openLimited());
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
             lp.setMarginStart(CloudUi.dp(c, -4));

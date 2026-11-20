@@ -14,6 +14,7 @@
     <string name="projects_auto_mining_line">Olduğu yerde önüne gelen blokları kırar. Taş jeneratörleri için.</string>
     <string name="projects_auto_limited_see">Sınırlı Sunucular</string>
     <string name="projects_auto_limited_short">Bu sunucuda kapalı</string>
+    <string name="projects_auto_limited_stored_on">Bu sunucuda çalışmaz. %1$s</string>
     <string name="projects_auto_slot_player">Başka hesaplarında açık. Burada açmak için önce birinde kapat.</string>
     <string name="projects_auto_fishing_no_slot">Şu an otomatik balık tutma için yer yok.</string>
     <string name="projects_auto_mining_no_slot">Şu an otomatik kazma için yer yok.</string>
