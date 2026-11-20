@@ -31,7 +31,7 @@
     <string name="projects_auto_command_label">Command</string>
     <string name="projects_auto_command_hint" translatable="false">/sell all</string>
     <string name="projects_auto_command_empty">Type the command.</string>
-    <string name="projects_auto_command_secret">This command can\'t contain a password.</string>
+    <string name="projects_auto_command_secret">Don\'t write a password or anything secret here.</string>
     <string name="projects_auto_command_paused">This command is being reviewed. Until then it waits when the inventory is full.</string>
     <string name="projects_auto_look_label">Look Around Now and Then</string>
     <string name="projects_auto_look_line">Between casts it turns its head a little and back.</string>

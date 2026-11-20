@@ -30,7 +30,7 @@
     <string name="projects_auto_full_command_help">Bu komutu gönderir, sonra yer açılmasını bekler. Dakikada en çok bir kez.</string>
     <string name="projects_auto_command_label">Komut</string>
     <string name="projects_auto_command_empty">Komutu yaz.</string>
-    <string name="projects_auto_command_secret">Bu komutta şifre olamaz.</string>
+    <string name="projects_auto_command_secret">Buraya şifre ya da gizli bir şey yazma.</string>
     <string name="projects_auto_command_paused">Bu komut inceleniyor. Şimdilik envanter dolunca bekler.</string>
     <string name="projects_auto_look_label">Arada Etrafına Baksın</string>
     <string name="projects_auto_look_line">Atışlar arasında başını biraz çevirip geri döner.</string>

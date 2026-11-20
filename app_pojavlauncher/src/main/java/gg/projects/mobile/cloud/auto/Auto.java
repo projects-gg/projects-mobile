@@ -216,6 +216,14 @@ public final class Auto {
     }
 
     /**
+     * A catch's name takes "(Büyülü)" only when the name does not say so already: an enchanted book's name is "Büyülü
+     * Kitap" (the site's rule, afk-web auto-view).
+     */
+    public static boolean enchantedMark(String id, boolean ench) {
+        return ench && !"minecraft:enchanted_book".equals(id);
+    }
+
+    /**
      * A count short enough for a slot (the full number is read out), as the site and players write it: "72", "1,1k" /
      * "1.1k", "12k".
      */

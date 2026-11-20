@@ -513,6 +513,13 @@ public class CloudAutoTest {
     }
 
     @Test
+    public void anEnchantedBookIsNamedAlone() {
+        assertTrue(gg.projects.mobile.cloud.auto.Auto.enchantedMark("minecraft:fishing_rod", true));
+        assertFalse(gg.projects.mobile.cloud.auto.Auto.enchantedMark("minecraft:enchanted_book", true));
+        assertFalse(gg.projects.mobile.cloud.auto.Auto.enchantedMark("minecraft:bow", false));
+    }
+
+    @Test
     public void aPausedCommandIsReadAndNeverWritten() {
         AutoSettings.Fishing f = AutoSettings.Fishing.read(Vectors.json("{\"enabled\":true,\"full\":{\"do\":\"command\",\"command\":\"/sell all\","
                 + "\"paused\":{\"case\":\"mc_01M7V41F00ABCDEFGHJKMNPQRS\",\"category\":\"advertising\"}}}"));

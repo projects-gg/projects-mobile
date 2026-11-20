@@ -775,7 +775,7 @@ public final class CloudAutoFragment extends CloudScreen implements CloudService
         row.setPaddingRelative(CloudUi.dp(c, 12), CloudUi.dp(c, 4), CloudUi.dp(c, 16), CloudUi.dp(c, 4));
         row.addView(CloudItemArt.tile(c, each.id, null, 32, each.ench), new LinearLayout.LayoutParams(CloudUi.dp(c, 32), CloudUi.dp(c, 32)));
         String name = itemName(each.id);
-        String shown = each.ench ? getString(R.string.projects_auto_enchanted, name) : name;
+        String shown = Auto.enchantedMark(each.id, each.ench) ? getString(R.string.projects_auto_enchanted, name) : name;
         boolean treasure = each.treasure();
         TextView title = CloudUi.text(c, shown, 14.5f, treasure ? R.color.projects_gold_200 : R.color.projects_bone_100, treasure);
         title.setSingleLine(true);
