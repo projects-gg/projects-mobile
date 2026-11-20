@@ -284,6 +284,14 @@ public class CloudAutoTest {
         assertFalse(a.features.autoPanel("mining"));
         assertFalse(a.features.autoSwitch("dancing"));
 
+        // The switch: a limited mode stored on can be turned off (never on); with no slot it stays off.
+        assertFalse(gg.projects.mobile.cloud.auto.Auto.switchLocked(f, true, true));
+        assertFalse(gg.projects.mobile.cloud.auto.Auto.switchLocked(f, true, false));
+        assertTrue(gg.projects.mobile.cloud.auto.Auto.switchLocked(f, false, false));
+        assertTrue(gg.projects.mobile.cloud.auto.Auto.switchLocked(m, false, false));
+        assertFalse(gg.projects.mobile.cloud.auto.Auto.switchLocked(m, true, false));
+        assertFalse(gg.projects.mobile.cloud.auto.Auto.switchLocked(m, false, true));
+
         // Off for the service: nothing of the mode shows, whatever else the object says.
         CloudModel.Account off = account("", ",\"fishing\":{\"mode\":\"off\",\"on\":true,\"slot\":\"host\","
                 + "\"limited\":{\"tr\":\"x\",\"en\":\"y\"}}");

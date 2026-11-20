@@ -122,6 +122,16 @@ public final class Auto {
         return false;
     }
 
+    /**
+     * The mode's switch cannot be used: a limited server never turns it on, but one stored on can still be turned off (the
+     * service always takes that, and the account would otherwise keep one of the player's slots with no way to free it);
+     * with no slot it stays off. {@code stored}: the saved setting; {@code checked}: the draft's.
+     */
+    public static boolean switchLocked(CloudModel.AutoFeature f, boolean stored, boolean checked) {
+        if (f.limited != null) return !stored;
+        return !stored && !checked && f.slot != null;
+    }
+
     /** Why the switch cannot be turned on now ({@code features.<mode>.slot}): the player's, number-free; or the machine's. */
     public static String slot(Context c, String mode, String slot) {
         if ("player".equals(slot)) return c.getString(R.string.projects_auto_slot_player);

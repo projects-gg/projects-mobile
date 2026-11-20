@@ -135,7 +135,8 @@ final class AutoSettingsBlock {
         void refresh() {
             if (exclusive == null) return;
             boolean fish = AutoSettings.FISHING.equals(mode);
-            if (other != null && other.on()) {
+            // "Bunu açarsan …" only under a switch that can be turned on (a locked one already says why it cannot).
+            if (other != null && other.on() && sw != null && sw.isEnabled()) {
                 exclusive.setText(fish ? R.string.projects_auto_one_job_will_fishing : R.string.projects_auto_one_job_will_mining);
                 exclusive.setVisibility(View.VISIBLE);
             } else if (did) {
@@ -197,9 +198,10 @@ final class AutoSettingsBlock {
         Context c = h.ctx();
         content.addView(CloudUi.gap(c, 16));
         LinearLayout group = CloudUi.group(c);
-        // Limited: shown as it is stored, not changed here (README "Auto switches"); no slot: it stays off and says why.
+        // Limited: shown as it is stored and never turned on here (README "Auto switches"), but one stored on can be turned
+        // off; no slot: it stays off and says why.
         boolean noSlot = !stored && !checked && feature.slot != null;
-        boolean disabled = feature.limited != null || noSlot;
+        boolean disabled = Auto.switchLocked(feature, stored, checked);
         SwitchCompat sw = CloudUi.toggle(c, c.getString(Auto.name(mode)), checked, toggle);
         sw.setEnabled(!disabled);
         // A switch that cannot be used dims with its title; the words under it stay readable (SHEET-UX 33).
