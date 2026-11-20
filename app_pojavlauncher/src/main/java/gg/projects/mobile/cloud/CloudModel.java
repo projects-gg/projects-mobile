@@ -388,7 +388,10 @@ public final class CloudModel {
                     mode ? Localized.read(Json.obj(o, "limited")) : null);
         }
 
-        /** The switch cannot be changed now: the server is limited for the mode, or no slot (with the setting off). */
+        /**
+         * The mode cannot be turned on now: the server is limited for it, or no slot (with the setting off). A limited mode stored
+         * on can still be turned off ({@code Auto.switchLocked}).
+         */
         public boolean blocked() {
             return limited != null || (!on && slot != null);
         }
