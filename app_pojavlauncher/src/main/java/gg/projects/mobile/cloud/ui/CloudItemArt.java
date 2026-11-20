@@ -32,8 +32,13 @@ public final class CloudItemArt {
      * seen ({@code base}), else (a typed one waiting for its first sight) a dashed cube outline.
      */
     public static View tile(Context c, String ref, @Nullable String base, float sizeDp) {
+        return tile(c, ref, base, sizeDp, false);
+    }
+
+    /** {@link #tile(Context, String, String, float)} with the game's glint on an enchanted item (a catch's book, a rod). */
+    public static View tile(Context c, String ref, @Nullable String base, float sizeDp, boolean enchanted) {
         String drawn = ref.startsWith("custom:") ? base : ref;
-        Tile tile = new Tile(c, drawn, CloudUi.dp(c, sizeDp));
+        Tile tile = new Tile(c, drawn, CloudUi.dp(c, sizeDp), enchanted);
         GradientDrawable bg = new GradientDrawable();
         bg.setCornerRadius(CloudUi.dp(c, 8));
         bg.setColor(CloudUi.color(c, R.color.projects_obsidian_800));
@@ -47,12 +52,14 @@ public final class CloudItemArt {
         @Nullable
         private final String mId;
         private final int mIcon;
+        private final boolean mEnchanted;
         private ItemArt mArt;
         private final Paint mDash = new Paint(Paint.ANTI_ALIAS_FLAG);
 
-        Tile(Context c, @Nullable String id, int sizePx) {
+        Tile(Context c, @Nullable String id, int sizePx, boolean enchanted) {
             super(c);
             mId = id;
+            mEnchanted = enchanted;
             // Whole pixels per texel: the largest multiple of 16 that leaves a quarter of the tile as margin.
             mIcon = Math.max(16, (int) (sizePx * 0.75f) / 16 * 16);
             mArt = ItemAtlases.art(c, null, mIcon, art -> {
@@ -75,7 +82,7 @@ public final class CloudItemArt {
                 canvas.drawRect(x + inset, y + inset, x + mIcon - inset, y + mIcon - inset, mDash);
                 return;
             }
-            mArt.draw(canvas, mId, null, null, false, x, y, mIcon, true);
+            mArt.draw(canvas, mId, null, null, mEnchanted, x, y, mIcon, true);
         }
     }
 }

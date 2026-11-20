@@ -367,6 +367,11 @@ public final class CloudWords {
             case "placeholder_length": return c.getString(R.string.projects_feat_ph_issue_length);
             default: break;
         }
+        // The auto modes (README "Auto settings"): the switch and its parts in the site's words.
+        if (issue.field.equals("fishing") || issue.field.equals("mining") || issue.field.startsWith("fishing.") || issue.field.startsWith("mining.")) {
+            String words = gg.projects.mobile.cloud.auto.Auto.issue(c, issue.field, p);
+            if (words != null) return words;
+        }
         // Movement turned on: switched off meanwhile ("off"), or no slot for the player ("player/<max>") or on the machine.
         if ("movement".equals(issue.field)) {
             if ("off".equals(p)) return c.getString(R.string.projects_feat_move_service_off);

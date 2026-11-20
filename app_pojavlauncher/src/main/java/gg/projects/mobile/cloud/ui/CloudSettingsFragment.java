@@ -44,6 +44,7 @@ import gg.projects.mobile.cloud.CloudService;
 import gg.projects.mobile.cloud.CloudStatus;
 import gg.projects.mobile.cloud.CloudText;
 import gg.projects.mobile.cloud.CloudWords;
+import gg.projects.mobile.cloud.auto.AutoSettings;
 import gg.projects.mobile.mods.Motion;
 import gg.projects.mobile.social.ui.BottomPanel;
 import gg.projects.mobile.ui.Haptics;
@@ -617,6 +618,90 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
             content.addView(CloudUi.note(c, blocked ? gg.projects.mobile.cloud.movement.Movement.slot(c, move.slot, 1)
                     : getString(R.string.projects_feat_move_setting_line)));
         }
+
+        // Auto-fishing and auto-mining (README "Auto switches", "Auto settings"): each while the service and the account's
+        // machine have it, in the site's words and order. The screen keeps a mode's setting only while it differs from
+        // what is stored, and a save sends it whole.
+        CloudModel.AutoFeature fishing = a.features.fishing;
+        if (fishing != null && fishing.mode) {
+            AutoSettings.Fishing stored = a.config.fishing;
+            AutoSettings.Fishing shown = mConfig.fishing != null ? mConfig.fishing : stored != null ? stored : AutoSettings.Fishing.defaults();
+            AutoSettingsBlock.fishing(content, autoHost(), fishing, stored != null && stored.enabled, shown);
+        }
+        CloudModel.AutoFeature mining = a.features.mining;
+        if (mining != null && mining.mode) {
+            AutoSettings.Mining stored = a.config.mining;
+            AutoSettings.Mining shown = mConfig.mining != null ? mConfig.mining : stored != null ? stored : AutoSettings.Mining.defaults();
+            AutoSettingsBlock.mining(content, autoHost(), mining, stored != null && stored.enabled, shown);
+        }
+    }
+
+    private boolean mNamesAsked;
+
+    /** The auto blocks' side of this screen: issues, item names, the limited servers page, and their changes. */
+    private AutoSettingsBlock.Host autoHost() {
+        return new AutoSettingsBlock.Host() {
+            @Override
+            public Context ctx() {
+                return CloudSettingsFragment.this.ctx();
+            }
+
+            @Nullable
+            @Override
+            public String issue(String field) {
+                return CloudSettingsFragment.this.issue("general", -1, field);
+            }
+
+            @Override
+            public String itemName(String id) {
+                return mService.itemName(accountId(), id, lang());
+            }
+
+            @Override
+            public void openLimited() {
+                mService.openSite(requireActivity(), gg.projects.mobile.cloud.auto.Auto.limitedPath(ctx()));
+            }
+
+            @Override
+            public void fishing(AutoSettings.Fishing edited) {
+                if (mBase == null) return;
+                AutoSettings.Fishing base = mBase.config.fishing != null ? mBase.config.fishing : AutoSettings.Fishing.defaults();
+                mConfig.fishing = edited.same(base) ? null : edited;
+                bar();
+            }
+
+            @Override
+            public void mining(AutoSettings.Mining edited) {
+                if (mBase == null) return;
+                AutoSettings.Mining base = mBase.config.mining != null ? mBase.config.mining : AutoSettings.Mining.defaults();
+                mConfig.mining = edited.same(base) ? null : edited;
+                bar();
+            }
+
+            @Override
+            public void needNames(final Runnable ready) {
+                CloudModel.Account a = mBase;
+                if (a == null) return;
+                String mc = a.version == null || "auto".equals(a.version) ? null : a.version;
+                if (mService.cachedItemData(mc) != null) {
+                    ready.run();
+                    return;
+                }
+                if (mNamesAsked) return;
+                mNamesAsked = true;
+                mService.itemData(mc, new CloudService.Result<gg.projects.mobile.cloud.items.ItemData>() {
+                    @Override
+                    public void ok(gg.projects.mobile.cloud.items.ItemData value) {
+                        if (alive()) ready.run();
+                    }
+
+                    @Override
+                    public void failed(CloudProblem problem) {
+                        mNamesAsked = false;
+                    }
+                });
+            }
+        };
     }
 
     /** A field-like row that opens a choice (the version list). */
@@ -905,11 +990,14 @@ public final class CloudSettingsFragment extends CloudScreen implements CloudRow
         boolean dirty = dirty();
         holdBack(dirty);
         // Only the inventory choice changed: it applies at the next connection, nothing restarts (CAFK-FEAT).
-        boolean onlyInventory = mName.equals(mBase.name) && !serverDirty() && mVersion.equals(mBase.version == null ? "auto" : mBase.version)
-                && mLang.equals("en".equals(mBase.lang) ? "en" : "tr") && mConfig.onlyInventoryDiffers(mOriginal);
+        boolean general = mName.equals(mBase.name) && !serverDirty() && mVersion.equals(mBase.version == null ? "auto" : mBase.version)
+                && mLang.equals("en".equals(mBase.lang) ? "en" : "tr");
+        boolean onlyInventory = general && mConfig.onlyInventoryDiffers(mOriginal);
+        // Only an auto mode's parts changed, not whether it is on: the running client takes them without a reconnect.
+        boolean onlyAutoParts = general && mConfig.onlyAutoPartsDiffer(mOriginal, mBase.config);
         mBar.setSaveLabel(stoppedOnPassword() ? getString(R.string.projects_cloud_settings_save_start) : null);
-        mBar.set(dirty || mSaving, mSaving, getString(onlyInventory ? R.string.projects_feat_inv_setting_note : CloudStatus.inGame(mBase)
-                ? R.string.projects_cloud_settings_restart_note : R.string.projects_cloud_settings_dirty));
+        mBar.set(dirty || mSaving, mSaving, getString(onlyInventory ? R.string.projects_feat_inv_setting_note
+                : CloudStatus.inGame(mBase) && !onlyAutoParts ? R.string.projects_cloud_settings_restart_note : R.string.projects_cloud_settings_dirty));
     }
 
     private void save() {

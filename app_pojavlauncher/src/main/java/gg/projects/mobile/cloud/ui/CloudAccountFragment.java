@@ -33,9 +33,12 @@ import gg.projects.mobile.ui.Haptics;
  * assistant's screens (each behind the service's switch for it). Orders, refunds and deleting stay on the site. The
  * screen watches the account live while it is open (the state changes as the account connects).
  *
- * <p>CAFK-FEAT (FEAT-M): "Envanter" and "Hareket" sit beside the console, each only for an account that may use it.
+ * <p>CAFK-FEAT (FEAT-M): "Envanter" and "Hareket" sit beside the console, each only for an account that may use it;
+ * FISHMINE-M: "Balık" and "Kazma" after them, the same way.
  */
 public final class CloudAccountFragment extends CloudScreen implements CloudService.LiveListener {
+    /** The auto modes' rows, in the site's order. */
+    private static final String[] AUTO_MODES = {gg.projects.mobile.cloud.auto.AutoSettings.FISHING, gg.projects.mobile.cloud.auto.AutoSettings.MINING};
     public static final String TAG = "ProjectsCloudAccountFragment";
 
     private String mShape = "";
@@ -158,6 +161,10 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
         if (mQuota != null) key.append('|').append(mQuota.estReplies).append(mQuota.boughtRemaining).append(mQuota.frozen);
         key.append('|').append(mService.waiting(a.id));
         key.append('|').append(a.features.inventoryMode).append(a.features.inventoryOn).append(gg.projects.mobile.cloud.movement.Movement.shows(a));
+        for (String mode : AUTO_MODES) {
+            CloudModel.AutoFeature f = a.features.auto(mode);
+            key.append('|').append(gg.projects.mobile.cloud.auto.Auto.shows(a, mode)).append(f != null && f.limited != null);
+        }
         CloudModel.Offer offer = mService.offer();
         if (offer != null && offer.plus != null) {
             key.append(offer.plus.features).append(offer.plus.sales).append(offer.plus.topup != null && offer.plus.topup.selling());
@@ -269,6 +276,16 @@ public final class CloudAccountFragment extends CloudScreen implements CloudServ
         if (gg.projects.mobile.cloud.movement.Movement.shows(a)) {
             rows.add(CloudUi.row(c, R.drawable.projects_ic_footprints, getString(R.string.projects_feat_movement),
                     v -> openFor(gg.projects.mobile.cloud.movement.CloudMovementFragment.class, a.id)).view);
+        }
+        // FISHMINE: "Balık" and "Kazma", each while the mode is there and on for this account (a limited server says so).
+        for (final String mode : AUTO_MODES) {
+            if (!gg.projects.mobile.cloud.auto.Auto.shows(a, mode)) continue;
+            CloudUi.Row auto = CloudUi.row(c, gg.projects.mobile.cloud.auto.Auto.fishing(mode) ? R.drawable.projects_ic_fish_simple
+                            : R.drawable.projects_ic_cube, getString(gg.projects.mobile.cloud.auto.Auto.tab(mode)),
+                    v -> open(gg.projects.mobile.cloud.auto.CloudAutoFragment.class, gg.projects.mobile.cloud.auto.CloudAutoFragment.args(a.id, mode)));
+            CloudModel.AutoFeature f = a.features.auto(mode);
+            if (f != null && f.limited != null) auto.setLine(getString(R.string.projects_auto_limited_short), R.color.projects_ash_400);
+            rows.add(auto.view);
         }
         rows.add(CloudUi.row(c, R.drawable.projects_ic_sliders, getString(R.string.projects_cloud_settings),
                 v -> openFor(CloudSettingsFragment.class, a.id)).view);
