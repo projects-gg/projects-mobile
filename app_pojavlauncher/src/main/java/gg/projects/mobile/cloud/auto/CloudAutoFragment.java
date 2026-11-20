@@ -492,8 +492,8 @@ public final class CloudAutoFragment extends CloudScreen implements CloudService
             LinearLayout cell = new LinearLayout(c);
             cell.setOrientation(LinearLayout.VERTICAL);
             if (i < labels.length) {
-                TextView value = CloudUi.figure(c, "0", 20, R.color.projects_bone_50);
-                cell.addView(value);
+                TextView figure = CloudUi.figure(c, "0", 20, R.color.projects_bone_50);
+                cell.addView(figure);
                 TextView label = CloudUi.text(c, getString(labels[i]), 12.5f, R.color.projects_ash_400, false);
                 label.setSingleLine(true);
                 label.setEllipsize(TextUtils.TruncateAt.END);
@@ -501,7 +501,7 @@ public final class CloudAutoFragment extends CloudScreen implements CloudService
                 llp.topMargin = CloudUi.dp(c, 3);
                 cell.addView(label, llp);
                 cell.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_YES);
-                mFigures[i] = value;
+                mFigures[i] = figure;
             }
             figures.addView(cell, CloudUi.weight(1f));
         }
