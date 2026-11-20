@@ -85,6 +85,9 @@ public final class CloudAutoFragment extends CloudScreen implements CloudService
     /** The warning's small mark before the sentence, on its first line (a state that waits on the player). */
     @Nullable
     private ImageView mWarn;
+    /** The sentence's second half under its first, quieter ("Envanter dolu." / "Yer açılınca devam eder."). */
+    @Nullable
+    private TextView mDetailText;
     @Nullable
     private TextView mRefusalText;
     @Nullable
@@ -271,6 +274,7 @@ public final class CloudAutoFragment extends CloudScreen implements CloudService
         mTargetText = null;
         mRefusalText = null;
         mWarn = null;
+        mDetailText = null;
         mToggle = null;
         mToolBox = null;
         mToolKey = "";
@@ -414,6 +418,16 @@ public final class CloudAutoFragment extends CloudScreen implements CloudService
         words.addView(stateRow, CloudUi.matchWrap());
         mStateText = state;
         mWarn = warn;
+        // The state in two weights: what happened in bold, what comes next quieter (as mining's block line under it).
+        TextView detail = CloudUi.text(c, "", 13.5f, R.color.projects_ash_300, false);
+        detail.setPadding(0, CloudUi.dp(c, 2), 0, 0);
+        detail.setLineSpacing(0, 1.1f);
+        if (Build.VERSION.SDK_INT >= 23) detail.setBreakStrategy(Layout.BREAK_STRATEGY_BALANCED);
+        // TalkBack reads the whole sentence once, from the bold line.
+        detail.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        detail.setVisibility(View.GONE);
+        words.addView(detail);
+        mDetailText = detail;
         if (!fishing()) {
             TextView target = CloudUi.text(c, "", 13.5f, R.color.projects_ash_300, false);
             target.setPadding(0, CloudUi.dp(c, 2), 0, 0);
@@ -584,7 +598,15 @@ public final class CloudAutoFragment extends CloudScreen implements CloudService
         if (s == null || mStateText == null || !"live".equals(mShape)) return;
         Context c = ctx();
         String mode = mode();
-        mStateText.setText(Auto.state(c, mode, s));
+        String sentence = Auto.state(c, mode, s);
+        int cut = sentence.indexOf(". ");
+        String rest = cut > 0 ? sentence.substring(cut + 2).trim() : "";
+        mStateText.setText(rest.isEmpty() ? sentence : sentence.substring(0, cut + 1));
+        mStateText.setContentDescription(sentence);
+        if (mDetailText != null) {
+            mDetailText.setText(rest);
+            mDetailText.setVisibility(rest.isEmpty() ? View.GONE : View.VISIBLE);
+        }
         if (mWarn != null) mWarn.setVisibility(Auto.needsPlayer(s) ? View.VISIBLE : View.GONE);
         if (mTargetText != null) {
             AutoFrames.Target target = mMine == null ? null : mMine.target;
